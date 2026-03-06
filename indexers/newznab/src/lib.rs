@@ -1,7 +1,7 @@
 use extism_pdk::*;
 use newznab_common::{
     execute_full_search, extract_base_metadata, standard_config_fields, Capabilities,
-    NewznabConfig, PluginDescriptor, SearchRequest, SearchResponse,
+    NewznabConfig, PluginDescriptor, SearchRequest,
 };
 
 #[plugin_fn]
@@ -28,7 +28,6 @@ pub fn describe(_input: String) -> FnResult<String> {
 pub fn search(input: String) -> FnResult<String> {
     let req: SearchRequest = serde_json::from_str(&input)?;
     let config = NewznabConfig::from_extism()?;
-    let results = execute_full_search(&config, &req, extract_base_metadata)?;
-    let response = SearchResponse { results };
+    let response = execute_full_search(&config, &req, extract_base_metadata)?;
     Ok(serde_json::to_string(&response)?)
 }
