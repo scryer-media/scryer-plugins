@@ -95,6 +95,14 @@ pub struct SearchRequest {
 #[derive(Serialize)]
 pub struct SearchResponse {
     pub results: Vec<SearchResult>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub api_current: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub api_max: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub grab_current: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub grab_max: Option<u32>,
 }
 
 #[derive(Serialize)]
@@ -239,6 +247,19 @@ pub fn extract_base_metadata(
 }
 
 // ---------------------------------------------------------------------------
+// API limit metadata
+// ---------------------------------------------------------------------------
+
+/// Rate limit metadata returned by Newznab indexers in `<limits>` elements.
+#[derive(Default)]
+struct ApiLimits {
+    api_current: Option<u32>,
+    api_max: Option<u32>,
+    grab_current: Option<u32>,
+    grab_max: Option<u32>,
+}
+
+// ---------------------------------------------------------------------------
 // Main search orchestrator
 // ---------------------------------------------------------------------------
 
@@ -254,7 +275,7 @@ pub fn execute_full_search(
     config: &NewznabConfig,
     req: &SearchRequest,
     extract_fn: MetadataExtractor,
-) -> Result<Vec<SearchResult>, Error> {
+) -> Result<SearchResponse, Error> {
     let query = req.query.trim().to_string();
     let limit = req.limit.clamp(1, 200);
 
@@ -270,7 +291,13 @@ pub fn execute_full_search(
         .filter(|v| !v.is_empty());
 
     if query.is_empty() && imdb_id.is_none() && tvdb_id.is_none() {
-        return Ok(vec![]);
+        return Ok(SearchResponse {
+            results: vec![],
+            api_current: None,
+            api_max: None,
+            grab_current: None,
+            grab_max: None,
+        });
     }
 
     // Determine search type from categories and hints
@@ -319,13 +346,19 @@ pub fn execute_full_search(
         return Err(Error::msg(format!("Newznab API returned HTTP {status}")));
     }
 
-    let results = if is_xml {
+    let (results, limits) = if is_xml {
         parse_newznab_xml(&body, limit, extract_fn)
     } else {
         parse_newznab_json(&body, limit, extract_fn)
     };
 
-    Ok(results)
+    Ok(SearchResponse {
+        results,
+        api_current: limits.api_current,
+        api_max: limits.api_max,
+        grab_current: limits.grab_current,
+        grab_max: limits.grab_max,
+    })
 }
 
 // ---------------------------------------------------------------------------
@@ -694,6 +727,26 @@ fn apply_standard_attrs(
 struct NewznabJsonResponse {
     channel: Option<NewznabJsonChannel>,
     error: Option<NewznabJsonErrorNode>,
+    #[serde(default)]
+    limits: Option<NewznabJsonLimitsNode>,
+}
+
+#[derive(Deserialize)]
+struct NewznabJsonLimitsNode {
+    #[serde(rename = "@attributes", default)]
+    attributes: Option<NewznabJsonLimitsAttrs>,
+}
+
+#[derive(Deserialize, Default)]
+struct NewznabJsonLimitsAttrs {
+    #[serde(default)]
+    api_current: Option<String>,
+    #[serde(default)]
+    api_max: Option<String>,
+    #[serde(default)]
+    grab_current: Option<String>,
+    #[serde(default)]
+    grab_max: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -799,18 +852,32 @@ fn parse_newznab_json(
     body: &str,
     limit: usize,
     extract_fn: MetadataExtractor,
-) -> Vec<SearchResult> {
+) -> (Vec<SearchResult>, ApiLimits) {
     let parsed: NewznabJsonResponse = match serde_json::from_str(body) {
         Ok(v) => v,
-        Err(_) => return vec![],
+        Err(_) => return (vec![], ApiLimits::default()),
     };
+
+    // Extract API limits from channel.limits if present
+    let limits = parsed
+        .limits
+        .map(|l| {
+            let attrs = l.attributes.unwrap_or_default();
+            ApiLimits {
+                api_current: attrs.api_current.and_then(|v| v.parse().ok()),
+                api_max: attrs.api_max.and_then(|v| v.parse().ok()),
+                grab_current: attrs.grab_current.and_then(|v| v.parse().ok()),
+                grab_max: attrs.grab_max.and_then(|v| v.parse().ok()),
+            }
+        })
+        .unwrap_or_default();
 
     let items = match parsed.channel.and_then(|c| c.item) {
         Some(items) => items.into_vec(),
-        None => return vec![],
+        None => return (vec![], limits),
     };
 
-    items
+    let results: Vec<SearchResult> = items
         .into_iter()
         .take(limit)
         .filter_map(|item| {
@@ -879,7 +946,9 @@ fn parse_newznab_json(
 
             Some(result)
         })
-        .collect()
+        .collect();
+
+    (results, limits)
 }
 
 // ---------------------------------------------------------------------------
@@ -931,12 +1000,13 @@ fn parse_newznab_xml(
     body: &str,
     limit: usize,
     extract_fn: MetadataExtractor,
-) -> Vec<SearchResult> {
+) -> (Vec<SearchResult>, ApiLimits) {
     let mut reader = Reader::from_str(body);
     reader.config_mut().trim_text(true);
 
     let mut buf = Vec::new();
     let mut results = Vec::new();
+    let mut api_limits = ApiLimits::default();
     let mut in_item = false;
 
     // Per-item accumulators
@@ -982,6 +1052,38 @@ fn parse_newznab_xml(
                         }
                         _ => {
                             current_tag = None;
+                        }
+                    }
+                }
+            }
+            Ok(Event::Empty(ref e)) if !in_item => {
+                // Parse <limits> or <newznab:limits> at channel level
+                let name_bytes = e.name().as_ref().to_vec();
+                let local_name = String::from_utf8_lossy(&name_bytes);
+                if local_name == "limits" || local_name.ends_with(":limits") {
+                    for a in e.attributes().flatten() {
+                        match a.key.as_ref() {
+                            b"api_current" => {
+                                api_limits.api_current = String::from_utf8(a.value.to_vec())
+                                    .ok()
+                                    .and_then(|v| v.parse().ok());
+                            }
+                            b"api_max" => {
+                                api_limits.api_max = String::from_utf8(a.value.to_vec())
+                                    .ok()
+                                    .and_then(|v| v.parse().ok());
+                            }
+                            b"grab_current" => {
+                                api_limits.grab_current = String::from_utf8(a.value.to_vec())
+                                    .ok()
+                                    .and_then(|v| v.parse().ok());
+                            }
+                            b"grab_max" => {
+                                api_limits.grab_max = String::from_utf8(a.value.to_vec())
+                                    .ok()
+                                    .and_then(|v| v.parse().ok());
+                            }
+                            _ => {}
                         }
                     }
                 }
@@ -1101,7 +1203,7 @@ fn parse_newznab_xml(
         buf.clear();
     }
 
-    results
+    (results, api_limits)
 }
 
 fn parse_enclosure_attrs(

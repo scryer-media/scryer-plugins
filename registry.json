@@ -8,7 +8,6 @@
       "plugin_type": "indexer",
       "provider_type": "nzbgeek",
       "version": "0.1.0",
-      "sdk_version": "0.1",
       "author": "scryer-media",
       "official": true,
       "builtin": true,
@@ -21,9 +20,7 @@
       "description": "Generic Newznab protocol indexer for DogNZB and other compatible services",
       "plugin_type": "indexer",
       "provider_type": "newznab",
-      "provider_aliases": ["dognzb"],
       "version": "0.1.0",
-      "sdk_version": "0.1",
       "author": "scryer-media",
       "official": true,
       "builtin": true,
@@ -37,13 +34,12 @@
       "plugin_type": "indexer",
       "provider_type": "animetosho",
       "version": "0.1.0",
-      "sdk_version": "0.1",
       "author": "scryer-media",
       "official": true,
       "builtin": false,
       "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/animetosho",
       "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/animetosho_indexer.wasm",
-      "wasm_sha256": "9615112140d9bcf0375fa1e28f68ca1ed48aa392472f010879b8daac6432a1ff",
+      "wasm_sha256": "1a51c18b83c6de178fc3697b8320a554038529c8ecfaf392c507afb7478d9086",
       "min_scryer_version": "0.0.5"
     }
   ]

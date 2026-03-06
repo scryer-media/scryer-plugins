@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use extism_pdk::*;
 use newznab_common::{
     execute_full_search, Capabilities, NewznabConfig, PluginDescriptor, SearchRequest,
-    SearchResponse, ScoringPolicy,
+    ScoringPolicy,
 };
 
 #[plugin_fn]
@@ -41,8 +41,7 @@ pub fn describe(_input: String) -> FnResult<String> {
 pub fn search(input: String) -> FnResult<String> {
     let req: SearchRequest = serde_json::from_str(&input)?;
     let config = NewznabConfig::from_extism()?;
-    let results = execute_full_search(&config, &req, nzbgeek_metadata_extractor)?;
-    let response = SearchResponse { results };
+    let response = execute_full_search(&config, &req, nzbgeek_metadata_extractor)?;
     Ok(serde_json::to_string(&response)?)
 }
 
