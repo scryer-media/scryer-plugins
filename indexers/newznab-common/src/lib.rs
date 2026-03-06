@@ -1229,3 +1229,529 @@ fn parse_enclosure_attrs(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── determine_search_type ────────────────────────────────────────────
+
+    #[test]
+    fn search_type_movie_category() {
+        let cats = vec!["2000".into()];
+        assert_eq!(determine_search_type(&cats, None, None, None), "movie");
+    }
+
+    #[test]
+    fn search_type_tv_category() {
+        let cats = vec!["5000".into()];
+        assert_eq!(determine_search_type(&cats, None, None, None), "tvsearch");
+    }
+
+    #[test]
+    fn search_type_movie_hint() {
+        assert_eq!(
+            determine_search_type(&[], Some("movie"), None, None),
+            "movie"
+        );
+    }
+
+    #[test]
+    fn search_type_tv_hint() {
+        assert_eq!(
+            determine_search_type(&[], Some("tv"), None, None),
+            "tvsearch"
+        );
+    }
+
+    #[test]
+    fn search_type_anime_hint() {
+        assert_eq!(
+            determine_search_type(&[], Some("anime"), None, None),
+            "tvsearch"
+        );
+    }
+
+    #[test]
+    fn search_type_imdb_id_fallback() {
+        assert_eq!(
+            determine_search_type(&[], None, Some("1234567"), None),
+            "movie"
+        );
+    }
+
+    #[test]
+    fn search_type_tvdb_id_fallback() {
+        assert_eq!(
+            determine_search_type(&[], None, None, Some("12345")),
+            "tvsearch"
+        );
+    }
+
+    #[test]
+    fn search_type_generic_fallback() {
+        assert_eq!(determine_search_type(&[], None, None, None), "search");
+    }
+
+    // ── build_category_param ─────────────────────────────────────────────
+
+    #[test]
+    fn category_param_numeric_only() {
+        let cats: Vec<String> = vec!["2000".into(), "movie".into(), "5040".into()];
+        assert_eq!(build_category_param(&cats), Some("2000,5040".into()));
+    }
+
+    #[test]
+    fn category_param_empty() {
+        let cats: Vec<String> = vec![];
+        assert_eq!(build_category_param(&cats), None);
+    }
+
+    #[test]
+    fn category_param_all_non_numeric() {
+        let cats: Vec<String> = vec!["movie".into(), "tv".into()];
+        assert_eq!(build_category_param(&cats), None);
+    }
+
+    #[test]
+    fn category_param_whitespace_trimmed() {
+        let cats: Vec<String> = vec![" 2000 ".into(), "5040".into()];
+        assert_eq!(build_category_param(&cats), Some("2000,5040".into()));
+    }
+
+    // ── build_endpoint ───────────────────────────────────────────────────
+
+    #[test]
+    fn endpoint_normal() {
+        assert_eq!(
+            build_endpoint("https://api.nzbgeek.info", "/api"),
+            "https://api.nzbgeek.info/api"
+        );
+    }
+
+    #[test]
+    fn endpoint_trailing_slash() {
+        assert_eq!(
+            build_endpoint("https://example.com/", "/api/"),
+            "https://example.com/api"
+        );
+    }
+
+    #[test]
+    fn endpoint_empty_path() {
+        assert_eq!(
+            build_endpoint("https://example.com", ""),
+            "https://example.com"
+        );
+    }
+
+    #[test]
+    fn endpoint_custom_path() {
+        assert_eq!(
+            build_endpoint("https://foo.bar", "/api/v1/api"),
+            "https://foo.bar/api/v1/api"
+        );
+    }
+
+    // ── is_empty_response ────────────────────────────────────────────────
+
+    #[test]
+    fn empty_json_no_title() {
+        assert!(is_empty_response(r#"{"channel":{}}"#));
+    }
+
+    #[test]
+    fn non_empty_json() {
+        assert!(!is_empty_response(r#"{"channel":{"item":{"title":"foo"}}}"#));
+    }
+
+    #[test]
+    fn empty_xml_no_item() {
+        assert!(is_empty_response("<rss><channel></channel></rss>"));
+    }
+
+    #[test]
+    fn non_empty_xml() {
+        assert!(!is_empty_response("<rss><channel><item><title>foo</title></item></channel></rss>"));
+    }
+
+    #[test]
+    fn random_text_is_empty() {
+        assert!(is_empty_response("hello"));
+    }
+
+    // ── url_encode ───────────────────────────────────────────────────────
+
+    #[test]
+    fn encode_plain_ascii() {
+        assert_eq!(url_encode("hello"), "hello");
+    }
+
+    #[test]
+    fn encode_spaces() {
+        assert_eq!(url_encode("hello world"), "hello%20world");
+    }
+
+    #[test]
+    fn encode_special_chars() {
+        assert_eq!(url_encode("a&b=c"), "a%26b%3Dc");
+    }
+
+    #[test]
+    fn encode_unreserved() {
+        assert_eq!(url_encode("-_.~"), "-_.~");
+    }
+
+    // ── classify_and_format_error ────────────────────────────────────────
+
+    #[test]
+    fn error_api_key_range() {
+        let err = classify_and_format_error("100", "Invalid API key");
+        let msg = format!("{err}");
+        assert!(msg.starts_with("Newznab API key error"), "got: {msg}");
+    }
+
+    #[test]
+    fn error_rate_limit() {
+        let err = classify_and_format_error("500", "Request limit reached");
+        let msg = format!("{err}");
+        assert!(msg.starts_with("Newznab rate limit"), "got: {msg}");
+    }
+
+    #[test]
+    fn error_generic() {
+        let err = classify_and_format_error("300", "something went wrong");
+        let msg = format!("{err}");
+        assert!(msg.starts_with("Newznab error"), "got: {msg}");
+    }
+
+    // ── apply_standard_attrs ─────────────────────────────────────────────
+
+    fn make_result() -> SearchResult {
+        SearchResult {
+            title: "test".into(),
+            link: None,
+            download_url: None,
+            size_bytes: None,
+            published_at: None,
+            grabs: None,
+            languages: vec![],
+            extra: HashMap::new(),
+            guid: None,
+            info_url: None,
+        }
+    }
+
+    #[test]
+    fn attrs_usenet_date() {
+        let pairs = vec![("usenetdate".into(), "2024-01-15".into())];
+        let mut result = make_result();
+        let mut usenet_date = None;
+        apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
+        assert_eq!(usenet_date, Some("2024-01-15".into()));
+    }
+
+    #[test]
+    fn attrs_tvdbid() {
+        let pairs = vec![("tvdbid".into(), "12345".into())];
+        let mut result = make_result();
+        let mut usenet_date = None;
+        apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
+        assert_eq!(
+            result.extra.get("response_tvdbid"),
+            Some(&serde_json::Value::from("12345"))
+        );
+    }
+
+    #[test]
+    fn attrs_imdbid() {
+        let pairs = vec![("imdb".into(), "1234567".into())];
+        let mut result = make_result();
+        let mut usenet_date = None;
+        apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
+        assert_eq!(
+            result.extra.get("response_imdbid"),
+            Some(&serde_json::Value::from("1234567"))
+        );
+    }
+
+    #[test]
+    fn attrs_prematch() {
+        let pairs = vec![("prematch".into(), "1".into())];
+        let mut result = make_result();
+        let mut usenet_date = None;
+        apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
+        let flags = result.extra.get("indexer_flags").unwrap();
+        assert!(flags.as_array().unwrap().contains(&serde_json::Value::from("scene")));
+    }
+
+    #[test]
+    fn attrs_nuked() {
+        let pairs = vec![("nuked".into(), "1".into())];
+        let mut result = make_result();
+        let mut usenet_date = None;
+        apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
+        let flags = result.extra.get("indexer_flags").unwrap();
+        assert!(flags.as_array().unwrap().contains(&serde_json::Value::from("nuked")));
+    }
+
+    #[test]
+    fn attrs_ignores_zero_values() {
+        let pairs = vec![
+            ("tvdbid".into(), "0".into()),
+            ("imdb".into(), "0".into()),
+            ("prematch".into(), "0".into()),
+            ("nuked".into(), "0".into()),
+        ];
+        let mut result = make_result();
+        let mut usenet_date = None;
+        apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
+        assert!(result.extra.is_empty(), "got: {:?}", result.extra);
+    }
+
+    // ── parse_error_json ─────────────────────────────────────────────────
+
+    #[test]
+    fn json_error_present() {
+        let body = r#"{"error":{"@attributes":{"code":"100","description":"bad key"}}}"#;
+        let result = parse_error_json(body);
+        assert_eq!(result, Some(("100".into(), "bad key".into())));
+    }
+
+    #[test]
+    fn json_error_absent() {
+        let body = r#"{"channel":{}}"#;
+        assert_eq!(parse_error_json(body), None);
+    }
+
+    #[test]
+    fn json_malformed() {
+        assert_eq!(parse_error_json("not json"), None);
+    }
+
+    // ── parse_error_xml ──────────────────────────────────────────────────
+
+    #[test]
+    fn xml_error_present() {
+        let body = r#"<?xml version="1.0"?><error code="100" description="bad key"/>"#;
+        let result = parse_error_xml(body);
+        assert_eq!(result, Some(("100".into(), "bad key".into())));
+    }
+
+    #[test]
+    fn xml_error_absent() {
+        let body = "<rss><channel></channel></rss>";
+        assert_eq!(parse_error_xml(body), None);
+    }
+
+    #[test]
+    fn xml_error_partial() {
+        let body = r#"<?xml version="1.0"?><error code="100"/>"#;
+        let result = parse_error_xml(body);
+        assert_eq!(result, Some(("100".into(), "unknown".into())));
+    }
+
+    // ── parse_newznab_json ───────────────────────────────────────────────
+
+    #[test]
+    fn json_empty_channel() {
+        let body = r#"{"channel":{}}"#;
+        let (results, _) = parse_newznab_json(body, 100, extract_base_metadata);
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn json_single_item() {
+        let body = r#"{
+            "channel": {
+                "item": {
+                    "title": "Test.Release.720p",
+                    "guid": "abc123",
+                    "link": "https://example.com/details/abc123",
+                    "comments": "https://example.com/details/abc123#comments",
+                    "pubDate": "Mon, 01 Jan 2024 12:00:00 +0000",
+                    "enclosure": {
+                        "@attributes": {
+                            "url": "https://example.com/download/abc123",
+                            "length": "1073741824",
+                            "type": "application/x-nzb"
+                        }
+                    },
+                    "attr": [
+                        {"@attributes": {"name": "grabs", "value": "42"}},
+                        {"@attributes": {"name": "language", "value": "English"}}
+                    ]
+                }
+            }
+        }"#;
+        let (results, _) = parse_newznab_json(body, 100, extract_base_metadata);
+        assert_eq!(results.len(), 1);
+        let r = &results[0];
+        assert_eq!(r.title, "Test.Release.720p");
+        assert_eq!(r.guid.as_deref(), Some("abc123"));
+        assert_eq!(r.download_url.as_deref(), Some("https://example.com/download/abc123"));
+        assert_eq!(r.size_bytes, Some(1_073_741_824));
+        assert_eq!(r.grabs, Some(42));
+        assert_eq!(r.languages, vec!["English"]);
+        assert_eq!(r.info_url.as_deref(), Some("https://example.com/details/abc123"));
+    }
+
+    #[test]
+    fn json_multiple_items_respects_limit() {
+        let body = r#"{
+            "channel": {
+                "item": [
+                    {"title": "Item 1", "guid": "a"},
+                    {"title": "Item 2", "guid": "b"},
+                    {"title": "Item 3", "guid": "c"}
+                ]
+            }
+        }"#;
+        let (results, _) = parse_newznab_json(body, 2, extract_base_metadata);
+        assert_eq!(results.len(), 2);
+    }
+
+    #[test]
+    fn json_item_without_title_skipped() {
+        let body = r#"{"channel":{"item":{"guid":"abc"}}}"#;
+        let (results, _) = parse_newznab_json(body, 100, extract_base_metadata);
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn json_api_limits_extracted() {
+        let body = r#"{
+            "channel": {},
+            "limits": {
+                "@attributes": {
+                    "api_current": "5",
+                    "api_max": "100",
+                    "grab_current": "10",
+                    "grab_max": "500"
+                }
+            }
+        }"#;
+        let (_, limits) = parse_newznab_json(body, 100, extract_base_metadata);
+        assert_eq!(limits.api_current, Some(5));
+        assert_eq!(limits.api_max, Some(100));
+        assert_eq!(limits.grab_current, Some(10));
+        assert_eq!(limits.grab_max, Some(500));
+    }
+
+    // ── parse_newznab_xml ────────────────────────────────────────────────
+
+    #[test]
+    fn xml_empty_rss() {
+        let body = r#"<?xml version="1.0"?><rss><channel></channel></rss>"#;
+        let (results, _) = parse_newznab_xml(body, 100, extract_base_metadata);
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn xml_single_item() {
+        let body = r#"<?xml version="1.0"?>
+<rss xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attributes/">
+<channel>
+  <item>
+    <title>Test.Release.1080p</title>
+    <guid>def456</guid>
+    <link>https://example.com/details/def456</link>
+    <comments>https://example.com/details/def456#comments</comments>
+    <pubDate>Tue, 02 Jan 2024 14:00:00 +0000</pubDate>
+    <enclosure url="https://example.com/dl/def456" length="2147483648" type="application/x-nzb"/>
+    <newznab:attr name="grabs" value="99"/>
+    <newznab:attr name="language" value="English - French"/>
+  </item>
+</channel>
+</rss>"#;
+        let (results, _) = parse_newznab_xml(body, 100, extract_base_metadata);
+        assert_eq!(results.len(), 1);
+        let r = &results[0];
+        assert_eq!(r.title, "Test.Release.1080p");
+        assert_eq!(r.guid.as_deref(), Some("def456"));
+        assert_eq!(r.download_url.as_deref(), Some("https://example.com/dl/def456"));
+        assert_eq!(r.size_bytes, Some(2_147_483_648));
+        assert_eq!(r.grabs, Some(99));
+        assert_eq!(r.languages, vec!["English", "French"]);
+        assert_eq!(r.info_url.as_deref(), Some("https://example.com/details/def456"));
+    }
+
+    #[test]
+    fn xml_multiple_items_respects_limit() {
+        let body = r#"<?xml version="1.0"?>
+<rss><channel>
+  <item><title>A</title></item>
+  <item><title>B</title></item>
+  <item><title>C</title></item>
+</channel></rss>"#;
+        let (results, _) = parse_newznab_xml(body, 1, extract_base_metadata);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].title, "A");
+    }
+
+    #[test]
+    fn xml_size_fallback_from_attr() {
+        let body = r#"<?xml version="1.0"?>
+<rss xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attributes/">
+<channel>
+  <item>
+    <title>Fallback Size</title>
+    <enclosure url="https://example.com/dl/x" length="0" type="application/x-nzb"/>
+    <newznab:attr name="size" value="12345"/>
+  </item>
+</channel>
+</rss>"#;
+        let (results, _) = parse_newznab_xml(body, 100, extract_base_metadata);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].size_bytes, Some(12345));
+    }
+
+    #[test]
+    fn xml_limits_parsed() {
+        let body = r#"<?xml version="1.0"?>
+<rss xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attributes/">
+<channel>
+  <newznab:limits api_current="5" api_max="100" grab_current="10" grab_max="500"/>
+</channel>
+</rss>"#;
+        let (results, limits) = parse_newznab_xml(body, 100, extract_base_metadata);
+        assert!(results.is_empty());
+        assert_eq!(limits.api_current, Some(5));
+        assert_eq!(limits.api_max, Some(100));
+        assert_eq!(limits.grab_current, Some(10));
+        assert_eq!(limits.grab_max, Some(500));
+    }
+
+    // ── extract_base_metadata ────────────────────────────────────────────
+
+    #[test]
+    fn base_extracts_language_and_grabs() {
+        let pairs = vec![
+            ("language".into(), "English - French".into()),
+            ("grabs".into(), "1,234".into()),
+        ];
+        let (languages, grabs, extra) = extract_base_metadata(&pairs);
+        assert_eq!(languages, vec!["English", "French"]);
+        assert_eq!(grabs, Some(1234));
+        assert!(extra.is_empty());
+    }
+
+    #[test]
+    fn base_ignores_unknown_attrs() {
+        let pairs = vec![("foo".into(), "bar".into())];
+        let (languages, grabs, extra) = extract_base_metadata(&pairs);
+        assert!(languages.is_empty());
+        assert_eq!(grabs, None);
+        assert!(extra.is_empty());
+    }
+
+    // ── standard_config_fields ───────────────────────────────────────────
+
+    #[test]
+    fn config_fields_has_api_path_and_additional_params() {
+        let fields = standard_config_fields();
+        assert_eq!(fields.len(), 2);
+        assert_eq!(fields[0].key, "api_path");
+        assert_eq!(fields[1].key, "additional_params");
+    }
+}

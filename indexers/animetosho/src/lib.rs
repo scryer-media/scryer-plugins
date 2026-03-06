@@ -353,3 +353,163 @@ fn url_encode(input: &str) -> String {
     }
     output
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── format_timestamp ─────────────────────────────────────────────────
+
+    #[test]
+    fn epoch_zero() {
+        assert_eq!(format_timestamp(0), "1970-01-01T00:00:00Z");
+    }
+
+    #[test]
+    fn known_date() {
+        assert_eq!(format_timestamp(1_700_000_000), "2023-11-14T22:13:20Z");
+    }
+
+    #[test]
+    fn y2k() {
+        assert_eq!(format_timestamp(946_684_800), "2000-01-01T00:00:00Z");
+    }
+
+    #[test]
+    fn leap_year_feb29() {
+        // 2024-02-29 00:00:00 UTC
+        assert_eq!(format_timestamp(1_709_164_800), "2024-02-29T00:00:00Z");
+    }
+
+    #[test]
+    fn recent_date() {
+        assert_eq!(format_timestamp(1_735_689_600), "2025-01-01T00:00:00Z");
+    }
+
+    // ── url_encode ───────────────────────────────────────────────────────
+
+    #[test]
+    fn encode_plain() {
+        assert_eq!(url_encode("naruto"), "naruto");
+    }
+
+    #[test]
+    fn encode_special() {
+        let encoded = url_encode("[SubGroup] Title (1080p)");
+        assert!(encoded.contains("%5B")); // [
+        assert!(encoded.contains("%5D")); // ]
+        assert!(encoded.contains("%28")); // (
+        assert!(encoded.contains("%29")); // )
+        assert!(encoded.contains("%20")); // space
+    }
+
+    // ── detect_source_tracker ────────────────────────────────────────────
+
+    fn make_item() -> AnimetoshoItem {
+        AnimetoshoItem {
+            id: None,
+            title: Some("Test".into()),
+            link: None,
+            timestamp: None,
+            status: None,
+            torrent_url: None,
+            nzb_url: None,
+            info_hash: None,
+            magnet_uri: None,
+            seeders: None,
+            leechers: None,
+            torrent_downloaded_count: None,
+            total_size: None,
+            num_files: None,
+            anidb_aid: None,
+            anidb_eid: None,
+            nyaa_id: None,
+            nekobt_id: None,
+            anidex_id: None,
+        }
+    }
+
+    #[test]
+    fn nyaa_detected() {
+        let mut item = make_item();
+        item.nyaa_id = Some(123);
+        assert_eq!(detect_source_tracker(&item), Some("nyaa".into()));
+    }
+
+    #[test]
+    fn nekobt_detected() {
+        let mut item = make_item();
+        item.nekobt_id = Some(456);
+        assert_eq!(detect_source_tracker(&item), Some("nekobt".into()));
+    }
+
+    #[test]
+    fn anidex_detected() {
+        let mut item = make_item();
+        item.anidex_id = Some(789);
+        assert_eq!(detect_source_tracker(&item), Some("anidex".into()));
+    }
+
+    #[test]
+    fn no_tracker() {
+        let item = make_item();
+        assert_eq!(detect_source_tracker(&item), None);
+    }
+
+    // ── build_results ────────────────────────────────────────────────────
+
+    #[test]
+    fn dual_torrent_and_nzb() {
+        let mut item = make_item();
+        item.torrent_url = Some("https://example.com/file.torrent".into());
+        item.nzb_url = Some("https://example.com/file.nzb".into());
+        item.total_size = Some(1_000_000);
+        item.seeders = Some(10);
+        item.leechers = Some(5);
+        item.torrent_downloaded_count = Some(42);
+
+        let results = build_results(vec![item]);
+        assert_eq!(results.len(), 2);
+
+        // Torrent result first
+        assert_eq!(
+            results[0].extra.get("download_type"),
+            Some(&serde_json::Value::from("torrent"))
+        );
+        assert_eq!(results[0].grabs, Some(42));
+        assert_eq!(
+            results[0].extra.get("seeders"),
+            Some(&serde_json::Value::from(10))
+        );
+
+        // NZB result second
+        assert_eq!(
+            results[1].extra.get("download_type"),
+            Some(&serde_json::Value::from("nzb"))
+        );
+        assert_eq!(results[1].grabs, None);
+    }
+
+    #[test]
+    fn torrent_only() {
+        let mut item = make_item();
+        item.torrent_url = Some("https://example.com/file.torrent".into());
+
+        let results = build_results(vec![item]);
+        assert_eq!(results.len(), 1);
+        assert_eq!(
+            results[0].extra.get("download_type"),
+            Some(&serde_json::Value::from("torrent"))
+        );
+    }
+
+    #[test]
+    fn empty_title_skipped() {
+        let mut item = make_item();
+        item.title = Some("".into());
+        item.torrent_url = Some("https://example.com/file.torrent".into());
+
+        let results = build_results(vec![item]);
+        assert!(results.is_empty());
+    }
+}
