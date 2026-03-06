@@ -10,7 +10,7 @@ use newznab_common::{
 pub fn describe(_input: String) -> FnResult<String> {
     let descriptor = PluginDescriptor {
         name: "NZBGeek Indexer".to_string(),
-        version: "0.2.0".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: "0.1".to_string(),
         plugin_type: "indexer".to_string(),
         provider_type: "nzbgeek".to_string(),
