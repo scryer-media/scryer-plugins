@@ -33,13 +33,13 @@
       "description": "Anime release aggregator with torrent and NZB downloads from Nyaa, nekoBT, and other trackers",
       "plugin_type": "indexer",
       "provider_type": "animetosho",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "author": "scryer-media",
       "official": true,
       "builtin": false,
       "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/animetosho",
       "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/animetosho_indexer.wasm",
-      "wasm_sha256": "1a51c18b83c6de178fc3697b8320a554038529c8ecfaf392c507afb7478d9086",
+      "wasm_sha256": "65e63daa8d76788afb1c07573b61ffb8ed949e8d30460dd1e0f00763e6cde8b4",
       "min_scryer_version": "0.0.5"
     }
   ]
