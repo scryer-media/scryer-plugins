@@ -152,3 +152,57 @@ score_entry["nzbgeek_english_confirmed"] := 200 if {
     lower(lang) == "english"
 }
 "#;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn pairs(items: &[(&str, &str)]) -> Vec<(String, String)> {
+        items.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect()
+    }
+
+    #[test]
+    fn extracts_thumbs_up_and_down() {
+        let p = pairs(&[("thumbs_up", "42"), ("thumbs_down", "3")]);
+        let (_, _, extra) = nzbgeek_metadata_extractor(&p);
+        assert_eq!(extra.get("thumbs_up"), Some(&serde_json::Value::from(42)));
+        assert_eq!(extra.get("thumbs_down"), Some(&serde_json::Value::from(3)));
+    }
+
+    #[test]
+    fn extracts_language() {
+        let p = pairs(&[("language", "English - French")]);
+        let (languages, _, _) = nzbgeek_metadata_extractor(&p);
+        assert_eq!(languages, vec!["English", "French"]);
+    }
+
+    #[test]
+    fn extracts_subs() {
+        let p = pairs(&[("subs", "English - Spanish")]);
+        let (_, _, extra) = nzbgeek_metadata_extractor(&p);
+        let subs = extra.get("subtitles").unwrap();
+        let arr: Vec<String> = serde_json::from_value(subs.clone()).unwrap();
+        assert_eq!(arr, vec!["English", "Spanish"]);
+    }
+
+    #[test]
+    fn extracts_grabs_with_comma() {
+        let p = pairs(&[("grabs", "1,234")]);
+        let (_, grabs, _) = nzbgeek_metadata_extractor(&p);
+        assert_eq!(grabs, Some(1234));
+    }
+
+    #[test]
+    fn extracts_password() {
+        let p = pairs(&[("password", "1")]);
+        let (_, _, extra) = nzbgeek_metadata_extractor(&p);
+        assert_eq!(extra.get("password"), Some(&serde_json::Value::from("1")));
+    }
+
+    #[test]
+    fn ignores_password_zero() {
+        let p = pairs(&[("password", "0")]);
+        let (_, _, extra) = nzbgeek_metadata_extractor(&p);
+        assert!(extra.get("password").is_none());
+    }
+}
