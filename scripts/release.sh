@@ -186,6 +186,7 @@ with open('$REGISTRY') as f:
 for p in reg['plugins']:
     if p['id'] == '$PLUGIN_NAME':
         p['version'] = '$NEXT_VERSION'
+        p['wasm_url'] = 'https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/$WASM_FILENAME'
         p['wasm_sha256'] = '$SHA256'
         break
 
