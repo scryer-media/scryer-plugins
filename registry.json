@@ -45,15 +45,17 @@
     {
       "id": "webhook",
       "name": "Webhook",
-      "description": "Generic webhook notification plugin — POSTs JSON payloads to a configured URL",
+      "description": "Generic webhook notification plugin \u2014 POSTs JSON payloads to a configured URL",
       "plugin_type": "notification",
       "provider_type": "webhook",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "author": "scryer-media",
       "official": true,
       "builtin": false,
       "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/webhook",
-      "min_scryer_version": "0.0.6"
+      "min_scryer_version": "0.0.6",
+      "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/webhook_notification.wasm",
+      "wasm_sha256": "eca620f2dbdc01105ad89bf49c5b5c6b4ddf175c2dd631f8054b45c0acfb5a46"
     }
   ]
 }
