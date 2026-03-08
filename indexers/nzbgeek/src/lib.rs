@@ -33,6 +33,8 @@ pub fn describe(_input: String) -> FnResult<String> {
             },
         ],
         config_fields: vec![],
+        allowed_hosts: vec![],
+        rate_limit_seconds: Some(2),
     };
     Ok(serde_json::to_string(&descriptor)?)
 }

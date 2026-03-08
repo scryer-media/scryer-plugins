@@ -41,6 +41,19 @@
       "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/animetosho_indexer.wasm",
       "wasm_sha256": "65e63daa8d76788afb1c07573b61ffb8ed949e8d30460dd1e0f00763e6cde8b4",
       "min_scryer_version": "0.0.5"
+    },
+    {
+      "id": "webhook",
+      "name": "Webhook",
+      "description": "Generic webhook notification plugin — POSTs JSON payloads to a configured URL",
+      "plugin_type": "notification",
+      "provider_type": "webhook",
+      "version": "0.1.0",
+      "author": "scryer-media",
+      "official": true,
+      "builtin": false,
+      "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/webhook",
+      "min_scryer_version": "0.0.6"
     }
   ]
 }

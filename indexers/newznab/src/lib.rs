@@ -20,6 +20,8 @@ pub fn describe(_input: String) -> FnResult<String> {
         },
         scoring_policies: vec![],
         config_fields: standard_config_fields(),
+        allowed_hosts: vec![],
+        rate_limit_seconds: None,
     };
     Ok(serde_json::to_string(&descriptor)?)
 }

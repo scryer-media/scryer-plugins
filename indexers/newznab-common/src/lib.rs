@@ -30,6 +30,10 @@ pub struct PluginDescriptor {
     pub scoring_policies: Vec<ScoringPolicy>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub config_fields: Vec<ConfigFieldDef>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub allowed_hosts: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rate_limit_seconds: Option<i64>,
 }
 
 #[derive(Serialize)]

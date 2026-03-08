@@ -21,6 +21,8 @@ struct PluginDescriptor {
     scoring_policies: Vec<serde_json::Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
     default_base_url: Option<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    allowed_hosts: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -119,6 +121,7 @@ pub fn describe(_input: String) -> FnResult<String> {
         },
         scoring_policies: vec![],
         default_base_url: Some("https://feed.animetosho.org".to_string()),
+        allowed_hosts: vec![],
     };
     Ok(serde_json::to_string(&descriptor)?)
 }
