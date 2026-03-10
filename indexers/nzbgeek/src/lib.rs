@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use extism_pdk::*;
 use newznab_common::{
-    execute_full_search, Capabilities, NewznabConfig, PluginDescriptor, SearchRequest,
-    ScoringPolicy,
+    execute_full_search, Capabilities, NewznabConfig, PluginDescriptor, ScoringPolicy,
+    SearchRequest,
 };
 
 #[plugin_fn]
@@ -12,7 +12,7 @@ pub fn describe(_input: String) -> FnResult<String> {
         name: "NZBGeek Indexer".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: "0.1".to_string(),
-        plugin_type: "indexer".to_string(),
+        plugin_type: "usenet_indexer".to_string(),
         provider_type: "nzbgeek".to_string(),
         provider_aliases: vec![],
         capabilities: Capabilities {
@@ -120,10 +120,7 @@ fn nzbgeek_metadata_extractor(
         );
     }
     if let Some(ref pw) = password {
-        extra.insert(
-            "password".to_string(),
-            serde_json::Value::from(pw.as_str()),
-        );
+        extra.insert("password".to_string(), serde_json::Value::from(pw.as_str()));
     }
 
     (languages, grabs, extra)
@@ -160,7 +157,10 @@ mod tests {
     use super::*;
 
     fn pairs(items: &[(&str, &str)]) -> Vec<(String, String)> {
-        items.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect()
+        items
+            .iter()
+            .map(|(k, v)| (k.to_string(), v.to_string()))
+            .collect()
     }
 
     #[test]
