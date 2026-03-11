@@ -38,6 +38,8 @@
       "official": true,
       "builtin": false,
       "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torznab",
+      "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/torznab_indexer.wasm",
+      "wasm_sha256": "4b391a7075432582b63cbaa187d4346ea58df41e69ab7cfa8f29c91c08ff5040",
       "min_scryer_version": "0.8.2"
     },
     {
@@ -51,6 +53,8 @@
       "official": true,
       "builtin": false,
       "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torrent-rss",
+      "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/torrent_rss_indexer.wasm",
+      "wasm_sha256": "a54cd7d5b76182b536cde31674dda4c543c6440fdc8bc8d2cfec18350986f1da",
       "min_scryer_version": "0.8.2"
     },
     {
@@ -94,7 +98,9 @@
       "official": true,
       "builtin": false,
       "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/qbittorrent",
-      "min_scryer_version": "0.8.0"
+      "min_scryer_version": "0.8.0",
+      "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/qbittorrent_download_client.wasm",
+      "wasm_sha256": "d83ce2e98554f91bf2b7f1fc78cd25b260eceb4492e8f4151fb737c49653afff"
     }
   ]
 }

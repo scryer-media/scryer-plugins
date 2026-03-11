@@ -16,6 +16,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="$REPO_ROOT/dist"
 REGISTRY="$REPO_ROOT/registry.json"
+VALIDATE_REGISTRY="$REPO_ROOT/scripts/validate_registry.py"
 
 # ── Colors ────────────────────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
@@ -196,6 +197,13 @@ with open('$REGISTRY', 'w') as f:
 "
 
 ok "registry.json updated (version=$NEXT_VERSION, sha256=$SHA256)"
+
+# ── Validate registry consistency ────────────────────────────────────────────
+step "Validating registry"
+
+python3 "$VALIDATE_REGISTRY" || die "Registry validation failed"
+
+ok "Registry validation passed"
 
 # ── Dry-run exit ──────────────────────────────────────────────────────────────
 if $DRY_RUN; then
