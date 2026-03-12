@@ -272,7 +272,7 @@ struct ApiLimits {
 /// This is the primary entry point for plugins. It:
 /// 1. Validates inputs
 /// 2. Determines search type (movie/tvsearch/search)
-/// 3. Executes a tiered search (ID-based → query-based → generic fallback)
+/// 3. Executes a tiered search (query+ID → ID-only → generic fallback)
 /// 4. Auto-detects response format (JSON or XML) and parses
 /// 5. Classifies errors with Newznab-specific handling
 pub fn execute_full_search(
@@ -286,7 +286,7 @@ pub fn execute_full_search(
     let imdb_id = req
         .imdb_id
         .as_ref()
-        .map(|v| v.trim().trim_start_matches("tt").to_string())
+        .map(|v| v.trim().to_string())
         .filter(|v| !v.is_empty());
     let tvdb_id = req
         .tvdb_id
@@ -444,13 +444,42 @@ fn execute_tiered_search(
     };
 
     let has_id = effective_imdb.is_some() || effective_tvdb.is_some();
+    let effective_query = if query.is_empty() { None } else { Some(query) };
 
-    // Tier 1: ID-based search (no &q=) when we have an ID
+    // Tier 1: Query-based search with IDs when query text is available. This
+    // matches the documented Newznab/NZBGeek movie and TV search forms.
+    if let Some(query_text) = effective_query {
+        let (status, body) = execute_search(
+            endpoint,
+            search_type,
+            Some(query_text),
+            api_key,
+            effective_imdb,
+            effective_tvdb,
+            cat,
+            limit,
+            season,
+            episode,
+            additional_params,
+        )?;
+
+        if is_success_status(status) {
+            let trimmed = body.trim_start();
+            let looks_empty = is_empty_response(trimmed);
+            if !looks_empty || !has_id {
+                return Ok((status, body));
+            }
+            // Fall through to the ID-only tier if the combined query+ID form
+            // came back empty.
+        }
+    }
+
+    // Tier 2: ID-only search when we have an authoritative ID.
     if has_id {
         let (status, body) = execute_search(
             endpoint,
             search_type,
-            None, // no query text — ID is authoritative
+            None,
             api_key,
             effective_imdb,
             effective_tvdb,
@@ -461,37 +490,7 @@ fn execute_tiered_search(
             additional_params,
         )?;
 
-        // If tier 1 succeeded (non-5xx), return it
-        if status < 500 {
-            // Check if we got an empty result with IDs — try adding query text
-            let trimmed = body.trim_start();
-            let looks_empty = is_empty_response(trimmed);
-
-            if !looks_empty {
-                return Ok((status, body));
-            }
-            // Fall through to tier 2 with query text
-        }
-    }
-
-    // Tier 2: Query-based search with search type
-    let effective_query = if query.is_empty() { None } else { Some(query) };
-    if effective_query.is_some() || has_id {
-        let (status, body) = execute_search(
-            endpoint,
-            search_type,
-            effective_query,
-            api_key,
-            effective_imdb,
-            effective_tvdb,
-            cat,
-            limit,
-            season,
-            episode,
-            additional_params,
-        )?;
-
-        if status < 500 {
+        if is_success_status(status) {
             return Ok((status, body));
         }
     }
@@ -523,6 +522,10 @@ fn execute_tiered_search(
 
     // Shouldn't reach here, but return empty
     Ok((200, r#"{"channel":{}}"#.to_string()))
+}
+
+fn is_success_status(status: u16) -> bool {
+    (200..300).contains(&status)
 }
 
 fn is_empty_response(trimmed: &str) -> bool {
@@ -565,6 +568,53 @@ fn execute_search(
     episode: Option<u32>,
     additional_params: &str,
 ) -> Result<(u16, String), Error> {
+    let url = build_search_url(
+        endpoint,
+        search_type,
+        query,
+        api_key,
+        imdb_id,
+        tvdb_id,
+        cat,
+        limit,
+        season,
+        episode,
+        additional_params,
+    );
+
+    let http_req = HttpRequest::new(&url)
+        .with_header("Accept", "application/json, application/xml, */*; q=0.8")
+        .with_header("Accept-Language", "en-US,en;q=0.9")
+        .with_header(
+            "User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
+             (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        );
+
+    let resp = http::request::<Vec<u8>>(&http_req, None)
+        .map_err(|e| Error::msg(format!("HTTP request failed: {e}")))?;
+
+    let status = resp.status_code();
+    let body = String::from_utf8_lossy(&resp.body()).to_string();
+
+    Ok((status, body))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn build_search_url(
+    endpoint: &str,
+    search_type: &str,
+    query: Option<&str>,
+    api_key: &str,
+    imdb_id: Option<&str>,
+    tvdb_id: Option<&str>,
+    cat: Option<&str>,
+    limit: usize,
+    season: Option<u32>,
+    episode: Option<u32>,
+    additional_params: &str,
+) -> String {
+    let imdb_id = imdb_id.map(normalize_imdbid_param);
     let mut url = format!(
         "{endpoint}?t={search_type}&apikey={api_key}&o=json&extended=1&limit={limit}"
     );
@@ -573,17 +623,13 @@ fn execute_search(
         url.push_str("&q=");
         url.push_str(&url_encode(q));
     }
-    if let Some(id) = imdb_id {
+    if let Some(id) = imdb_id.as_deref() {
         url.push_str("&imdbid=");
         url.push_str(id);
     }
     if let Some(id) = tvdb_id {
         url.push_str("&tvdbid=");
         url.push_str(id);
-    }
-    // Aggregate ID search: include both when available
-    if imdb_id.is_some() && tvdb_id.is_some() {
-        // Already appended above — both are included
     }
     if let Some(c) = cat {
         url.push_str("&cat=");
@@ -603,22 +649,19 @@ fn execute_search(
         url.push_str(params);
     }
 
-    let http_req = HttpRequest::new(&url)
-        .with_header("Accept", "application/json, application/xml, */*; q=0.8")
-        .with_header("Accept-Language", "en-US,en;q=0.9")
-        .with_header(
-            "User-Agent",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
-             (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        );
+    url
+}
 
-    let resp = http::request::<Vec<u8>>(&http_req, None)
-        .map_err(|e| Error::msg(format!("HTTP request failed: {e}")))?;
-
-    let status = resp.status_code();
-    let body = String::from_utf8_lossy(&resp.body()).to_string();
-
-    Ok((status, body))
+fn normalize_imdbid_param(raw: &str) -> String {
+    let trimmed = raw.trim();
+    if trimmed.len() > 2
+        && trimmed[..2].eq_ignore_ascii_case("tt")
+        && trimmed[2..].chars().all(|ch| ch.is_ascii_digit())
+    {
+        format!("00{}", &trimmed[2..])
+    } else {
+        trimmed.to_string()
+    }
 }
 
 /// Minimal percent-encoding for query string values.
@@ -1315,6 +1358,69 @@ mod tests {
     fn category_param_all_non_numeric() {
         let cats: Vec<String> = vec!["movie".into(), "tv".into()];
         assert_eq!(build_category_param(&cats), None);
+    }
+
+    #[test]
+    fn build_search_url_movie_prefers_query_and_imdbid() {
+        let url = build_search_url(
+            "https://api.nzbgeek.info/api",
+            "movie",
+            Some("12 years a slave"),
+            "test-api-key",
+            Some("tt2024544"),
+            None,
+            None,
+            200,
+            None,
+            None,
+            "",
+        );
+
+        assert!(url.contains("t=movie"));
+        assert!(url.contains("q=12%20years%20a%20slave"));
+        assert!(url.contains("imdbid=002024544"));
+        assert!(url.contains("limit=200"));
+        assert!(url.contains("extended=1"));
+        assert!(url.contains("o=json"));
+    }
+
+    #[test]
+    fn build_search_url_tv_prefers_query_and_tvdbid() {
+        let url = build_search_url(
+            "https://api.nzbgeek.info/api",
+            "tvsearch",
+            Some("demon slayer"),
+            "test-api-key",
+            None,
+            Some("123456"),
+            None,
+            200,
+            None,
+            None,
+            "",
+        );
+
+        assert!(url.contains("t=tvsearch"));
+        assert!(url.contains("q=demon%20slayer"));
+        assert!(url.contains("tvdbid=123456"));
+        assert!(url.contains("limit=200"));
+        assert!(url.contains("extended=1"));
+        assert!(url.contains("o=json"));
+    }
+
+    #[test]
+    fn success_status_rejects_redirects() {
+        assert!(is_success_status(200));
+        assert!(is_success_status(204));
+        assert!(!is_success_status(302));
+        assert!(!is_success_status(500));
+    }
+
+    #[test]
+    fn normalize_imdbid_rewrites_tt_prefix_to_double_zero() {
+        assert_eq!(normalize_imdbid_param("tt2024544"), "002024544");
+        assert_eq!(normalize_imdbid_param("TT1234567"), "001234567");
+        assert_eq!(normalize_imdbid_param("1234567"), "1234567");
     }
 
     #[test]
