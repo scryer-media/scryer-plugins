@@ -93,14 +93,14 @@
       "description": "Torrent download client plugin for qBittorrent with category/tag routing, queue control, and import handoff support",
       "plugin_type": "download_client",
       "provider_type": "qbittorrent",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "author": "scryer-media",
       "official": true,
       "builtin": false,
       "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/qbittorrent",
       "min_scryer_version": "0.8.0",
       "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/qbittorrent_download_client.wasm",
-      "wasm_sha256": "d83ce2e98554f91bf2b7f1fc78cd25b260eceb4492e8f4151fb737c49653afff"
+      "wasm_sha256": "0de3ba13744c318b8a269975063241fecf02a1fac84eab75c0d8a0240f6f0cbd"
     }
   ]
 }
