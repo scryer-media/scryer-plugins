@@ -15,9 +15,22 @@
       "min_scryer_version": "0.0.5"
     },
     {
+      "id": "dognzb",
+      "name": "DogNZB Indexer",
+      "description": "DogNZB-specific Newznab indexer with rating, genre, and comment metadata extraction",
+      "plugin_type": "usenet_indexer",
+      "provider_type": "dognzb",
+      "version": "0.1.0",
+      "author": "scryer-media",
+      "official": true,
+      "builtin": true,
+      "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/dognzb",
+      "min_scryer_version": "0.0.5"
+    },
+    {
       "id": "newznab",
       "name": "Newznab Indexer",
-      "description": "Generic Newznab protocol indexer for DogNZB and other compatible services",
+      "description": "Generic Newznab protocol indexer for compatible services",
       "plugin_type": "usenet_indexer",
       "provider_type": "newznab",
       "version": "0.1.0",

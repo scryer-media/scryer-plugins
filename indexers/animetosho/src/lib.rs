@@ -239,6 +239,8 @@ fn query_json_api(endpoint: &str, params: &str) -> Result<Vec<AnimetoshoItem>, E
 fn http_get_with_retry(url: &str) -> Result<String, Error> {
     const BACKOFF_SECS: &[u64] = &[2, 5, 10];
 
+    log!(LogLevel::Debug, "HTTP GET {url}");
+
     let http_req = HttpRequest::new(url)
         .with_header("Accept", "application/json")
         .with_header("Accept-Language", "en-US,en;q=0.9")

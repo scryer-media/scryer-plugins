@@ -335,6 +335,8 @@ fn fetch_feed(
     password: Option<&str>,
     additional_headers: &str,
 ) -> Result<String, Error> {
+    log!(LogLevel::Debug, "HTTP GET {feed_url}");
+
     let mut request = HttpRequest::new(feed_url)
         .with_header(
             "Accept",

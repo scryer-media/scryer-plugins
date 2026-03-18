@@ -156,6 +156,8 @@ pub struct NewznabConfig {
     pub api_key: String,
     pub api_path: String,
     pub additional_params: String,
+    /// Maximum results the indexer returns per page. Defaults to 200.
+    pub page_size: usize,
 }
 
 impl NewznabConfig {
@@ -182,11 +184,19 @@ impl NewznabConfig {
             ));
         }
 
+        let page_size = config::get("page_size")
+            .ok()
+            .flatten()
+            .and_then(|v| v.parse::<usize>().ok())
+            .unwrap_or(200)
+            .clamp(1, 500);
+
         Ok(Self {
             base_url,
             api_key,
             api_path,
             additional_params,
+            page_size,
         })
     }
 }
@@ -296,7 +306,6 @@ pub fn execute_full_search(
     extract_fn: MetadataExtractor,
 ) -> Result<SearchResponse, Error> {
     let query = req.query.trim().to_string();
-    let limit = req.limit.clamp(1, 200);
 
     let imdb_id = req
         .imdb_id
@@ -332,17 +341,18 @@ pub fn execute_full_search(
 
     let endpoint = build_endpoint(&config.base_url, &config.api_path);
 
-    // Paginated search: fetch up to MAX_PAGES pages of PAGE_SIZE results each.
+    // Paginated search: fetch up to MAX_PAGES pages.
     // Stop early if a page returns fewer results than the page size.
-    const PAGE_SIZE: usize = 200;
-    const MAX_PAGES: usize = 5; // 5 × 200 = 1000 max results
-    const MAX_RESULTS: usize = PAGE_SIZE * MAX_PAGES;
+    let page_size = config.page_size;
+    const MAX_PAGES: usize = 5;
+    let max_results = page_size * MAX_PAGES;
+    let limit = req.limit.clamp(1, max_results);
 
     let mut all_results: Vec<SearchResult> = Vec::new();
     let mut last_limits = ApiLimits::default();
 
     for page in 0..MAX_PAGES {
-        let offset = page * PAGE_SIZE;
+        let offset = page * page_size;
         let page_params = if config.additional_params.is_empty() {
             format!("&offset={offset}")
         } else {
@@ -357,7 +367,7 @@ pub fn execute_full_search(
             imdb_id.as_deref(),
             tvdb_id.as_deref(),
             newznab_cat.as_deref(),
-            PAGE_SIZE,
+            page_size,
             req.season,
             req.episode,
             &page_params,
@@ -391,9 +401,9 @@ pub fn execute_full_search(
         }
 
         let (page_results, limits) = if is_xml {
-            parse_newznab_xml(&body, PAGE_SIZE, extract_fn)
+            parse_newznab_xml(&body, page_size, extract_fn)
         } else {
-            parse_newznab_json(&body, PAGE_SIZE, extract_fn)
+            parse_newznab_json(&body, page_size, extract_fn)
         };
 
         last_limits = limits;
@@ -402,7 +412,7 @@ pub fn execute_full_search(
 
         // Stop if this page was less than full (no more results)
         // or we've hit the overall max
-        if page_count < PAGE_SIZE || all_results.len() >= MAX_RESULTS {
+        if page_count < page_size || all_results.len() >= max_results {
             break;
         }
     }
@@ -652,6 +662,8 @@ const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 /// If the 429 persists after 10s (or Retry-After > 10s), returns an error.
 fn http_get_with_retry(url: &str) -> Result<(u16, String), Error> {
     const BACKOFF_SECS: &[u64] = &[2, 5, 10];
+
+    log!(LogLevel::Debug, "HTTP GET {url}");
 
     let http_req = HttpRequest::new(url)
         .with_header("Accept", "application/json, application/xml, */*; q=0.8")

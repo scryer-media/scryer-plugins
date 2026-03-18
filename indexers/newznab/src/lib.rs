@@ -14,7 +14,7 @@ pub fn describe(_input: String) -> FnResult<String> {
         sdk_version: "0.1".to_string(),
         plugin_type: "usenet_indexer".to_string(),
         provider_type: "newznab".to_string(),
-        provider_aliases: vec!["dognzb".to_string()],
+        provider_aliases: vec![],
         capabilities: Capabilities {
             supported_ids: HashMap::from([
                 ("movie".into(), vec!["imdb_id".into()]),
