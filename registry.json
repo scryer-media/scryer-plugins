@@ -33,13 +33,13 @@
       "description": "Generic Torznab-compatible torrent indexer for Jackett, Prowlarr, and native Torznab feeds",
       "plugin_type": "torrent_indexer",
       "provider_type": "torznab",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "author": "scryer-media",
       "official": true,
       "builtin": false,
       "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torznab",
       "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/torznab_indexer.wasm",
-      "wasm_sha256": "4b391a7075432582b63cbaa187d4346ea58df41e69ab7cfa8f29c91c08ff5040",
+      "wasm_sha256": "511671174b0a65ec45de2200869eca67014fbb3f54950109fd597d2adef7a5a6",
       "min_scryer_version": "0.8.2"
     },
     {
