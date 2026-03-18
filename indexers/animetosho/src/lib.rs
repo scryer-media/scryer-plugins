@@ -27,6 +27,16 @@ struct PluginDescriptor {
 
 #[derive(Serialize)]
 struct Capabilities {
+    supported_ids: HashMap<String, Vec<String>>,
+    #[serde(default)]
+    deduplicates_aliases: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    season_param: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    episode_param: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    query_param: Option<String>,
+    // Legacy fields
     search: bool,
     imdb_search: bool,
     tvdb_search: bool,
@@ -126,9 +136,17 @@ pub fn describe(_input: String) -> FnResult<String> {
         provider_type: "animetosho".to_string(),
         provider_aliases: vec![],
         capabilities: Capabilities {
+            supported_ids: HashMap::from([
+                ("anime".into(), vec!["anidb_id".into()]),
+                ("movie".into(), vec!["anidb_id".into()]),
+            ]),
+            deduplicates_aliases: true,
+            season_param: None,
+            episode_param: None,
+            query_param: Some("q".into()),
             search: true,
             imdb_search: false,
-            tvdb_search: true,
+            tvdb_search: false,
             anidb_search: true,
         },
         scoring_policies: vec![],
@@ -159,48 +177,43 @@ pub fn search(input: String) -> FnResult<String> {
         let trimmed = v.trim();
         if trimmed.is_empty() { None } else { Some(trimmed.to_string()) }
     });
-    let tvdb_id = req.tvdb_id.as_deref().and_then(|v| {
-        let trimmed = v.trim();
-        if trimmed.is_empty() { None } else { Some(trimmed.to_string()) }
-    });
+    // Choose endpoint based on what IDs are available.
+    // Paginate: 75 results per page, up to ~1000 results (14 pages).
+    // Stop when a page returns fewer than PAGE_SIZE results.
+    const PAGE_SIZE: usize = 75;
+    const MAX_PAGES: usize = 14; // 14 × 75 = 1050
+    const MAX_RESULTS: usize = 1000;
 
-    // Collect items from multiple endpoints, then dedup.
+    let base_params = if let Some(ref aid) = anidb_id {
+        if !query.is_empty() {
+            format!("aid={aid}&q={}", url_encode(&query))
+        } else {
+            format!("aid={aid}")
+        }
+    } else if !query.is_empty() {
+        format!("q={}", url_encode(&query))
+    } else {
+        return Ok(serde_json::to_string(&SearchResponse { results: vec![] })?);
+    };
+
     let mut all_items: Vec<AnimetoshoItem> = Vec::new();
 
-    // Priority 1: AniDB ID → JSON API (richest metadata)
-    if let Some(ref aid) = anidb_id {
-        if let Ok(items) = query_json_api(endpoint, &format!("aid={aid}&num={limit}")) {
-            all_items.extend(items);
+    for page in 1..=MAX_PAGES {
+        let params = format!("{base_params}&page={page}");
+        let page_items = match query_json_api(endpoint, &params) {
+            Ok(items) => items,
+            Err(_) => break,
+        };
+
+        let page_count = page_items.len();
+        all_items.extend(page_items);
+
+        if page_count < PAGE_SIZE || all_items.len() >= MAX_RESULTS {
+            break;
         }
     }
 
-    // Priority 2: TVDB ID → Torznab API
-    if let Some(ref tvdb) = tvdb_id {
-        let mut torznab_params = format!("t=tvsearch&tvdbid={tvdb}&limit={limit}");
-        if let Some(s) = req.season {
-            torznab_params.push_str(&format!("&season={s}"));
-        }
-        if let Some(e) = req.episode {
-            torznab_params.push_str(&format!("&ep={e}"));
-        }
-        if let Ok(items) = query_torznab_api(endpoint, &torznab_params) {
-            all_items.extend(items);
-        }
-    }
-
-    // Priority 3: Freetext → JSON API
-    if !query.is_empty() {
-        if let Ok(items) = query_json_api(endpoint, &format!("q={}&num={limit}", url_encode(&query))) {
-            all_items.extend(items);
-        }
-    }
-
-    // If no endpoints were queried, return empty
-    if all_items.is_empty() && anidb_id.is_none() && tvdb_id.is_none() && query.is_empty() {
-        return Ok(serde_json::to_string(&SearchResponse { results: vec![] })?);
-    }
-
-    // Dedup by info_hash (first occurrence wins = higher priority endpoint)
+    // Dedup by info_hash (first occurrence wins)
     let deduped = dedup_items(all_items);
 
     let results = build_results(deduped);
@@ -213,231 +226,69 @@ pub fn search(input: String) -> FnResult<String> {
 
 fn query_json_api(endpoint: &str, params: &str) -> Result<Vec<AnimetoshoItem>, Error> {
     let url = format!("{endpoint}/json?{params}");
-    let http_req = HttpRequest::new(&url)
+
+    let body = http_get_with_retry(&url)?;
+    Ok(serde_json::from_str::<Vec<AnimetoshoItem>>(&body).unwrap_or_default())
+}
+
+/// HTTP GET with 429 retry handling.
+///
+/// On a 429 response, retries with escalating backoff: 2s → 5s → 10s.
+/// Respects `Retry-After` / `X-Retry-After` headers if present.
+/// If the 429 persists after 10s (or Retry-After > 10s), returns an error.
+fn http_get_with_retry(url: &str) -> Result<String, Error> {
+    const BACKOFF_SECS: &[u64] = &[2, 5, 10];
+
+    let http_req = HttpRequest::new(url)
         .with_header("Accept", "application/json")
         .with_header("Accept-Language", "en-US,en;q=0.9")
         .with_header("User-Agent", USER_AGENT);
 
-    let resp = http::request::<Vec<u8>>(&http_req, None)
-        .map_err(|e| Error::msg(format!("JSON API request failed: {e}")))?;
-
-    if resp.status_code() >= 400 {
-        return Err(Error::msg(format!("JSON API returned HTTP {}", resp.status_code())));
-    }
-
-    let body = String::from_utf8_lossy(&resp.body()).to_string();
-    Ok(serde_json::from_str::<Vec<AnimetoshoItem>>(&body).unwrap_or_default())
-}
-
-fn query_torznab_api(endpoint: &str, params: &str) -> Result<Vec<AnimetoshoItem>, Error> {
-    let url = format!("{endpoint}/nabapi?{params}");
-    let http_req = HttpRequest::new(&url)
-        .with_header("Accept", "application/xml, */*")
-        .with_header("Accept-Language", "en-US,en;q=0.9")
-        .with_header("User-Agent", USER_AGENT);
-
-    let resp = http::request::<Vec<u8>>(&http_req, None)
-        .map_err(|e| Error::msg(format!("Torznab API request failed: {e}")))?;
-
-    if resp.status_code() >= 400 {
-        return Err(Error::msg(format!("Torznab API returned HTTP {}", resp.status_code())));
-    }
-
-    let body = String::from_utf8_lossy(&resp.body()).to_string();
-    Ok(parse_torznab_items(&body))
-}
-
-// ---------------------------------------------------------------------------
-// Torznab XML parsing
-// ---------------------------------------------------------------------------
-
-fn parse_torznab_items(xml: &str) -> Vec<AnimetoshoItem> {
-    use quick_xml::events::Event;
-    use quick_xml::Reader;
-
-    let mut reader = Reader::from_str(xml);
-    let mut items = Vec::new();
-    let mut in_item = false;
-    let mut current_title = None;
-    let mut current_link = None;
-    let mut current_pub_date = None;
-    let mut current_size: Option<i64> = None;
-    let mut current_info_hash = None;
-    let mut current_magnet_uri = None;
-    let mut current_seeders: Option<i64> = None;
-    let mut current_leechers: Option<i64> = None;
-    let mut current_enclosure_url = None;
-    let mut current_tag = String::new();
-    let mut buf = Vec::new();
-
-    loop {
-        match reader.read_event_into(&mut buf) {
-            Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
-                if tag == "item" {
-                    in_item = true;
-                    current_title = None;
-                    current_link = None;
-                    current_pub_date = None;
-                    current_size = None;
-                    current_info_hash = None;
-                    current_magnet_uri = None;
-                    current_seeders = None;
-                    current_leechers = None;
-                    current_enclosure_url = None;
-                }
-                if in_item {
-                    current_tag = tag;
-                }
+    let mut next_delay: u64 = 0;
+    for attempt in 0..=BACKOFF_SECS.len() {
+        if next_delay > 0 {
+            let start = std::time::Instant::now();
+            let wait = std::time::Duration::from_secs(next_delay);
+            while start.elapsed() < wait {
+                std::hint::spin_loop();
             }
-            Ok(Event::Empty(ref e)) => {
-                if !in_item {
-                    buf.clear();
-                    continue;
-                }
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
-                if tag == "enclosure" {
-                    for attr in e.attributes().flatten() {
-                        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
-                        let val = String::from_utf8_lossy(&attr.value).to_string();
-                        match key.as_str() {
-                            "url" if current_enclosure_url.is_none() => {
-                                current_enclosure_url = Some(val);
-                            }
-                            "length" => {
-                                if let Ok(s) = val.parse::<i64>() {
-                                    if s > 0 {
-                                        current_size = Some(s);
-                                    }
-                                }
-                            }
-                            _ => {}
-                        }
-                    }
-                } else if tag.contains("attr") {
-                    let mut attr_name = String::new();
-                    let mut attr_value = String::new();
-                    for attr in e.attributes().flatten() {
-                        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
-                        let val = String::from_utf8_lossy(&attr.value).to_string();
-                        match key.as_str() {
-                            "name" => attr_name = val,
-                            "value" => attr_value = val,
-                            _ => {}
-                        }
-                    }
-                    match attr_name.as_str() {
-                        "size" => { current_size = attr_value.parse().ok(); }
-                        "infohash" => { current_info_hash = Some(attr_value); }
-                        "magneturl" => { current_magnet_uri = Some(attr_value); }
-                        "seeders" => { current_seeders = attr_value.parse().ok(); }
-                        "peers" => { current_leechers = attr_value.parse::<i64>().ok().map(|p| p.saturating_sub(current_seeders.unwrap_or(0))); }
-                        _ => {}
-                    }
-                }
-            }
-            Ok(Event::Text(ref e)) => {
-                if !in_item {
-                    buf.clear();
-                    continue;
-                }
-                let text = e.unescape().unwrap_or_default().to_string();
-                match current_tag.as_str() {
-                    "title" => { current_title = Some(text); }
-                    "link" => { current_link = Some(text); }
-                    "pubDate" => { current_pub_date = Some(text); }
-                    _ => {}
-                }
-            }
-            Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
-                if tag == "item" && in_item {
-                    in_item = false;
-                    if let Some(ref title) = current_title {
-                        if !title.is_empty() {
-                            // Determine torrent vs NZB from enclosure URL
-                            let is_torrent = current_enclosure_url.as_ref()
-                                .is_some_and(|u| u.contains(".torrent"));
-                            let is_nzb = current_enclosure_url.as_ref()
-                                .is_some_and(|u| u.contains(".nzb"));
-
-                            let torrent_url = if is_torrent { current_enclosure_url.clone() } else { None };
-                            let nzb_url = if is_nzb { current_enclosure_url.clone() } else { None };
-
-                            let timestamp = current_pub_date.as_ref().and_then(|d| parse_rfc2822_to_epoch(d));
-
-                            items.push(AnimetoshoItem {
-                                id: None,
-                                title: current_title.clone(),
-                                link: current_link.clone(),
-                                timestamp,
-                                status: None,
-                                torrent_url,
-                                nzb_url,
-                                info_hash: current_info_hash.clone(),
-                                magnet_uri: current_magnet_uri.clone(),
-                                seeders: current_seeders,
-                                leechers: current_leechers,
-                                torrent_downloaded_count: None,
-                                total_size: current_size,
-                                num_files: None,
-                                anidb_aid: None,
-                                anidb_eid: None,
-                                nyaa_id: None,
-                                nekobt_id: None,
-                                anidex_id: None,
-                            });
-                        }
-                    }
-                }
-                current_tag.clear();
-            }
-            Ok(Event::Eof) => break,
-            Err(_) => break,
-            _ => {}
         }
-        buf.clear();
+
+        let resp = http::request::<Vec<u8>>(&http_req, None)
+            .map_err(|e| Error::msg(format!("HTTP request failed: {e}")))?;
+
+        if resp.status_code() == 429 {
+            if attempt >= BACKOFF_SECS.len() {
+                return Err(Error::msg("HTTP 429: rate limited after all retries"));
+            }
+
+            // Honor Retry-After / X-Retry-After if present, otherwise use backoff table
+            let server_delay = resp
+                .headers()
+                .get("retry-after")
+                .or_else(|| resp.headers().get("x-retry-after"))
+                .and_then(|v| v.parse::<u64>().ok());
+
+            next_delay = match server_delay {
+                Some(secs) if secs > 10 => {
+                    return Err(Error::msg(format!(
+                        "HTTP 429: Retry-After {secs}s exceeds maximum"
+                    )));
+                }
+                Some(secs) => secs,
+                None => BACKOFF_SECS[attempt],
+            };
+            continue;
+        }
+
+        if resp.status_code() >= 400 {
+            return Err(Error::msg(format!("HTTP {}", resp.status_code())));
+        }
+
+        return Ok(String::from_utf8_lossy(&resp.body()).to_string());
     }
 
-    items
-}
-
-/// Best-effort RFC 2822 date to Unix epoch. Falls back to None on failure.
-fn parse_rfc2822_to_epoch(date: &str) -> Option<i64> {
-    // Format: "Tue, 02 Aug 2016 13:48:04 +0000"
-    let parts: Vec<&str> = date.split_whitespace().collect();
-    if parts.len() < 5 { return None; }
-
-    let day: i64 = parts[1].parse().ok()?;
-    let month = match parts[2].to_ascii_lowercase().as_str() {
-        "jan" => 1, "feb" => 2, "mar" => 3, "apr" => 4, "may" => 5, "jun" => 6,
-        "jul" => 7, "aug" => 8, "sep" => 9, "oct" => 10, "nov" => 11, "dec" => 12,
-        _ => return None,
-    };
-    let year: i64 = parts[3].parse().ok()?;
-    let time_parts: Vec<&str> = parts[4].split(':').collect();
-    if time_parts.len() < 3 { return None; }
-    let hour: i64 = time_parts[0].parse().ok()?;
-    let min: i64 = time_parts[1].parse().ok()?;
-    let sec: i64 = time_parts[2].parse().ok()?;
-
-    // Simplified days-from-epoch calculation
-    let mut days: i64 = 0;
-    for y in 1970..year {
-        days += if is_leap(y) { 366 } else { 365 };
-    }
-    let month_days = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    for m in 1..month {
-        days += month_days[m as usize];
-        if m == 2 && is_leap(year) { days += 1; }
-    }
-    days += day - 1;
-
-    Some(days * 86400 + hour * 3600 + min * 60 + sec)
-}
-
-fn is_leap(y: i64) -> bool {
-    (y % 4 == 0 && y % 100 != 0) || (y % 400 == 0)
+    Err(Error::msg("HTTP request exhausted all retries"))
 }
 
 // ---------------------------------------------------------------------------
@@ -596,6 +447,10 @@ fn format_timestamp(ts: i64) -> String {
     )
 }
 
+fn is_leap(y: i64) -> bool {
+    (y % 4 == 0 && y % 100 != 0) || (y % 400 == 0)
+}
+
 fn url_encode(input: &str) -> String {
     let mut output = String::with_capacity(input.len() * 2);
     for byte in input.bytes() {
@@ -747,12 +602,4 @@ mod tests {
         assert!(build_results(vec![item]).is_empty());
     }
 
-    // ── parse_rfc2822_to_epoch ───────────────────────────────────────────
-
-    #[test]
-    fn parse_rfc2822() {
-        let epoch = parse_rfc2822_to_epoch("Tue, 02 Aug 2016 13:48:04 +0000");
-        assert!(epoch.is_some());
-        assert_eq!(format_timestamp(epoch.unwrap()), "2016-08-02T13:48:04Z");
-    }
 }

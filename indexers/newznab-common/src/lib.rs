@@ -38,6 +38,21 @@ pub struct PluginDescriptor {
 
 #[derive(Serialize)]
 pub struct Capabilities {
+    /// Facet-scoped ID support using well-known names: e.g. {"movie": ["imdb_id"], "series": ["tvdb_id"]}
+    pub supported_ids: HashMap<String, Vec<String>>,
+    /// Whether this indexer deduplicates title aliases internally.
+    #[serde(default)]
+    pub deduplicates_aliases: bool,
+    /// Query param name for season filtering (e.g. "season").
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub season_param: Option<String>,
+    /// Query param name for episode filtering (e.g. "ep").
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub episode_param: Option<String>,
+    /// Query param name for freetext search (e.g. "q"). None = no freetext.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub query_param: Option<String>,
+    // Legacy fields for backward compat with host-side deserialization.
     pub search: bool,
     pub imdb_search: bool,
     pub tvdb_search: bool,
@@ -317,51 +332,92 @@ pub fn execute_full_search(
 
     let endpoint = build_endpoint(&config.base_url, &config.api_path);
 
-    // Tiered search execution
-    let (status, body) = execute_tiered_search(
-        &endpoint,
-        &search_type,
-        &query,
-        &config.api_key,
-        imdb_id.as_deref(),
-        tvdb_id.as_deref(),
-        newznab_cat.as_deref(),
-        limit,
-        req.season,
-        req.episode,
-        &config.additional_params,
-    )?;
+    // Paginated search: fetch up to MAX_PAGES pages of PAGE_SIZE results each.
+    // Stop early if a page returns fewer results than the page size.
+    const PAGE_SIZE: usize = 200;
+    const MAX_PAGES: usize = 5; // 5 × 200 = 1000 max results
+    const MAX_RESULTS: usize = PAGE_SIZE * MAX_PAGES;
 
-    // Detect response format and check for errors
-    let trimmed = body.trim_start();
-    let is_xml = trimmed.starts_with("<?xml")
-        || trimmed.starts_with("<rss")
-        || trimmed.starts_with("<error");
+    let mut all_results: Vec<SearchResult> = Vec::new();
+    let mut last_limits = ApiLimits::default();
 
-    if is_xml {
-        if let Some((code, description)) = parse_error_xml(&body) {
-            return Err(classify_and_format_error(&code, &description));
+    for page in 0..MAX_PAGES {
+        let offset = page * PAGE_SIZE;
+        let page_params = if config.additional_params.is_empty() {
+            format!("&offset={offset}")
+        } else {
+            format!("{}&offset={offset}", config.additional_params)
+        };
+
+        let (status, body) = execute_tiered_search(
+            &endpoint,
+            &search_type,
+            &query,
+            &config.api_key,
+            imdb_id.as_deref(),
+            tvdb_id.as_deref(),
+            newznab_cat.as_deref(),
+            PAGE_SIZE,
+            req.season,
+            req.episode,
+            &page_params,
+        )?;
+
+        // Detect response format and check for errors
+        let trimmed = body.trim_start();
+        let is_xml = trimmed.starts_with("<?xml")
+            || trimmed.starts_with("<rss")
+            || trimmed.starts_with("<error");
+
+        if is_xml {
+            if let Some((code, description)) = parse_error_xml(&body) {
+                if page == 0 {
+                    return Err(classify_and_format_error(&code, &description));
+                }
+                break; // Later pages erroring is not fatal
+            }
+        } else if let Some((code, description)) = parse_error_json(&body) {
+            if page == 0 {
+                return Err(classify_and_format_error(&code, &description));
+            }
+            break;
         }
-    } else if let Some((code, description)) = parse_error_json(&body) {
-        return Err(classify_and_format_error(&code, &description));
+
+        if status >= 400 {
+            if page == 0 {
+                return Err(Error::msg(format!("Newznab API returned HTTP {status}")));
+            }
+            break;
+        }
+
+        let (page_results, limits) = if is_xml {
+            parse_newznab_xml(&body, PAGE_SIZE, extract_fn)
+        } else {
+            parse_newznab_json(&body, PAGE_SIZE, extract_fn)
+        };
+
+        last_limits = limits;
+        let page_count = page_results.len();
+        all_results.extend(page_results);
+
+        // Stop if this page was less than full (no more results)
+        // or we've hit the overall max
+        if page_count < PAGE_SIZE || all_results.len() >= MAX_RESULTS {
+            break;
+        }
     }
 
-    if status >= 400 {
-        return Err(Error::msg(format!("Newznab API returned HTTP {status}")));
+    // Respect the caller's requested limit
+    if all_results.len() > limit {
+        all_results.truncate(limit);
     }
-
-    let (results, limits) = if is_xml {
-        parse_newznab_xml(&body, limit, extract_fn)
-    } else {
-        parse_newznab_json(&body, limit, extract_fn)
-    };
 
     Ok(SearchResponse {
-        results,
-        api_current: limits.api_current,
-        api_max: limits.api_max,
-        grab_current: limits.grab_current,
-        grab_max: limits.grab_max,
+        results: all_results,
+        api_current: last_limits.api_current,
+        api_max: last_limits.api_max,
+        grab_current: last_limits.grab_current,
+        grab_max: last_limits.grab_max,
     })
 }
 
@@ -582,22 +638,66 @@ fn execute_search(
         additional_params,
     );
 
-    let http_req = HttpRequest::new(&url)
+    let (status, body) = http_get_with_retry(&url)?;
+    Ok((status, body))
+}
+
+const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
+    (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
+/// HTTP GET with 429 retry handling.
+///
+/// On a 429 response, retries with escalating backoff: 2s → 5s → 10s.
+/// Respects `Retry-After` / `X-Retry-After` headers if present.
+/// If the 429 persists after 10s (or Retry-After > 10s), returns an error.
+fn http_get_with_retry(url: &str) -> Result<(u16, String), Error> {
+    const BACKOFF_SECS: &[u64] = &[2, 5, 10];
+
+    let http_req = HttpRequest::new(url)
         .with_header("Accept", "application/json, application/xml, */*; q=0.8")
         .with_header("Accept-Language", "en-US,en;q=0.9")
-        .with_header(
-            "User-Agent",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
-             (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        );
+        .with_header("User-Agent", USER_AGENT);
 
-    let resp = http::request::<Vec<u8>>(&http_req, None)
-        .map_err(|e| Error::msg(format!("HTTP request failed: {e}")))?;
+    let mut next_delay: u64 = 0;
+    for attempt in 0..=BACKOFF_SECS.len() {
+        if next_delay > 0 {
+            let start = std::time::Instant::now();
+            let wait = std::time::Duration::from_secs(next_delay);
+            while start.elapsed() < wait {
+                std::hint::spin_loop();
+            }
+        }
 
-    let status = resp.status_code();
-    let body = String::from_utf8_lossy(&resp.body()).to_string();
+        let resp = http::request::<Vec<u8>>(&http_req, None)
+            .map_err(|e| Error::msg(format!("HTTP request failed: {e}")))?;
 
-    Ok((status, body))
+        if resp.status_code() == 429 {
+            if attempt >= BACKOFF_SECS.len() {
+                return Err(Error::msg("HTTP 429: rate limited after all retries"));
+            }
+
+            let server_delay = resp
+                .headers()
+                .get("retry-after")
+                .or_else(|| resp.headers().get("x-retry-after"))
+                .and_then(|v| v.parse::<u64>().ok());
+
+            next_delay = match server_delay {
+                Some(secs) if secs > 10 => {
+                    return Err(Error::msg(format!(
+                        "HTTP 429: Retry-After {secs}s exceeds maximum"
+                    )));
+                }
+                Some(secs) => secs,
+                None => BACKOFF_SECS[attempt],
+            };
+            continue;
+        }
+
+        return Ok((resp.status_code(), String::from_utf8_lossy(&resp.body()).to_string()));
+    }
+
+    Err(Error::msg("HTTP request exhausted all retries"))
 }
 
 #[allow(clippy::too_many_arguments)]

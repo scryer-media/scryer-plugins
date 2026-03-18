@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "id": "anime-scoring-pack",
+  "name": "Anime Scoring Pack",
+  "description": "Community-curated rules for anime collectors",
+  "author": "scryer-media",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "prefer-subsplease",
+      "title": "Prefer SubsPlease releases",
+      "description": "SubsPlease provides fast, consistent CR rips with standard naming",
+      "category": "Anime",
+      "appliedFacets": ["anime"],
+      "regoSource": "import rego.v1\n\nscore_entry[\"subsplease_bonus\"] := 400 if {\n    lower(input.release.release_group) == \"subsplease\"\n}"
+    },
+    {
+      "id": "prefer-erai-raws",
+      "title": "Prefer Erai-raws releases",
+      "description": "Erai-raws provides multi-sub releases from multiple streaming sources",
+      "category": "Anime",
+      "appliedFacets": ["anime"],
+      "regoSource": "import rego.v1\n\nscore_entry[\"erai_bonus\"] := 350 if {\n    lower(input.release.release_group) == \"erai-raws\"\n}"
+    },
+    {
+      "id": "block-mini-encodes",
+      "title": "Block mini encodes",
+      "description": "Mini encodes sacrifice quality for size — block known groups",
+      "category": "Anime",
+      "appliedFacets": ["anime"],
+      "regoSource": "import rego.v1\n\nmini_groups := {\"judas\", \"bonkai77\", \"mini-encode\", \"minifreeza\", \"smallsizedanime\"}\n\nscore_entry[\"block_mini_encode\"] := scryer.block_score() if {\n    group := lower(input.release.release_group)\n    mini_groups[group]\n}"
+    },
+    {
+      "id": "prefer-batch-releases",
+      "title": "Prefer batch releases",
+      "description": "Batch releases (v2, BD) are typically higher quality than initial TV rips",
+      "category": "Anime",
+      "appliedFacets": ["anime"],
+      "regoSource": "import rego.v1\n\nscore_entry[\"batch_bonus\"] := 200 if {\n    contains(lower(input.release.raw_title), \"batch\")\n}"
+    },
+    {
+      "id": "require-japanese-audio-post",
+      "title": "Require Japanese audio (post-download)",
+      "description": "Block imported files that don't contain a Japanese audio track",
+      "category": "Anime",
+      "appliedFacets": ["anime"],
+      "regoSource": "import rego.v1\n\nscore_entry[\"no_japanese_audio\"] := scryer.block_score() if {\n    input.file != null\n    not has_japanese_audio\n}\n\nhas_japanese_audio if {\n    some lang in input.file.audio_languages\n    scryer.lang_matches(lang, \"ja\")\n}"
+    }
+  ]
+}

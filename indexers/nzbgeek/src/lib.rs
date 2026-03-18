@@ -16,6 +16,15 @@ pub fn describe(_input: String) -> FnResult<String> {
         provider_type: "nzbgeek".to_string(),
         provider_aliases: vec![],
         capabilities: Capabilities {
+            supported_ids: HashMap::from([
+                ("movie".into(), vec!["imdb_id".into()]),
+                ("series".into(), vec!["tvdb_id".into()]),
+                ("anime".into(), vec!["tvdb_id".into()]),
+            ]),
+            deduplicates_aliases: false,
+            season_param: Some("season".into()),
+            episode_param: Some("ep".into()),
+            query_param: Some("q".into()),
             search: true,
             imdb_search: true,
             tvdb_search: true,
@@ -34,7 +43,7 @@ pub fn describe(_input: String) -> FnResult<String> {
         ],
         config_fields: vec![],
         allowed_hosts: vec![],
-        rate_limit_seconds: Some(2),
+        rate_limit_seconds: None,
     };
     Ok(serde_json::to_string(&descriptor)?)
 }

@@ -28,6 +28,16 @@ struct PluginDescriptor {
 
 #[derive(Serialize)]
 struct Capabilities {
+    supported_ids: HashMap<String, Vec<String>>,
+    #[serde(default)]
+    deduplicates_aliases: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    season_param: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    episode_param: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    query_param: Option<String>,
+    // Legacy fields
     search: bool,
     imdb_search: bool,
     tvdb_search: bool,
@@ -139,9 +149,14 @@ fn build_descriptor_json() -> Result<String, Error> {
         provider_type: "torrent_rss".to_string(),
         provider_aliases: vec!["rss".to_string()],
         capabilities: Capabilities {
-            search: true,
-            imdb_search: true,
-            tvdb_search: true,
+            supported_ids: HashMap::new(),
+            deduplicates_aliases: false,
+            season_param: None,
+            episode_param: None,
+            query_param: None,
+            search: false,
+            imdb_search: false,
+            tvdb_search: false,
             rss: true,
         },
         scoring_policies: vec![],

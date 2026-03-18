@@ -20,6 +20,15 @@ fn build_descriptor_json() -> Result<String, Error> {
         provider_type: "torznab".to_string(),
         provider_aliases: vec!["jackett".to_string(), "prowlarr".to_string()],
         capabilities: Capabilities {
+            supported_ids: HashMap::from([
+                ("movie".into(), vec!["imdb_id".into()]),
+                ("series".into(), vec!["tvdb_id".into()]),
+                ("anime".into(), vec!["tvdb_id".into()]),
+            ]),
+            deduplicates_aliases: false,
+            season_param: Some("season".into()),
+            episode_param: Some("ep".into()),
+            query_param: Some("q".into()),
             search: true,
             imdb_search: true,
             tvdb_search: true,
@@ -148,8 +157,15 @@ fn torznab_metadata_extractor(
             serde_json::Value::from(value),
         );
     }
-    if let Some(value) = info_hash {
-        extra.insert("info_hash".to_string(), serde_json::Value::from(value));
+    if let Some(ref value) = info_hash {
+        extra.insert("info_hash".to_string(), serde_json::Value::from(value.as_str()));
+        // Auto-generate magnet URI if tracker didn't provide one
+        if magnet_uri.is_none() {
+            extra.insert(
+                "magnet_uri".to_string(),
+                serde_json::Value::from(build_magnet_uri(value)),
+            );
+        }
     }
     if let Some(value) = magnet_uri {
         extra.insert("magnet_uri".to_string(), serde_json::Value::from(value));
@@ -196,6 +212,26 @@ fn normalize_info_hash(value: &str) -> String {
         .filter(|ch| ch.is_ascii_hexdigit())
         .collect::<String>()
         .to_ascii_lowercase()
+}
+
+fn build_magnet_uri(info_hash: &str) -> String {
+    const TRACKERS: &[&str] = &[
+        "udp://tracker.opentrackr.org:1337/announce",
+        "udp://open.stealth.si:80/announce",
+        "udp://tracker.torrent.eu.org:451/announce",
+        "udp://tracker.bittor.pw:1337/announce",
+        "udp://public.popcorn-tracker.org:6969/announce",
+        "udp://tracker.dler.org:6969/announce",
+        "udp://exodus.desync.com:6969",
+        "udp://open.demonii.com:1337/announce",
+    ];
+
+    let mut uri = format!("magnet:?xt=urn:btih:{info_hash}");
+    for tracker in TRACKERS {
+        uri.push_str("&tr=");
+        uri.push_str(tracker);
+    }
+    uri
 }
 
 fn dedupe(values: Vec<String>) -> Vec<String> {

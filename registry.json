@@ -102,5 +102,25 @@
       "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/qbittorrent_download_client.wasm",
       "wasm_sha256": "0de3ba13744c318b8a269975063241fecf02a1fac84eab75c0d8a0240f6f0cbd"
     }
+  ],
+  "rule_packs": [
+    {
+      "id": "anime-scoring-pack",
+      "name": "Anime Scoring Pack",
+      "description": "Community-curated rules for anime collectors: group preferences, dual audio bonuses, mini-encode blocking",
+      "author": "scryer-media",
+      "version": "1.0.0",
+      "url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/rule_packs/anime-scoring.json",
+      "min_scryer_version": "0.9.4"
+    },
+    {
+      "id": "torrent-optimization-pack",
+      "name": "Torrent Optimization Pack",
+      "description": "Rules for torrent users: freeleech preference, seeder requirements, ratio-friendly scoring",
+      "author": "scryer-media",
+      "version": "1.0.0",
+      "url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/rule_packs/torrent-optimization.json",
+      "min_scryer_version": "0.9.4"
+    }
   ]
 }

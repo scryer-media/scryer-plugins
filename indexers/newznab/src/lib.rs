@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use extism_pdk::*;
 use newznab_common::{
     execute_full_search, extract_base_metadata, standard_config_fields, Capabilities,
@@ -14,6 +16,15 @@ pub fn describe(_input: String) -> FnResult<String> {
         provider_type: "newznab".to_string(),
         provider_aliases: vec!["dognzb".to_string()],
         capabilities: Capabilities {
+            supported_ids: HashMap::from([
+                ("movie".into(), vec!["imdb_id".into()]),
+                ("series".into(), vec!["tvdb_id".into()]),
+                ("anime".into(), vec!["tvdb_id".into()]),
+            ]),
+            deduplicates_aliases: false,
+            season_param: Some("season".into()),
+            episode_param: Some("ep".into()),
+            query_param: Some("q".into()),
             search: true,
             imdb_search: true,
             tvdb_search: true,

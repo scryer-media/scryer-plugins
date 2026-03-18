@@ -1611,12 +1611,40 @@ fn derive_completed_dest_dir(torrent: &QbTorrent) -> Option<String> {
     }
 }
 
+/// Detect whether a qBittorrent content_path points to a single file (as
+/// opposed to a directory created for a multi-file torrent).
+///
+/// Scene release names like `Show.S01E02.2160p.WEB.h265-GROUP` are full of
+/// dots but are directories, so we check for a *known media file extension*
+/// rather than just "contains a dot".
 fn path_looks_like_file(path: &str) -> bool {
+    const FILE_EXTENSIONS: &[&str] = &[
+        // video
+        "mkv", "mp4", "avi", "wmv", "mov", "m4v", "ts", "m2ts", "webm", "flv", "ogv",
+        // archive
+        "rar", "zip", "7z",
+        // audio (for music torrents)
+        "flac", "mp3", "ogg", "wav", "aac", "m4a",
+        // subtitle
+        "srt", "ass", "ssa", "sub", "idx", "sup",
+        // other single-file types qBittorrent may report
+        "iso", "img", "nzb", "torrent",
+    ];
     let trimmed = path.trim_end_matches('/');
-    trimmed
-        .rsplit('/')
-        .next()
-        .is_some_and(|segment| segment.contains('.'))
+    let last_segment = match trimmed.rsplit('/').next() {
+        Some(s) => s,
+        None => return false,
+    };
+    // Extract extension after the *last* dot
+    let ext = match last_segment.rsplit('.').next() {
+        Some(e) => e,
+        None => return false,
+    };
+    // Must actually have a dot (rsplit returns the whole string if no dot)
+    if ext == last_segment {
+        return false;
+    }
+    FILE_EXTENSIONS.contains(&ext.to_ascii_lowercase().as_str())
 }
 
 fn preferred_content_path(torrent: &QbTorrent) -> Option<String> {
@@ -1788,6 +1816,41 @@ mod tests {
             derive_completed_dest_dir(&torrent).as_deref(),
             Some("/downloads/tv/Series Season 01")
         );
+    }
+
+    #[test]
+    fn completed_dest_dir_uses_content_path_for_scene_release_with_dots() {
+        // Scene release names like "Show.S01E02.2160p.WEB.h265-GROUP" contain
+        // dots but are directories, not files.
+        let torrent = QbTorrent {
+            name: "Rooster.S01E02.DV.HDR.2160p.WEB.h265-ETHEL".to_string(),
+            save_path: Some("/qbit-downloads/tv".to_string()),
+            content_path: Some(
+                "/qbit-downloads/tv/Rooster.S01E02.DV.HDR.2160p.WEB.h265-ETHEL".to_string(),
+            ),
+            ..QbTorrent::default()
+        };
+        assert_eq!(
+            derive_completed_dest_dir(&torrent).as_deref(),
+            Some("/qbit-downloads/tv/Rooster.S01E02.DV.HDR.2160p.WEB.h265-ETHEL")
+        );
+    }
+
+    #[test]
+    fn path_looks_like_file_detects_video_extension() {
+        assert!(path_looks_like_file("/downloads/Movie.mkv"));
+        assert!(path_looks_like_file("/downloads/movie.MP4"));
+        assert!(path_looks_like_file("/downloads/archive.rar"));
+    }
+
+    #[test]
+    fn path_looks_like_file_rejects_scene_directory_names() {
+        assert!(!path_looks_like_file(
+            "/downloads/tv/Show.S01E02.2160p.WEB.h265-GROUP"
+        ));
+        assert!(!path_looks_like_file(
+            "/downloads/Rooster.S01E02.DV.HDR.2160p.WEB.h265-ETHEL"
+        ));
     }
 
     #[test]

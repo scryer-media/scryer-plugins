@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "id": "torrent-optimization-pack",
+  "name": "Torrent Optimization Pack",
+  "description": "Rules for torrent users to optimize ratio and download efficiency",
+  "author": "scryer-media",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "freeleech-bonus",
+      "title": "Boost freeleech releases",
+      "description": "Add 500 points to freeleech releases — no ratio impact",
+      "category": "Torrent",
+      "regoSource": "import rego.v1\n\nscore_entry[\"freeleech_bonus\"] := 500 if {\n    input.release.extra.freeleech == true\n}"
+    },
+    {
+      "id": "halfleech-bonus",
+      "title": "Boost half-leech releases",
+      "description": "Add 200 points to 50% download factor releases",
+      "category": "Torrent",
+      "regoSource": "import rego.v1\n\nscore_entry[\"halfleech_bonus\"] := 200 if {\n    input.release.extra.downloadvolumefactor == 0.5\n}"
+    },
+    {
+      "id": "well-seeded",
+      "title": "Prefer well-seeded torrents",
+      "description": "Boost torrents with 10+ seeders, penalize dead or near-dead torrents",
+      "category": "Torrent",
+      "regoSource": "import rego.v1\n\nscore_entry[\"well_seeded\"] := 200 if {\n    input.release.extra.seeders >= 10\n}\n\nscore_entry[\"poorly_seeded\"] := -300 if {\n    input.release.extra.seeders != null\n    input.release.extra.seeders < 3\n}"
+    },
+    {
+      "id": "block-no-seeders",
+      "title": "Block dead torrents",
+      "description": "Hard-block torrents with zero seeders",
+      "category": "Torrent",
+      "regoSource": "import rego.v1\n\nscore_entry[\"dead_torrent\"] := scryer.block_score() if {\n    input.release.extra.seeders == 0\n}"
+    },
+    {
+      "id": "internal-release-bonus",
+      "title": "Prefer internal releases",
+      "description": "Boost releases tagged as internal by the tracker",
+      "category": "Torrent",
+      "regoSource": "import rego.v1\n\nscore_entry[\"internal_bonus\"] := 300 if {\n    some tag in input.release.extra.tags\n    lower(tag) == \"internal\"\n}"
+    }
+  ]
+}
