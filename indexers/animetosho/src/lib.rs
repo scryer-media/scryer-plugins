@@ -45,21 +45,16 @@ struct Capabilities {
 }
 
 #[derive(Deserialize)]
-struct TaggedAlias {
-    name: String,
-    language: String,
-}
+struct TaggedAlias {}
 
 #[derive(Deserialize)]
 #[allow(dead_code)]
 struct SearchRequest {
     query: String,
     #[serde(default)]
-    imdb_id: Option<String>,
+    ids: HashMap<String, String>,
     #[serde(default)]
-    tvdb_id: Option<String>,
-    #[serde(default)]
-    anidb_id: Option<String>,
+    facet: Option<String>,
     #[serde(default)]
     category: Option<String>,
     #[serde(default)]
@@ -70,6 +65,8 @@ struct SearchRequest {
     season: Option<u32>,
     #[serde(default)]
     episode: Option<u32>,
+    #[serde(default)]
+    absolute_episode: Option<u32>,
     #[serde(default)]
     tagged_aliases: Vec<TaggedAlias>,
 }
@@ -180,8 +177,8 @@ pub fn search(input: String) -> FnResult<String> {
 
     let endpoint = base_url.trim_end_matches('/');
     let query = req.query.trim().to_string();
-    let query_candidates = build_query_candidates(&query, &req.tagged_aliases);
-    let anidb_id = req.anidb_id.as_deref().and_then(|v| {
+    let title_query_candidates = build_query_candidates(&query, &req.tagged_aliases);
+    let anidb_id = req.ids.get("anidb_id").map(String::as_str).and_then(|v| {
         let trimmed = v.trim();
         if trimmed.is_empty() { None } else { Some(trimmed.to_string()) }
     });
@@ -192,28 +189,19 @@ pub fn search(input: String) -> FnResult<String> {
     const MAX_PAGES: usize = 14; // 14 × 75 = 1050
     const MAX_RESULTS: usize = 1000;
 
-    if anidb_id.is_none() && query_candidates.is_empty() {
+    if anidb_id.is_none() && title_query_candidates.is_empty() {
         return Ok(serde_json::to_string(&SearchResponse { results: vec![] })?);
     }
 
     let mut all_items: Vec<AnimetoshoItem> = Vec::new();
 
-    for query_candidate in query_candidates.iter().map(Some).chain(std::iter::once(None)) {
-        if query_candidate.is_none() && anidb_id.is_none() {
-            continue;
-        }
-
-        let base_params = if let Some(ref aid) = anidb_id {
-            if let Some(query_candidate) = query_candidate {
-                format!("aid={aid}&q={}", url_encode(query_candidate))
-            } else {
-                format!("aid={aid}")
-            }
-        } else if let Some(query_candidate) = query_candidate {
-            format!("q={}", url_encode(query_candidate))
-        } else {
-            continue;
-        };
+    for base_params in build_animetosho_request_params(
+        anidb_id.as_deref(),
+        &title_query_candidates,
+        req.season,
+        req.episode,
+        req.absolute_episode,
+    ) {
 
         let mut query_items: Vec<AnimetoshoItem> = Vec::new();
         for page in 1..=MAX_PAGES {
@@ -385,14 +373,10 @@ fn dedup_items(items: Vec<AnimetoshoItem>) -> Vec<AnimetoshoItem> {
 fn build_query_candidates(query: &str, tagged_aliases: &[TaggedAlias]) -> Vec<String> {
     let mut candidates = Vec::new();
 
-    if let Some(preferred) = preferred_anime_query(query, tagged_aliases) {
-        if !preferred.is_empty() {
-            candidates.push(preferred);
-        }
-    }
-
-    if !query.is_empty() {
-        candidates.push(query.to_string());
+    let _ = tagged_aliases;
+    let canonical = strip_query_context(query);
+    if !canonical.is_empty() {
+        candidates.push(canonical.to_string());
     }
 
     let mut seen = HashSet::new();
@@ -400,38 +384,64 @@ fn build_query_candidates(query: &str, tagged_aliases: &[TaggedAlias]) -> Vec<St
     candidates
 }
 
-fn preferred_anime_query(query: &str, tagged_aliases: &[TaggedAlias]) -> Option<String> {
-    let alias = tagged_aliases
+fn build_animetosho_request_params(
+    anidb_id: Option<&str>,
+    title_candidates: &[String],
+    season: Option<u32>,
+    episode: Option<u32>,
+    absolute_episode: Option<u32>,
+) -> Vec<String> {
+    if let Some(aid) = anidb_id {
+        if let Some(absolute) = absolute_episode {
+            return vec![format!("aid={aid}&q={}", url_encode(&absolute.to_string()))];
+        }
+
+        if let Some(episode) = episode {
+            return vec![format!(
+                "aid={aid}&q={}",
+                url_encode(&format_season_episode_query(season, episode))
+            )];
+        }
+
+        return vec![format!("aid={aid}")];
+    }
+
+    title_candidates
         .iter()
-        .find(|alias| alias.language.eq_ignore_ascii_case("jpn") && is_romanized_alias(&alias.name))?
-        .name
-        .trim();
+        .filter(|candidate| !candidate.is_empty())
+        .map(|candidate| format!(
+            "q={}",
+            url_encode(&format_freetext_query(candidate, season, episode))
+        ))
+        .collect()
+}
 
-    if alias.is_empty() {
-        return None;
-    }
-
-    let suffix = extract_query_suffix(query);
-    if suffix.is_empty() {
-        Some(alias.to_string())
-    } else {
-        Some(format!("{alias} {suffix}"))
+fn format_season_episode_query(season: Option<u32>, episode: u32) -> String {
+    match season {
+        Some(season) => format!("S{season:02}E{episode:02}"),
+        None => episode.to_string(),
     }
 }
 
-fn is_romanized_alias(alias: &str) -> bool {
-    let trimmed = alias.trim();
-    !trimmed.is_empty()
-        && trimmed.chars().all(|ch| {
-            ch.is_ascii_alphanumeric()
-                || matches!(ch, ' ' | '-' | '_' | ':' | ';' | ',' | '.' | '\'' | '&' | '!' | '?')
-        })
+fn format_freetext_query(title: &str, season: Option<u32>, episode: Option<u32>) -> String {
+    let title = title.trim();
+    match episode {
+        Some(episode) => {
+            let suffix = format_season_episode_query(season, episode);
+            if title.is_empty() {
+                suffix
+            } else {
+                format!("{title} {suffix}")
+            }
+        }
+        None => title.to_string(),
+    }
 }
 
-fn extract_query_suffix(query: &str) -> String {
+fn strip_query_context(query: &str) -> &str {
     let tokens: Vec<&str> = query.split_whitespace().collect();
     if tokens.is_empty() {
-        return String::new();
+        return query.trim();
     }
 
     let mut start = tokens.len();
@@ -443,10 +453,10 @@ fn extract_query_suffix(query: &str) -> String {
         }
     }
 
-    if start < tokens.len() {
-        tokens[start..].join(" ")
+    if start == tokens.len() {
+        query.trim()
     } else {
-        String::new()
+        query[..query.rfind(tokens[start]).unwrap_or(query.len())].trim()
     }
 }
 
@@ -775,23 +785,28 @@ mod tests {
     }
 
     #[test]
-    fn build_query_candidates_prefers_romanized_jpn_alias() {
-        let candidates = build_query_candidates(
-            "Frieren S01E01",
-            &[
-                TaggedAlias {
-                    name: "葬送のフリーレン".into(),
-                    language: "jpn".into(),
-                },
-                TaggedAlias {
-                    name: "Sousou no Frieren".into(),
-                    language: "jpn".into(),
-                },
-            ],
-        );
+    fn build_query_candidates_uses_canonical_title_only() {
+        let candidates = build_query_candidates("Frieren S01E01", &[]);
 
-        assert_eq!(candidates[0], "Sousou no Frieren S01E01");
-        assert_eq!(candidates[1], "Frieren S01E01");
+        assert_eq!(candidates, vec!["Frieren"]);
+    }
+
+    #[test]
+    fn build_animetosho_request_params_id_search_uses_season_and_episode() {
+        let params = build_animetosho_request_params(Some("18220"), &["Bleach".into()], Some(17), Some(37), None);
+        assert_eq!(params, vec!["aid=18220&q=S17E37"]);
+    }
+
+    #[test]
+    fn build_animetosho_request_params_abs_search_uses_absolute_episode_only() {
+        let params = build_animetosho_request_params(Some("18220"), &["Bleach".into()], Some(17), Some(37), Some(403));
+        assert_eq!(params, vec!["aid=18220&q=403"]);
+    }
+
+    #[test]
+    fn build_animetosho_request_params_freetext_uses_title_with_season_and_episode() {
+        let params = build_animetosho_request_params(None, &["Frieren".into()], Some(1), Some(1), Some(1));
+        assert_eq!(params, vec!["q=Frieren%20S01E01"]);
     }
 
 }

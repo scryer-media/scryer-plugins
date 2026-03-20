@@ -101,10 +101,11 @@ pub struct TaggedAlias {
 pub struct SearchRequest {
     pub query: String,
     #[serde(default)]
-    pub imdb_id: Option<String>,
+    pub ids: HashMap<String, String>,
+    /// Explicit normalized media facet from the caller (movie, series, anime).
     #[serde(default)]
-    pub tvdb_id: Option<String>,
-    /// Semantic category hint from the caller (e.g. "movie", "tv", "anime").
+    pub facet: Option<String>,
+    /// Semantic category hint from the caller (e.g. "movie", "series", "anime").
     #[serde(default)]
     pub category: Option<String>,
     #[serde(default)]
@@ -115,6 +116,8 @@ pub struct SearchRequest {
     pub season: Option<u32>,
     #[serde(default)]
     pub episode: Option<u32>,
+    #[serde(default)]
+    pub absolute_episode: Option<u32>,
     #[serde(default)]
     pub tagged_aliases: Vec<TaggedAlias>,
 }
@@ -313,16 +316,17 @@ pub fn execute_full_search(
     extract_fn: MetadataExtractor,
 ) -> Result<SearchResponse, Error> {
     let query = req.query.trim().to_string();
-    let query_variants = build_query_variants(req, &query);
+    let is_anime = is_anime_request(req.facet.as_deref(), req.category.as_deref());
+    let query_variants = build_query_variants(&query);
 
     let imdb_id = req
-        .imdb_id
-        .as_ref()
+        .ids
+        .get("imdb_id")
         .map(|v| v.trim().to_string())
         .filter(|v| !v.is_empty());
     let tvdb_id = req
-        .tvdb_id
-        .as_ref()
+        .ids
+        .get("tvdb_id")
         .map(|v| v.trim().to_string())
         .filter(|v| !v.is_empty());
 
@@ -339,6 +343,7 @@ pub fn execute_full_search(
     // Determine search type from categories and hints
     let search_type = determine_search_type(
         &req.categories,
+        req.facet.as_deref(),
         req.category.as_deref(),
         imdb_id.as_deref(),
         tvdb_id.as_deref(),
@@ -367,19 +372,34 @@ pub fn execute_full_search(
             format!("{}&offset={offset}", config.additional_params)
         };
 
-        let (status, body) = execute_tiered_search(
-            &endpoint,
-            &search_type,
-            &query_variants,
-            &config.api_key,
-            imdb_id.as_deref(),
-            tvdb_id.as_deref(),
-            newznab_cat.as_deref(),
-            page_size,
-            req.season,
-            req.episode,
-            &page_params,
-        )?;
+        let (status, body) = if is_anime {
+            execute_exact_anime_search(
+                &endpoint,
+                &query_variants,
+                &config.api_key,
+                tvdb_id.as_deref(),
+                newznab_cat.as_deref(),
+                page_size,
+                req.season,
+                req.episode,
+                req.absolute_episode,
+                &page_params,
+            )?
+        } else {
+            execute_tiered_search(
+                &endpoint,
+                &search_type,
+                &query_variants,
+                &config.api_key,
+                imdb_id.as_deref(),
+                tvdb_id.as_deref(),
+                newznab_cat.as_deref(),
+                page_size,
+                req.season,
+                req.episode,
+                &page_params,
+            )?
+        };
 
         // Detect response format and check for errors
         let trimmed = body.trim_start();
@@ -445,6 +465,7 @@ pub fn execute_full_search(
 
 fn determine_search_type(
     categories: &[String],
+    facet_hint: Option<&str>,
     category_hint: Option<&str>,
     imdb_id: Option<&str>,
     tvdb_id: Option<&str>,
@@ -452,13 +473,18 @@ fn determine_search_type(
     let cats_movie = categories.iter().any(|c| c.starts_with('2'));
     let cats_tv = categories.iter().any(|c| c.starts_with('5'));
 
-    let hint = category_hint.unwrap_or("").to_ascii_lowercase();
-    let hint_movie = matches!(hint.as_str(), "movie" | "movies");
-    let hint_tv = matches!(hint.as_str(), "tv" | "series" | "anime");
+    let facet_movie = matches!(facet_hint.map(str::trim), Some("movie"));
+    let facet_tv = matches!(facet_hint.map(str::trim), Some("series" | "anime"));
+    let hint_movie = matches!(category_hint.map(str::trim), Some("movie"));
+    let hint_tv = matches!(category_hint.map(str::trim), Some("series" | "anime"));
 
     if cats_movie {
         "movie".to_string()
     } else if cats_tv {
+        "tvsearch".to_string()
+    } else if facet_movie {
+        "movie".to_string()
+    } else if facet_tv {
         "tvsearch".to_string()
     } else if hint_movie {
         "movie".to_string()
@@ -486,16 +512,9 @@ fn build_category_param(categories: &[String]) -> Option<String> {
     }
 }
 
-fn build_query_variants(req: &SearchRequest, query: &str) -> Vec<String> {
+fn build_query_variants(query: &str) -> Vec<String> {
     let mut variants = Vec::new();
-
-    if is_anime_category(req.category.as_deref()) {
-        if let Some(preferred) = preferred_anime_query(query, &req.tagged_aliases) {
-            if !preferred.is_empty() {
-                variants.push(preferred);
-            }
-        }
-    }
+    let query = strip_query_context(query);
 
     if !query.is_empty() {
         variants.push(query.to_string());
@@ -506,60 +525,11 @@ fn build_query_variants(req: &SearchRequest, query: &str) -> Vec<String> {
     variants
 }
 
-fn is_anime_category(category_hint: Option<&str>) -> bool {
-    category_hint
-        .map(|value| value.trim().eq_ignore_ascii_case("anime"))
-        .unwrap_or(false)
-}
-
-fn preferred_anime_query(query: &str, tagged_aliases: &[TaggedAlias]) -> Option<String> {
-    let alias = tagged_aliases
-        .iter()
-        .find(|alias| alias.language.eq_ignore_ascii_case("jpn") && is_romanized_alias(&alias.name))?
-        .name
-        .trim();
-
-    if alias.is_empty() {
-        return None;
-    }
-
-    let suffix = extract_query_suffix(query);
-    if suffix.is_empty() {
-        Some(alias.to_string())
-    } else {
-        Some(format!("{alias} {suffix}"))
-    }
-}
-
-fn is_romanized_alias(alias: &str) -> bool {
-    let trimmed = alias.trim();
-    !trimmed.is_empty()
-        && trimmed.chars().all(|ch| {
-            ch.is_ascii_alphanumeric()
-                || matches!(ch, ' ' | '-' | '_' | ':' | ';' | ',' | '.' | '\'' | '&' | '!' | '?')
-        })
-}
-
-fn extract_query_suffix(query: &str) -> String {
-    let tokens: Vec<&str> = query.split_whitespace().collect();
-    if tokens.is_empty() {
-        return String::new();
-    }
-
-    let mut start = tokens.len();
-    for index in (0..tokens.len()).rev() {
-        if looks_like_context_token(tokens[index]) {
-            start = index;
-        } else if start != tokens.len() {
-            break;
-        }
-    }
-
-    if start < tokens.len() {
-        tokens[start..].join(" ")
-    } else {
-        String::new()
-    }
+fn is_anime_request(facet_hint: Option<&str>, category_hint: Option<&str>) -> bool {
+    matches!(facet_hint.map(str::trim), Some("anime"))
+        || category_hint
+            .map(|value| value.trim() == "anime")
+            .unwrap_or(false)
 }
 
 fn looks_like_context_token(token: &str) -> bool {
@@ -587,6 +557,82 @@ fn looks_like_context_token(token: &str) -> bool {
     }
 
     trimmed.chars().all(|ch| ch.is_ascii_digit())
+}
+
+fn strip_query_context(query: &str) -> &str {
+    let tokens: Vec<&str> = query.split_whitespace().collect();
+    if tokens.is_empty() {
+        return query.trim();
+    }
+
+    let mut start = tokens.len();
+    for index in (0..tokens.len()).rev() {
+        if looks_like_context_token(tokens[index]) {
+            start = index;
+        } else if start != tokens.len() {
+            break;
+        }
+    }
+
+    if start == tokens.len() {
+        query.trim()
+    } else {
+        query[..query.rfind(tokens[start]).unwrap_or(query.len())].trim()
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn execute_exact_anime_search(
+    endpoint: &str,
+    query_variants: &[String],
+    api_key: &str,
+    tvdb_id: Option<&str>,
+    cat: Option<&str>,
+    limit: usize,
+    season: Option<u32>,
+    episode: Option<u32>,
+    absolute_episode: Option<u32>,
+    additional_params: &str,
+) -> Result<(u16, String), Error> {
+    if let Some(tvdb_id) = tvdb_id {
+        return execute_search(
+            endpoint,
+            "tvsearch",
+            None,
+            api_key,
+            None,
+            Some(tvdb_id),
+            cat,
+            limit,
+            if absolute_episode.is_some() { None } else { season },
+            absolute_episode.or(episode),
+            additional_params,
+        );
+    }
+
+    let mut last_response = (200, r#"{"channel":{}}"#.to_string());
+    for query_text in query_variants.iter().map(String::as_str).filter(|query| !query.is_empty()) {
+        let (status, body) = execute_search(
+            endpoint,
+            "tvsearch",
+            Some(query_text),
+            api_key,
+            None,
+            None,
+            cat,
+            limit,
+            season,
+            episode,
+            additional_params,
+        )?;
+        let looks_empty = is_empty_response(body.trim_start());
+        last_response = (status, body.clone());
+        if is_success_status(status) && !looks_empty {
+            return Ok((status, body));
+        }
+    }
+
+    Ok(last_response)
 }
 
 // ---------------------------------------------------------------------------
@@ -1580,19 +1626,19 @@ mod tests {
     #[test]
     fn search_type_movie_category() {
         let cats = vec!["2000".into()];
-        assert_eq!(determine_search_type(&cats, None, None, None), "movie");
+        assert_eq!(determine_search_type(&cats, None, None, None, None), "movie");
     }
 
     #[test]
     fn search_type_tv_category() {
         let cats = vec!["5000".into()];
-        assert_eq!(determine_search_type(&cats, None, None, None), "tvsearch");
+        assert_eq!(determine_search_type(&cats, None, None, None, None), "tvsearch");
     }
 
     #[test]
     fn search_type_movie_hint() {
         assert_eq!(
-            determine_search_type(&[], Some("movie"), None, None),
+            determine_search_type(&[], None, Some("movie"), None, None),
             "movie"
         );
     }
@@ -1600,7 +1646,7 @@ mod tests {
     #[test]
     fn search_type_tv_hint() {
         assert_eq!(
-            determine_search_type(&[], Some("tv"), None, None),
+            determine_search_type(&[], None, Some("series"), None, None),
             "tvsearch"
         );
     }
@@ -1608,7 +1654,15 @@ mod tests {
     #[test]
     fn search_type_anime_hint() {
         assert_eq!(
-            determine_search_type(&[], Some("anime"), None, None),
+            determine_search_type(&[], None, Some("anime"), None, None),
+            "tvsearch"
+        );
+    }
+
+    #[test]
+    fn search_type_prefers_explicit_facet() {
+        assert_eq!(
+            determine_search_type(&[], Some("series"), Some("movie"), None, None),
             "tvsearch"
         );
     }
@@ -1616,7 +1670,7 @@ mod tests {
     #[test]
     fn search_type_imdb_id_fallback() {
         assert_eq!(
-            determine_search_type(&[], None, Some("1234567"), None),
+            determine_search_type(&[], None, None, Some("1234567"), None),
             "movie"
         );
     }
@@ -1624,14 +1678,14 @@ mod tests {
     #[test]
     fn search_type_tvdb_id_fallback() {
         assert_eq!(
-            determine_search_type(&[], None, None, Some("12345")),
+            determine_search_type(&[], None, None, None, Some("12345")),
             "tvsearch"
         );
     }
 
     #[test]
     fn search_type_generic_fallback() {
-        assert_eq!(determine_search_type(&[], None, None, None), "search");
+        assert_eq!(determine_search_type(&[], None, None, None, None), "search");
     }
 
     // ── build_category_param ─────────────────────────────────────────────
@@ -1703,44 +1757,52 @@ mod tests {
     }
 
     #[test]
-    fn preferred_anime_query_uses_romanized_jpn_alias_with_episode_suffix() {
-        let query = preferred_anime_query(
-            "Frieren S01E01",
-            &[
-                TaggedAlias {
-                    name: "葬送のフリーレン".into(),
-                    language: "jpn".into(),
-                },
-                TaggedAlias {
-                    name: "Sousou no Frieren".into(),
-                    language: "jpn".into(),
-                },
-            ],
-        );
-
-        assert_eq!(query.as_deref(), Some("Sousou no Frieren S01E01"));
+    fn build_query_variants_prefers_romanized_anime_alias_before_canonical() {
+        let variants = build_query_variants("Frieren S01E01");
+        assert_eq!(variants, vec!["Frieren"]);
     }
 
     #[test]
-    fn build_query_variants_prefers_romanized_anime_alias_before_canonical() {
-        let req = SearchRequest {
-            query: "Frieren S01E01".into(),
-            imdb_id: None,
-            tvdb_id: Some("424536".into()),
-            category: Some("anime".into()),
-            categories: vec![],
-            limit: 100,
-            season: Some(1),
-            episode: Some(1),
-            tagged_aliases: vec![TaggedAlias {
-                name: "Sousou no Frieren".into(),
-                language: "jpn".into(),
-            }],
-        };
+    fn build_search_url_tvdb_absolute_omits_query_and_season() {
+        let url = build_search_url(
+            "https://api.nzbgeek.info/api",
+            "tvsearch",
+            None,
+            "test-api-key",
+            None,
+            Some("74796"),
+            None,
+            200,
+            None,
+            Some(403),
+            "",
+        );
 
-        let variants = build_query_variants(&req, &req.query);
-        assert_eq!(variants[0], "Sousou no Frieren S01E01");
-        assert_eq!(variants[1], "Frieren S01E01");
+        assert!(url.contains("tvdbid=74796"));
+        assert!(url.contains("ep=403"));
+        assert!(!url.contains("q="));
+        assert!(!url.contains("season="));
+    }
+
+    #[test]
+    fn build_search_url_anime_freetext_uses_title_only_with_episode_context() {
+        let url = build_search_url(
+            "https://api.nzbgeek.info/api",
+            "tvsearch",
+            Some("Sousou no Frieren"),
+            "test-api-key",
+            None,
+            None,
+            None,
+            200,
+            Some(1),
+            Some(1),
+            "",
+        );
+
+        assert!(url.contains("q=Sousou%20no%20Frieren"));
+        assert!(url.contains("season=1"));
+        assert!(url.contains("ep=1"));
     }
 
     #[test]

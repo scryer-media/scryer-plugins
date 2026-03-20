@@ -69,9 +69,9 @@ struct ConfigFieldOption {
 struct SearchRequest {
     query: String,
     #[serde(default)]
-    imdb_id: Option<String>,
+    ids: HashMap<String, String>,
     #[serde(default)]
-    tvdb_id: Option<String>,
+    facet: Option<String>,
     #[serde(default)]
     category: Option<String>,
     #[serde(default)]
@@ -82,6 +82,8 @@ struct SearchRequest {
     season: Option<u32>,
     #[serde(default)]
     episode: Option<u32>,
+    #[serde(default)]
+    absolute_episode: Option<u32>,
 }
 
 #[derive(Serialize)]
@@ -885,8 +887,8 @@ fn filter_results(
     limit: usize,
 ) -> Vec<SearchResult> {
     let normalized_query = normalize_for_match(&req.query);
-    let imdb_id = req.imdb_id.as_deref().map(normalize_imdb);
-    let tvdb_id = req.tvdb_id.as_deref().map(str::trim).map(str::to_string);
+    let imdb_id = req.ids.get("imdb_id").map(|value| normalize_imdb(value));
+    let tvdb_id = req.ids.get("tvdb_id").map(|value| value.trim().to_string());
     let season_episode = build_episode_tokens(req.season, req.episode);
     let category_terms = requested_category_terms(req);
 
@@ -962,6 +964,12 @@ fn build_episode_tokens(season: Option<u32>, episode: Option<u32>) -> Option<Str
 
 fn requested_category_terms(req: &SearchRequest) -> Vec<String> {
     let mut terms = Vec::new();
+    if let Some(facet) = req.facet.as_deref() {
+        let normalized = normalize_for_match(facet);
+        if !normalized.is_empty() {
+            terms.push(normalized);
+        }
+    }
     if let Some(category) = req.category.as_deref() {
         let normalized = normalize_for_match(category);
         if !normalized.is_empty() {
@@ -1173,13 +1181,14 @@ mod tests {
             results,
             &SearchRequest {
                 query: "Show".to_string(),
-                imdb_id: None,
-                tvdb_id: None,
+                ids: HashMap::new(),
+                facet: Some("series".to_string()),
                 category: Some("tv".to_string()),
                 categories: vec![],
                 limit: 10,
                 season: Some(1),
                 episode: Some(2),
+                absolute_episode: None,
             },
             10,
         );
