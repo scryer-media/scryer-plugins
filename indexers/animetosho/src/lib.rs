@@ -45,6 +45,12 @@ struct Capabilities {
 }
 
 #[derive(Deserialize)]
+struct TaggedAlias {
+    name: String,
+    language: String,
+}
+
+#[derive(Deserialize)]
 #[allow(dead_code)]
 struct SearchRequest {
     query: String,
@@ -64,6 +70,8 @@ struct SearchRequest {
     season: Option<u32>,
     #[serde(default)]
     episode: Option<u32>,
+    #[serde(default)]
+    tagged_aliases: Vec<TaggedAlias>,
 }
 
 #[derive(Serialize)]
@@ -171,8 +179,8 @@ pub fn search(input: String) -> FnResult<String> {
     };
 
     let endpoint = base_url.trim_end_matches('/');
-    let limit = req.limit.clamp(1, 500);
     let query = req.query.trim().to_string();
+    let query_candidates = build_query_candidates(&query, &req.tagged_aliases);
     let anidb_id = req.anidb_id.as_deref().and_then(|v| {
         let trimmed = v.trim();
         if trimmed.is_empty() { None } else { Some(trimmed.to_string()) }
@@ -184,31 +192,47 @@ pub fn search(input: String) -> FnResult<String> {
     const MAX_PAGES: usize = 14; // 14 × 75 = 1050
     const MAX_RESULTS: usize = 1000;
 
-    let base_params = if let Some(ref aid) = anidb_id {
-        if !query.is_empty() {
-            format!("aid={aid}&q={}", url_encode(&query))
-        } else {
-            format!("aid={aid}")
-        }
-    } else if !query.is_empty() {
-        format!("q={}", url_encode(&query))
-    } else {
+    if anidb_id.is_none() && query_candidates.is_empty() {
         return Ok(serde_json::to_string(&SearchResponse { results: vec![] })?);
-    };
+    }
 
     let mut all_items: Vec<AnimetoshoItem> = Vec::new();
 
-    for page in 1..=MAX_PAGES {
-        let params = format!("{base_params}&page={page}");
-        let page_items = match query_json_api(endpoint, &params) {
-            Ok(items) => items,
-            Err(_) => break,
+    for query_candidate in query_candidates.iter().map(Some).chain(std::iter::once(None)) {
+        if query_candidate.is_none() && anidb_id.is_none() {
+            continue;
+        }
+
+        let base_params = if let Some(ref aid) = anidb_id {
+            if let Some(query_candidate) = query_candidate {
+                format!("aid={aid}&q={}", url_encode(query_candidate))
+            } else {
+                format!("aid={aid}")
+            }
+        } else if let Some(query_candidate) = query_candidate {
+            format!("q={}", url_encode(query_candidate))
+        } else {
+            continue;
         };
 
-        let page_count = page_items.len();
-        all_items.extend(page_items);
+        let mut query_items: Vec<AnimetoshoItem> = Vec::new();
+        for page in 1..=MAX_PAGES {
+            let params = format!("{base_params}&page={page}");
+            let page_items = match query_json_api(endpoint, &params) {
+                Ok(items) => items,
+                Err(_) => break,
+            };
 
-        if page_count < PAGE_SIZE || all_items.len() >= MAX_RESULTS {
+            let page_count = page_items.len();
+            query_items.extend(page_items);
+
+            if page_count < PAGE_SIZE || query_items.len() >= MAX_RESULTS {
+                break;
+            }
+        }
+
+        if !query_items.is_empty() {
+            all_items = query_items;
             break;
         }
     }
@@ -239,7 +263,7 @@ fn query_json_api(endpoint: &str, params: &str) -> Result<Vec<AnimetoshoItem>, E
 fn http_get_with_retry(url: &str) -> Result<String, Error> {
     const BACKOFF_SECS: &[u64] = &[2, 5, 10];
 
-    log!(LogLevel::Debug, "HTTP GET {url}");
+    let logged_url = redact_url_for_log(url);
 
     let http_req = HttpRequest::new(url)
         .with_header("Accept", "application/json")
@@ -256,8 +280,32 @@ fn http_get_with_retry(url: &str) -> Result<String, Error> {
             }
         }
 
+        log!(
+            LogLevel::Debug,
+            "http_trace plugin=animetosho method=GET attempt={} url={}",
+            attempt + 1,
+            logged_url
+        );
+
         let resp = http::request::<Vec<u8>>(&http_req, None)
-            .map_err(|e| Error::msg(format!("HTTP request failed: {e}")))?;
+            .map_err(|e| {
+                log!(
+                    LogLevel::Debug,
+                    "http_trace_error plugin=animetosho method=GET attempt={} url={} error={}",
+                    attempt + 1,
+                    logged_url,
+                    e
+                );
+                Error::msg(format!("HTTP request failed: {e}"))
+            })?;
+
+        log!(
+            LogLevel::Debug,
+            "http_trace_response plugin=animetosho method=GET attempt={} status={} url={}",
+            attempt + 1,
+            resp.status_code(),
+            logged_url
+        );
 
         if resp.status_code() == 429 {
             if attempt >= BACKOFF_SECS.len() {
@@ -293,6 +341,33 @@ fn http_get_with_retry(url: &str) -> Result<String, Error> {
     Err(Error::msg("HTTP request exhausted all retries"))
 }
 
+fn redact_url_for_log(url: &str) -> String {
+    let Some((base, query)) = url.split_once('?') else {
+        return url.to_string();
+    };
+
+    let redacted_query = query
+        .split('&')
+        .map(|pair| {
+            let Some((key, value)) = pair.split_once('=') else {
+                return pair.to_string();
+            };
+
+            if matches!(
+                key.trim().to_ascii_lowercase().as_str(),
+                "apikey" | "api_key" | "token" | "key" | "password" | "pass"
+            ) {
+                format!("{key}=REDACTED")
+            } else {
+                format!("{key}={value}")
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("&");
+
+    format!("{base}?{redacted_query}")
+}
+
 // ---------------------------------------------------------------------------
 // Deduplication
 // ---------------------------------------------------------------------------
@@ -305,6 +380,101 @@ fn dedup_items(items: Vec<AnimetoshoItem>) -> Vec<AnimetoshoItem> {
             _ => true, // keep items without info_hash
         }
     }).collect()
+}
+
+fn build_query_candidates(query: &str, tagged_aliases: &[TaggedAlias]) -> Vec<String> {
+    let mut candidates = Vec::new();
+
+    if let Some(preferred) = preferred_anime_query(query, tagged_aliases) {
+        if !preferred.is_empty() {
+            candidates.push(preferred);
+        }
+    }
+
+    if !query.is_empty() {
+        candidates.push(query.to_string());
+    }
+
+    let mut seen = HashSet::new();
+    candidates.retain(|candidate| seen.insert(candidate.to_ascii_lowercase()));
+    candidates
+}
+
+fn preferred_anime_query(query: &str, tagged_aliases: &[TaggedAlias]) -> Option<String> {
+    let alias = tagged_aliases
+        .iter()
+        .find(|alias| alias.language.eq_ignore_ascii_case("jpn") && is_romanized_alias(&alias.name))?
+        .name
+        .trim();
+
+    if alias.is_empty() {
+        return None;
+    }
+
+    let suffix = extract_query_suffix(query);
+    if suffix.is_empty() {
+        Some(alias.to_string())
+    } else {
+        Some(format!("{alias} {suffix}"))
+    }
+}
+
+fn is_romanized_alias(alias: &str) -> bool {
+    let trimmed = alias.trim();
+    !trimmed.is_empty()
+        && trimmed.chars().all(|ch| {
+            ch.is_ascii_alphanumeric()
+                || matches!(ch, ' ' | '-' | '_' | ':' | ';' | ',' | '.' | '\'' | '&' | '!' | '?')
+        })
+}
+
+fn extract_query_suffix(query: &str) -> String {
+    let tokens: Vec<&str> = query.split_whitespace().collect();
+    if tokens.is_empty() {
+        return String::new();
+    }
+
+    let mut start = tokens.len();
+    for index in (0..tokens.len()).rev() {
+        if looks_like_context_token(tokens[index]) {
+            start = index;
+        } else if start != tokens.len() {
+            break;
+        }
+    }
+
+    if start < tokens.len() {
+        tokens[start..].join(" ")
+    } else {
+        String::new()
+    }
+}
+
+fn looks_like_context_token(token: &str) -> bool {
+    let trimmed = token.trim_matches(|ch: char| !ch.is_ascii_alphanumeric());
+    if trimmed.is_empty() {
+        return false;
+    }
+
+    let upper = trimmed.to_ascii_uppercase();
+    if upper == "OVA" || upper == "SPECIAL" {
+        return true;
+    }
+
+    if upper.starts_with('S') {
+        let rest = &upper[1..];
+        if rest.chars().all(|ch| ch.is_ascii_digit()) {
+            return true;
+        }
+        if let Some((season_part, episode_part)) = rest.split_once('E') {
+            return !season_part.is_empty()
+                && !episode_part.is_empty()
+                && season_part.chars().all(|ch| ch.is_ascii_digit())
+                && episode_part.chars().all(|ch| ch.is_ascii_digit());
+        }
+    }
+
+    trimmed.chars().all(|ch| ch.is_ascii_digit())
 }
 
 // ---------------------------------------------------------------------------
@@ -602,6 +772,26 @@ mod tests {
         item.title = Some("".into());
         item.torrent_url = Some("https://example.com/file.torrent".into());
         assert!(build_results(vec![item]).is_empty());
+    }
+
+    #[test]
+    fn build_query_candidates_prefers_romanized_jpn_alias() {
+        let candidates = build_query_candidates(
+            "Frieren S01E01",
+            &[
+                TaggedAlias {
+                    name: "葬送のフリーレン".into(),
+                    language: "jpn".into(),
+                },
+                TaggedAlias {
+                    name: "Sousou no Frieren".into(),
+                    language: "jpn".into(),
+                },
+            ],
+        );
+
+        assert_eq!(candidates[0], "Sousou no Frieren S01E01");
+        assert_eq!(candidates[1], "Frieren S01E01");
     }
 
 }

@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use extism_pdk::*;
 use newznab_common::{
-    execute_full_search, Capabilities, NewznabConfig, PluginDescriptor, ScoringPolicy,
-    SearchRequest,
+    execute_full_search, Capabilities, NewznabConfig, PluginDescriptor,
+    ScoringPolicy, SearchRequest,
 };
 
 #[plugin_fn]

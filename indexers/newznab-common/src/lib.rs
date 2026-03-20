@@ -92,6 +92,12 @@ pub struct ConfigFieldOption {
 // ---------------------------------------------------------------------------
 
 #[derive(Deserialize)]
+pub struct TaggedAlias {
+    pub name: String,
+    pub language: String,
+}
+
+#[derive(Deserialize)]
 pub struct SearchRequest {
     pub query: String,
     #[serde(default)]
@@ -109,6 +115,8 @@ pub struct SearchRequest {
     pub season: Option<u32>,
     #[serde(default)]
     pub episode: Option<u32>,
+    #[serde(default)]
+    pub tagged_aliases: Vec<TaggedAlias>,
 }
 
 #[derive(Serialize)]
@@ -190,7 +198,6 @@ impl NewznabConfig {
             .and_then(|v| v.parse::<usize>().ok())
             .unwrap_or(200)
             .clamp(1, 500);
-
         Ok(Self {
             base_url,
             api_key,
@@ -306,6 +313,7 @@ pub fn execute_full_search(
     extract_fn: MetadataExtractor,
 ) -> Result<SearchResponse, Error> {
     let query = req.query.trim().to_string();
+    let query_variants = build_query_variants(req, &query);
 
     let imdb_id = req
         .imdb_id
@@ -362,7 +370,7 @@ pub fn execute_full_search(
         let (status, body) = execute_tiered_search(
             &endpoint,
             &search_type,
-            &query,
+            &query_variants,
             &config.api_key,
             imdb_id.as_deref(),
             tvdb_id.as_deref(),
@@ -478,6 +486,109 @@ fn build_category_param(categories: &[String]) -> Option<String> {
     }
 }
 
+fn build_query_variants(req: &SearchRequest, query: &str) -> Vec<String> {
+    let mut variants = Vec::new();
+
+    if is_anime_category(req.category.as_deref()) {
+        if let Some(preferred) = preferred_anime_query(query, &req.tagged_aliases) {
+            if !preferred.is_empty() {
+                variants.push(preferred);
+            }
+        }
+    }
+
+    if !query.is_empty() {
+        variants.push(query.to_string());
+    }
+
+    let mut seen = std::collections::HashSet::new();
+    variants.retain(|value| seen.insert(value.to_ascii_lowercase()));
+    variants
+}
+
+fn is_anime_category(category_hint: Option<&str>) -> bool {
+    category_hint
+        .map(|value| value.trim().eq_ignore_ascii_case("anime"))
+        .unwrap_or(false)
+}
+
+fn preferred_anime_query(query: &str, tagged_aliases: &[TaggedAlias]) -> Option<String> {
+    let alias = tagged_aliases
+        .iter()
+        .find(|alias| alias.language.eq_ignore_ascii_case("jpn") && is_romanized_alias(&alias.name))?
+        .name
+        .trim();
+
+    if alias.is_empty() {
+        return None;
+    }
+
+    let suffix = extract_query_suffix(query);
+    if suffix.is_empty() {
+        Some(alias.to_string())
+    } else {
+        Some(format!("{alias} {suffix}"))
+    }
+}
+
+fn is_romanized_alias(alias: &str) -> bool {
+    let trimmed = alias.trim();
+    !trimmed.is_empty()
+        && trimmed.chars().all(|ch| {
+            ch.is_ascii_alphanumeric()
+                || matches!(ch, ' ' | '-' | '_' | ':' | ';' | ',' | '.' | '\'' | '&' | '!' | '?')
+        })
+}
+
+fn extract_query_suffix(query: &str) -> String {
+    let tokens: Vec<&str> = query.split_whitespace().collect();
+    if tokens.is_empty() {
+        return String::new();
+    }
+
+    let mut start = tokens.len();
+    for index in (0..tokens.len()).rev() {
+        if looks_like_context_token(tokens[index]) {
+            start = index;
+        } else if start != tokens.len() {
+            break;
+        }
+    }
+
+    if start < tokens.len() {
+        tokens[start..].join(" ")
+    } else {
+        String::new()
+    }
+}
+
+fn looks_like_context_token(token: &str) -> bool {
+    let trimmed = token.trim_matches(|ch: char| !ch.is_ascii_alphanumeric());
+    if trimmed.is_empty() {
+        return false;
+    }
+
+    let upper = trimmed.to_ascii_uppercase();
+    if upper == "OVA" || upper == "SPECIAL" {
+        return true;
+    }
+
+    if upper.starts_with('S') {
+        let rest = &upper[1..];
+        if rest.chars().all(|ch| ch.is_ascii_digit()) {
+            return true;
+        }
+        if let Some((season_part, episode_part)) = rest.split_once('E') {
+            return !season_part.is_empty()
+                && !episode_part.is_empty()
+                && season_part.chars().all(|ch| ch.is_ascii_digit())
+                && episode_part.chars().all(|ch| ch.is_ascii_digit());
+        }
+    }
+
+    trimmed.chars().all(|ch| ch.is_ascii_digit())
+}
+
 // ---------------------------------------------------------------------------
 // Tiered search execution
 // ---------------------------------------------------------------------------
@@ -486,7 +597,7 @@ fn build_category_param(categories: &[String]) -> Option<String> {
 fn execute_tiered_search(
     endpoint: &str,
     search_type: &str,
-    query: &str,
+    query_variants: &[String],
     api_key: &str,
     imdb_id: Option<&str>,
     tvdb_id: Option<&str>,
@@ -510,11 +621,11 @@ fn execute_tiered_search(
     };
 
     let has_id = effective_imdb.is_some() || effective_tvdb.is_some();
-    let effective_query = if query.is_empty() { None } else { Some(query) };
+    let mut last_query_response: Option<(u16, String)> = None;
 
     // Tier 1: Query-based search with IDs when query text is available. This
     // matches the documented Newznab/NZBGeek movie and TV search forms.
-    if let Some(query_text) = effective_query {
+    for query_text in query_variants.iter().map(String::as_str).filter(|query| !query.is_empty()) {
         let (status, body) = execute_search(
             endpoint,
             search_type,
@@ -529,15 +640,19 @@ fn execute_tiered_search(
             additional_params,
         )?;
 
+        last_query_response = Some((status, body.clone()));
+
         if is_success_status(status) {
             let trimmed = body.trim_start();
             let looks_empty = is_empty_response(trimmed);
-            if !looks_empty || !has_id {
+            if !looks_empty {
                 return Ok((status, body));
             }
-            // Fall through to the ID-only tier if the combined query+ID form
-            // came back empty.
         }
+    }
+
+    if search_type == "search" && !has_id {
+        return Ok(last_query_response.unwrap_or((200, r#"{"channel":{}}"#.to_string())));
     }
 
     // Tier 2: ID-only search when we have an authoritative ID.
@@ -563,27 +678,39 @@ fn execute_tiered_search(
 
     // Tier 3: Generic search fallback (t=search, no IDs, no season/ep)
     if search_type != "search" {
-        let fallback_query = if query.is_empty() {
-            imdb_id.or(tvdb_id)
-        } else {
-            Some(query)
-        }
-        .filter(|v| !v.is_empty());
+        let mut fallback_queries: Vec<Option<&str>> = query_variants
+            .iter()
+            .map(String::as_str)
+            .filter(|query| !query.is_empty())
+            .map(Some)
+            .collect();
 
-        let (status, body) = execute_search(
-            endpoint,
-            "search",
-            fallback_query,
-            api_key,
-            None,
-            None,
-            cat,
-            limit,
-            None,
-            None,
-            additional_params,
-        )?;
-        return Ok((status, body));
+        if fallback_queries.is_empty() {
+            fallback_queries.push(imdb_id.or(tvdb_id).filter(|value| !value.is_empty()));
+        }
+
+        let mut last_fallback = (200, r#"{"channel":{}}"#.to_string());
+        for fallback_query in fallback_queries {
+            let (status, body) = execute_search(
+                endpoint,
+                "search",
+                fallback_query,
+                api_key,
+                None,
+                None,
+                cat,
+                limit,
+                None,
+                None,
+                additional_params,
+            )?;
+            let looks_empty = is_empty_response(body.trim_start());
+            last_fallback = (status, body.clone());
+            if is_success_status(status) && !looks_empty {
+                return Ok((status, body));
+            }
+        }
+        return Ok(last_fallback);
     }
 
     // Shouldn't reach here, but return empty
@@ -663,7 +790,7 @@ const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 fn http_get_with_retry(url: &str) -> Result<(u16, String), Error> {
     const BACKOFF_SECS: &[u64] = &[2, 5, 10];
 
-    log!(LogLevel::Debug, "HTTP GET {url}");
+    let logged_url = redact_url_for_log(url);
 
     let http_req = HttpRequest::new(url)
         .with_header("Accept", "application/json, application/xml, */*; q=0.8")
@@ -680,8 +807,32 @@ fn http_get_with_retry(url: &str) -> Result<(u16, String), Error> {
             }
         }
 
+        log!(
+            LogLevel::Debug,
+            "http_trace plugin=newznab method=GET attempt={} url={}",
+            attempt + 1,
+            logged_url
+        );
+
         let resp = http::request::<Vec<u8>>(&http_req, None)
-            .map_err(|e| Error::msg(format!("HTTP request failed: {e}")))?;
+            .map_err(|e| {
+                log!(
+                    LogLevel::Debug,
+                    "http_trace_error plugin=newznab method=GET attempt={} url={} error={}",
+                    attempt + 1,
+                    logged_url,
+                    e
+                );
+                Error::msg(format!("HTTP request failed: {e}"))
+            })?;
+
+        log!(
+            LogLevel::Debug,
+            "http_trace_response plugin=newznab method=GET attempt={} status={} url={}",
+            attempt + 1,
+            resp.status_code(),
+            logged_url
+        );
 
         if resp.status_code() == 429 {
             if attempt >= BACKOFF_SECS.len() {
@@ -710,6 +861,37 @@ fn http_get_with_retry(url: &str) -> Result<(u16, String), Error> {
     }
 
     Err(Error::msg("HTTP request exhausted all retries"))
+}
+
+fn redact_url_for_log(url: &str) -> String {
+    let Some((base, query)) = url.split_once('?') else {
+        return url.to_string();
+    };
+
+    let redacted_query = query
+        .split('&')
+        .map(|pair| {
+            let Some((key, value)) = pair.split_once('=') else {
+                return pair.to_string();
+            };
+
+            if is_sensitive_query_key(key) {
+                format!("{key}=REDACTED")
+            } else {
+                format!("{key}={value}")
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("&");
+
+    format!("{base}?{redacted_query}")
+}
+
+fn is_sensitive_query_key(key: &str) -> bool {
+    matches!(
+        key.trim().to_ascii_lowercase().as_str(),
+        "apikey" | "api_key" | "token" | "key" | "password" | "pass"
+    )
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1518,6 +1700,57 @@ mod tests {
         assert!(url.contains("limit=200"));
         assert!(url.contains("extended=1"));
         assert!(url.contains("o=json"));
+    }
+
+    #[test]
+    fn preferred_anime_query_uses_romanized_jpn_alias_with_episode_suffix() {
+        let query = preferred_anime_query(
+            "Frieren S01E01",
+            &[
+                TaggedAlias {
+                    name: "葬送のフリーレン".into(),
+                    language: "jpn".into(),
+                },
+                TaggedAlias {
+                    name: "Sousou no Frieren".into(),
+                    language: "jpn".into(),
+                },
+            ],
+        );
+
+        assert_eq!(query.as_deref(), Some("Sousou no Frieren S01E01"));
+    }
+
+    #[test]
+    fn build_query_variants_prefers_romanized_anime_alias_before_canonical() {
+        let req = SearchRequest {
+            query: "Frieren S01E01".into(),
+            imdb_id: None,
+            tvdb_id: Some("424536".into()),
+            category: Some("anime".into()),
+            categories: vec![],
+            limit: 100,
+            season: Some(1),
+            episode: Some(1),
+            tagged_aliases: vec![TaggedAlias {
+                name: "Sousou no Frieren".into(),
+                language: "jpn".into(),
+            }],
+        };
+
+        let variants = build_query_variants(&req, &req.query);
+        assert_eq!(variants[0], "Sousou no Frieren S01E01");
+        assert_eq!(variants[1], "Frieren S01E01");
+    }
+
+    #[test]
+    fn redact_url_for_log_redacts_apikey() {
+        let redacted = redact_url_for_log(
+            "https://example.test/api?t=movie&apikey=secret&o=json&token=abc",
+        );
+        assert!(redacted.contains("apikey=REDACTED"));
+        assert!(redacted.contains("token=REDACTED"));
+        assert!(redacted.contains("t=movie"));
     }
 
     #[test]

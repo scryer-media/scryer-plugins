@@ -335,7 +335,7 @@ fn fetch_feed(
     password: Option<&str>,
     additional_headers: &str,
 ) -> Result<String, Error> {
-    log!(LogLevel::Debug, "HTTP GET {feed_url}");
+    let logged_url = redact_url_for_log(feed_url);
 
     let mut request = HttpRequest::new(feed_url)
         .with_header(
@@ -369,9 +369,29 @@ fn fetch_feed(
         }
     }
 
+    log!(
+        LogLevel::Debug,
+        "http_trace plugin=torrent_rss method=GET attempt=1 url={}",
+        logged_url
+    );
+
     let response = http::request::<Vec<u8>>(&request, None)
-        .map_err(|e| Error::msg(format!("HTTP request failed: {e}")))?;
+        .map_err(|e| {
+            log!(
+                LogLevel::Debug,
+                "http_trace_error plugin=torrent_rss method=GET attempt=1 url={} error={}",
+                logged_url,
+                e
+            );
+            Error::msg(format!("HTTP request failed: {e}"))
+        })?;
     let status = response.status_code();
+    log!(
+        LogLevel::Debug,
+        "http_trace_response plugin=torrent_rss method=GET attempt=1 status={} url={}",
+        status,
+        logged_url
+    );
     if status >= 400 {
         return Err(Error::msg(format!(
             "Torrent RSS feed returned HTTP {status}"
@@ -379,6 +399,33 @@ fn fetch_feed(
     }
 
     Ok(String::from_utf8_lossy(&response.body()).to_string())
+}
+
+fn redact_url_for_log(url: &str) -> String {
+    let Some((base, query)) = url.split_once('?') else {
+        return url.to_string();
+    };
+
+    let redacted_query = query
+        .split('&')
+        .map(|pair| {
+            let Some((key, value)) = pair.split_once('=') else {
+                return pair.to_string();
+            };
+
+            if matches!(
+                key.trim().to_ascii_lowercase().as_str(),
+                "apikey" | "api_key" | "token" | "key" | "password" | "pass"
+            ) {
+                format!("{key}=REDACTED")
+            } else {
+                format!("{key}={value}")
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("&");
+
+    format!("{base}?{redacted_query}")
 }
 
 fn parse_rss_feed(body: &str, preference: DownloadPreference) -> Vec<SearchResult> {
