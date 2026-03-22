@@ -331,13 +331,7 @@ pub fn execute_full_search(
         .filter(|v| !v.is_empty());
 
     if query.is_empty() && imdb_id.is_none() && tvdb_id.is_none() {
-        return Ok(SearchResponse {
-            results: vec![],
-            api_current: None,
-            api_max: None,
-            grab_current: None,
-            grab_max: None,
-        });
+        return execute_rss_search(config, req, extract_fn);
     }
 
     // Determine search type from categories and hints
@@ -449,6 +443,155 @@ pub fn execute_full_search(
     if all_results.len() > limit {
         all_results.truncate(limit);
     }
+
+    Ok(SearchResponse {
+        results: all_results,
+        api_current: last_limits.api_current,
+        api_max: last_limits.api_max,
+        grab_current: last_limits.grab_current,
+        grab_max: last_limits.grab_max,
+    })
+}
+
+// ---------------------------------------------------------------------------
+// RSS / unfiltered API search
+// ---------------------------------------------------------------------------
+
+/// Fetch recent releases via unfiltered Newznab API calls (no query, no IDs).
+///
+/// Makes category-only requests using the appropriate search type per facet:
+/// - Movie categories (2xxx) → `t=movie`
+/// - TV/anime categories (5xxx) → `t=tvsearch`
+/// - Unknown → both
+fn execute_rss_search(
+    config: &NewznabConfig,
+    req: &SearchRequest,
+    extract_fn: MetadataExtractor,
+) -> Result<SearchResponse, Error> {
+    let endpoint = build_endpoint(&config.base_url, &config.api_path);
+    let newznab_cat = build_category_param(&req.categories);
+
+    // If no categories provided, we can't make a meaningful RSS request
+    let cat_str = match newznab_cat {
+        Some(ref c) => c.as_str(),
+        None => {
+            log!(
+                LogLevel::Debug,
+                "rss_search: no categories provided, skipping"
+            );
+            return Ok(SearchResponse {
+                results: vec![],
+                api_current: None,
+                api_max: None,
+                grab_current: None,
+                grab_max: None,
+            });
+        }
+    };
+
+    // Determine which search types to use based on categories and facet
+    let has_movie_cats = req.categories.iter().any(|c| c.starts_with('2'));
+    let has_tv_cats = req.categories.iter().any(|c| c.starts_with('5'));
+    let facet_movie = matches!(req.facet.as_deref(), Some("movie"));
+    let facet_tv = matches!(req.facet.as_deref(), Some("series" | "anime"));
+
+    let mut search_types = Vec::new();
+    if has_movie_cats || facet_movie {
+        search_types.push("movie");
+    }
+    if has_tv_cats || facet_tv {
+        search_types.push("tvsearch");
+    }
+    if search_types.is_empty() {
+        // No clear signal — try both
+        search_types.push("tvsearch");
+        search_types.push("movie");
+    }
+
+    log!(
+        LogLevel::Info,
+        "rss_search: fetching recent releases cat={} search_types={:?}",
+        cat_str,
+        search_types
+    );
+
+    let mut all_results: Vec<SearchResult> = Vec::new();
+    let mut last_limits = ApiLimits::default();
+
+    for search_type in &search_types {
+        let (status, body) = execute_search(
+            &endpoint,
+            search_type,
+            None, // no query
+            &config.api_key,
+            None, // no imdb_id
+            None, // no tvdb_id
+            Some(cat_str),
+            config.page_size,
+            None, // no season
+            None, // no episode
+            &config.additional_params,
+        )?;
+
+        let trimmed = body.trim_start();
+        let is_xml = trimmed.starts_with("<?xml")
+            || trimmed.starts_with("<rss")
+            || trimmed.starts_with("<error");
+
+        if is_xml {
+            if let Some((code, description)) = parse_error_xml(&body) {
+                log!(
+                    LogLevel::Warn,
+                    "RSS fetch error for t={}: {} — {}",
+                    search_type,
+                    code,
+                    description
+                );
+                continue;
+            }
+        } else if let Some((code, description)) = parse_error_json(&body) {
+            log!(
+                LogLevel::Warn,
+                "RSS fetch error for t={}: {} — {}",
+                search_type,
+                code,
+                description
+            );
+            continue;
+        }
+
+        if status >= 400 {
+            log!(
+                LogLevel::Warn,
+                "RSS fetch HTTP {} for t={}",
+                status,
+                search_type
+            );
+            continue;
+        }
+
+        let (page_results, limits) = if is_xml {
+            parse_newznab_xml(&body, config.page_size, extract_fn)
+        } else {
+            parse_newznab_json(&body, config.page_size, extract_fn)
+        };
+
+        log!(
+            LogLevel::Info,
+            "rss_search: t={} returned {} results",
+            search_type,
+            page_results.len()
+        );
+        last_limits = limits;
+        all_results.extend(page_results);
+    }
+
+    log!(
+        LogLevel::Info,
+        "rss_search: total {} results across {} search types",
+        all_results.len(),
+        search_types.len()
+    );
 
     Ok(SearchResponse {
         results: all_results,
@@ -840,6 +983,7 @@ fn http_get_with_retry(url: &str) -> Result<(u16, String), Error> {
 
     let http_req = HttpRequest::new(url)
         .with_header("Accept", "application/json, application/xml, */*; q=0.8")
+        .with_header("Accept-Encoding", "gzip")
         .with_header("Accept-Language", "en-US,en;q=0.9")
         .with_header("User-Agent", USER_AGENT);
 
