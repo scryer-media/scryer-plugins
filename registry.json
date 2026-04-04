@@ -52,7 +52,7 @@
       "builtin": false,
       "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torznab",
       "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/torznab_indexer.wasm",
-      "wasm_sha256": "511671174b0a65ec45de2200869eca67014fbb3f54950109fd597d2adef7a5a6",
+      "wasm_sha256": "58d856c459f46e576702a323a63cc9917a6aa89aacfe0463f44bd7a71eb5d762",
       "min_scryer_version": "0.8.2"
     },
     {
@@ -67,7 +67,7 @@
       "builtin": false,
       "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torrent-rss",
       "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/torrent_rss_indexer.wasm",
-      "wasm_sha256": "5cd3e7634f28e2e5ae5ce55f13d6c3a1aa0fca3f99bac8b86dcd01199ca7cb27",
+      "wasm_sha256": "182a84f7c2ffd624bbb0fe978861e71b2dfe07a129751f8da79793a3719d312b",
       "min_scryer_version": "0.8.2"
     },
     {
@@ -76,13 +76,13 @@
       "description": "Anime release aggregator with torrent and NZB downloads from Nyaa, nekoBT, and other trackers",
       "plugin_type": "indexer",
       "provider_type": "animetosho",
-      "version": "0.3.3",
+      "version": "0.3.4",
       "author": "scryer-media",
       "official": true,
       "builtin": false,
       "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/animetosho",
       "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/animetosho_indexer.wasm",
-      "wasm_sha256": "5c5a149faaf964a59c47ecadd0b04f465b5863ff5bdfb003e453e906e7f28d57",
+      "wasm_sha256": "7c19793001ff6616a7e3ec74672d5c3ecd5a18f4ece0c948d966fd420adb9501",
       "min_scryer_version": "0.0.5"
     },
     {
