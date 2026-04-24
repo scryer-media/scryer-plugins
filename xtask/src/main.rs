@@ -257,7 +257,7 @@ fn save_registry(ctx: &TaskContext, registry: &Registry) -> Result<()> {
 }
 
 fn locate_plugin(ctx: &TaskContext, plugin_name: &str) -> Result<PathBuf> {
-    for prefix in ["indexers", "download_clients", "notifications"] {
+    for prefix in ["indexers", "download_clients", "notifications", "subtitles"] {
         let path = ctx.path(prefix).join(plugin_name);
         if path.is_dir() {
             return Ok(path);

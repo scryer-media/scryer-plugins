@@ -129,6 +129,60 @@
       "min_scryer_version": "0.8.0",
       "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/qbittorrent_download_client.wasm",
       "wasm_sha256": "0de3ba13744c318b8a269975063241fecf02a1fac84eab75c0d8a0240f6f0cbd"
+    },
+    {
+      "id": "opensubtitles",
+      "name": "OpenSubtitles",
+      "description": "OpenSubtitles subtitle provider with provider-managed auth, search, and download",
+      "plugin_type": "subtitle_provider",
+      "provider_type": "opensubtitles",
+      "version": "0.1.0",
+      "author": "scryer-media",
+      "official": true,
+      "builtin": true,
+      "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/opensubtitles",
+      "min_scryer_version": "0.11.4"
+    },
+    {
+      "id": "jimaku",
+      "name": "Jimaku",
+      "description": "Anime-focused Jimaku subtitle provider using AniList IDs and optional name fallback",
+      "plugin_type": "subtitle_provider",
+      "provider_type": "jimaku",
+      "version": "0.1.0",
+      "author": "scryer-media",
+      "official": true,
+      "builtin": true,
+      "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/jimaku",
+      "min_scryer_version": "0.11.4"
+    },
+    {
+      "id": "animetosho-subtitles",
+      "name": "AnimeTosho Subtitles",
+      "description": "AnimeTosho subtitle attachment provider for AniDB episode matches",
+      "plugin_type": "subtitle_provider",
+      "provider_type": "animetosho",
+      "version": "0.1.0",
+      "author": "scryer-media",
+      "official": true,
+      "builtin": false,
+      "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/animetosho",
+      "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/animetosho_subtitle_provider.wasm",
+      "wasm_sha256": "f9b11ebc45ef18586e478df1974e56b6aaa2c8932cbb09789981488b4a89043f",
+      "min_scryer_version": "0.11.4"
+    },
+    {
+      "id": "whisper",
+      "name": "Whisper",
+      "description": "OpenAI Whisper subtitle generator for staged audio transcription",
+      "plugin_type": "subtitle_provider",
+      "provider_type": "whisper",
+      "version": "0.1.0",
+      "author": "scryer-media",
+      "official": true,
+      "builtin": true,
+      "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/whisper",
+      "min_scryer_version": "0.11.4"
     }
   ],
   "rule_packs": [
