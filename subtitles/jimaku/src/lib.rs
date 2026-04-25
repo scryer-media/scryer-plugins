@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::collections::HashSet;
 use std::time::Duration;
 
 use base64::engine::general_purpose::STANDARD as BASE64;
@@ -10,6 +11,8 @@ const API_BASE: &str = "https://jimaku.cc/api";
 const USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"));
 const MIN_SUBTITLE_BYTES: usize = 500;
 const MAX_RATE_LIMIT_WAIT_SECONDS: u64 = 5;
+const MAX_SEARCH_ENTRY_CANDIDATES: usize = 5;
+const MAX_SEARCH_QUERIES: usize = 12;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct PluginDescriptor {
@@ -153,6 +156,8 @@ struct SubtitlePluginSearchRequest {
     pub title: String,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub title_aliases: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub title_candidates: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub season: Option<i32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -393,10 +398,20 @@ fn search_subtitles_impl(
     request: &SubtitlePluginSearchRequest,
 ) -> Result<Vec<SubtitlePluginCandidate>, String> {
     let entries = search_entries(config, request)?;
-    let Some(entry) = entries.into_iter().next() else {
-        return Ok(Vec::new());
-    };
+    let mut results = Vec::new();
+    for entry in entries.into_iter().take(MAX_SEARCH_ENTRY_CANDIDATES) {
+        let mut entry_results = search_entry_subtitles(config, request, entry)?;
+        results.append(&mut entry_results);
+    }
 
+    Ok(results)
+}
+
+fn search_entry_subtitles(
+    config: &JimakuConfig,
+    request: &SubtitlePluginSearchRequest,
+    entry: JimakuEntry,
+) -> Result<Vec<SubtitlePluginCandidate>, String> {
     let mut only_archives = false;
     let files = if request.media_kind == SubtitleQueryMediaKind::Episode && !entry.flags.movie {
         if let Some(episode) = request.episode.or(request.absolute_episode) {
@@ -434,7 +449,7 @@ fn search_subtitles_impl(
             continue;
         }
 
-        let language = detect_language(&file.name);
+        let language = detect_language(&file.name, &request.languages);
         if !requested_language_matches(&request.languages, &language) {
             continue;
         }
@@ -485,6 +500,55 @@ fn search_entries(
     config: &JimakuConfig,
     request: &SubtitlePluginSearchRequest,
 ) -> Result<Vec<JimakuEntry>, String> {
+    let mut entries = Vec::new();
+    let mut seen_ids = HashSet::<i64>::new();
+
+    let season_number = request.season.unwrap_or(1);
+    let should_prefer_season_name_search =
+        request.media_kind == SubtitleQueryMediaKind::Episode && season_number > 1;
+
+    if !should_prefer_season_name_search {
+        append_anilist_entries(config, request, &mut entries, &mut seen_ids)?;
+    }
+
+    if config.enable_name_search_fallback || request.media_kind == SubtitleQueryMediaKind::Movie {
+        let queries = search_query_candidates(request);
+        for query in &queries {
+            append_search_query_entries(config, &query, None, &mut entries, &mut seen_ids)?;
+            if entries.len() >= MAX_SEARCH_ENTRY_CANDIDATES {
+                return Ok(entries);
+            }
+        }
+
+        if entries.is_empty() {
+            for query in &queries {
+                append_search_query_entries(
+                    config,
+                    &query,
+                    Some(false),
+                    &mut entries,
+                    &mut seen_ids,
+                )?;
+                if entries.len() >= MAX_SEARCH_ENTRY_CANDIDATES {
+                    return Ok(entries);
+                }
+            }
+        }
+    }
+
+    if should_prefer_season_name_search {
+        append_anilist_entries(config, request, &mut entries, &mut seen_ids)?;
+    }
+
+    Ok(entries)
+}
+
+fn append_anilist_entries(
+    config: &JimakuConfig,
+    request: &SubtitlePluginSearchRequest,
+    entries: &mut Vec<JimakuEntry>,
+    seen_ids: &mut HashSet<i64>,
+) -> Result<(), String> {
     for id in request
         .external_ids
         .get("anilist")
@@ -493,32 +557,98 @@ fn search_entries(
         .filter(|id| !id.trim().is_empty())
     {
         let path = format!("entries/search?anilist_id={}", url_encode(id.trim()));
-        let entries = jimaku_get_json::<Vec<JimakuEntry>>(config, &path)?;
-        if !entries.is_empty() {
-            return Ok(entries);
+        append_entries(jimaku_get_json(config, &path)?, entries, seen_ids);
+        if entries.len() >= MAX_SEARCH_ENTRY_CANDIDATES {
+            break;
+        }
+    }
+    Ok(())
+}
+
+fn append_search_query_entries(
+    config: &JimakuConfig,
+    query: &str,
+    anime: Option<bool>,
+    entries: &mut Vec<JimakuEntry>,
+    seen_ids: &mut HashSet<i64>,
+) -> Result<(), String> {
+    let path = match anime {
+        Some(value) => format!(
+            "entries/search?query={}&anime={value}",
+            url_encode(query.trim())
+        ),
+        None => format!("entries/search?query={}", url_encode(query.trim())),
+    };
+    append_entries(jimaku_get_json(config, &path)?, entries, seen_ids);
+    Ok(())
+}
+
+fn append_entries(
+    found: Vec<JimakuEntry>,
+    entries: &mut Vec<JimakuEntry>,
+    seen_ids: &mut HashSet<i64>,
+) {
+    for entry in found {
+        if seen_ids.insert(entry.id) {
+            entries.push(entry);
+        }
+    }
+}
+
+fn search_query_candidates(request: &SubtitlePluginSearchRequest) -> Vec<String> {
+    let mut bases = Vec::new();
+    let mut seen_bases = HashSet::new();
+    for candidate in request
+        .title_candidates
+        .iter()
+        .chain(std::iter::once(&request.title))
+        .chain(request.title_aliases.iter())
+    {
+        let normalized = normalize_query(candidate);
+        if !normalized.is_empty() && seen_bases.insert(normalized.clone()) {
+            bases.push(normalized);
         }
     }
 
-    if !config.enable_name_search_fallback && request.media_kind != SubtitleQueryMediaKind::Movie {
-        return Ok(Vec::new());
-    }
-
-    let mut query = request.title.to_ascii_lowercase();
-    if request.media_kind == SubtitleQueryMediaKind::Episode {
-        if let Some(season) = request.season {
-            if season > 1 {
-                query = format!("{query} {season}");
-            }
+    let mut queries = Vec::new();
+    let mut seen_queries = HashSet::new();
+    let season = request.season.filter(|season| *season > 1);
+    for base in &bases {
+        if let Some(season) = season {
+            push_query_candidate(&mut queries, &mut seen_queries, format!("{base} {season}"));
+            push_query_candidate(
+                &mut queries,
+                &mut seen_queries,
+                format!("{base} season {season}"),
+            );
+            push_query_candidate(&mut queries, &mut seen_queries, format!("{base} s{season}"));
+        }
+        push_query_candidate(&mut queries, &mut seen_queries, base.clone());
+        if queries.len() >= MAX_SEARCH_QUERIES {
+            break;
         }
     }
-    let path = format!("entries/search?query={}", url_encode(&query));
-    let entries = jimaku_get_json::<Vec<JimakuEntry>>(config, &path)?;
-    if !entries.is_empty() {
-        return Ok(entries);
-    }
 
-    let path = format!("entries/search?query={}&anime=false", url_encode(&query));
-    jimaku_get_json::<Vec<JimakuEntry>>(config, &path)
+    queries
+}
+
+fn push_query_candidate(queries: &mut Vec<String>, seen: &mut HashSet<String>, query: String) {
+    if queries.len() >= MAX_SEARCH_QUERIES {
+        return;
+    }
+    let query = normalize_query(&query);
+    if !query.is_empty() && seen.insert(query.clone()) {
+        queries.push(query);
+    }
+}
+
+fn normalize_query(value: &str) -> String {
+    value
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+        .trim()
+        .to_ascii_lowercase()
 }
 
 fn entry_files(
@@ -681,12 +811,30 @@ fn looks_like_ai_subtitle(filename: &str) -> bool {
     lower.contains("whisper") || lower.contains("whisperai")
 }
 
-fn detect_language(filename: &str) -> String {
+fn detect_language(filename: &str, requested: &[String]) -> String {
     let lower = filename.to_ascii_lowercase();
-    if lower.contains(".en.") || lower.contains("[en]") || lower.contains("english") {
+    if lower.contains(".en.")
+        || lower.contains("[en]")
+        || lower.contains(".eng.")
+        || lower.contains("[eng]")
+        || lower.contains("english")
+    {
         "eng".to_string()
-    } else {
+    } else if lower.contains(".ja.")
+        || lower.contains(".ja[")
+        || lower.contains(".jp.")
+        || lower.contains(".jp[")
+        || lower.contains("ja-jp")
+        || lower.contains("[ja]")
+        || lower.contains("[jp]")
+        || lower.contains("japanese")
+        || lower.contains("jpsc")
+    {
         "jpn".to_string()
+    } else if let Some(language) = requested_single_language(requested) {
+        language
+    } else {
+        "eng".to_string()
     }
 }
 
@@ -695,6 +843,21 @@ fn requested_language_matches(requested: &[String], language: &str) -> bool {
         || requested
             .iter()
             .any(|candidate| normalize_lang(candidate) == normalize_lang(language))
+}
+
+fn requested_single_language(requested: &[String]) -> Option<String> {
+    let mut normalized = requested
+        .iter()
+        .map(|language| normalize_lang(language).to_string())
+        .filter(|language| !language.trim().is_empty())
+        .collect::<Vec<_>>();
+    normalized.sort();
+    normalized.dedup();
+    if normalized.len() == 1 {
+        normalized.pop()
+    } else {
+        None
+    }
 }
 
 fn normalize_lang(language: &str) -> &str {
@@ -732,4 +895,64 @@ fn url_encode(input: &str) -> String {
         }
     }
     output
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn episode_request() -> SubtitlePluginSearchRequest {
+        SubtitlePluginSearchRequest {
+            media_kind: SubtitleQueryMediaKind::Episode,
+            facet: Some("anime".to_string()),
+            title: "The Apothecary Diaries".to_string(),
+            title_aliases: vec!["Kusuriya no Hitorigoto".to_string()],
+            title_candidates: vec![],
+            season: Some(2),
+            episode: Some(23),
+            absolute_episode: None,
+            external_ids: BTreeMap::new(),
+            languages: vec!["eng".to_string()],
+        }
+    }
+
+    #[test]
+    fn season_two_queries_include_season_qualified_aliases_before_bare_aliases() {
+        let request = episode_request();
+
+        let queries = search_query_candidates(&request);
+
+        assert!(queries
+            .iter()
+            .any(|query| query == "kusuriya no hitorigoto 2"));
+        let qualified = queries
+            .iter()
+            .position(|query| query == "kusuriya no hitorigoto 2")
+            .expect("qualified alias query should exist");
+        let bare = queries
+            .iter()
+            .position(|query| query == "kusuriya no hitorigoto")
+            .expect("bare alias query should exist");
+        assert!(qualified < bare);
+    }
+
+    #[test]
+    fn unmarked_jimaku_file_uses_requested_language() {
+        let language = detect_language(
+            "[NanakoRaws] Kusuriya no Hitorigoto S2 - 23 (NTV 1920x1080 x265 AAC).srt",
+            &["eng".to_string()],
+        );
+
+        assert_eq!(language, "eng");
+    }
+
+    #[test]
+    fn explicit_japanese_marker_wins_over_requested_english() {
+        let language = detect_language(
+            "薬屋のひとりごと.S01E23.WEBRip.Netflix.ja[cc].srt",
+            &["eng".to_string()],
+        );
+
+        assert_eq!(language, "jpn");
+    }
 }
