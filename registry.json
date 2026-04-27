@@ -49,10 +49,8 @@
       "version": "0.1.2",
       "author": "scryer-media",
       "official": true,
-      "builtin": false,
+      "builtin": true,
       "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torznab",
-      "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/torznab_indexer.wasm",
-      "wasm_sha256": "43f5e6dee4d78b0c4efb76d9a7f1b707ab95ebc9de1ab44959b8ecfe337b17a2",
       "min_scryer_version": "0.8.2"
     },
     {
@@ -79,10 +77,8 @@
       "version": "0.3.4",
       "author": "scryer-media",
       "official": true,
-      "builtin": false,
+      "builtin": true,
       "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/animetosho",
-      "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/animetosho_indexer.wasm",
-      "wasm_sha256": "7c19793001ff6616a7e3ec74672d5c3ecd5a18f4ece0c948d966fd420adb9501",
       "min_scryer_version": "0.0.5"
     },
     {
@@ -139,8 +135,10 @@
       "version": "0.1.0",
       "author": "scryer-media",
       "official": true,
-      "builtin": true,
+      "builtin": false,
       "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/opensubtitles",
+      "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/opensubtitles_subtitle_provider.wasm",
+      "wasm_sha256": "4088f5c17882e352c9cde198e5a595758a5ab2b168b1af697461599a7c6b6a37",
       "min_scryer_version": "0.11.4"
     },
     {
@@ -180,8 +178,10 @@
       "version": "0.1.0",
       "author": "scryer-media",
       "official": true,
-      "builtin": true,
+      "builtin": false,
       "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/whisper",
+      "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/whisper_subtitle_provider.wasm",
+      "wasm_sha256": "a224a78bcd747ef9140cfadb36bbd929c4c8e21c36c1004590e439f2e9320efa",
       "min_scryer_version": "0.11.4"
     }
   ],
