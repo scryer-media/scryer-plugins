@@ -221,9 +221,7 @@ pub fn standard_config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("/api".to_string()),
             options: vec![],
-            help_text: Some(
-                "API endpoint path (e.g. /api, /api/v1/api, /nabapi)".to_string(),
-            ),
+            help_text: Some("API endpoint path (e.g. /api, /api/v1/api, /nabapi)".to_string()),
         },
         ConfigFieldDef {
             key: "additional_params".to_string(),
@@ -747,14 +745,22 @@ fn execute_exact_anime_search(
             Some(tvdb_id),
             cat,
             limit,
-            if absolute_episode.is_some() { None } else { season },
+            if absolute_episode.is_some() {
+                None
+            } else {
+                season
+            },
             absolute_episode.or(episode),
             additional_params,
         );
     }
 
     let mut last_response = (200, r#"{"channel":{}}"#.to_string());
-    for query_text in query_variants.iter().map(String::as_str).filter(|query| !query.is_empty()) {
+    for query_text in query_variants
+        .iter()
+        .map(String::as_str)
+        .filter(|query| !query.is_empty())
+    {
         let (status, body) = execute_search(
             endpoint,
             "tvsearch",
@@ -814,7 +820,11 @@ fn execute_tiered_search(
 
     // Tier 1: Query-based search with IDs when query text is available. This
     // matches the documented Newznab/NZBGeek movie and TV search forms.
-    for query_text in query_variants.iter().map(String::as_str).filter(|query| !query.is_empty()) {
+    for query_text in query_variants
+        .iter()
+        .map(String::as_str)
+        .filter(|query| !query.is_empty())
+    {
         let (status, body) = execute_search(
             endpoint,
             search_type,
@@ -928,7 +938,10 @@ fn is_empty_response(trimmed: &str) -> bool {
 
 fn build_endpoint(base_url: &str, api_path: &str) -> String {
     let cleaned = base_url.trim_end_matches('/');
-    let path = api_path.trim().trim_start_matches('/').trim_end_matches('/');
+    let path = api_path
+        .trim()
+        .trim_start_matches('/')
+        .trim_end_matches('/');
     if path.is_empty() {
         cleaned.to_string()
     } else {
@@ -1004,17 +1017,16 @@ fn http_get_with_retry(url: &str) -> Result<(u16, String), Error> {
             logged_url
         );
 
-        let resp = http::request::<Vec<u8>>(&http_req, None)
-            .map_err(|e| {
-                log!(
-                    LogLevel::Debug,
-                    "http_trace_error plugin=newznab method=GET attempt={} url={} error={}",
-                    attempt + 1,
-                    logged_url,
-                    e
-                );
-                Error::msg(format!("HTTP request failed: {e}"))
-            })?;
+        let resp = http::request::<Vec<u8>>(&http_req, None).map_err(|e| {
+            log!(
+                LogLevel::Debug,
+                "http_trace_error plugin=newznab method=GET attempt={} url={} error={}",
+                attempt + 1,
+                logged_url,
+                e
+            );
+            Error::msg(format!("HTTP request failed: {e}"))
+        })?;
 
         log!(
             LogLevel::Debug,
@@ -1047,7 +1059,10 @@ fn http_get_with_retry(url: &str) -> Result<(u16, String), Error> {
             continue;
         }
 
-        return Ok((resp.status_code(), String::from_utf8_lossy(&resp.body()).to_string()));
+        return Ok((
+            resp.status_code(),
+            String::from_utf8_lossy(&resp.body()).to_string(),
+        ));
     }
 
     Err(Error::msg("HTTP request exhausted all retries"))
@@ -1099,9 +1114,8 @@ fn build_search_url(
     additional_params: &str,
 ) -> String {
     let imdb_id = imdb_id.map(normalize_imdbid_param);
-    let mut url = format!(
-        "{endpoint}?t={search_type}&apikey={api_key}&o=json&extended=1&limit={limit}"
-    );
+    let mut url =
+        format!("{endpoint}?t={search_type}&apikey={api_key}&o=json&extended=1&limit={limit}");
 
     if let Some(q) = query {
         url.push_str("&q=");
@@ -1153,13 +1167,9 @@ fn url_encode(input: &str) -> String {
     let mut output = String::with_capacity(input.len() * 2);
     for byte in input.bytes() {
         match byte {
-            b'A'..=b'Z'
-            | b'a'..=b'z'
-            | b'0'..=b'9'
-            | b'-'
-            | b'_'
-            | b'.'
-            | b'~' => output.push(byte as char),
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                output.push(byte as char)
+            }
             b' ' => output.push_str("%20"),
             _ => {
                 output.push('%');
@@ -1211,16 +1221,18 @@ fn apply_standard_attrs(
             }
             "tvdbid" => {
                 if !value.is_empty() && value != "0" {
-                    result
-                        .extra
-                        .insert("response_tvdbid".to_string(), serde_json::Value::from(value.as_str()));
+                    result.extra.insert(
+                        "response_tvdbid".to_string(),
+                        serde_json::Value::from(value.as_str()),
+                    );
                 }
             }
             "imdb" | "imdbid" => {
                 if !value.is_empty() && value != "0" {
-                    result
-                        .extra
-                        .insert("response_imdbid".to_string(), serde_json::Value::from(value.as_str()));
+                    result.extra.insert(
+                        "response_imdbid".to_string(),
+                        serde_json::Value::from(value.as_str()),
+                    );
                 }
             }
             "prematch" | "haspretime" => {
@@ -1283,6 +1295,18 @@ struct NewznabJsonLimitsAttrs {
 #[derive(Deserialize)]
 struct NewznabJsonChannel {
     item: Option<NewznabJsonItems>,
+    account: Option<NewznabJsonAccountNode>,
+}
+
+#[derive(Deserialize)]
+struct NewznabJsonAccountNode {
+    #[serde(rename = "@attributes")]
+    attributes: Option<NewznabJsonAccountAttrs>,
+}
+
+#[derive(Deserialize)]
+struct NewznabJsonAccountAttrs {
+    status: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -1369,10 +1393,34 @@ struct NewznabJsonErrorAttrs {
 
 fn parse_error_json(body: &str) -> Option<(String, String)> {
     let parsed: NewznabJsonResponse = serde_json::from_str(body).ok()?;
-    let attrs = parsed.error?.attributes?;
-    let code = attrs.code.unwrap_or_else(|| "unknown".into());
-    let description = attrs.description.unwrap_or_else(|| "unknown".into());
-    Some((code, description))
+    if let Some(attrs) = parsed.error.and_then(|error| error.attributes) {
+        let code = attrs.code.unwrap_or_else(|| "unknown".into());
+        let description = attrs.description.unwrap_or_else(|| "unknown".into());
+        return Some((code, description));
+    }
+
+    let status = parsed
+        .channel
+        .and_then(|channel| channel.account)
+        .and_then(|account| account.attributes)
+        .and_then(|attrs| attrs.status)?;
+    error_from_account_status(&status)
+}
+
+fn error_from_account_status(status: &str) -> Option<(String, String)> {
+    let status = status.trim();
+    if status.is_empty() {
+        return None;
+    }
+
+    let lower = status.to_ascii_lowercase();
+    if lower.contains("invalid") && lower.contains("key") {
+        Some(("100".to_string(), status.to_string()))
+    } else if lower.contains("error") || lower.contains("denied") || lower.contains("disabled") {
+        Some(("unknown".to_string(), status.to_string()))
+    } else {
+        None
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1421,9 +1469,7 @@ fn parse_newznab_json(
                 .and_then(|v| v.replace(',', "").parse::<i64>().ok());
 
             // Check enclosure MIME type
-            let enclosure_type = enclosure_attrs
-                .as_ref()
-                .and_then(|a| a.mime_type.clone());
+            let enclosure_type = enclosure_attrs.as_ref().and_then(|a| a.mime_type.clone());
 
             // Extract attr pairs
             let pairs: Vec<(String, String)> = item
@@ -1452,9 +1498,11 @@ fn parse_newznab_json(
                 languages,
                 extra,
                 guid: item.guid,
-                info_url: item.comments.as_ref().map(|c| {
-                    c.split('#').next().unwrap_or(c).trim().to_string()
-                }).filter(|s| !s.is_empty()),
+                info_url: item
+                    .comments
+                    .as_ref()
+                    .map(|c| c.split('#').next().unwrap_or(c).trim().to_string())
+                    .filter(|s| !s.is_empty()),
             };
 
             // Apply standard attrs (usenetdate, prematch, nuked, response IDs)
@@ -1469,9 +1517,10 @@ fn parse_newznab_json(
             // Store non-NZB enclosure type as metadata
             if let Some(ref mime) = enclosure_type {
                 if mime != "application/x-nzb" {
-                    result
-                        .extra
-                        .insert("enclosure_type".to_string(), serde_json::Value::from(mime.as_str()));
+                    result.extra.insert(
+                        "enclosure_type".to_string(),
+                        serde_json::Value::from(mime.as_str()),
+                    );
                 }
             }
 
@@ -1491,9 +1540,7 @@ fn parse_error_xml(body: &str) -> Option<(String, String)> {
     let mut buf = Vec::new();
     loop {
         match reader.read_event_into(&mut buf) {
-            Ok(Event::Empty(ref e)) | Ok(Event::Start(ref e))
-                if e.name().as_ref() == b"error" =>
-            {
+            Ok(Event::Empty(ref e)) | Ok(Event::Start(ref e)) if e.name().as_ref() == b"error" => {
                 let mut code = None;
                 let mut description = None;
                 for attr in e.attributes().flatten() {
@@ -1512,6 +1559,19 @@ fn parse_error_xml(body: &str) -> Option<(String, String)> {
                         code.unwrap_or_else(|| "unknown".into()),
                         description.unwrap_or_else(|| "unknown".into()),
                     ));
+                }
+            }
+            Ok(Event::Empty(ref e)) | Ok(Event::Start(ref e))
+                if e.name().as_ref() == b"account" =>
+            {
+                for attr in e.attributes().flatten() {
+                    if attr.key.as_ref() == b"status" {
+                        if let Ok(status) = String::from_utf8(attr.value.to_vec()) {
+                            if let Some(error) = error_from_account_status(&status) {
+                                return Some(error);
+                            }
+                        }
+                    }
                 }
             }
             Ok(Event::Eof) => break,
@@ -1672,8 +1732,7 @@ fn parse_newznab_xml(
                             if size_bytes.is_none() || size_bytes == Some(0) {
                                 for (n, v) in &attrs {
                                     if n == "size" {
-                                        size_bytes =
-                                            v.replace(',', "").parse::<i64>().ok();
+                                        size_bytes = v.replace(',', "").parse::<i64>().ok();
                                         break;
                                     }
                                 }
@@ -1682,9 +1741,10 @@ fn parse_newznab_xml(
                             // Run provider-specific extractor
                             let (languages, grabs, extra) = extract_fn(&attrs);
 
-                            let info_url = comments.as_ref().map(|c| {
-                                c.split('#').next().unwrap_or(c).trim().to_string()
-                            }).filter(|s| !s.is_empty());
+                            let info_url = comments
+                                .as_ref()
+                                .map(|c| c.split('#').next().unwrap_or(c).trim().to_string())
+                                .filter(|s| !s.is_empty());
 
                             let mut result = SearchResult {
                                 title: t.clone(),
@@ -1770,13 +1830,19 @@ mod tests {
     #[test]
     fn search_type_movie_category() {
         let cats = vec!["2000".into()];
-        assert_eq!(determine_search_type(&cats, None, None, None, None), "movie");
+        assert_eq!(
+            determine_search_type(&cats, None, None, None, None),
+            "movie"
+        );
     }
 
     #[test]
     fn search_type_tv_category() {
         let cats = vec!["5000".into()];
-        assert_eq!(determine_search_type(&cats, None, None, None, None), "tvsearch");
+        assert_eq!(
+            determine_search_type(&cats, None, None, None, None),
+            "tvsearch"
+        );
     }
 
     #[test]
@@ -1951,9 +2017,8 @@ mod tests {
 
     #[test]
     fn redact_url_for_log_redacts_apikey() {
-        let redacted = redact_url_for_log(
-            "https://example.test/api?t=movie&apikey=secret&o=json&token=abc",
-        );
+        let redacted =
+            redact_url_for_log("https://example.test/api?t=movie&apikey=secret&o=json&token=abc");
         assert!(redacted.contains("apikey=REDACTED"));
         assert!(redacted.contains("token=REDACTED"));
         assert!(redacted.contains("t=movie"));
@@ -2023,7 +2088,9 @@ mod tests {
 
     #[test]
     fn non_empty_json() {
-        assert!(!is_empty_response(r#"{"channel":{"item":{"title":"foo"}}}"#));
+        assert!(!is_empty_response(
+            r#"{"channel":{"item":{"title":"foo"}}}"#
+        ));
     }
 
     #[test]
@@ -2033,7 +2100,9 @@ mod tests {
 
     #[test]
     fn non_empty_xml() {
-        assert!(!is_empty_response("<rss><channel><item><title>foo</title></item></channel></rss>"));
+        assert!(!is_empty_response(
+            "<rss><channel><item><title>foo</title></item></channel></rss>"
+        ));
     }
 
     #[test]
@@ -2143,7 +2212,10 @@ mod tests {
         let mut usenet_date = None;
         apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
         let flags = result.extra.get("indexer_flags").unwrap();
-        assert!(flags.as_array().unwrap().contains(&serde_json::Value::from("scene")));
+        assert!(flags
+            .as_array()
+            .unwrap()
+            .contains(&serde_json::Value::from("scene")));
     }
 
     #[test]
@@ -2153,7 +2225,10 @@ mod tests {
         let mut usenet_date = None;
         apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
         let flags = result.extra.get("indexer_flags").unwrap();
-        assert!(flags.as_array().unwrap().contains(&serde_json::Value::from("nuked")));
+        assert!(flags
+            .as_array()
+            .unwrap()
+            .contains(&serde_json::Value::from("nuked")));
     }
 
     #[test]
@@ -2186,6 +2261,19 @@ mod tests {
     }
 
     #[test]
+    fn json_account_invalid_key_status_is_error() {
+        let body = r#"{"channel":{"account":{"@attributes":{"status":"Invalid API Key"}}}}"#;
+        let result = parse_error_json(body);
+        assert_eq!(result, Some(("100".into(), "Invalid API Key".into())));
+    }
+
+    #[test]
+    fn json_account_ok_status_is_not_error() {
+        let body = r#"{"channel":{"account":{"@attributes":{"status":"OK"}}}}"#;
+        assert_eq!(parse_error_json(body), None);
+    }
+
+    #[test]
     fn json_malformed() {
         assert_eq!(parse_error_json("not json"), None);
     }
@@ -2203,6 +2291,13 @@ mod tests {
     fn xml_error_absent() {
         let body = "<rss><channel></channel></rss>";
         assert_eq!(parse_error_xml(body), None);
+    }
+
+    #[test]
+    fn xml_account_invalid_key_status_is_error() {
+        let body = r#"<rss><channel><account status="Invalid API Key"/></channel></rss>"#;
+        let result = parse_error_xml(body);
+        assert_eq!(result, Some(("100".into(), "Invalid API Key".into())));
     }
 
     #[test]
@@ -2250,11 +2345,17 @@ mod tests {
         let r = &results[0];
         assert_eq!(r.title, "Test.Release.720p");
         assert_eq!(r.guid.as_deref(), Some("abc123"));
-        assert_eq!(r.download_url.as_deref(), Some("https://example.com/download/abc123"));
+        assert_eq!(
+            r.download_url.as_deref(),
+            Some("https://example.com/download/abc123")
+        );
         assert_eq!(r.size_bytes, Some(1_073_741_824));
         assert_eq!(r.grabs, Some(42));
         assert_eq!(r.languages, vec!["English"]);
-        assert_eq!(r.info_url.as_deref(), Some("https://example.com/details/abc123"));
+        assert_eq!(
+            r.info_url.as_deref(),
+            Some("https://example.com/details/abc123")
+        );
     }
 
     #[test]
@@ -2330,11 +2431,17 @@ mod tests {
         let r = &results[0];
         assert_eq!(r.title, "Test.Release.1080p");
         assert_eq!(r.guid.as_deref(), Some("def456"));
-        assert_eq!(r.download_url.as_deref(), Some("https://example.com/dl/def456"));
+        assert_eq!(
+            r.download_url.as_deref(),
+            Some("https://example.com/dl/def456")
+        );
         assert_eq!(r.size_bytes, Some(2_147_483_648));
         assert_eq!(r.grabs, Some(99));
         assert_eq!(r.languages, vec!["English", "French"]);
-        assert_eq!(r.info_url.as_deref(), Some("https://example.com/details/def456"));
+        assert_eq!(
+            r.info_url.as_deref(),
+            Some("https://example.com/details/def456")
+        );
     }
 
     #[test]
