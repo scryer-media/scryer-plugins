@@ -16,6 +16,35 @@ const YELLOW: &str = "\x1b[1;33m";
 const BOLD: &str = "\x1b[1m";
 const RESET: &str = "\x1b[0m";
 const RAW_PREFIX: &str = "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/";
+const WASM_TARGET: &str = "wasm32-wasip1";
+
+struct BuiltinPluginSpec {
+    plugin_dir: &'static str,
+    artifact_name: &'static str,
+}
+
+const BUILTIN_PLUGINS: &[BuiltinPluginSpec] = &[
+    BuiltinPluginSpec {
+        plugin_dir: "indexers/nzbgeek",
+        artifact_name: "nzbgeek_indexer.wasm",
+    },
+    BuiltinPluginSpec {
+        plugin_dir: "indexers/newznab",
+        artifact_name: "newznab_indexer.wasm",
+    },
+    BuiltinPluginSpec {
+        plugin_dir: "indexers/animetosho",
+        artifact_name: "animetosho_indexer.wasm",
+    },
+    BuiltinPluginSpec {
+        plugin_dir: "indexers/torznab",
+        artifact_name: "torznab_indexer.wasm",
+    },
+    BuiltinPluginSpec {
+        plugin_dir: "subtitles/jimaku",
+        artifact_name: "jimaku_subtitle_provider.wasm",
+    },
+];
 
 fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -35,6 +64,7 @@ struct Cli {
 enum Commands {
     Release(ReleaseArgs),
     Registry(RegistryArgs),
+    Builtins(BuiltinsArgs),
 }
 
 #[derive(Args)]
@@ -55,6 +85,12 @@ struct ReleaseArgs {
 struct RegistryArgs {
     #[command(subcommand)]
     command: RegistryCommand,
+}
+
+#[derive(Args)]
+struct BuiltinsArgs {
+    #[arg(long, value_name = "DIR")]
+    output_dir: Option<PathBuf>,
 }
 
 #[derive(Subcommand)]
@@ -122,6 +158,7 @@ fn main() -> Result<()> {
         Commands::Registry(args) => match args.command {
             RegistryCommand::Validate => validate_registry(&ctx),
         },
+        Commands::Builtins(args) => run_builtins(&ctx, args),
     }
 }
 
@@ -174,6 +211,17 @@ fn require_command(command: &str) -> Result<()> {
     } else {
         bail!("{command} is required")
     }
+}
+
+fn require_wasm_target(ctx: &TaskContext) -> Result<()> {
+    require_command("rustup")?;
+    let mut targets = ctx.command("rustup");
+    targets.args(["target", "list", "--installed"]);
+    let installed_targets = run_capture(&mut targets)?;
+    if !installed_targets.lines().any(|line| line == WASM_TARGET) {
+        bail!("{WASM_TARGET} target not installed — run: rustup target add {WASM_TARGET}");
+    }
+    Ok(())
 }
 
 fn git_capture(ctx: &TaskContext, args: &[&str]) -> Result<String> {
@@ -366,6 +414,62 @@ fn validate_registry(ctx: &TaskContext) -> Result<()> {
     }
 }
 
+fn run_builtins(ctx: &TaskContext, args: BuiltinsArgs) -> Result<()> {
+    require_wasm_target(ctx)?;
+
+    let output_dir = args.output_dir.unwrap_or_else(|| ctx.path("dist/builtins"));
+    fs::create_dir_all(&output_dir)
+        .with_context(|| format!("failed to create {}", output_dir.display()))?;
+
+    step(format!(
+        "Building {} built-in plugin WASM artifact(s)",
+        BUILTIN_PLUGINS.len()
+    ));
+    for spec in BUILTIN_PLUGINS {
+        let plugin_dir = ctx.path(spec.plugin_dir);
+        if !plugin_dir.is_dir() {
+            bail!(
+                "built-in plugin directory missing: {}",
+                plugin_dir.display()
+            );
+        }
+
+        let mut build = ctx.command_in("cargo", &plugin_dir);
+        build.args(["build", "--release", "--target", WASM_TARGET, "--locked"]);
+        run_checked(&mut build).with_context(|| format!("failed to build {}", spec.plugin_dir))?;
+
+        let built_wasm = plugin_dir
+            .join("target")
+            .join(WASM_TARGET)
+            .join("release")
+            .join(spec.artifact_name);
+        if !built_wasm.is_file() {
+            bail!("expected WASM at {} but not found", built_wasm.display());
+        }
+
+        let output_wasm = output_dir.join(spec.artifact_name);
+        fs::copy(&built_wasm, &output_wasm).with_context(|| {
+            format!(
+                "failed to copy {} to {}",
+                built_wasm.display(),
+                output_wasm.display()
+            )
+        })?;
+        let sha256 = sha256_file(&output_wasm)?;
+        println!(
+            "   {} -> {} ({sha256})",
+            spec.plugin_dir,
+            output_wasm.display()
+        );
+    }
+
+    ok(format!(
+        "Copied built-in plugin artifacts to {}",
+        output_dir.display()
+    ));
+    Ok(())
+}
+
 fn run_release(ctx: &TaskContext, args: ReleaseArgs) -> Result<()> {
     let plugin_dir = locate_plugin(ctx, &args.plugin_name)?;
     let cargo_toml = plugin_dir.join("Cargo.toml");
@@ -409,16 +513,7 @@ fn run_release(ctx: &TaskContext, args: ReleaseArgs) -> Result<()> {
         );
     }
 
-    require_command("rustup")?;
-    let mut targets = ctx.command("rustup");
-    targets.args(["target", "list", "--installed"]);
-    let installed_targets = run_capture(&mut targets)?;
-    if !installed_targets
-        .lines()
-        .any(|line| line == "wasm32-wasip1")
-    {
-        bail!("wasm32-wasip1 target not installed — run: rustup target add wasm32-wasip1");
-    }
+    require_wasm_target(ctx)?;
     ok("Pre-flight OK");
 
     step(format!("Bumping {crate_name} to {next_version}"));
