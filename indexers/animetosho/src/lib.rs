@@ -2,8 +2,10 @@ use std::collections::{HashMap, HashSet};
 
 use extism_pdk::*;
 use scryer_plugin_sdk::{
-    IndexerCapabilities as Capabilities, IndexerDescriptor, IndexerSourceKind, PluginDescriptor,
-    PluginResult, PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
+    IndexerCapabilities as Capabilities, IndexerDescriptor, IndexerFeedMode,
+    IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput,
+    IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor, PluginResult,
+    PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
     PluginSearchResult as SearchResult, ProviderDescriptor, TaggedAlias, SDK_VERSION,
 };
 use serde::Deserialize;
@@ -69,6 +71,40 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
                 tvdb_search: false,
                 anidb_search: true,
                 rss: true,
+                protocols: vec![IndexerProtocol::Mixed],
+                feed_modes: vec![
+                    IndexerFeedMode::Recent,
+                    IndexerFeedMode::Rss,
+                    IndexerFeedMode::AutomaticSearch,
+                    IndexerFeedMode::InteractiveSearch,
+                ],
+                search_inputs: vec![
+                    IndexerSearchInput::TitleQuery,
+                    IndexerSearchInput::IdQuery,
+                    IndexerSearchInput::AbsoluteEpisode,
+                    IndexerSearchInput::Episode,
+                    IndexerSearchInput::Limit,
+                ],
+                supported_external_ids: vec!["anidb_id".into()],
+                category_model: None,
+                limits: Some(IndexerLimitCapabilities {
+                    page_size: Some(75),
+                    max_page_size: Some(75),
+                    max_pages: Some(14),
+                    ..IndexerLimitCapabilities::default()
+                }),
+                torrent: Some(IndexerTorrentCapabilities {
+                    reports_seeders: true,
+                    reports_leechers: true,
+                    reports_info_hash: true,
+                    reports_magnet_uri: true,
+                    ..IndexerTorrentCapabilities::default()
+                }),
+                response_features: Some(IndexerResponseFeatures {
+                    info_url: true,
+                    raw_provider_metadata: true,
+                    ..IndexerResponseFeatures::default()
+                }),
             },
             scoring_policies: vec![],
             config_fields: vec![],
@@ -481,6 +517,13 @@ fn build_results(items: Vec<AnimetoshoItem>) -> Vec<SearchResult> {
                 password_hint: None,
                 protected: None,
                 provider_extra: extra,
+                source_kind: Some(IndexerSourceKind::Torrent),
+                protocol: Some(IndexerProtocol::Torrent),
+                info_hash_v1: item.info_hash.clone(),
+                magnet_url: item.magnet_uri.clone(),
+                seeders: item.seeders,
+                leechers: item.leechers,
+                ..SearchResult::default()
             });
         }
 
@@ -505,6 +548,9 @@ fn build_results(items: Vec<AnimetoshoItem>) -> Vec<SearchResult> {
                 password_hint: None,
                 protected: None,
                 provider_extra: extra,
+                source_kind: Some(IndexerSourceKind::Usenet),
+                protocol: Some(IndexerProtocol::Usenet),
+                ..SearchResult::default()
             });
         }
     }

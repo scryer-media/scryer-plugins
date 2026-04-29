@@ -28,8 +28,6 @@ const MAX_SEARCH_QUERIES: usize = 12;
 struct JimakuConfig {
     api_key: String,
     enable_name_search_fallback: bool,
-    enable_archives_download: bool,
-    enable_ai_subs: bool,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -114,8 +112,6 @@ impl JimakuConfig {
         Ok(Self {
             api_key: config_required_string("api_key")?,
             enable_name_search_fallback: config_bool("enable_name_search_fallback", true),
-            enable_archives_download: config_bool("enable_archives_download", false),
-            enable_ai_subs: config_bool("enable_ai_subs", false),
         })
     }
 }
@@ -143,20 +139,6 @@ fn descriptor() -> PluginDescriptor {
                     ConfigFieldType::Bool,
                     false,
                     Some("true"),
-                ),
-                config_field(
-                    "enable_archives_download",
-                    "Enable Archive Downloads",
-                    ConfigFieldType::Bool,
-                    false,
-                    Some("false"),
-                ),
-                config_field(
-                    "enable_ai_subs",
-                    "Enable AI/Whisper Subtitles",
-                    ConfigFieldType::Bool,
-                    false,
-                    Some("false"),
                 ),
             ],
             default_base_url: Some(API_BASE.to_string()),
@@ -218,12 +200,10 @@ fn search_entry_subtitles(
     request: &SubtitlePluginSearchRequest,
     entry: JimakuEntry,
 ) -> Result<Vec<SubtitlePluginCandidate>, String> {
-    let mut only_archives = false;
     let files = if request.media_kind == SubtitleQueryMediaKind::Episode && !entry.flags.movie {
         if let Some(episode) = request.episode.or(request.absolute_episode) {
             let files = entry_files(config, entry.id, Some(episode))?;
             if files.is_empty() {
-                only_archives = true;
                 entry_files(config, entry.id, None)?
             } else {
                 files
@@ -235,23 +215,9 @@ fn search_entry_subtitles(
         entry_files(config, entry.id, None)?
     };
 
-    let archive_count = files.iter().filter(|file| is_archive(&file.name)).count();
-    let direct_count = files.len().saturating_sub(archive_count);
-    let archive_only = archive_count > 0 && direct_count == 0;
-
     let mut results = Vec::new();
     for file in files {
-        if file.size.unwrap_or(MIN_SUBTITLE_BYTES) < MIN_SUBTITLE_BYTES {
-            continue;
-        }
-        if !config.enable_ai_subs && looks_like_ai_subtitle(&file.name) {
-            continue;
-        }
-        let archive = is_archive(&file.name);
-        if archive && !archive_only && !only_archives && !config.enable_archives_download {
-            continue;
-        }
-        if !archive && !is_subtitle_file(&file.name) {
+        if !should_include_search_file(&file, request.include_ai_translated) {
             continue;
         }
 
@@ -624,6 +590,17 @@ fn looks_like_ai_subtitle(filename: &str) -> bool {
     lower.contains("whisper") || lower.contains("whisperai")
 }
 
+fn should_include_search_file(file: &JimakuFile, include_ai_translated: bool) -> bool {
+    if file.size.unwrap_or(MIN_SUBTITLE_BYTES) < MIN_SUBTITLE_BYTES {
+        return false;
+    }
+    if looks_like_ai_subtitle(&file.name) && !include_ai_translated {
+        return false;
+    }
+    let archive = is_archive(&file.name);
+    archive || is_subtitle_file(&file.name)
+}
+
 fn detect_language(filename: &str, requested: &[String]) -> String {
     let lower = filename.to_ascii_lowercase();
     if lower.contains(".en.")
@@ -779,5 +756,43 @@ mod tests {
         );
 
         assert_eq!(language, "jpn");
+    }
+
+    #[test]
+    fn descriptor_only_exposes_public_jimaku_settings() {
+        let ProviderDescriptor::Subtitle(descriptor) = descriptor().provider else {
+            panic!("jimaku should be a subtitle provider");
+        };
+
+        let keys = descriptor
+            .config_fields
+            .iter()
+            .map(|field| field.key.as_str())
+            .collect::<Vec<_>>();
+
+        assert_eq!(keys, vec!["api_key", "enable_name_search_fallback"]);
+    }
+
+    #[test]
+    fn archive_files_are_always_search_candidates() {
+        let file = JimakuFile {
+            name: "Show.S01E01.eng.zip".to_string(),
+            url: "https://jimaku.cc/file.zip".to_string(),
+            size: Some(MIN_SUBTITLE_BYTES + 1),
+        };
+
+        assert!(should_include_search_file(&file, false));
+    }
+
+    #[test]
+    fn ai_named_files_follow_request_flag() {
+        let file = JimakuFile {
+            name: "Show.S01E01.whisper.eng.srt".to_string(),
+            url: "https://jimaku.cc/file.srt".to_string(),
+            size: Some(MIN_SUBTITLE_BYTES + 1),
+        };
+
+        assert!(!should_include_search_file(&file, false));
+        assert!(should_include_search_file(&file, true));
     }
 }

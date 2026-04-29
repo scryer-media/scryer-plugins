@@ -11,8 +11,10 @@ use extism_pdk::*;
 use quick_xml::events::Event;
 use quick_xml::Reader;
 pub use scryer_plugin_sdk::{
-    ConfigFieldDef, ConfigFieldType, IndexerCapabilities as Capabilities, IndexerDescriptor,
-    IndexerSourceKind, PluginDescriptor, PluginScoringPolicy as ScoringPolicy,
+    ConfigFieldDef, ConfigFieldType, IndexerCapabilities as Capabilities, IndexerCategoryModel,
+    IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities,
+    IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind,
+    IndexerTorrentCapabilities, PluginDescriptor, PluginScoringPolicy as ScoringPolicy,
     PluginResult, PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
     PluginSearchResult as SearchResult, ProviderDescriptor, SDK_VERSION,
 };
@@ -1390,6 +1392,7 @@ fn parse_newznab_json(
                     .as_ref()
                     .map(|c| c.split('#').next().unwrap_or(c).trim().to_string())
                     .filter(|s| !s.is_empty()),
+                ..SearchResult::default()
             };
 
             // Apply standard attrs (usenetdate, prematch, nuked, response IDs)
@@ -1663,6 +1666,7 @@ fn parse_newznab_xml(
                                 provider_extra: extra,
                                 guid: guid.clone(),
                                 info_url,
+                                ..SearchResult::default()
                             };
 
                             // Apply standard attrs

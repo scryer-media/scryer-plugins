@@ -2,9 +2,11 @@ use std::collections::HashMap;
 
 use extism_pdk::*;
 use newznab_common::{
-    execute_full_search, standard_config_fields, Capabilities, IndexerDescriptor,
-    IndexerSourceKind, NewznabConfig, PluginDescriptor, PluginResult, ProviderDescriptor,
-    SDK_VERSION, SearchRequest,
+    execute_full_search, standard_config_fields, Capabilities, IndexerCategoryModel,
+    IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities,
+    IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind,
+    IndexerTorrentCapabilities, NewznabConfig, PluginDescriptor, PluginResult,
+    ProviderDescriptor, SDK_VERSION, SearchRequest,
 };
 
 #[plugin_fn]
@@ -37,6 +39,67 @@ fn build_descriptor_json() -> Result<String, Error> {
                 tvdb_search: true,
                 anidb_search: false,
                 rss: true,
+                protocols: vec![IndexerProtocol::Torrent],
+                feed_modes: vec![
+                    IndexerFeedMode::Recent,
+                    IndexerFeedMode::Rss,
+                    IndexerFeedMode::AutomaticSearch,
+                    IndexerFeedMode::InteractiveSearch,
+                ],
+                search_inputs: vec![
+                    IndexerSearchInput::TitleQuery,
+                    IndexerSearchInput::IdQuery,
+                    IndexerSearchInput::AggregateIdQuery,
+                    IndexerSearchInput::Season,
+                    IndexerSearchInput::Episode,
+                    IndexerSearchInput::AbsoluteEpisode,
+                    IndexerSearchInput::Category,
+                    IndexerSearchInput::Limit,
+                ],
+                supported_external_ids: vec![
+                    "imdb_id".into(),
+                    "tvdb_id".into(),
+                    "tmdb_id".into(),
+                    "tvmaze_id".into(),
+                    "tvrage_id".into(),
+                    "anidb_id".into(),
+                ],
+                category_model: Some(IndexerCategoryModel {
+                    value_kinds: vec![IndexerCategoryValueKind::Numeric],
+                    separate_anime_categories: true,
+                    provider_category_metadata: true,
+                    ..IndexerCategoryModel::default()
+                }),
+                limits: Some(IndexerLimitCapabilities {
+                    page_size: Some(100),
+                    max_page_size: Some(100),
+                    max_pages: Some(10),
+                    rate_limit_hint_seconds: Some(2),
+                    api_quota_supported: true,
+                    grab_quota_supported: true,
+                }),
+                torrent: Some(IndexerTorrentCapabilities {
+                    reports_seeders: true,
+                    reports_peers: true,
+                    reports_leechers: true,
+                    reports_info_hash: true,
+                    reports_magnet_uri: true,
+                    reports_volume_factors: true,
+                    supports_private_tracker_flags: true,
+                    supports_seed_requirements: true,
+                }),
+                response_features: Some(IndexerResponseFeatures {
+                    languages: true,
+                    subtitles: true,
+                    grabs: true,
+                    votes: true,
+                    comments: true,
+                    info_url: true,
+                    guid: true,
+                    raw_provider_metadata: true,
+                    protection_hint: true,
+                    ..IndexerResponseFeatures::default()
+                }),
             },
             scoring_policies: vec![],
             config_fields: standard_config_fields(),

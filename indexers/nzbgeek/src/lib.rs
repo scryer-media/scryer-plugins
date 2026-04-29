@@ -2,7 +2,9 @@ use std::collections::HashMap;
 
 use extism_pdk::*;
 use newznab_common::{
-    execute_full_search, Capabilities, IndexerDescriptor, IndexerSourceKind, NewznabConfig,
+    execute_full_search, Capabilities, IndexerCategoryModel, IndexerCategoryValueKind,
+    IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol,
+    IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind, NewznabConfig,
     PluginDescriptor, PluginResult, ProviderDescriptor, SDK_VERSION, ScoringPolicy, SearchRequest,
 };
 
@@ -32,6 +34,55 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
                 tvdb_search: true,
                 anidb_search: false,
                 rss: true,
+                protocols: vec![IndexerProtocol::Usenet],
+                feed_modes: vec![
+                    IndexerFeedMode::Recent,
+                    IndexerFeedMode::Rss,
+                    IndexerFeedMode::AutomaticSearch,
+                    IndexerFeedMode::InteractiveSearch,
+                ],
+                search_inputs: vec![
+                    IndexerSearchInput::TitleQuery,
+                    IndexerSearchInput::IdQuery,
+                    IndexerSearchInput::Season,
+                    IndexerSearchInput::Episode,
+                    IndexerSearchInput::Category,
+                    IndexerSearchInput::Limit,
+                ],
+                supported_external_ids: vec![
+                    "imdb_id".into(),
+                    "tvdb_id".into(),
+                    "tmdb_id".into(),
+                    "tvmaze_id".into(),
+                    "tvrage_id".into(),
+                ],
+                category_model: Some(IndexerCategoryModel {
+                    value_kinds: vec![IndexerCategoryValueKind::Numeric],
+                    separate_anime_categories: true,
+                    provider_category_metadata: true,
+                    ..IndexerCategoryModel::default()
+                }),
+                limits: Some(IndexerLimitCapabilities {
+                    page_size: Some(100),
+                    max_page_size: Some(100),
+                    max_pages: Some(10),
+                    api_quota_supported: true,
+                    grab_quota_supported: true,
+                    ..IndexerLimitCapabilities::default()
+                }),
+                torrent: None,
+                response_features: Some(IndexerResponseFeatures {
+                    languages: true,
+                    subtitles: true,
+                    grabs: true,
+                    comments: true,
+                    info_url: true,
+                    guid: true,
+                    raw_provider_metadata: true,
+                    password_hint: true,
+                    protection_hint: true,
+                    ..IndexerResponseFeatures::default()
+                }),
             },
             scoring_policies: vec![
                 ScoringPolicy {

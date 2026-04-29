@@ -6,7 +6,9 @@ use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldOption, ConfigFieldType, IndexerCapabilities as Capabilities,
-    IndexerDescriptor, IndexerSourceKind, PluginDescriptor, PluginResult,
+    IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode,
+    IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput,
+    IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor, PluginResult,
     PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
     PluginSearchResult as SearchResult, ProviderDescriptor, SDK_VERSION,
 };
@@ -60,6 +62,45 @@ fn build_descriptor_json() -> Result<String, Error> {
                 tvdb_search: false,
                 anidb_search: false,
                 rss: true,
+                protocols: vec![IndexerProtocol::Torrent],
+                feed_modes: vec![IndexerFeedMode::Recent, IndexerFeedMode::Rss],
+                search_inputs: vec![
+                    IndexerSearchInput::TextQuery,
+                    IndexerSearchInput::Category,
+                    IndexerSearchInput::Season,
+                    IndexerSearchInput::Episode,
+                    IndexerSearchInput::Limit,
+                ],
+                supported_external_ids: vec!["imdb_id".into(), "tvdb_id".into()],
+                category_model: Some(IndexerCategoryModel {
+                    value_kinds: vec![IndexerCategoryValueKind::String],
+                    provider_category_metadata: true,
+                    ..IndexerCategoryModel::default()
+                }),
+                limits: Some(IndexerLimitCapabilities {
+                    page_size: Some(200),
+                    max_page_size: Some(200),
+                    rate_limit_hint_seconds: Some(2),
+                    ..IndexerLimitCapabilities::default()
+                }),
+                torrent: Some(IndexerTorrentCapabilities {
+                    reports_seeders: true,
+                    reports_peers: true,
+                    reports_info_hash: true,
+                    reports_magnet_uri: true,
+                    reports_volume_factors: true,
+                    supports_private_tracker_flags: true,
+                    supports_seed_requirements: true,
+                    ..IndexerTorrentCapabilities::default()
+                }),
+                response_features: Some(IndexerResponseFeatures {
+                    languages: true,
+                    grabs: true,
+                    info_url: true,
+                    guid: true,
+                    raw_provider_metadata: true,
+                    ..IndexerResponseFeatures::default()
+                }),
             },
             scoring_policies: vec![],
             config_fields: config_fields(),
@@ -675,6 +716,7 @@ fn build_result(item: ParsedItem, preference: DownloadPreference) -> Option<Sear
         provider_extra: extra,
         guid: item.guid,
         info_url,
+        ..SearchResult::default()
     })
 }
 
@@ -1097,6 +1139,7 @@ mod tests {
                 provider_extra: HashMap::new(),
                 guid: None,
                 info_url: None,
+                ..SearchResult::default()
             },
             SearchResult {
                 title: "Other.S01E02.1080p.WEB".to_string(),
@@ -1114,6 +1157,7 @@ mod tests {
                 provider_extra: HashMap::new(),
                 guid: None,
                 info_url: None,
+                ..SearchResult::default()
             },
         ];
 
@@ -1130,6 +1174,7 @@ mod tests {
                 episode: Some(2),
                 absolute_episode: None,
                 tagged_aliases: vec![],
+                ..SearchRequest::default()
             },
             10,
         );

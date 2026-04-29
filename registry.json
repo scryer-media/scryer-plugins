@@ -25,8 +25,10 @@
       "sdk_version": "1.0.0",
       "author": "scryer-media",
       "official": true,
-      "builtin": true,
+      "builtin": false,
       "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/dognzb",
+      "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/dognzb_indexer.wasm",
+      "wasm_sha256": "760dd11bec0af2498489d9f37f25c6b46505f3128e480198ca31e5691da896bd",
       "min_scryer_version": "0.0.5"
     },
     {

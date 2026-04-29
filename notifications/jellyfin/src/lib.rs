@@ -2,8 +2,9 @@ use std::collections::HashSet;
 
 use extism_pdk::*;
 use scryer_plugin_sdk::{
-    ConfigFieldDef, ConfigFieldType, NotificationCapabilities, NotificationDescriptor,
-    NotificationEventType as SdkNotificationEventType, PluginDescriptor, PluginNotificationFile,
+    ConfigFieldDef, ConfigFieldType, NotificationCapabilities, NotificationDeliveryMode,
+    NotificationDescriptor, NotificationEventType as SdkNotificationEventType,
+    NotificationPayloadFormat, PluginDescriptor, PluginNotificationFile,
     PluginNotificationRequest, PluginNotificationResponse, PluginNotificationTitle, PluginResult,
     ProviderDescriptor, SDK_VERSION,
 };
@@ -140,7 +141,15 @@ fn default_descriptor() -> PluginDescriptor {
             capabilities: NotificationCapabilities {
                 supports_rich_text: false,
                 supports_images: false,
+                supports_test: true,
+                supports_batch: true,
+                supports_coalescing: true,
+                requires_host_filesystem: false,
+                requires_host_process: false,
+                delivery_modes: vec![NotificationDeliveryMode::MediaServerUpdate],
+                payload_formats: vec![NotificationPayloadFormat::StructuredJson],
                 supported_events: vec![],
+                event_options: Default::default(),
             },
             config_fields: vec![
                 ConfigFieldDef {
@@ -602,6 +611,11 @@ fn success_response() -> String {
     serde_json::to_string(&PluginResult::Ok(PluginNotificationResponse {
         success: true,
         error: None,
+        delivery_id: None,
+        provider_status: None,
+        retry_after_seconds: None,
+        warnings: Vec::new(),
+        target_results: Vec::new(),
     }))
     .unwrap_or_else(|_| "{\"success\":true}".to_string())
 }
@@ -610,6 +624,11 @@ fn error_response(error: String) -> String {
     serde_json::to_string(&PluginResult::Ok(PluginNotificationResponse {
         success: false,
         error: Some(error),
+        delivery_id: None,
+        provider_status: None,
+        retry_after_seconds: None,
+        warnings: Vec::new(),
+        target_results: Vec::new(),
     }))
     .unwrap_or_else(|_| "{\"success\":false,\"error\":\"notification failed\"}".to_string())
 }
@@ -646,6 +665,7 @@ mod tests {
             })
             .unwrap_or_default();
         PluginNotificationRequest {
+            schema_version: 1,
             event_type: match event_type {
                 "import_complete" => SdkNotificationEventType::ImportComplete,
                 "upgrade" => SdkNotificationEventType::Upgrade,
@@ -654,6 +674,12 @@ mod tests {
                 "test" => SdkNotificationEventType::Test,
                 other => panic!("unsupported event_type in test fixture: {other}"),
             },
+            event_id: Some("evt-1".to_string()),
+            occurred_at: Some("2026-04-29T12:00:00Z".to_string()),
+            correlation_id: Some("corr-1".to_string()),
+            actor: None,
+            severity: None,
+            is_test: event_type == "test",
             summary_title: "Test".to_string(),
             summary_message: "Body".to_string(),
             app: scryer_plugin_sdk::PluginNotificationApp {
@@ -661,10 +687,22 @@ mod tests {
                 version: "test".to_string(),
             },
             title: Some(PluginNotificationTitle {
+                id: None,
                 name: "Test".to_string(),
                 facet: title_facet.to_string(),
                 year: None,
+                slug: None,
+                path: None,
+                overview: None,
+                sort_title: None,
+                banner_url: None,
+                background_url: None,
                 poster_url: None,
+                genres: Vec::new(),
+                tags: Vec::new(),
+                aliases: Vec::new(),
+                original_language: None,
+                original_country: None,
                 external_ids: scryer_plugin_sdk::PluginNotificationExternalIds {
                     tmdb_id: external_ids
                         .and_then(|ids| ids.get("tmdb_id"))
@@ -679,9 +717,15 @@ mod tests {
                         .and_then(serde_json::Value::as_str)
                         .map(str::to_string),
                     anidb_id: None,
+                    tvmaze_id: None,
+                    anilist_ids: Vec::new(),
+                    mal_ids: Vec::new(),
+                    kitsu_ids: Vec::new(),
+                    by_source: Default::default(),
                 },
             }),
             episode: None,
+            episodes: Vec::new(),
             release: None,
             download: None,
             import: None,
@@ -690,6 +734,9 @@ mod tests {
                 primary_path: media_updates.first().map(|update| update.path.clone()),
                 media_updates,
             }),
+            media_files: Vec::new(),
+            application_update: None,
+            manual_interaction: None,
         }
     }
 

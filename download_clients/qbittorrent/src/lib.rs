@@ -5,11 +5,12 @@ use extism_pdk::*;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldOption, ConfigFieldType, DownloadClientCapabilities,
     DownloadClientDescriptor, DownloadControlAction, DownloadInputKind, DownloadIsolationMode,
-    DownloadItemState, PluginCompletedDownload, PluginDescriptor, PluginError,
-    PluginErrorCode,
+    DownloadItemState, DownloadTorrentCapabilities, PluginCompletedDownload, PluginDescriptor,
     PluginDownloadClientAddRequest, PluginDownloadClientAddResponse,
     PluginDownloadClientControlRequest, PluginDownloadClientMarkImportedRequest,
-    PluginDownloadClientStatus, PluginDownloadItem, PluginResult, ProviderDescriptor, SDK_VERSION,
+    PluginDownloadClientStatus, PluginDownloadItem, PluginDownloadOutputKind, PluginError,
+    PluginErrorCode, PluginResult, PluginTorrentContentLayout, PluginTorrentInitialState,
+    PluginTorrentItem, ProviderDescriptor, SDK_VERSION,
 };
 use serde::Deserialize;
 use sha1::{Digest, Sha1};
@@ -17,16 +18,23 @@ use sha1::{Digest, Sha1};
 const COOKIE_VAR_KEY: &str = "qbittorrent.sid";
 const IMPORTED_TAG_DEFAULT: &str = "scryer:imported";
 
-fn plugin_error_response<T: serde::Serialize>(
-    code: PluginErrorCode,
-    public_message: impl Into<String>,
-) -> FnResult<String> {
-    Ok(serde_json::to_string(&PluginResult::<T>::Err(PluginError {
+fn plugin_error<T>(code: PluginErrorCode, public_message: impl Into<String>) -> PluginResult<T> {
+    PluginResult::Err(PluginError {
         code,
         public_message: public_message.into(),
         debug_message: None,
         retry_after_seconds: None,
-    }))?)
+    })
+}
+
+fn plugin_error_response<T: serde::Serialize>(
+    code: PluginErrorCode,
+    public_message: impl Into<String>,
+) -> FnResult<String> {
+    Ok(serde_json::to_string(&plugin_error::<T>(
+        code,
+        public_message,
+    ))?)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -84,6 +92,20 @@ struct QbTorrent {
     completion_on: Option<i64>,
     #[serde(default)]
     tags: Option<String>,
+    #[serde(default)]
+    uploaded: Option<i64>,
+    #[serde(default)]
+    downloaded: Option<i64>,
+    #[serde(default)]
+    upspeed: Option<i64>,
+    #[serde(default)]
+    dlspeed: Option<i64>,
+    #[serde(default)]
+    ratio: Option<f64>,
+    #[serde(default)]
+    seeding_time: Option<i64>,
+    #[serde(default)]
+    private: Option<bool>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -119,7 +141,12 @@ fn build_descriptor_json() -> Result<String, Error> {
             config_fields: config_fields(),
             default_base_url: None,
             allowed_hosts: vec![],
-            accepted_inputs: vec![DownloadInputKind::MagnetUri, DownloadInputKind::TorrentFile],
+            accepted_inputs: vec![
+                DownloadInputKind::MagnetUri,
+                DownloadInputKind::TorrentUrl,
+                DownloadInputKind::TorrentBytes,
+                DownloadInputKind::TorrentFile,
+            ],
             isolation_modes: vec![
                 DownloadIsolationMode::Category,
                 DownloadIsolationMode::Tag,
@@ -140,6 +167,41 @@ fn build_descriptor_json() -> Result<String, Error> {
                 per_download_directory: true,
                 host_fs_required: false,
                 test_connection: true,
+                torrent: Some(DownloadTorrentCapabilities {
+                    supported_sources: vec![
+                        DownloadInputKind::MagnetUri,
+                        DownloadInputKind::TorrentUrl,
+                        DownloadInputKind::TorrentBytes,
+                        DownloadInputKind::TorrentFile,
+                    ],
+                    preferred_sources: vec![
+                        DownloadInputKind::MagnetUri,
+                        DownloadInputKind::TorrentBytes,
+                        DownloadInputKind::TorrentUrl,
+                        DownloadInputKind::TorrentFile,
+                    ],
+                    isolation_modes: vec![
+                        DownloadIsolationMode::Category,
+                        DownloadIsolationMode::Tag,
+                        DownloadIsolationMode::Directory,
+                    ],
+                    post_import_isolation_modes: vec![
+                        DownloadIsolationMode::Category,
+                        DownloadIsolationMode::Tag,
+                    ],
+                    supports_seed_ratio_limit: true,
+                    supports_seed_time_limit: true,
+                    supports_start_paused: true,
+                    supports_force_start: true,
+                    supports_sequential_download: true,
+                    supports_first_last_piece_priority: true,
+                    supports_content_layout: true,
+                    supports_skip_checking: true,
+                    supports_auto_management: true,
+                    supports_post_import_isolation: true,
+                    reports_content_paths: true,
+                    ..DownloadTorrentCapabilities::default()
+                }),
             },
         }),
     };
@@ -149,14 +211,23 @@ fn build_descriptor_json() -> Result<String, Error> {
 #[plugin_fn]
 pub fn scryer_download_add(input: String) -> FnResult<String> {
     let request: PluginDownloadClientAddRequest = serde_json::from_str(&input)?;
-    let config = QbittorrentConfig::from_extism()?;
+    let config = match QbittorrentConfig::from_extism() {
+        Ok(config) => config,
+        Err(err) => {
+            return plugin_error_response::<PluginDownloadClientAddResponse>(
+                PluginErrorCode::InvalidConfig,
+                err.to_string(),
+            );
+        }
+    };
+    let response = handle_download_add(config, request)?;
+    Ok(serde_json::to_string(&response)?)
+}
 
-    let before = list_torrents(&config, Some("all"))?;
-    let before_hashes: HashSet<String> = before
-        .iter()
-        .map(|torrent| normalize_hash(&torrent.hash))
-        .collect();
-
+fn handle_download_add(
+    config: QbittorrentConfig,
+    request: PluginDownloadClientAddRequest,
+) -> Result<PluginResult<PluginDownloadClientAddResponse>, Error> {
     let expected_hash = derive_expected_hash(&request);
     let tags = build_tags(&config, &request);
     let download_directory = normalize_non_empty(request.routing.download_directory.clone());
@@ -166,82 +237,145 @@ pub fn scryer_download_add(input: String) -> FnResult<String> {
         config.auto_tmm
     };
 
-    if let Some(torrent_bytes_base64) = request.source.torrent_bytes_base64.as_deref() {
-        let bytes = general_purpose::STANDARD
-            .decode(torrent_bytes_base64)
-            .map_err(|e| Error::msg(format!("invalid torrent_bytes_base64: {e}")))?;
-        let file_name =
-            derive_torrent_filename(request.source.source_title.as_deref(), &request.title.title_name);
-        let body = build_add_multipart_body(
-            &file_name,
-            &bytes,
-            AddOptions {
-                category: category_for_add(&config, &request),
-                tags: tags_to_csv(&tags),
-                savepath: download_directory.clone(),
-                ratio_limit: request.release.seed_goal_ratio,
-                seeding_time_limit_minutes: request
-                    .release
-                    .seed_goal_seconds
-                    .and_then(seconds_to_minutes),
-                auto_tmm,
-                paused: config.start_paused,
-                stop_condition: None,
-                content_layout: None,
-                skip_checking: config.skip_checking,
-                sequential_download: false,
-                first_last_piece_prio: false,
-                force_start: config.force_start,
-            },
-        );
-        post_multipart(&config, "/torrents/add", &body.content_type, body.body)?;
-    } else {
-        let source_value = match request.source.kind {
-            DownloadInputKind::MagnetUri => request
-                .source
-                .magnet_uri
-                .clone()
-                .or_else(|| request.source.download_url.clone()),
-            DownloadInputKind::TorrentFile => request
-                .source
-                .download_url
-                .clone()
-                .or_else(|| request.source.magnet_uri.clone()),
-            DownloadInputKind::Nzb | DownloadInputKind::NzbUrl => request
-                .source
-                .magnet_uri
-                .clone()
-                .or_else(|| request.source.download_url.clone()),
-        }
-        .ok_or_else(|| Error::msg("download source is missing"))?;
+    let prepared_request =
+        if let Some(torrent_bytes_base64) = request.source.torrent_bytes_base64.as_deref() {
+            let bytes = match general_purpose::STANDARD.decode(torrent_bytes_base64) {
+                Ok(bytes) => bytes,
+                Err(err) => {
+                    return Ok(plugin_error(
+                        PluginErrorCode::Permanent,
+                        format!("invalid torrent_bytes_base64: {err}"),
+                    ));
+                }
+            };
+            let file_name = derive_torrent_filename(
+                request.source.source_title.as_deref(),
+                &request.title.title_name,
+            );
+            let body = build_add_multipart_body(
+                &file_name,
+                &bytes,
+                AddOptions {
+                    category: category_for_add(&config, &request),
+                    tags: tags_to_csv(&tags),
+                    savepath: download_directory.clone(),
+                    ratio_limit: request
+                        .torrent
+                        .as_ref()
+                        .and_then(|torrent| torrent.seed_goal_ratio)
+                        .or(request.release.seed_goal_ratio),
+                    seeding_time_limit_minutes: request
+                        .torrent
+                        .as_ref()
+                        .and_then(|torrent| torrent.seed_goal_seconds)
+                        .or(request.release.seed_goal_seconds)
+                        .and_then(seconds_to_minutes),
+                    auto_tmm: request_auto_tmm(&config, &request, auto_tmm),
+                    paused: request_paused(&config, &request),
+                    stop_condition: None,
+                    content_layout: request_content_layout(&request),
+                    skip_checking: request_skip_checking(&config, &request),
+                    sequential_download: request_sequential_download(&request),
+                    first_last_piece_prio: request_first_last_piece_prio(&request),
+                    force_start: request_force_start(&config, &request),
+                },
+            );
+            PreparedAddRequest::Multipart(body)
+        } else {
+            let Some(source_value) = (match request.source.kind {
+                DownloadInputKind::MagnetUri => request
+                    .source
+                    .magnet_uri
+                    .clone()
+                    .or_else(|| request.source.download_url.clone()),
+                DownloadInputKind::TorrentFile
+                | DownloadInputKind::TorrentUrl
+                | DownloadInputKind::TorrentBytes => request
+                    .source
+                    .torrent_url
+                    .clone()
+                    .or_else(|| request.source.download_url.clone())
+                    .or_else(|| request.source.magnet_uri.clone()),
+                DownloadInputKind::Nzb | DownloadInputKind::NzbUrl => request
+                    .source
+                    .magnet_uri
+                    .clone()
+                    .or_else(|| request.source.download_url.clone()),
+            }) else {
+                return Ok(plugin_error(
+                    PluginErrorCode::Permanent,
+                    "download source is missing",
+                ));
+            };
 
-        let mut form_fields = vec![("urls".to_string(), source_value)];
-        maybe_push_field(&mut form_fields, "category", category_for_add(&config, &request));
-        maybe_push_field(&mut form_fields, "tags", tags_to_csv(&tags));
-        maybe_push_field(&mut form_fields, "savepath", download_directory);
-        maybe_push_field(&mut form_fields, "ratioLimit", request.release.seed_goal_ratio.map(float_to_string));
-        maybe_push_field(
-            &mut form_fields,
-            "seedingTimeLimit",
-            request
-                .release
-                .seed_goal_seconds
-                .and_then(seconds_to_minutes)
-                .map(|value| value.to_string()),
-        );
-        if auto_tmm {
-            form_fields.push(("autoTMM".to_string(), "true".to_string()));
+            let mut form_fields = vec![("urls".to_string(), source_value)];
+            maybe_push_field(
+                &mut form_fields,
+                "category",
+                category_for_add(&config, &request),
+            );
+            maybe_push_field(&mut form_fields, "tags", tags_to_csv(&tags));
+            maybe_push_field(&mut form_fields, "savepath", download_directory);
+            maybe_push_field(
+                &mut form_fields,
+                "ratioLimit",
+                request
+                    .torrent
+                    .as_ref()
+                    .and_then(|torrent| torrent.seed_goal_ratio)
+                    .or(request.release.seed_goal_ratio)
+                    .map(float_to_string),
+            );
+            maybe_push_field(
+                &mut form_fields,
+                "seedingTimeLimit",
+                request
+                    .torrent
+                    .as_ref()
+                    .and_then(|torrent| torrent.seed_goal_seconds)
+                    .or(request.release.seed_goal_seconds)
+                    .and_then(seconds_to_minutes)
+                    .map(|value| value.to_string()),
+            );
+            if request_auto_tmm(&config, &request, auto_tmm) {
+                form_fields.push(("autoTMM".to_string(), "true".to_string()));
+            }
+            if request_paused(&config, &request) {
+                form_fields.push(("paused".to_string(), "true".to_string()));
+            }
+            if request_skip_checking(&config, &request) {
+                form_fields.push(("skip_checking".to_string(), "true".to_string()));
+            }
+            if request_force_start(&config, &request) {
+                form_fields.push(("forceStart".to_string(), "true".to_string()));
+            }
+            maybe_push_field(
+                &mut form_fields,
+                "contentLayout",
+                request_content_layout(&request),
+            );
+            if request_sequential_download(&request) {
+                form_fields.push(("sequentialDownload".to_string(), "true".to_string()));
+            }
+            if request_first_last_piece_prio(&request) {
+                form_fields.push(("firstLastPiecePrio".to_string(), "true".to_string()));
+            }
+            PreparedAddRequest::Form(form_fields)
+        };
+
+    let before = list_torrents(&config, Some("all"))?;
+    let before_hashes: HashSet<String> = before
+        .iter()
+        .map(|torrent| normalize_hash(&torrent.hash))
+        .collect();
+
+    match prepared_request {
+        PreparedAddRequest::Multipart(body) => {
+            post_multipart(&config, "/torrents/add", &body.content_type, body.body)?;
         }
-        if config.start_paused {
-            form_fields.push(("paused".to_string(), "true".to_string()));
+        PreparedAddRequest::Form(form_fields) => {
+            post_form(&config, "/torrents/add", &form_fields)?;
         }
-        if config.skip_checking {
-            form_fields.push(("skip_checking".to_string(), "true".to_string()));
-        }
-        if config.force_start {
-            form_fields.push(("forceStart".to_string(), "true".to_string()));
-        }
-        post_form(&config, "/torrents/add", &form_fields)?;
     }
 
     let hash = resolve_added_hash(&config, &request, &before_hashes, expected_hash)?;
@@ -249,21 +383,26 @@ pub fn scryer_download_add(input: String) -> FnResult<String> {
         client_item_id: hash.clone(),
         info_hash: Some(hash),
     };
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+    Ok(PluginResult::Ok(response))
 }
 
 #[plugin_fn]
 pub fn scryer_download_list_queue(_input: String) -> FnResult<String> {
     let config = QbittorrentConfig::from_extism()?;
     let torrents = list_torrents(&config, Some("all"))?;
-    let items = torrents.into_iter().map(torrent_to_item).collect::<Vec<_>>();
+    let items = torrents
+        .into_iter()
+        .map(torrent_to_item)
+        .collect::<Vec<_>>();
     Ok(serde_json::to_string(&PluginResult::Ok(items))?)
 }
 
 #[plugin_fn]
 pub fn scryer_download_list_completed(_input: String) -> FnResult<String> {
     let config = QbittorrentConfig::from_extism()?;
-    Ok(serde_json::to_string(&PluginResult::Ok(completed_downloads(&config)?))?)
+    Ok(serde_json::to_string(&PluginResult::Ok(
+        completed_downloads(&config)?,
+    ))?)
 }
 
 fn completed_downloads(config: &QbittorrentConfig) -> Result<Vec<PluginCompletedDownload>, Error> {
@@ -278,7 +417,9 @@ fn completed_downloads(config: &QbittorrentConfig) -> Result<Vec<PluginCompleted
 #[plugin_fn]
 pub fn scryer_download_list_history(_input: String) -> FnResult<String> {
     let config = QbittorrentConfig::from_extism()?;
-    Ok(serde_json::to_string(&PluginResult::Ok(completed_downloads(&config)?))?)
+    Ok(serde_json::to_string(&PluginResult::Ok(
+        completed_downloads(&config)?,
+    ))?)
 }
 
 #[plugin_fn]
@@ -311,8 +452,12 @@ fn handle_download_control(
     let config = QbittorrentConfig::from_extism()?;
 
     match request.action {
-        DownloadControlAction::Pause => post_form(&config, "/torrents/pause", &[("hashes".to_string(), hash)])?,
-        DownloadControlAction::Resume => post_form(&config, "/torrents/resume", &[("hashes".to_string(), hash)])?,
+        DownloadControlAction::Pause => {
+            post_form(&config, "/torrents/pause", &[("hashes".to_string(), hash)])?
+        }
+        DownloadControlAction::Resume => {
+            post_form(&config, "/torrents/resume", &[("hashes".to_string(), hash)])?
+        }
         DownloadControlAction::Remove => post_form(
             &config,
             "/torrents/delete",
@@ -355,6 +500,8 @@ pub fn scryer_download_mark_imported(input: String) -> FnResult<String> {
     if !torrent_exists(&config, &hash)? {
         return Ok(serde_json::to_string(&PluginResult::Ok(()))?);
     }
+
+    apply_post_import_isolation(&config, &hash, &request)?;
 
     match config.post_import_action {
         PostImportAction::Retain => {}
@@ -548,6 +695,12 @@ struct MultipartBody {
 }
 
 #[derive(Debug)]
+enum PreparedAddRequest {
+    Multipart(MultipartBody),
+    Form(Vec<(String, String)>),
+}
+
+#[derive(Debug)]
 struct AddOptions {
     category: Option<String>,
     tags: Option<String>,
@@ -717,7 +870,12 @@ fn config_bool(key: &str, default: bool) -> bool {
     config::get(key)
         .ok()
         .flatten()
-        .map(|value| matches!(value.trim().to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on"))
+        .map(|value| {
+            matches!(
+                value.trim().to_ascii_lowercase().as_str(),
+                "1" | "true" | "yes" | "on"
+            )
+        })
         .unwrap_or(default)
 }
 
@@ -774,11 +932,13 @@ fn login(config: &QbittorrentConfig) -> Result<String, Error> {
             body
         )));
     }
-    let cookie =
-        extract_cookie(&response).ok_or_else(|| Error::msg("qBittorrent login did not return a session cookie"))?;
+    let cookie = extract_cookie(&response)
+        .ok_or_else(|| Error::msg("qBittorrent login did not return a session cookie"))?;
     let body = String::from_utf8_lossy(&response.body()).trim().to_string();
     if !(body.eq_ignore_ascii_case("ok.") || body.eq_ignore_ascii_case("ok")) {
-        return Err(Error::msg(format!("qBittorrent login rejected credentials: {body}")));
+        return Err(Error::msg(format!(
+            "qBittorrent login rejected credentials: {body}"
+        )));
     }
     var::set(COOKIE_VAR_KEY, cookie.clone())?;
     Ok(cookie)
@@ -837,7 +997,10 @@ fn get_text(config: &QbittorrentConfig, path: &str) -> Result<String, Error> {
     Ok(String::from_utf8_lossy(&response.body()).trim().to_string())
 }
 
-fn get_json<T: for<'de> Deserialize<'de>>(config: &QbittorrentConfig, path: &str) -> Result<T, Error> {
+fn get_json<T: for<'de> Deserialize<'de>>(
+    config: &QbittorrentConfig,
+    path: &str,
+) -> Result<T, Error> {
     let response = request_with_auth(config, "GET", path, None, None)?;
     ensure_success(path, &response)?;
     response
@@ -845,7 +1008,11 @@ fn get_json<T: for<'de> Deserialize<'de>>(config: &QbittorrentConfig, path: &str
         .map_err(|e| Error::msg(format!("invalid qBittorrent JSON from {path}: {e}")))
 }
 
-fn post_form(config: &QbittorrentConfig, path: &str, fields: &[(String, String)]) -> Result<(), Error> {
+fn post_form(
+    config: &QbittorrentConfig,
+    path: &str,
+    fields: &[(String, String)],
+) -> Result<(), Error> {
     let response = request_with_auth(
         config,
         "POST",
@@ -879,7 +1046,10 @@ fn ensure_success(path: &str, response: &HttpResponse) -> Result<(), Error> {
     Ok(())
 }
 
-fn list_torrents(config: &QbittorrentConfig, filter: Option<&str>) -> Result<Vec<QbTorrent>, Error> {
+fn list_torrents(
+    config: &QbittorrentConfig,
+    filter: Option<&str>,
+) -> Result<Vec<QbTorrent>, Error> {
     let mut path = "/torrents/info?sort=added_on&reverse=true".to_string();
     if let Some(filter) = filter {
         path.push_str("&filter=");
@@ -991,6 +1161,129 @@ fn build_tags(config: &QbittorrentConfig, request: &PluginDownloadClientAddReque
     dedupe(tags)
 }
 
+fn request_paused(config: &QbittorrentConfig, request: &PluginDownloadClientAddRequest) -> bool {
+    match request
+        .torrent
+        .as_ref()
+        .and_then(|torrent| torrent.initial_state)
+    {
+        Some(PluginTorrentInitialState::Paused | PluginTorrentInitialState::Stopped) => true,
+        Some(PluginTorrentInitialState::Started) => false,
+        Some(PluginTorrentInitialState::Default) | None => config.start_paused,
+    }
+}
+
+fn request_force_start(
+    config: &QbittorrentConfig,
+    request: &PluginDownloadClientAddRequest,
+) -> bool {
+    request
+        .torrent
+        .as_ref()
+        .and_then(|torrent| torrent.force_start)
+        .unwrap_or(config.force_start)
+}
+
+fn request_skip_checking(
+    config: &QbittorrentConfig,
+    request: &PluginDownloadClientAddRequest,
+) -> bool {
+    request
+        .torrent
+        .as_ref()
+        .and_then(|torrent| torrent.skip_checking)
+        .unwrap_or(config.skip_checking)
+}
+
+fn request_auto_tmm(
+    config: &QbittorrentConfig,
+    request: &PluginDownloadClientAddRequest,
+    fallback: bool,
+) -> bool {
+    request
+        .torrent
+        .as_ref()
+        .and_then(|torrent| torrent.auto_management)
+        .unwrap_or_else(|| {
+            if request.routing.download_directory.is_some() {
+                false
+            } else {
+                fallback && config.auto_tmm
+            }
+        })
+}
+
+fn request_sequential_download(request: &PluginDownloadClientAddRequest) -> bool {
+    request
+        .torrent
+        .as_ref()
+        .and_then(|torrent| torrent.sequential_download)
+        .unwrap_or(false)
+}
+
+fn request_first_last_piece_prio(request: &PluginDownloadClientAddRequest) -> bool {
+    request
+        .torrent
+        .as_ref()
+        .and_then(|torrent| torrent.first_last_piece_priority)
+        .unwrap_or(false)
+}
+
+fn request_content_layout(request: &PluginDownloadClientAddRequest) -> Option<String> {
+    match request
+        .torrent
+        .as_ref()
+        .and_then(|torrent| torrent.content_layout)
+    {
+        Some(PluginTorrentContentLayout::Original) => Some("Original".to_string()),
+        Some(PluginTorrentContentLayout::Subfolder) => Some("Subfolder".to_string()),
+        Some(PluginTorrentContentLayout::NoSubfolder) => Some("NoSubfolder".to_string()),
+        Some(PluginTorrentContentLayout::Default) | None => None,
+    }
+}
+
+fn apply_post_import_isolation(
+    config: &QbittorrentConfig,
+    hash: &str,
+    request: &PluginDownloadClientMarkImportedRequest,
+) -> Result<(), Error> {
+    let Some(target) = request
+        .post_import_isolation
+        .iter()
+        .find(|entry| {
+            matches!(
+                (config.routing_mode, entry.mode),
+                (RoutingMode::Category, DownloadIsolationMode::Category)
+                    | (RoutingMode::Tag, DownloadIsolationMode::Tag)
+                    | (RoutingMode::Tag, DownloadIsolationMode::Label)
+            )
+        })
+        .map(|entry| entry.value.trim())
+        .filter(|value| !value.is_empty())
+    else {
+        return Ok(());
+    };
+
+    match config.routing_mode {
+        RoutingMode::Category => post_form(
+            config,
+            "/torrents/setCategory",
+            &[
+                ("hashes".to_string(), hash.to_string()),
+                ("category".to_string(), target.to_string()),
+            ],
+        ),
+        RoutingMode::Tag => post_form(
+            config,
+            "/torrents/addTags",
+            &[
+                ("hashes".to_string(), hash.to_string()),
+                ("tags".to_string(), target.to_string()),
+            ],
+        ),
+    }
+}
+
 fn category_for_add(
     config: &QbittorrentConfig,
     request: &PluginDownloadClientAddRequest,
@@ -1045,12 +1338,7 @@ fn build_add_multipart_body(file_name: &str, bytes: &[u8], options: AddOptions) 
     append_multipart_text(&mut body, boundary, "savepath", options.savepath.as_deref());
     append_multipart_text(&mut body, boundary, "category", options.category.as_deref());
     append_multipart_text(&mut body, boundary, "tags", options.tags.as_deref());
-    append_multipart_text(
-        &mut body,
-        boundary,
-        "ratioLimit",
-        ratio_limit.as_deref(),
-    );
+    append_multipart_text(&mut body, boundary, "ratioLimit", ratio_limit.as_deref());
     append_multipart_text(
         &mut body,
         boundary,
@@ -1147,8 +1435,9 @@ fn url_encode(value: &str) -> String {
 fn derive_expected_hash(request: &PluginDownloadClientAddRequest) -> Option<String> {
     request
         .release
-        .info_hash_hint
+        .info_hash_v1
         .clone()
+        .or_else(|| request.release.info_hash_hint.clone())
         .map(|value| normalize_hash(&value))
         .filter(|value| !value.is_empty())
         .or_else(|| {
@@ -1226,7 +1515,9 @@ fn find_info_dict_range(bytes: &[u8]) -> Result<(usize, usize), Error> {
         idx = value_end;
     }
 
-    Err(Error::msg("torrent payload is missing top-level info dictionary"))
+    Err(Error::msg(
+        "torrent payload is missing top-level info dictionary",
+    ))
 }
 
 fn parse_bencoded_string(bytes: &[u8], start: usize) -> Result<(&[u8], usize), Error> {
@@ -1315,6 +1606,7 @@ fn torrent_to_item(torrent: QbTorrent) -> PluginDownloadItem {
     let state = map_state(&torrent.state);
     let category = normalize_non_empty(torrent.category.clone());
     let remote_output_path = preferred_content_path(&torrent);
+    let content_paths = remote_output_path.clone().into_iter().collect::<Vec<_>>();
     let progress_percent = torrent
         .progress
         .map(|value| (value * 100.0).round().clamp(0.0, 100.0) as u8)
@@ -1334,6 +1626,30 @@ fn torrent_to_item(torrent: QbTorrent) -> PluginDownloadItem {
         message: state_message(&torrent.state),
         category,
         remote_output_path,
+        torrent: Some(PluginTorrentItem {
+            info_hash_v1: Some(normalize_hash(&torrent.hash)),
+            info_hash_v2: None,
+            client_native_id: Some(torrent.hash.clone()),
+            tags: parse_csv(torrent.tags.as_deref().unwrap_or_default()),
+            labels: Vec::new(),
+            categories: torrent.category.iter().cloned().collect(),
+            views: Vec::new(),
+            save_path: normalize_non_empty(torrent.save_path.clone()),
+            content_paths,
+            uploaded_bytes: positive_i64(torrent.uploaded),
+            downloaded_bytes: positive_i64(torrent.downloaded),
+            upload_rate_bytes_per_second: positive_i64(torrent.upspeed),
+            download_rate_bytes_per_second: positive_i64(torrent.dlspeed),
+            seed_ratio: torrent
+                .ratio
+                .filter(|value| value.is_finite() && *value >= 0.0),
+            seed_time_seconds: positive_i64(torrent.seeding_time),
+            metadata_only: Some(false),
+            is_encrypted: None,
+            is_private: torrent.private,
+            raw_status: raw_state.clone(),
+            status_reason: state_message(&torrent.state),
+        }),
         total_size_bytes: torrent.total_size.or(torrent.size),
         remaining_size_bytes: torrent.amount_left,
         eta_seconds: positive_i64(torrent.eta),
@@ -1352,12 +1668,22 @@ fn torrent_to_completed_download(torrent: QbTorrent) -> Option<PluginCompletedDo
         return None;
     }
     let dest_dir = derive_completed_dest_dir(&torrent)?;
+    let content_paths = preferred_content_path(&torrent)
+        .into_iter()
+        .collect::<Vec<_>>();
+    let output_kind = match content_paths.first() {
+        Some(path) if path_looks_like_file(path) => PluginDownloadOutputKind::File,
+        Some(_) => PluginDownloadOutputKind::Directory,
+        None => PluginDownloadOutputKind::Unknown,
+    };
     Some(PluginCompletedDownload {
         client_item_id: hash.clone(),
         info_hash: Some(hash),
         name: torrent.name.clone(),
         dest_dir,
         category: normalize_non_empty(torrent.category.clone()),
+        output_kind: Some(output_kind),
+        content_paths,
         size_bytes: torrent.total_size.or(torrent.size),
         completed_at: unix_to_rfc3339(torrent.completion_on),
         parameters: parameters_from_tags(torrent.tags.as_deref()),
@@ -1427,7 +1753,8 @@ fn normalize_hash(value: &str) -> String {
 }
 
 fn normalize_title_match(value: &str) -> String {
-    value.chars()
+    value
+        .chars()
         .map(|ch| {
             if ch.is_ascii_alphanumeric() {
                 ch.to_ascii_lowercase()
@@ -1480,10 +1807,8 @@ fn path_looks_like_file(path: &str) -> bool {
         // video
         "mkv", "mp4", "avi", "wmv", "mov", "m4v", "ts", "m2ts", "webm", "flv", "ogv",
         // archive
-        "rar", "zip", "7z",
-        // audio (for music torrents)
-        "flac", "mp3", "ogg", "wav", "aac", "m4a",
-        // subtitle
+        "rar", "zip", "7z", // audio (for music torrents)
+        "flac", "mp3", "ogg", "wav", "aac", "m4a", // subtitle
         "srt", "ass", "ssa", "sub", "idx", "sup",
         // other single-file types qBittorrent may report
         "iso", "img", "nzb", "torrent",
@@ -1536,9 +1861,7 @@ fn chrono_like_rfc3339(timestamp: i64) -> String {
     let hour = seconds_of_day / 3600;
     let minute = (seconds_of_day % 3600) / 60;
     let second = seconds_of_day % 60;
-    format!(
-        "{year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}Z"
-    )
+    format!("{year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}Z")
 }
 
 fn civil_from_days(days_since_epoch: i64) -> (i64, i64, i64) {
@@ -1559,15 +1882,14 @@ fn map_state(state: &str) -> DownloadItemState {
     match state.trim().to_ascii_lowercase().as_str() {
         "queueddl" => DownloadItemState::Queued,
         "pauseddl" => DownloadItemState::Paused,
-        "metadl"
-        | "forcedmetadl"
-        | "stalleddl"
-        | "forceddl"
-        | "downloading"
-        | "allocating" => DownloadItemState::Downloading,
+        "metadl" | "forcedmetadl" | "stalleddl" | "forceddl" | "downloading" | "allocating" => {
+            DownloadItemState::Downloading
+        }
         "checkingup" | "checkingdl" | "checkingresumedata" => DownloadItemState::Verifying,
         "moving" => DownloadItemState::ImportPending,
-        "pausedup" | "queuedup" | "stalledup" | "uploading" | "forcedup" => DownloadItemState::Completed,
+        "pausedup" | "queuedup" | "stalledup" | "uploading" | "forcedup" => {
+            DownloadItemState::Completed
+        }
         "error" | "missingfiles" => DownloadItemState::Failed,
         "unknown" => DownloadItemState::Error,
         _ => DownloadItemState::Warning,
@@ -1603,9 +1925,69 @@ fn create_tag_if_missing(config: &QbittorrentConfig, tag: &str) -> Result<(), Er
 
 fn is_localhost_url(url: &str) -> bool {
     let lower = url.trim().to_ascii_lowercase();
-    lower.contains("://localhost")
-        || lower.contains("://127.0.0.1")
-        || lower.contains("://[::1]")
+    lower.contains("://localhost") || lower.contains("://127.0.0.1") || lower.contains("://[::1]")
+}
+
+#[cfg(test)]
+mod extism_host_stubs {
+    #[unsafe(no_mangle)]
+    pub extern "C" fn alloc(_len: u64) -> u64 {
+        0
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn config_get(_ptr: u64) -> u64 {
+        0
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn http_headers() -> u64 {
+        0
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn http_request(_request: u64, _body: u64) -> u64 {
+        0
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn http_status_code() -> u64 {
+        200
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn length(_offset: u64) -> u64 {
+        0
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn length_unsafe(_offset: u64) -> u64 {
+        0
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn load_u64(_offset: u64) -> u64 {
+        0
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn load_u8(_offset: u64) -> u8 {
+        0
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn store_u64(_offset: u64, _value: u64) {}
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn store_u8(_offset: u64, _value: u8) {}
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn var_get(_ptr: u64) -> u64 {
+        0
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn var_set(_ptr: u64, _value: u64) {}
 }
 
 #[cfg(test)]
@@ -1619,6 +2001,60 @@ mod tests {
         assert_eq!(value["provider"]["kind"], "download_client");
         assert_eq!(value["provider"]["provider_type"], "qbittorrent");
         assert_eq!(value["provider"]["accepted_inputs"][0], "magnet_uri");
+        assert_eq!(
+            value["provider"]["capabilities"]["torrent"]["supported_sources"][1],
+            "torrent_url"
+        );
+        assert_eq!(
+            value["provider"]["capabilities"]["torrent"]["supports_post_import_isolation"],
+            true
+        );
+    }
+
+    #[test]
+    fn v11_add_request_fields_deserialize() {
+        let json = r#"{
+            "source":{
+                "kind":"torrent_bytes",
+                "torrent_bytes_base64":"dG9ycmVudA==",
+                "torrent_url":"https://tracker.example/release.torrent",
+                "torrent_file_name":"release.torrent",
+                "torrent_content_type":"application/x-bittorrent"
+            },
+            "release":{
+                "release_title":"Example",
+                "info_hash_hint":"abcdef0123456789abcdef0123456789abcdef01",
+                "info_hash_v1":"abcdef0123456789abcdef0123456789abcdef01"
+            },
+            "title":{
+                "title_name":"Example",
+                "media_facet":"series",
+                "tags":[]
+            },
+            "routing":{
+                "isolation_value":"series",
+                "isolation":[{"mode":"category","value":"series"}],
+                "post_import_isolation":[{"mode":"tag","value":"imported"}]
+            },
+            "torrent":{
+                "source_preference":["torrent_bytes","torrent_url"],
+                "sequential_download":true,
+                "first_last_piece_priority":true,
+                "content_layout":"subfolder",
+                "skip_checking":true
+            }
+        }"#;
+
+        let request: PluginDownloadClientAddRequest = serde_json::from_str(json).unwrap();
+        assert_eq!(request.source.kind, DownloadInputKind::TorrentBytes);
+        assert_eq!(
+            request
+                .torrent
+                .as_ref()
+                .and_then(|torrent| torrent.content_layout),
+            Some(PluginTorrentContentLayout::Subfolder)
+        );
+        assert_eq!(request.routing.post_import_isolation.len(), 1);
     }
 
     #[test]
@@ -1678,6 +2114,23 @@ mod tests {
     }
 
     #[test]
+    fn completed_download_reports_output_kind_for_single_file() {
+        let torrent = QbTorrent {
+            hash: "abcdef0123456789abcdef0123456789abcdef01".to_string(),
+            name: "Movie".to_string(),
+            save_path: Some("/downloads/movies".to_string()),
+            content_path: Some("/downloads/movies/Movie.mkv".to_string()),
+            ..QbTorrent::default()
+        };
+        let completed = torrent_to_completed_download(torrent).unwrap();
+        assert_eq!(completed.output_kind, Some(PluginDownloadOutputKind::File));
+        assert_eq!(
+            completed.content_paths,
+            vec!["/downloads/movies/Movie.mkv".to_string()]
+        );
+    }
+
+    #[test]
     fn completed_dest_dir_uses_content_path_for_scene_release_with_dots() {
         // Scene release names like "Show.S01E02.2160p.WEB.h265-GROUP" contain
         // dots but are directories, not files.
@@ -1714,7 +2167,8 @@ mod tests {
 
     #[test]
     fn internal_tags_round_trip_to_parameters() {
-        let parameters = parameters_from_tags(Some("scryer-origin,scryer-title-abc123,scryer-facet-anime"));
+        let parameters =
+            parameters_from_tags(Some("scryer-origin,scryer-title-abc123,scryer-facet-anime"));
         assert!(parameters.contains(&("*scryer_title_id".to_string(), "abc123".to_string())));
         assert!(parameters.contains(&("*scryer_facet".to_string(), "anime".to_string())));
     }
@@ -1807,6 +2261,73 @@ mod tests {
                 );
             }
             PluginResult::Ok(()) => panic!("expected structured error"),
+        }
+    }
+
+    fn test_add_request(kind: DownloadInputKind) -> PluginDownloadClientAddRequest {
+        serde_json::from_value(serde_json::json!({
+            "source": { "kind": kind },
+            "release": { "release_title": "Example Release" },
+            "title": {
+                "title_name": "Example",
+                "media_facet": "movie",
+                "tags": []
+            },
+            "routing": {
+                "isolation_value": "movie",
+                "isolation": [],
+                "post_import_isolation": []
+            }
+        }))
+        .unwrap()
+    }
+
+    fn test_config() -> QbittorrentConfig {
+        QbittorrentConfig {
+            webui_url: "http://localhost:8080".to_string(),
+            api_root: "http://localhost:8080/api/v2".to_string(),
+            username: "user".to_string(),
+            password: "pass".to_string(),
+            routing_mode: RoutingMode::Category,
+            static_tags: Vec::new(),
+            auto_tmm: false,
+            start_paused: false,
+            force_start: false,
+            skip_checking: false,
+            imported_tag: IMPORTED_TAG_DEFAULT.to_string(),
+            post_import_action: PostImportAction::TagImported,
+        }
+    }
+
+    #[test]
+    fn add_missing_source_returns_structured_error() {
+        match handle_download_add(
+            test_config(),
+            test_add_request(DownloadInputKind::TorrentUrl),
+        )
+        .unwrap()
+        {
+            PluginResult::Err(error) => {
+                assert_eq!(error.code, PluginErrorCode::Permanent);
+                assert_eq!(error.public_message, "download source is missing");
+            }
+            PluginResult::Ok(_) => panic!("expected structured error"),
+        }
+    }
+
+    #[test]
+    fn add_invalid_torrent_bytes_returns_structured_error() {
+        let mut request = test_add_request(DownloadInputKind::TorrentBytes);
+        request.source.torrent_bytes_base64 = Some("not-base64".to_string());
+
+        match handle_download_add(test_config(), request).unwrap() {
+            PluginResult::Err(error) => {
+                assert_eq!(error.code, PluginErrorCode::Permanent);
+                assert!(error
+                    .public_message
+                    .contains("invalid torrent_bytes_base64"));
+            }
+            PluginResult::Ok(_) => panic!("expected structured error"),
         }
     }
 }

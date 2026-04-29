@@ -519,8 +519,9 @@ fn run_builtins(ctx: &TaskContext, args: BuiltinsArgs) -> Result<()> {
             );
         }
 
+        ensure_lockfile(ctx, &plugin_dir)?;
         let mut build = ctx.command_in("cargo", &plugin_dir);
-        build.args(["build", "--release", "--target", WASM_TARGET, "--locked"]);
+        build.args(["build", "--release", "--target", WASM_TARGET, "--offline"]);
         run_checked(&mut build).with_context(|| format!("failed to build {}", spec.plugin_dir))?;
 
         let built_wasm = plugin_dir
@@ -559,14 +560,28 @@ fn wasm_filename_for_manifest(cargo_toml: &Path) -> Result<String> {
     Ok(crate_name_from_manifest(cargo_toml)?.replace('-', "_") + ".wasm")
 }
 
+fn ensure_lockfile(ctx: &TaskContext, plugin_dir: &Path) -> Result<()> {
+    let lockfile = plugin_dir.join("Cargo.lock");
+    if lockfile.is_file() {
+        return Ok(());
+    }
+
+    step(format!("Generating lockfile for {}", plugin_dir.display()));
+    let mut command = ctx.command_in("cargo", plugin_dir);
+    command.args(["generate-lockfile", "--offline"]);
+    run_checked(&mut command)
+        .with_context(|| format!("failed to generate lockfile for {}", plugin_dir.display()))
+}
+
 fn build_plugin_wasm(ctx: &TaskContext, plugin_dir: &Path) -> Result<PathBuf> {
     require_wasm_target(ctx)?;
     let cargo_toml = plugin_dir.join("Cargo.toml");
     let wasm_filename = wasm_filename_for_manifest(&cargo_toml)?;
 
     step(format!("Building {}", plugin_dir.display()));
+    ensure_lockfile(ctx, plugin_dir)?;
     let mut build = ctx.command_in("cargo", plugin_dir);
-    build.args(["build", "--release", "--target", WASM_TARGET, "--locked"]);
+    build.args(["build", "--release", "--target", WASM_TARGET, "--offline"]);
     run_checked(&mut build)?;
 
     let built_wasm = plugin_dir

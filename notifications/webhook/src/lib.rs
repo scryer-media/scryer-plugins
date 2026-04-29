@@ -1,8 +1,9 @@
 use extism_pdk::*;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldOption, ConfigFieldType, NotificationCapabilities,
-    NotificationDescriptor, PluginDescriptor, PluginNotificationRequest,
-    PluginNotificationResponse, PluginResult, ProviderDescriptor, SDK_VERSION,
+    NotificationDeliveryMode, NotificationDescriptor, NotificationPayloadFormat,
+    PluginDescriptor, PluginNotificationRequest, PluginNotificationResponse, PluginResult,
+    ProviderDescriptor, SDK_VERSION, to_webhook_json,
 };
 
 // ---------------------------------------------------------------------------
@@ -28,7 +29,18 @@ fn build_descriptor() -> PluginDescriptor {
             capabilities: NotificationCapabilities {
                 supports_rich_text: false,
                 supports_images: false,
+                supports_test: true,
+                supports_batch: false,
+                supports_coalescing: false,
+                requires_host_filesystem: false,
+                requires_host_process: false,
+                delivery_modes: vec![NotificationDeliveryMode::Webhook],
+                payload_formats: vec![
+                    NotificationPayloadFormat::StructuredJson,
+                    NotificationPayloadFormat::PlainText,
+                ],
                 supported_events: vec![],
+                event_options: Default::default(),
             },
             config_fields: vec![
             ConfigFieldDef {
@@ -100,6 +112,11 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
         let resp = PluginNotificationResponse {
             success: false,
             error: Some("webhook_url is not configured".to_string()),
+            delivery_id: None,
+            provider_status: None,
+            retry_after_seconds: None,
+            warnings: Vec::new(),
+            target_results: Vec::new(),
         };
         return Ok(serde_json::to_string(&PluginResult::Ok(resp))?);
     }
@@ -121,7 +138,7 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
             req.summary_message
         )
     } else {
-        serde_json::to_string(&req)?
+        serde_json::to_string(&to_webhook_json(&req))?
     };
 
     // Make HTTP request via Extism host function
@@ -137,6 +154,11 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
                 let resp = PluginNotificationResponse {
                     success: true,
                     error: None,
+                    delivery_id: None,
+                    provider_status: None,
+                    retry_after_seconds: None,
+                    warnings: Vec::new(),
+                    target_results: Vec::new(),
                 };
                 Ok(serde_json::to_string(&PluginResult::Ok(resp))?)
             } else {
@@ -144,6 +166,11 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
                 let resp = PluginNotificationResponse {
                     success: false,
                     error: Some(format!("HTTP {}: {}", status, body_text)),
+                    delivery_id: None,
+                    provider_status: Some(format!("http_{status}")),
+                    retry_after_seconds: None,
+                    warnings: Vec::new(),
+                    target_results: Vec::new(),
                 };
                 Ok(serde_json::to_string(&PluginResult::Ok(resp))?)
             }
@@ -152,6 +179,11 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
             let resp = PluginNotificationResponse {
                 success: false,
                 error: Some(format!("request failed: {}", e)),
+                delivery_id: None,
+                provider_status: None,
+                retry_after_seconds: None,
+                warnings: Vec::new(),
+                target_results: Vec::new(),
             };
             Ok(serde_json::to_string(&PluginResult::Ok(resp))?)
         }
@@ -176,7 +208,14 @@ mod tests {
     #[test]
     fn webhook_payload_serialization() {
         let payload = PluginNotificationRequest {
+            schema_version: 1,
             event_type: scryer_plugin_sdk::NotificationEventType::Test,
+            event_id: Some("evt-1".to_string()),
+            occurred_at: Some("2026-04-29T12:00:00Z".to_string()),
+            correlation_id: Some("corr-1".to_string()),
+            actor: None,
+            severity: None,
+            is_test: true,
             summary_title: "Test Notification".to_string(),
             summary_message: "This is a test.".to_string(),
             app: scryer_plugin_sdk::PluginNotificationApp {
@@ -184,21 +223,38 @@ mod tests {
                 version: "test".to_string(),
             },
             title: Some(scryer_plugin_sdk::PluginNotificationTitle {
+                id: None,
                 name: "Breaking Bad".to_string(),
                 facet: "tv".to_string(),
                 year: Some(2008),
+                slug: None,
+                path: None,
+                overview: None,
+                sort_title: None,
+                banner_url: None,
+                background_url: None,
                 poster_url: None,
+                genres: Vec::new(),
+                tags: Vec::new(),
+                aliases: Vec::new(),
+                original_language: None,
+                original_country: None,
                 external_ids: Default::default(),
             }),
             episode: None,
+            episodes: Vec::new(),
             release: None,
             download: None,
             import: None,
             health: None,
             file: None,
+            media_files: Vec::new(),
+            application_update: None,
+            manual_interaction: None,
         };
         let json = serde_json::to_string(&payload).unwrap();
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed["schema_version"], 1);
         assert_eq!(parsed["event_type"], "test");
         assert_eq!(parsed["title"]["name"], "Breaking Bad");
         assert!(parsed.get("provider_extra").is_none());
