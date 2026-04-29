@@ -4,115 +4,12 @@ use base64::{engine::general_purpose::STANDARD, Engine as _};
 use extism_pdk::*;
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize)]
-struct PluginDescriptor {
-    name: String,
-    version: String,
-    sdk_version: String,
-    plugin_type: String,
-    provider_type: String,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    provider_aliases: Vec<String>,
-    capabilities: Capabilities,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    scoring_policies: Vec<serde_json::Value>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    config_fields: Vec<ConfigFieldDef>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    allowed_hosts: Vec<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    rate_limit_seconds: Option<i64>,
-}
-
-#[derive(Serialize)]
-struct Capabilities {
-    supported_ids: HashMap<String, Vec<String>>,
-    #[serde(default)]
-    deduplicates_aliases: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    season_param: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    episode_param: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    query_param: Option<String>,
-    // Legacy fields
-    search: bool,
-    imdb_search: bool,
-    tvdb_search: bool,
-    rss: bool,
-}
-
-#[derive(Serialize)]
-struct ConfigFieldDef {
-    key: String,
-    label: String,
-    field_type: String,
-    #[serde(default)]
-    required: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    default_value: Option<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    options: Vec<ConfigFieldOption>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    help_text: Option<String>,
-}
-
-#[derive(Serialize)]
-struct ConfigFieldOption {
-    value: String,
-    label: String,
-}
-
-#[derive(Deserialize)]
-struct SearchRequest {
-    query: String,
-    #[serde(default)]
-    ids: HashMap<String, String>,
-    #[serde(default)]
-    facet: Option<String>,
-    #[serde(default)]
-    category: Option<String>,
-    #[serde(default)]
-    categories: Vec<String>,
-    #[serde(default)]
-    limit: usize,
-    #[serde(default)]
-    season: Option<u32>,
-    #[serde(default)]
-    episode: Option<u32>,
-    #[serde(default)]
-    absolute_episode: Option<u32>,
-}
-
-#[derive(Serialize)]
-struct SearchResponse {
-    results: Vec<SearchResult>,
-}
-
-#[derive(Clone, Debug, Serialize)]
-struct SearchResult {
-    title: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    link: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    download_url: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    size_bytes: Option<i64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    published_at: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    grabs: Option<i64>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    languages: Vec<String>,
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    extra: HashMap<String, serde_json::Value>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    guid: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    info_url: Option<String>,
-}
+use scryer_plugin_sdk::{
+    ConfigFieldDef, ConfigFieldOption, ConfigFieldType, IndexerCapabilities as Capabilities,
+    IndexerDescriptor, IndexerSourceKind, PluginDescriptor, PluginResult,
+    PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
+    PluginSearchResult as SearchResult, ProviderDescriptor, SDK_VERSION,
+};
 
 #[derive(Default)]
 struct ParsedItem {
@@ -138,39 +35,44 @@ enum DownloadPreference {
 }
 
 #[plugin_fn]
-pub fn describe(_input: String) -> FnResult<String> {
+pub fn scryer_describe(_input: String) -> FnResult<String> {
     Ok(build_descriptor_json()?)
 }
 
 fn build_descriptor_json() -> Result<String, Error> {
     let descriptor = PluginDescriptor {
+        id: "torrent-rss".to_string(),
         name: "Torrent RSS Feed Indexer".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
-        sdk_version: "0.1".to_string(),
-        plugin_type: "torrent_indexer".to_string(),
-        provider_type: "torrent_rss".to_string(),
-        provider_aliases: vec!["rss".to_string()],
-        capabilities: Capabilities {
-            supported_ids: HashMap::new(),
-            deduplicates_aliases: false,
-            season_param: None,
-            episode_param: None,
-            query_param: None,
-            search: false,
-            imdb_search: false,
-            tvdb_search: false,
-            rss: true,
-        },
-        scoring_policies: vec![],
-        config_fields: config_fields(),
-        allowed_hosts: vec![],
-        rate_limit_seconds: Some(2),
+        sdk_version: SDK_VERSION.to_string(),
+        provider: ProviderDescriptor::Indexer(IndexerDescriptor {
+            provider_type: "torrent_rss".to_string(),
+            provider_aliases: vec!["rss".to_string()],
+            source_kind: IndexerSourceKind::Torrent,
+            capabilities: Capabilities {
+                supported_ids: HashMap::new(),
+                deduplicates_aliases: false,
+                season_param: None,
+                episode_param: None,
+                query_param: None,
+                search: false,
+                imdb_search: false,
+                tvdb_search: false,
+                anidb_search: false,
+                rss: true,
+            },
+            scoring_policies: vec![],
+            config_fields: config_fields(),
+            default_base_url: None,
+            allowed_hosts: vec![],
+            rate_limit_seconds: Some(2),
+        }),
     };
     Ok(serde_json::to_string(&descriptor)?)
 }
 
 #[plugin_fn]
-pub fn search(input: String) -> FnResult<String> {
+pub fn scryer_indexer_search(input: String) -> FnResult<String> {
     let req: SearchRequest = serde_json::from_str(&input)?;
     let feed_url = read_config("feed_url")?;
     if feed_url.trim().is_empty() {
@@ -199,7 +101,10 @@ pub fn search(input: String) -> FnResult<String> {
     let mut results = parse_rss_feed(&body, preference);
     results = filter_results(results, &req, limit);
 
-    Ok(serde_json::to_string(&SearchResponse { results })?)
+    Ok(serde_json::to_string(&PluginResult::Ok(SearchResponse {
+        results,
+        ..Default::default()
+    }))?)
 }
 
 fn config_fields() -> Vec<ConfigFieldDef> {
@@ -207,9 +112,11 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         ConfigFieldDef {
             key: "feed_url".to_string(),
             label: "Feed URL".to_string(),
-            field_type: "string".to_string(),
+            field_type: ConfigFieldType::String,
             required: true,
             default_value: None,
+            value_source: Default::default(),
+            host_binding: None,
             options: vec![],
             help_text: Some(
                 "Direct RSS feed URL for the torrent tracker or aggregator".to_string(),
@@ -218,9 +125,11 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         ConfigFieldDef {
             key: "download_preference".to_string(),
             label: "Download Preference".to_string(),
-            field_type: "select".to_string(),
+            field_type: ConfigFieldType::Select,
             required: false,
             default_value: Some("auto".to_string()),
+            value_source: Default::default(),
+            host_binding: None,
             options: vec![
                 ConfigFieldOption {
                     value: "auto".to_string(),
@@ -251,27 +160,33 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         ConfigFieldDef {
             key: "username".to_string(),
             label: "Username".to_string(),
-            field_type: "string".to_string(),
+            field_type: ConfigFieldType::String,
             required: false,
             default_value: None,
+            value_source: Default::default(),
+            host_binding: None,
             options: vec![],
             help_text: Some("Optional username for HTTP basic auth".to_string()),
         },
         ConfigFieldDef {
             key: "password".to_string(),
             label: "Password".to_string(),
-            field_type: "secret".to_string(),
+            field_type: ConfigFieldType::Password,
             required: false,
             default_value: None,
+            value_source: Default::default(),
+            host_binding: None,
             options: vec![],
             help_text: Some("Optional password for HTTP basic auth".to_string()),
         },
         ConfigFieldDef {
             key: "cookie".to_string(),
             label: "Cookie Header".to_string(),
-            field_type: "secret".to_string(),
+            field_type: ConfigFieldType::Password,
             required: false,
             default_value: None,
+            value_source: Default::default(),
+            host_binding: None,
             options: vec![],
             help_text: Some(
                 "Optional raw Cookie header for private trackers that gate RSS with session cookies"
@@ -281,18 +196,22 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         ConfigFieldDef {
             key: "user_agent".to_string(),
             label: "User Agent".to_string(),
-            field_type: "string".to_string(),
+            field_type: ConfigFieldType::String,
             required: false,
             default_value: Some("Scryer Torrent RSS Indexer/0.1".to_string()),
+            value_source: Default::default(),
+            host_binding: None,
             options: vec![],
             help_text: Some("Optional custom User-Agent header".to_string()),
         },
         ConfigFieldDef {
             key: "additional_headers".to_string(),
             label: "Additional Headers".to_string(),
-            field_type: "string".to_string(),
+            field_type: ConfigFieldType::String,
             required: false,
             default_value: None,
+            value_source: Default::default(),
+            host_binding: None,
             options: vec![],
             help_text: Some(
                 "Optional extra headers, one per line, formatted as Header-Name: value".to_string(),
@@ -742,7 +661,18 @@ fn build_result(item: ParsedItem, preference: DownloadPreference) -> Option<Sear
         published_at: item.published_at,
         grabs,
         languages: dedupe(languages),
-        extra,
+        thumbs_up: extra
+            .get("seeders")
+            .and_then(|value| value.as_i64())
+            .and_then(|value| i32::try_from(value).ok()),
+        thumbs_down: extra
+            .get("peers")
+            .and_then(|value| value.as_i64())
+            .and_then(|value| i32::try_from(value).ok()),
+        subtitles: vec![],
+        password_hint: None,
+        protected: None,
+        provider_extra: extra,
         guid: item.guid,
         info_url,
     })
@@ -925,7 +855,7 @@ fn imdb_matches(result: &SearchResult, requested: Option<&str>) -> bool {
         return true;
     };
     match result
-        .extra
+        .provider_extra
         .get("response_imdbid")
         .and_then(|value| value.as_str())
     {
@@ -939,7 +869,7 @@ fn tvdb_matches(result: &SearchResult, requested: Option<&str>) -> bool {
         return true;
     };
     match result
-        .extra
+        .provider_extra
         .get("response_tvdbid")
         .and_then(|value| value.as_str())
     {
@@ -991,7 +921,7 @@ fn category_matches(result: &SearchResult, requested: &[String]) -> bool {
     }
 
     let available = result
-        .extra
+        .provider_extra
         .get("categories")
         .and_then(|value| value.as_array())
         .map(|values| {
@@ -1045,7 +975,7 @@ mod tests {
     fn descriptor_is_torrent_rss() {
         let json = build_descriptor_json().unwrap();
         assert!(json.contains("\"provider_type\":\"torrent_rss\""));
-        assert!(json.contains("\"plugin_type\":\"torrent_indexer\""));
+        assert!(json.contains("\"source_kind\":\"torrent\""));
     }
 
     #[test]
@@ -1078,21 +1008,21 @@ mod tests {
         );
         assert_eq!(result.size_bytes, Some(123456));
         assert_eq!(
-            result.extra.get("seeders"),
+            result.provider_extra.get("seeders"),
             Some(&serde_json::Value::from(55))
         );
         assert_eq!(
-            result.extra.get("peers"),
+            result.provider_extra.get("peers"),
             Some(&serde_json::Value::from(12))
         );
         assert_eq!(
-            result.extra.get("info_hash"),
+            result.provider_extra.get("info_hash"),
             Some(&serde_json::Value::from(
                 "abcdef1234567890abcdef1234567890abcdef12"
             ))
         );
         assert_eq!(
-            result.extra.get("response_imdbid"),
+            result.provider_extra.get("response_imdbid"),
             Some(&serde_json::Value::from("tt15239678"))
         );
     }
@@ -1119,7 +1049,7 @@ mod tests {
             Some("magnet:?xt=urn:btih:abcdef1234567890abcdef1234567890abcdef12&dn=Show")
         );
         assert_eq!(
-            results[0].extra.get("info_hash"),
+            results[0].provider_extra.get("info_hash"),
             Some(&serde_json::Value::from(
                 "abcdef1234567890abcdef1234567890abcdef12"
             ))
@@ -1159,7 +1089,12 @@ mod tests {
                 published_at: None,
                 grabs: None,
                 languages: vec![],
-                extra: HashMap::new(),
+                thumbs_up: None,
+                thumbs_down: None,
+                subtitles: vec![],
+                password_hint: None,
+                protected: None,
+                provider_extra: HashMap::new(),
                 guid: None,
                 info_url: None,
             },
@@ -1171,7 +1106,12 @@ mod tests {
                 published_at: None,
                 grabs: None,
                 languages: vec![],
-                extra: HashMap::new(),
+                thumbs_up: None,
+                thumbs_down: None,
+                subtitles: vec![],
+                password_hint: None,
+                protected: None,
+                provider_extra: HashMap::new(),
                 guid: None,
                 info_url: None,
             },
@@ -1189,6 +1129,7 @@ mod tests {
                 season: Some(1),
                 episode: Some(2),
                 absolute_episode: None,
+                tagged_aliases: vec![],
             },
             10,
         );

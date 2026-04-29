@@ -2,58 +2,64 @@ use std::collections::HashMap;
 
 use extism_pdk::*;
 use newznab_common::{
-    execute_full_search, Capabilities, NewznabConfig, PluginDescriptor,
-    ScoringPolicy, SearchRequest,
+    execute_full_search, Capabilities, IndexerDescriptor, IndexerSourceKind, NewznabConfig,
+    PluginDescriptor, PluginResult, ProviderDescriptor, SDK_VERSION, ScoringPolicy, SearchRequest,
 };
 
 #[plugin_fn]
-pub fn describe(_input: String) -> FnResult<String> {
+pub fn scryer_describe(_input: String) -> FnResult<String> {
     let descriptor = PluginDescriptor {
+        id: "nzbgeek".to_string(),
         name: "NZBGeek Indexer".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
-        sdk_version: "0.1".to_string(),
-        plugin_type: "usenet_indexer".to_string(),
-        provider_type: "nzbgeek".to_string(),
-        provider_aliases: vec![],
-        capabilities: Capabilities {
-            supported_ids: HashMap::from([
-                ("movie".into(), vec!["imdb_id".into()]),
-                ("series".into(), vec!["tvdb_id".into()]),
-                ("anime".into(), vec!["tvdb_id".into()]),
-            ]),
-            deduplicates_aliases: false,
-            season_param: Some("season".into()),
-            episode_param: Some("ep".into()),
-            query_param: Some("q".into()),
-            search: true,
-            imdb_search: true,
-            tvdb_search: true,
-        },
-        scoring_policies: vec![
-            ScoringPolicy {
-                name: "nzbgeek_vote_penalty".to_string(),
-                rego_source: REGO_VOTE_PENALTY.to_string(),
-                applied_facets: vec![],
+        sdk_version: SDK_VERSION.to_string(),
+        provider: ProviderDescriptor::Indexer(IndexerDescriptor {
+            provider_type: "nzbgeek".to_string(),
+            provider_aliases: vec![],
+            source_kind: IndexerSourceKind::Usenet,
+            capabilities: Capabilities {
+                supported_ids: HashMap::from([
+                    ("movie".into(), vec!["imdb_id".into()]),
+                    ("series".into(), vec!["tvdb_id".into()]),
+                    ("anime".into(), vec!["tvdb_id".into()]),
+                ]),
+                deduplicates_aliases: false,
+                season_param: Some("season".into()),
+                episode_param: Some("ep".into()),
+                query_param: Some("q".into()),
+                search: true,
+                imdb_search: true,
+                tvdb_search: true,
+                anidb_search: false,
+                rss: true,
             },
-            ScoringPolicy {
-                name: "nzbgeek_language_bonus".to_string(),
-                rego_source: REGO_LANGUAGE_BONUS.to_string(),
-                applied_facets: vec![],
-            },
-        ],
-        config_fields: vec![],
-        allowed_hosts: vec![],
-        rate_limit_seconds: None,
+            scoring_policies: vec![
+                ScoringPolicy {
+                    name: "nzbgeek_vote_penalty".to_string(),
+                    rego_source: REGO_VOTE_PENALTY.to_string(),
+                    applied_facets: vec![],
+                },
+                ScoringPolicy {
+                    name: "nzbgeek_language_bonus".to_string(),
+                    rego_source: REGO_LANGUAGE_BONUS.to_string(),
+                    applied_facets: vec![],
+                },
+            ],
+            config_fields: vec![],
+            default_base_url: None,
+            allowed_hosts: vec![],
+            rate_limit_seconds: None,
+        }),
     };
     Ok(serde_json::to_string(&descriptor)?)
 }
 
 #[plugin_fn]
-pub fn search(input: String) -> FnResult<String> {
+pub fn scryer_indexer_search(input: String) -> FnResult<String> {
     let req: SearchRequest = serde_json::from_str(&input)?;
     let config = NewznabConfig::from_extism()?;
     let response = execute_full_search(&config, &req, nzbgeek_metadata_extractor)?;
-    Ok(serde_json::to_string(&response)?)
+    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
 }
 
 // ---------------------------------------------------------------------------

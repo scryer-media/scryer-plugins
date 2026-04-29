@@ -1,5 +1,14 @@
 use anyhow::{Context, Result, anyhow, bail};
 use clap::{Args, Parser, Subcommand, ValueEnum};
+use extism::Manifest;
+use scryer_plugin_sdk::{
+    EXPORT_DESCRIBE, EXPORT_DOWNLOAD_ADD, EXPORT_DOWNLOAD_CONTROL, EXPORT_DOWNLOAD_LIST_COMPLETED,
+    EXPORT_DOWNLOAD_LIST_HISTORY, EXPORT_DOWNLOAD_LIST_QUEUE, EXPORT_DOWNLOAD_MARK_IMPORTED,
+    EXPORT_DOWNLOAD_STATUS, EXPORT_DOWNLOAD_TEST_CONNECTION, EXPORT_INDEXER_SEARCH,
+    EXPORT_NOTIFICATION_SEND, EXPORT_SUBTITLE_DOWNLOAD, EXPORT_SUBTITLE_GENERATE,
+    EXPORT_SUBTITLE_SEARCH, EXPORT_VALIDATE_CONFIG, PluginDescriptor, ProviderDescriptor,
+    SDK_VERSION, SubtitleProviderMode,
+};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -31,6 +40,10 @@ const BUILTIN_PLUGINS: &[BuiltinPluginSpec] = &[
     BuiltinPluginSpec {
         plugin_dir: "indexers/newznab",
         artifact_name: "newznab_indexer.wasm",
+    },
+    BuiltinPluginSpec {
+        plugin_dir: "indexers/dognzb",
+        artifact_name: "dognzb_indexer.wasm",
     },
     BuiltinPluginSpec {
         plugin_dir: "indexers/animetosho",
@@ -65,6 +78,7 @@ enum Commands {
     Release(ReleaseArgs),
     Registry(RegistryArgs),
     Builtins(BuiltinsArgs),
+    Plugin(PluginArgs),
 }
 
 #[derive(Args)]
@@ -91,6 +105,37 @@ struct RegistryArgs {
 struct BuiltinsArgs {
     #[arg(long, value_name = "DIR")]
     output_dir: Option<PathBuf>,
+}
+
+#[derive(Args)]
+struct PluginArgs {
+    #[command(subcommand)]
+    command: PluginCommand,
+}
+
+#[derive(Subcommand)]
+enum PluginCommand {
+    New(PluginNewArgs),
+    Validate(PluginValidateArgs),
+}
+
+#[derive(Args)]
+struct PluginNewArgs {
+    kind: PluginKindArg,
+    name: String,
+}
+
+#[derive(Args)]
+struct PluginValidateArgs {
+    path: PathBuf,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, ValueEnum)]
+enum PluginKindArg {
+    Indexer,
+    DownloadClient,
+    Notification,
+    Subtitle,
 }
 
 #[derive(Subcommand)]
@@ -140,13 +185,19 @@ struct Registry {
 #[derive(Debug, Deserialize, Serialize)]
 struct RegistryPlugin {
     id: String,
+    name: String,
+    plugin_type: String,
+    provider_type: String,
     version: String,
+    sdk_version: String,
     #[serde(default)]
     builtin: bool,
     #[serde(default)]
     wasm_url: Option<String>,
     #[serde(default)]
     wasm_sha256: Option<String>,
+    #[serde(default)]
+    source_url: Option<String>,
 }
 
 fn main() -> Result<()> {
@@ -159,6 +210,10 @@ fn main() -> Result<()> {
             RegistryCommand::Validate => validate_registry(&ctx),
         },
         Commands::Builtins(args) => run_builtins(&ctx, args),
+        Commands::Plugin(args) => match args.command {
+            PluginCommand::New(args) => run_plugin_new(&ctx, args),
+            PluginCommand::Validate(args) => run_plugin_validate(&ctx, args),
+        },
     }
 }
 
@@ -365,41 +420,59 @@ fn validate_registry(ctx: &TaskContext) -> Result<()> {
     let mut errors = Vec::new();
 
     for plugin in &registry.plugins {
-        if plugin.builtin {
-            continue;
-        }
-        let Some(wasm_url) = plugin.wasm_url.as_deref() else {
-            errors.push(format!("{}: missing wasm_url", plugin.id));
-            continue;
-        };
-        let Some(wasm_sha256) = plugin.wasm_sha256.as_deref() else {
-            errors.push(format!("{}: missing wasm_sha256", plugin.id));
-            continue;
-        };
-        if !wasm_url.starts_with(RAW_PREFIX) {
-            errors.push(format!(
-                "{}: wasm_url must start with {}",
-                plugin.id, RAW_PREFIX
-            ));
-            continue;
-        }
+        let artifact_path = if plugin.builtin {
+            match plugin_source_dir(ctx, plugin).and_then(|plugin_dir| build_plugin_wasm(ctx, &plugin_dir))
+            {
+                Ok(path) => path,
+                Err(error) => {
+                    errors.push(format!("{}: {error}", plugin.id));
+                    continue;
+                }
+            }
+        } else {
+            let Some(wasm_url) = plugin.wasm_url.as_deref() else {
+                errors.push(format!("{}: missing wasm_url", plugin.id));
+                continue;
+            };
+            let Some(wasm_sha256) = plugin.wasm_sha256.as_deref() else {
+                errors.push(format!("{}: missing wasm_sha256", plugin.id));
+                continue;
+            };
+            if !wasm_url.starts_with(RAW_PREFIX) {
+                errors.push(format!(
+                    "{}: wasm_url must start with {}",
+                    plugin.id, RAW_PREFIX
+                ));
+                continue;
+            }
 
-        let artifact_name = wasm_url.trim_start_matches(RAW_PREFIX);
-        let artifact_path = dist_dir.join(artifact_name);
-        if !artifact_path.is_file() {
-            errors.push(format!(
-                "{}: missing dist artifact {}",
-                plugin.id, artifact_name
-            ));
-            continue;
-        }
+            let artifact_name = wasm_url.trim_start_matches(RAW_PREFIX);
+            let artifact_path = dist_dir.join(artifact_name);
+            if !artifact_path.is_file() {
+                errors.push(format!(
+                    "{}: missing dist artifact {}",
+                    plugin.id, artifact_name
+                ));
+                continue;
+            }
 
-        let actual_sha = sha256_file(&artifact_path)?;
-        if actual_sha != wasm_sha256 {
-            errors.push(format!(
-                "{}: sha256 mismatch (registry={}, actual={})",
-                plugin.id, wasm_sha256, actual_sha
-            ));
+            let actual_sha = sha256_file(&artifact_path)?;
+            if actual_sha != wasm_sha256 {
+                errors.push(format!(
+                    "{}: sha256 mismatch (registry={}, actual={})",
+                    plugin.id, wasm_sha256, actual_sha
+                ));
+            }
+
+            artifact_path
+        };
+
+        match load_descriptor_from_wasm(&artifact_path).and_then(|descriptor| {
+            validate_descriptor_contract(&descriptor)?;
+            validate_registry_entry_matches_descriptor(plugin, &descriptor)
+        }) {
+            Ok(()) => {}
+            Err(error) => errors.push(format!("{}: {error}", plugin.id)),
         }
     }
 
@@ -412,6 +485,18 @@ fn validate_registry(ctx: &TaskContext) -> Result<()> {
         }
         bail!("registry validation failed");
     }
+}
+
+fn plugin_source_dir(ctx: &TaskContext, plugin: &RegistryPlugin) -> Result<PathBuf> {
+    let source_url = plugin
+        .source_url
+        .as_deref()
+        .ok_or_else(|| anyhow!("{}: builtin plugin is missing source_url", plugin.id))?;
+    let relative = source_url
+        .split("/tree/main/")
+        .nth(1)
+        .ok_or_else(|| anyhow!("{}: unsupported source_url {}", plugin.id, source_url))?;
+    Ok(ctx.path(relative))
 }
 
 fn run_builtins(ctx: &TaskContext, args: BuiltinsArgs) -> Result<()> {
@@ -470,6 +555,476 @@ fn run_builtins(ctx: &TaskContext, args: BuiltinsArgs) -> Result<()> {
     Ok(())
 }
 
+fn wasm_filename_for_manifest(cargo_toml: &Path) -> Result<String> {
+    Ok(crate_name_from_manifest(cargo_toml)?.replace('-', "_") + ".wasm")
+}
+
+fn build_plugin_wasm(ctx: &TaskContext, plugin_dir: &Path) -> Result<PathBuf> {
+    require_wasm_target(ctx)?;
+    let cargo_toml = plugin_dir.join("Cargo.toml");
+    let wasm_filename = wasm_filename_for_manifest(&cargo_toml)?;
+
+    step(format!("Building {}", plugin_dir.display()));
+    let mut build = ctx.command_in("cargo", plugin_dir);
+    build.args(["build", "--release", "--target", WASM_TARGET, "--locked"]);
+    run_checked(&mut build)?;
+
+    let built_wasm = plugin_dir
+        .join("target")
+        .join(WASM_TARGET)
+        .join("release")
+        .join(wasm_filename);
+    if !built_wasm.is_file() {
+        bail!("expected WASM at {} but not found", built_wasm.display());
+    }
+    Ok(built_wasm)
+}
+
+fn required_exports_for_descriptor(descriptor: &PluginDescriptor) -> Vec<&'static str> {
+    let mut exports = vec![EXPORT_DESCRIBE];
+    match &descriptor.provider {
+        ProviderDescriptor::Indexer(_) => exports.push(EXPORT_INDEXER_SEARCH),
+        ProviderDescriptor::DownloadClient(_) => exports.extend([
+            EXPORT_DOWNLOAD_ADD,
+            EXPORT_DOWNLOAD_LIST_QUEUE,
+            EXPORT_DOWNLOAD_LIST_HISTORY,
+            EXPORT_DOWNLOAD_LIST_COMPLETED,
+            EXPORT_DOWNLOAD_CONTROL,
+            EXPORT_DOWNLOAD_MARK_IMPORTED,
+            EXPORT_DOWNLOAD_STATUS,
+            EXPORT_DOWNLOAD_TEST_CONNECTION,
+        ]),
+        ProviderDescriptor::Notification(_) => exports.push(EXPORT_NOTIFICATION_SEND),
+        ProviderDescriptor::Subtitle(subtitle) => {
+            exports.push(EXPORT_VALIDATE_CONFIG);
+            match subtitle.capabilities.mode {
+                SubtitleProviderMode::Catalog => {
+                    exports.extend([EXPORT_SUBTITLE_SEARCH, EXPORT_SUBTITLE_DOWNLOAD]);
+                }
+                SubtitleProviderMode::Generator => exports.push(EXPORT_SUBTITLE_GENERATE),
+            }
+        }
+    }
+    exports
+}
+
+fn load_descriptor_from_wasm(wasm_path: &Path) -> Result<PluginDescriptor> {
+    let bytes =
+        fs::read(wasm_path).with_context(|| format!("failed to read {}", wasm_path.display()))?;
+    let manifest =
+        Manifest::new([extism::Wasm::data(bytes)]).with_timeout(std::time::Duration::from_secs(10));
+    let mut plugin = extism::PluginBuilder::new(manifest)
+        .with_wasi(true)
+        .build()
+        .with_context(|| format!("failed to instantiate {}", wasm_path.display()))?;
+
+    if !plugin.function_exists(EXPORT_DESCRIBE) {
+        bail!("plugin is missing required export {EXPORT_DESCRIBE}");
+    }
+
+    let output: String = plugin
+        .call::<&str, String>(EXPORT_DESCRIBE, "")
+        .with_context(|| format!("{EXPORT_DESCRIBE} failed"))?;
+    let descriptor: PluginDescriptor =
+        serde_json::from_str(&output).context("scryer_describe returned invalid JSON")?;
+
+    let missing = required_exports_for_descriptor(&descriptor)
+        .into_iter()
+        .filter(|export| !plugin.function_exists(export))
+        .collect::<Vec<_>>();
+    if !missing.is_empty() {
+        bail!(
+            "{} ({}) is missing required export(s): {}",
+            descriptor.id,
+            descriptor.plugin_type(),
+            missing.join(", ")
+        );
+    }
+
+    Ok(descriptor)
+}
+
+fn validate_descriptor_contract(descriptor: &PluginDescriptor) -> Result<()> {
+    let sdk_major = descriptor.sdk_version.split('.').next().unwrap_or_default();
+    let supported_major = SDK_VERSION.split('.').next().unwrap_or_default();
+    if sdk_major != supported_major {
+        bail!(
+            "{}: unsupported sdk_version {} (expected major {})",
+            descriptor.id,
+            descriptor.sdk_version,
+            supported_major
+        );
+    }
+    if descriptor.id.trim().is_empty() {
+        bail!("descriptor id must not be empty");
+    }
+    if descriptor.provider_type().trim().is_empty() {
+        bail!("{}: provider_type must not be empty", descriptor.id);
+    }
+    for host in descriptor.allowed_hosts() {
+        if !allowed_host_pattern_is_valid(host) {
+            bail!("{}: invalid network permission pattern {}", descriptor.id, host);
+        }
+    }
+    Ok(())
+}
+
+fn allowed_host_pattern_is_valid(host: &str) -> bool {
+    let host = host.trim();
+    if host.is_empty()
+        || host == "*"
+        || host.contains("://")
+        || host.contains('/')
+        || host.contains('?')
+        || host.contains('#')
+        || host.contains(':')
+    {
+        return false;
+    }
+
+    if let Some(suffix) = host.strip_prefix("*.") {
+        return !suffix.is_empty()
+            && !suffix.contains('*')
+            && url::Host::parse(suffix).is_ok();
+    }
+
+    !host.contains('*') && url::Host::parse(host).is_ok()
+}
+
+fn validate_descriptor_against_registry(
+    ctx: &TaskContext,
+    descriptor: &PluginDescriptor,
+) -> Result<()> {
+    let registry = load_registry(ctx)?;
+    let Some(entry) = registry
+        .plugins
+        .iter()
+        .find(|plugin| plugin.id == descriptor.id)
+    else {
+        warn(format!(
+            "{} is not present in registry.json; skipping registry comparison",
+            descriptor.id
+        ));
+        return Ok(());
+    };
+
+    validate_registry_entry_matches_descriptor(entry, descriptor)
+}
+
+fn validate_registry_entry_matches_descriptor(
+    entry: &RegistryPlugin,
+    descriptor: &PluginDescriptor,
+) -> Result<()> {
+    let expected = [
+        ("id", entry.id.as_str(), descriptor.id.as_str()),
+        (
+            "version",
+            entry.version.as_str(),
+            descriptor.version.as_str(),
+        ),
+        (
+            "sdk_version",
+            entry.sdk_version.as_str(),
+            descriptor.sdk_version.as_str(),
+        ),
+        (
+            "plugin_type",
+            entry.plugin_type.as_str(),
+            descriptor.plugin_type(),
+        ),
+        (
+            "provider_type",
+            entry.provider_type.as_str(),
+            descriptor.provider_type(),
+        ),
+    ];
+    for (field, registry_value, descriptor_value) in expected {
+        if registry_value != descriptor_value {
+            bail!(
+                "{}: registry {field}={} does not match descriptor {field}={}",
+                descriptor.id,
+                registry_value,
+                descriptor_value
+            );
+        }
+    }
+    Ok(())
+}
+
+fn run_plugin_validate(ctx: &TaskContext, args: PluginValidateArgs) -> Result<()> {
+    let plugin_dir = if args.path.is_file() {
+        args.path
+            .parent()
+            .ok_or_else(|| anyhow!("invalid plugin path {}", args.path.display()))?
+            .to_path_buf()
+    } else {
+        args.path
+    };
+    let plugin_dir = if plugin_dir.is_absolute() {
+        plugin_dir
+    } else {
+        ctx.repo_root.join(plugin_dir)
+    };
+    if !plugin_dir.join("Cargo.toml").is_file() {
+        bail!("{} does not contain Cargo.toml", plugin_dir.display());
+    }
+
+    let wasm_path = build_plugin_wasm(ctx, &plugin_dir)?;
+    let descriptor = load_descriptor_from_wasm(&wasm_path)?;
+    validate_descriptor_contract(&descriptor)?;
+    validate_descriptor_against_registry(ctx, &descriptor)?;
+    ok(format!(
+        "Validated {} {} ({})",
+        descriptor.id,
+        descriptor.version,
+        descriptor.plugin_type()
+    ));
+    Ok(())
+}
+
+fn plugin_kind_directory(kind: PluginKindArg) -> &'static str {
+    match kind {
+        PluginKindArg::Indexer => "indexers",
+        PluginKindArg::DownloadClient => "download_clients",
+        PluginKindArg::Notification => "notifications",
+        PluginKindArg::Subtitle => "subtitles",
+    }
+}
+
+fn plugin_kind_crate_suffix(kind: PluginKindArg) -> &'static str {
+    match kind {
+        PluginKindArg::Indexer => "indexer",
+        PluginKindArg::DownloadClient => "download_client",
+        PluginKindArg::Notification => "notification",
+        PluginKindArg::Subtitle => "subtitle_provider",
+    }
+}
+
+fn normalize_plugin_name(name: &str) -> Result<String> {
+    let normalized = name
+        .trim()
+        .to_ascii_lowercase()
+        .chars()
+        .map(|ch| if ch.is_ascii_alphanumeric() { ch } else { '-' })
+        .collect::<String>()
+        .split('-')
+        .filter(|part| !part.is_empty())
+        .collect::<Vec<_>>()
+        .join("-");
+    if normalized.is_empty() {
+        bail!("plugin name must contain at least one ASCII letter or digit");
+    }
+    Ok(normalized)
+}
+
+fn run_plugin_new(ctx: &TaskContext, args: PluginNewArgs) -> Result<()> {
+    let plugin_id = normalize_plugin_name(&args.name)?;
+    let plugin_dir = ctx
+        .repo_root
+        .join(plugin_kind_directory(args.kind))
+        .join(&plugin_id);
+    if plugin_dir.exists() {
+        bail!("{} already exists", plugin_dir.display());
+    }
+    fs::create_dir_all(plugin_dir.join("src"))?;
+
+    let crate_name = format!(
+        "{}_{}",
+        plugin_id.replace('-', "_"),
+        plugin_kind_crate_suffix(args.kind)
+    );
+    let cargo_toml = format!(
+        r#"[package]
+name = "{crate_name}"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+extism-pdk = "1"
+scryer-plugin-sdk = {{ path = "../../../scryer/crates/scryer-plugin-sdk" }}
+serde_json = "1"
+"#
+    );
+    fs::write(plugin_dir.join("Cargo.toml"), cargo_toml)?;
+
+    let lib_rs = plugin_scaffold_source(args.kind, &plugin_id);
+    fs::write(plugin_dir.join("src/lib.rs"), lib_rs)?;
+    ok(format!("Created {}", plugin_dir.display()));
+    Ok(())
+}
+
+fn plugin_scaffold_source(kind: PluginKindArg, plugin_id: &str) -> String {
+    let provider_variant = match kind {
+        PluginKindArg::Indexer => format!(
+            r#"ProviderDescriptor::Indexer(IndexerDescriptor {{
+            provider_type: "{plugin_id}".to_string(),
+            provider_aliases: vec![],
+            source_kind: IndexerSourceKind::Generic,
+            capabilities: IndexerCapabilities::default(),
+            scoring_policies: vec![],
+            config_fields: vec![],
+            default_base_url: None,
+            allowed_hosts: vec![],
+            rate_limit_seconds: None,
+        }})"#
+        ),
+        PluginKindArg::DownloadClient => format!(
+            r#"ProviderDescriptor::DownloadClient(DownloadClientDescriptor {{
+            provider_type: "{plugin_id}".to_string(),
+            provider_aliases: vec![],
+            config_fields: vec![],
+            default_base_url: None,
+            allowed_hosts: vec![],
+            accepted_inputs: vec![],
+            isolation_modes: vec![],
+            capabilities: DownloadClientCapabilities::default(),
+        }})"#
+        ),
+        PluginKindArg::Notification => format!(
+            r#"ProviderDescriptor::Notification(NotificationDescriptor {{
+            provider_type: "{plugin_id}".to_string(),
+            provider_aliases: vec![],
+            config_fields: vec![],
+            default_base_url: None,
+            allowed_hosts: vec![],
+            capabilities: NotificationCapabilities::default(),
+        }})"#
+        ),
+        PluginKindArg::Subtitle => format!(
+            r#"ProviderDescriptor::Subtitle(SubtitleDescriptor {{
+            provider_type: "{plugin_id}".to_string(),
+            provider_aliases: vec![],
+            config_fields: vec![],
+            default_base_url: None,
+            allowed_hosts: vec![],
+            capabilities: SubtitleCapabilities {{
+                mode: SubtitleProviderMode::Catalog,
+                ..SubtitleCapabilities::default()
+            }},
+        }})"#
+        ),
+    };
+
+    let family_exports = match kind {
+        PluginKindArg::Indexer => {
+            r#"
+#[plugin_fn]
+pub fn scryer_indexer_search(_input: String) -> FnResult<String> {
+    Ok(serde_json::to_string(&PluginResult::Ok(PluginSearchResponse::default()))?)
+}
+"#
+        }
+        PluginKindArg::DownloadClient => {
+            r#"
+#[plugin_fn]
+pub fn scryer_download_add(_input: String) -> FnResult<String> {
+    Ok(serde_json::to_string(&PluginResult::<PluginDownloadClientAddResponse>::Err(PluginError {
+        code: PluginErrorCode::Unsupported,
+        public_message: "download add is not implemented".to_string(),
+        debug_message: None,
+        retry_after_seconds: None,
+    }))?)
+}
+
+#[plugin_fn]
+pub fn scryer_download_list_queue() -> FnResult<String> {
+    Ok(serde_json::to_string(&PluginResult::Ok(Vec::<PluginDownloadItem>::new()))?)
+}
+
+#[plugin_fn]
+pub fn scryer_download_list_history() -> FnResult<String> {
+    Ok(serde_json::to_string(&PluginResult::Ok(Vec::<PluginCompletedDownload>::new()))?)
+}
+
+#[plugin_fn]
+pub fn scryer_download_list_completed() -> FnResult<String> {
+    Ok(serde_json::to_string(&PluginResult::Ok(Vec::<PluginCompletedDownload>::new()))?)
+}
+
+#[plugin_fn]
+pub fn scryer_download_control(_input: String) -> FnResult<String> {
+    Ok(serde_json::to_string(&PluginResult::Ok(()))?)
+}
+
+#[plugin_fn]
+pub fn scryer_download_mark_imported(_input: String) -> FnResult<String> {
+    Ok(serde_json::to_string(&PluginResult::Ok(()))?)
+}
+
+#[plugin_fn]
+pub fn scryer_download_status() -> FnResult<String> {
+    Ok(serde_json::to_string(&PluginResult::Ok(PluginDownloadClientStatus::default()))?)
+}
+
+#[plugin_fn]
+pub fn scryer_download_test_connection() -> FnResult<String> {
+    Ok(serde_json::to_string(&PluginResult::Ok(()))?)
+}
+"#
+        }
+        PluginKindArg::Notification => {
+            r#"
+#[plugin_fn]
+pub fn scryer_notification_send(_input: String) -> FnResult<String> {
+    Ok(serde_json::to_string(&PluginResult::Ok(PluginNotificationResponse {
+        success: true,
+        error: None,
+    }))?)
+}
+"#
+        }
+        PluginKindArg::Subtitle => {
+            r#"
+#[plugin_fn]
+pub fn scryer_validate_config(_input: String) -> FnResult<String> {
+    Ok(serde_json::to_string(&PluginResult::Ok(SubtitlePluginValidateConfigResponse {
+        status: SubtitleValidateConfigStatus::Valid,
+        message: None,
+        retry_after_seconds: None,
+    }))?)
+}
+
+#[plugin_fn]
+pub fn scryer_subtitle_search(_input: String) -> FnResult<String> {
+    Ok(serde_json::to_string(&PluginResult::Ok(SubtitlePluginSearchResponse::default()))?)
+}
+
+#[plugin_fn]
+pub fn scryer_subtitle_download(_input: String) -> FnResult<String> {
+    Ok(serde_json::to_string(&PluginResult::<SubtitlePluginDownloadResponse>::Err(PluginError {
+        code: PluginErrorCode::Unsupported,
+        public_message: "subtitle download is not implemented".to_string(),
+        debug_message: None,
+        retry_after_seconds: None,
+    }))?)
+}
+"#
+        }
+    };
+
+    format!(
+        r#"use extism_pdk::*;
+use scryer_plugin_sdk::*;
+
+#[plugin_fn]
+pub fn scryer_describe(_input: String) -> FnResult<String> {{
+    let descriptor = PluginDescriptor {{
+        id: "{plugin_id}".to_string(),
+        name: "{plugin_id}".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        sdk_version: SDK_VERSION.to_string(),
+        provider: {provider_variant},
+    }};
+    Ok(serde_json::to_string(&descriptor)?)
+}}
+{family_exports}
+"#
+    )
+}
+
 fn run_release(ctx: &TaskContext, args: ReleaseArgs) -> Result<()> {
     let plugin_dir = locate_plugin(ctx, &args.plugin_name)?;
     let cargo_toml = plugin_dir.join("Cargo.toml");
@@ -522,7 +1077,13 @@ fn run_release(ctx: &TaskContext, args: ReleaseArgs) -> Result<()> {
 
     step("Building WASM (release, wasm32-wasip1)");
     let mut build = ctx.command_in("cargo", &plugin_dir);
-    build.args(["build", "--release", "--target", "wasm32-wasip1"]);
+    build.args([
+        "build",
+        "--release",
+        "--target",
+        "wasm32-wasip1",
+        "--locked",
+    ]);
     run_checked(&mut build)?;
     let built_wasm = plugin_dir
         .join("target/wasm32-wasip1/release")

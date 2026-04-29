@@ -2,220 +2,31 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 
 use base64::{engine::general_purpose, Engine as _};
 use extism_pdk::*;
-use serde::{Deserialize, Serialize};
+use scryer_plugin_sdk::{
+    ConfigFieldDef, ConfigFieldOption, ConfigFieldType, DownloadClientCapabilities,
+    DownloadClientDescriptor, DownloadControlAction, DownloadInputKind, DownloadIsolationMode,
+    DownloadItemState, PluginCompletedDownload, PluginDescriptor, PluginError,
+    PluginErrorCode,
+    PluginDownloadClientAddRequest, PluginDownloadClientAddResponse,
+    PluginDownloadClientControlRequest, PluginDownloadClientMarkImportedRequest,
+    PluginDownloadClientStatus, PluginDownloadItem, PluginResult, ProviderDescriptor, SDK_VERSION,
+};
+use serde::Deserialize;
 use sha1::{Digest, Sha1};
 
 const COOKIE_VAR_KEY: &str = "qbittorrent.sid";
 const IMPORTED_TAG_DEFAULT: &str = "scryer:imported";
-const SDK_VERSION: &str = "0.1";
 
-#[derive(Serialize)]
-struct PluginDescriptor {
-    name: String,
-    version: String,
-    sdk_version: String,
-    plugin_type: String,
-    provider_type: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    provider_aliases: Vec<String>,
-    capabilities: IndexerCapabilities,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    scoring_policies: Vec<serde_json::Value>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    config_fields: Vec<ConfigFieldDef>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    allowed_hosts: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    accepted_inputs: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    isolation_modes: Vec<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    download_client_capabilities: Option<DownloadClientCapabilities>,
-}
-
-#[derive(Serialize)]
-struct IndexerCapabilities {
-    search: bool,
-    imdb_search: bool,
-    tvdb_search: bool,
-}
-
-#[derive(Serialize)]
-struct ConfigFieldDef {
-    key: String,
-    label: String,
-    field_type: String,
-    #[serde(default)]
-    required: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    default_value: Option<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    options: Vec<ConfigFieldOption>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    help_text: Option<String>,
-}
-
-#[derive(Serialize)]
-struct ConfigFieldOption {
-    value: String,
-    label: String,
-}
-
-#[derive(Serialize)]
-struct DownloadClientCapabilities {
-    pause: bool,
-    resume: bool,
-    remove: bool,
-    remove_with_data: bool,
-    mark_imported: bool,
-    prepare_for_import: bool,
-    client_status: bool,
-    queue_priority: bool,
-    seed_limits: bool,
-    start_paused: bool,
-    force_start: bool,
-    per_download_directory: bool,
-    host_fs_required: bool,
-    test_connection: bool,
-}
-
-#[derive(Debug, Deserialize)]
-struct PluginDownloadClientAddRequest {
-    source: PluginDownloadSource,
-    release: PluginDownloadRelease,
-    title: PluginDownloadTitle,
-    routing: PluginDownloadRouting,
-}
-
-#[derive(Debug, Deserialize)]
-struct PluginDownloadSource {
-    kind: String,
-    #[serde(default)]
-    download_url: Option<String>,
-    #[serde(default)]
-    magnet_uri: Option<String>,
-    #[serde(default)]
-    torrent_bytes_base64: Option<String>,
-    #[serde(default)]
-    source_title: Option<String>,
-}
-
-#[derive(Debug, Default, Deserialize)]
-struct PluginDownloadRelease {
-    #[serde(default)]
-    release_title: Option<String>,
-    #[serde(default)]
-    info_hash_hint: Option<String>,
-    #[serde(default)]
-    seed_goal_ratio: Option<f64>,
-    #[serde(default)]
-    seed_goal_seconds: Option<i64>,
-}
-
-#[derive(Debug, Deserialize)]
-struct PluginDownloadTitle {
-    #[serde(default)]
-    title_id: Option<String>,
-    title_name: String,
-    media_facet: String,
-    #[serde(default)]
-    tags: Vec<String>,
-}
-
-#[derive(Debug, Default, Deserialize)]
-struct PluginDownloadRouting {
-    #[serde(default)]
-    isolation_value: Option<String>,
-    #[serde(default)]
-    download_directory: Option<String>,
-}
-
-#[derive(Serialize)]
-struct PluginDownloadClientAddResponse {
-    client_item_id: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    info_hash: Option<String>,
-}
-
-#[derive(Serialize)]
-struct PluginDownloadItem {
-    client_item_id: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    info_hash: Option<String>,
-    title: String,
-    state: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    message: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    category: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    remote_output_path: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    total_size_bytes: Option<i64>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    remaining_size_bytes: Option<i64>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    eta_seconds: Option<i64>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    progress_percent: Option<u8>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    can_move_files: Option<bool>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    can_remove: Option<bool>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    removed: Option<bool>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    raw_state: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    completed_at: Option<String>,
-}
-
-#[derive(Serialize)]
-struct PluginCompletedDownload {
-    client_item_id: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    info_hash: Option<String>,
-    name: String,
-    dest_dir: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    category: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    size_bytes: Option<i64>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    completed_at: Option<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    parameters: Vec<(String, String)>,
-}
-
-#[derive(Debug, Deserialize)]
-struct PluginDownloadClientControlRequest {
-    action: String,
-    client_item_id: String,
-    #[serde(default)]
-    remove_data: bool,
-}
-
-#[derive(Debug, Deserialize)]
-struct PluginDownloadClientMarkImportedRequest {
-    client_item_id: String,
-    #[serde(default)]
-    info_hash: Option<String>,
-}
-
-#[derive(Serialize)]
-struct PluginDownloadClientStatus {
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    version: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    is_localhost: Option<bool>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    remote_output_roots: Vec<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    removes_completed_downloads: Option<bool>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    sorting_mode: Option<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    warnings: Vec<String>,
+fn plugin_error_response<T: serde::Serialize>(
+    code: PluginErrorCode,
+    public_message: impl Into<String>,
+) -> FnResult<String> {
+    Ok(serde_json::to_string(&PluginResult::<T>::Err(PluginError {
+        code,
+        public_message: public_message.into(),
+        debug_message: None,
+        retry_after_seconds: None,
+    }))?)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -292,54 +103,51 @@ struct QbCategory {
 }
 
 #[plugin_fn]
-pub fn describe(_input: String) -> FnResult<String> {
+pub fn scryer_describe(_input: String) -> FnResult<String> {
     Ok(build_descriptor_json()?)
 }
 
 fn build_descriptor_json() -> Result<String, Error> {
     let descriptor = PluginDescriptor {
+        id: "qbittorrent".to_string(),
         name: "qBittorrent".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
-        plugin_type: "download_client".to_string(),
-        provider_type: "qbittorrent".to_string(),
-        provider_aliases: vec!["qbit".to_string()],
-        capabilities: IndexerCapabilities {
-            search: false,
-            imdb_search: false,
-            tvdb_search: false,
-        },
-        scoring_policies: vec![],
-        config_fields: config_fields(),
-        allowed_hosts: vec![],
-        accepted_inputs: vec!["magnet_uri".to_string(), "torrent_file".to_string()],
-        isolation_modes: vec![
-            "category".to_string(),
-            "tag".to_string(),
-            "directory".to_string(),
-        ],
-        download_client_capabilities: Some(DownloadClientCapabilities {
-            pause: true,
-            resume: true,
-            remove: true,
-            remove_with_data: true,
-            mark_imported: true,
-            prepare_for_import: false,
-            client_status: true,
-            queue_priority: false,
-            seed_limits: true,
-            start_paused: true,
-            force_start: true,
-            per_download_directory: true,
-            host_fs_required: false,
-            test_connection: true,
+        provider: ProviderDescriptor::DownloadClient(DownloadClientDescriptor {
+            provider_type: "qbittorrent".to_string(),
+            provider_aliases: vec!["qbit".to_string()],
+            config_fields: config_fields(),
+            default_base_url: None,
+            allowed_hosts: vec![],
+            accepted_inputs: vec![DownloadInputKind::MagnetUri, DownloadInputKind::TorrentFile],
+            isolation_modes: vec![
+                DownloadIsolationMode::Category,
+                DownloadIsolationMode::Tag,
+                DownloadIsolationMode::Directory,
+            ],
+            capabilities: DownloadClientCapabilities {
+                pause: true,
+                resume: true,
+                remove: true,
+                remove_with_data: true,
+                mark_imported: true,
+                prepare_for_import: false,
+                client_status: true,
+                queue_priority: false,
+                seed_limits: true,
+                start_paused: true,
+                force_start: true,
+                per_download_directory: true,
+                host_fs_required: false,
+                test_connection: true,
+            },
         }),
     };
     Ok(serde_json::to_string(&descriptor)?)
 }
 
 #[plugin_fn]
-pub fn add_download(input: String) -> FnResult<String> {
+pub fn scryer_download_add(input: String) -> FnResult<String> {
     let request: PluginDownloadClientAddRequest = serde_json::from_str(&input)?;
     let config = QbittorrentConfig::from_extism()?;
 
@@ -358,7 +166,6 @@ pub fn add_download(input: String) -> FnResult<String> {
         config.auto_tmm
     };
 
-    let source_kind = request.source.kind.trim().to_ascii_lowercase();
     if let Some(torrent_bytes_base64) = request.source.torrent_bytes_base64.as_deref() {
         let bytes = general_purpose::STANDARD
             .decode(torrent_bytes_base64)
@@ -389,18 +196,18 @@ pub fn add_download(input: String) -> FnResult<String> {
         );
         post_multipart(&config, "/torrents/add", &body.content_type, body.body)?;
     } else {
-        let source_value = match source_kind.as_str() {
-            "magnet_uri" => request
+        let source_value = match request.source.kind {
+            DownloadInputKind::MagnetUri => request
                 .source
                 .magnet_uri
                 .clone()
                 .or_else(|| request.source.download_url.clone()),
-            "torrent_file" => request
+            DownloadInputKind::TorrentFile => request
                 .source
                 .download_url
                 .clone()
                 .or_else(|| request.source.magnet_uri.clone()),
-            _ => request
+            DownloadInputKind::Nzb | DownloadInputKind::NzbUrl => request
                 .source
                 .magnet_uri
                 .clone()
@@ -442,42 +249,71 @@ pub fn add_download(input: String) -> FnResult<String> {
         client_item_id: hash.clone(),
         info_hash: Some(hash),
     };
-    Ok(serde_json::to_string(&response)?)
+    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
 }
 
 #[plugin_fn]
-pub fn list_downloads(_input: String) -> FnResult<String> {
+pub fn scryer_download_list_queue(_input: String) -> FnResult<String> {
     let config = QbittorrentConfig::from_extism()?;
     let torrents = list_torrents(&config, Some("all"))?;
     let items = torrents.into_iter().map(torrent_to_item).collect::<Vec<_>>();
-    Ok(serde_json::to_string(&items)?)
+    Ok(serde_json::to_string(&PluginResult::Ok(items))?)
 }
 
 #[plugin_fn]
-pub fn list_completed_downloads(_input: String) -> FnResult<String> {
+pub fn scryer_download_list_completed(_input: String) -> FnResult<String> {
     let config = QbittorrentConfig::from_extism()?;
+    Ok(serde_json::to_string(&PluginResult::Ok(completed_downloads(&config)?))?)
+}
+
+fn completed_downloads(config: &QbittorrentConfig) -> Result<Vec<PluginCompletedDownload>, Error> {
     let torrents = list_torrents(&config, Some("completed"))?;
-    let downloads = torrents
+    Ok(torrents
         .into_iter()
         .filter(|torrent| is_completed_state(&torrent.state))
         .filter_map(torrent_to_completed_download)
-        .collect::<Vec<_>>();
-    Ok(serde_json::to_string(&downloads)?)
+        .collect::<Vec<_>>())
 }
 
 #[plugin_fn]
-pub fn control(input: String) -> FnResult<String> {
-    let request: PluginDownloadClientControlRequest = serde_json::from_str(&input)?;
+pub fn scryer_download_list_history(_input: String) -> FnResult<String> {
     let config = QbittorrentConfig::from_extism()?;
+    Ok(serde_json::to_string(&PluginResult::Ok(completed_downloads(&config)?))?)
+}
+
+#[plugin_fn]
+pub fn scryer_download_control(input: String) -> FnResult<String> {
+    let request: PluginDownloadClientControlRequest = serde_json::from_str(&input)?;
+    Ok(serde_json::to_string(&handle_download_control(request)?)?)
+}
+
+fn handle_download_control(
+    request: PluginDownloadClientControlRequest,
+) -> Result<PluginResult<()>, Error> {
     let hash = normalize_hash(&request.client_item_id);
     if hash.is_empty() {
-        return Err(Error::msg("client_item_id is required").into());
+        return Ok(PluginResult::Err(PluginError {
+            code: PluginErrorCode::Permanent,
+            public_message: "client_item_id is required".to_string(),
+            debug_message: None,
+            retry_after_seconds: None,
+        }));
+    }
+    if matches!(request.action, DownloadControlAction::ForceStart) {
+        return Ok(PluginResult::Err(PluginError {
+            code: PluginErrorCode::Unsupported,
+            public_message: "unsupported control action: force_start".to_string(),
+            debug_message: None,
+            retry_after_seconds: None,
+        }));
     }
 
-    match request.action.trim().to_ascii_lowercase().as_str() {
-        "pause" => post_form(&config, "/torrents/pause", &[("hashes".to_string(), hash)])?,
-        "resume" => post_form(&config, "/torrents/resume", &[("hashes".to_string(), hash)])?,
-        "remove" => post_form(
+    let config = QbittorrentConfig::from_extism()?;
+
+    match request.action {
+        DownloadControlAction::Pause => post_form(&config, "/torrents/pause", &[("hashes".to_string(), hash)])?,
+        DownloadControlAction::Resume => post_form(&config, "/torrents/resume", &[("hashes".to_string(), hash)])?,
+        DownloadControlAction::Remove => post_form(
             &config,
             "/torrents/delete",
             &[
@@ -492,18 +328,15 @@ pub fn control(input: String) -> FnResult<String> {
                 ),
             ],
         )?,
-        other => {
-            return Err(Error::msg(format!("unsupported control action: {other}")).into());
-        }
+        DownloadControlAction::ForceStart => unreachable!("handled before config lookup"),
     }
 
-    Ok("{}".to_string())
+    Ok(PluginResult::Ok(()))
 }
 
 #[plugin_fn]
-pub fn mark_imported(input: String) -> FnResult<String> {
+pub fn scryer_download_mark_imported(input: String) -> FnResult<String> {
     let request: PluginDownloadClientMarkImportedRequest = serde_json::from_str(&input)?;
-    let config = QbittorrentConfig::from_extism()?;
     let hash = normalize_hash(
         &request
             .info_hash
@@ -511,11 +344,16 @@ pub fn mark_imported(input: String) -> FnResult<String> {
             .unwrap_or_else(|| request.client_item_id.clone()),
     );
     if hash.is_empty() {
-        return Err(Error::msg("client_item_id is required").into());
+        return plugin_error_response::<()>(
+            PluginErrorCode::Permanent,
+            "client_item_id is required",
+        );
     }
 
+    let config = QbittorrentConfig::from_extism()?;
+
     if !torrent_exists(&config, &hash)? {
-        return Ok("{}".to_string());
+        return Ok(serde_json::to_string(&PluginResult::Ok(()))?);
     }
 
     match config.post_import_action {
@@ -553,11 +391,11 @@ pub fn mark_imported(input: String) -> FnResult<String> {
         }
     }
 
-    Ok("{}".to_string())
+    Ok(serde_json::to_string(&PluginResult::Ok(()))?)
 }
 
 #[plugin_fn]
-pub fn get_client_status(_input: String) -> FnResult<String> {
+pub fn scryer_download_status(_input: String) -> FnResult<String> {
     let config = QbittorrentConfig::from_extism()?;
     let version = get_text(&config, "/app/version")?;
     let preferences: QbPreferences = get_json(&config, "/app/preferences")?;
@@ -614,15 +452,15 @@ pub fn get_client_status(_input: String) -> FnResult<String> {
         warnings,
     };
 
-    Ok(serde_json::to_string(&status)?)
+    Ok(serde_json::to_string(&PluginResult::Ok(status))?)
 }
 
 #[plugin_fn]
-pub fn test_connection(_input: String) -> FnResult<String> {
+pub fn scryer_download_test_connection(_input: String) -> FnResult<String> {
     let config = QbittorrentConfig::from_extism()?;
     var::remove(COOKIE_VAR_KEY)?;
     let version = get_text(&config, "/app/version")?;
-    Ok(version)
+    Ok(serde_json::to_string(&PluginResult::Ok(version))?)
 }
 
 impl QbittorrentConfig {
@@ -731,27 +569,33 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         ConfigFieldDef {
             key: "username".to_string(),
             label: "Username".to_string(),
-            field_type: "string".to_string(),
+            field_type: ConfigFieldType::String,
             required: true,
             default_value: None,
+            value_source: Default::default(),
+            host_binding: None,
             options: vec![],
             help_text: Some("qBittorrent WebUI username".to_string()),
         },
         ConfigFieldDef {
             key: "password".to_string(),
             label: "Password".to_string(),
-            field_type: "password".to_string(),
+            field_type: ConfigFieldType::Password,
             required: true,
             default_value: None,
+            value_source: Default::default(),
+            host_binding: None,
             options: vec![],
             help_text: Some("qBittorrent WebUI password".to_string()),
         },
         ConfigFieldDef {
             key: "routing_mode".to_string(),
             label: "Isolation Routing".to_string(),
-            field_type: "select".to_string(),
+            field_type: ConfigFieldType::Select,
             required: false,
             default_value: Some("category".to_string()),
+            value_source: Default::default(),
+            host_binding: None,
             options: vec![
                 ConfigFieldOption {
                     value: "category".to_string(),
@@ -769,18 +613,22 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         ConfigFieldDef {
             key: "static_tags".to_string(),
             label: "Static Tags".to_string(),
-            field_type: "string".to_string(),
+            field_type: ConfigFieldType::String,
             required: false,
             default_value: None,
+            value_source: Default::default(),
+            host_binding: None,
             options: vec![],
             help_text: Some("Comma-separated tags added to every torrent".to_string()),
         },
         ConfigFieldDef {
             key: "auto_tmm".to_string(),
             label: "Automatic Torrent Management".to_string(),
-            field_type: "bool".to_string(),
+            field_type: ConfigFieldType::Bool,
             required: false,
             default_value: Some("false".to_string()),
+            value_source: Default::default(),
+            host_binding: None,
             options: vec![],
             help_text: Some(
                 "Enable qBittorrent automatic torrent management unless Scryer provided an explicit download directory"
@@ -790,36 +638,44 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         ConfigFieldDef {
             key: "start_paused".to_string(),
             label: "Start Paused".to_string(),
-            field_type: "bool".to_string(),
+            field_type: ConfigFieldType::Bool,
             required: false,
             default_value: Some("false".to_string()),
+            value_source: Default::default(),
+            host_binding: None,
             options: vec![],
             help_text: Some("Add torrents in a paused state".to_string()),
         },
         ConfigFieldDef {
             key: "force_start".to_string(),
             label: "Force Start".to_string(),
-            field_type: "bool".to_string(),
+            field_type: ConfigFieldType::Bool,
             required: false,
             default_value: Some("false".to_string()),
+            value_source: Default::default(),
+            host_binding: None,
             options: vec![],
             help_text: Some("Force-start torrents after adding them".to_string()),
         },
         ConfigFieldDef {
             key: "skip_checking".to_string(),
             label: "Skip Recheck".to_string(),
-            field_type: "bool".to_string(),
+            field_type: ConfigFieldType::Bool,
             required: false,
             default_value: Some("false".to_string()),
+            value_source: Default::default(),
+            host_binding: None,
             options: vec![],
             help_text: Some("Skip piece recheck when adding local torrent payloads".to_string()),
         },
         ConfigFieldDef {
             key: "post_import_action".to_string(),
             label: "Post-Import Action".to_string(),
-            field_type: "select".to_string(),
+            field_type: ConfigFieldType::Select,
             required: false,
             default_value: Some("tag_imported".to_string()),
+            value_source: Default::default(),
+            host_binding: None,
             options: vec![
                 ConfigFieldOption {
                     value: "tag_imported".to_string(),
@@ -843,9 +699,11 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         ConfigFieldDef {
             key: "imported_tag".to_string(),
             label: "Imported Tag".to_string(),
-            field_type: "string".to_string(),
+            field_type: ConfigFieldType::String,
             required: false,
             default_value: Some(IMPORTED_TAG_DEFAULT.to_string()),
+            value_source: Default::default(),
+            host_binding: None,
             options: vec![],
             help_text: Some(
                 "Tag applied after import when post-import action is set to Tag Imported"
@@ -1472,7 +1330,7 @@ fn torrent_to_item(torrent: QbTorrent) -> PluginDownloadItem {
         client_item_id: normalize_hash(&torrent.hash),
         info_hash: Some(normalize_hash(&torrent.hash)),
         title: torrent.name,
-        state: state.to_string(),
+        state,
         message: state_message(&torrent.state),
         category,
         remote_output_path,
@@ -1697,21 +1555,22 @@ fn civil_from_days(days_since_epoch: i64) -> (i64, i64, i64) {
     (year, m, d)
 }
 
-fn map_state(state: &str) -> &'static str {
+fn map_state(state: &str) -> DownloadItemState {
     match state.trim().to_ascii_lowercase().as_str() {
-        "queueddl" => "queued",
-        "pauseddl" => "paused",
+        "queueddl" => DownloadItemState::Queued,
+        "pauseddl" => DownloadItemState::Paused,
         "metadl"
         | "forcedmetadl"
         | "stalleddl"
         | "forceddl"
         | "downloading"
-        | "allocating" => "downloading",
-        "checkingup" | "checkingdl" | "checkingresumedata" => "verifying",
-        "moving" => "import_pending",
-        "pausedup" | "queuedup" | "stalledup" | "uploading" | "forcedup" => "completed",
-        "error" | "missingfiles" | "unknown" => "failed",
-        _ => "queued",
+        | "allocating" => DownloadItemState::Downloading,
+        "checkingup" | "checkingdl" | "checkingresumedata" => DownloadItemState::Verifying,
+        "moving" => DownloadItemState::ImportPending,
+        "pausedup" | "queuedup" | "stalledup" | "uploading" | "forcedup" => DownloadItemState::Completed,
+        "error" | "missingfiles" => DownloadItemState::Failed,
+        "unknown" => DownloadItemState::Error,
+        _ => DownloadItemState::Warning,
     }
 }
 
@@ -1757,9 +1616,9 @@ mod tests {
     fn descriptor_is_download_client() {
         let json = build_descriptor_json().unwrap();
         let value: serde_json::Value = serde_json::from_str(&json).unwrap();
-        assert_eq!(value["plugin_type"], "download_client");
-        assert_eq!(value["provider_type"], "qbittorrent");
-        assert_eq!(value["accepted_inputs"][0], "magnet_uri");
+        assert_eq!(value["provider"]["kind"], "download_client");
+        assert_eq!(value["provider"]["provider_type"], "qbittorrent");
+        assert_eq!(value["provider"]["accepted_inputs"][0], "magnet_uri");
     }
 
     #[test]
@@ -1785,9 +1644,9 @@ mod tests {
 
     #[test]
     fn state_mapping_handles_completed_states() {
-        assert_eq!(map_state("pausedUP"), "completed");
-        assert_eq!(map_state("moving"), "import_pending");
-        assert_eq!(map_state("missingFiles"), "failed");
+        assert_eq!(map_state("pausedUP"), DownloadItemState::Completed);
+        assert_eq!(map_state("moving"), DownloadItemState::ImportPending);
+        assert_eq!(map_state("missingFiles"), DownloadItemState::Failed);
     }
 
     #[test]
@@ -1910,5 +1769,44 @@ mod tests {
         assert!(text.contains("filename=\"test.torrent\""));
         assert!(text.contains("name=\"category\""));
         assert!(text.contains("name=\"paused\""));
+    }
+
+    #[test]
+    fn control_missing_client_item_id_returns_structured_error() {
+        match handle_download_control(PluginDownloadClientControlRequest {
+            client_item_id: String::new(),
+            action: DownloadControlAction::Pause,
+            remove_data: false,
+            is_history: false,
+        })
+        .unwrap()
+        {
+            PluginResult::Err(error) => {
+                assert_eq!(error.code, PluginErrorCode::Permanent);
+                assert_eq!(error.public_message, "client_item_id is required");
+            }
+            PluginResult::Ok(()) => panic!("expected structured error"),
+        }
+    }
+
+    #[test]
+    fn control_force_start_returns_structured_unsupported_error() {
+        match handle_download_control(PluginDownloadClientControlRequest {
+            client_item_id: "abc123".to_string(),
+            action: DownloadControlAction::ForceStart,
+            remove_data: false,
+            is_history: false,
+        })
+        .unwrap()
+        {
+            PluginResult::Err(error) => {
+                assert_eq!(error.code, PluginErrorCode::Unsupported);
+                assert_eq!(
+                    error.public_message,
+                    "unsupported control action: force_start"
+                );
+            }
+            PluginResult::Ok(()) => panic!("expected structured error"),
+        }
     }
 }

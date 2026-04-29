@@ -3,202 +3,17 @@ use std::fs;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
 use extism_pdk::*;
-use serde::{Deserialize, Serialize};
+use scryer_plugin_sdk::{
+    ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginResult,
+    ProviderDescriptor, SDK_VERSION, SubtitleCapabilities, SubtitleDescriptor,
+    SubtitlePluginGenerateRequest, SubtitlePluginGenerateResponse,
+    SubtitlePluginValidateConfigRequest, SubtitlePluginValidateConfigResponse,
+    SubtitleProviderMode, SubtitleQueryMediaKind, SubtitleValidateConfigStatus,
+};
 
 const OPENAI_API_BASE: &str = "https://api.openai.com/v1";
 const DEFAULT_RETRY_AFTER_SECONDS: i64 = 10;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct PluginDescriptor {
-    name: String,
-    version: String,
-    sdk_version: String,
-    plugin_type: String,
-    provider_type: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    provider_aliases: Vec<String>,
-    #[serde(default)]
-    capabilities: IndexerCapabilities,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    scoring_policies: Vec<PluginScoringPolicy>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    config_fields: Vec<ConfigFieldDef>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    default_base_url: Option<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    allowed_hosts: Vec<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    rate_limit_seconds: Option<i64>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    notification_capabilities: Option<serde_json::Value>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    accepted_inputs: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    isolation_modes: Vec<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    download_client_capabilities: Option<serde_json::Value>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    subtitle_capabilities: Option<SubtitleCapabilities>,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-struct IndexerCapabilities {
-    #[serde(default)]
-    search: bool,
-    #[serde(default)]
-    imdb_search: bool,
-    #[serde(default)]
-    tvdb_search: bool,
-    #[serde(default)]
-    anidb_search: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct PluginScoringPolicy {
-    name: String,
-    rego_source: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    applied_facets: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct ConfigFieldDef {
-    key: String,
-    label: String,
-    field_type: ConfigFieldType,
-    #[serde(default)]
-    required: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    default_value: Option<String>,
-    #[serde(default)]
-    value_source: ConfigFieldValueSource,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    host_binding: Option<PluginHostBindingId>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    options: Vec<ConfigFieldOption>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    help_text: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct ConfigFieldOption {
-    value: String,
-    label: String,
-}
-
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum ConfigFieldType {
-    #[default]
-    String,
-    Password,
-    Multiline,
-    Bool,
-    Select,
-    Number,
-}
-
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum ConfigFieldValueSource {
-    #[default]
-    User,
-    HostBinding,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-enum PluginHostBindingId {
-    #[serde(rename = "smg.opensubtitles_api_key")]
-    SmgOpenSubtitlesApiKey,
-}
-
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum SubtitleProviderMode {
-    #[default]
-    Catalog,
-    Generator,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-struct SubtitleCapabilities {
-    mode: SubtitleProviderMode,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    supported_media_kinds: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    recommended_facets: Vec<String>,
-    #[serde(default)]
-    supports_hash_lookup: bool,
-    #[serde(default)]
-    supports_forced: bool,
-    #[serde(default)]
-    supports_hearing_impaired: bool,
-    #[serde(default)]
-    supports_ai_translated: bool,
-    #[serde(default)]
-    supports_machine_translated: bool,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    supported_languages: Vec<String>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum SubtitleValidateConfigStatus {
-    Valid,
-    InvalidConfig,
-    AuthFailed,
-    RateLimited,
-    Unreachable,
-    Unsupported,
-    MissingHostBinding,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum SubtitleQueryMediaKind {
-    Movie,
-    Episode,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SubtitleGeneratorInputRef {
-    path: String,
-    mime_type: String,
-    duration_seconds: i64,
-    size_bytes: i64,
-    checksum: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SubtitlePluginGenerateRequest {
-    media_kind: SubtitleQueryMediaKind,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    facet: Option<String>,
-    input: SubtitleGeneratorInputRef,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    languages: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SubtitlePluginGenerateResponse {
-    content_base64: String,
-    format: String,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-struct SubtitlePluginValidateConfigRequest {
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    config_instance_name: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SubtitlePluginValidateConfigResponse {
-    status: SubtitleValidateConfigStatus,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    message: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    retry_after_seconds: Option<i64>,
-}
 
 #[derive(Clone)]
 struct WhisperConfig {
@@ -213,12 +28,12 @@ struct MultipartBody {
 }
 
 #[plugin_fn]
-pub fn describe(_input: String) -> FnResult<String> {
+pub fn scryer_describe(_input: String) -> FnResult<String> {
     Ok(serde_json::to_string(&descriptor())?)
 }
 
 #[plugin_fn]
-pub fn validate_config(input: String) -> FnResult<String> {
+pub fn scryer_validate_config(input: String) -> FnResult<String> {
     let _: SubtitlePluginValidateConfigRequest = serde_json::from_str(&input)?;
     let response = match WhisperConfig::from_extism() {
         Ok(config) => match validate_api_key(&config) {
@@ -236,15 +51,15 @@ pub fn validate_config(input: String) -> FnResult<String> {
         },
     };
 
-    Ok(serde_json::to_string(&response)?)
+    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
 }
 
 #[plugin_fn]
-pub fn generate_subtitle(input: String) -> FnResult<String> {
+pub fn scryer_subtitle_generate(input: String) -> FnResult<String> {
     let request: SubtitlePluginGenerateRequest = serde_json::from_str(&input)?;
     let config = WhisperConfig::from_extism().map_err(Error::msg)?;
     let response = generate_subtitle_impl(&config, &request).map_err(Error::msg)?;
-    Ok(serde_json::to_string(&response)?)
+    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
 }
 
 impl WhisperConfig {
@@ -259,64 +74,61 @@ impl WhisperConfig {
 
 fn descriptor() -> PluginDescriptor {
     PluginDescriptor {
+        id: "whisper".to_string(),
         name: "Whisper".to_string(),
-        version: "0.1.0".to_string(),
-        sdk_version: "0.1.0".to_string(),
-        plugin_type: "subtitle_provider".to_string(),
-        provider_type: "whisper".to_string(),
-        provider_aliases: Vec::new(),
-        capabilities: IndexerCapabilities::default(),
-        scoring_policies: Vec::new(),
-        config_fields: vec![
-            ConfigFieldDef {
-                key: "api_key".to_string(),
-                label: "API Key".to_string(),
-                field_type: ConfigFieldType::Password,
-                required: true,
-                default_value: None,
-                value_source: ConfigFieldValueSource::User,
-                host_binding: None,
-                options: Vec::new(),
-                help_text: Some(
-                    "OpenAI API key used for Whisper transcription requests.".to_string(),
-                ),
-            },
-            ConfigFieldDef {
-                key: "model".to_string(),
-                label: "Model".to_string(),
-                field_type: ConfigFieldType::String,
-                required: true,
-                default_value: Some("whisper-1".to_string()),
-                value_source: ConfigFieldValueSource::User,
-                host_binding: None,
-                options: Vec::new(),
-                help_text: Some("Transcription model to use.".to_string()),
-            },
-            ConfigFieldDef {
-                key: "prompt".to_string(),
-                label: "Prompt".to_string(),
-                field_type: ConfigFieldType::Multiline,
-                required: false,
-                default_value: None,
-                value_source: ConfigFieldValueSource::User,
-                host_binding: None,
-                options: Vec::new(),
-                help_text: Some(
-                    "Optional prompt to improve terminology or formatting for the transcription."
-                        .to_string(),
-                ),
-            },
-        ],
-        default_base_url: Some(OPENAI_API_BASE.to_string()),
-        allowed_hosts: vec!["api.openai.com".to_string()],
-        rate_limit_seconds: None,
-        notification_capabilities: None,
-        accepted_inputs: vec!["audio/flac".to_string()],
-        isolation_modes: vec!["wasi".to_string()],
-        download_client_capabilities: None,
-        subtitle_capabilities: Some(SubtitleCapabilities {
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        sdk_version: SDK_VERSION.to_string(),
+        provider: ProviderDescriptor::Subtitle(SubtitleDescriptor {
+            provider_type: "whisper".to_string(),
+            provider_aliases: Vec::new(),
+            config_fields: vec![
+                ConfigFieldDef {
+                    key: "api_key".to_string(),
+                    label: "API Key".to_string(),
+                    field_type: ConfigFieldType::Password,
+                    required: true,
+                    default_value: None,
+                    value_source: ConfigFieldValueSource::User,
+                    host_binding: None,
+                    options: Vec::new(),
+                    help_text: Some(
+                        "OpenAI API key used for Whisper transcription requests.".to_string(),
+                    ),
+                },
+                ConfigFieldDef {
+                    key: "model".to_string(),
+                    label: "Model".to_string(),
+                    field_type: ConfigFieldType::String,
+                    required: true,
+                    default_value: Some("whisper-1".to_string()),
+                    value_source: ConfigFieldValueSource::User,
+                    host_binding: None,
+                    options: Vec::new(),
+                    help_text: Some("Transcription model to use.".to_string()),
+                },
+                ConfigFieldDef {
+                    key: "prompt".to_string(),
+                    label: "Prompt".to_string(),
+                    field_type: ConfigFieldType::Multiline,
+                    required: false,
+                    default_value: None,
+                    value_source: ConfigFieldValueSource::User,
+                    host_binding: None,
+                    options: Vec::new(),
+                    help_text: Some(
+                        "Optional prompt to improve terminology or formatting for the transcription."
+                            .to_string(),
+                    ),
+                },
+            ],
+            default_base_url: Some(OPENAI_API_BASE.to_string()),
+            allowed_hosts: vec!["api.openai.com".to_string()],
+            capabilities: SubtitleCapabilities {
             mode: SubtitleProviderMode::Generator,
-            supported_media_kinds: vec!["movie".to_string(), "episode".to_string()],
+            supported_media_kinds: vec![
+                SubtitleQueryMediaKind::Movie,
+                SubtitleQueryMediaKind::Episode,
+            ],
             recommended_facets: vec![
                 "movie".to_string(),
                 "series".to_string(),
@@ -328,6 +140,7 @@ fn descriptor() -> PluginDescriptor {
             supports_ai_translated: false,
             supports_machine_translated: false,
             supported_languages: Vec::new(),
+            },
         }),
     }
 }
@@ -348,17 +161,18 @@ fn generate_subtitle_impl(
     config: &WhisperConfig,
     request: &SubtitlePluginGenerateRequest,
 ) -> Result<SubtitlePluginGenerateResponse, String> {
+    let input_path = request.input.path.to_string_lossy().to_string();
     let audio_bytes = fs::read(&request.input.path).map_err(|error| {
         format!(
             "failed to read staged generator input '{}': {error}",
-            request.input.path
+            input_path
         )
     })?;
     let file_name = request
         .input
         .path
-        .rsplit('/')
-        .next()
+        .file_name()
+        .and_then(|value| value.to_str())
         .filter(|value| !value.is_empty())
         .unwrap_or("audio.flac");
     let multipart = build_transcription_multipart_body(

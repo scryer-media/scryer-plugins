@@ -1,10 +1,20 @@
-use std::collections::BTreeMap;
 use std::collections::HashSet;
+#[cfg(test)]
+use std::collections::BTreeMap;
 use std::time::Duration;
 
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
 use extism_pdk::*;
+use scryer_plugin_sdk::{
+    ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginResult,
+    ProviderDescriptor, SDK_VERSION, SubtitleCapabilities, SubtitleDescriptor,
+    SubtitleMatchHint, SubtitleMatchHintKind, SubtitlePluginCandidate,
+    SubtitlePluginDownloadRequest, SubtitlePluginDownloadResponse, SubtitlePluginSearchRequest,
+    SubtitlePluginSearchResponse, SubtitlePluginValidateConfigRequest,
+    SubtitlePluginValidateConfigResponse, SubtitleProviderMode, SubtitleQueryMediaKind,
+    SubtitleValidateConfigStatus,
+};
 use serde::{Deserialize, Serialize};
 
 const API_BASE: &str = "https://jimaku.cc/api";
@@ -13,208 +23,6 @@ const MIN_SUBTITLE_BYTES: usize = 500;
 const MAX_RATE_LIMIT_WAIT_SECONDS: u64 = 5;
 const MAX_SEARCH_ENTRY_CANDIDATES: usize = 5;
 const MAX_SEARCH_QUERIES: usize = 12;
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct PluginDescriptor {
-    name: String,
-    version: String,
-    sdk_version: String,
-    plugin_type: String,
-    provider_type: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    provider_aliases: Vec<String>,
-    #[serde(default)]
-    capabilities: IndexerCapabilities,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    scoring_policies: Vec<serde_json::Value>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    config_fields: Vec<ConfigFieldDef>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    default_base_url: Option<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    allowed_hosts: Vec<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    rate_limit_seconds: Option<i64>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    notification_capabilities: Option<serde_json::Value>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    accepted_inputs: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    isolation_modes: Vec<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    download_client_capabilities: Option<serde_json::Value>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    subtitle_capabilities: Option<SubtitleCapabilities>,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-struct IndexerCapabilities {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct ConfigFieldDef {
-    key: String,
-    label: String,
-    field_type: ConfigFieldType,
-    #[serde(default)]
-    required: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    default_value: Option<String>,
-    #[serde(default)]
-    value_source: ConfigFieldValueSource,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    host_binding: Option<serde_json::Value>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    options: Vec<serde_json::Value>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    help_text: Option<String>,
-}
-
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum ConfigFieldType {
-    #[default]
-    String,
-    Password,
-    Bool,
-    Number,
-}
-
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum ConfigFieldValueSource {
-    #[default]
-    User,
-}
-
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum SubtitleProviderMode {
-    #[default]
-    Catalog,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-struct SubtitleCapabilities {
-    mode: SubtitleProviderMode,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    supported_media_kinds: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    recommended_facets: Vec<String>,
-    #[serde(default)]
-    supports_hash_lookup: bool,
-    #[serde(default)]
-    supports_forced: bool,
-    #[serde(default)]
-    supports_hearing_impaired: bool,
-    #[serde(default)]
-    supports_ai_translated: bool,
-    #[serde(default)]
-    supports_machine_translated: bool,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    supported_languages: Vec<String>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum SubtitleValidateConfigStatus {
-    Valid,
-    InvalidConfig,
-    AuthFailed,
-    RateLimited,
-    Unreachable,
-    Unsupported,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum SubtitleMatchHintKind {
-    ExternalId,
-    Title,
-    SeasonEpisode,
-    Language,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SubtitleMatchHint {
-    kind: SubtitleMatchHintKind,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    value: Option<String>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum SubtitleQueryMediaKind {
-    Movie,
-    Episode,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SubtitlePluginSearchRequest {
-    media_kind: SubtitleQueryMediaKind,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    facet: Option<String>,
-    pub title: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub title_aliases: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub title_candidates: Vec<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub season: Option<i32>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub episode: Option<i32>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub absolute_episode: Option<i32>,
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub external_ids: BTreeMap<String, Vec<String>>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub languages: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SubtitlePluginCandidate {
-    provider_file_id: String,
-    language: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    release_info: Option<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    match_hints: Vec<SubtitleMatchHint>,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-struct SubtitlePluginSearchResponse {
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    results: Vec<SubtitlePluginCandidate>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SubtitlePluginDownloadRequest {
-    provider_file_id: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SubtitlePluginDownloadResponse {
-    content_base64: String,
-    format: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    filename: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    content_type: Option<String>,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-struct SubtitlePluginValidateConfigRequest {
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    config_instance_name: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SubtitlePluginValidateConfigResponse {
-    status: SubtitleValidateConfigStatus,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    message: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    retry_after_seconds: Option<i64>,
-}
 
 #[derive(Clone)]
 struct JimakuConfig {
@@ -255,12 +63,12 @@ struct JimakuDownloadRef {
 }
 
 #[plugin_fn]
-pub fn describe(_input: String) -> FnResult<String> {
+pub fn scryer_describe(_input: String) -> FnResult<String> {
     Ok(serde_json::to_string(&descriptor())?)
 }
 
 #[plugin_fn]
-pub fn validate_config(input: String) -> FnResult<String> {
+pub fn scryer_validate_config(input: String) -> FnResult<String> {
     let _: SubtitlePluginValidateConfigRequest = serde_json::from_str(&input)?;
     let response = match JimakuConfig::from_extism() {
         Ok(config) => {
@@ -279,26 +87,26 @@ pub fn validate_config(input: String) -> FnResult<String> {
             retry_after_seconds: None,
         },
     };
-    Ok(serde_json::to_string(&response)?)
+    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
 }
 
 #[plugin_fn]
-pub fn search_subtitles(input: String) -> FnResult<String> {
+pub fn scryer_subtitle_search(input: String) -> FnResult<String> {
     let request: SubtitlePluginSearchRequest = serde_json::from_str(&input)?;
     let config = JimakuConfig::from_extism().map_err(Error::msg)?;
     let results = search_subtitles_impl(&config, &request).map_err(Error::msg)?;
-    Ok(serde_json::to_string(&SubtitlePluginSearchResponse {
+    Ok(serde_json::to_string(&PluginResult::Ok(SubtitlePluginSearchResponse {
         results,
-    })?)
+    }))?)
 }
 
 #[plugin_fn]
-pub fn download_subtitle(input: String) -> FnResult<String> {
+pub fn scryer_subtitle_download(input: String) -> FnResult<String> {
     let request: SubtitlePluginDownloadRequest = serde_json::from_str(&input)?;
     let reference: JimakuDownloadRef =
         serde_json::from_str(&request.provider_file_id).map_err(Error::msg)?;
     let response = download_subtitle_impl(&reference).map_err(Error::msg)?;
-    Ok(serde_json::to_string(&response)?)
+    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
 }
 
 impl JimakuConfig {
@@ -314,54 +122,51 @@ impl JimakuConfig {
 
 fn descriptor() -> PluginDescriptor {
     PluginDescriptor {
+        id: "jimaku".to_string(),
         name: "Jimaku".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
-        sdk_version: "0.1".to_string(),
-        plugin_type: "subtitle_provider".to_string(),
-        provider_type: "jimaku".to_string(),
-        provider_aliases: vec![],
-        capabilities: IndexerCapabilities::default(),
-        scoring_policies: vec![],
-        config_fields: vec![
-            config_field(
-                "api_key",
-                "Jimaku API Key",
-                ConfigFieldType::Password,
-                true,
-                None,
-            ),
-            config_field(
-                "enable_name_search_fallback",
-                "Enable Name Search Fallback",
-                ConfigFieldType::Bool,
-                false,
-                Some("true"),
-            ),
-            config_field(
-                "enable_archives_download",
-                "Enable Archive Downloads",
-                ConfigFieldType::Bool,
-                false,
-                Some("false"),
-            ),
-            config_field(
-                "enable_ai_subs",
-                "Enable AI/Whisper Subtitles",
-                ConfigFieldType::Bool,
-                false,
-                Some("false"),
-            ),
-        ],
-        default_base_url: Some(API_BASE.to_string()),
-        allowed_hosts: vec!["jimaku.cc".to_string()],
-        rate_limit_seconds: Some(1),
-        notification_capabilities: None,
-        accepted_inputs: vec![],
-        isolation_modes: vec![],
-        download_client_capabilities: None,
-        subtitle_capabilities: Some(SubtitleCapabilities {
+        sdk_version: SDK_VERSION.to_string(),
+        provider: ProviderDescriptor::Subtitle(SubtitleDescriptor {
+            provider_type: "jimaku".to_string(),
+            provider_aliases: vec![],
+            config_fields: vec![
+                config_field(
+                    "api_key",
+                    "Jimaku API Key",
+                    ConfigFieldType::Password,
+                    true,
+                    None,
+                ),
+                config_field(
+                    "enable_name_search_fallback",
+                    "Enable Name Search Fallback",
+                    ConfigFieldType::Bool,
+                    false,
+                    Some("true"),
+                ),
+                config_field(
+                    "enable_archives_download",
+                    "Enable Archive Downloads",
+                    ConfigFieldType::Bool,
+                    false,
+                    Some("false"),
+                ),
+                config_field(
+                    "enable_ai_subs",
+                    "Enable AI/Whisper Subtitles",
+                    ConfigFieldType::Bool,
+                    false,
+                    Some("false"),
+                ),
+            ],
+            default_base_url: Some(API_BASE.to_string()),
+            allowed_hosts: vec!["jimaku.cc".to_string()],
+            capabilities: SubtitleCapabilities {
             mode: SubtitleProviderMode::Catalog,
-            supported_media_kinds: vec!["movie".to_string(), "episode".to_string()],
+            supported_media_kinds: vec![
+                SubtitleQueryMediaKind::Movie,
+                SubtitleQueryMediaKind::Episode,
+            ],
             recommended_facets: vec!["anime".to_string()],
             supports_hash_lookup: false,
             supports_forced: false,
@@ -369,6 +174,7 @@ fn descriptor() -> PluginDescriptor {
             supports_ai_translated: true,
             supports_machine_translated: false,
             supported_languages: vec!["jpn".to_string(), "eng".to_string()],
+            },
         }),
     }
 }
@@ -485,10 +291,17 @@ fn search_entry_subtitles(
             });
         }
 
+        let ai_translated = looks_like_ai_subtitle(&file.name);
         results.push(SubtitlePluginCandidate {
             provider_file_id,
             language,
             release_info: Some(file.name),
+            hearing_impaired: false,
+            forced: false,
+            ai_translated,
+            machine_translated: false,
+            uploader: None,
+            download_count: None,
             match_hints,
         });
     }
@@ -905,14 +718,26 @@ mod tests {
         SubtitlePluginSearchRequest {
             media_kind: SubtitleQueryMediaKind::Episode,
             facet: Some("anime".to_string()),
+            file_hash: None,
+            imdb_id: None,
+            series_imdb_id: None,
             title: "The Apothecary Diaries".to_string(),
             title_aliases: vec!["Kusuriya no Hitorigoto".to_string()],
             title_candidates: vec![],
+            year: None,
             season: Some(2),
             episode: Some(23),
             absolute_episode: None,
             external_ids: BTreeMap::new(),
             languages: vec!["eng".to_string()],
+            release_group: None,
+            source: None,
+            video_codec: None,
+            audio_codec: None,
+            resolution: None,
+            hearing_impaired: None,
+            include_ai_translated: false,
+            include_machine_translated: false,
         }
     }
 

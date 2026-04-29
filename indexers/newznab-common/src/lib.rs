@@ -10,153 +10,17 @@ use std::collections::HashMap;
 use extism_pdk::*;
 use quick_xml::events::Event;
 use quick_xml::Reader;
-use serde::{Deserialize, Serialize};
-
-// ---------------------------------------------------------------------------
-// Plugin contract types (must match scryer-plugins/src/types.rs)
-// ---------------------------------------------------------------------------
-
-#[derive(Serialize)]
-pub struct PluginDescriptor {
-    pub name: String,
-    pub version: String,
-    pub sdk_version: String,
-    pub plugin_type: String,
-    pub provider_type: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub provider_aliases: Vec<String>,
-    pub capabilities: Capabilities,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub scoring_policies: Vec<ScoringPolicy>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub config_fields: Vec<ConfigFieldDef>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub allowed_hosts: Vec<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub rate_limit_seconds: Option<i64>,
-}
-
-#[derive(Serialize)]
-pub struct Capabilities {
-    /// Facet-scoped ID support using well-known names: e.g. {"movie": ["imdb_id"], "series": ["tvdb_id"]}
-    pub supported_ids: HashMap<String, Vec<String>>,
-    /// Whether this indexer deduplicates title aliases internally.
-    #[serde(default)]
-    pub deduplicates_aliases: bool,
-    /// Query param name for season filtering (e.g. "season").
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub season_param: Option<String>,
-    /// Query param name for episode filtering (e.g. "ep").
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub episode_param: Option<String>,
-    /// Query param name for freetext search (e.g. "q"). None = no freetext.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub query_param: Option<String>,
-    // Legacy fields for backward compat with host-side deserialization.
-    pub search: bool,
-    pub imdb_search: bool,
-    pub tvdb_search: bool,
-}
-
-#[derive(Serialize)]
-pub struct ScoringPolicy {
-    pub name: String,
-    pub rego_source: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub applied_facets: Vec<String>,
-}
-
-#[derive(Serialize)]
-pub struct ConfigFieldDef {
-    pub key: String,
-    pub label: String,
-    pub field_type: String,
-    #[serde(default)]
-    pub required: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub default_value: Option<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub options: Vec<ConfigFieldOption>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub help_text: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct ConfigFieldOption {
-    pub value: String,
-    pub label: String,
-}
+pub use scryer_plugin_sdk::{
+    ConfigFieldDef, ConfigFieldType, IndexerCapabilities as Capabilities, IndexerDescriptor,
+    IndexerSourceKind, PluginDescriptor, PluginScoringPolicy as ScoringPolicy,
+    PluginResult, PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
+    PluginSearchResult as SearchResult, ProviderDescriptor, SDK_VERSION,
+};
+use serde::Deserialize;
 
 // ---------------------------------------------------------------------------
 // Search request / response types
 // ---------------------------------------------------------------------------
-
-#[derive(Deserialize)]
-pub struct TaggedAlias {
-    pub name: String,
-    pub language: String,
-}
-
-#[derive(Deserialize)]
-pub struct SearchRequest {
-    pub query: String,
-    #[serde(default)]
-    pub ids: HashMap<String, String>,
-    /// Explicit normalized media facet from the caller (movie, series, anime).
-    #[serde(default)]
-    pub facet: Option<String>,
-    /// Semantic category hint from the caller (e.g. "movie", "series", "anime").
-    #[serde(default)]
-    pub category: Option<String>,
-    #[serde(default)]
-    pub categories: Vec<String>,
-    #[serde(default)]
-    pub limit: usize,
-    #[serde(default)]
-    pub season: Option<u32>,
-    #[serde(default)]
-    pub episode: Option<u32>,
-    #[serde(default)]
-    pub absolute_episode: Option<u32>,
-    #[serde(default)]
-    pub tagged_aliases: Vec<TaggedAlias>,
-}
-
-#[derive(Serialize)]
-pub struct SearchResponse {
-    pub results: Vec<SearchResult>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub api_current: Option<u32>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub api_max: Option<u32>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub grab_current: Option<u32>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub grab_max: Option<u32>,
-}
-
-#[derive(Serialize)]
-pub struct SearchResult {
-    pub title: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub link: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub download_url: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub size_bytes: Option<i64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub published_at: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub grabs: Option<i64>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub languages: Vec<String>,
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub extra: HashMap<String, serde_json::Value>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub guid: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub info_url: Option<String>,
-}
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -217,18 +81,22 @@ pub fn standard_config_fields() -> Vec<ConfigFieldDef> {
         ConfigFieldDef {
             key: "api_path".to_string(),
             label: "API Path".to_string(),
-            field_type: "string".to_string(),
+            field_type: ConfigFieldType::String,
             required: false,
             default_value: Some("/api".to_string()),
+            value_source: Default::default(),
+            host_binding: None,
             options: vec![],
             help_text: Some("API endpoint path (e.g. /api, /api/v1/api, /nabapi)".to_string()),
         },
         ConfigFieldDef {
             key: "additional_params".to_string(),
             label: "Additional Parameters".to_string(),
-            field_type: "string".to_string(),
+            field_type: ConfigFieldType::String,
             required: false,
             default_value: None,
+            value_source: Default::default(),
+            host_binding: None,
             options: vec![],
             help_text: Some(
                 "Extra query parameters appended to every request (e.g. &dl=1&attrs=poster)"
@@ -1221,7 +1089,7 @@ fn apply_standard_attrs(
             }
             "tvdbid" => {
                 if !value.is_empty() && value != "0" {
-                    result.extra.insert(
+                    result.provider_extra.insert(
                         "response_tvdbid".to_string(),
                         serde_json::Value::from(value.as_str()),
                     );
@@ -1229,7 +1097,7 @@ fn apply_standard_attrs(
             }
             "imdb" | "imdbid" => {
                 if !value.is_empty() && value != "0" {
-                    result.extra.insert(
+                    result.provider_extra.insert(
                         "response_imdbid".to_string(),
                         serde_json::Value::from(value.as_str()),
                     );
@@ -1238,7 +1106,7 @@ fn apply_standard_attrs(
             "prematch" | "haspretime" => {
                 if value != "0" {
                     let flags = result
-                        .extra
+                        .provider_extra
                         .entry("indexer_flags".to_string())
                         .or_insert_with(|| serde_json::Value::Array(vec![]));
                     if let serde_json::Value::Array(ref mut arr) = flags {
@@ -1249,7 +1117,7 @@ fn apply_standard_attrs(
             "nuked" => {
                 if value != "0" {
                     let flags = result
-                        .extra
+                        .provider_extra
                         .entry("indexer_flags".to_string())
                         .or_insert_with(|| serde_json::Value::Array(vec![]));
                     if let serde_json::Value::Array(ref mut arr) = flags {
@@ -1496,7 +1364,26 @@ fn parse_newznab_json(
                 published_at: item.pub_date.clone(),
                 grabs,
                 languages,
-                extra,
+                thumbs_up: extra
+                    .get("thumbs_up")
+                    .and_then(|value| value.as_i64())
+                    .map(|value| value as i32),
+                thumbs_down: extra
+                    .get("thumbs_down")
+                    .and_then(|value| value.as_i64())
+                    .map(|value| value as i32),
+                subtitles: extra
+                    .get("subtitles")
+                    .and_then(|value| serde_json::from_value(value.clone()).ok())
+                    .unwrap_or_default(),
+                password_hint: extra
+                    .get("password")
+                    .and_then(|value| value.as_str())
+                    .map(ToString::to_string),
+                protected: extra
+                    .get("password_protected")
+                    .and_then(|value| value.as_bool()),
+                provider_extra: extra,
                 guid: item.guid,
                 info_url: item
                     .comments
@@ -1517,7 +1404,7 @@ fn parse_newznab_json(
             // Store non-NZB enclosure type as metadata
             if let Some(ref mime) = enclosure_type {
                 if mime != "application/x-nzb" {
-                    result.extra.insert(
+                    result.provider_extra.insert(
                         "enclosure_type".to_string(),
                         serde_json::Value::from(mime.as_str()),
                     );
@@ -1754,7 +1641,26 @@ fn parse_newznab_xml(
                                 published_at: pub_date.clone(),
                                 grabs,
                                 languages,
-                                extra,
+                                thumbs_up: extra
+                                    .get("thumbs_up")
+                                    .and_then(|value| value.as_i64())
+                                    .map(|value| value as i32),
+                                thumbs_down: extra
+                                    .get("thumbs_down")
+                                    .and_then(|value| value.as_i64())
+                                    .map(|value| value as i32),
+                                subtitles: extra
+                                    .get("subtitles")
+                                    .and_then(|value| serde_json::from_value(value.clone()).ok())
+                                    .unwrap_or_default(),
+                                password_hint: extra
+                                    .get("password")
+                                    .and_then(|value| value.as_str())
+                                    .map(ToString::to_string),
+                                protected: extra
+                                    .get("password_protected")
+                                    .and_then(|value| value.as_bool()),
+                                provider_extra: extra,
                                 guid: guid.clone(),
                                 info_url,
                             };
@@ -1770,7 +1676,7 @@ fn parse_newznab_xml(
                             // Store non-NZB enclosure type
                             if let Some(ref mime) = enclosure_type {
                                 if mime != "application/x-nzb" {
-                                    result.extra.insert(
+                                    result.provider_extra.insert(
                                         "enclosure_type".to_string(),
                                         serde_json::Value::from(mime.as_str()),
                                     );
@@ -2166,7 +2072,12 @@ mod tests {
             published_at: None,
             grabs: None,
             languages: vec![],
-            extra: HashMap::new(),
+            thumbs_up: None,
+            thumbs_down: None,
+            subtitles: vec![],
+            password_hint: None,
+            protected: None,
+            provider_extra: HashMap::new(),
             guid: None,
             info_url: None,
         }
@@ -2188,7 +2099,7 @@ mod tests {
         let mut usenet_date = None;
         apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
         assert_eq!(
-            result.extra.get("response_tvdbid"),
+            result.provider_extra.get("response_tvdbid"),
             Some(&serde_json::Value::from("12345"))
         );
     }
@@ -2200,7 +2111,7 @@ mod tests {
         let mut usenet_date = None;
         apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
         assert_eq!(
-            result.extra.get("response_imdbid"),
+            result.provider_extra.get("response_imdbid"),
             Some(&serde_json::Value::from("1234567"))
         );
     }
@@ -2211,7 +2122,7 @@ mod tests {
         let mut result = make_result();
         let mut usenet_date = None;
         apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
-        let flags = result.extra.get("indexer_flags").unwrap();
+        let flags = result.provider_extra.get("indexer_flags").unwrap();
         assert!(flags
             .as_array()
             .unwrap()
@@ -2224,7 +2135,7 @@ mod tests {
         let mut result = make_result();
         let mut usenet_date = None;
         apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
-        let flags = result.extra.get("indexer_flags").unwrap();
+        let flags = result.provider_extra.get("indexer_flags").unwrap();
         assert!(flags
             .as_array()
             .unwrap()
@@ -2242,7 +2153,11 @@ mod tests {
         let mut result = make_result();
         let mut usenet_date = None;
         apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
-        assert!(result.extra.is_empty(), "got: {:?}", result.extra);
+        assert!(
+            result.provider_extra.is_empty(),
+            "got: {:?}",
+            result.provider_extra
+        );
     }
 
     // ── parse_error_json ─────────────────────────────────────────────────

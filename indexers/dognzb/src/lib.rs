@@ -2,52 +2,59 @@ use std::collections::HashMap;
 
 use extism_pdk::*;
 use newznab_common::{
-    execute_full_search, standard_config_fields, Capabilities, NewznabConfig, PluginDescriptor,
-    ScoringPolicy, SearchRequest,
+    execute_full_search, standard_config_fields, Capabilities, IndexerDescriptor,
+    IndexerSourceKind, NewznabConfig, PluginDescriptor, PluginResult, ProviderDescriptor,
+    SDK_VERSION, ScoringPolicy, SearchRequest,
 };
 
 #[plugin_fn]
-pub fn describe(_input: String) -> FnResult<String> {
+pub fn scryer_describe(_input: String) -> FnResult<String> {
     let descriptor = PluginDescriptor {
+        id: "dognzb".to_string(),
         name: "DogNZB Indexer".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
-        sdk_version: "0.1".to_string(),
-        plugin_type: "usenet_indexer".to_string(),
-        provider_type: "dognzb".to_string(),
-        provider_aliases: vec![],
-        capabilities: Capabilities {
-            supported_ids: HashMap::from([
-                ("movie".into(), vec!["imdb_id".into()]),
-                ("series".into(), vec!["tvdb_id".into()]),
-                ("anime".into(), vec!["tvdb_id".into()]),
-            ]),
-            deduplicates_aliases: false,
-            season_param: Some("season".into()),
-            episode_param: Some("ep".into()),
-            query_param: Some("q".into()),
-            search: true,
-            imdb_search: true,
-            tvdb_search: true,
-        },
-        scoring_policies: vec![ScoringPolicy {
-            name: "dognzb_rating_bonus".to_string(),
-            rego_source: REGO_RATING_BONUS.to_string(),
-            applied_facets: vec![],
-        }],
-        config_fields: standard_config_fields(),
-        allowed_hosts: vec![],
-        rate_limit_seconds: None,
+        sdk_version: SDK_VERSION.to_string(),
+        provider: ProviderDescriptor::Indexer(IndexerDescriptor {
+            provider_type: "dognzb".to_string(),
+            provider_aliases: vec![],
+            source_kind: IndexerSourceKind::Usenet,
+            capabilities: Capabilities {
+                supported_ids: HashMap::from([
+                    ("movie".into(), vec!["imdb_id".into()]),
+                    ("series".into(), vec!["tvdb_id".into()]),
+                    ("anime".into(), vec!["tvdb_id".into()]),
+                ]),
+                deduplicates_aliases: false,
+                season_param: Some("season".into()),
+                episode_param: Some("ep".into()),
+                query_param: Some("q".into()),
+                search: true,
+                imdb_search: true,
+                tvdb_search: true,
+                anidb_search: false,
+                rss: true,
+            },
+            scoring_policies: vec![ScoringPolicy {
+                name: "dognzb_rating_bonus".to_string(),
+                rego_source: REGO_RATING_BONUS.to_string(),
+                applied_facets: vec![],
+            }],
+            config_fields: standard_config_fields(),
+            default_base_url: None,
+            allowed_hosts: vec![],
+            rate_limit_seconds: None,
+        }),
     };
     Ok(serde_json::to_string(&descriptor)?)
 }
 
 #[plugin_fn]
-pub fn search(input: String) -> FnResult<String> {
+pub fn scryer_indexer_search(input: String) -> FnResult<String> {
     let req: SearchRequest = serde_json::from_str(&input)?;
     let mut config = NewznabConfig::from_extism()?;
     config.page_size = 100;
     let response = execute_full_search(&config, &req, dognzb_metadata_extractor)?;
-    Ok(serde_json::to_string(&response)?)
+    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
 }
 
 // ---------------------------------------------------------------------------

@@ -7,6 +7,8 @@ For humans and agents alike:
 - `cargo xtask` is the canonical interface for repo automation
 - `cargo xtask release <plugin>` is the release path
 - `cargo xtask registry validate` is the registry integrity check
+- `cargo xtask plugin validate <path>` is the SDK-v1 ABI check for a plugin crate
+- `cargo xtask plugin new <kind> <name>` is the scaffold path for new plugin crates
 - `scripts/release.sh` is a compatibility wrapper over xtask, not the source of truth
 
 Operational rules:

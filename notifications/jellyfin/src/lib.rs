@@ -1,101 +1,13 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use extism_pdk::*;
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize)]
-struct PluginDescriptor {
-    name: String,
-    version: String,
-    sdk_version: String,
-    plugin_type: String,
-    provider_type: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    provider_aliases: Vec<String>,
-    capabilities: IndexerCapabilities,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    scoring_policies: Vec<()>,
-    config_fields: Vec<ConfigFieldDef>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    allowed_hosts: Vec<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    notification_capabilities: Option<NotificationCapabilities>,
-}
-
-#[derive(Serialize)]
-struct IndexerCapabilities {
-    search: bool,
-    imdb_search: bool,
-    tvdb_search: bool,
-}
-
-#[derive(Serialize)]
-struct NotificationCapabilities {
-    supports_rich_text: bool,
-    supports_images: bool,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    supported_events: Vec<String>,
-}
-
-#[derive(Serialize)]
-struct ConfigFieldDef {
-    key: String,
-    label: String,
-    field_type: String,
-    #[serde(default)]
-    required: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    default_value: Option<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    options: Vec<ConfigFieldOption>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    help_text: Option<String>,
-}
-
-#[derive(Serialize)]
-struct ConfigFieldOption {
-    value: String,
-    label: String,
-}
-
-#[allow(dead_code)]
-#[derive(Deserialize)]
-struct PluginNotificationRequest {
-    event_type: String,
-    title: String,
-    message: String,
-    #[serde(default)]
-    title_name: Option<String>,
-    #[serde(default)]
-    title_year: Option<i32>,
-    #[serde(default)]
-    title_facet: Option<String>,
-    #[serde(default)]
-    poster_url: Option<String>,
-    #[serde(default)]
-    episode_info: Option<String>,
-    #[serde(default)]
-    quality: Option<String>,
-    #[serde(default)]
-    release_title: Option<String>,
-    #[serde(default)]
-    download_client: Option<String>,
-    #[serde(default)]
-    file_path: Option<String>,
-    #[serde(default)]
-    health_message: Option<String>,
-    #[serde(default)]
-    application_version: Option<String>,
-    #[serde(default)]
-    metadata: HashMap<String, serde_json::Value>,
-}
-
-#[derive(Serialize)]
-struct PluginNotificationResponse {
-    success: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    error: Option<String>,
-}
+use scryer_plugin_sdk::{
+    ConfigFieldDef, ConfigFieldType, NotificationCapabilities, NotificationDescriptor,
+    NotificationEventType as SdkNotificationEventType, PluginDescriptor, PluginNotificationFile,
+    PluginNotificationRequest, PluginNotificationResponse, PluginNotificationTitle, PluginResult,
+    ProviderDescriptor, SDK_VERSION,
+};
+use serde::Serialize;
 
 #[derive(Debug, Clone)]
 struct JellyfinConfig {
@@ -119,15 +31,6 @@ enum MediaUpdateType {
 }
 
 impl MediaUpdateType {
-    fn parse(value: &str) -> Option<Self> {
-        match value.trim().to_ascii_lowercase().as_str() {
-            "created" => Some(Self::Created),
-            "modified" => Some(Self::Modified),
-            "deleted" => Some(Self::Deleted),
-            _ => None,
-        }
-    }
-
     fn as_jellyfin(self) -> &'static str {
         match self {
             Self::Created => "Created",
@@ -225,76 +128,71 @@ struct MediaUpdatedPathPayload<'a> {
 
 fn default_descriptor() -> PluginDescriptor {
     PluginDescriptor {
+        id: "jellyfin".to_string(),
         name: "Jellyfin".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
-        sdk_version: "0.1".to_string(),
-        plugin_type: "notification".to_string(),
-        provider_type: "jellyfin".to_string(),
-        provider_aliases: vec![],
-        capabilities: IndexerCapabilities {
-            search: false,
-            imdb_search: false,
-            tvdb_search: false,
-        },
-        scoring_policies: vec![],
-        config_fields: vec![
-            ConfigFieldDef {
-                key: "base_url".to_string(),
-                label: "Base URL".to_string(),
-                field_type: "string".to_string(),
-                required: true,
-                default_value: None,
-                options: vec![],
-                help_text: Some(
-                    "Jellyfin server URL, for example http://jellyfin:8096".to_string(),
-                ),
+        sdk_version: SDK_VERSION.to_string(),
+        provider: ProviderDescriptor::Notification(NotificationDescriptor {
+            provider_type: "jellyfin".to_string(),
+            provider_aliases: vec![],
+            default_base_url: None,
+            allowed_hosts: vec![],
+            capabilities: NotificationCapabilities {
+                supports_rich_text: false,
+                supports_images: false,
+                supported_events: vec![],
             },
-            ConfigFieldDef {
-                key: "api_key".to_string(),
-                label: "API Key".to_string(),
-                field_type: "password".to_string(),
-                required: true,
-                default_value: None,
-                options: vec![],
-                help_text: Some("Jellyfin API key used for targeted refresh calls.".to_string()),
-            },
-            ConfigFieldDef {
-                key: "path_mappings".to_string(),
-                label: "Path Mappings".to_string(),
-                field_type: "multiline".to_string(),
-                required: true,
-                default_value: None,
-                options: vec![],
-                help_text: Some(
-                    "One mapping per line: /scryer/path => /jellyfin/path. Longest prefix wins."
-                        .to_string(),
-                ),
-            },
-        ],
-        allowed_hosts: vec![],
-        notification_capabilities: Some(NotificationCapabilities {
-            supports_rich_text: false,
-            supports_images: false,
-            supported_events: vec![
-                "download".to_string(),
-                "import_complete".to_string(),
-                "upgrade".to_string(),
-                "rename".to_string(),
-                "file_deleted".to_string(),
-                "file_deleted_for_upgrade".to_string(),
-                "test".to_string(),
+            config_fields: vec![
+                ConfigFieldDef {
+                    key: "base_url".to_string(),
+                    label: "Base URL".to_string(),
+                    field_type: ConfigFieldType::String,
+                    required: true,
+                    default_value: None,
+                    value_source: Default::default(),
+                    host_binding: None,
+                    options: vec![],
+                    help_text: Some(
+                        "Jellyfin server URL, for example http://jellyfin:8096".to_string(),
+                    ),
+                },
+                ConfigFieldDef {
+                    key: "api_key".to_string(),
+                    label: "API Key".to_string(),
+                    field_type: ConfigFieldType::Password,
+                    required: true,
+                    default_value: None,
+                    value_source: Default::default(),
+                    host_binding: None,
+                    options: vec![],
+                    help_text: Some("Jellyfin API key used for targeted refresh calls.".to_string()),
+                },
+                ConfigFieldDef {
+                    key: "path_mappings".to_string(),
+                    label: "Path Mappings".to_string(),
+                    field_type: ConfigFieldType::Multiline,
+                    required: true,
+                    default_value: None,
+                    value_source: Default::default(),
+                    host_binding: None,
+                    options: vec![],
+                    help_text: Some(
+                        "One mapping per line: /scryer/path => /jellyfin/path. Longest prefix wins."
+                            .to_string(),
+                    ),
+                },
             ],
         }),
     }
 }
 
 #[plugin_fn]
-pub fn describe(_input: String) -> FnResult<String> {
+pub fn scryer_describe(_input: String) -> FnResult<String> {
     Ok(serde_json::to_string(&default_descriptor())?)
 }
 
 #[plugin_fn]
-pub fn send_notification(input: String) -> FnResult<String> {
+pub fn scryer_notification_send(input: String) -> FnResult<String> {
     let request: PluginNotificationRequest = serde_json::from_str(&input)?;
 
     let config = match JellyfinConfig::from_extism() {
@@ -355,24 +253,19 @@ fn build_request_plans(
     request: &PluginNotificationRequest,
     config: &JellyfinConfig,
 ) -> Result<Vec<JellyfinRequestPlan>, String> {
-    if request.event_type == "test" {
+    if matches!(request.event_type, SdkNotificationEventType::Test) {
         return Ok(vec![JellyfinRequestPlan::SystemInfo]);
     }
 
     let mappings = parse_path_mappings(&config.path_mappings)?;
-    let updates = parse_media_updates(&request.metadata)?;
-    let external_ids = parse_external_ids(&request.metadata);
+    let updates = parse_media_updates(request.file.as_ref())?;
+    let external_ids = parse_external_ids(request.title.as_ref());
     let title_facet = request
-        .title_facet
-        .as_deref()
+        .title
+        .as_ref()
+        .map(|title| title.facet.as_str())
         .map(str::trim)
-        .filter(|value| !value.is_empty())
-        .or_else(|| {
-            request
-                .metadata
-                .get("title_facet")
-                .and_then(serde_json::Value::as_str)
-        });
+        .filter(|value| !value.is_empty());
 
     let mut mapped_updates = Vec::new();
     let mut saw_unmapped_update = false;
@@ -441,31 +334,22 @@ fn build_request_plans(
     Ok(plans)
 }
 
-fn parse_media_updates(
-    metadata: &HashMap<String, serde_json::Value>,
-) -> Result<Vec<MediaUpdate>, String> {
-    let Some(value) = metadata.get("media_updates") else {
-        return Err("metadata.media_updates is required".to_string());
+fn parse_media_updates(file: Option<&PluginNotificationFile>) -> Result<Vec<MediaUpdate>, String> {
+    let Some(file) = file else {
+        return Err("file.media_updates is required".to_string());
     };
-    let updates = value
-        .as_array()
-        .ok_or_else(|| "metadata.media_updates must be an array".to_string())?;
 
-    let mut parsed = Vec::with_capacity(updates.len());
-    for item in updates {
-        let path = item
-            .get("path")
-            .and_then(serde_json::Value::as_str)
-            .map(str::trim)
-            .filter(|value| !value.is_empty())
-            .ok_or_else(|| "media_updates[].path is required".to_string())?;
-        let update_type = item
-            .get("update_type")
-            .and_then(serde_json::Value::as_str)
-            .and_then(MediaUpdateType::parse)
-            .ok_or_else(|| {
-                "media_updates[].update_type must be created, modified, or deleted".to_string()
-            })?;
+    let mut parsed = Vec::with_capacity(file.media_updates.len());
+    for item in &file.media_updates {
+        let path = item.path.trim();
+        if path.is_empty() {
+            return Err("file.media_updates[].path is required".to_string());
+        }
+        let update_type = match item.update_type {
+            scryer_plugin_sdk::NotificationMediaUpdateType::Created => MediaUpdateType::Created,
+            scryer_plugin_sdk::NotificationMediaUpdateType::Modified => MediaUpdateType::Modified,
+            scryer_plugin_sdk::NotificationMediaUpdateType::Deleted => MediaUpdateType::Deleted,
+        };
         parsed.push(MediaUpdate {
             path: path.to_string(),
             update_type,
@@ -475,30 +359,29 @@ fn parse_media_updates(
     Ok(parsed)
 }
 
-fn parse_external_ids(metadata: &HashMap<String, serde_json::Value>) -> ExternalIds {
-    let Some(value) = metadata.get("external_ids") else {
+fn parse_external_ids(title: Option<&PluginNotificationTitle>) -> ExternalIds {
+    let Some(title) = title else {
         return ExternalIds::default();
     };
-    let Some(object) = value.as_object() else {
-        return ExternalIds::default();
-    };
-
     ExternalIds {
-        tmdb_id: object
-            .get("tmdb_id")
-            .and_then(serde_json::Value::as_str)
+        tmdb_id: title
+            .external_ids
+            .tmdb_id
+            .as_deref()
             .map(str::trim)
             .filter(|value| !value.is_empty())
             .map(str::to_string),
-        imdb_id: object
-            .get("imdb_id")
-            .and_then(serde_json::Value::as_str)
+        imdb_id: title
+            .external_ids
+            .imdb_id
+            .as_deref()
             .map(str::trim)
             .filter(|value| !value.is_empty())
             .map(str::to_string),
-        tvdb_id: object
-            .get("tvdb_id")
-            .and_then(serde_json::Value::as_str)
+        tvdb_id: title
+            .external_ids
+            .tvdb_id
+            .as_deref()
             .map(str::trim)
             .filter(|value| !value.is_empty())
             .map(str::to_string),
@@ -716,18 +599,18 @@ fn encode_query_value(value: &str) -> String {
 }
 
 fn success_response() -> String {
-    serde_json::to_string(&PluginNotificationResponse {
+    serde_json::to_string(&PluginResult::Ok(PluginNotificationResponse {
         success: true,
         error: None,
-    })
+    }))
     .unwrap_or_else(|_| "{\"success\":true}".to_string())
 }
 
 fn error_response(error: String) -> String {
-    serde_json::to_string(&PluginNotificationResponse {
+    serde_json::to_string(&PluginResult::Ok(PluginNotificationResponse {
         success: false,
         error: Some(error),
-    })
+    }))
     .unwrap_or_else(|_| "{\"success\":false,\"error\":\"notification failed\"}".to_string())
 }
 
@@ -740,28 +623,73 @@ mod tests {
         title_facet: &str,
         metadata: serde_json::Value,
     ) -> PluginNotificationRequest {
-        let metadata = metadata
-            .as_object()
-            .unwrap()
-            .iter()
-            .map(|(key, value)| (key.clone(), value.clone()))
-            .collect();
+        let metadata = metadata.as_object().unwrap();
+        let external_ids = metadata
+            .get("external_ids")
+            .and_then(serde_json::Value::as_object);
+        let media_updates = metadata
+            .get("media_updates")
+            .and_then(serde_json::Value::as_array)
+            .map(|updates| {
+                updates
+                    .iter()
+                    .map(|update| PluginNotificationMediaUpdate {
+                        path: update["path"].as_str().unwrap_or_default().to_string(),
+                        update_type: match update["update_type"].as_str().unwrap_or_default() {
+                            "created" => scryer_plugin_sdk::NotificationMediaUpdateType::Created,
+                            "modified" => scryer_plugin_sdk::NotificationMediaUpdateType::Modified,
+                            "deleted" => scryer_plugin_sdk::NotificationMediaUpdateType::Deleted,
+                            other => panic!("unsupported update_type in test fixture: {other}"),
+                        },
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
         PluginNotificationRequest {
-            event_type: event_type.to_string(),
-            title: "Test".to_string(),
-            message: "Body".to_string(),
-            title_name: Some("Test".to_string()),
-            title_year: None,
-            title_facet: Some(title_facet.to_string()),
-            poster_url: None,
-            episode_info: None,
-            quality: None,
-            release_title: None,
-            download_client: None,
-            file_path: None,
-            health_message: None,
-            application_version: None,
-            metadata,
+            event_type: match event_type {
+                "import_complete" => SdkNotificationEventType::ImportComplete,
+                "upgrade" => SdkNotificationEventType::Upgrade,
+                "rename" => SdkNotificationEventType::Rename,
+                "file_deleted" => SdkNotificationEventType::FileDeleted,
+                "test" => SdkNotificationEventType::Test,
+                other => panic!("unsupported event_type in test fixture: {other}"),
+            },
+            summary_title: "Test".to_string(),
+            summary_message: "Body".to_string(),
+            app: scryer_plugin_sdk::PluginNotificationApp {
+                name: "Scryer".to_string(),
+                version: "test".to_string(),
+            },
+            title: Some(PluginNotificationTitle {
+                name: "Test".to_string(),
+                facet: title_facet.to_string(),
+                year: None,
+                poster_url: None,
+                external_ids: scryer_plugin_sdk::PluginNotificationExternalIds {
+                    tmdb_id: external_ids
+                        .and_then(|ids| ids.get("tmdb_id"))
+                        .and_then(serde_json::Value::as_str)
+                        .map(str::to_string),
+                    imdb_id: external_ids
+                        .and_then(|ids| ids.get("imdb_id"))
+                        .and_then(serde_json::Value::as_str)
+                        .map(str::to_string),
+                    tvdb_id: external_ids
+                        .and_then(|ids| ids.get("tvdb_id"))
+                        .and_then(serde_json::Value::as_str)
+                        .map(str::to_string),
+                    anidb_id: None,
+                },
+            }),
+            episode: None,
+            release: None,
+            download: None,
+            import: None,
+            health: None,
+            file: Some(PluginNotificationFile {
+                primary_path: media_updates.first().map(|update| update.path.clone()),
+                media_updates,
+            }),
         }
     }
 
@@ -777,9 +705,9 @@ mod tests {
     fn describe_includes_expected_fields() {
         let descriptor = default_descriptor();
         let json = serde_json::to_value(descriptor).unwrap();
-        assert_eq!(json["provider_type"], "jellyfin");
-        assert_eq!(json["plugin_type"], "notification");
-        assert_eq!(json["config_fields"][2]["field_type"], "multiline");
+        assert_eq!(json["provider"]["provider_type"], "jellyfin");
+        assert_eq!(json["provider"]["kind"], "notification");
+        assert_eq!(json["provider"]["config_fields"][2]["field_type"], "multiline");
     }
 
     #[test]

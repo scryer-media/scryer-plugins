@@ -1,99 +1,12 @@
 use std::collections::{HashMap, HashSet};
 
 use extism_pdk::*;
-use serde::{Deserialize, Serialize};
-
-// ---------------------------------------------------------------------------
-// Plugin contract types (must match scryer-plugins/src/types.rs)
-// ---------------------------------------------------------------------------
-
-#[derive(Serialize)]
-struct PluginDescriptor {
-    name: String,
-    version: String,
-    sdk_version: String,
-    plugin_type: String,
-    provider_type: String,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    provider_aliases: Vec<String>,
-    capabilities: Capabilities,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    scoring_policies: Vec<serde_json::Value>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    default_base_url: Option<String>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    allowed_hosts: Vec<String>,
-}
-
-#[derive(Serialize)]
-struct Capabilities {
-    supported_ids: HashMap<String, Vec<String>>,
-    #[serde(default)]
-    deduplicates_aliases: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    season_param: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    episode_param: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    query_param: Option<String>,
-    // Legacy fields
-    search: bool,
-    imdb_search: bool,
-    tvdb_search: bool,
-    #[serde(default)]
-    anidb_search: bool,
-}
-
-#[derive(Deserialize)]
-struct TaggedAlias {}
-
-#[derive(Deserialize)]
-#[allow(dead_code)]
-struct SearchRequest {
-    query: String,
-    #[serde(default)]
-    ids: HashMap<String, String>,
-    #[serde(default)]
-    facet: Option<String>,
-    #[serde(default)]
-    category: Option<String>,
-    #[serde(default)]
-    categories: Vec<String>,
-    #[serde(default)]
-    limit: usize,
-    #[serde(default)]
-    season: Option<u32>,
-    #[serde(default)]
-    episode: Option<u32>,
-    #[serde(default)]
-    absolute_episode: Option<u32>,
-    #[serde(default)]
-    tagged_aliases: Vec<TaggedAlias>,
-}
-
-#[derive(Serialize)]
-struct SearchResponse {
-    results: Vec<SearchResult>,
-}
-
-#[derive(Serialize)]
-struct SearchResult {
-    title: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    link: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    download_url: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    size_bytes: Option<i64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    published_at: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    grabs: Option<i64>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    languages: Vec<String>,
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    extra: HashMap<String, serde_json::Value>,
-}
+use scryer_plugin_sdk::{
+    IndexerCapabilities as Capabilities, IndexerDescriptor, IndexerSourceKind, PluginDescriptor,
+    PluginResult, PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
+    PluginSearchResult as SearchResult, ProviderDescriptor, TaggedAlias, SDK_VERSION,
+};
+use serde::Deserialize;
 
 // ---------------------------------------------------------------------------
 // AnimeTosho JSON API response types
@@ -132,37 +45,43 @@ struct AnimetoshoItem {
 // ---------------------------------------------------------------------------
 
 #[plugin_fn]
-pub fn describe(_input: String) -> FnResult<String> {
+pub fn scryer_describe(_input: String) -> FnResult<String> {
     let descriptor = PluginDescriptor {
+        id: "animetosho".to_string(),
         name: "AnimeTosho Indexer".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
-        sdk_version: "0.1".to_string(),
-        plugin_type: "indexer".to_string(),
-        provider_type: "animetosho".to_string(),
-        provider_aliases: vec![],
-        capabilities: Capabilities {
-            supported_ids: HashMap::from([
-                ("anime".into(), vec!["anidb_id".into()]),
-                ("movie".into(), vec!["anidb_id".into()]),
-            ]),
-            deduplicates_aliases: true,
-            season_param: None,
-            episode_param: None,
-            query_param: Some("q".into()),
-            search: true,
-            imdb_search: false,
-            tvdb_search: false,
-            anidb_search: true,
-        },
-        scoring_policies: vec![],
-        default_base_url: Some("https://feed.animetosho.org".to_string()),
-        allowed_hosts: vec![],
+        sdk_version: SDK_VERSION.to_string(),
+        provider: ProviderDescriptor::Indexer(IndexerDescriptor {
+            provider_type: "animetosho".to_string(),
+            provider_aliases: vec![],
+            source_kind: IndexerSourceKind::Generic,
+            capabilities: Capabilities {
+                supported_ids: HashMap::from([
+                    ("anime".into(), vec!["anidb_id".into()]),
+                    ("movie".into(), vec!["anidb_id".into()]),
+                ]),
+                deduplicates_aliases: true,
+                season_param: None,
+                episode_param: None,
+                query_param: Some("q".into()),
+                search: true,
+                imdb_search: false,
+                tvdb_search: false,
+                anidb_search: true,
+                rss: true,
+            },
+            scoring_policies: vec![],
+            config_fields: vec![],
+            default_base_url: Some("https://feed.animetosho.org".to_string()),
+            allowed_hosts: vec![],
+            rate_limit_seconds: None,
+        }),
     };
     Ok(serde_json::to_string(&descriptor)?)
 }
 
 #[plugin_fn]
-pub fn search(input: String) -> FnResult<String> {
+pub fn scryer_indexer_search(input: String) -> FnResult<String> {
     let req: SearchRequest = serde_json::from_str(&input)?;
 
     let base_url = config::get("base_url")
@@ -190,7 +109,10 @@ pub fn search(input: String) -> FnResult<String> {
     const MAX_RESULTS: usize = 1000;
 
     if anidb_id.is_none() && title_query_candidates.is_empty() {
-        return Ok(serde_json::to_string(&SearchResponse { results: vec![] })?);
+        return Ok(serde_json::to_string(&PluginResult::Ok(SearchResponse {
+            results: vec![],
+            ..Default::default()
+        }))?);
     }
 
     let mut all_items: Vec<AnimetoshoItem> = Vec::new();
@@ -229,7 +151,10 @@ pub fn search(input: String) -> FnResult<String> {
     let deduped = dedup_items(all_items);
 
     let results = build_results(deduped);
-    Ok(serde_json::to_string(&SearchResponse { results })?)
+    Ok(serde_json::to_string(&PluginResult::Ok(SearchResponse {
+        results,
+        ..Default::default()
+    }))?)
 }
 
 // ---------------------------------------------------------------------------
@@ -542,13 +467,20 @@ fn build_results(items: Vec<AnimetoshoItem>) -> Vec<SearchResult> {
 
             results.push(SearchResult {
                 title: title.clone(),
+                guid: None,
                 link: link.clone(),
+                info_url: None,
                 download_url: Some(torrent_url.clone()),
                 size_bytes,
                 published_at: published_at.clone(),
                 grabs: item.torrent_downloaded_count,
                 languages: vec![],
-                extra,
+                subtitles: vec![],
+                thumbs_up: item.seeders.and_then(|value| i32::try_from(value).ok()),
+                thumbs_down: item.leechers.and_then(|value| i32::try_from(value).ok()),
+                password_hint: None,
+                protected: None,
+                provider_extra: extra,
             });
         }
 
@@ -559,13 +491,20 @@ fn build_results(items: Vec<AnimetoshoItem>) -> Vec<SearchResult> {
 
             results.push(SearchResult {
                 title,
+                guid: None,
                 link,
+                info_url: None,
                 download_url: Some(nzb_url.clone()),
                 size_bytes,
                 published_at,
                 grabs: None,
                 languages: vec![],
-                extra,
+                subtitles: vec![],
+                thumbs_up: None,
+                thumbs_down: None,
+                password_hint: None,
+                protected: None,
+                provider_extra: extra,
             });
         }
     }
@@ -771,9 +710,9 @@ mod tests {
 
         let results = build_results(vec![item]);
         assert_eq!(results.len(), 2);
-        assert_eq!(results[0].extra.get("download_type"), Some(&serde_json::Value::from("torrent")));
+        assert_eq!(results[0].provider_extra.get("download_type"), Some(&serde_json::Value::from("torrent")));
         assert_eq!(results[0].grabs, Some(42));
-        assert_eq!(results[1].extra.get("download_type"), Some(&serde_json::Value::from("nzb")));
+        assert_eq!(results[1].provider_extra.get("download_type"), Some(&serde_json::Value::from("nzb")));
     }
 
     #[test]

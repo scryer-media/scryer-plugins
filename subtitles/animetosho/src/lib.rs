@@ -1,9 +1,17 @@
-use std::collections::BTreeMap;
 use std::time::Duration;
 
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
 use extism_pdk::*;
+use scryer_plugin_sdk::{
+    ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginResult,
+    ProviderDescriptor, SDK_VERSION, SubtitleCapabilities, SubtitleDescriptor,
+    SubtitleMatchHint, SubtitleMatchHintKind, SubtitlePluginCandidate,
+    SubtitlePluginDownloadRequest, SubtitlePluginDownloadResponse, SubtitlePluginSearchRequest,
+    SubtitlePluginSearchResponse, SubtitlePluginValidateConfigRequest,
+    SubtitlePluginValidateConfigResponse, SubtitleProviderMode, SubtitleQueryMediaKind,
+    SubtitleValidateConfigStatus,
+};
 use serde::{Deserialize, Serialize};
 
 const FEED_API_URL: &str = "https://feed.animetosho.org/json";
@@ -14,171 +22,6 @@ const MAX_SEARCH_THRESHOLD: usize = 15;
 const MAX_RATE_LIMIT_WAIT_SECONDS: u64 = 10;
 const XZ_MAGIC: &[u8] = b"\xFD\x37\x7A\x58\x5A\x00";
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct PluginDescriptor {
-    name: String,
-    version: String,
-    sdk_version: String,
-    plugin_type: String,
-    provider_type: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    provider_aliases: Vec<String>,
-    #[serde(default)]
-    capabilities: IndexerCapabilities,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    scoring_policies: Vec<serde_json::Value>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    config_fields: Vec<ConfigFieldDef>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    default_base_url: Option<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    allowed_hosts: Vec<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    rate_limit_seconds: Option<i64>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    notification_capabilities: Option<serde_json::Value>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    accepted_inputs: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    isolation_modes: Vec<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    download_client_capabilities: Option<serde_json::Value>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    subtitle_capabilities: Option<SubtitleCapabilities>,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-struct IndexerCapabilities {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct ConfigFieldDef {
-    key: String,
-    label: String,
-    field_type: ConfigFieldType,
-    #[serde(default)]
-    required: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    default_value: Option<String>,
-    #[serde(default)]
-    value_source: ConfigFieldValueSource,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    host_binding: Option<serde_json::Value>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    options: Vec<serde_json::Value>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    help_text: Option<String>,
-}
-
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum ConfigFieldType {
-    #[default]
-    Number,
-}
-
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum ConfigFieldValueSource {
-    #[default]
-    User,
-}
-
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum SubtitleProviderMode {
-    #[default]
-    Catalog,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-struct SubtitleCapabilities {
-    mode: SubtitleProviderMode,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    supported_media_kinds: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    recommended_facets: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    supported_languages: Vec<String>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum SubtitleValidateConfigStatus {
-    Valid,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum SubtitleMatchHintKind {
-    ExternalId,
-    AbsoluteEpisode,
-    SeasonEpisode,
-    Title,
-    Language,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SubtitleMatchHint {
-    kind: SubtitleMatchHintKind,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    value: Option<String>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-enum SubtitleQueryMediaKind {
-    Movie,
-    Episode,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SubtitlePluginSearchRequest {
-    media_kind: SubtitleQueryMediaKind,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    facet: Option<String>,
-    title: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    season: Option<i32>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    episode: Option<i32>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    absolute_episode: Option<i32>,
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    external_ids: BTreeMap<String, Vec<String>>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    languages: Vec<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SubtitlePluginCandidate {
-    provider_file_id: String,
-    language: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    release_info: Option<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    match_hints: Vec<SubtitleMatchHint>,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-struct SubtitlePluginSearchResponse {
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    results: Vec<SubtitlePluginCandidate>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SubtitlePluginDownloadRequest {
-    provider_file_id: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SubtitlePluginDownloadResponse {
-    content_base64: String,
-    format: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    filename: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    content_type: Option<String>,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct AnimeToshoDownloadRef {
@@ -187,21 +30,6 @@ struct AnimeToshoDownloadRef {
     filename: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     language: Option<String>,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-struct SubtitlePluginValidateConfigRequest {
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    config_instance_name: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SubtitlePluginValidateConfigResponse {
-    status: SubtitleValidateConfigStatus,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    message: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    retry_after_seconds: Option<i64>,
 }
 
 #[derive(Clone)]
@@ -246,39 +74,39 @@ struct AttachmentInfo {
 }
 
 #[plugin_fn]
-pub fn describe(_input: String) -> FnResult<String> {
+pub fn scryer_describe(_input: String) -> FnResult<String> {
     Ok(serde_json::to_string(&descriptor())?)
 }
 
 #[plugin_fn]
-pub fn validate_config(input: String) -> FnResult<String> {
+pub fn scryer_validate_config(input: String) -> FnResult<String> {
     let _: SubtitlePluginValidateConfigRequest = serde_json::from_str(&input)?;
     let _ = AnimeToshoConfig::from_extism();
-    Ok(serde_json::to_string(
-        &SubtitlePluginValidateConfigResponse {
+    Ok(serde_json::to_string(&PluginResult::Ok(
+        SubtitlePluginValidateConfigResponse {
             status: SubtitleValidateConfigStatus::Valid,
             message: None,
             retry_after_seconds: None,
         },
-    )?)
+    ))?)
 }
 
 #[plugin_fn]
-pub fn search_subtitles(input: String) -> FnResult<String> {
+pub fn scryer_subtitle_search(input: String) -> FnResult<String> {
     let request: SubtitlePluginSearchRequest = serde_json::from_str(&input)?;
     let config = AnimeToshoConfig::from_extism();
     let results = search_subtitles_impl(&config, &request).map_err(Error::msg)?;
-    Ok(serde_json::to_string(&SubtitlePluginSearchResponse {
+    Ok(serde_json::to_string(&PluginResult::Ok(SubtitlePluginSearchResponse {
         results,
-    })?)
+    }))?)
 }
 
 #[plugin_fn]
-pub fn download_subtitle(input: String) -> FnResult<String> {
+pub fn scryer_subtitle_download(input: String) -> FnResult<String> {
     let request: SubtitlePluginDownloadRequest = serde_json::from_str(&input)?;
     let reference = parse_download_ref(&request.provider_file_id).map_err(Error::msg)?;
     let response = download_subtitle_impl(&reference).map_err(Error::msg)?;
-    Ok(serde_json::to_string(&response)?)
+    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
 }
 
 impl AnimeToshoConfig {
@@ -296,40 +124,40 @@ impl AnimeToshoConfig {
 
 fn descriptor() -> PluginDescriptor {
     PluginDescriptor {
+        id: "animetosho-subtitles".to_string(),
         name: "AnimeTosho Subtitles".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
-        sdk_version: "0.1".to_string(),
-        plugin_type: "subtitle_provider".to_string(),
-        provider_type: "animetosho".to_string(),
-        provider_aliases: vec![],
-        capabilities: IndexerCapabilities::default(),
-        scoring_policies: vec![],
-        config_fields: vec![ConfigFieldDef {
-            key: "search_threshold".to_string(),
-            label: "Search Threshold".to_string(),
-            field_type: ConfigFieldType::Number,
-            required: false,
-            default_value: Some(DEFAULT_SEARCH_THRESHOLD.to_string()),
-            value_source: ConfigFieldValueSource::User,
-            host_binding: None,
-            options: vec![],
-            help_text: Some("Maximum AnimeTosho entries to inspect, from 1 to 15.".to_string()),
-        }],
-        default_base_url: Some(FEED_API_URL.to_string()),
-        allowed_hosts: vec![
-            "feed.animetosho.org".to_string(),
-            "animetosho.org".to_string(),
-        ],
-        rate_limit_seconds: Some(1),
-        notification_capabilities: None,
-        accepted_inputs: vec![],
-        isolation_modes: vec![],
-        download_client_capabilities: None,
-        subtitle_capabilities: Some(SubtitleCapabilities {
+        sdk_version: SDK_VERSION.to_string(),
+        provider: ProviderDescriptor::Subtitle(SubtitleDescriptor {
+            provider_type: "animetosho".to_string(),
+            provider_aliases: vec![],
+            config_fields: vec![ConfigFieldDef {
+                key: "search_threshold".to_string(),
+                label: "Search Threshold".to_string(),
+                field_type: ConfigFieldType::Number,
+                required: false,
+                default_value: Some(DEFAULT_SEARCH_THRESHOLD.to_string()),
+                value_source: ConfigFieldValueSource::User,
+                host_binding: None,
+                options: vec![],
+                help_text: Some("Maximum AnimeTosho entries to inspect, from 1 to 15.".to_string()),
+            }],
+            default_base_url: Some(FEED_API_URL.to_string()),
+            allowed_hosts: vec![
+                "feed.animetosho.org".to_string(),
+                "animetosho.org".to_string(),
+            ],
+            capabilities: SubtitleCapabilities {
             mode: SubtitleProviderMode::Catalog,
-            supported_media_kinds: vec!["episode".to_string()],
+            supported_media_kinds: vec![SubtitleQueryMediaKind::Episode],
             recommended_facets: vec!["anime".to_string()],
+            supports_hash_lookup: false,
+            supports_forced: false,
+            supports_hearing_impaired: false,
+            supports_ai_translated: false,
+            supports_machine_translated: false,
             supported_languages: vec![],
+            },
         }),
     }
 }
@@ -388,6 +216,12 @@ fn search_subtitles_impl(
                         .clone()
                         .or_else(|| file.filename.clone())
                         .or_else(|| attachment.info.name.clone()),
+                    hearing_impaired: false,
+                    forced: false,
+                    ai_translated: false,
+                    machine_translated: false,
+                    uploader: None,
+                    download_count: None,
                     match_hints: vec![
                         SubtitleMatchHint {
                             kind: SubtitleMatchHintKind::ExternalId,
