@@ -186,7 +186,7 @@ fn default_descriptor() -> PluginDescriptor {
                     host_binding: None,
                     options: vec![],
                     help_text: Some(
-                        "One mapping per line: /scryer/path => /jellyfin/path. Longest prefix wins."
+                        "Pick the Scryer path on the left and enter the matching Jellyfin-visible path on the right. Add up to 10 mappings. Most specific path wins."
                             .to_string(),
                     ),
                 },

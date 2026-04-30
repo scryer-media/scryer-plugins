@@ -112,14 +112,14 @@
       "plugin_type": "notification",
       "provider_type": "jellyfin",
       "version": "0.1.0",
-      "sdk_version": "1.0.0",
+      "sdk_version": "1.3.0",
       "author": "scryer-media",
       "official": true,
       "builtin": false,
       "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/jellyfin",
       "min_scryer_version": "0.10.4",
       "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/jellyfin_notification.wasm",
-      "wasm_sha256": "5afcccce19e665db21c15f483e075ee5268ddcbf430208428bdd90d10bc6cea6"
+      "wasm_sha256": "05943cabc112c6701c559d1489fd036eb9a8a5f3360fe6e5479ff2040e6c97bf"
     },
     {
       "id": "qbittorrent",

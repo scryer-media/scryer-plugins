@@ -20,7 +20,8 @@ This plugin sends targeted Jellyfin library refresh requests when Scryer imports
   - Jellyfin API key
 - `path_mappings`
   - Multiline text
-  - One rule per line: `SOURCE_PREFIX => JELLYFIN_PREFIX`
+  - In the Scryer UI, each row maps the Scryer-visible local path on the left to the matching Jellyfin-visible path on the right
+  - Raw format is still one rule per line: `SOURCE_PREFIX => JELLYFIN_PREFIX`
   - Blank lines and lines starting with `#` are ignored
   - Both sides must be absolute paths
   - Longest matching prefix wins
