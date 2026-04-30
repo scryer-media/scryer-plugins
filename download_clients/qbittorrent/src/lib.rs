@@ -135,6 +135,7 @@ fn build_descriptor_json() -> Result<String, Error> {
         name: "qBittorrent".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
+        sdk_constraint: current_sdk_constraint(),
         provider: ProviderDescriptor::DownloadClient(DownloadClientDescriptor {
             provider_type: "qbittorrent".to_string(),
             provider_aliases: vec!["qbit".to_string()],

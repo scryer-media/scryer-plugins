@@ -5,8 +5,8 @@ use newznab_common::{
     execute_full_search, standard_config_fields, Capabilities, IndexerCategoryModel,
     IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities,
     IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind,
-    IndexerTorrentCapabilities, NewznabConfig, PluginDescriptor, PluginResult,
-    ProviderDescriptor, SDK_VERSION, SearchRequest,
+    IndexerTorrentCapabilities, NewznabConfig, PluginDescriptor, PluginResult, ProviderDescriptor,
+    SearchRequest, SDK_VERSION,
 };
 
 #[plugin_fn]
@@ -20,6 +20,7 @@ fn build_descriptor_json() -> Result<String, Error> {
         name: "Torznab Indexer".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
+        sdk_constraint: current_sdk_constraint(),
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: "torznab".to_string(),
             provider_aliases: vec!["jackett".to_string(), "prowlarr".to_string()],
@@ -228,7 +229,10 @@ fn torznab_metadata_extractor(
         );
     }
     if let Some(ref value) = info_hash {
-        extra.insert("info_hash".to_string(), serde_json::Value::from(value.as_str()));
+        extra.insert(
+            "info_hash".to_string(),
+            serde_json::Value::from(value.as_str()),
+        );
         // Auto-generate magnet URI if tracker didn't provide one
         if magnet_uri.is_none() {
             extra.insert(

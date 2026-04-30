@@ -5,7 +5,7 @@ use newznab_common::{
     execute_full_search, Capabilities, IndexerCategoryModel, IndexerCategoryValueKind,
     IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol,
     IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind, NewznabConfig,
-    PluginDescriptor, PluginResult, ProviderDescriptor, SDK_VERSION, ScoringPolicy, SearchRequest,
+    PluginDescriptor, PluginResult, ProviderDescriptor, ScoringPolicy, SearchRequest, SDK_VERSION,
 };
 
 #[plugin_fn]
@@ -15,6 +15,7 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
         name: "NZBGeek Indexer".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
+        sdk_constraint: current_sdk_constraint(),
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: "nzbgeek".to_string(),
             provider_aliases: vec![],

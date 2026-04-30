@@ -53,6 +53,7 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
         name: "AnimeTosho Indexer".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
+        sdk_constraint: current_sdk_constraint(),
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: "animetosho".to_string(),
             provider_aliases: vec![],
@@ -135,7 +136,11 @@ pub fn scryer_indexer_search(input: String) -> FnResult<String> {
     let title_query_candidates = build_query_candidates(&query, &req.tagged_aliases);
     let anidb_id = req.ids.get("anidb_id").map(String::as_str).and_then(|v| {
         let trimmed = v.trim();
-        if trimmed.is_empty() { None } else { Some(trimmed.to_string()) }
+        if trimmed.is_empty() {
+            None
+        } else {
+            Some(trimmed.to_string())
+        }
     });
     // Choose endpoint based on what IDs are available.
     // Paginate: 75 results per page, up to ~1000 results (14 pages).
@@ -160,7 +165,6 @@ pub fn scryer_indexer_search(input: String) -> FnResult<String> {
         req.episode,
         req.absolute_episode,
     ) {
-
         let mut query_items: Vec<AnimetoshoItem> = Vec::new();
         for page in 1..=MAX_PAGES {
             let params = format!("{base_params}&page={page}");
@@ -236,17 +240,16 @@ fn http_get_with_retry(url: &str) -> Result<String, Error> {
             logged_url
         );
 
-        let resp = http::request::<Vec<u8>>(&http_req, None)
-            .map_err(|e| {
-                log!(
-                    LogLevel::Debug,
-                    "http_trace_error plugin=animetosho method=GET attempt={} url={} error={}",
-                    attempt + 1,
-                    logged_url,
-                    e
-                );
-                Error::msg(format!("HTTP request failed: {e}"))
-            })?;
+        let resp = http::request::<Vec<u8>>(&http_req, None).map_err(|e| {
+            log!(
+                LogLevel::Debug,
+                "http_trace_error plugin=animetosho method=GET attempt={} url={} error={}",
+                attempt + 1,
+                logged_url,
+                e
+            );
+            Error::msg(format!("HTTP request failed: {e}"))
+        })?;
 
         log!(
             LogLevel::Debug,
@@ -323,12 +326,15 @@ fn redact_url_for_log(url: &str) -> String {
 
 fn dedup_items(items: Vec<AnimetoshoItem>) -> Vec<AnimetoshoItem> {
     let mut seen: HashSet<String> = HashSet::new();
-    items.into_iter().filter(|item| {
-        match &item.info_hash {
-            Some(h) if !h.is_empty() => seen.insert(h.to_ascii_lowercase()),
-            _ => true, // keep items without info_hash
-        }
-    }).collect()
+    items
+        .into_iter()
+        .filter(|item| {
+            match &item.info_hash {
+                Some(h) if !h.is_empty() => seen.insert(h.to_ascii_lowercase()),
+                _ => true, // keep items without info_hash
+            }
+        })
+        .collect()
 }
 
 fn build_query_candidates(query: &str, tagged_aliases: &[TaggedAlias]) -> Vec<String> {
@@ -370,10 +376,12 @@ fn build_animetosho_request_params(
     title_candidates
         .iter()
         .filter(|candidate| !candidate.is_empty())
-        .map(|candidate| format!(
-            "q={}",
-            url_encode(&format_freetext_query(candidate, season, episode))
-        ))
+        .map(|candidate| {
+            format!(
+                "q={}",
+                url_encode(&format_freetext_query(candidate, season, episode))
+            )
+        })
         .collect()
 }
 
@@ -487,7 +495,10 @@ fn build_results(items: Vec<AnimetoshoItem>) -> Vec<SearchResult> {
         // Torrent result
         if let Some(ref torrent_url) = item.torrent_url {
             let mut extra = common_extra.clone();
-            extra.insert("download_type".to_string(), serde_json::Value::from("torrent"));
+            extra.insert(
+                "download_type".to_string(),
+                serde_json::Value::from("torrent"),
+            );
             if let Some(seeders) = item.seeders {
                 extra.insert("seeders".to_string(), serde_json::Value::from(seeders));
             }
@@ -495,10 +506,16 @@ fn build_results(items: Vec<AnimetoshoItem>) -> Vec<SearchResult> {
                 extra.insert("leechers".to_string(), serde_json::Value::from(leechers));
             }
             if let Some(ref hash) = item.info_hash {
-                extra.insert("info_hash".to_string(), serde_json::Value::from(hash.as_str()));
+                extra.insert(
+                    "info_hash".to_string(),
+                    serde_json::Value::from(hash.as_str()),
+                );
             }
             if let Some(ref magnet) = item.magnet_uri {
-                extra.insert("magnet_uri".to_string(), serde_json::Value::from(magnet.as_str()));
+                extra.insert(
+                    "magnet_uri".to_string(),
+                    serde_json::Value::from(magnet.as_str()),
+                );
             }
 
             results.push(SearchResult {
@@ -595,7 +612,9 @@ fn format_timestamp(ts: i64) -> String {
     let mut year: i64 = 1970;
     loop {
         let year_days = if is_leap(year) { 366 } else { 365 };
-        if days < year_days { break; }
+        if days < year_days {
+            break;
+        }
         days -= year_days;
         year += 1;
     }
@@ -687,11 +706,24 @@ mod tests {
 
     fn make_item() -> AnimetoshoItem {
         AnimetoshoItem {
-            id: None, title: Some("Test".into()), link: None, timestamp: None,
-            status: None, torrent_url: None, nzb_url: None, info_hash: None,
-            magnet_uri: None, seeders: None, leechers: None,
-            torrent_downloaded_count: None, total_size: None, num_files: None,
-            anidb_aid: None, anidb_eid: None, nyaa_id: None, nekobt_id: None,
+            id: None,
+            title: Some("Test".into()),
+            link: None,
+            timestamp: None,
+            status: None,
+            torrent_url: None,
+            nzb_url: None,
+            info_hash: None,
+            magnet_uri: None,
+            seeders: None,
+            leechers: None,
+            torrent_downloaded_count: None,
+            total_size: None,
+            num_files: None,
+            anidb_aid: None,
+            anidb_eid: None,
+            nyaa_id: None,
+            nekobt_id: None,
             anidex_id: None,
         }
     }
@@ -727,8 +759,14 @@ mod tests {
         let deduped = dedup_items(vec![a, b, c]);
         assert_eq!(deduped.len(), 2);
         // First occurrence (a) wins over b
-        assert_eq!(deduped[0].torrent_url.as_deref(), Some("https://example.com/a.torrent"));
-        assert_eq!(deduped[1].torrent_url.as_deref(), Some("https://example.com/c.torrent"));
+        assert_eq!(
+            deduped[0].torrent_url.as_deref(),
+            Some("https://example.com/a.torrent")
+        );
+        assert_eq!(
+            deduped[1].torrent_url.as_deref(),
+            Some("https://example.com/c.torrent")
+        );
     }
 
     #[test]
@@ -756,9 +794,15 @@ mod tests {
 
         let results = build_results(vec![item]);
         assert_eq!(results.len(), 2);
-        assert_eq!(results[0].provider_extra.get("download_type"), Some(&serde_json::Value::from("torrent")));
+        assert_eq!(
+            results[0].provider_extra.get("download_type"),
+            Some(&serde_json::Value::from("torrent"))
+        );
         assert_eq!(results[0].grabs, Some(42));
-        assert_eq!(results[1].provider_extra.get("download_type"), Some(&serde_json::Value::from("nzb")));
+        assert_eq!(
+            results[1].provider_extra.get("download_type"),
+            Some(&serde_json::Value::from("nzb"))
+        );
     }
 
     #[test]
@@ -778,20 +822,32 @@ mod tests {
 
     #[test]
     fn build_animetosho_request_params_id_search_uses_season_and_episode() {
-        let params = build_animetosho_request_params(Some("18220"), &["Bleach".into()], Some(17), Some(37), None);
+        let params = build_animetosho_request_params(
+            Some("18220"),
+            &["Bleach".into()],
+            Some(17),
+            Some(37),
+            None,
+        );
         assert_eq!(params, vec!["aid=18220&q=S17E37"]);
     }
 
     #[test]
     fn build_animetosho_request_params_abs_search_uses_absolute_episode_only() {
-        let params = build_animetosho_request_params(Some("18220"), &["Bleach".into()], Some(17), Some(37), Some(403));
+        let params = build_animetosho_request_params(
+            Some("18220"),
+            &["Bleach".into()],
+            Some(17),
+            Some(37),
+            Some(403),
+        );
         assert_eq!(params, vec!["aid=18220&q=403"]);
     }
 
     #[test]
     fn build_animetosho_request_params_freetext_uses_title_with_season_and_episode() {
-        let params = build_animetosho_request_params(None, &["Frieren".into()], Some(1), Some(1), Some(1));
+        let params =
+            build_animetosho_request_params(None, &["Frieren".into()], Some(1), Some(1), Some(1));
         assert_eq!(params, vec!["q=Frieren%20S01E01"]);
     }
-
 }

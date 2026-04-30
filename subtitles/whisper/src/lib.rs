@@ -5,15 +5,14 @@ use base64::Engine as _;
 use extism_pdk::*;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginResult,
-    ProviderDescriptor, SDK_VERSION, SubtitleCapabilities, SubtitleDescriptor,
-    SubtitlePluginGenerateRequest, SubtitlePluginGenerateResponse,
-    SubtitlePluginValidateConfigRequest, SubtitlePluginValidateConfigResponse,
-    SubtitleProviderMode, SubtitleQueryMediaKind, SubtitleValidateConfigStatus,
+    ProviderDescriptor, SubtitleCapabilities, SubtitleDescriptor, SubtitlePluginGenerateRequest,
+    SubtitlePluginGenerateResponse, SubtitlePluginValidateConfigRequest,
+    SubtitlePluginValidateConfigResponse, SubtitleProviderMode, SubtitleQueryMediaKind,
+    SubtitleValidateConfigStatus, SDK_VERSION,
 };
 
 const OPENAI_API_BASE: &str = "https://api.openai.com/v1";
 const DEFAULT_RETRY_AFTER_SECONDS: i64 = 10;
-
 
 #[derive(Clone)]
 struct WhisperConfig {
@@ -78,6 +77,7 @@ fn descriptor() -> PluginDescriptor {
         name: "Whisper".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
+        sdk_constraint: current_sdk_constraint(),
         provider: ProviderDescriptor::Subtitle(SubtitleDescriptor {
             provider_type: "whisper".to_string(),
             provider_aliases: Vec::new(),

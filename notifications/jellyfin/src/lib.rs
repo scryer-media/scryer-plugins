@@ -4,9 +4,9 @@ use extism_pdk::*;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldType, NotificationCapabilities, NotificationDeliveryMode,
     NotificationDescriptor, NotificationEventType as SdkNotificationEventType,
-    NotificationPayloadFormat, PluginDescriptor, PluginNotificationFile,
-    PluginNotificationRequest, PluginNotificationResponse, PluginNotificationTitle, PluginResult,
-    ProviderDescriptor, SDK_VERSION,
+    NotificationPayloadFormat, PluginDescriptor, PluginNotificationFile, PluginNotificationRequest,
+    PluginNotificationResponse, PluginNotificationTitle, PluginResult, ProviderDescriptor,
+    SDK_VERSION,
 };
 use serde::Serialize;
 
@@ -133,6 +133,7 @@ fn default_descriptor() -> PluginDescriptor {
         name: "Jellyfin".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
+        sdk_constraint: current_sdk_constraint(),
         provider: ProviderDescriptor::Notification(NotificationDescriptor {
             provider_type: "jellyfin".to_string(),
             provider_aliases: vec![],
@@ -754,7 +755,10 @@ mod tests {
         let json = serde_json::to_value(descriptor).unwrap();
         assert_eq!(json["provider"]["provider_type"], "jellyfin");
         assert_eq!(json["provider"]["kind"], "notification");
-        assert_eq!(json["provider"]["config_fields"][2]["field_type"], "multiline");
+        assert_eq!(
+            json["provider"]["config_fields"][2]["field_type"],
+            "multiline"
+        );
     }
 
     #[test]
@@ -948,9 +952,13 @@ mod tests {
 
         assert_eq!(request.method, "POST");
         assert_eq!(request.url, "http://jellyfin:8096/Library/Media/Updated");
-        assert_eq!(request.header_value("Content-Type"), Some("application/json"));
+        assert_eq!(
+            request.header_value("Content-Type"),
+            Some("application/json")
+        );
 
-        let body: serde_json::Value = serde_json::from_slice(request.body.as_ref().unwrap()).unwrap();
+        let body: serde_json::Value =
+            serde_json::from_slice(request.body.as_ref().unwrap()).unwrap();
         assert_eq!(
             body,
             serde_json::json!({

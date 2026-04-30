@@ -5,12 +5,11 @@ use base64::Engine as _;
 use extism_pdk::*;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginResult,
-    ProviderDescriptor, SDK_VERSION, SubtitleCapabilities, SubtitleDescriptor,
-    SubtitleMatchHint, SubtitleMatchHintKind, SubtitlePluginCandidate,
-    SubtitlePluginDownloadRequest, SubtitlePluginDownloadResponse, SubtitlePluginSearchRequest,
-    SubtitlePluginSearchResponse, SubtitlePluginValidateConfigRequest,
-    SubtitlePluginValidateConfigResponse, SubtitleProviderMode, SubtitleQueryMediaKind,
-    SubtitleValidateConfigStatus,
+    ProviderDescriptor, SubtitleCapabilities, SubtitleDescriptor, SubtitleMatchHint,
+    SubtitleMatchHintKind, SubtitlePluginCandidate, SubtitlePluginDownloadRequest,
+    SubtitlePluginDownloadResponse, SubtitlePluginSearchRequest, SubtitlePluginSearchResponse,
+    SubtitlePluginValidateConfigRequest, SubtitlePluginValidateConfigResponse,
+    SubtitleProviderMode, SubtitleQueryMediaKind, SubtitleValidateConfigStatus, SDK_VERSION,
 };
 use serde::{Deserialize, Serialize};
 
@@ -21,7 +20,6 @@ const DEFAULT_SEARCH_THRESHOLD: usize = 6;
 const MAX_SEARCH_THRESHOLD: usize = 15;
 const MAX_RATE_LIMIT_WAIT_SECONDS: u64 = 10;
 const XZ_MAGIC: &[u8] = b"\xFD\x37\x7A\x58\x5A\x00";
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct AnimeToshoDownloadRef {
@@ -96,9 +94,9 @@ pub fn scryer_subtitle_search(input: String) -> FnResult<String> {
     let request: SubtitlePluginSearchRequest = serde_json::from_str(&input)?;
     let config = AnimeToshoConfig::from_extism();
     let results = search_subtitles_impl(&config, &request).map_err(Error::msg)?;
-    Ok(serde_json::to_string(&PluginResult::Ok(SubtitlePluginSearchResponse {
-        results,
-    }))?)
+    Ok(serde_json::to_string(&PluginResult::Ok(
+        SubtitlePluginSearchResponse { results },
+    ))?)
 }
 
 #[plugin_fn]
@@ -128,6 +126,7 @@ fn descriptor() -> PluginDescriptor {
         name: "AnimeTosho Subtitles".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
+        sdk_constraint: current_sdk_constraint(),
         provider: ProviderDescriptor::Subtitle(SubtitleDescriptor {
             provider_type: "animetosho".to_string(),
             provider_aliases: vec![],
@@ -148,15 +147,15 @@ fn descriptor() -> PluginDescriptor {
                 "animetosho.org".to_string(),
             ],
             capabilities: SubtitleCapabilities {
-            mode: SubtitleProviderMode::Catalog,
-            supported_media_kinds: vec![SubtitleQueryMediaKind::Episode],
-            recommended_facets: vec!["anime".to_string()],
-            supports_hash_lookup: false,
-            supports_forced: false,
-            supports_hearing_impaired: false,
-            supports_ai_translated: false,
-            supports_machine_translated: false,
-            supported_languages: vec![],
+                mode: SubtitleProviderMode::Catalog,
+                supported_media_kinds: vec![SubtitleQueryMediaKind::Episode],
+                recommended_facets: vec!["anime".to_string()],
+                supports_hash_lookup: false,
+                supports_forced: false,
+                supports_hearing_impaired: false,
+                supports_ai_translated: false,
+                supports_machine_translated: false,
+                supported_languages: vec![],
             },
         }),
     }

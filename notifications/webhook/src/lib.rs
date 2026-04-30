@@ -1,9 +1,9 @@
 use extism_pdk::*;
 use scryer_plugin_sdk::{
-    ConfigFieldDef, ConfigFieldOption, ConfigFieldType, NotificationCapabilities,
-    NotificationDeliveryMode, NotificationDescriptor, NotificationPayloadFormat,
-    PluginDescriptor, PluginNotificationRequest, PluginNotificationResponse, PluginResult,
-    ProviderDescriptor, SDK_VERSION, to_webhook_json,
+    to_webhook_json, ConfigFieldDef, ConfigFieldOption, ConfigFieldType, NotificationCapabilities,
+    NotificationDeliveryMode, NotificationDescriptor, NotificationPayloadFormat, PluginDescriptor,
+    PluginNotificationRequest, PluginNotificationResponse, PluginResult, ProviderDescriptor,
+    SDK_VERSION,
 };
 
 // ---------------------------------------------------------------------------
@@ -21,6 +21,7 @@ fn build_descriptor() -> PluginDescriptor {
         name: "Webhook".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
+        sdk_constraint: current_sdk_constraint(),
         provider: ProviderDescriptor::Notification(NotificationDescriptor {
             provider_type: "webhook".to_string(),
             provider_aliases: vec![],
@@ -43,58 +44,58 @@ fn build_descriptor() -> PluginDescriptor {
                 event_options: Default::default(),
             },
             config_fields: vec![
-            ConfigFieldDef {
-                key: "webhook_url".to_string(),
-                label: "Webhook URL".to_string(),
-                field_type: ConfigFieldType::String,
-                required: true,
-                default_value: None,
-                value_source: Default::default(),
-                host_binding: None,
-                options: vec![],
-                help_text: Some("The URL to POST notification payloads to.".to_string()),
-            },
-            ConfigFieldDef {
-                key: "method".to_string(),
-                label: "HTTP Method".to_string(),
-                field_type: ConfigFieldType::Select,
-                required: false,
-                default_value: Some("POST".to_string()),
-                value_source: Default::default(),
-                host_binding: None,
-                options: vec![
-                    ConfigFieldOption {
-                        value: "POST".to_string(),
-                        label: "POST".to_string(),
-                    },
-                    ConfigFieldOption {
-                        value: "PUT".to_string(),
-                        label: "PUT".to_string(),
-                    },
-                ],
-                help_text: None,
-            },
-            ConfigFieldDef {
-                key: "content_type".to_string(),
-                label: "Content Type".to_string(),
-                field_type: ConfigFieldType::Select,
-                required: false,
-                default_value: Some("application/json".to_string()),
-                value_source: Default::default(),
-                host_binding: None,
-                options: vec![
-                    ConfigFieldOption {
-                        value: "application/json".to_string(),
-                        label: "application/json".to_string(),
-                    },
-                    ConfigFieldOption {
-                        value: "text/plain".to_string(),
-                        label: "text/plain".to_string(),
-                    },
-                ],
-                help_text: None,
-            },
-        ],
+                ConfigFieldDef {
+                    key: "webhook_url".to_string(),
+                    label: "Webhook URL".to_string(),
+                    field_type: ConfigFieldType::String,
+                    required: true,
+                    default_value: None,
+                    value_source: Default::default(),
+                    host_binding: None,
+                    options: vec![],
+                    help_text: Some("The URL to POST notification payloads to.".to_string()),
+                },
+                ConfigFieldDef {
+                    key: "method".to_string(),
+                    label: "HTTP Method".to_string(),
+                    field_type: ConfigFieldType::Select,
+                    required: false,
+                    default_value: Some("POST".to_string()),
+                    value_source: Default::default(),
+                    host_binding: None,
+                    options: vec![
+                        ConfigFieldOption {
+                            value: "POST".to_string(),
+                            label: "POST".to_string(),
+                        },
+                        ConfigFieldOption {
+                            value: "PUT".to_string(),
+                            label: "PUT".to_string(),
+                        },
+                    ],
+                    help_text: None,
+                },
+                ConfigFieldDef {
+                    key: "content_type".to_string(),
+                    label: "Content Type".to_string(),
+                    field_type: ConfigFieldType::Select,
+                    required: false,
+                    default_value: Some("application/json".to_string()),
+                    value_source: Default::default(),
+                    host_binding: None,
+                    options: vec![
+                        ConfigFieldOption {
+                            value: "application/json".to_string(),
+                            label: "application/json".to_string(),
+                        },
+                        ConfigFieldOption {
+                            value: "text/plain".to_string(),
+                            label: "text/plain".to_string(),
+                        },
+                    ],
+                    help_text: None,
+                },
+            ],
         }),
     }
 }
@@ -201,7 +202,10 @@ mod tests {
         let desc: serde_json::Value = serde_json::from_str(&result).unwrap();
         assert_eq!(desc["provider"]["kind"], "notification");
         assert_eq!(desc["provider"]["provider_type"], "webhook");
-        assert_eq!(desc["provider"]["config_fields"].as_array().unwrap().len(), 3);
+        assert_eq!(
+            desc["provider"]["config_fields"].as_array().unwrap().len(),
+            3
+        );
         assert!(desc["provider"]["capabilities"].is_object());
     }
 

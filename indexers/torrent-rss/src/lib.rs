@@ -47,6 +47,7 @@ fn build_descriptor_json() -> Result<String, Error> {
         name: "Torrent RSS Feed Indexer".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
+        sdk_constraint: current_sdk_constraint(),
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: "torrent_rss".to_string(),
             provider_aliases: vec!["rss".to_string()],
@@ -337,16 +338,15 @@ fn fetch_feed(
         logged_url
     );
 
-    let response = http::request::<Vec<u8>>(&request, None)
-        .map_err(|e| {
-            log!(
-                LogLevel::Debug,
-                "http_trace_error plugin=torrent_rss method=GET attempt=1 url={} error={}",
-                logged_url,
-                e
-            );
-            Error::msg(format!("HTTP request failed: {e}"))
-        })?;
+    let response = http::request::<Vec<u8>>(&request, None).map_err(|e| {
+        log!(
+            LogLevel::Debug,
+            "http_trace_error plugin=torrent_rss method=GET attempt=1 url={} error={}",
+            logged_url,
+            e
+        );
+        Error::msg(format!("HTTP request failed: {e}"))
+    })?;
     let status = response.status_code();
     log!(
         LogLevel::Debug,

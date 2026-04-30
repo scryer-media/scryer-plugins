@@ -1,13 +1,13 @@
-use anyhow::{Context, Result, anyhow, bail};
+use anyhow::{anyhow, bail, Context, Result};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use extism::Manifest;
 use scryer_plugin_sdk::{
-    EXPORT_DESCRIBE, EXPORT_DOWNLOAD_ADD, EXPORT_DOWNLOAD_CONTROL, EXPORT_DOWNLOAD_LIST_COMPLETED,
-    EXPORT_DOWNLOAD_LIST_HISTORY, EXPORT_DOWNLOAD_LIST_QUEUE, EXPORT_DOWNLOAD_MARK_IMPORTED,
-    EXPORT_DOWNLOAD_STATUS, EXPORT_DOWNLOAD_TEST_CONNECTION, EXPORT_INDEXER_SEARCH,
-    EXPORT_NOTIFICATION_SEND, EXPORT_SUBTITLE_DOWNLOAD, EXPORT_SUBTITLE_GENERATE,
-    EXPORT_SUBTITLE_SEARCH, EXPORT_VALIDATE_CONFIG, PluginDescriptor, ProviderDescriptor,
-    SDK_VERSION, SubtitleProviderMode,
+    plugin_descriptor_sdk_constraint, validate_sdk_contract, PluginDescriptor, ProviderDescriptor,
+    SubtitleProviderMode, EXPORT_DESCRIBE, EXPORT_DOWNLOAD_ADD, EXPORT_DOWNLOAD_CONTROL,
+    EXPORT_DOWNLOAD_LIST_COMPLETED, EXPORT_DOWNLOAD_LIST_HISTORY, EXPORT_DOWNLOAD_LIST_QUEUE,
+    EXPORT_DOWNLOAD_MARK_IMPORTED, EXPORT_DOWNLOAD_STATUS, EXPORT_DOWNLOAD_TEST_CONNECTION,
+    EXPORT_INDEXER_SEARCH, EXPORT_NOTIFICATION_SEND, EXPORT_SUBTITLE_DOWNLOAD,
+    EXPORT_SUBTITLE_GENERATE, EXPORT_SUBTITLE_SEARCH, EXPORT_VALIDATE_CONFIG, SDK_VERSION,
 };
 use semver::Version;
 use serde::{Deserialize, Serialize};
@@ -17,14 +17,14 @@ use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus};
-use toml_edit::{DocumentMut, value};
+use toml_edit::{value, DocumentMut};
 
 const BLUE: &str = "\x1b[0;34m";
 const GREEN: &str = "\x1b[0;32m";
 const YELLOW: &str = "\x1b[1;33m";
 const BOLD: &str = "\x1b[1m";
 const RESET: &str = "\x1b[0m";
-const RAW_PREFIX: &str = "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/";
+const RAW_REPO_PREFIX: &str = "https://raw.githubusercontent.com/scryer-media/scryer-plugins/";
 const WASM_TARGET: &str = "wasm32-wasip1";
 
 struct BuiltinPluginSpec {
@@ -177,19 +177,59 @@ impl TaskContext {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 struct Registry {
+    #[serde(default = "default_schema_version")]
+    schema_version: u32,
     plugins: Vec<RegistryPlugin>,
+    #[serde(default)]
+    rule_packs: Vec<serde_json::Value>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 struct RegistryPlugin {
     id: String,
     name: String,
+    #[serde(default)]
+    description: String,
     plugin_type: String,
     provider_type: String,
+    #[serde(default)]
+    author: String,
+    #[serde(default)]
+    official: bool,
+    #[serde(default)]
+    releases: Vec<RegistryRelease>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    version: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    sdk_version: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    sdk_constraint: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    builtin: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    wasm_url: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    wasm_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    source_url: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    scryer_constraint: Option<String>,
+    #[serde(
+        default,
+        rename = "min_scryer_version",
+        skip_serializing_if = "Option::is_none"
+    )]
+    legacy_min_scryer_version: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct RegistryRelease {
     version: String,
     sdk_version: String,
+    #[serde(default)]
+    sdk_constraint: String,
     #[serde(default)]
     builtin: bool,
     #[serde(default)]
@@ -198,6 +238,59 @@ struct RegistryPlugin {
     wasm_sha256: Option<String>,
     #[serde(default)]
     source_url: Option<String>,
+    #[serde(default)]
+    scryer_constraint: Option<String>,
+    #[serde(default, rename = "min_scryer_version", skip_serializing_if = "Option::is_none")]
+    legacy_min_scryer_version: Option<String>,
+}
+
+fn default_schema_version() -> u32 {
+    1
+}
+
+impl RegistryPlugin {
+    fn normalized_releases(&self) -> Vec<RegistryRelease> {
+        if !self.releases.is_empty() {
+            return self.releases.clone();
+        }
+
+        self.version
+            .as_ref()
+            .map(|version| {
+                vec![RegistryRelease {
+                    version: version.clone(),
+                    sdk_version: self.sdk_version.clone().unwrap_or_default(),
+                    sdk_constraint: self.sdk_constraint.clone().unwrap_or_default(),
+                    builtin: self.builtin.unwrap_or(false),
+                    wasm_url: self.wasm_url.clone(),
+                    wasm_sha256: self.wasm_sha256.clone(),
+                    source_url: self.source_url.clone(),
+                    scryer_constraint: self.scryer_constraint.clone(),
+                    legacy_min_scryer_version: self.legacy_min_scryer_version.clone(),
+                }]
+            })
+            .unwrap_or_default()
+    }
+
+    fn canonicalize(&mut self) {
+        if self.releases.is_empty() {
+            self.releases = self.normalized_releases();
+        }
+        self.releases.sort_by(|left, right| {
+            parse_release_version(&self.id, left)
+                .ok()
+                .cmp(&parse_release_version(&self.id, right).ok())
+        });
+        self.version = None;
+        self.sdk_version = None;
+        self.sdk_constraint = None;
+        self.builtin = None;
+        self.wasm_url = None;
+        self.wasm_sha256 = None;
+        self.source_url = None;
+        self.scryer_constraint = None;
+        self.legacy_min_scryer_version = None;
+    }
 }
 
 fn main() -> Result<()> {
@@ -348,13 +441,25 @@ fn registry_path(ctx: &TaskContext) -> PathBuf {
 
 fn load_registry(ctx: &TaskContext) -> Result<Registry> {
     let content = fs::read_to_string(registry_path(ctx))?;
-    Ok(serde_json::from_str(&content)?)
+    let mut registry: Registry = serde_json::from_str(&content)?;
+    for plugin in &mut registry.plugins {
+        plugin.canonicalize();
+    }
+    Ok(registry)
 }
 
 fn save_registry(ctx: &TaskContext, registry: &Registry) -> Result<()> {
+    let mut registry = Registry {
+        schema_version: registry.schema_version,
+        plugins: registry.plugins.clone(),
+        rule_packs: registry.rule_packs.clone(),
+    };
+    for plugin in &mut registry.plugins {
+        plugin.canonicalize();
+    }
     fs::write(
         registry_path(ctx),
-        serde_json::to_string_pretty(registry)? + "\n",
+        serde_json::to_string_pretty(&registry)? + "\n",
     )?;
     Ok(())
 }
@@ -414,65 +519,186 @@ fn sha256_file(path: &Path) -> Result<String> {
     Ok(format!("{digest:x}"))
 }
 
+fn release_wasm_url(tag_name: &str, wasm_filename: &str) -> String {
+    format!("{RAW_REPO_PREFIX}{tag_name}/dist/{wasm_filename}")
+}
+
+fn artifact_name_from_wasm_url(wasm_url: &str) -> Result<&str> {
+    let suffix = wasm_url
+        .strip_prefix(RAW_REPO_PREFIX)
+        .ok_or_else(|| anyhow!("wasm_url must start with {RAW_REPO_PREFIX}"))?;
+    let (git_ref, artifact_name) = suffix
+        .split_once("/dist/")
+        .ok_or_else(|| anyhow!("wasm_url must contain /dist/ after the git ref"))?;
+    if git_ref.trim().is_empty() {
+        bail!("wasm_url is missing a git ref");
+    }
+    if git_ref == "main" {
+        bail!("wasm_url must use an immutable tag or commit ref, not main");
+    }
+    if artifact_name.trim().is_empty() {
+        bail!("wasm_url is missing an artifact name");
+    }
+    Ok(artifact_name)
+}
+
+fn parse_release_version(plugin_id: &str, release: &RegistryRelease) -> Result<Version> {
+    Version::parse(release.version.trim())
+        .with_context(|| format!("{plugin_id}: invalid release version {}", release.version))
+}
+
+fn latest_release(plugin: &RegistryPlugin) -> Result<RegistryRelease> {
+    plugin
+        .normalized_releases()
+        .into_iter()
+        .max_by(|left, right| {
+            parse_release_version(&plugin.id, left)
+                .ok()
+                .cmp(&parse_release_version(&plugin.id, right).ok())
+        })
+        .ok_or_else(|| anyhow!("{}: registry entry has no releases", plugin.id))
+}
+
+fn latest_builtin_release(plugin: &RegistryPlugin) -> Result<Option<RegistryRelease>> {
+    Ok(plugin
+        .normalized_releases()
+        .into_iter()
+        .filter(|release| release.builtin)
+        .max_by(|left, right| {
+            parse_release_version(&plugin.id, left)
+                .ok()
+                .cmp(&parse_release_version(&plugin.id, right).ok())
+        }))
+}
+
+fn registry_release_sdk_constraint(release: &RegistryRelease) -> String {
+    scryer_plugin_sdk::sdk_constraint_or_legacy(&release.sdk_version, &release.sdk_constraint)
+}
+
+fn registry_release_scryer_constraint(release: &RegistryRelease) -> Option<String> {
+    release
+        .scryer_constraint
+        .as_deref()
+        .map(str::trim)
+        .filter(|constraint| !constraint.is_empty())
+        .map(str::to_string)
+        .or_else(|| {
+            release
+                .legacy_min_scryer_version
+                .as_deref()
+                .map(str::trim)
+                .filter(|version| !version.is_empty())
+                .map(|version| format!(">={version}"))
+        })
+}
+
+fn validate_registry_release_scryer_constraint(
+    plugin_id: &str,
+    release: &RegistryRelease,
+) -> Result<()> {
+    let Some(constraint) = registry_release_scryer_constraint(release) else {
+        return Ok(());
+    };
+    semver::VersionReq::parse(constraint.trim()).map_err(|error| {
+        anyhow!(
+            "{} {}: invalid scryer_constraint {}: {error}",
+            plugin_id,
+            release.version,
+            constraint
+        )
+    })?;
+    Ok(())
+}
+
 fn validate_registry(ctx: &TaskContext) -> Result<()> {
     let registry = load_registry(ctx)?;
     let dist_dir = ctx.path("dist");
     let mut errors = Vec::new();
 
     for plugin in &registry.plugins {
-        let artifact_path = if plugin.builtin {
-            match plugin_source_dir(ctx, plugin).and_then(|plugin_dir| build_plugin_wasm(ctx, &plugin_dir))
-            {
-                Ok(path) => path,
-                Err(error) => {
-                    errors.push(format!("{}: {error}", plugin.id));
-                    continue;
-                }
-            }
-        } else {
-            let Some(wasm_url) = plugin.wasm_url.as_deref() else {
-                errors.push(format!("{}: missing wasm_url", plugin.id));
-                continue;
-            };
-            let Some(wasm_sha256) = plugin.wasm_sha256.as_deref() else {
-                errors.push(format!("{}: missing wasm_sha256", plugin.id));
-                continue;
-            };
-            if !wasm_url.starts_with(RAW_PREFIX) {
-                errors.push(format!(
-                    "{}: wasm_url must start with {}",
-                    plugin.id, RAW_PREFIX
-                ));
+        let latest_builtin = match latest_builtin_release(plugin) {
+            Ok(value) => value,
+            Err(error) => {
+                errors.push(format!("{}: {error}", plugin.id));
                 continue;
             }
-
-            let artifact_name = wasm_url.trim_start_matches(RAW_PREFIX);
-            let artifact_path = dist_dir.join(artifact_name);
-            if !artifact_path.is_file() {
-                errors.push(format!(
-                    "{}: missing dist artifact {}",
-                    plugin.id, artifact_name
-                ));
-                continue;
-            }
-
-            let actual_sha = sha256_file(&artifact_path)?;
-            if actual_sha != wasm_sha256 {
-                errors.push(format!(
-                    "{}: sha256 mismatch (registry={}, actual={})",
-                    plugin.id, wasm_sha256, actual_sha
-                ));
-            }
-
-            artifact_path
         };
 
-        match load_descriptor_from_wasm(&artifact_path).and_then(|descriptor| {
-            validate_descriptor_contract(&descriptor)?;
-            validate_registry_entry_matches_descriptor(plugin, &descriptor)
-        }) {
-            Ok(()) => {}
-            Err(error) => errors.push(format!("{}: {error}", plugin.id)),
+        for release in plugin.normalized_releases() {
+            if let Err(error) = validate_registry_release_scryer_constraint(&plugin.id, &release) {
+                errors.push(error.to_string());
+                continue;
+            }
+            let artifact_path = if let Some(wasm_url) = release.wasm_url.as_deref() {
+                let Some(wasm_sha256) = release.wasm_sha256.as_deref() else {
+                    errors.push(format!(
+                        "{} {}: missing wasm_sha256",
+                        plugin.id, release.version
+                    ));
+                    continue;
+                };
+                let artifact_name = match artifact_name_from_wasm_url(wasm_url) {
+                    Ok(value) => value,
+                    Err(error) => {
+                        errors.push(format!("{} {}: {error}", plugin.id, release.version));
+                        continue;
+                    }
+                };
+                let artifact_path = dist_dir.join(artifact_name);
+                if !artifact_path.is_file() {
+                    errors.push(format!(
+                        "{} {}: missing dist artifact {}",
+                        plugin.id, release.version, artifact_name
+                    ));
+                    continue;
+                }
+
+                let actual_sha = sha256_file(&artifact_path)?;
+                if actual_sha != wasm_sha256 {
+                    errors.push(format!(
+                        "{} {}: sha256 mismatch (registry={}, actual={})",
+                        plugin.id, release.version, wasm_sha256, actual_sha
+                    ));
+                }
+
+                artifact_path
+            } else if latest_builtin
+                .as_ref()
+                .is_some_and(|builtin| builtin.version == release.version)
+            {
+                let Some(source_url) = release.source_url.as_deref() else {
+                    errors.push(format!(
+                        "{} {}: builtin release is missing source_url",
+                        plugin.id, release.version
+                    ));
+                    continue;
+                };
+                match plugin_source_dir(ctx, &plugin.id, source_url)
+                    .and_then(|plugin_dir| build_plugin_wasm(ctx, &plugin_dir))
+                {
+                    Ok(path) => path,
+                    Err(error) => {
+                        errors.push(format!("{} {}: {error}", plugin.id, release.version));
+                        continue;
+                    }
+                }
+            } else if release.builtin {
+                continue;
+            } else {
+                errors.push(format!(
+                    "{} {}: missing wasm_url for downloadable release",
+                    plugin.id, release.version
+                ));
+                continue;
+            };
+
+            match load_descriptor_from_wasm(&artifact_path).and_then(|descriptor| {
+                validate_descriptor_contract(&descriptor)?;
+                validate_registry_entry_matches_descriptor(plugin, &release, &descriptor)
+            }) {
+                Ok(()) => {}
+                Err(error) => errors.push(format!("{} {}: {error}", plugin.id, release.version)),
+            }
         }
     }
 
@@ -487,15 +713,11 @@ fn validate_registry(ctx: &TaskContext) -> Result<()> {
     }
 }
 
-fn plugin_source_dir(ctx: &TaskContext, plugin: &RegistryPlugin) -> Result<PathBuf> {
-    let source_url = plugin
-        .source_url
-        .as_deref()
-        .ok_or_else(|| anyhow!("{}: builtin plugin is missing source_url", plugin.id))?;
+fn plugin_source_dir(ctx: &TaskContext, plugin_id: &str, source_url: &str) -> Result<PathBuf> {
     let relative = source_url
         .split("/tree/main/")
         .nth(1)
-        .ok_or_else(|| anyhow!("{}: unsupported source_url {}", plugin.id, source_url))?;
+        .ok_or_else(|| anyhow!("{plugin_id}: unsupported source_url {source_url}"))?;
     Ok(ctx.path(relative))
 }
 
@@ -521,7 +743,14 @@ fn run_builtins(ctx: &TaskContext, args: BuiltinsArgs) -> Result<()> {
 
         ensure_lockfile(ctx, &plugin_dir)?;
         let mut build = ctx.command_in("cargo", &plugin_dir);
-        build.args(["build", "--release", "--target", WASM_TARGET, "--offline"]);
+        build.args([
+            "build",
+            "--release",
+            "--target",
+            WASM_TARGET,
+            "--locked",
+            "--offline",
+        ]);
         run_checked(&mut build).with_context(|| format!("failed to build {}", spec.plugin_dir))?;
 
         let built_wasm = plugin_dir
@@ -581,7 +810,14 @@ fn build_plugin_wasm(ctx: &TaskContext, plugin_dir: &Path) -> Result<PathBuf> {
     step(format!("Building {}", plugin_dir.display()));
     ensure_lockfile(ctx, plugin_dir)?;
     let mut build = ctx.command_in("cargo", plugin_dir);
-    build.args(["build", "--release", "--target", WASM_TARGET, "--offline"]);
+    build.args([
+        "build",
+        "--release",
+        "--target",
+        WASM_TARGET,
+        "--locked",
+        "--offline",
+    ]);
     run_checked(&mut build)?;
 
     let built_wasm = plugin_dir
@@ -660,16 +896,12 @@ fn load_descriptor_from_wasm(wasm_path: &Path) -> Result<PluginDescriptor> {
 }
 
 fn validate_descriptor_contract(descriptor: &PluginDescriptor) -> Result<()> {
-    let sdk_major = descriptor.sdk_version.split('.').next().unwrap_or_default();
-    let supported_major = SDK_VERSION.split('.').next().unwrap_or_default();
-    if sdk_major != supported_major {
-        bail!(
-            "{}: unsupported sdk_version {} (expected major {})",
-            descriptor.id,
-            descriptor.sdk_version,
-            supported_major
-        );
-    }
+    validate_sdk_contract(
+        &descriptor.id,
+        &descriptor.sdk_version,
+        &descriptor.sdk_constraint,
+        SDK_VERSION,
+    )?;
     if descriptor.id.trim().is_empty() {
         bail!("descriptor id must not be empty");
     }
@@ -678,7 +910,11 @@ fn validate_descriptor_contract(descriptor: &PluginDescriptor) -> Result<()> {
     }
     for host in descriptor.allowed_hosts() {
         if !allowed_host_pattern_is_valid(host) {
-            bail!("{}: invalid network permission pattern {}", descriptor.id, host);
+            bail!(
+                "{}: invalid network permission pattern {}",
+                descriptor.id,
+                host
+            );
         }
     }
     Ok(())
@@ -698,9 +934,7 @@ fn allowed_host_pattern_is_valid(host: &str) -> bool {
     }
 
     if let Some(suffix) = host.strip_prefix("*.") {
-        return !suffix.is_empty()
-            && !suffix.contains('*')
-            && url::Host::parse(suffix).is_ok();
+        return !suffix.is_empty() && !suffix.contains('*') && url::Host::parse(suffix).is_ok();
     }
 
     !host.contains('*') && url::Host::parse(host).is_ok()
@@ -723,34 +957,43 @@ fn validate_descriptor_against_registry(
         return Ok(());
     };
 
-    validate_registry_entry_matches_descriptor(entry, descriptor)
+    let release = latest_release(entry)?;
+    validate_registry_entry_matches_descriptor(entry, &release, descriptor)
 }
 
 fn validate_registry_entry_matches_descriptor(
     entry: &RegistryPlugin,
+    release: &RegistryRelease,
     descriptor: &PluginDescriptor,
 ) -> Result<()> {
-    let expected = [
-        ("id", entry.id.as_str(), descriptor.id.as_str()),
+    let expected_sdk_constraint = registry_release_sdk_constraint(release);
+    let descriptor_sdk_constraint = plugin_descriptor_sdk_constraint(descriptor);
+    let expected = vec![
+        ("id", entry.id.clone(), descriptor.id.clone()),
         (
             "version",
-            entry.version.as_str(),
-            descriptor.version.as_str(),
+            release.version.clone(),
+            descriptor.version.clone(),
         ),
         (
             "sdk_version",
-            entry.sdk_version.as_str(),
-            descriptor.sdk_version.as_str(),
+            release.sdk_version.clone(),
+            descriptor.sdk_version.clone(),
+        ),
+        (
+            "sdk_constraint",
+            expected_sdk_constraint,
+            descriptor_sdk_constraint,
         ),
         (
             "plugin_type",
-            entry.plugin_type.as_str(),
-            descriptor.plugin_type(),
+            entry.plugin_type.clone(),
+            descriptor.plugin_type().to_string(),
         ),
         (
             "provider_type",
-            entry.provider_type.as_str(),
-            descriptor.provider_type(),
+            entry.provider_type.clone(),
+            descriptor.provider_type().to_string(),
         ),
     ];
     for (field, registry_value, descriptor_value) in expected {
@@ -1031,6 +1274,7 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {{
         name: "{plugin_id}".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
+        sdk_constraint: current_sdk_constraint(),
         provider: {provider_variant},
     }};
     Ok(serde_json::to_string(&descriptor)?)
@@ -1041,16 +1285,43 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {{
 }
 
 fn run_release(ctx: &TaskContext, args: ReleaseArgs) -> Result<()> {
-    let plugin_dir = locate_plugin(ctx, &args.plugin_name)?;
+    let mut registry = load_registry(ctx)?;
+    let plugin = registry
+        .plugins
+        .iter_mut()
+        .find(|plugin| plugin.id == args.plugin_name)
+        .ok_or_else(|| anyhow!("Plugin '{}' not found in registry.json", args.plugin_name))?;
+    let plugin_id = plugin.id.clone();
+    let latest = latest_release(plugin)?;
+    let source_url = latest.source_url.clone().ok_or_else(|| {
+        anyhow!(
+            "Plugin '{}' is missing source_url in its latest release",
+            plugin_id
+        )
+    })?;
+    let plugin_dir = plugin_source_dir(ctx, &plugin_id, &source_url)?;
     let cargo_toml = plugin_dir.join("Cargo.toml");
     let crate_name = crate_name_from_manifest(&cargo_toml)?;
     let current_version = version_from_manifest(&cargo_toml)?;
     let (bump, explicit) = parse_bump(&args)?;
     let next_version = explicit.unwrap_or_else(|| next_version(&current_version, bump));
-    let tag_name = format!("{}-v{}", args.plugin_name, next_version);
+    let next_version_text = next_version.to_string();
+    if plugin
+        .normalized_releases()
+        .iter()
+        .any(|release| release.version == next_version_text)
+    {
+        bail!(
+            "Plugin '{}' already has a {} release in registry.json",
+            plugin_id,
+            next_version
+        );
+    }
+    let tag_name = format!("{}-v{}", plugin_id, next_version);
     let wasm_filename = crate_name.replace('-', "_") + ".wasm";
 
     step("Determining next version");
+    println!("   Plugin ID  : {}", plugin_id);
     println!("   Plugin dir : {}", plugin_dir.display());
     println!("   Crate name : {crate_name}");
     println!("   WASM file  : {wasm_filename}");
@@ -1069,19 +1340,6 @@ fn run_release(ctx: &TaskContext, args: ReleaseArgs) -> Result<()> {
     let branch = current_branch(ctx)?;
     println!("   Branch: {branch}");
     prompt_continue_if_dirty(ctx)?;
-
-    let mut registry = load_registry(ctx)?;
-    let plugin = registry
-        .plugins
-        .iter_mut()
-        .find(|plugin| plugin.id == args.plugin_name)
-        .ok_or_else(|| anyhow!("Plugin '{}' not found in registry.json", args.plugin_name))?;
-    if plugin.builtin {
-        bail!(
-            "Plugin '{}' is builtin — builtin plugins are released with scryer, not independently",
-            args.plugin_name
-        );
-    }
 
     require_wasm_target(ctx)?;
     ok("Pre-flight OK");
@@ -1108,6 +1366,37 @@ fn run_release(ctx: &TaskContext, args: ReleaseArgs) -> Result<()> {
     }
     ok(format!("Built {wasm_filename}"));
 
+    step("Validating built descriptor");
+    let descriptor = load_descriptor_from_wasm(&built_wasm)?;
+    validate_descriptor_contract(&descriptor)?;
+    let descriptor_version = Version::parse(&descriptor.version).with_context(|| {
+        format!(
+            "{}: descriptor version {} is not valid semver",
+            descriptor.id, descriptor.version
+        )
+    })?;
+    if descriptor.id != plugin_id {
+        bail!(
+            "built descriptor id {} does not match registry plugin id {}",
+            descriptor.id,
+            plugin_id
+        );
+    }
+    if descriptor_version != next_version {
+        bail!(
+            "{}: built descriptor version {} does not match requested release version {}",
+            descriptor.id,
+            descriptor.version,
+            next_version
+        );
+    }
+    ok(format!(
+        "Validated descriptor {} {} ({})",
+        descriptor.id,
+        descriptor.version,
+        descriptor.plugin_type()
+    ));
+
     step(format!("Updating dist/{wasm_filename}"));
     let dist_dir = ctx.path("dist");
     fs::create_dir_all(&dist_dir)?;
@@ -1119,13 +1408,24 @@ fn run_release(ctx: &TaskContext, args: ReleaseArgs) -> Result<()> {
     ok("Copied to dist/");
 
     step("Updating registry.json");
-    plugin.version = next_version.to_string();
-    plugin.wasm_url = Some(format!("{RAW_PREFIX}{wasm_filename}"));
-    plugin.wasm_sha256 = Some(sha256.clone());
+    let release = RegistryRelease {
+        version: descriptor.version.clone(),
+        sdk_version: descriptor.sdk_version.clone(),
+        sdk_constraint: plugin_descriptor_sdk_constraint(&descriptor),
+        builtin: false,
+        wasm_url: Some(release_wasm_url(&tag_name, &wasm_filename)),
+        wasm_sha256: Some(sha256.clone()),
+        source_url: Some(source_url),
+        scryer_constraint: registry_release_scryer_constraint(&latest),
+        legacy_min_scryer_version: None,
+    };
+    validate_registry_entry_matches_descriptor(plugin, &release, &descriptor)?;
+    plugin.releases.push(release);
+    plugin.canonicalize();
     save_registry(ctx, &registry)?;
     ok(format!(
-        "registry.json updated (version={}, sha256={sha256})",
-        next_version
+        "registry.json updated (appended version={}, sha256={sha256})",
+        descriptor.version
     ));
 
     step("Validating registry");
@@ -1134,7 +1434,7 @@ fn run_release(ctx: &TaskContext, args: ReleaseArgs) -> Result<()> {
 
     if args.dry_run {
         println!("\n{YELLOW}{BOLD}Dry run complete — stopping before commit/tag/push.{RESET}");
-        println!("  {} {} validated OK.", args.plugin_name, next_version);
+        println!("  {} {} validated OK.", plugin_id, next_version);
         let restore = vec![cargo_toml.clone(), registry_path(ctx)];
         git_checkout_paths(ctx, &restore)?;
         if existed_before {
@@ -1156,7 +1456,7 @@ fn run_release(ctx: &TaskContext, args: ReleaseArgs) -> Result<()> {
     commit.args([
         "commit",
         "-m",
-        &format!("release: {} {}", args.plugin_name, next_version),
+        &format!("release: {} {}", plugin_id, next_version),
     ]);
     run_checked(&mut commit)?;
     ok("Committed");

@@ -1,6 +1,6 @@
-use std::collections::HashSet;
 #[cfg(test)]
 use std::collections::BTreeMap;
+use std::collections::HashSet;
 use std::time::Duration;
 
 use base64::engine::general_purpose::STANDARD as BASE64;
@@ -8,12 +8,11 @@ use base64::Engine as _;
 use extism_pdk::*;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginResult,
-    ProviderDescriptor, SDK_VERSION, SubtitleCapabilities, SubtitleDescriptor,
-    SubtitleMatchHint, SubtitleMatchHintKind, SubtitlePluginCandidate,
-    SubtitlePluginDownloadRequest, SubtitlePluginDownloadResponse, SubtitlePluginSearchRequest,
-    SubtitlePluginSearchResponse, SubtitlePluginValidateConfigRequest,
-    SubtitlePluginValidateConfigResponse, SubtitleProviderMode, SubtitleQueryMediaKind,
-    SubtitleValidateConfigStatus,
+    ProviderDescriptor, SubtitleCapabilities, SubtitleDescriptor, SubtitleMatchHint,
+    SubtitleMatchHintKind, SubtitlePluginCandidate, SubtitlePluginDownloadRequest,
+    SubtitlePluginDownloadResponse, SubtitlePluginSearchRequest, SubtitlePluginSearchResponse,
+    SubtitlePluginValidateConfigRequest, SubtitlePluginValidateConfigResponse,
+    SubtitleProviderMode, SubtitleQueryMediaKind, SubtitleValidateConfigStatus, SDK_VERSION,
 };
 use serde::{Deserialize, Serialize};
 
@@ -93,9 +92,9 @@ pub fn scryer_subtitle_search(input: String) -> FnResult<String> {
     let request: SubtitlePluginSearchRequest = serde_json::from_str(&input)?;
     let config = JimakuConfig::from_extism().map_err(Error::msg)?;
     let results = search_subtitles_impl(&config, &request).map_err(Error::msg)?;
-    Ok(serde_json::to_string(&PluginResult::Ok(SubtitlePluginSearchResponse {
-        results,
-    }))?)
+    Ok(serde_json::to_string(&PluginResult::Ok(
+        SubtitlePluginSearchResponse { results },
+    ))?)
 }
 
 #[plugin_fn]
@@ -122,6 +121,7 @@ fn descriptor() -> PluginDescriptor {
         name: "Jimaku".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
+        sdk_constraint: current_sdk_constraint(),
         provider: ProviderDescriptor::Subtitle(SubtitleDescriptor {
             provider_type: "jimaku".to_string(),
             provider_aliases: vec![],
@@ -144,18 +144,18 @@ fn descriptor() -> PluginDescriptor {
             default_base_url: Some(API_BASE.to_string()),
             allowed_hosts: vec!["jimaku.cc".to_string()],
             capabilities: SubtitleCapabilities {
-            mode: SubtitleProviderMode::Catalog,
-            supported_media_kinds: vec![
-                SubtitleQueryMediaKind::Movie,
-                SubtitleQueryMediaKind::Episode,
-            ],
-            recommended_facets: vec!["anime".to_string()],
-            supports_hash_lookup: false,
-            supports_forced: false,
-            supports_hearing_impaired: false,
-            supports_ai_translated: true,
-            supports_machine_translated: false,
-            supported_languages: vec!["jpn".to_string(), "eng".to_string()],
+                mode: SubtitleProviderMode::Catalog,
+                supported_media_kinds: vec![
+                    SubtitleQueryMediaKind::Movie,
+                    SubtitleQueryMediaKind::Episode,
+                ],
+                recommended_facets: vec!["anime".to_string()],
+                supports_hash_lookup: false,
+                supports_forced: false,
+                supports_hearing_impaired: false,
+                supports_ai_translated: true,
+                supports_machine_translated: false,
+                supported_languages: vec!["jpn".to_string(), "eng".to_string()],
             },
         }),
     }

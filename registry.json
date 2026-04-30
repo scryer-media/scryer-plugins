@@ -7,13 +7,18 @@
       "description": "NZBGeek-specific Newznab indexer with metadata extraction (thumbs, subtitles, password detection)",
       "plugin_type": "usenet_indexer",
       "provider_type": "nzbgeek",
-      "version": "0.2.3",
-      "sdk_version": "1.0.0",
       "author": "scryer-media",
       "official": true,
-      "builtin": true,
-      "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/nzbgeek",
-      "min_scryer_version": "0.0.5"
+      "releases": [
+        {
+          "version": "0.2.3",
+          "sdk_version": "1.3.0",
+          "sdk_constraint": ">=1.3.0, <1.4.0",
+          "builtin": true,
+          "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/nzbgeek",
+          "scryer_constraint": ">=0.0.5"
+        }
+      ]
     },
     {
       "id": "dognzb",
@@ -21,15 +26,20 @@
       "description": "DogNZB-specific Newznab indexer with rating, genre, and comment metadata extraction",
       "plugin_type": "usenet_indexer",
       "provider_type": "dognzb",
-      "version": "0.1.0",
-      "sdk_version": "1.0.0",
       "author": "scryer-media",
       "official": true,
-      "builtin": false,
-      "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/dognzb",
-      "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/dognzb_indexer.wasm",
-      "wasm_sha256": "760dd11bec0af2498489d9f37f25c6b46505f3128e480198ca31e5691da896bd",
-      "min_scryer_version": "0.0.5"
+      "releases": [
+        {
+          "version": "0.1.0",
+          "sdk_version": "1.0.0",
+          "sdk_constraint": ">=1.0.0, <2.0.0",
+          "builtin": false,
+          "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/dognzb",
+          "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/38c8dd28b19d2d64a7afa6aaedf59123579f6ebf/dist/dognzb_indexer.wasm",
+          "wasm_sha256": "760dd11bec0af2498489d9f37f25c6b46505f3128e480198ca31e5691da896bd",
+          "scryer_constraint": ">=0.0.5"
+        }
+      ]
     },
     {
       "id": "newznab",
@@ -37,13 +47,18 @@
       "description": "Generic Newznab protocol indexer for compatible services",
       "plugin_type": "usenet_indexer",
       "provider_type": "newznab",
-      "version": "0.2.2",
-      "sdk_version": "1.0.0",
       "author": "scryer-media",
       "official": true,
-      "builtin": true,
-      "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/newznab",
-      "min_scryer_version": "0.0.5"
+      "releases": [
+        {
+          "version": "0.2.2",
+          "sdk_version": "1.3.0",
+          "sdk_constraint": ">=1.3.0, <1.4.0",
+          "builtin": true,
+          "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/newznab",
+          "scryer_constraint": ">=0.0.5"
+        }
+      ]
     },
     {
       "id": "torznab",
@@ -51,13 +66,18 @@
       "description": "Generic Torznab-compatible torrent indexer for Jackett, Prowlarr, and native Torznab feeds",
       "plugin_type": "torrent_indexer",
       "provider_type": "torznab",
-      "version": "0.1.2",
-      "sdk_version": "1.0.0",
       "author": "scryer-media",
       "official": true,
-      "builtin": true,
-      "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torznab",
-      "min_scryer_version": "0.8.2"
+      "releases": [
+        {
+          "version": "0.1.2",
+          "sdk_version": "1.3.0",
+          "sdk_constraint": ">=1.3.0, <1.4.0",
+          "builtin": true,
+          "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torznab",
+          "scryer_constraint": ">=0.8.2"
+        }
+      ]
     },
     {
       "id": "torrent-rss",
@@ -65,15 +85,20 @@
       "description": "Generic torrent RSS indexer for trackers and aggregators that expose direct RSS feeds without Torznab",
       "plugin_type": "torrent_indexer",
       "provider_type": "torrent_rss",
-      "version": "0.1.4",
-      "sdk_version": "1.0.0",
       "author": "scryer-media",
       "official": true,
-      "builtin": false,
-      "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torrent-rss",
-      "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/torrent_rss_indexer.wasm",
-      "wasm_sha256": "7cdd5e489f2e9c33fd2d968d7b92e9fb270474020bebbd5c7eae34aae6c12eca",
-      "min_scryer_version": "0.8.2"
+      "releases": [
+        {
+          "version": "0.1.4",
+          "sdk_version": "1.0.0",
+          "sdk_constraint": ">=1.0.0, <2.0.0",
+          "builtin": false,
+          "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torrent-rss",
+          "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/torrent-rss-v0.1.4/dist/torrent_rss_indexer.wasm",
+          "wasm_sha256": "7cdd5e489f2e9c33fd2d968d7b92e9fb270474020bebbd5c7eae34aae6c12eca",
+          "scryer_constraint": ">=0.8.2"
+        }
+      ]
     },
     {
       "id": "animetosho",
@@ -81,29 +106,39 @@
       "description": "Anime release aggregator with torrent and NZB downloads from Nyaa, nekoBT, and other trackers",
       "plugin_type": "indexer",
       "provider_type": "animetosho",
-      "version": "0.3.4",
-      "sdk_version": "1.0.0",
       "author": "scryer-media",
       "official": true,
-      "builtin": true,
-      "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/animetosho",
-      "min_scryer_version": "0.0.5"
+      "releases": [
+        {
+          "version": "0.3.4",
+          "sdk_version": "1.3.0",
+          "sdk_constraint": ">=1.3.0, <1.4.0",
+          "builtin": true,
+          "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/animetosho",
+          "scryer_constraint": ">=0.0.5"
+        }
+      ]
     },
     {
       "id": "webhook",
       "name": "Webhook",
-      "description": "Generic webhook notification plugin \u2014 POSTs JSON payloads to a configured URL",
+      "description": "Generic webhook notification plugin — POSTs JSON payloads to a configured URL",
       "plugin_type": "notification",
       "provider_type": "webhook",
-      "version": "0.1.1",
-      "sdk_version": "1.0.0",
       "author": "scryer-media",
       "official": true,
-      "builtin": false,
-      "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/webhook",
-      "min_scryer_version": "0.0.6",
-      "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/webhook_notification.wasm",
-      "wasm_sha256": "fed24bb18d54e62c8cd7c5271f607a3c1c6a31d989406deead3f7880bfc69502"
+      "releases": [
+        {
+          "version": "0.1.1",
+          "sdk_version": "1.0.0",
+          "sdk_constraint": ">=1.0.0, <2.0.0",
+          "builtin": false,
+          "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/webhook",
+          "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/webhook-v0.1.1/dist/webhook_notification.wasm",
+          "wasm_sha256": "fed24bb18d54e62c8cd7c5271f607a3c1c6a31d989406deead3f7880bfc69502",
+          "scryer_constraint": ">=0.0.6"
+        }
+      ]
     },
     {
       "id": "jellyfin",
@@ -111,15 +146,20 @@
       "description": "Targeted Jellyfin library refresh notifications using mapped media paths and provider-id fallbacks",
       "plugin_type": "notification",
       "provider_type": "jellyfin",
-      "version": "0.1.0",
-      "sdk_version": "1.3.0",
       "author": "scryer-media",
       "official": true,
-      "builtin": false,
-      "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/jellyfin",
-      "min_scryer_version": "0.10.4",
-      "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/jellyfin_notification.wasm",
-      "wasm_sha256": "05943cabc112c6701c559d1489fd036eb9a8a5f3360fe6e5479ff2040e6c97bf"
+      "releases": [
+        {
+          "version": "0.1.0",
+          "sdk_version": "1.3.0",
+          "sdk_constraint": ">=1.3.0, <1.4.0",
+          "builtin": false,
+          "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/jellyfin",
+          "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/38c8dd28b19d2d64a7afa6aaedf59123579f6ebf/dist/jellyfin_notification.wasm",
+          "wasm_sha256": "05943cabc112c6701c559d1489fd036eb9a8a5f3360fe6e5479ff2040e6c97bf",
+          "scryer_constraint": ">=0.10.4"
+        }
+      ]
     },
     {
       "id": "qbittorrent",
@@ -127,15 +167,20 @@
       "description": "Torrent download client plugin for qBittorrent with category/tag routing, queue control, and import handoff support",
       "plugin_type": "download_client",
       "provider_type": "qbittorrent",
-      "version": "0.1.1",
-      "sdk_version": "1.0.0",
       "author": "scryer-media",
       "official": true,
-      "builtin": false,
-      "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/qbittorrent",
-      "min_scryer_version": "0.8.0",
-      "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/qbittorrent_download_client.wasm",
-      "wasm_sha256": "1438f9b37b582f2b3f397f4df585021d565a89616839d94f3d3db40181e4e98c"
+      "releases": [
+        {
+          "version": "0.1.1",
+          "sdk_version": "1.0.0",
+          "sdk_constraint": ">=1.0.0, <2.0.0",
+          "builtin": false,
+          "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/qbittorrent",
+          "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/qbittorrent-v0.1.1/dist/qbittorrent_download_client.wasm",
+          "wasm_sha256": "1438f9b37b582f2b3f397f4df585021d565a89616839d94f3d3db40181e4e98c",
+          "scryer_constraint": ">=0.8.0"
+        }
+      ]
     },
     {
       "id": "opensubtitles",
@@ -143,15 +188,20 @@
       "description": "OpenSubtitles subtitle provider with provider-managed auth, search, and download",
       "plugin_type": "subtitle_provider",
       "provider_type": "opensubtitles",
-      "version": "0.1.0",
-      "sdk_version": "1.0.0",
       "author": "scryer-media",
       "official": true,
-      "builtin": false,
-      "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/opensubtitles",
-      "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/opensubtitles_subtitle_provider.wasm",
-      "wasm_sha256": "9feef9235934acf9908f8ff3fd5ef4c0bc6d0ebb44d59a0d3340742811346627",
-      "min_scryer_version": "0.11.4"
+      "releases": [
+        {
+          "version": "0.1.0",
+          "sdk_version": "1.0.0",
+          "sdk_constraint": ">=1.0.0, <2.0.0",
+          "builtin": false,
+          "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/opensubtitles",
+          "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/38c8dd28b19d2d64a7afa6aaedf59123579f6ebf/dist/opensubtitles_subtitle_provider.wasm",
+          "wasm_sha256": "9feef9235934acf9908f8ff3fd5ef4c0bc6d0ebb44d59a0d3340742811346627",
+          "scryer_constraint": ">=0.11.4"
+        }
+      ]
     },
     {
       "id": "jimaku",
@@ -159,13 +209,18 @@
       "description": "Anime-focused Jimaku subtitle provider using AniList IDs and optional name fallback",
       "plugin_type": "subtitle_provider",
       "provider_type": "jimaku",
-      "version": "0.1.0",
-      "sdk_version": "1.0.0",
       "author": "scryer-media",
       "official": true,
-      "builtin": true,
-      "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/jimaku",
-      "min_scryer_version": "0.11.4"
+      "releases": [
+        {
+          "version": "0.1.0",
+          "sdk_version": "1.3.0",
+          "sdk_constraint": ">=1.3.0, <1.4.0",
+          "builtin": true,
+          "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/jimaku",
+          "scryer_constraint": ">=0.11.4"
+        }
+      ]
     },
     {
       "id": "animetosho-subtitles",
@@ -173,15 +228,20 @@
       "description": "AnimeTosho subtitle attachment provider for AniDB episode matches",
       "plugin_type": "subtitle_provider",
       "provider_type": "animetosho",
-      "version": "0.1.0",
-      "sdk_version": "1.0.0",
       "author": "scryer-media",
       "official": true,
-      "builtin": false,
-      "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/animetosho",
-      "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/animetosho_subtitle_provider.wasm",
-      "wasm_sha256": "b277f6671439d751f408631a8f9056cfd9b54f59b168ffa13100ebd99da16fdb",
-      "min_scryer_version": "0.11.4"
+      "releases": [
+        {
+          "version": "0.1.0",
+          "sdk_version": "1.0.0",
+          "sdk_constraint": ">=1.0.0, <2.0.0",
+          "builtin": false,
+          "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/animetosho",
+          "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/38c8dd28b19d2d64a7afa6aaedf59123579f6ebf/dist/animetosho_subtitle_provider.wasm",
+          "wasm_sha256": "b277f6671439d751f408631a8f9056cfd9b54f59b168ffa13100ebd99da16fdb",
+          "scryer_constraint": ">=0.11.4"
+        }
+      ]
     },
     {
       "id": "whisper",
@@ -189,15 +249,20 @@
       "description": "OpenAI Whisper subtitle generator for staged audio transcription",
       "plugin_type": "subtitle_provider",
       "provider_type": "whisper",
-      "version": "0.1.0",
-      "sdk_version": "1.0.0",
       "author": "scryer-media",
       "official": true,
-      "builtin": false,
-      "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/whisper",
-      "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/main/dist/whisper_subtitle_provider.wasm",
-      "wasm_sha256": "c27f2244182f2a5159bc114cf27a26d1f0ed4ad07b57ba3dbcb3c3a89761f3ed",
-      "min_scryer_version": "0.11.4"
+      "releases": [
+        {
+          "version": "0.1.0",
+          "sdk_version": "1.0.0",
+          "sdk_constraint": ">=1.0.0, <2.0.0",
+          "builtin": false,
+          "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/whisper",
+          "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/38c8dd28b19d2d64a7afa6aaedf59123579f6ebf/dist/whisper_subtitle_provider.wasm",
+          "wasm_sha256": "c27f2244182f2a5159bc114cf27a26d1f0ed4ad07b57ba3dbcb3c3a89761f3ed",
+          "scryer_constraint": ">=0.11.4"
+        }
+      ]
     }
   ],
   "rule_packs": [
