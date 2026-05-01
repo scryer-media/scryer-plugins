@@ -715,6 +715,17 @@ fn validate_registry(ctx: &TaskContext) -> Result<()> {
     let mut errors = Vec::new();
 
     for plugin in &registry.plugins {
+        let releases = plugin.normalized_releases();
+        if releases.is_empty() {
+            continue;
+        }
+        let latest_release_version = match latest_release(plugin) {
+            Ok(value) => value.version,
+            Err(error) => {
+                errors.push(format!("{}: {error}", plugin.id));
+                continue;
+            }
+        };
         let latest_builtin = match latest_builtin_release(plugin) {
             Ok(value) => value,
             Err(error) => {
@@ -723,9 +734,26 @@ fn validate_registry(ctx: &TaskContext) -> Result<()> {
             }
         };
 
-        for release in plugin.normalized_releases() {
+        for release in releases {
             if let Err(error) = validate_registry_release_scryer_constraint(&plugin.id, &release) {
                 errors.push(error.to_string());
+                continue;
+            }
+            if release.version != latest_release_version {
+                if !release.builtin {
+                    if release.wasm_url.is_none() {
+                        errors.push(format!(
+                            "{} {}: missing wasm_url for downloadable release",
+                            plugin.id, release.version
+                        ));
+                    }
+                    if release.wasm_sha256.is_none() {
+                        errors.push(format!(
+                            "{} {}: missing wasm_sha256",
+                            plugin.id, release.version
+                        ));
+                    }
+                }
                 continue;
             }
             let artifact_path = if let Some(wasm_url) = release.wasm_url.as_deref() {
