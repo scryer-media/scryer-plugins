@@ -120,13 +120,19 @@ fn descriptor() -> PluginDescriptor {
                     None,
                 ),
                 field("reply_to", "Reply-To", ConfigFieldType::String, false, None),
-                field(
-                    "hello_name",
-                    "EHLO Name",
-                    ConfigFieldType::String,
-                    false,
-                    None,
-                ),
+                ConfigFieldDef {
+                    help_text: Some(
+                        "Hostname sent in the SMTP EHLO greeting. Leave blank to use the default unless your mail server requires a specific fully qualified domain name."
+                            .to_string(),
+                    ),
+                    ..field(
+                        "hello_name",
+                        "EHLO Name",
+                        ConfigFieldType::String,
+                        false,
+                        None,
+                    )
+                },
             ],
         }),
     }
