@@ -993,6 +993,7 @@ fn run_release_targets(
             target.crate_name, target.next_version
         ));
         write_manifest_version(&target.cargo_toml, &target.next_version)?;
+        refresh_lockfile(ctx, &target.plugin_dir)?;
         ok(format!("{} Cargo.toml updated", target.crate_name));
     }
 
@@ -1236,6 +1237,14 @@ fn ensure_lockfile(ctx: &TaskContext, plugin_dir: &Path) -> Result<()> {
     command.args(["generate-lockfile", "--offline"]);
     run_checked(&mut command)
         .with_context(|| format!("failed to generate lockfile for {}", plugin_dir.display()))
+}
+
+fn refresh_lockfile(ctx: &TaskContext, plugin_dir: &Path) -> Result<()> {
+    step(format!("Refreshing lockfile for {}", plugin_dir.display()));
+    let mut command = wasm_build_command_in(ctx, plugin_dir)?;
+    command.args(["generate-lockfile", "--offline"]);
+    run_checked(&mut command)
+        .with_context(|| format!("failed to refresh lockfile for {}", plugin_dir.display()))
 }
 
 fn build_plugin_wasm(ctx: &TaskContext, plugin_dir: &Path) -> Result<PathBuf> {
