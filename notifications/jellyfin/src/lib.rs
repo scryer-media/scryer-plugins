@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use extism_pdk::*;
+use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldType, NotificationCapabilities, NotificationDeliveryMode,
     NotificationDescriptor, NotificationEventType as SdkNotificationEventType,
@@ -134,6 +135,7 @@ fn default_descriptor() -> PluginDescriptor {
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
         sdk_constraint: current_sdk_constraint(),
+        socket_permissions: vec![],
         provider: ProviderDescriptor::Notification(NotificationDescriptor {
             provider_type: "jellyfin".to_string(),
             provider_aliases: vec![],
@@ -181,7 +183,7 @@ fn default_descriptor() -> PluginDescriptor {
                     key: "path_mappings".to_string(),
                     label: "Path Mappings".to_string(),
                     field_type: ConfigFieldType::Multiline,
-                    required: true,
+                    required: false,
                     default_value: None,
                     value_source: Default::default(),
                     host_binding: None,

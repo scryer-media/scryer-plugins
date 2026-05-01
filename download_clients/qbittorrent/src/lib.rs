@@ -2,6 +2,7 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 
 use base64::{engine::general_purpose, Engine as _};
 use extism_pdk::*;
+use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldOption, ConfigFieldType, DownloadClientCapabilities,
     DownloadClientDescriptor, DownloadControlAction, DownloadInputKind, DownloadIsolationMode,
@@ -136,6 +137,7 @@ fn build_descriptor_json() -> Result<String, Error> {
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
         sdk_constraint: current_sdk_constraint(),
+        socket_permissions: vec![],
         provider: ProviderDescriptor::DownloadClient(DownloadClientDescriptor {
             provider_type: "qbittorrent".to_string(),
             provider_aliases: vec!["qbit".to_string()],

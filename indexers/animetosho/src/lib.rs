@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use extism_pdk::*;
+use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     IndexerCapabilities as Capabilities, IndexerDescriptor, IndexerFeedMode,
     IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput,
@@ -54,6 +55,7 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
         sdk_constraint: current_sdk_constraint(),
+        socket_permissions: vec![],
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: "animetosho".to_string(),
             provider_aliases: vec![],

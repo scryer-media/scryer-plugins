@@ -2,10 +2,11 @@ use std::collections::HashMap;
 
 use extism_pdk::*;
 use newznab_common::{
-    execute_full_search, standard_config_fields, Capabilities, IndexerCategoryModel,
-    IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities,
-    IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind, NewznabConfig,
-    PluginDescriptor, PluginResult, ProviderDescriptor, ScoringPolicy, SearchRequest, SDK_VERSION,
+    current_sdk_constraint, execute_full_search, standard_config_fields, Capabilities,
+    IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode,
+    IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput,
+    IndexerSourceKind, NewznabConfig, PluginDescriptor, PluginResult, ProviderDescriptor,
+    ScoringPolicy, SearchRequest, SDK_VERSION,
 };
 
 #[plugin_fn]
@@ -16,6 +17,7 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
         sdk_constraint: current_sdk_constraint(),
+        socket_permissions: vec![],
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: "dognzb".to_string(),
             provider_aliases: vec![],

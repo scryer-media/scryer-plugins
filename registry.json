@@ -95,7 +95,7 @@
           "builtin": false,
           "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torrent-rss",
           "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/torrent-rss-v0.1.4/dist/torrent_rss_indexer.wasm",
-          "wasm_sha256": "7cdd5e489f2e9c33fd2d968d7b92e9fb270474020bebbd5c7eae34aae6c12eca",
+          "wasm_sha256": "7eee0a30a56c7c278f867af527ddfb2ad01073cdbc47883632588d7cd8367032",
           "scryer_constraint": ">=0.8.2"
         }
       ]
@@ -112,7 +112,7 @@
         {
           "version": "0.3.4",
           "sdk_version": "1.3.0",
-          "sdk_constraint": ">=1.3.0, <1.4.0",
+          "sdk_constraint": ">=1.0.0, <2.0.0",
           "builtin": true,
           "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/animetosho",
           "scryer_constraint": ">=0.0.5"
@@ -135,7 +135,7 @@
           "builtin": false,
           "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/webhook",
           "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/webhook-v0.1.1/dist/webhook_notification.wasm",
-          "wasm_sha256": "fed24bb18d54e62c8cd7c5271f607a3c1c6a31d989406deead3f7880bfc69502",
+          "wasm_sha256": "eca620f2dbdc01105ad89bf49c5b5c6b4ddf175c2dd631f8054b45c0acfb5a46",
           "scryer_constraint": ">=0.0.6"
         }
       ]
@@ -162,6 +162,16 @@
       ]
     },
     {
+      "id": "email",
+      "name": "Email",
+      "description": "Plaintext SMTP email notification plugin with plain, STARTTLS, and TLS delivery modes",
+      "plugin_type": "notification",
+      "provider_type": "email",
+      "author": "scryer-media",
+      "official": true,
+      "releases": []
+    },
+    {
       "id": "qbittorrent",
       "name": "qBittorrent Download Client",
       "description": "Torrent download client plugin for qBittorrent with category/tag routing, queue control, and import handoff support",
@@ -177,7 +187,7 @@
           "builtin": false,
           "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/qbittorrent",
           "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/qbittorrent-v0.1.1/dist/qbittorrent_download_client.wasm",
-          "wasm_sha256": "1438f9b37b582f2b3f397f4df585021d565a89616839d94f3d3db40181e4e98c",
+          "wasm_sha256": "0de3ba13744c318b8a269975063241fecf02a1fac84eab75c0d8a0240f6f0cbd",
           "scryer_constraint": ">=0.8.0"
         }
       ]

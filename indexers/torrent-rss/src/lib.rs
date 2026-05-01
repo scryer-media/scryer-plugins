@@ -4,6 +4,7 @@ use base64::{engine::general_purpose::STANDARD, Engine as _};
 use extism_pdk::*;
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
+use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldOption, ConfigFieldType, IndexerCapabilities as Capabilities,
     IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode,
@@ -48,6 +49,7 @@ fn build_descriptor_json() -> Result<String, Error> {
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
         sdk_constraint: current_sdk_constraint(),
+        socket_permissions: vec![],
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: "torrent_rss".to_string(),
             provider_aliases: vec!["rss".to_string()],

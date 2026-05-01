@@ -11,12 +11,13 @@ use extism_pdk::*;
 use quick_xml::events::Event;
 use quick_xml::Reader;
 pub use scryer_plugin_sdk::{
-    ConfigFieldDef, ConfigFieldType, IndexerCapabilities as Capabilities, IndexerCategoryModel,
-    IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities,
-    IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind,
-    IndexerTorrentCapabilities, PluginDescriptor, PluginScoringPolicy as ScoringPolicy,
-    PluginResult, PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
-    PluginSearchResult as SearchResult, ProviderDescriptor, SDK_VERSION,
+    current_sdk_constraint, ConfigFieldDef, ConfigFieldType, IndexerCapabilities as Capabilities,
+    IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode,
+    IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput,
+    IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor, PluginResult,
+    PluginScoringPolicy as ScoringPolicy, PluginSearchRequest as SearchRequest,
+    PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult, ProviderDescriptor,
+    SDK_VERSION,
 };
 use serde::Deserialize;
 

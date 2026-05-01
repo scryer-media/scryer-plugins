@@ -1,4 +1,5 @@
 use extism_pdk::*;
+use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     to_webhook_json, ConfigFieldDef, ConfigFieldOption, ConfigFieldType, NotificationCapabilities,
     NotificationDeliveryMode, NotificationDescriptor, NotificationPayloadFormat, PluginDescriptor,
@@ -22,6 +23,7 @@ fn build_descriptor() -> PluginDescriptor {
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
         sdk_constraint: current_sdk_constraint(),
+        socket_permissions: vec![],
         provider: ProviderDescriptor::Notification(NotificationDescriptor {
             provider_type: "webhook".to_string(),
             provider_aliases: vec![],

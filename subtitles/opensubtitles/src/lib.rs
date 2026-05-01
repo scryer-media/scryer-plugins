@@ -7,6 +7,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
 use extism_pdk::*;
+use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginHostBindingId,
     PluginResult, ProviderDescriptor, SubtitleCapabilities, SubtitleDescriptor, SubtitleMatchHint,
@@ -206,6 +207,7 @@ fn descriptor() -> PluginDescriptor {
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
         sdk_constraint: current_sdk_constraint(),
+        socket_permissions: vec![],
         provider: ProviderDescriptor::Subtitle(SubtitleDescriptor {
             provider_type: "opensubtitles".to_string(),
             provider_aliases: vec![],

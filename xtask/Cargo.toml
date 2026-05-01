@@ -15,4 +15,3 @@ scryer-plugin-sdk = { path = "../../scryer/crates/scryer-plugin-sdk" }
 tempfile = "3"
 toml_edit = "0.22"
 extism = "1.13"
-url = "2"

@@ -2,11 +2,11 @@ use std::collections::HashMap;
 
 use extism_pdk::*;
 use newznab_common::{
-    execute_full_search, standard_config_fields, Capabilities, IndexerCategoryModel,
-    IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities,
-    IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind,
-    IndexerTorrentCapabilities, NewznabConfig, PluginDescriptor, PluginResult, ProviderDescriptor,
-    SearchRequest, SDK_VERSION,
+    current_sdk_constraint, execute_full_search, standard_config_fields, Capabilities,
+    IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode,
+    IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput,
+    IndexerSourceKind, IndexerTorrentCapabilities, NewznabConfig, PluginDescriptor, PluginResult,
+    ProviderDescriptor, SearchRequest, SDK_VERSION,
 };
 
 #[plugin_fn]
@@ -21,6 +21,7 @@ fn build_descriptor_json() -> Result<String, Error> {
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
         sdk_constraint: current_sdk_constraint(),
+        socket_permissions: vec![],
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: "torznab".to_string(),
             provider_aliases: vec!["jackett".to_string(), "prowlarr".to_string()],
