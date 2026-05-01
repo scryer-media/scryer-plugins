@@ -4,8 +4,14 @@ This file covers contributor setup notes that sit alongside [ARCHITECTURE.md](/U
 
 ## Prerequisites
 
-- Rust (stable toolchain) + Cargo for `xtask`
+- Rustup-managed Rust toolchain for `cargo xtask`
 - The Wasm/tooling dependencies required by the plugin you are releasing or validating
+
+This repo pins its Rust toolchain in `rust-toolchain.toml` and declares
+`wasm32-wasip1` there. The `xtask` build flow also runs plugin Wasm builds
+through `rustup run <toolchain> cargo ...` and will install the Wasm target
+automatically when rustup is available, so built-in/plugin release flows do not
+depend on whichever `cargo` happens to be first on `PATH`.
 
 ## macOS Privacy & Security
 

@@ -42,6 +42,12 @@ struct BuiltinPluginSpec {
     artifact_name: &'static str,
 }
 
+#[derive(Clone)]
+struct RustupToolchain {
+    rustup: PathBuf,
+    toolchain: String,
+}
+
 const BUILTIN_PLUGINS: &[BuiltinPluginSpec] = &[
     BuiltinPluginSpec {
         plugin_dir: "indexers/nzbgeek",
@@ -398,37 +404,73 @@ fn run_capture(command: &mut Command) -> Result<String> {
     Ok(String::from_utf8_lossy(&output.stdout).to_string())
 }
 
-fn command_available(command: &str) -> Result<bool> {
-    let status = Command::new("sh")
-        .arg("-c")
-        .arg(format!("command -v {command} >/dev/null 2>&1"))
-        .status()?;
-    Ok(status.success())
+fn rustup_toolchain_override() -> Option<String> {
+    env::var("SCRYER_RUSTUP_TOOLCHAIN")
+        .ok()
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
 }
 
-fn rustup_toolchain_with_wasm_target(ctx: &TaskContext) -> Result<Option<String>> {
-    if !command_available("rustup")? {
+fn rustup_binary_override() -> Option<PathBuf> {
+    env::var_os("SCRYER_RUSTUP_BIN")
+        .filter(|value| !value.is_empty())
+        .map(PathBuf::from)
+}
+
+fn rustup_binary() -> Option<PathBuf> {
+    if let Some(path) = rustup_binary_override().filter(|path| path.is_file()) {
+        return Some(path);
+    }
+
+    let exe = format!("rustup{}", env::consts::EXE_SUFFIX);
+    let mut candidates = Vec::new();
+    if let Some(path) = env::var_os("PATH") {
+        candidates.extend(env::split_paths(&path).map(|dir| dir.join(&exe)));
+    }
+    if let Some(home) = env::var_os("HOME") {
+        candidates.push(PathBuf::from(&home).join(".cargo/bin").join(&exe));
+    }
+    candidates.push(PathBuf::from("/opt/homebrew/bin").join(&exe));
+    candidates.push(PathBuf::from("/usr/local/bin").join(&exe));
+    candidates.into_iter().find(|path| path.is_file())
+}
+
+fn rustup_toolchain_from_file(path: &Path) -> Result<Option<String>> {
+    if !path.is_file() {
         return Ok(None);
     }
 
-    let mut toolchains = ctx.command("rustup");
-    toolchains.args(["toolchain", "list"]);
-    let installed_toolchains = run_capture(&mut toolchains)?;
+    let document = fs::read_to_string(path)?
+        .parse::<DocumentMut>()
+        .with_context(|| format!("failed to parse {}", path.display()))?;
+    Ok(document["toolchain"]["channel"]
+        .as_str()
+        .map(ToOwned::to_owned))
+}
 
-    for toolchain in installed_toolchains
-        .lines()
-        .filter_map(|line| line.split_whitespace().next())
-        .filter(|line| !line.is_empty())
-    {
-        let mut targets = ctx.command("rustup");
-        targets.args(["target", "list", "--installed", "--toolchain", toolchain]);
-        let installed_targets = run_capture(&mut targets)?;
-        if installed_targets.lines().any(|line| line == WASM_TARGET) {
-            return Ok(Some(toolchain.to_string()));
-        }
+fn configured_rustup_toolchain(ctx: &TaskContext) -> Result<Option<RustupToolchain>> {
+    let Some(rustup) = rustup_binary() else {
+        return Ok(None);
+    };
+
+    if let Some(toolchain) = rustup_toolchain_override() {
+        return Ok(Some(RustupToolchain { rustup, toolchain }));
     }
 
-    Ok(None)
+    if let Some(toolchain) = rustup_toolchain_from_file(&ctx.path("rust-toolchain.toml"))? {
+        return Ok(Some(RustupToolchain { rustup, toolchain }));
+    }
+
+    let mut active = Command::new(&rustup);
+    active.current_dir(&ctx.repo_root);
+    active.args(["show", "active-toolchain"]);
+    Ok(run_capture(&mut active)?
+        .split_whitespace()
+        .next()
+        .map(|toolchain| RustupToolchain {
+            rustup,
+            toolchain: toolchain.to_string(),
+        }))
 }
 
 fn host_rust_has_wasm_target(ctx: &TaskContext) -> Result<bool> {
@@ -437,47 +479,127 @@ fn host_rust_has_wasm_target(ctx: &TaskContext) -> Result<bool> {
     Ok(rustc.output()?.status.success())
 }
 
-fn rustup_which(ctx: &TaskContext, toolchain: &str, binary: &str) -> Result<PathBuf> {
-    let mut command = ctx.command("rustup");
-    command.args(["which", binary, "--toolchain", toolchain]);
+fn rustup_toolchain_has_target(
+    _ctx: &TaskContext,
+    rustup_toolchain: &RustupToolchain,
+) -> Result<bool> {
+    let mut targets = Command::new(&rustup_toolchain.rustup);
+    targets.args([
+        "target",
+        "list",
+        "--installed",
+        "--toolchain",
+        rustup_toolchain.toolchain.as_str(),
+    ]);
+    let installed_targets = run_capture(&mut targets)?;
+    Ok(installed_targets
+        .lines()
+        .any(|line| line.trim() == WASM_TARGET))
+}
+
+fn ensure_rustup_wasm_target(
+    ctx: &TaskContext,
+    rustup_toolchain: &RustupToolchain,
+) -> Result<()> {
+    if rustup_toolchain_has_target(ctx, rustup_toolchain)? {
+        return Ok(());
+    }
+
+    step(format!(
+        "Installing {WASM_TARGET} for rustup toolchain {}",
+        rustup_toolchain.toolchain
+    ));
+    let mut command = Command::new(&rustup_toolchain.rustup);
+    command.args([
+        "target",
+        "add",
+        "--toolchain",
+        rustup_toolchain.toolchain.as_str(),
+        WASM_TARGET,
+    ]);
+    run_checked(&mut command).with_context(|| {
+        format!(
+            "failed to install {WASM_TARGET} for rustup toolchain {}",
+            rustup_toolchain.toolchain
+        )
+    })
+}
+
+fn rustup_which(rustup_toolchain: &RustupToolchain, binary: &str) -> Result<PathBuf> {
+    let mut command = Command::new(&rustup_toolchain.rustup);
+    command.args([
+        "which",
+        binary,
+        "--toolchain",
+        rustup_toolchain.toolchain.as_str(),
+    ]);
     let path = run_capture(&mut command)?;
     Ok(PathBuf::from(path.trim()))
 }
 
-fn wasm_build_command_in(ctx: &TaskContext, cwd: &Path) -> Result<Command> {
-    if let Some(toolchain) = rustup_toolchain_with_wasm_target(ctx)? {
-        let cargo = rustup_which(ctx, &toolchain, "cargo")?;
-        let rustc = rustup_which(ctx, &toolchain, "rustc")?;
-        let mut command = Command::new(&cargo);
-        command.current_dir(cwd);
-        command.env("RUSTC", &rustc);
-        command.env("RUSTUP_TOOLCHAIN", toolchain.as_str());
-        if let Some(toolchain_bin) = rustc.parent() {
-            let existing_path = env::var_os("PATH").unwrap_or_default();
-            let mut paths = vec![toolchain_bin.to_path_buf()];
-            paths.extend(env::split_paths(&existing_path));
-            let joined = env::join_paths(paths).context("join rustup PATH")?;
-            command.env("PATH", joined);
-        }
-        return Ok(command);
+fn rustup_cargo_command_in(
+    rustup_toolchain: &RustupToolchain,
+    cwd: &Path,
+) -> Result<Command> {
+    let cargo = rustup_which(rustup_toolchain, "cargo")?;
+    let rustc = rustup_which(rustup_toolchain, "rustc")?;
+    let rustdoc = rustup_which(rustup_toolchain, "rustdoc").ok();
+
+    let mut command = Command::new(&cargo);
+    command.current_dir(cwd);
+    command.env("CARGO", &cargo);
+    command.env("RUSTC", &rustc);
+    command.env("RUSTUP_TOOLCHAIN", rustup_toolchain.toolchain.as_str());
+    command.env_remove("RUSTC_WRAPPER");
+    command.env_remove("RUSTC_WORKSPACE_WRAPPER");
+    if let Some(rustdoc) = rustdoc {
+        command.env("RUSTDOC", rustdoc);
+    }
+    if let Some(toolchain_bin) = cargo.parent() {
+        let existing_path = env::var_os("PATH").unwrap_or_default();
+        let mut paths = vec![toolchain_bin.to_path_buf()];
+        paths.extend(env::split_paths(&existing_path));
+        let joined = env::join_paths(paths).context("join rustup PATH")?;
+        command.env("PATH", joined);
+    }
+    Ok(command)
+}
+
+fn repo_cargo_command_in(ctx: &TaskContext, cwd: &Path) -> Result<Command> {
+    if let Some(rustup_toolchain) = configured_rustup_toolchain(ctx)? {
+        return rustup_cargo_command_in(&rustup_toolchain, cwd);
     }
 
     Ok(ctx.command_in("cargo", cwd))
 }
 
-fn require_wasm_target(ctx: &TaskContext) -> Result<()> {
-    if rustup_toolchain_with_wasm_target(ctx)?.is_some() || host_rust_has_wasm_target(ctx)? {
-        return Ok(());
+fn wasm_build_command_in(ctx: &TaskContext, cwd: &Path) -> Result<Command> {
+    if let Some(rustup_toolchain) = configured_rustup_toolchain(ctx)? {
+        ensure_rustup_wasm_target(ctx, &rustup_toolchain)?;
+        return rustup_cargo_command_in(&rustup_toolchain, cwd);
     }
 
-    if command_available("rustup")? {
-        bail!(
-            "{WASM_TARGET} target not installed for any available rustup toolchain or host rustc — run: rustup target add {WASM_TARGET} --toolchain stable"
-        );
+    if host_rust_has_wasm_target(ctx)? {
+        return Ok(ctx.command_in("cargo", cwd));
     }
 
     bail!(
-        "{WASM_TARGET} target not installed and rustup is unavailable — install rustup or add the target to the active Rust toolchain"
+        "{WASM_TARGET} target is unavailable. Install rustup so xtask can bootstrap the repo toolchain, or add {WASM_TARGET} to the active host Rust toolchain."
+    )
+}
+
+fn require_wasm_target(ctx: &TaskContext) -> Result<()> {
+    if let Some(rustup_toolchain) = configured_rustup_toolchain(ctx)? {
+        ensure_rustup_wasm_target(ctx, &rustup_toolchain)?;
+        return Ok(());
+    }
+
+    if host_rust_has_wasm_target(ctx)? {
+        return Ok(());
+    }
+
+    bail!(
+        "{WASM_TARGET} target is unavailable. Install rustup so xtask can bootstrap the repo toolchain, or add {WASM_TARGET} to the active host Rust toolchain."
     )
 }
 
@@ -1206,26 +1328,8 @@ fn run_builtins(ctx: &TaskContext, args: BuiltinsArgs) -> Result<()> {
             );
         }
 
-        ensure_lockfile(ctx, &plugin_dir)?;
-        let mut build = ctx.command_in("cargo", &plugin_dir);
-        build.args([
-            "build",
-            "--release",
-            "--target",
-            WASM_TARGET,
-            "--locked",
-            "--offline",
-        ]);
-        run_checked(&mut build).with_context(|| format!("failed to build {}", spec.plugin_dir))?;
-
-        let built_wasm = plugin_dir
-            .join("target")
-            .join(WASM_TARGET)
-            .join("release")
-            .join(spec.artifact_name);
-        if !built_wasm.is_file() {
-            bail!("expected WASM at {} but not found", built_wasm.display());
-        }
+        let built_wasm = build_plugin_wasm(ctx, &plugin_dir)
+            .with_context(|| format!("failed to build {}", spec.plugin_dir))?;
 
         let output_wasm = output_dir.join(spec.artifact_name);
         fs::copy(&built_wasm, &output_wasm).with_context(|| {
@@ -1261,7 +1365,7 @@ fn ensure_lockfile(ctx: &TaskContext, plugin_dir: &Path) -> Result<()> {
     }
 
     step(format!("Generating lockfile for {}", plugin_dir.display()));
-    let mut command = ctx.command_in("cargo", plugin_dir);
+    let mut command = repo_cargo_command_in(ctx, plugin_dir)?;
     command.args(["generate-lockfile", "--offline"]);
     run_checked(&mut command)
         .with_context(|| format!("failed to generate lockfile for {}", plugin_dir.display()))
@@ -1269,14 +1373,13 @@ fn ensure_lockfile(ctx: &TaskContext, plugin_dir: &Path) -> Result<()> {
 
 fn refresh_lockfile(ctx: &TaskContext, plugin_dir: &Path) -> Result<()> {
     step(format!("Refreshing lockfile for {}", plugin_dir.display()));
-    let mut command = wasm_build_command_in(ctx, plugin_dir)?;
+    let mut command = repo_cargo_command_in(ctx, plugin_dir)?;
     command.args(["generate-lockfile", "--offline"]);
     run_checked(&mut command)
         .with_context(|| format!("failed to refresh lockfile for {}", plugin_dir.display()))
 }
 
 fn build_plugin_wasm(ctx: &TaskContext, plugin_dir: &Path) -> Result<PathBuf> {
-    require_wasm_target(ctx)?;
     let cargo_toml = plugin_dir.join("Cargo.toml");
     let wasm_filename = wasm_filename_for_manifest(&cargo_toml)?;
 
