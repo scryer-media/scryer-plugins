@@ -102,6 +102,7 @@ struct ReleaseOptions {
     patch: bool,
     #[arg(long)]
     dry_run: bool,
+    #[arg(long)]
     version: Option<String>,
 }
 
