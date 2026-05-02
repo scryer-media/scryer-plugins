@@ -417,11 +417,20 @@ fn completed_downloads(config: &QbittorrentConfig) -> Result<Vec<PluginCompleted
         .collect::<Vec<_>>())
 }
 
+fn completed_history_items(config: &QbittorrentConfig) -> Result<Vec<PluginDownloadItem>, Error> {
+    let torrents = list_torrents(&config, Some("completed"))?;
+    Ok(torrents
+        .into_iter()
+        .filter(|torrent| is_completed_state(&torrent.state))
+        .map(torrent_to_item)
+        .collect::<Vec<_>>())
+}
+
 #[plugin_fn]
 pub fn scryer_download_list_history(_input: String) -> FnResult<String> {
     let config = QbittorrentConfig::from_extism()?;
     Ok(serde_json::to_string(&PluginResult::Ok(
-        completed_downloads(&config)?,
+        completed_history_items(&config)?,
     ))?)
 }
 
@@ -2130,6 +2139,25 @@ mod tests {
         assert_eq!(
             completed.content_paths,
             vec!["/downloads/movies/Movie.mkv".to_string()]
+        );
+    }
+
+    #[test]
+    fn completed_history_item_uses_download_item_shape() {
+        let torrent = QbTorrent {
+            hash: "abcdef0123456789abcdef0123456789abcdef01".to_string(),
+            name: "Movie".to_string(),
+            state: "pausedUP".to_string(),
+            save_path: Some("/downloads/movies".to_string()),
+            content_path: Some("/downloads/movies/Movie.mkv".to_string()),
+            ..QbTorrent::default()
+        };
+        let item = torrent_to_item(torrent);
+        assert_eq!(item.title, "Movie");
+        assert_eq!(item.state, DownloadItemState::Completed);
+        assert_eq!(
+            item.remote_output_path.as_deref(),
+            Some("/downloads/movies/Movie.mkv")
         );
     }
 
