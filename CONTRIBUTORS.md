@@ -30,6 +30,11 @@ Use `cargo xtask` as the canonical interface for repo automation. See [ARCHITECT
 First-party and third-party plugins must use the SDK-v1 ABI from
 `scryer-plugin-sdk`. Do not copy protocol structs into plugin crates.
 
+The SDK is versioned and published independently from the Scryer application.
+After `scryer-plugin-sdk = "1.0.0"` has been published to crates.io,
+maintainers should run `cargo xtask sdk bump 1.0.0` to switch plugin crates
+from local transition paths to the published SDK line and refresh lockfiles.
+
 Required exports are validated from the plugin descriptor:
 
 - `scryer_describe`

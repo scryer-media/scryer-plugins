@@ -1,0 +1,152 @@
+name: release-plugin
+
+on:
+  push:
+    tags:
+      - "plugins/*/v*"
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  build-sign-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+
+      - name: Install release tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y binaryen zstd
+
+      - uses: sigstore/cosign-installer@v3
+
+      - name: Prepare unsigned plugin assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          PLUGIN_SPEC="${TAG#plugins/}"
+          PLUGIN_ID="${PLUGIN_SPEC%/v*}"
+          VERSION="${TAG##*/v}"
+          PREPARED_DIR="dist/catalog-v2/${PLUGIN_ID}"
+          EXISTING_ARGS=()
+
+          mkdir -p existing-child-catalog
+          if gh release download "plugins/${PLUGIN_ID}/catalog" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --pattern catalog-v2.min.json.zst \
+            --pattern catalog-v2.min.json.zst.bundle \
+            --dir existing-child-catalog \
+            --clobber; then
+            cosign verify-blob \
+              --bundle existing-child-catalog/catalog-v2.min.json.zst.bundle \
+              --certificate-identity-regexp "^https://github.com/${GITHUB_REPOSITORY}/\\.github/workflows/.*@refs/(tags|heads)/.*$" \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+              existing-child-catalog/catalog-v2.min.json.zst
+            EXISTING_ARGS=(--existing-child-catalog existing-child-catalog/catalog-v2.min.json.zst)
+          else
+            echo "No existing child catalog found for ${PLUGIN_ID}; preparing first catalog."
+          fi
+
+          cargo run --locked --manifest-path xtask/Cargo.toml -- \
+            official prepare "${PLUGIN_ID}" \
+            --version "${VERSION}" \
+            --out "${PREPARED_DIR}" \
+            "${EXISTING_ARGS[@]}"
+
+          cargo run --locked --manifest-path xtask/Cargo.toml -- \
+            official verify-prepared "${PREPARED_DIR}"
+
+      - name: Sign plugin release assets
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          PLUGIN_SPEC="${TAG#plugins/}"
+          PLUGIN_ID="${PLUGIN_SPEC%/v*}"
+          PREPARED_DIR="dist/catalog-v2/${PLUGIN_ID}"
+          for asset in plugin.wasm.zst plugin.manifest.json catalog-v2.json catalog-v2.min.json.zst; do
+            cosign sign-blob \
+              --yes \
+              --bundle "${PREPARED_DIR}/${asset}.bundle" \
+              "${PREPARED_DIR}/${asset}"
+          done
+
+      - name: Publish plugin release and child catalog
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          PLUGIN_SPEC="${TAG#plugins/}"
+          PLUGIN_ID="${PLUGIN_SPEC%/v*}"
+          VERSION="${TAG##*/v}"
+          PREPARED_DIR="dist/catalog-v2/${PLUGIN_ID}"
+          CATALOG_TAG="plugins/${PLUGIN_ID}/catalog"
+
+          gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 || \
+            gh release create "${TAG}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --title "${PLUGIN_ID} ${VERSION}" \
+              --target "${GITHUB_SHA}" \
+              --notes "Scryer plugin distribution assets."
+          gh release upload "${TAG}" \
+            "${PREPARED_DIR}/plugin.wasm.zst" \
+            "${PREPARED_DIR}/plugin.wasm.zst.bundle" \
+            "${PREPARED_DIR}/plugin.manifest.json" \
+            "${PREPARED_DIR}/plugin.manifest.json.bundle" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --clobber
+
+          gh release view "${CATALOG_TAG}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 || \
+            gh release create "${CATALOG_TAG}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --title "${PLUGIN_ID} plugin catalog" \
+              --target "${GITHUB_SHA}" \
+              --notes "Scryer plugin child catalog assets."
+          gh release upload "${CATALOG_TAG}" \
+            "${PREPARED_DIR}/catalog-v2.json" \
+            "${PREPARED_DIR}/catalog-v2.json.bundle" \
+            "${PREPARED_DIR}/catalog-v2.min.json.zst" \
+            "${PREPARED_DIR}/catalog-v2.min.json.zst.bundle" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --clobber
+
+      - name: Prepare and sign central catalog
+        run: |
+          set -euo pipefail
+          cargo run --locked --manifest-path xtask/Cargo.toml -- \
+            catalog prepare-v2 --out dist/catalog-v2
+          for asset in catalog-v2.json catalog-v2.min.json.zst; do
+            cosign sign-blob \
+              --yes \
+              --bundle "dist/catalog-v2/${asset}.bundle" \
+              "dist/catalog-v2/${asset}"
+          done
+
+      - name: Publish central catalog
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release view "catalog/v2" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 || \
+            gh release create "catalog/v2" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --title "Scryer plugin central catalog v2" \
+              --target "${GITHUB_SHA}" \
+              --notes "Scryer plugin central catalog assets."
+          gh release upload "catalog/v2" \
+            "dist/catalog-v2/catalog-v2.json" \
+            "dist/catalog-v2/catalog-v2.json.bundle" \
+            "dist/catalog-v2/catalog-v2.min.json.zst" \
+            "dist/catalog-v2/catalog-v2.min.json.zst.bundle" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --clobber

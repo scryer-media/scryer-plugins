@@ -11,7 +11,8 @@ semver = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
-scryer-plugin-sdk = { path = "../../scryer/crates/scryer-plugin-sdk" }
+blake3 = "1"
+scryer-plugin-sdk = "1.0.0"
 tempfile = "3"
 toml_edit = "0.22"
 extism = "1.13"

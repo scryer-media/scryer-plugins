@@ -13,8 +13,20 @@ For humans and agents alike:
 
 Operational rules:
 
-- `registry.json` is authoritative for published plugin metadata
+- `registry.json` is legacy-only for pre-0.13.2/local flows and must not be
+  mutated by the catalog-v2 release path
+- `catalog-v2.json`, one-plugin child catalogs, and per-release manifests are
+  the 0.13.2+ runtime distribution contract
+- plugin crates and xtask move to the published `scryer-plugin-sdk` crate
+  after the SDK release has landed on crates.io; do not add new sibling
+  `../scryer` path dependencies after that cutover
+- SDK dependency bumps are explicit maintainer actions via
+  `cargo xtask sdk bump <version>` after the SDK crate has been published
+- release tags are split by product: Scryer app tags use `scryer-v*`, the SDK
+  uses `plugin-sdk-v*`, and plugin artifacts use `plugins/<plugin-id>/v*`
 - plugin releases append immutable `releases[]` entries instead of overwriting one flat row
-- built-in plugin families may publish downloadable overrides from this repo; bundled Scryer artifacts remain a separate host release decision
-- wasm artifacts in `dist/` must match the URLs and SHA-256 hashes recorded in the registry
+- Scryer owns built-in pinning; this repo can publish official plugins, but it
+  no longer declares built-in candidates
+- release artifacts are optimized with `wasm-opt -Oz`, compressed with
+  `zstd -10`, hashed with BLAKE3, and signed with cosign keyless bundles
 - new automation belongs in xtask rather than ad hoc shell or Python helpers
