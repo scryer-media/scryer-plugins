@@ -1,6 +1,6 @@
 [package]
 name = "whisper-subtitle-provider"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 
 [lib]
@@ -9,6 +9,6 @@ crate-type = ["cdylib"]
 [dependencies]
 base64 = "0.22"
 extism-pdk = "1.4"
-scryer-plugin-sdk = { path = "../../../scryer/crates/scryer-plugin-sdk" }
+scryer-plugin-sdk = "1.0.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

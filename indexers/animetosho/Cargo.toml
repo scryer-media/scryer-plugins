@@ -1,6 +1,6 @@
 [package]
 name = "animetosho-indexer"
-version = "0.3.5"
+version = "0.3.6"
 edition = "2021"
 
 [lib]
@@ -8,6 +8,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 extism-pdk = "1.4"
-scryer-plugin-sdk = { path = "../../../scryer/crates/scryer-plugin-sdk" }
+scryer-plugin-sdk = "1.0.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
