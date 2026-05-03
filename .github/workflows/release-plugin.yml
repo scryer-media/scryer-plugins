@@ -60,7 +60,7 @@ jobs:
               printf '%s\n' "${plugin_spec%/v*}"
             done < selected-plugin-tags.txt | sort -u
           )
-          ./target/debug/xtask official prefetch "${plugin_ids[@]}"
+          ./xtask/target/debug/xtask official prefetch "${plugin_ids[@]}"
 
       - name: Prepare sign and publish selected plugin assets
         env:
@@ -92,12 +92,12 @@ jobs:
               echo "No existing child catalog found for ${plugin_id}; preparing first catalog."
             fi
 
-            ./target/debug/xtask official prepare "${plugin_id}" \
+            ./xtask/target/debug/xtask official prepare "${plugin_id}" \
               --version "${version}" \
               --out "${prepared_dir}" \
               "${existing_args[@]}"
 
-            ./target/debug/xtask official verify-prepared "${prepared_dir}"
+            ./xtask/target/debug/xtask official verify-prepared "${prepared_dir}"
 
             for asset in plugin.wasm.zst plugin.manifest.json catalog-v2.json catalog-v2.min.json.zst; do
               cosign sign-blob \
@@ -141,7 +141,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          ./target/debug/xtask catalog prepare-v2 --out dist/catalog-v2
+          ./xtask/target/debug/xtask catalog prepare-v2 --out dist/catalog-v2
           for asset in catalog-v2.json catalog-v2.min.json.zst; do
             cosign sign-blob \
               --yes \
