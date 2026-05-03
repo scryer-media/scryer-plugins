@@ -2,6 +2,7 @@
 name = "torrent-rss-indexer"
 version = "0.1.6"
 edition = "2021"
+license = "GPL-3.0-only"
 
 [lib]
 crate-type = ["cdylib"]
@@ -10,6 +11,6 @@ crate-type = ["cdylib"]
 base64 = "0.22"
 extism-pdk = "1.4"
 quick-xml = "0.38"
-scryer-plugin-sdk = "1.0.0"
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", tag = "plugin-sdk-v1.5.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

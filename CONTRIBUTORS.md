@@ -32,6 +32,9 @@ Official plugin publishing is a two-tier tag flow:
 - the same command then creates one signed `plugins/release/*` tag last
 - GitHub Actions watches only the repo release tag and publishes the plugin tags
   that point at that exact commit
+- each published plugin version release includes its child catalog assets next
+  to `plugin.wasm.zst` and `plugin.manifest.json`; first-party plugins do not
+  get a separate catalog-only GitHub Release
 
 ## Plugin SDK v1
 
@@ -39,8 +42,8 @@ First-party and third-party plugins must use the SDK-v1 ABI from
 `scryer-plugin-sdk`. Do not copy protocol structs into plugin crates.
 
 The SDK is versioned and published independently from the Scryer application.
-After `scryer-plugin-sdk = "1.0.0"` has been published to crates.io,
-maintainers should run `cargo xtask sdk bump 1.0.0` to switch plugin crates
+After `scryer-plugin-sdk = "1.5.0"` has been published to crates.io,
+maintainers should run `cargo xtask sdk bump 1.5.0` to switch plugin crates
 from local transition paths to the published SDK line and refresh lockfiles.
 
 Required exports are validated from the plugin descriptor:

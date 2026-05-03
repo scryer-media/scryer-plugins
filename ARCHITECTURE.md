@@ -18,6 +18,9 @@ Operational rules:
   mutated by the catalog-v2 release path
 - `catalog-v2.json`, one-plugin child catalogs, and per-release manifests are
   the 0.13.2+ runtime distribution contract
+- official plugin child catalog assets ship in the same GitHub Release as the
+  matching `plugins/<plugin-id>/v*` artifact bundle; do not create a second
+  `plugins/<plugin-id>/catalog` release for first-party plugins
 - plugin crates and xtask move to the published `scryer-plugin-sdk` crate
   after the SDK release has landed on crates.io; do not add new sibling
   `../scryer` path dependencies after that cutover

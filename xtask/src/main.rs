@@ -1236,6 +1236,19 @@ fn locate_plugin_dir(ctx: &TaskContext, plugin_id: &str, provider_type: &str) ->
     )
 }
 
+fn registry_plugin_dir(ctx: &TaskContext, plugin: &RegistryPlugin) -> Result<PathBuf> {
+    plugin
+        .normalized_releases()
+        .last()
+        .and_then(|release| release.source_url.as_deref())
+        .map(|source_url| plugin_source_dir(ctx, &plugin.id, source_url))
+        .transpose()?
+        .map_or_else(
+            || locate_plugin_dir(ctx, &plugin.id, &plugin.provider_type),
+            Ok,
+        )
+}
+
 fn package_version(manifest_path: &Path) -> Result<String> {
     let document = fs::read_to_string(manifest_path)?
         .parse::<DocumentMut>()
@@ -1465,16 +1478,7 @@ fn release_impact_for_plugin(ctx: &TaskContext, plugin: &RegistryPlugin) -> Resu
         return Ok(ReleaseImpact::ArtifactWide(reason.to_string()));
     }
 
-    let plugin_dir = plugin
-        .normalized_releases()
-        .last()
-        .and_then(|release| release.source_url.as_deref())
-        .map(|source_url| plugin_source_dir(ctx, &plugin.id, source_url))
-        .transpose()?
-        .map_or_else(
-            || locate_plugin_dir(ctx, &plugin.id, &plugin.provider_type),
-            Ok,
-        )?;
+    let plugin_dir = registry_plugin_dir(ctx, plugin)?;
     let plugin_dir = path_relative_to_repo(ctx, &plugin_dir)?;
     if changed.iter().any(|path| path_is_under(path, &plugin_dir)) {
         return Ok(ReleaseImpact::PluginChanged);
@@ -2605,10 +2609,18 @@ fn run_doctor(ctx: &TaskContext) -> Result<()> {
         }
     }
     require_wasm_target(ctx)?;
-    match current_sdk_dependency_version(ctx)
-        .and_then(|version| ensure_published_sdk_version(ctx, &version))
-    {
-        Ok(()) => ok("published scryer-plugin-sdk dependency is available"),
+    match current_sdk_dependency(ctx) {
+        Ok(SdkDependency::Published(version)) => {
+            match ensure_published_sdk_version(ctx, &version) {
+                Ok(()) => ok("published scryer-plugin-sdk dependency is available"),
+                Err(error) => warn(error.to_string()),
+            }
+        }
+        Ok(SdkDependency::GitTag { tag, version }) => {
+            ok(format!(
+                "temporary git-sourced scryer-plugin-sdk dependency active ({tag} -> {version})"
+            ));
+        }
         Err(error) => warn(error.to_string()),
     }
     ok(format!(
@@ -2694,20 +2706,51 @@ fn run_sdk_bump(ctx: &TaskContext, version: &str) -> Result<()> {
     Ok(())
 }
 
-fn current_sdk_dependency_version(ctx: &TaskContext) -> Result<String> {
+enum SdkDependency {
+    Published(String),
+    GitTag { tag: String, version: String },
+}
+
+fn current_sdk_dependency(ctx: &TaskContext) -> Result<SdkDependency> {
     let manifest_path = ctx.repo_root.join("xtask/Cargo.toml");
     let document = fs::read_to_string(&manifest_path)?
         .parse::<DocumentMut>()
         .with_context(|| format!("failed to parse {}", manifest_path.display()))?;
-    let dependency = document["dependencies"]["scryer-plugin-sdk"]
-        .as_str()
-        .ok_or_else(|| anyhow!("xtask/Cargo.toml must depend on scryer-plugin-sdk by version"))?;
-    Ok(dependency.trim().to_string())
+    let dependency = &document["dependencies"]["scryer-plugin-sdk"];
+    if let Some(version) = dependency.as_str() {
+        return Ok(SdkDependency::Published(version.trim().to_string()));
+    }
+    let git = dependency["git"].as_str();
+    let tag = dependency["tag"].as_str();
+    match (git, tag) {
+        (Some(_), Some(tag)) => {
+            let version = tag
+                .trim()
+                .strip_prefix("plugin-sdk-v")
+                .ok_or_else(|| {
+                    anyhow!(
+                        "xtask/Cargo.toml temporary scryer-plugin-sdk git dependency must use a plugin-sdk-v<semver> tag"
+                    )
+                })?
+                .to_string();
+            Version::parse(&version)
+                .with_context(|| format!("invalid SDK version derived from git tag {tag}"))?;
+            Ok(SdkDependency::GitTag {
+                tag: tag.trim().to_string(),
+                version,
+            })
+        }
+        _ => Err(anyhow!(
+            "xtask/Cargo.toml must depend on scryer-plugin-sdk by version or plugin-sdk-v<semver> git tag"
+        )),
+    }
 }
 
 fn ensure_current_sdk_dependency_is_published(ctx: &TaskContext) -> Result<()> {
-    let version = current_sdk_dependency_version(ctx)?;
-    ensure_published_sdk_version(ctx, &version)
+    match current_sdk_dependency(ctx)? {
+        SdkDependency::Published(version) => ensure_published_sdk_version(ctx, &version),
+        SdkDependency::GitTag { .. } => Ok(()),
+    }
 }
 
 fn ensure_published_sdk_version(ctx: &TaskContext, version: &str) -> Result<()> {
@@ -2779,8 +2822,9 @@ fn official_plugin_child_catalog_url(plugin_id: &str, version: &str) -> String {
 
 fn plugin_source_repo(plugin: &RegistryPlugin) -> String {
     plugin
-        .source_url
-        .clone()
+        .normalized_releases()
+        .last()
+        .and_then(|release| release.source_url.clone())
         .unwrap_or_else(|| format!("{TREE_REPO_PREFIX}{}", plugin.id))
 }
 
@@ -2971,7 +3015,7 @@ fn prepare_official_release(
                 args.plugin_id
             )
         })?;
-    let plugin_dir = locate_plugin_dir(ctx, &plugin.id, &plugin.provider_type)?;
+    let plugin_dir = registry_plugin_dir(ctx, plugin)?;
     let wasm = build_plugin_wasm(ctx, &plugin_dir)?;
     let dist = args
         .out
@@ -3053,7 +3097,7 @@ fn run_official_prefetch(ctx: &TaskContext, args: OfficialPrefetchArgs) -> Resul
             .iter()
             .find(|plugin| plugin.id == plugin_id)
             .ok_or_else(|| anyhow!("plugin '{plugin_id}' not found in registry.json"))?;
-        let plugin_dir = locate_plugin_dir(ctx, &plugin.id, &plugin.provider_type)?;
+        let plugin_dir = registry_plugin_dir(ctx, plugin)?;
         prefetch_plugin_dependencies(ctx, &plugin_dir)?;
     }
 
@@ -3107,7 +3151,7 @@ fn run_official_verify_prepared(ctx: &TaskContext, dir: &Path) -> Result<()> {
 
 fn catalog_entry_from_registry(ctx: &TaskContext, plugin: &RegistryPlugin) -> Result<CatalogV2Entry> {
     let source_repo = plugin_source_repo(plugin);
-    let plugin_dir = locate_plugin_dir(ctx, &plugin.id, &plugin.provider_type)?;
+    let plugin_dir = registry_plugin_dir(ctx, plugin)?;
     let version = plugin_crate_version(&plugin_dir)?;
     Ok(CatalogV2Entry {
         id: plugin.id.clone(),
