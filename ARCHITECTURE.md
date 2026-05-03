@@ -5,7 +5,8 @@ This repository is the source of truth for distributable Scryer plugin artifacts
 For humans and agents alike:
 
 - `cargo xtask` is the canonical interface for repo automation
-- `cargo xtask release <plugin-id>` is the release path
+- `cargo xtask release-changed` is the canonical official release path
+- `cargo xtask release <plugin-id>` remains available for one-off legacy release prep
 - `cargo xtask registry validate` is the registry integrity check
 - `cargo xtask plugin validate <path>` is the SDK-v1 ABI check for a plugin crate
 - `cargo xtask plugin new <kind> <name>` is the scaffold path for new plugin crates
@@ -23,7 +24,10 @@ Operational rules:
 - SDK dependency bumps are explicit maintainer actions via
   `cargo xtask sdk bump <version>` after the SDK crate has been published
 - release tags are split by product: Scryer app tags use `scryer-v*`, the SDK
-  uses `plugin-sdk-v*`, and plugin artifacts use `plugins/<plugin-id>/v*`
+  uses `plugin-sdk-v*`, plugin version tags use `plugins/<plugin-id>/v*`, and
+  the watched orchestration tag family is `plugins/release/*`
+- GitHub Actions must only watch `plugins/release/*`; per-plugin version tags
+  are inventory for the batch publisher, not direct workflow triggers
 - plugin releases append immutable `releases[]` entries instead of overwriting one flat row
 - Scryer owns built-in pinning; this repo can publish official plugins, but it
   no longer declares built-in candidates

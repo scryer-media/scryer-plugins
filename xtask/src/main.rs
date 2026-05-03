@@ -20,6 +20,7 @@ use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus};
+use std::time::{SystemTime, UNIX_EPOCH};
 use toml_edit::{DocumentMut, value};
 
 const BLUE: &str = "\x1b[0;34m";
@@ -37,6 +38,7 @@ const WASM_OPT_LEVEL: &str = "-Oz";
 const ZSTD_LEVEL: &str = "-10";
 const OFFICIAL_GITHUB_REPO: &str = "scryer-media/scryer-plugins";
 const OFFICIAL_RELEASE_WORKFLOW: &str = ".github/workflows/release-plugin.yml";
+const REPO_RELEASE_TAG_PREFIX: &str = "plugins/release/";
 const CATALOG_PRETTY_JSON: &str = "catalog-v2.json";
 const CATALOG_MINIFIED_JSON: &str = "catalog-v2.min.json";
 const CATALOG_MINIFIED_ZST: &str = "catalog-v2.min.json.zst";
@@ -210,6 +212,7 @@ struct OfficialArgs {
 enum OfficialCommand {
     Release(OfficialReleaseArgs),
     Prepare(OfficialPrepareArgs),
+    Prefetch(OfficialPrefetchArgs),
     VerifyPrepared(OfficialVerifyPreparedArgs),
 }
 
@@ -233,6 +236,11 @@ struct OfficialPrepareArgs {
     out: Option<PathBuf>,
     #[arg(long)]
     existing_child_catalog: Option<PathBuf>,
+}
+
+#[derive(Args)]
+struct OfficialPrefetchArgs {
+    plugin_ids: Vec<String>,
 }
 
 #[derive(Args)]
@@ -581,6 +589,7 @@ fn main() -> Result<()> {
         Commands::Official(args) => match args.command {
             OfficialCommand::Release(args) => run_official_release(&ctx, args),
             OfficialCommand::Prepare(args) => run_official_prepare(&ctx, args),
+            OfficialCommand::Prefetch(args) => run_official_prefetch(&ctx, args),
             OfficialCommand::VerifyPrepared(args) => run_official_verify_prepared(&ctx, &args.dir),
         },
         Commands::Catalog(args) => match args.command {
@@ -1349,6 +1358,10 @@ fn release_tag_prefix(plugin_id: &str) -> String {
     format!("plugins/{plugin_id}/v")
 }
 
+fn repo_release_tag_prefix() -> &'static str {
+    REPO_RELEASE_TAG_PREFIX
+}
+
 fn legacy_release_tag_prefix(plugin_id: &str) -> String {
     format!("{plugin_id}-v")
 }
@@ -1366,6 +1379,23 @@ fn latest_plugin_release_tag(ctx: &TaskContext, plugin_id: &str) -> Result<Optio
         .filter_map(|tag| release_tag_version(plugin_id, tag).map(|version| (version, tag)))
         .max_by(|(left, _), (right, _)| left.cmp(right))
         .map(|(_, tag)| tag.to_string()))
+}
+
+fn head_short_sha(ctx: &TaskContext) -> Result<String> {
+    git_capture(ctx, &["rev-parse", "--short=12", "HEAD"]).map(|value| value.trim().to_string())
+}
+
+fn repo_release_tag_name(ctx: &TaskContext) -> Result<String> {
+    let unix_seconds = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .context("system clock is before UNIX_EPOCH")?
+        .as_secs();
+    Ok(format!(
+        "{}{}-{}",
+        repo_release_tag_prefix(),
+        unix_seconds,
+        head_short_sha(ctx)?
+    ))
 }
 
 fn path_relative_to_repo(ctx: &TaskContext, path: &Path) -> Result<String> {
@@ -1632,6 +1662,19 @@ fn run_tag_only_release_targets(
         ok(format!("Tag {} created", target.tag_name));
     }
 
+    let release_tag = repo_release_tag_name(ctx)?;
+    step(format!("Creating signed release trigger tag {release_tag}"));
+    let mut release_tag_command = ctx.command_in("git", &ctx.repo_root);
+    release_tag_command.args([
+        "tag",
+        "-s",
+        &release_tag,
+        "-m",
+        &format!("Release trigger for {}", release_commit_message(&targets)),
+    ]);
+    run_checked(&mut release_tag_command)?;
+    ok(format!("Tag {release_tag} created"));
+
     step("Pushing to origin");
     let mut push_branch = ctx.command_in("git", &ctx.repo_root);
     push_branch.args(["push", "origin", &branch]);
@@ -1642,12 +1685,21 @@ fn run_tag_only_release_targets(
         push_tags.arg(&target.tag_name);
     }
     run_checked(&mut push_tags)?;
-    ok(format!("Pushed {} and {} tag(s)", branch, targets.len()));
+    let mut push_release_tag = ctx.command_in("git", &ctx.repo_root);
+    push_release_tag.args(["push", "origin", &release_tag]);
+    run_checked(&mut push_release_tag)?;
+    ok(format!(
+        "Pushed {}, {} plugin tag(s), and {}",
+        branch,
+        targets.len(),
+        release_tag
+    ));
 
     println!(
         "\n{GREEN}{BOLD}Released {} plugin tag(s) without touching legacy registry artifacts{RESET}",
         targets.len()
     );
+    println!("   Release batch tag: {release_tag}");
     Ok(())
 }
 
@@ -1965,6 +2017,29 @@ fn refresh_lockfile(ctx: &TaskContext, plugin_dir: &Path) -> Result<()> {
     command.args(["generate-lockfile", "--offline"]);
     run_checked(&mut command)
         .with_context(|| format!("failed to refresh lockfile for {}", plugin_dir.display()))
+}
+
+fn prefetch_plugin_dependencies(ctx: &TaskContext, plugin_dir: &Path) -> Result<()> {
+    let lockfile = plugin_dir.join("Cargo.lock");
+    if !lockfile.is_file() {
+        bail!(
+            "missing lockfile for {}; run cargo xtask release-changed locally before publishing",
+            plugin_dir.display()
+        );
+    }
+
+    step(format!(
+        "Prefetching dependencies for {}",
+        plugin_dir.display()
+    ));
+    let mut command = repo_cargo_command_in(ctx, plugin_dir)?;
+    command.args(["fetch", "--locked", "--target", WASM_TARGET]);
+    run_checked(&mut command).with_context(|| {
+        format!(
+            "failed to prefetch dependencies for {}",
+            plugin_dir.display()
+        )
+    })
 }
 
 fn build_plugin_wasm(ctx: &TaskContext, plugin_dir: &Path) -> Result<PathBuf> {
@@ -2951,6 +3026,31 @@ fn run_official_prepare(ctx: &TaskContext, args: OfficialPrepareArgs) -> Result<
     Ok(())
 }
 
+fn run_official_prefetch(ctx: &TaskContext, args: OfficialPrefetchArgs) -> Result<()> {
+    if args.plugin_ids.is_empty() {
+        bail!("official prefetch requires at least one plugin id");
+    }
+
+    let registry = load_registry(ctx)?;
+    let mut selected = BTreeSet::new();
+    for plugin_id in args.plugin_ids {
+        if !selected.insert(plugin_id.clone()) {
+            continue;
+        }
+
+        let plugin = registry
+            .plugins
+            .iter()
+            .find(|plugin| plugin.id == plugin_id)
+            .ok_or_else(|| anyhow!("plugin '{plugin_id}' not found in registry.json"))?;
+        let plugin_dir = locate_plugin_dir(ctx, &plugin.id, &plugin.provider_type)?;
+        prefetch_plugin_dependencies(ctx, &plugin_dir)?;
+    }
+
+    ok("prefetched plugin release dependencies");
+    Ok(())
+}
+
 fn run_official_verify_prepared(ctx: &TaskContext, dir: &Path) -> Result<()> {
     step(format!(
         "Verifying prepared release assets in {}",
@@ -3411,6 +3511,10 @@ mod tests {
             Some(Version::new(1, 2, 3))
         );
         assert_eq!(release_tag_version("email", "plugins/other/v1.2.3"), None);
+        assert_eq!(
+            release_tag_version("email", "plugins/release/1746226197-f74cd0e"),
+            None
+        );
     }
 
     #[test]

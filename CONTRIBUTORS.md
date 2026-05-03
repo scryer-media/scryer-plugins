@@ -25,6 +25,14 @@ Enable your terminal under `System Settings -> Privacy & Security -> Developer T
 
 Use `cargo xtask` as the canonical interface for repo automation. See [ARCHITECTURE.md](/Users/jeremy/dev/scryer-media/scryer-plugins/ARCHITECTURE.md) for release and registry workflow rules.
 
+Official plugin publishing is a two-tier tag flow:
+
+- `cargo xtask release-changed` creates only the changed `plugins/<plugin-id>/v*`
+  version tags
+- the same command then creates one signed `plugins/release/*` tag last
+- GitHub Actions watches only the repo release tag and publishes the plugin tags
+  that point at that exact commit
+
 ## Plugin SDK v1
 
 First-party and third-party plugins must use the SDK-v1 ABI from
