@@ -1,0 +1,13 @@
+{
+  "schema_version": "scryer.plugin.v1",
+  "id": "dognzb",
+  "plugin_type": "usenet_indexer",
+  "provider_type": "dognzb",
+  "version": "0.1.2",
+  "publisher": "scryer",
+  "artifact": "plugin.wasm.zst",
+  "compression": "zstd",
+  "wasm_digest": "blake3:b4de646cbb3a9e2bba4dc468285b6b16aeddab89968e53bb59d6e2cc3c6575d3",
+  "artifact_digest": "blake3:0d3981776d242d4f15a6907c567bc006f2e1b48ac3e1e504848721b1bcce8bf4",
+  "signature": "plugin.wasm.zst.bundle"
+}

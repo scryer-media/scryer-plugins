@@ -1,0 +1,11 @@
+plugin	plugin_path	raw_bytes	oz_bytes	zst10_bytes
+nzbgeek\tindexers/nzbgeek\t612078\t421153\t154642
+dognzb\tindexers/dognzb\t610283\t420167\t154566
+newznab\tindexers/newznab\t604962\t417615\t153257
+torznab\tindexers/torznab\t643340\t448336\t161934
+torrent-rss\tindexers/torrent-rss\t494447\t356438\t134451
+animetosho\tindexers/animetosho\t454751\t319772\t123269
+webhook\tnotifications/webhook\t542367\t385059\t138528
+jellyfin\tnotifications/jellyfin\t508808\t366863\t137008
+email\tnotifications/email\t599300\t418287\t153878
+qbittorrent\tdownload_clients/qbittorrent\t572439\t406587\t150687

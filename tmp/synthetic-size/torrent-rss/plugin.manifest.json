@@ -1,0 +1,13 @@
+{
+  "schema_version": "scryer.plugin.v1",
+  "id": "torrent-rss",
+  "plugin_type": "torrent_indexer",
+  "provider_type": "torrent_rss",
+  "version": "0.1.6",
+  "publisher": "scryer",
+  "artifact": "plugin.wasm.zst",
+  "compression": "zstd",
+  "wasm_digest": "blake3:987862ad608bcdbbb5d93da0eef5835f8e0c4c01ef7741152cc4dec8257db455",
+  "artifact_digest": "blake3:9a897fefdd43588fb69447b35adaa484dbf956e654f44ab6a9441ae9fdfcac1e",
+  "signature": "plugin.wasm.zst.bundle"
+}

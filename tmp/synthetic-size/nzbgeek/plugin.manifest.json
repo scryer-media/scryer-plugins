@@ -1,0 +1,13 @@
+{
+  "schema_version": "scryer.plugin.v1",
+  "id": "nzbgeek",
+  "plugin_type": "usenet_indexer",
+  "provider_type": "nzbgeek",
+  "version": "0.2.5",
+  "publisher": "scryer",
+  "artifact": "plugin.wasm.zst",
+  "compression": "zstd",
+  "wasm_digest": "blake3:31b760b665c4af03289e2c4b5683e83bea23b3144e2474cb457618cccf02bdf1",
+  "artifact_digest": "blake3:8e9008895480eb8e719d0240b1ffee7e0fc2b57dad35836f588206731b3bf4e8",
+  "signature": "plugin.wasm.zst.bundle"
+}

@@ -1,0 +1,29 @@
+{
+  "schema_version": "scryer.plugin.child_catalog.v2",
+  "id": "jellyfin",
+  "name": "Jellyfin",
+  "description": "Targeted Jellyfin library refresh notifications using mapped media paths and provider-id fallbacks",
+  "plugin_type": "notification",
+  "provider_type": "jellyfin",
+  "publisher": "scryer",
+  "support_tier": "official",
+  "docs_url": "https://github.com/scryer-media/scryer-plugins/tree/main/jellyfin",
+  "source_repo": "https://github.com/scryer-media/scryer-plugins/tree/main/jellyfin",
+  "releases": [
+    {
+      "version": "0.1.0",
+      "sdk_constraint": ">=1.3.0, <1.4.0",
+      "artifact_manifest_url": "https://github.com/scryer-media/scryer-plugins/releases/download/plugins%2Fjellyfin%2Fv0.1.0/plugin.manifest.json"
+    },
+    {
+      "version": "0.1.1",
+      "sdk_constraint": ">=1.4.0, <1.5.0",
+      "artifact_manifest_url": "https://github.com/scryer-media/scryer-plugins/releases/download/plugins%2Fjellyfin%2Fv0.1.1/plugin.manifest.json"
+    },
+    {
+      "version": "0.1.2",
+      "sdk_constraint": ">=1.0.0, <1.1.0",
+      "artifact_manifest_url": "https://github.com/scryer-media/scryer-plugins/releases/download/plugins%2Fjellyfin%2Fv0.1.2/plugin.manifest.json"
+    }
+  ]
+}

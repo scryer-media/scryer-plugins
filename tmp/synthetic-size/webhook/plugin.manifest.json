@@ -1,0 +1,13 @@
+{
+  "schema_version": "scryer.plugin.v1",
+  "id": "webhook",
+  "plugin_type": "notification",
+  "provider_type": "webhook",
+  "version": "0.1.3",
+  "publisher": "scryer",
+  "artifact": "plugin.wasm.zst",
+  "compression": "zstd",
+  "wasm_digest": "blake3:c874c302b69c5d8bdd7209d34361b470c09aa283d0bd4307f8b470b9087a1c45",
+  "artifact_digest": "blake3:1686f558245c2593bcf2a1734758c53d66d6da8018f5ff72215e145f3eb95b93",
+  "signature": "plugin.wasm.zst.bundle"
+}

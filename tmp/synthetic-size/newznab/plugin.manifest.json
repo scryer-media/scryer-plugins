@@ -1,0 +1,13 @@
+{
+  "schema_version": "scryer.plugin.v1",
+  "id": "newznab",
+  "plugin_type": "usenet_indexer",
+  "provider_type": "newznab",
+  "version": "0.2.4",
+  "publisher": "scryer",
+  "artifact": "plugin.wasm.zst",
+  "compression": "zstd",
+  "wasm_digest": "blake3:df27e8460ff4ec990286567ef19049161c9b66963960f38a6b9de883990cb5be",
+  "artifact_digest": "blake3:243c3757a1660c6ee8ebe5c285f27a506686d184b874c14f8926ac17d57342d0",
+  "signature": "plugin.wasm.zst.bundle"
+}

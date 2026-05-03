@@ -1236,6 +1236,20 @@ fn locate_plugin_dir(ctx: &TaskContext, plugin_id: &str, provider_type: &str) ->
     )
 }
 
+fn package_version(manifest_path: &Path) -> Result<String> {
+    let document = fs::read_to_string(manifest_path)?
+        .parse::<DocumentMut>()
+        .with_context(|| format!("failed to parse {}", manifest_path.display()))?;
+    let version = document["package"]["version"]
+        .as_str()
+        .ok_or_else(|| anyhow!("{} must define package.version", manifest_path.display()))?;
+    Ok(version.trim().to_string())
+}
+
+fn plugin_crate_version(plugin_dir: &Path) -> Result<String> {
+    package_version(&plugin_dir.join("Cargo.toml"))
+}
+
 fn source_url_for_plugin_dir(ctx: &TaskContext, plugin_dir: &Path) -> Result<String> {
     let relative = plugin_dir.strip_prefix(&ctx.repo_root).with_context(|| {
         format!(
@@ -2747,10 +2761,6 @@ fn official_plugin_release_tag(plugin_id: &str, version: &str) -> String {
     format!("plugins/{plugin_id}/v{version}")
 }
 
-fn official_plugin_catalog_tag(plugin_id: &str) -> String {
-    format!("plugins/{plugin_id}/catalog")
-}
-
 fn official_plugin_manifest_url(plugin_id: &str, version: &str) -> String {
     github_release_asset_url(
         OFFICIAL_GITHUB_REPO,
@@ -2759,10 +2769,10 @@ fn official_plugin_manifest_url(plugin_id: &str, version: &str) -> String {
     )
 }
 
-fn official_plugin_child_catalog_url(plugin_id: &str) -> String {
+fn official_plugin_child_catalog_url(plugin_id: &str, version: &str) -> String {
     github_release_asset_url(
         OFFICIAL_GITHUB_REPO,
-        &official_plugin_catalog_tag(plugin_id),
+        &official_plugin_release_tag(plugin_id, version),
         CATALOG_MINIFIED_ZST,
     )
 }
@@ -3095,9 +3105,11 @@ fn run_official_verify_prepared(ctx: &TaskContext, dir: &Path) -> Result<()> {
     Ok(())
 }
 
-fn catalog_entry_from_registry(plugin: &RegistryPlugin) -> CatalogV2Entry {
+fn catalog_entry_from_registry(ctx: &TaskContext, plugin: &RegistryPlugin) -> Result<CatalogV2Entry> {
     let source_repo = plugin_source_repo(plugin);
-    CatalogV2Entry {
+    let plugin_dir = locate_plugin_dir(ctx, &plugin.id, &plugin.provider_type)?;
+    let version = plugin_crate_version(&plugin_dir)?;
+    Ok(CatalogV2Entry {
         id: plugin.id.clone(),
         name: plugin.name.clone(),
         description: plugin.description.clone(),
@@ -3107,12 +3119,12 @@ fn catalog_entry_from_registry(plugin: &RegistryPlugin) -> CatalogV2Entry {
         support_tier: "official".to_string(),
         docs_url: source_repo.clone(),
         source_repo,
-        child_catalog_url: official_plugin_child_catalog_url(&plugin.id),
+        child_catalog_url: official_plugin_child_catalog_url(&plugin.id, &version),
         required_signer: RequiredSignerV2 {
             github_repository: OFFICIAL_GITHUB_REPO.to_string(),
             github_workflow: Some(OFFICIAL_RELEASE_WORKFLOW.to_string()),
         },
-    }
+    })
 }
 
 fn run_catalog_render_v2(ctx: &TaskContext) -> Result<()> {
@@ -3122,19 +3134,17 @@ fn run_catalog_render_v2(ctx: &TaskContext) -> Result<()> {
 fn run_catalog_prepare_v2(ctx: &TaskContext, out: Option<PathBuf>) -> Result<()> {
     step("Preparing catalog-v2 assets without touching legacy registry.json");
     let registry = load_registry(ctx)?;
+    let plugins = registry
+        .plugins
+        .iter()
+        .map(|plugin| catalog_entry_from_registry(ctx, plugin))
+        .collect::<Result<Vec<_>>>()?;
     let catalog = CatalogV2 {
         schema_version: CATALOG_V2_SCHEMA.to_string(),
-        plugins: registry
-            .plugins
-            .iter()
-            .map(catalog_entry_from_registry)
-            .collect(),
+        plugins,
     };
     let dist = out.unwrap_or_else(|| ctx.repo_root.join("dist").join("catalog-v2"));
     let central_paths = write_catalog_assets(ctx, &catalog, &dist)?;
-    for plugin in &registry.plugins {
-        write_child_catalog_to_dir(ctx, plugin, None, None, &dist.join(&plugin.id))?;
-    }
     ok(format!("wrote {}", central_paths.pretty_json.display()));
     ok(format!("wrote {}", central_paths.minified_zst.display()));
     Ok(())

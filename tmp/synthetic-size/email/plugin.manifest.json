@@ -1,0 +1,13 @@
+{
+  "schema_version": "scryer.plugin.v1",
+  "id": "email",
+  "plugin_type": "notification",
+  "provider_type": "email",
+  "version": "0.1.1",
+  "publisher": "scryer",
+  "artifact": "plugin.wasm.zst",
+  "compression": "zstd",
+  "wasm_digest": "blake3:244663a1f912b9718a4d3bd98a2b8722a056130904cee9a902d95499a010400a",
+  "artifact_digest": "blake3:3e5348c8e770d299ff0a709dcbfb7e39a616289ad8c7ed3598566a4345f1d6d4",
+  "signature": "plugin.wasm.zst.bundle"
+}

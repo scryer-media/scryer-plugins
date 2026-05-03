@@ -1,0 +1,13 @@
+{
+  "schema_version": "scryer.plugin.v1",
+  "id": "animetosho",
+  "plugin_type": "indexer",
+  "provider_type": "animetosho",
+  "version": "0.3.6",
+  "publisher": "scryer",
+  "artifact": "plugin.wasm.zst",
+  "compression": "zstd",
+  "wasm_digest": "blake3:c956a57f8636df65b841fa7e5e93e5b6c500a28e6e8ef08c4915b496b0c09501",
+  "artifact_digest": "blake3:b7526879a3cb189c83c7c7d11e38d71a69c9894e1f0bb0fd21e1f4fff9d256ea",
+  "signature": "plugin.wasm.zst.bundle"
+}

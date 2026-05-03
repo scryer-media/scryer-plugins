@@ -1,0 +1,13 @@
+{
+  "schema_version": "scryer.plugin.v1",
+  "id": "jellyfin",
+  "plugin_type": "notification",
+  "provider_type": "jellyfin",
+  "version": "0.1.2",
+  "publisher": "scryer",
+  "artifact": "plugin.wasm.zst",
+  "compression": "zstd",
+  "wasm_digest": "blake3:24f274ea7681195eb4ff316c617fcbac19a5064b464db13b4caf7be051f1d27b",
+  "artifact_digest": "blake3:bccfd43093cb69b9ea5f9c06c830c56d61df8fbad71df6f5a557c39fea39df6c",
+  "signature": "plugin.wasm.zst.bundle"
+}

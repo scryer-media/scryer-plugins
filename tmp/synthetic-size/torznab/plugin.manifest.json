@@ -1,0 +1,13 @@
+{
+  "schema_version": "scryer.plugin.v1",
+  "id": "torznab",
+  "plugin_type": "torrent_indexer",
+  "provider_type": "torznab",
+  "version": "0.1.4",
+  "publisher": "scryer",
+  "artifact": "plugin.wasm.zst",
+  "compression": "zstd",
+  "wasm_digest": "blake3:02c17df1d71a7619e0fa6533f4d9bb57f2e46ff40360f47f30690f816989d369",
+  "artifact_digest": "blake3:4133b9c1a730a141551b7f5d658feb456a7a10980b11a595e52bed7cd8609c22",
+  "signature": "plugin.wasm.zst.bundle"
+}

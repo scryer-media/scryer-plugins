@@ -1,0 +1,29 @@
+{
+  "schema_version": "scryer.plugin.child_catalog.v2",
+  "id": "dognzb",
+  "name": "DogNZB Indexer",
+  "description": "DogNZB-specific Newznab indexer with rating, genre, and comment metadata extraction",
+  "plugin_type": "usenet_indexer",
+  "provider_type": "dognzb",
+  "publisher": "scryer",
+  "support_tier": "official",
+  "docs_url": "https://github.com/scryer-media/scryer-plugins/tree/main/dognzb",
+  "source_repo": "https://github.com/scryer-media/scryer-plugins/tree/main/dognzb",
+  "releases": [
+    {
+      "version": "0.1.0",
+      "sdk_constraint": ">=1.0.0, <2.0.0",
+      "artifact_manifest_url": "https://github.com/scryer-media/scryer-plugins/releases/download/plugins%2Fdognzb%2Fv0.1.0/plugin.manifest.json"
+    },
+    {
+      "version": "0.1.1",
+      "sdk_constraint": ">=1.4.0, <1.5.0",
+      "artifact_manifest_url": "https://github.com/scryer-media/scryer-plugins/releases/download/plugins%2Fdognzb%2Fv0.1.1/plugin.manifest.json"
+    },
+    {
+      "version": "0.1.2",
+      "sdk_constraint": ">=1.0.0, <1.1.0",
+      "artifact_manifest_url": "https://github.com/scryer-media/scryer-plugins/releases/download/plugins%2Fdognzb%2Fv0.1.2/plugin.manifest.json"
+    }
+  ]
+}

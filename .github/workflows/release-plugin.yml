@@ -74,9 +74,15 @@ jobs:
             prepared_dir="dist/catalog-v2/${plugin_id}"
             existing_dir="existing-child-catalog/${plugin_id}"
             existing_args=()
+            previous_tag="$(
+              git tag --list "plugins/${plugin_id}/v*" --sort=-version:refname \
+                | grep -v -Fx "${tag}" \
+                | head -n1 \
+                || true
+            )"
 
             mkdir -p "${existing_dir}"
-            if gh release download "plugins/${plugin_id}/catalog" \
+            if [ -n "${previous_tag}" ] && gh release download "${previous_tag}" \
               --repo "${GITHUB_REPOSITORY}" \
               --pattern catalog-v2.min.json.zst \
               --pattern catalog-v2.min.json.zst.bundle \
@@ -117,17 +123,6 @@ jobs:
               "${prepared_dir}/plugin.wasm.zst.bundle" \
               "${prepared_dir}/plugin.manifest.json" \
               "${prepared_dir}/plugin.manifest.json.bundle" \
-              --repo "${GITHUB_REPOSITORY}" \
-              --clobber
-
-            catalog_tag="plugins/${plugin_id}/catalog"
-            gh release view "${catalog_tag}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 || \
-              gh release create "${catalog_tag}" \
-                --repo "${GITHUB_REPOSITORY}" \
-                --title "${plugin_id} plugin catalog" \
-                --target "$(git rev-parse HEAD)" \
-                --notes "Scryer plugin child catalog assets."
-            gh release upload "${catalog_tag}" \
               "${prepared_dir}/catalog-v2.json" \
               "${prepared_dir}/catalog-v2.json.bundle" \
               "${prepared_dir}/catalog-v2.min.json.zst" \

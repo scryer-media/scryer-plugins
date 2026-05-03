@@ -1,0 +1,24 @@
+{
+  "schema_version": "scryer.plugin.child_catalog.v2",
+  "id": "email",
+  "name": "Email",
+  "description": "Plaintext SMTP email notification plugin with plain, STARTTLS, and TLS delivery modes",
+  "plugin_type": "notification",
+  "provider_type": "email",
+  "publisher": "scryer",
+  "support_tier": "official",
+  "docs_url": "https://github.com/scryer-media/scryer-plugins/tree/main/email",
+  "source_repo": "https://github.com/scryer-media/scryer-plugins/tree/main/email",
+  "releases": [
+    {
+      "version": "0.1.0",
+      "sdk_constraint": ">=1.4.0, <1.5.0",
+      "artifact_manifest_url": "https://github.com/scryer-media/scryer-plugins/releases/download/plugins%2Femail%2Fv0.1.0/plugin.manifest.json"
+    },
+    {
+      "version": "0.1.1",
+      "sdk_constraint": ">=1.0.0, <1.1.0",
+      "artifact_manifest_url": "https://github.com/scryer-media/scryer-plugins/releases/download/plugins%2Femail%2Fv0.1.1/plugin.manifest.json"
+    }
+  ]
+}

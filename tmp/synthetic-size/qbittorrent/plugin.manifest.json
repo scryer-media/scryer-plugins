@@ -1,0 +1,13 @@
+{
+  "schema_version": "scryer.plugin.v1",
+  "id": "qbittorrent",
+  "plugin_type": "download_client",
+  "provider_type": "qbittorrent",
+  "version": "0.1.3",
+  "publisher": "scryer",
+  "artifact": "plugin.wasm.zst",
+  "compression": "zstd",
+  "wasm_digest": "blake3:7477db3fd3a3bf2741ed8f49ccf0405adba1326c68cdc7b0cdb810d819532a8b",
+  "artifact_digest": "blake3:64371634cbf244175ade74d633a817db076cacdb637a41964d50e73880edcbf9",
+  "signature": "plugin.wasm.zst.bundle"
+}
