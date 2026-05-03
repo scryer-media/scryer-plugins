@@ -50,39 +50,11 @@ host_fn!(socket_unsupported(_state: (); _input: String) -> String {
     )
 });
 
-struct BuiltinPluginSpec {
-    plugin_dir: &'static str,
-    artifact_name: &'static str,
-}
-
 #[derive(Clone)]
 struct RustupToolchain {
     rustup: PathBuf,
     toolchain: String,
 }
-
-const BUILTIN_PLUGINS: &[BuiltinPluginSpec] = &[
-    BuiltinPluginSpec {
-        plugin_dir: "indexers/nzbgeek",
-        artifact_name: "nzbgeek_indexer.wasm",
-    },
-    BuiltinPluginSpec {
-        plugin_dir: "indexers/newznab",
-        artifact_name: "newznab_indexer.wasm",
-    },
-    BuiltinPluginSpec {
-        plugin_dir: "indexers/animetosho",
-        artifact_name: "animetosho_indexer.wasm",
-    },
-    BuiltinPluginSpec {
-        plugin_dir: "indexers/torznab",
-        artifact_name: "torznab_indexer.wasm",
-    },
-    BuiltinPluginSpec {
-        plugin_dir: "subtitles/jimaku",
-        artifact_name: "jimaku_subtitle_provider.wasm",
-    },
-];
 
 fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -105,7 +77,6 @@ enum Commands {
     ReleaseMany(ReleaseManyArgs),
     ReleaseChanged(ReleaseChangedArgs),
     Registry(RegistryArgs),
-    Builtins(BuiltinsArgs),
     Plugin(PluginArgs),
     Sdk(SdkArgs),
     Official(OfficialArgs),
@@ -151,19 +122,6 @@ struct ReleaseManyArgs {
 struct RegistryArgs {
     #[command(subcommand)]
     command: RegistryCommand,
-}
-
-#[derive(Args)]
-struct BuiltinsArgs {
-    #[command(subcommand)]
-    command: Option<BuiltinsCommand>,
-    #[arg(long, value_name = "DIR")]
-    output_dir: Option<PathBuf>,
-}
-
-#[derive(Subcommand)]
-enum BuiltinsCommand {
-    Audit,
 }
 
 #[derive(Args)]
@@ -576,7 +534,6 @@ fn main() -> Result<()> {
         Commands::Registry(args) => match args.command {
             RegistryCommand::Validate => validate_registry(&ctx),
         },
-        Commands::Builtins(args) => run_builtins(&ctx, args),
         Commands::Plugin(args) => match args.command {
             PluginCommand::New(args) => run_plugin_new(&ctx, args),
             PluginCommand::Validate(args) => run_plugin_validate(&ctx, args),
@@ -1922,93 +1879,6 @@ fn run_release_targets(
     ok(format!("Pushed {} and {} tag(s)", branch, targets.len()));
 
     println!("\n{GREEN}{BOLD}Released {} plugin(s){RESET}", targets.len());
-    Ok(())
-}
-
-fn run_builtins(ctx: &TaskContext, args: BuiltinsArgs) -> Result<()> {
-    if let Some(BuiltinsCommand::Audit) = args.command {
-        return audit_builtins(ctx);
-    }
-
-    require_wasm_target(ctx)?;
-
-    let output_dir = args.output_dir.unwrap_or_else(|| ctx.path("dist/builtins"));
-    fs::create_dir_all(&output_dir)
-        .with_context(|| format!("failed to create {}", output_dir.display()))?;
-
-    step(format!(
-        "Building {} built-in plugin WASM artifact(s)",
-        BUILTIN_PLUGINS.len()
-    ));
-    for spec in BUILTIN_PLUGINS {
-        let plugin_dir = ctx.path(spec.plugin_dir);
-        if !plugin_dir.is_dir() {
-            bail!(
-                "built-in plugin directory missing: {}",
-                plugin_dir.display()
-            );
-        }
-
-        let built_wasm = build_plugin_wasm(ctx, &plugin_dir)
-            .with_context(|| format!("failed to build {}", spec.plugin_dir))?;
-
-        let output_wasm = output_dir.join(spec.artifact_name);
-        fs::copy(&built_wasm, &output_wasm).with_context(|| {
-            format!(
-                "failed to copy {} to {}",
-                built_wasm.display(),
-                output_wasm.display()
-            )
-        })?;
-        let sha256 = sha256_file(&output_wasm)?;
-        println!(
-            "   {} -> {} ({sha256})",
-            spec.plugin_dir,
-            output_wasm.display()
-        );
-    }
-
-    ok(format!(
-        "Copied built-in plugin artifacts to {}",
-        output_dir.display()
-    ));
-    Ok(())
-}
-
-fn audit_builtins(ctx: &TaskContext) -> Result<()> {
-    step("Auditing built-in plugin selection");
-
-    let mut artifact_names = Vec::new();
-    for spec in BUILTIN_PLUGINS {
-        if spec.plugin_dir.contains("dognzb") || spec.artifact_name.contains("dognzb") {
-            bail!("dognzb must remain downloadable-only and cannot be a built-in");
-        }
-
-        if artifact_names
-            .iter()
-            .any(|artifact_name| artifact_name == &spec.artifact_name)
-        {
-            bail!("duplicate built-in artifact name {}", spec.artifact_name);
-        }
-        artifact_names.push(spec.artifact_name);
-
-        let plugin_dir = ctx.path(spec.plugin_dir);
-        let manifest_path = plugin_dir.join("Cargo.toml");
-        if !manifest_path.is_file() {
-            bail!(
-                "built-in plugin manifest missing: {}",
-                manifest_path.display()
-            );
-        }
-        if !is_plugin_crate(&manifest_path)? {
-            bail!("built-in entry is not a plugin crate: {}", spec.plugin_dir);
-        }
-    }
-
-    ok(format!(
-        "{} built-in plugin selection(s) are valid",
-        BUILTIN_PLUGINS.len()
-    ));
     Ok(())
 }
 
