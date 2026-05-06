@@ -16,7 +16,29 @@ permissions:
   id-token: write
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_ref || github.ref }}
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
+
+      - name: Verify formatting audit and clippy
+        run: cargo run --locked --manifest-path xtask/Cargo.toml -- ci strict
+
   build-sign-release:
+    needs: [validate]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

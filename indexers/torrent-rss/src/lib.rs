@@ -423,35 +423,29 @@ fn parse_rss_feed(body: &str, preference: DownloadPreference) -> Vec<SearchResul
                     }
                 }
             }
-            Ok(Event::Empty(ref event)) => {
-                if in_item {
-                    let name = tag_name(event);
-                    if name == "enclosure" {
-                        parse_enclosure(event, &mut item);
-                    } else if name == "attr" || name.ends_with(":attr") {
-                        if let Some(pair) = parse_attr_pair(event) {
-                            item.attrs.push(pair);
-                        }
+            Ok(Event::Empty(ref event)) if in_item => {
+                let name = tag_name(event);
+                if name == "enclosure" {
+                    parse_enclosure(event, &mut item);
+                } else if name == "attr" || name.ends_with(":attr") {
+                    if let Some(pair) = parse_attr_pair(event) {
+                        item.attrs.push(pair);
                     }
                 }
             }
-            Ok(Event::Text(text)) => {
-                if in_item {
-                    apply_text(
-                        &mut item,
-                        current_tag.as_deref(),
-                        decode_text(text.as_ref()),
-                    );
-                }
+            Ok(Event::Text(text)) if in_item => {
+                apply_text(
+                    &mut item,
+                    current_tag.as_deref(),
+                    decode_text(text.as_ref()),
+                );
             }
-            Ok(Event::CData(text)) => {
-                if in_item {
-                    apply_text(
-                        &mut item,
-                        current_tag.as_deref(),
-                        decode_text(text.as_ref()),
-                    );
-                }
+            Ok(Event::CData(text)) if in_item => {
+                apply_text(
+                    &mut item,
+                    current_tag.as_deref(),
+                    decode_text(text.as_ref()),
+                );
             }
             Ok(Event::End(ref event)) => {
                 let name = String::from_utf8_lossy(event.name().as_ref()).to_string();
@@ -620,10 +614,8 @@ fn build_result(item: ParsedItem, preference: DownloadPreference) -> Option<Sear
                     );
                 }
             }
-            "magneturl" => {
-                if !trimmed.is_empty() {
-                    magnet_uri = Some(trimmed.to_string());
-                }
+            "magneturl" if !trimmed.is_empty() => {
+                magnet_uri = Some(trimmed.to_string());
             }
             "imdb" | "imdbid" => {
                 let normalized_id = normalize_imdb(trimmed);
@@ -634,19 +626,15 @@ fn build_result(item: ParsedItem, preference: DownloadPreference) -> Option<Sear
                     );
                 }
             }
-            "tvdbid" => {
-                if !trimmed.is_empty() && trimmed != "0" {
-                    extra.insert(
-                        "response_tvdbid".to_string(),
-                        serde_json::Value::from(trimmed),
-                    );
-                }
+            "tvdbid" if !trimmed.is_empty() && trimmed != "0" => {
+                extra.insert(
+                    "response_tvdbid".to_string(),
+                    serde_json::Value::from(trimmed),
+                );
             }
-            "size" => {
-                if item.enclosure_length.is_none() {
-                    if let Some(value) = parse_i64(trimmed) {
-                        extra.insert("reported_size".to_string(), serde_json::Value::from(value));
-                    }
+            "size" if item.enclosure_length.is_none() => {
+                if let Some(value) = parse_i64(trimmed) {
+                    extra.insert("reported_size".to_string(), serde_json::Value::from(value));
                 }
             }
             _ => {}

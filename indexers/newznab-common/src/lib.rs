@@ -555,8 +555,7 @@ fn looks_like_context_token(token: &str) -> bool {
         return true;
     }
 
-    if upper.starts_with('S') {
-        let rest = &upper[1..];
+    if let Some(rest) = upper.strip_prefix('S') {
         if rest.chars().all(|ch| ch.is_ascii_digit()) {
             return true;
         }
@@ -872,7 +871,13 @@ fn http_get_with_retry(url: &str) -> Result<(u16, String), Error> {
         .with_header("User-Agent", USER_AGENT);
 
     let mut next_delay: u64 = 0;
-    for attempt in 0..=BACKOFF_SECS.len() {
+    for (attempt, fallback_delay) in BACKOFF_SECS
+        .iter()
+        .copied()
+        .map(Some)
+        .chain(std::iter::once(None))
+        .enumerate()
+    {
         if next_delay > 0 {
             let start = std::time::Instant::now();
             let wait = std::time::Duration::from_secs(next_delay);
@@ -908,9 +913,9 @@ fn http_get_with_retry(url: &str) -> Result<(u16, String), Error> {
         );
 
         if resp.status_code() == 429 {
-            if attempt >= BACKOFF_SECS.len() {
+            let Some(fallback_delay) = fallback_delay else {
                 return Err(Error::msg("HTTP 429: rate limited after all retries"));
-            }
+            };
 
             let server_delay = resp
                 .headers()
@@ -925,7 +930,7 @@ fn http_get_with_retry(url: &str) -> Result<(u16, String), Error> {
                     )));
                 }
                 Some(secs) => secs,
-                None => BACKOFF_SECS[attempt],
+                None => fallback_delay,
             };
             continue;
         }
@@ -1090,42 +1095,34 @@ fn apply_standard_attrs(
             "usenetdate" => {
                 *usenet_date = Some(value.clone());
             }
-            "tvdbid" => {
-                if !value.is_empty() && value != "0" {
-                    result.provider_extra.insert(
-                        "response_tvdbid".to_string(),
-                        serde_json::Value::from(value.as_str()),
-                    );
+            "tvdbid" if !value.is_empty() && value != "0" => {
+                result.provider_extra.insert(
+                    "response_tvdbid".to_string(),
+                    serde_json::Value::from(value.as_str()),
+                );
+            }
+            "imdb" | "imdbid" if !value.is_empty() && value != "0" => {
+                result.provider_extra.insert(
+                    "response_imdbid".to_string(),
+                    serde_json::Value::from(value.as_str()),
+                );
+            }
+            "prematch" | "haspretime" if value != "0" => {
+                let flags = result
+                    .provider_extra
+                    .entry("indexer_flags".to_string())
+                    .or_insert_with(|| serde_json::Value::Array(vec![]));
+                if let serde_json::Value::Array(ref mut arr) = flags {
+                    arr.push(serde_json::Value::from("scene"));
                 }
             }
-            "imdb" | "imdbid" => {
-                if !value.is_empty() && value != "0" {
-                    result.provider_extra.insert(
-                        "response_imdbid".to_string(),
-                        serde_json::Value::from(value.as_str()),
-                    );
-                }
-            }
-            "prematch" | "haspretime" => {
-                if value != "0" {
-                    let flags = result
-                        .provider_extra
-                        .entry("indexer_flags".to_string())
-                        .or_insert_with(|| serde_json::Value::Array(vec![]));
-                    if let serde_json::Value::Array(ref mut arr) = flags {
-                        arr.push(serde_json::Value::from("scene"));
-                    }
-                }
-            }
-            "nuked" => {
-                if value != "0" {
-                    let flags = result
-                        .provider_extra
-                        .entry("indexer_flags".to_string())
-                        .or_insert_with(|| serde_json::Value::Array(vec![]));
-                    if let serde_json::Value::Array(ref mut arr) = flags {
-                        arr.push(serde_json::Value::from("nuked"));
-                    }
+            "nuked" if value != "0" => {
+                let flags = result
+                    .provider_extra
+                    .entry("indexer_flags".to_string())
+                    .or_insert_with(|| serde_json::Value::Array(vec![]));
+                if let serde_json::Value::Array(ref mut arr) = flags {
+                    arr.push(serde_json::Value::from("nuked"));
                 }
             }
             _ => {}
@@ -2085,6 +2082,7 @@ mod tests {
             provider_extra: HashMap::new(),
             guid: None,
             info_url: None,
+            ..SearchResult::default()
         }
     }
 

@@ -183,7 +183,7 @@ fn search_subtitles_impl(
 
     let mut entries = fetch_entries(anidb_episode_id)?;
     entries.retain(|entry| entry.status.as_deref() == Some("complete"));
-    entries.sort_by(|left, right| right.timestamp.cmp(&left.timestamp));
+    entries.sort_by_key(|entry| std::cmp::Reverse(entry.timestamp));
     entries.truncate(config.search_threshold);
 
     let mut results = Vec::new();
@@ -202,7 +202,7 @@ fn search_subtitles_impl(
                     continue;
                 }
                 let url = attachment_download_url(attachment.id);
-                let filename = attachment_filename(&entry, &file, &attachment);
+                let filename = attachment_filename(&entry, &file, attachment);
                 let provider_file_id = serde_json::to_string(&AnimeToshoDownloadRef {
                     url,
                     filename: Some(filename),
@@ -324,7 +324,14 @@ fn http_get(url: &str) -> Result<HttpResponse, String> {
     const BACKOFF_SECS: &[u64] = &[2, 5, 10];
 
     let mut next_delay = 0;
-    for attempt in 0..=BACKOFF_SECS.len() {
+    let fallback_delay = BACKOFF_SECS.last().copied().unwrap_or(1);
+    for (attempt, default_delay) in BACKOFF_SECS
+        .iter()
+        .copied()
+        .map(Some)
+        .chain(std::iter::once(None))
+        .enumerate()
+    {
         if next_delay > 0 {
             std::thread::sleep(Duration::from_secs(next_delay));
         }
@@ -339,7 +346,7 @@ fn http_get(url: &str) -> Result<HttpResponse, String> {
         next_delay = match retry_after_seconds(&response) {
             Some(seconds) if seconds > MAX_RATE_LIMIT_WAIT_SECONDS => return Ok(response),
             Some(seconds) => seconds.max(1),
-            None => BACKOFF_SECS[attempt],
+            None => default_delay.unwrap_or(fallback_delay),
         };
     }
 

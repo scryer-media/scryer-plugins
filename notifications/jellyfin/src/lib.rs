@@ -575,7 +575,7 @@ fn base_request(method: &str, url: &str, config: &JellyfinConfig) -> PreparedHtt
     PreparedHttpRequest::new(method, url.to_string())
         .with_header(
             "Authorization",
-            &format!("MediaBrowser Token=\"{}\"", config.api_key),
+            format!("MediaBrowser Token=\"{}\"", config.api_key),
         )
         .with_header("Accept", "application/json")
         .with_header("User-Agent", "scryer-jellyfin-plugin/0.1")
@@ -649,13 +649,13 @@ mod tests {
         let external_ids = metadata
             .get("external_ids")
             .and_then(serde_json::Value::as_object);
-        let media_updates = metadata
+        let media_updates: Vec<scryer_plugin_sdk::PluginNotificationMediaUpdate> = metadata
             .get("media_updates")
             .and_then(serde_json::Value::as_array)
             .map(|updates| {
                 updates
                     .iter()
-                    .map(|update| PluginNotificationMediaUpdate {
+                    .map(|update| scryer_plugin_sdk::PluginNotificationMediaUpdate {
                         path: update["path"].as_str().unwrap_or_default().to_string(),
                         update_type: match update["update_type"].as_str().unwrap_or_default() {
                             "created" => scryer_plugin_sdk::NotificationMediaUpdateType::Created,

@@ -42,6 +42,22 @@ const REPO_RELEASE_TAG_PREFIX: &str = "plugins/release/";
 const CATALOG_PRETTY_JSON: &str = "catalog-v2.json";
 const CATALOG_MINIFIED_JSON: &str = "catalog-v2.min.json";
 const CATALOG_MINIFIED_ZST: &str = "catalog-v2.min.json.zst";
+const AUDIT_IGNORE_ADVISORIES: &[&str] = &[
+    // Extism currently pins wasmtime 41.x upstream, so these remain blocked on
+    // the runtime stack moving onto a patched line.
+    "RUSTSEC-2026-0085",
+    "RUSTSEC-2026-0086",
+    "RUSTSEC-2026-0087",
+    "RUSTSEC-2026-0088",
+    "RUSTSEC-2026-0089",
+    "RUSTSEC-2026-0091",
+    "RUSTSEC-2026-0092",
+    "RUSTSEC-2026-0093",
+    "RUSTSEC-2026-0094",
+    "RUSTSEC-2026-0095",
+    "RUSTSEC-2026-0096",
+    "RUSTSEC-2026-0114",
+];
 
 host_fn!(socket_unsupported(_state: (); _input: String) -> String {
     Ok(
@@ -73,6 +89,7 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Doctor,
+    Ci(CiArgs),
     Release(ReleaseArgs),
     ReleaseMany(ReleaseManyArgs),
     ReleaseChanged(ReleaseChangedArgs),
@@ -116,6 +133,20 @@ struct ReleaseManyArgs {
     plugin_names: Vec<String>,
     #[command(flatten)]
     options: ReleaseOptions,
+}
+
+#[derive(Args)]
+struct CiArgs {
+    #[command(subcommand)]
+    command: CiCommand,
+}
+
+#[derive(Subcommand)]
+enum CiCommand {
+    Fmt,
+    Clippy,
+    Audit,
+    Strict,
 }
 
 #[derive(Args)]
@@ -528,6 +559,12 @@ fn main() -> Result<()> {
 
     match cli.command {
         Commands::Doctor => run_doctor(&ctx),
+        Commands::Ci(args) => match args.command {
+            CiCommand::Fmt => run_ci_fmt_check(&ctx),
+            CiCommand::Clippy => run_ci_strict_clippy(&ctx),
+            CiCommand::Audit => run_ci_audit(&ctx),
+            CiCommand::Strict => run_ci_strict(&ctx),
+        },
         Commands::Release(args) => run_release(&ctx, args),
         Commands::ReleaseMany(args) => run_release_many(&ctx, args),
         Commands::ReleaseChanged(args) => run_release_changed(&ctx, args),
@@ -693,6 +730,49 @@ fn rustup_toolchain_has_target(
         .any(|line| line.trim() == WASM_TARGET))
 }
 
+fn rustup_toolchain_has_component(
+    rustup_toolchain: &RustupToolchain,
+    component: &str,
+) -> Result<bool> {
+    let mut components = Command::new(&rustup_toolchain.rustup);
+    components.args([
+        "component",
+        "list",
+        "--installed",
+        "--toolchain",
+        rustup_toolchain.toolchain.as_str(),
+    ]);
+    let installed_components = run_capture(&mut components)?;
+    Ok(installed_components
+        .lines()
+        .any(|line| line.trim() == component))
+}
+
+fn ensure_rustup_component(rustup_toolchain: &RustupToolchain, component: &str) -> Result<()> {
+    if rustup_toolchain_has_component(rustup_toolchain, component)? {
+        return Ok(());
+    }
+
+    step(format!(
+        "Installing {component} for rustup toolchain {}",
+        rustup_toolchain.toolchain
+    ));
+    let mut command = Command::new(&rustup_toolchain.rustup);
+    command.args([
+        "component",
+        "add",
+        "--toolchain",
+        rustup_toolchain.toolchain.as_str(),
+        component,
+    ]);
+    run_checked(&mut command).with_context(|| {
+        format!(
+            "failed to install {component} for rustup toolchain {}",
+            rustup_toolchain.toolchain
+        )
+    })
+}
+
 fn ensure_rustup_wasm_target(ctx: &TaskContext, rustup_toolchain: &RustupToolchain) -> Result<()> {
     if rustup_toolchain_has_target(ctx, rustup_toolchain)? {
         return Ok(());
@@ -761,6 +841,25 @@ fn repo_cargo_command_in(ctx: &TaskContext, cwd: &Path) -> Result<Command> {
     }
 
     Ok(ctx.command_in("cargo", cwd))
+}
+
+fn ci_target_dir(ctx: &TaskContext, cwd: &Path) -> Result<PathBuf> {
+    let toolchain = configured_rustup_toolchain(ctx)?
+        .map(|toolchain| {
+            toolchain
+                .toolchain
+                .chars()
+                .map(|ch| if ch.is_ascii_alphanumeric() { ch } else { '-' })
+                .collect::<String>()
+        })
+        .unwrap_or_else(|| "host".to_string());
+    Ok(cwd.join("target").join("ci").join(toolchain))
+}
+
+fn ci_cargo_command_in(ctx: &TaskContext, cwd: &Path) -> Result<Command> {
+    let mut command = repo_cargo_command_in(ctx, cwd)?;
+    command.env("CARGO_TARGET_DIR", ci_target_dir(ctx, cwd)?);
+    Ok(command)
 }
 
 fn wasm_build_command_in(ctx: &TaskContext, cwd: &Path) -> Result<Command> {
@@ -1519,6 +1618,7 @@ fn run_tag_only_release_targets(
     println!("   Branch: {branch}");
     prompt_continue_if_dirty(ctx)?;
     require_wasm_target(ctx)?;
+    run_ci_strict(ctx)?;
     ok("Pre-flight OK");
 
     let lockfiles = targets
@@ -1709,6 +1809,7 @@ fn run_release_targets(
     println!("   Branch: {branch}");
     prompt_continue_if_dirty(ctx)?;
     require_wasm_target(ctx)?;
+    run_ci_strict(ctx)?;
     ok("Pre-flight OK");
 
     for target in &targets {
@@ -2537,6 +2638,98 @@ fn plugin_crate_dirs(ctx: &TaskContext) -> Result<Vec<PathBuf>> {
     Ok(dirs)
 }
 
+fn ci_project_dirs(ctx: &TaskContext) -> Result<Vec<PathBuf>> {
+    let mut dirs = plugin_crate_dirs(ctx)?;
+    dirs.push(ctx.repo_root.join("xtask"));
+    dirs.sort();
+    Ok(dirs)
+}
+
+fn ensure_cargo_audit(ctx: &TaskContext) -> Result<()> {
+    let mut version = repo_cargo_command_in(ctx, &ctx.repo_root)?;
+    version.args(["audit", "--version"]);
+    if run_status(&mut version)
+        .map(|status| status.success())
+        .unwrap_or(false)
+    {
+        return Ok(());
+    }
+
+    step("Installing cargo-audit");
+    let mut install = repo_cargo_command_in(ctx, &ctx.repo_root)?;
+    install.args(["install", "--locked", "cargo-audit"]);
+    run_checked(&mut install)?;
+    ok("cargo-audit installed");
+    Ok(())
+}
+
+fn run_ci_fmt_check(ctx: &TaskContext) -> Result<()> {
+    step("Checking cargo fmt across plugin crates and xtask");
+    if let Some(rustup_toolchain) = configured_rustup_toolchain(ctx)? {
+        ensure_rustup_component(&rustup_toolchain, "rustfmt")?;
+    }
+    for project_dir in ci_project_dirs(ctx)? {
+        let relative = path_relative_to_repo(ctx, &project_dir)?;
+        println!("   cargo fmt --check :: {relative}");
+        let mut fmt = repo_cargo_command_in(ctx, &project_dir)?;
+        fmt.args(["fmt", "--check"]);
+        run_checked(&mut fmt)?;
+    }
+    ok("cargo fmt passed");
+    Ok(())
+}
+
+fn run_ci_strict_clippy(ctx: &TaskContext) -> Result<()> {
+    step("Running strict clippy across plugin crates and xtask");
+    if let Some(rustup_toolchain) = configured_rustup_toolchain(ctx)? {
+        ensure_rustup_component(&rustup_toolchain, "clippy")?;
+    }
+    for project_dir in ci_project_dirs(ctx)? {
+        let relative = path_relative_to_repo(ctx, &project_dir)?;
+        println!("   cargo clippy -D warnings :: {relative}");
+        let mut clippy = ci_cargo_command_in(ctx, &project_dir)?;
+        clippy.args([
+            "clippy",
+            "--all-targets",
+            "--all-features",
+            "--locked",
+            "--",
+        ]);
+        clippy.args(["-D", "warnings"]);
+        run_checked(&mut clippy)?;
+    }
+    ok("strict clippy passed");
+    Ok(())
+}
+
+fn run_ci_audit(ctx: &TaskContext) -> Result<()> {
+    step("Running cargo audit across plugin crates and xtask");
+    ensure_cargo_audit(ctx)?;
+    warn(format!(
+        "Ignoring advisories pending upstream runtime fixes: {}",
+        AUDIT_IGNORE_ADVISORIES.join(" ")
+    ));
+    for project_dir in ci_project_dirs(ctx)? {
+        let relative = path_relative_to_repo(ctx, &project_dir)?;
+        println!("   cargo audit :: {relative}");
+        let mut audit = repo_cargo_command_in(ctx, &project_dir)?;
+        audit.args(["audit", "--file", "Cargo.lock"]);
+        for advisory in AUDIT_IGNORE_ADVISORIES {
+            audit.args(["--ignore", advisory]);
+        }
+        run_checked(&mut audit)?;
+    }
+    ok("cargo audit passed");
+    Ok(())
+}
+
+fn run_ci_strict(ctx: &TaskContext) -> Result<()> {
+    run_ci_fmt_check(ctx)?;
+    run_ci_audit(ctx)?;
+    run_ci_strict_clippy(ctx)?;
+    Ok(())
+}
+
 fn run_plugin_build_all(ctx: &TaskContext) -> Result<()> {
     step("Building all plugin crates");
     ensure_current_sdk_dependency_is_published(ctx)?;
@@ -2798,13 +2991,13 @@ fn merge_child_catalog_releases(
                 release.version, release.sdk_constraint
             )
         })?;
-        if let Some(existing) = by_version.insert(version, release.clone()) {
-            if existing.artifact_manifest_url != release.artifact_manifest_url {
-                bail!(
-                    "{plugin_id} {}: child catalog release row points to multiple manifests",
-                    release.version
-                );
-            }
+        if let Some(existing) = by_version.insert(version, release.clone())
+            && existing.artifact_manifest_url != release.artifact_manifest_url
+        {
+            bail!(
+                "{plugin_id} {}: child catalog release row points to multiple manifests",
+                release.version
+            );
         }
     }
 
@@ -3019,7 +3212,10 @@ fn run_official_verify_prepared(ctx: &TaskContext, dir: &Path) -> Result<()> {
     Ok(())
 }
 
-fn catalog_entry_from_registry(ctx: &TaskContext, plugin: &RegistryPlugin) -> Result<CatalogV2Entry> {
+fn catalog_entry_from_registry(
+    ctx: &TaskContext,
+    plugin: &RegistryPlugin,
+) -> Result<CatalogV2Entry> {
     let source_repo = plugin_source_repo(plugin);
     let plugin_dir = registry_plugin_dir(ctx, plugin)?;
     let version = plugin_crate_version(&plugin_dir)?;

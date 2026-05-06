@@ -409,7 +409,7 @@ pub fn scryer_download_list_completed(_input: String) -> FnResult<String> {
 }
 
 fn completed_downloads(config: &QbittorrentConfig) -> Result<Vec<PluginCompletedDownload>, Error> {
-    let torrents = list_torrents(&config, Some("completed"))?;
+    let torrents = list_torrents(config, Some("completed"))?;
     Ok(torrents
         .into_iter()
         .filter(|torrent| is_completed_state(&torrent.state))
@@ -418,7 +418,7 @@ fn completed_downloads(config: &QbittorrentConfig) -> Result<Vec<PluginCompleted
 }
 
 fn completed_history_items(config: &QbittorrentConfig) -> Result<Vec<PluginDownloadItem>, Error> {
-    let torrents = list_torrents(&config, Some("completed"))?;
+    let torrents = list_torrents(config, Some("completed"))?;
     Ok(torrents
         .into_iter()
         .filter(|torrent| is_completed_state(&torrent.state))

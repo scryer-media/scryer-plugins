@@ -295,7 +295,7 @@ fn search_entries(
     if config.enable_name_search_fallback || request.media_kind == SubtitleQueryMediaKind::Movie {
         let queries = search_query_candidates(request);
         for query in &queries {
-            append_search_query_entries(config, &query, None, &mut entries, &mut seen_ids)?;
+            append_search_query_entries(config, query, None, &mut entries, &mut seen_ids)?;
             if entries.len() >= MAX_SEARCH_ENTRY_CANDIDATES {
                 return Ok(entries);
             }
@@ -305,7 +305,7 @@ fn search_entries(
             for query in &queries {
                 append_search_query_entries(
                     config,
-                    &query,
+                    query,
                     Some(false),
                     &mut entries,
                     &mut seen_ids,

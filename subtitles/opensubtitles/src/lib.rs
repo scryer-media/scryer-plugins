@@ -383,7 +383,7 @@ fn execute_subtitle_search(
     movie_identifier_match: bool,
     series_identifier_match: bool,
 ) -> Result<Vec<SubtitlePluginCandidate>, String> {
-    let response = send_request_json(config, "GET", "subtitles", Some(&params), None)?;
+    let response = send_request_json(config, "GET", "subtitles", Some(params), None)?;
     if response.status_code() >= 400 {
         return Err(http_error(config, "search", &response));
     }

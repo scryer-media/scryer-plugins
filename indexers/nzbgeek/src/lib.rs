@@ -273,6 +273,6 @@ mod tests {
     fn ignores_password_zero() {
         let p = pairs(&[("password", "0")]);
         let (_, _, extra) = nzbgeek_metadata_extractor(&p);
-        assert!(extra.get("password").is_none());
+        assert!(!extra.contains_key("password"));
     }
 }

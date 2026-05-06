@@ -5,6 +5,7 @@ This repository is the source of truth for distributable Scryer plugin artifacts
 For humans and agents alike:
 
 - `cargo xtask` is the canonical interface for repo automation
+- `cargo xtask ci strict` is the canonical repo validation pass for format, audit, and strict clippy
 - `cargo xtask release-changed` is the canonical official release path
 - `cargo xtask release <plugin-id>` remains available for one-off legacy release prep
 - `cargo xtask registry validate` is the registry integrity check

@@ -180,10 +180,8 @@ fn torznab_metadata_extractor(
                     info_hash = Some(normalized_hash);
                 }
             }
-            "magneturl" => {
-                if !trimmed.is_empty() {
-                    magnet_uri = Some(trimmed.to_string());
-                }
+            "magneturl" if !trimmed.is_empty() => {
+                magnet_uri = Some(trimmed.to_string());
             }
             "genre" => {
                 genres.extend(split_multi_value(trimmed));
