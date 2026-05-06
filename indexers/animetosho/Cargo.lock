@@ -49,7 +49,7 @@ dependencies = [
 
 [[package]]
 name = "animetosho-indexer"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = [
  "extism-pdk",
  "scryer-plugin-sdk",
