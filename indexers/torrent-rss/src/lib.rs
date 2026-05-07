@@ -112,7 +112,32 @@ fn build_descriptor_json() -> Result<String, Error> {
             rate_limit_seconds: Some(2),
         }),
     };
-    Ok(serde_json::to_string(&descriptor)?)
+    let mut value = serde_json::to_value(&descriptor)?;
+    if let Some(provider) = value
+        .pointer_mut("/provider")
+        .and_then(|value| value.as_object_mut())
+    {
+        provider.remove("default_base_url");
+    }
+    let fields = value
+        .pointer_mut("/provider/config_fields")
+        .and_then(|value| value.as_array_mut())
+        .ok_or_else(|| Error::msg("descriptor missing provider.config_fields"))?;
+    let field = fields
+        .iter_mut()
+        .filter_map(|value| value.as_object_mut())
+        .find(|field| {
+            field
+                .get("key")
+                .and_then(|value| value.as_str())
+                .is_some_and(|key| key == "feed_url")
+        })
+        .ok_or_else(|| Error::msg("descriptor missing feed_url config field"))?;
+    field.insert(
+        "role".to_string(),
+        serde_json::Value::String("connection_url".to_string()),
+    );
+    Ok(serde_json::to_string(&value)?)
 }
 
 #[plugin_fn]

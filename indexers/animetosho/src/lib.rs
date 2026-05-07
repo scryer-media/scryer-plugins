@@ -3,10 +3,10 @@ use std::collections::{HashMap, HashSet};
 use extism_pdk::*;
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
-    IndexerCapabilities as Capabilities, IndexerDescriptor, IndexerFeedMode,
-    IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput,
-    IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor, PluginResult,
-    PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
+    ConfigFieldDef, ConfigFieldType, IndexerCapabilities as Capabilities, IndexerDescriptor,
+    IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures,
+    IndexerSearchInput, IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor,
+    PluginResult, PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
     PluginSearchResult as SearchResult, ProviderDescriptor, TaggedAlias, SDK_VERSION,
 };
 use serde::Deserialize;
@@ -110,13 +110,42 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
                 }),
             },
             scoring_policies: vec![],
-            config_fields: vec![],
-            default_base_url: Some("https://feed.animetosho.org".to_string()),
+            config_fields: vec![ConfigFieldDef {
+                key: "base_url".to_string(),
+                label: "Base URL".to_string(),
+                field_type: ConfigFieldType::String,
+                required: false,
+                default_value: Some("https://feed.animetosho.org".to_string()),
+                value_source: Default::default(),
+                host_binding: None,
+                options: vec![],
+                help_text: Some("AnimeTosho feed API base URL".to_string()),
+            }],
+            default_base_url: None,
             allowed_hosts: vec![],
             rate_limit_seconds: None,
         }),
     };
-    Ok(serde_json::to_string(&descriptor)?)
+    let mut value = serde_json::to_value(&descriptor)?;
+    if let Some(provider) = value
+        .pointer_mut("/provider")
+        .and_then(|value| value.as_object_mut())
+    {
+        provider.remove("default_base_url");
+    }
+    let fields = value
+        .pointer_mut("/provider/config_fields")
+        .and_then(|value| value.as_array_mut())
+        .ok_or_else(|| Error::msg("descriptor missing provider.config_fields"))?;
+    let field = fields
+        .first_mut()
+        .and_then(|value| value.as_object_mut())
+        .ok_or_else(|| Error::msg("descriptor missing base_url config field"))?;
+    field.insert(
+        "role".to_string(),
+        serde_json::Value::String("connection_url".to_string()),
+    );
+    Ok(serde_json::to_string(&value)?)
 }
 
 #[plugin_fn]

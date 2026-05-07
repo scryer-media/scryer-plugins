@@ -25,6 +25,12 @@ Enable your terminal under `System Settings -> Privacy & Security -> Developer T
 
 Use `cargo xtask` as the canonical interface for repo automation. See [ARCHITECTURE.md](/Users/jeremy/dev/scryer-media/scryer-plugins/ARCHITECTURE.md) for release and registry workflow rules.
 
+For official plugins:
+
+- `cargo xtask catalog validate-v2` is the authoritative health check for the published official catalog, child catalogs, and release manifests
+- current source and published official releases start from the `scryer-plugin-sdk` `1.5.x` line; future SDK lines extend that same child-catalog history
+- published child-catalog `releases[]` is the authoritative installable history for supported Scryer hosts
+
 Official plugin publishing is a two-tier tag flow:
 
 - `cargo xtask release-changed` creates only the changed `plugins/<plugin-id>/v*`
@@ -45,6 +51,8 @@ The SDK is versioned and published independently from the Scryer application.
 After `scryer-plugin-sdk = "1.5.0"` has been published to crates.io,
 maintainers should run `cargo xtask sdk bump 1.5.0` to switch plugin crates
 from local transition paths to the published SDK line and refresh lockfiles.
+That `1.5.x` line is the canonical launch/current SDK contract even though
+earlier false starts existed before the real SDK release flow stabilized.
 
 Required exports are validated from the plugin descriptor:
 

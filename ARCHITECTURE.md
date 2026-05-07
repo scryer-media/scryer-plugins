@@ -8,17 +8,21 @@ For humans and agents alike:
 - `cargo xtask ci strict` is the canonical repo validation pass for format, audit, and strict clippy
 - `cargo xtask release-changed` is the canonical official release path
 - `cargo xtask release <plugin-id>` remains available for one-off legacy release prep
-- `cargo xtask registry validate` is the registry integrity check
+- `cargo xtask catalog validate-v2` is the authoritative official published-catalog validation pass
 - `cargo xtask plugin validate <path>` is the SDK-v1 ABI check for a plugin crate
 - `cargo xtask plugin new <kind> <name>` is the scaffold path for new plugin crates
 - `scripts/release.sh` is a compatibility wrapper over xtask, not the source of truth
 
 Operational rules:
 
-- `registry.json` is legacy-only for pre-0.13.2/local flows and must not be
-  mutated by the catalog-v2 release path
 - `catalog-v2.json`, one-plugin child catalogs, and per-release manifests are
   the 0.13.2+ runtime distribution contract
+- `catalog-v2` is the source of truth for official plugin inventory; central
+  catalog entries point to child catalogs, and child `releases[]` is the full
+  installable history for supported Scryer hosts
+- child `releases[]` starts at the `scryer-plugin-sdk` `1.5.x` support line for
+  the current supported Scryer era; future SDK lines extend that history, but
+  pre-`1.5.x` rows do not belong in catalog-v2
 - official plugin child catalog assets ship in the same GitHub Release as the
   matching `plugins/<plugin-id>/v*` artifact bundle; do not create a second
   `plugins/<plugin-id>/catalog` release for first-party plugins
@@ -27,6 +31,8 @@ Operational rules:
   `../scryer` path dependencies after that cutover
 - SDK dependency bumps are explicit maintainer actions via
   `cargo xtask sdk bump <version>` after the SDK crate has been published
+- `1.5.x` is the canonical launch/current SDK line; older failed starts do not
+  change the published compatibility contract for current official releases
 - release tags are split by product: Scryer app tags use `scryer-v*`, the SDK
   uses `plugin-sdk-v*`, plugin version tags use `plugins/<plugin-id>/v*`, and
   the watched orchestration tag family is `plugins/release/*`

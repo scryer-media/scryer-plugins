@@ -2,9 +2,10 @@ use std::collections::HashMap;
 
 use extism_pdk::*;
 use newznab_common::{
-    current_sdk_constraint, execute_full_search, Capabilities, IndexerCategoryModel,
-    IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities,
-    IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind, NewznabConfig,
+    current_sdk_constraint, descriptor_json_with_connection_url, execute_full_search,
+    standard_config_fields, Capabilities, IndexerCategoryModel, IndexerCategoryValueKind,
+    IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol,
+    IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind, NewznabConfig,
     PluginDescriptor, PluginResult, ProviderDescriptor, ScoringPolicy, SearchRequest, SDK_VERSION,
 };
 
@@ -98,13 +99,16 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
                     applied_facets: vec![],
                 },
             ],
-            config_fields: vec![],
+            config_fields: standard_config_fields(),
             default_base_url: None,
             allowed_hosts: vec![],
             rate_limit_seconds: None,
         }),
     };
-    Ok(serde_json::to_string(&descriptor)?)
+    Ok(descriptor_json_with_connection_url(
+        &descriptor,
+        "base_url",
+    )?)
 }
 
 #[plugin_fn]

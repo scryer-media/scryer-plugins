@@ -7,12 +7,11 @@ use scryer_plugin_sdk::{
     EXPORT_DOWNLOAD_STATUS, EXPORT_DOWNLOAD_TEST_CONNECTION, EXPORT_INDEXER_SEARCH,
     EXPORT_NOTIFICATION_SEND, EXPORT_SUBTITLE_DOWNLOAD, EXPORT_SUBTITLE_GENERATE,
     EXPORT_SUBTITLE_SEARCH, EXPORT_VALIDATE_CONFIG, PluginDescriptor, ProviderDescriptor,
-    SDK_VERSION, SubtitleProviderMode, plugin_descriptor_sdk_constraint,
+    SDK_VERSION, SubtitleProviderMode, host_version_matches_constraint,
     validate_plugin_descriptor_host_permissions, validate_sdk_contract,
 };
 use semver::Version;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::ffi::OsStr;
@@ -28,7 +27,6 @@ const GREEN: &str = "\x1b[0;32m";
 const YELLOW: &str = "\x1b[1;33m";
 const BOLD: &str = "\x1b[1m";
 const RESET: &str = "\x1b[0m";
-const RAW_REPO_PREFIX: &str = "https://raw.githubusercontent.com/scryer-media/scryer-plugins/";
 const TREE_REPO_PREFIX: &str = "https://github.com/scryer-media/scryer-plugins/tree/main/";
 const WASM_TARGET: &str = "wasm32-wasip1";
 const CATALOG_V2_SCHEMA: &str = "scryer.plugin.catalog.v2";
@@ -38,6 +36,9 @@ const WASM_OPT_LEVEL: &str = "-Oz";
 const ZSTD_LEVEL: &str = "-10";
 const OFFICIAL_GITHUB_REPO: &str = "scryer-media/scryer-plugins";
 const OFFICIAL_RELEASE_WORKFLOW: &str = ".github/workflows/release-plugin.yml";
+const CENTRAL_CATALOG_RELEASE_TAG: &str = "catalog/v2";
+const CATALOG_V2_BASE_SDK_VERSION: &str = "1.5.0";
+const RULE_PACK_SOURCE_MANIFEST: &str = "rule_packs/manifest.json";
 const REPO_RELEASE_TAG_PREFIX: &str = "plugins/release/";
 const CATALOG_PRETTY_JSON: &str = "catalog-v2.json";
 const CATALOG_MINIFIED_JSON: &str = "catalog-v2.min.json";
@@ -93,7 +94,6 @@ enum Commands {
     Release(ReleaseArgs),
     ReleaseMany(ReleaseManyArgs),
     ReleaseChanged(ReleaseChangedArgs),
-    Registry(RegistryArgs),
     Plugin(PluginArgs),
     Sdk(SdkArgs),
     Official(OfficialArgs),
@@ -147,12 +147,6 @@ enum CiCommand {
     Clippy,
     Audit,
     Strict,
-}
-
-#[derive(Args)]
-struct RegistryArgs {
-    #[command(subcommand)]
-    command: RegistryCommand,
 }
 
 #[derive(Args)]
@@ -248,6 +242,7 @@ enum CatalogCommand {
     RenderV2,
     PrepareV2(CatalogPrepareV2Args),
     PublishV2,
+    ValidateV2,
 }
 
 #[derive(Args)]
@@ -284,11 +279,6 @@ enum PluginKindArg {
     Subtitle,
 }
 
-#[derive(Subcommand)]
-enum RegistryCommand {
-    Validate,
-}
-
 #[derive(Copy, Clone, Eq, PartialEq, ValueEnum)]
 enum VersionBump {
     Patch,
@@ -304,24 +294,26 @@ struct TaskContext {
 #[derive(Clone)]
 struct ReleaseTarget {
     plugin_id: String,
-    plugin_index: usize,
     plugin_dir: PathBuf,
     cargo_toml: PathBuf,
     crate_name: String,
     current_version: Version,
     next_version: Version,
     tag_name: String,
-    wasm_filename: String,
-    source_url: String,
-    scryer_constraint: Option<String>,
 }
 
-struct ReleaseArtifact {
-    target: ReleaseTarget,
-    descriptor: PluginDescriptor,
-    dist_wasm: PathBuf,
-    existed_before: bool,
-    sha256: String,
+#[derive(Clone)]
+struct LocalPluginInfo {
+    plugin_id: String,
+    name: String,
+    description: String,
+    plugin_type: String,
+    provider_type: String,
+    plugin_dir: PathBuf,
+    cargo_toml: PathBuf,
+    crate_name: String,
+    current_version: Version,
+    source_repo: String,
 }
 
 #[derive(Clone, Debug)]
@@ -369,80 +361,11 @@ impl TaskContext {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-struct Registry {
-    #[serde(default = "default_schema_version")]
-    schema_version: u32,
-    plugins: Vec<RegistryPlugin>,
-    #[serde(default)]
-    rule_packs: Vec<serde_json::Value>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-struct RegistryPlugin {
-    id: String,
-    name: String,
-    #[serde(default)]
-    description: String,
-    plugin_type: String,
-    provider_type: String,
-    #[serde(default)]
-    author: String,
-    #[serde(default)]
-    official: bool,
-    #[serde(default)]
-    releases: Vec<RegistryRelease>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    version: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    sdk_version: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    sdk_constraint: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    builtin: Option<bool>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    wasm_url: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    wasm_sha256: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    source_url: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    scryer_constraint: Option<String>,
-    #[serde(
-        default,
-        rename = "min_scryer_version",
-        skip_serializing_if = "Option::is_none"
-    )]
-    legacy_min_scryer_version: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-struct RegistryRelease {
-    version: String,
-    sdk_version: String,
-    #[serde(default)]
-    sdk_constraint: String,
-    #[serde(default)]
-    builtin: bool,
-    #[serde(default)]
-    wasm_url: Option<String>,
-    #[serde(default)]
-    wasm_sha256: Option<String>,
-    #[serde(default)]
-    source_url: Option<String>,
-    #[serde(default)]
-    scryer_constraint: Option<String>,
-    #[serde(
-        default,
-        rename = "min_scryer_version",
-        skip_serializing_if = "Option::is_none"
-    )]
-    legacy_min_scryer_version: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
 struct CatalogV2 {
     schema_version: String,
     plugins: Vec<CatalogV2Entry>,
+    #[serde(default)]
+    rule_packs: Vec<RulePackCatalogEntryV2>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -465,6 +388,49 @@ struct RequiredSignerV2 {
     github_repository: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     github_workflow: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct RulePackCatalogEntryV2 {
+    id: String,
+    name: String,
+    description: String,
+    author: String,
+    version: String,
+    url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    min_scryer_version: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct RulePackSourceManifest {
+    rule_packs: Vec<RulePackSourceEntry>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct RulePackSourceEntry {
+    asset: String,
+    #[serde(default)]
+    min_scryer_version: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct RulePackManifestV1 {
+    schema_version: u32,
+    id: String,
+    name: String,
+    description: String,
+    author: String,
+    version: String,
+    #[serde(default)]
+    rules: Vec<serde_json::Value>,
+}
+
+#[derive(Clone, Debug)]
+struct PreparedRulePack {
+    entry: RulePackCatalogEntryV2,
+    source_path: PathBuf,
+    asset_name: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -504,55 +470,6 @@ struct PluginManifestV2 {
     signature: String,
 }
 
-fn default_schema_version() -> u32 {
-    1
-}
-
-impl RegistryPlugin {
-    fn normalized_releases(&self) -> Vec<RegistryRelease> {
-        if !self.releases.is_empty() {
-            return self.releases.clone();
-        }
-
-        self.version
-            .as_ref()
-            .map(|version| {
-                vec![RegistryRelease {
-                    version: version.clone(),
-                    sdk_version: self.sdk_version.clone().unwrap_or_default(),
-                    sdk_constraint: self.sdk_constraint.clone().unwrap_or_default(),
-                    builtin: self.builtin.unwrap_or(false),
-                    wasm_url: self.wasm_url.clone(),
-                    wasm_sha256: self.wasm_sha256.clone(),
-                    source_url: self.source_url.clone(),
-                    scryer_constraint: self.scryer_constraint.clone(),
-                    legacy_min_scryer_version: self.legacy_min_scryer_version.clone(),
-                }]
-            })
-            .unwrap_or_default()
-    }
-
-    fn canonicalize(&mut self) {
-        if self.releases.is_empty() {
-            self.releases = self.normalized_releases();
-        }
-        self.releases.sort_by(|left, right| {
-            parse_release_version(&self.id, left)
-                .ok()
-                .cmp(&parse_release_version(&self.id, right).ok())
-        });
-        self.version = None;
-        self.sdk_version = None;
-        self.sdk_constraint = None;
-        self.builtin = None;
-        self.wasm_url = None;
-        self.wasm_sha256 = None;
-        self.source_url = None;
-        self.scryer_constraint = None;
-        self.legacy_min_scryer_version = None;
-    }
-}
-
 fn main() -> Result<()> {
     let cli = Cli::parse();
     let ctx = TaskContext::new();
@@ -568,9 +485,6 @@ fn main() -> Result<()> {
         Commands::Release(args) => run_release(&ctx, args),
         Commands::ReleaseMany(args) => run_release_many(&ctx, args),
         Commands::ReleaseChanged(args) => run_release_changed(&ctx, args),
-        Commands::Registry(args) => match args.command {
-            RegistryCommand::Validate => validate_registry(&ctx),
-        },
         Commands::Plugin(args) => match args.command {
             PluginCommand::New(args) => run_plugin_new(&ctx, args),
             PluginCommand::Validate(args) => run_plugin_validate(&ctx, args),
@@ -590,6 +504,7 @@ fn main() -> Result<()> {
             CatalogCommand::RenderV2 => run_catalog_render_v2(&ctx),
             CatalogCommand::PrepareV2(args) => run_catalog_prepare_v2(&ctx, args.out),
             CatalogCommand::PublishV2 => run_catalog_publish_v2(&ctx),
+            CatalogCommand::ValidateV2 => run_catalog_validate_v2(&ctx),
         },
         Commands::Community(args) => match args.command {
             CommunityCommand::Scaffold {
@@ -955,35 +870,6 @@ fn next_version(current: &Version, bump: VersionBump) -> Version {
     next
 }
 
-fn registry_path(ctx: &TaskContext) -> PathBuf {
-    ctx.path("registry.json")
-}
-
-fn load_registry(ctx: &TaskContext) -> Result<Registry> {
-    let content = fs::read_to_string(registry_path(ctx))?;
-    let mut registry: Registry = serde_json::from_str(&content)?;
-    for plugin in &mut registry.plugins {
-        plugin.canonicalize();
-    }
-    Ok(registry)
-}
-
-fn save_registry(ctx: &TaskContext, registry: &Registry) -> Result<()> {
-    let mut registry = Registry {
-        schema_version: registry.schema_version,
-        plugins: registry.plugins.clone(),
-        rule_packs: registry.rule_packs.clone(),
-    };
-    for plugin in &mut registry.plugins {
-        plugin.canonicalize();
-    }
-    fs::write(
-        registry_path(ctx),
-        serde_json::to_string_pretty(&registry)? + "\n",
-    )?;
-    Ok(())
-}
-
 fn crate_name_from_manifest(path: &Path) -> Result<String> {
     let document = fs::read_to_string(path)?
         .parse::<DocumentMut>()
@@ -1040,269 +926,25 @@ fn git_path_is_tracked(ctx: &TaskContext, path: &Path) -> Result<bool> {
     Ok(run_status(&mut command)?.success())
 }
 
-fn sha256_file(path: &Path) -> Result<String> {
-    let bytes = fs::read(path)?;
-    let digest = Sha256::digest(bytes);
-    Ok(format!("{digest:x}"))
-}
-
-fn release_wasm_url(tag_name: &str, wasm_filename: &str) -> String {
-    format!("{RAW_REPO_PREFIX}{tag_name}/dist/{wasm_filename}")
-}
-
-fn artifact_name_from_wasm_url(wasm_url: &str) -> Result<&str> {
-    let suffix = wasm_url
-        .strip_prefix(RAW_REPO_PREFIX)
-        .ok_or_else(|| anyhow!("wasm_url must start with {RAW_REPO_PREFIX}"))?;
-    let (git_ref, artifact_name) = suffix
-        .split_once("/dist/")
-        .ok_or_else(|| anyhow!("wasm_url must contain /dist/ after the git ref"))?;
-    if git_ref.trim().is_empty() {
-        bail!("wasm_url is missing a git ref");
-    }
-    if git_ref == "main" {
-        bail!("wasm_url must use an immutable tag or commit ref, not main");
-    }
-    if artifact_name.trim().is_empty() {
-        bail!("wasm_url is missing an artifact name");
-    }
-    Ok(artifact_name)
-}
-
-fn parse_release_version(plugin_id: &str, release: &RegistryRelease) -> Result<Version> {
-    Version::parse(release.version.trim())
-        .with_context(|| format!("{plugin_id}: invalid release version {}", release.version))
-}
-
-fn latest_release(plugin: &RegistryPlugin) -> Result<RegistryRelease> {
-    plugin
-        .normalized_releases()
-        .into_iter()
-        .max_by(|left, right| {
-            parse_release_version(&plugin.id, left)
-                .ok()
-                .cmp(&parse_release_version(&plugin.id, right).ok())
-        })
-        .ok_or_else(|| anyhow!("{}: registry entry has no releases", plugin.id))
-}
-
-fn latest_builtin_release(plugin: &RegistryPlugin) -> Result<Option<RegistryRelease>> {
-    Ok(plugin
-        .normalized_releases()
-        .into_iter()
-        .filter(|release| release.builtin)
-        .max_by(|left, right| {
-            parse_release_version(&plugin.id, left)
-                .ok()
-                .cmp(&parse_release_version(&plugin.id, right).ok())
-        }))
-}
-
-fn registry_release_sdk_constraint(release: &RegistryRelease) -> String {
-    scryer_plugin_sdk::sdk_constraint_or_legacy(&release.sdk_version, &release.sdk_constraint)
-}
-
-fn registry_release_scryer_constraint(release: &RegistryRelease) -> Option<String> {
-    release
-        .scryer_constraint
-        .as_deref()
-        .map(str::trim)
-        .filter(|constraint| !constraint.is_empty())
-        .map(str::to_string)
-        .or_else(|| {
-            release
-                .legacy_min_scryer_version
-                .as_deref()
-                .map(str::trim)
-                .filter(|version| !version.is_empty())
-                .map(|version| format!(">={version}"))
-        })
-}
-
-fn validate_registry_release_scryer_constraint(
-    plugin_id: &str,
-    release: &RegistryRelease,
-) -> Result<()> {
-    let Some(constraint) = registry_release_scryer_constraint(release) else {
-        return Ok(());
-    };
-    semver::VersionReq::parse(constraint.trim()).map_err(|error| {
-        anyhow!(
-            "{} {}: invalid scryer_constraint {}: {error}",
-            plugin_id,
-            release.version,
-            constraint
-        )
-    })?;
-    Ok(())
-}
-
-fn validate_registry(ctx: &TaskContext) -> Result<()> {
-    let registry = load_registry(ctx)?;
-    let dist_dir = ctx.path("dist");
-    let mut errors = Vec::new();
-
-    for plugin in &registry.plugins {
-        let releases = plugin.normalized_releases();
-        if releases.is_empty() {
+fn local_plugin_directories(ctx: &TaskContext) -> Result<Vec<PathBuf>> {
+    let mut plugin_dirs = Vec::new();
+    for prefix in ["indexers", "download_clients", "notifications", "subtitles"] {
+        let prefix_dir = ctx.path(prefix);
+        if !prefix_dir.is_dir() {
             continue;
         }
-        let latest_release_version = match latest_release(plugin) {
-            Ok(value) => value.version,
-            Err(error) => {
-                errors.push(format!("{}: {error}", plugin.id));
-                continue;
-            }
-        };
-        let latest_builtin = match latest_builtin_release(plugin) {
-            Ok(value) => value,
-            Err(error) => {
-                errors.push(format!("{}: {error}", plugin.id));
-                continue;
-            }
-        };
-
-        for release in releases {
-            if let Err(error) = validate_registry_release_scryer_constraint(&plugin.id, &release) {
-                errors.push(error.to_string());
-                continue;
-            }
-            if release.version != latest_release_version {
-                if !release.builtin {
-                    if release.wasm_url.is_none() {
-                        errors.push(format!(
-                            "{} {}: missing wasm_url for downloadable release",
-                            plugin.id, release.version
-                        ));
-                    }
-                    if release.wasm_sha256.is_none() {
-                        errors.push(format!(
-                            "{} {}: missing wasm_sha256",
-                            plugin.id, release.version
-                        ));
-                    }
-                }
-                continue;
-            }
-            let artifact_path = if let Some(wasm_url) = release.wasm_url.as_deref() {
-                let Some(wasm_sha256) = release.wasm_sha256.as_deref() else {
-                    errors.push(format!(
-                        "{} {}: missing wasm_sha256",
-                        plugin.id, release.version
-                    ));
-                    continue;
-                };
-                let artifact_name = match artifact_name_from_wasm_url(wasm_url) {
-                    Ok(value) => value,
-                    Err(error) => {
-                        errors.push(format!("{} {}: {error}", plugin.id, release.version));
-                        continue;
-                    }
-                };
-                let artifact_path = dist_dir.join(artifact_name);
-                if !artifact_path.is_file() {
-                    errors.push(format!(
-                        "{} {}: missing dist artifact {}",
-                        plugin.id, release.version, artifact_name
-                    ));
-                    continue;
-                }
-
-                let actual_sha = sha256_file(&artifact_path)?;
-                if actual_sha != wasm_sha256 {
-                    errors.push(format!(
-                        "{} {}: sha256 mismatch (registry={}, actual={})",
-                        plugin.id, release.version, wasm_sha256, actual_sha
-                    ));
-                }
-
-                artifact_path
-            } else if latest_builtin
-                .as_ref()
-                .is_some_and(|builtin| builtin.version == release.version)
-            {
-                let Some(source_url) = release.source_url.as_deref() else {
-                    errors.push(format!(
-                        "{} {}: builtin release is missing source_url",
-                        plugin.id, release.version
-                    ));
-                    continue;
-                };
-                match plugin_source_dir(ctx, &plugin.id, source_url)
-                    .and_then(|plugin_dir| build_plugin_wasm(ctx, &plugin_dir))
-                {
-                    Ok(path) => path,
-                    Err(error) => {
-                        errors.push(format!("{} {}: {error}", plugin.id, release.version));
-                        continue;
-                    }
-                }
-            } else if release.builtin {
-                continue;
-            } else {
-                errors.push(format!(
-                    "{} {}: missing wasm_url for downloadable release",
-                    plugin.id, release.version
-                ));
-                continue;
-            };
-
-            match load_descriptor_from_wasm(&artifact_path).and_then(|descriptor| {
-                validate_descriptor_contract(&descriptor)?;
-                validate_registry_entry_matches_descriptor(plugin, &release, &descriptor)
-            }) {
-                Ok(()) => {}
-                Err(error) => errors.push(format!("{} {}: {error}", plugin.id, release.version)),
+        for entry in fs::read_dir(&prefix_dir)
+            .with_context(|| format!("failed to read {}", prefix_dir.display()))?
+        {
+            let entry = entry?;
+            let path = entry.path();
+            if path.is_dir() && path.join("Cargo.toml").is_file() {
+                plugin_dirs.push(path);
             }
         }
     }
-
-    if errors.is_empty() {
-        println!("registry OK");
-        Ok(())
-    } else {
-        for error in errors {
-            eprintln!("{error}");
-        }
-        bail!("registry validation failed");
-    }
-}
-
-fn plugin_source_dir(ctx: &TaskContext, plugin_id: &str, source_url: &str) -> Result<PathBuf> {
-    let relative = source_url
-        .split("/tree/main/")
-        .nth(1)
-        .ok_or_else(|| anyhow!("{plugin_id}: unsupported source_url {source_url}"))?;
-    Ok(ctx.path(relative))
-}
-
-fn locate_plugin_dir(ctx: &TaskContext, plugin_id: &str, provider_type: &str) -> Result<PathBuf> {
-    for candidate in [plugin_id, provider_type] {
-        for prefix in ["indexers", "download_clients", "notifications", "subtitles"] {
-            let path = ctx.path(prefix).join(candidate);
-            if path.is_dir() {
-                return Ok(path);
-            }
-        }
-    }
-    bail!(
-        "could not locate plugin directory for id={} provider_type={}",
-        plugin_id,
-        provider_type
-    )
-}
-
-fn registry_plugin_dir(ctx: &TaskContext, plugin: &RegistryPlugin) -> Result<PathBuf> {
-    plugin
-        .normalized_releases()
-        .last()
-        .and_then(|release| release.source_url.as_deref())
-        .map(|source_url| plugin_source_dir(ctx, &plugin.id, source_url))
-        .transpose()?
-        .map_or_else(
-            || locate_plugin_dir(ctx, &plugin.id, &plugin.provider_type),
-            Ok,
-        )
+    plugin_dirs.sort();
+    Ok(plugin_dirs)
 }
 
 fn package_version(manifest_path: &Path) -> Result<String> {
@@ -1319,6 +961,17 @@ fn plugin_crate_version(plugin_dir: &Path) -> Result<String> {
     package_version(&plugin_dir.join("Cargo.toml"))
 }
 
+fn package_description(manifest_path: &Path) -> Result<String> {
+    let document = fs::read_to_string(manifest_path)?
+        .parse::<DocumentMut>()
+        .with_context(|| format!("failed to parse {}", manifest_path.display()))?;
+    Ok(document["package"]["description"]
+        .as_str()
+        .map(str::trim)
+        .unwrap_or_default()
+        .to_string())
+}
+
 fn source_url_for_plugin_dir(ctx: &TaskContext, plugin_dir: &Path) -> Result<String> {
     let relative = plugin_dir.strip_prefix(&ctx.repo_root).with_context(|| {
         format!(
@@ -1330,64 +983,149 @@ fn source_url_for_plugin_dir(ctx: &TaskContext, plugin_dir: &Path) -> Result<Str
     Ok(format!("{TREE_REPO_PREFIX}{}", relative.display()))
 }
 
-fn initial_scryer_constraint(ctx: &TaskContext) -> Result<String> {
-    let workspace_root = ctx
-        .repo_root
-        .parent()
-        .ok_or_else(|| anyhow!("{} has no workspace parent", ctx.repo_root.display()))?;
-    let scryer_manifest = workspace_root
-        .join("scryer")
-        .join("crates/scryer/Cargo.toml");
-    let version = version_from_manifest(&scryer_manifest)?;
-    Ok(format!(">={version}"))
+fn discover_local_plugin(ctx: &TaskContext, plugin_dir: &Path) -> Result<LocalPluginInfo> {
+    let cargo_toml = plugin_dir.join("Cargo.toml");
+    let crate_name = crate_name_from_manifest(&cargo_toml)?;
+    let current_version = version_from_manifest(&cargo_toml)?;
+    let description = package_description(&cargo_toml)?;
+    let source_repo = source_url_for_plugin_dir(ctx, plugin_dir)?;
+    let wasm = build_plugin_wasm(ctx, plugin_dir)?;
+    let descriptor = load_descriptor_from_wasm(&wasm)?;
+    validate_descriptor_contract(&descriptor)?;
+
+    Ok(LocalPluginInfo {
+        plugin_id: descriptor.id.clone(),
+        name: descriptor.name.clone(),
+        description,
+        plugin_type: descriptor.plugin_type().to_string(),
+        provider_type: descriptor.provider_type().to_string(),
+        plugin_dir: plugin_dir.to_path_buf(),
+        cargo_toml,
+        crate_name,
+        current_version,
+        source_repo,
+    })
+}
+
+fn discover_local_plugins(ctx: &TaskContext) -> Result<Vec<LocalPluginInfo>> {
+    local_plugin_directories(ctx)?
+        .into_iter()
+        .map(|plugin_dir| discover_local_plugin(ctx, &plugin_dir))
+        .collect()
+}
+
+fn catalog_v2_base_sdk_version() -> Version {
+    Version::parse(CATALOG_V2_BASE_SDK_VERSION).expect("catalog-v2 base sdk must be valid semver")
+}
+
+fn catalog_v2_minimum_sdk_version(sdk_constraint: &str) -> Result<Option<Version>> {
+    let requirement = semver::VersionReq::parse(sdk_constraint)
+        .with_context(|| format!("invalid SDK constraint {sdk_constraint}"))?;
+    let minimum = requirement
+        .comparators
+        .iter()
+        .filter(|comparator| {
+            matches!(
+                comparator.op,
+                semver::Op::Exact
+                    | semver::Op::Greater
+                    | semver::Op::GreaterEq
+                    | semver::Op::Tilde
+                    | semver::Op::Caret
+                    | semver::Op::Wildcard
+            )
+        })
+        .map(|comparator| Version {
+            major: comparator.major,
+            minor: comparator.minor.unwrap_or(0),
+            patch: comparator.patch.unwrap_or(0),
+            pre: comparator.pre.clone(),
+            build: Default::default(),
+        })
+        .min();
+    Ok(minimum)
+}
+
+fn catalog_v2_supported_sdk_constraint(sdk_constraint: &str) -> Result<bool> {
+    let Some(minimum) = catalog_v2_minimum_sdk_version(sdk_constraint)? else {
+        return Ok(false);
+    };
+    Ok(minimum >= catalog_v2_base_sdk_version())
+}
+
+fn catalog_v2_supported_child_releases(
+    releases: Vec<ChildCatalogReleaseV2>,
+) -> Result<Vec<ChildCatalogReleaseV2>> {
+    let mut filtered = Vec::new();
+    for release in releases {
+        let matches =
+            catalog_v2_supported_sdk_constraint(&release.sdk_constraint).with_context(|| {
+                format!(
+                    "{}: invalid SDK constraint {}",
+                    release.version, release.sdk_constraint
+                )
+            })?;
+        if matches {
+            filtered.push(release);
+        }
+    }
+    Ok(filtered)
+}
+
+fn read_child_catalog_releases_from_path(
+    ctx: &TaskContext,
+    path: &Path,
+) -> Result<Vec<ChildCatalogReleaseV2>> {
+    let bytes = read_catalog_bytes(ctx, path)?;
+    let catalog: ChildCatalogV2 = serde_json::from_slice(&bytes)
+        .with_context(|| format!("failed to parse child catalog {}", path.display()))?;
+    catalog_v2_supported_child_releases(catalog.releases)
+}
+
+fn read_published_child_catalog_releases(
+    ctx: &TaskContext,
+    plugin_id: &str,
+) -> Result<Vec<ChildCatalogReleaseV2>> {
+    let temp = tempfile::tempdir()?;
+    let central_path = github_release_download(
+        ctx,
+        OFFICIAL_GITHUB_REPO,
+        CENTRAL_CATALOG_RELEASE_TAG,
+        CATALOG_PRETTY_JSON,
+        temp.path(),
+    )?;
+    let catalog: CatalogV2 = serde_json::from_slice(&fs::read(&central_path)?)
+        .with_context(|| format!("failed to parse {}", central_path.display()))?;
+    let Some(entry) = catalog.plugins.iter().find(|plugin| plugin.id == plugin_id) else {
+        return Ok(Vec::new());
+    };
+    let (tag, asset) = release_asset_url_parts(&entry.child_catalog_url, OFFICIAL_GITHUB_REPO)?;
+    let child_path = github_release_download(ctx, OFFICIAL_GITHUB_REPO, &tag, &asset, temp.path())?;
+    read_child_catalog_releases_from_path(ctx, &child_path)
 }
 
 fn resolve_release_target(
     ctx: &TaskContext,
-    registry: &Registry,
+    plugins: &[LocalPluginInfo],
     plugin_name: &str,
     options: &ReleaseOptions,
 ) -> Result<ReleaseTarget> {
-    let plugin_index = registry
-        .plugins
+    let plugin = plugins
         .iter()
-        .position(|plugin| plugin.id == plugin_name)
-        .ok_or_else(|| anyhow!("Plugin '{}' not found in registry.json", plugin_name))?;
-    let plugin = &registry.plugins[plugin_index];
-    let existing_releases = plugin.normalized_releases();
-    let has_existing_release = !existing_releases.is_empty();
-
-    let (plugin_dir, source_url, scryer_constraint) = if has_existing_release {
-        let latest = latest_release(plugin)?;
-        let source_url = latest.source_url.clone().ok_or_else(|| {
+        .find(|plugin| plugin.plugin_id == plugin_name)
+        .ok_or_else(|| {
             anyhow!(
-                "Plugin '{}' is missing source_url in its latest release",
-                plugin.id
+                "Plugin '{}' not found in local official plugins",
+                plugin_name
             )
         })?;
-        (
-            plugin_source_dir(ctx, &plugin.id, &source_url)?,
-            source_url,
-            registry_release_scryer_constraint(&latest),
-        )
-    } else {
-        let plugin_dir = locate_plugin_dir(ctx, &plugin.id, &plugin.provider_type)?;
-        let source_url = source_url_for_plugin_dir(ctx, &plugin_dir)?;
-        (
-            plugin_dir,
-            source_url,
-            Some(initial_scryer_constraint(ctx)?),
-        )
-    };
-
-    let cargo_toml = plugin_dir.join("Cargo.toml");
-    let crate_name = crate_name_from_manifest(&cargo_toml)?;
-    let current_version = version_from_manifest(&cargo_toml)?;
+    let existing_releases = read_published_child_catalog_releases(ctx, &plugin.plugin_id)?;
+    let has_existing_release = !existing_releases.is_empty();
     let (bump, explicit) = parse_bump(options)?;
     let next_version = match explicit {
         Some(version) => version,
-        None if has_existing_release => next_version(&current_version, bump),
-        None => current_version.clone(),
+        None if has_existing_release => next_version(&plugin.current_version, bump),
+        None => plugin.current_version.clone(),
     };
     let next_version_text = next_version.to_string();
     if existing_releases
@@ -1395,27 +1133,22 @@ fn resolve_release_target(
         .any(|release| release.version == next_version_text)
     {
         bail!(
-            "Plugin '{}' already has a {} release in registry.json",
-            plugin.id,
+            "Plugin '{}' already has a {} release in published child catalog history",
+            plugin.plugin_id,
             next_version
         );
     }
 
-    let tag_name = official_plugin_release_tag(&plugin.id, &next_version.to_string());
-    let wasm_filename = crate_name.replace('-', "_") + ".wasm";
+    let tag_name = official_plugin_release_tag(&plugin.plugin_id, &next_version.to_string());
 
     Ok(ReleaseTarget {
-        plugin_id: plugin.id.clone(),
-        plugin_index,
-        plugin_dir,
-        cargo_toml,
-        crate_name,
-        current_version,
+        plugin_id: plugin.plugin_id.clone(),
+        plugin_dir: plugin.plugin_dir.clone(),
+        cargo_toml: plugin.cargo_toml.clone(),
+        crate_name: plugin.crate_name.clone(),
+        current_version: plugin.current_version.clone(),
         next_version,
         tag_name,
-        wasm_filename,
-        source_url,
-        scryer_constraint,
     })
 }
 
@@ -1522,8 +1255,8 @@ fn path_is_under(path: &str, dir: &str) -> bool {
             .is_some_and(|rest| rest.starts_with('/'))
 }
 
-fn release_impact_for_plugin(ctx: &TaskContext, plugin: &RegistryPlugin) -> Result<ReleaseImpact> {
-    let Some(tag) = latest_plugin_release_tag(ctx, &plugin.id)? else {
+fn release_impact_for_plugin(ctx: &TaskContext, plugin: &LocalPluginInfo) -> Result<ReleaseImpact> {
+    let Some(tag) = latest_plugin_release_tag(ctx, &plugin.plugin_id)? else {
         return Ok(ReleaseImpact::PluginChanged);
     };
     let changed = changed_paths_since(ctx, &tag)?;
@@ -1534,8 +1267,7 @@ fn release_impact_for_plugin(ctx: &TaskContext, plugin: &RegistryPlugin) -> Resu
         return Ok(ReleaseImpact::ArtifactWide(reason.to_string()));
     }
 
-    let plugin_dir = registry_plugin_dir(ctx, plugin)?;
-    let plugin_dir = path_relative_to_repo(ctx, &plugin_dir)?;
+    let plugin_dir = path_relative_to_repo(ctx, &plugin.plugin_dir)?;
     if changed.iter().any(|path| path_is_under(path, &plugin_dir)) {
         return Ok(ReleaseImpact::PluginChanged);
     }
@@ -1545,18 +1277,18 @@ fn release_impact_for_plugin(ctx: &TaskContext, plugin: &RegistryPlugin) -> Resu
 
 fn run_release_changed(ctx: &TaskContext, args: ReleaseChangedArgs) -> Result<()> {
     ensure_current_sdk_dependency_is_published(ctx)?;
-    let registry = load_registry(ctx)?;
+    let plugins = discover_local_plugins(ctx)?;
     let mut selected = Vec::new();
     let mut reasons = Vec::new();
-    for plugin in registry.plugins.iter().filter(|plugin| plugin.official) {
+    for plugin in &plugins {
         match release_impact_for_plugin(ctx, plugin)? {
             ReleaseImpact::PluginChanged => {
-                selected.push(plugin.id.clone());
-                reasons.push(format!("{}: plugin-specific changes", plugin.id));
+                selected.push(plugin.plugin_id.clone());
+                reasons.push(format!("{}: plugin-specific changes", plugin.plugin_id));
             }
             ReleaseImpact::ArtifactWide(reason) => {
-                selected.push(plugin.id.clone());
-                reasons.push(format!("{}: {reason}", plugin.id));
+                selected.push(plugin.plugin_id.clone());
+                reasons.push(format!("{}: {reason}", plugin.plugin_id));
             }
             ReleaseImpact::Unchanged => {}
         }
@@ -1581,7 +1313,7 @@ fn run_release_changed(ctx: &TaskContext, args: ReleaseChangedArgs) -> Result<()
     for plugin_id in &selected {
         targets.push(resolve_release_target(
             ctx,
-            &registry,
+            &plugins,
             plugin_id,
             &args.options,
         )?);
@@ -1780,207 +1512,10 @@ fn run_tag_only_release_targets(
 
 fn run_release_targets(
     ctx: &TaskContext,
-    mut registry: Registry,
     targets: Vec<ReleaseTarget>,
     options: &ReleaseOptions,
 ) -> Result<()> {
-    step("Determining next versions");
-    for target in &targets {
-        println!("   Plugin ID  : {}", target.plugin_id);
-        println!("   Plugin dir : {}", target.plugin_dir.display());
-        println!("   Crate name : {}", target.crate_name);
-        println!("   WASM file  : {}", target.wasm_filename);
-        println!("   Current    : {}", target.current_version);
-        println!("   Next       : {}", target.next_version);
-        println!("   Tag        : {}", target.tag_name);
-    }
-    if options.dry_run {
-        println!("   {YELLOW}(dry run — no commits, tags, or pushes){RESET}");
-    }
-
-    step("Pre-flight checks");
-    let tags = git_capture(ctx, &["tag"])?;
-    for target in &targets {
-        if tags.lines().any(|line| line == target.tag_name) {
-            bail!("Tag {} already exists", target.tag_name);
-        }
-    }
-    let branch = current_branch(ctx)?;
-    println!("   Branch: {branch}");
-    prompt_continue_if_dirty(ctx)?;
-    require_wasm_target(ctx)?;
-    run_ci_strict(ctx)?;
-    ok("Pre-flight OK");
-
-    for target in &targets {
-        step(format!(
-            "Bumping {} to {}",
-            target.crate_name, target.next_version
-        ));
-        write_manifest_version(&target.cargo_toml, &target.next_version)?;
-        refresh_lockfile(ctx, &target.plugin_dir)?;
-        ok(format!("{} Cargo.toml updated", target.crate_name));
-    }
-
-    let dist_dir = ctx.path("dist");
-    fs::create_dir_all(&dist_dir)?;
-    let mut artifacts = Vec::new();
-
-    for target in &targets {
-        step(format!(
-            "Building {} (release, wasm32-wasip1)",
-            target.crate_name
-        ));
-        let built_wasm = build_plugin_wasm(ctx, &target.plugin_dir)?;
-        ok(format!("Built {}", target.wasm_filename));
-
-        step(format!("Validating {}", target.plugin_id));
-        let descriptor = load_descriptor_from_wasm(&built_wasm)?;
-        validate_descriptor_contract(&descriptor)?;
-        let descriptor_version = Version::parse(&descriptor.version).with_context(|| {
-            format!(
-                "{}: descriptor version {} is not valid semver",
-                descriptor.id, descriptor.version
-            )
-        })?;
-        if descriptor.id != target.plugin_id {
-            bail!(
-                "built descriptor id {} does not match registry plugin id {}",
-                descriptor.id,
-                target.plugin_id
-            );
-        }
-        if descriptor_version != target.next_version {
-            bail!(
-                "{}: built descriptor version {} does not match requested release version {}",
-                descriptor.id,
-                descriptor.version,
-                target.next_version
-            );
-        }
-        ok(format!(
-            "Validated descriptor {} {} ({})",
-            descriptor.id,
-            descriptor.version,
-            descriptor.plugin_type()
-        ));
-
-        step(format!("Updating dist/{}", target.wasm_filename));
-        let dist_wasm = dist_dir.join(&target.wasm_filename);
-        let existed_before = dist_wasm.exists();
-        fs::copy(&built_wasm, &dist_wasm)?;
-        let sha256 = sha256_file(&dist_wasm)?;
-        println!("   SHA256: {sha256}");
-        ok("Copied to dist/");
-
-        artifacts.push(ReleaseArtifact {
-            target: target.clone(),
-            descriptor,
-            dist_wasm,
-            existed_before,
-            sha256,
-        });
-    }
-
-    step("Updating registry.json");
-    for artifact in &artifacts {
-        let plugin = registry
-            .plugins
-            .get_mut(artifact.target.plugin_index)
-            .ok_or_else(|| {
-                anyhow!(
-                    "registry index out of bounds for {}",
-                    artifact.target.plugin_id
-                )
-            })?;
-        let release = RegistryRelease {
-            version: artifact.descriptor.version.clone(),
-            sdk_version: artifact.descriptor.sdk_version.clone(),
-            sdk_constraint: plugin_descriptor_sdk_constraint(&artifact.descriptor),
-            builtin: false,
-            wasm_url: Some(release_wasm_url(
-                &artifact.target.tag_name,
-                &artifact.target.wasm_filename,
-            )),
-            wasm_sha256: Some(artifact.sha256.clone()),
-            source_url: Some(artifact.target.source_url.clone()),
-            scryer_constraint: artifact.target.scryer_constraint.clone(),
-            legacy_min_scryer_version: None,
-        };
-        validate_registry_entry_matches_descriptor(plugin, &release, &artifact.descriptor)?;
-        plugin.releases.push(release);
-        plugin.canonicalize();
-    }
-    save_registry(ctx, &registry)?;
-    ok("registry.json updated");
-
-    step("Validating registry");
-    validate_registry(ctx)?;
-    ok("Registry validation passed");
-
-    if options.dry_run {
-        println!("\n{YELLOW}{BOLD}Dry run complete — stopping before commit/tag/push.{RESET}");
-        let mut restore = targets
-            .iter()
-            .map(|target| target.cargo_toml.clone())
-            .collect::<Vec<_>>();
-        restore.push(registry_path(ctx));
-        git_checkout_paths(ctx, &restore)?;
-        for artifact in &artifacts {
-            if artifact.existed_before {
-                let _ = git_checkout_paths(ctx, std::slice::from_ref(&artifact.dist_wasm));
-            } else {
-                let _ = fs::remove_file(&artifact.dist_wasm);
-            }
-        }
-        return Ok(());
-    }
-
-    step("Committing changes");
-    let mut add = ctx.command_in("git", &ctx.repo_root);
-    add.arg("add");
-    for target in &targets {
-        add.arg(&target.cargo_toml);
-    }
-    add.arg(registry_path(ctx));
-    for artifact in &artifacts {
-        add.arg(&artifact.dist_wasm);
-    }
-    run_checked(&mut add)?;
-    let mut commit = ctx.command_in("git", &ctx.repo_root);
-    let commit_message = release_commit_message(&targets);
-    commit.args(["commit", "-m", &commit_message]);
-    run_checked(&mut commit)?;
-    ok("Committed");
-
-    for target in &targets {
-        step(format!("Creating signed tag {}", target.tag_name));
-        let mut tag = ctx.command_in("git", &ctx.repo_root);
-        tag.args([
-            "tag",
-            "-s",
-            &target.tag_name,
-            "-m",
-            &format!("Release {}", target.tag_name),
-        ]);
-        run_checked(&mut tag)?;
-        ok(format!("Tag {} created", target.tag_name));
-    }
-
-    step("Pushing to origin");
-    let mut push_branch = ctx.command_in("git", &ctx.repo_root);
-    push_branch.args(["push", "origin", &branch]);
-    run_checked(&mut push_branch)?;
-    let mut push_tags = ctx.command_in("git", &ctx.repo_root);
-    push_tags.arg("push").arg("origin");
-    for target in &targets {
-        push_tags.arg(&target.tag_name);
-    }
-    run_checked(&mut push_tags)?;
-    ok(format!("Pushed {} and {} tag(s)", branch, targets.len()));
-
-    println!("\n{GREEN}{BOLD}Released {} plugin(s){RESET}", targets.len());
-    Ok(())
+    run_tag_only_release_targets(ctx, targets, options)
 }
 
 fn wasm_filename_for_manifest(cargo_toml: &Path) -> Result<String> {
@@ -2182,112 +1717,6 @@ fn validate_descriptor_contract(descriptor: &PluginDescriptor) -> Result<()> {
     Ok(())
 }
 
-fn validate_descriptor_against_registry(
-    ctx: &TaskContext,
-    descriptor: &PluginDescriptor,
-) -> Result<()> {
-    let registry = load_registry(ctx)?;
-    let Some(entry) = registry
-        .plugins
-        .iter()
-        .find(|plugin| plugin.id == descriptor.id)
-    else {
-        warn(format!(
-            "{} is not present in registry.json; skipping registry comparison",
-            descriptor.id
-        ));
-        return Ok(());
-    };
-
-    let expected = vec![
-        ("id", entry.id.clone(), descriptor.id.clone()),
-        (
-            "plugin_type",
-            entry.plugin_type.clone(),
-            descriptor.plugin_type().to_string(),
-        ),
-        (
-            "provider_type",
-            entry.provider_type.clone(),
-            descriptor.provider_type().to_string(),
-        ),
-    ];
-    for (field, registry_value, descriptor_value) in expected {
-        if registry_value != descriptor_value {
-            bail!(
-                "{}: registry {field}={} does not match descriptor {field}={}",
-                descriptor.id,
-                registry_value,
-                descriptor_value
-            );
-        }
-    }
-
-    if let Ok(release) = latest_release(entry) {
-        let descriptor_sdk_constraint = plugin_descriptor_sdk_constraint(descriptor);
-        let expected_sdk_constraint = registry_release_sdk_constraint(&release);
-        if release.version != descriptor.version
-            || release.sdk_version != descriptor.sdk_version
-            || expected_sdk_constraint != descriptor_sdk_constraint
-        {
-            warn(format!(
-                "{} legacy registry release metadata differs from descriptor; ignoring for catalog-v2 flow",
-                descriptor.id
-            ));
-        }
-    }
-
-    Ok(())
-}
-
-fn validate_registry_entry_matches_descriptor(
-    entry: &RegistryPlugin,
-    release: &RegistryRelease,
-    descriptor: &PluginDescriptor,
-) -> Result<()> {
-    let expected_sdk_constraint = registry_release_sdk_constraint(release);
-    let descriptor_sdk_constraint = plugin_descriptor_sdk_constraint(descriptor);
-    let expected = vec![
-        ("id", entry.id.clone(), descriptor.id.clone()),
-        (
-            "version",
-            release.version.clone(),
-            descriptor.version.clone(),
-        ),
-        (
-            "sdk_version",
-            release.sdk_version.clone(),
-            descriptor.sdk_version.clone(),
-        ),
-        (
-            "sdk_constraint",
-            expected_sdk_constraint,
-            descriptor_sdk_constraint,
-        ),
-        (
-            "plugin_type",
-            entry.plugin_type.clone(),
-            descriptor.plugin_type().to_string(),
-        ),
-        (
-            "provider_type",
-            entry.provider_type.clone(),
-            descriptor.provider_type().to_string(),
-        ),
-    ];
-    for (field, registry_value, descriptor_value) in expected {
-        if registry_value != descriptor_value {
-            bail!(
-                "{}: registry {field}={} does not match descriptor {field}={}",
-                descriptor.id,
-                registry_value,
-                descriptor_value
-            );
-        }
-    }
-    Ok(())
-}
-
 fn run_plugin_validate(ctx: &TaskContext, args: PluginValidateArgs) -> Result<()> {
     let plugin_dir = if args.path.is_file() {
         args.path
@@ -2309,7 +1738,6 @@ fn run_plugin_validate(ctx: &TaskContext, args: PluginValidateArgs) -> Result<()
     let wasm_path = build_plugin_wasm(ctx, &plugin_dir)?;
     let descriptor = load_descriptor_from_wasm(&wasm_path)?;
     validate_descriptor_contract(&descriptor)?;
-    validate_descriptor_against_registry(ctx, &descriptor)?;
     ok(format!(
         "Validated {} {} ({})",
         descriptor.id,
@@ -2883,40 +2311,23 @@ fn official_plugin_child_catalog_url(plugin_id: &str, version: &str) -> String {
     )
 }
 
-fn plugin_source_repo(plugin: &RegistryPlugin) -> String {
-    plugin
-        .normalized_releases()
-        .last()
-        .and_then(|release| release.source_url.clone())
-        .unwrap_or_else(|| format!("{TREE_REPO_PREFIX}{}", plugin.id))
-}
-
-fn child_catalog_release(plugin_id: &str, release: &RegistryRelease) -> ChildCatalogReleaseV2 {
-    ChildCatalogReleaseV2 {
-        version: release.version.clone(),
-        sdk_constraint: registry_release_sdk_constraint(release),
-        artifact_manifest_url: official_plugin_manifest_url(plugin_id, &release.version),
-    }
-}
-
-fn child_catalog_from_registry(
-    plugin: &RegistryPlugin,
+fn child_catalog_from_local_plugin(
+    plugin: &LocalPluginInfo,
     releases: Vec<ChildCatalogReleaseV2>,
 ) -> Result<ChildCatalogV2> {
-    let releases = merge_child_catalog_releases(&plugin.id, releases)?;
+    let releases = merge_child_catalog_releases(&plugin.plugin_id, releases)?;
 
-    let source_repo = plugin_source_repo(plugin);
     Ok(ChildCatalogV2 {
         schema_version: CHILD_CATALOG_V2_SCHEMA.to_string(),
-        id: plugin.id.clone(),
+        id: plugin.plugin_id.clone(),
         name: plugin.name.clone(),
         description: plugin.description.clone(),
         plugin_type: plugin.plugin_type.clone(),
         provider_type: plugin.provider_type.clone(),
         publisher: "scryer".to_string(),
         support_tier: "official".to_string(),
-        docs_url: source_repo.clone(),
-        source_repo,
+        docs_url: plugin.source_repo.clone(),
+        source_repo: plugin.source_repo.clone(),
         releases,
     })
 }
@@ -2967,16 +2378,6 @@ fn read_catalog_bytes(ctx: &TaskContext, path: &Path) -> Result<Vec<u8>> {
     fs::read(path).with_context(|| format!("failed to read {}", path.display()))
 }
 
-fn read_existing_child_catalog_releases(
-    ctx: &TaskContext,
-    path: &Path,
-) -> Result<Vec<ChildCatalogReleaseV2>> {
-    let bytes = read_catalog_bytes(ctx, path)?;
-    let catalog: ChildCatalogV2 = serde_json::from_slice(&bytes)
-        .with_context(|| format!("failed to parse existing child catalog {}", path.display()))?;
-    Ok(catalog.releases)
-}
-
 fn merge_child_catalog_releases(
     plugin_id: &str,
     releases: Vec<ChildCatalogReleaseV2>,
@@ -3006,40 +2407,19 @@ fn merge_child_catalog_releases(
 
 fn write_child_catalog_to_dir(
     ctx: &TaskContext,
-    plugin: &RegistryPlugin,
+    plugin: &LocalPluginInfo,
     extra_release: Option<ChildCatalogReleaseV2>,
-    existing_catalog: Option<&Path>,
+    existing_releases: Vec<ChildCatalogReleaseV2>,
     dir: &Path,
 ) -> Result<CatalogAssetPaths> {
-    let mut releases = plugin
-        .normalized_releases()
-        .iter()
-        .map(|release| child_catalog_release(&plugin.id, release))
-        .collect::<Vec<_>>();
-    let existing_releases = if let Some(existing_catalog) = existing_catalog {
-        read_existing_child_catalog_releases(ctx, existing_catalog)?
-    } else {
-        Vec::new()
-    };
-    let existing_unique_release_count =
-        merge_child_catalog_releases(&plugin.id, existing_releases.clone())?.len();
-    releases.extend(existing_releases);
+    let mut releases = catalog_v2_supported_child_releases(existing_releases)?;
 
     if let Some(release) = extra_release {
         releases.retain(|existing| existing.version != release.version);
         releases.push(release);
     }
 
-    let catalog = child_catalog_from_registry(plugin, releases)?;
-    if catalog.releases.len() < existing_unique_release_count {
-        bail!(
-            "{}: refusing to publish child catalog with fewer release rows ({} -> {})",
-            plugin.id,
-            existing_unique_release_count,
-            catalog.releases.len()
-        );
-    }
-
+    let catalog = child_catalog_from_local_plugin(plugin, releases)?;
     write_catalog_assets(ctx, &catalog, dir)
 }
 
@@ -3058,6 +2438,18 @@ fn run_official_release(ctx: &TaskContext, args: OfficialReleaseArgs) -> Result<
     )
 }
 
+fn resolve_existing_child_catalog_releases(
+    ctx: &TaskContext,
+    plugin_id: &str,
+    existing_child_catalog: Option<&Path>,
+) -> Result<Vec<ChildCatalogReleaseV2>> {
+    if let Some(path) = existing_child_catalog {
+        return read_child_catalog_releases_from_path(ctx, path);
+    }
+
+    read_published_child_catalog_releases(ctx, plugin_id)
+}
+
 fn prepare_official_release(
     ctx: &TaskContext,
     args: OfficialPrepareArgs,
@@ -3067,22 +2459,25 @@ fn prepare_official_release(
         "Preparing unsigned release assets for {}",
         args.plugin_id
     ));
-    let registry = load_registry(ctx)?;
-    let plugin = registry
-        .plugins
+    let plugins = discover_local_plugins(ctx)?;
+    let plugin = plugins
         .iter()
-        .find(|plugin| plugin.id == args.plugin_id)
+        .find(|plugin| plugin.plugin_id == args.plugin_id)
         .ok_or_else(|| {
             anyhow!(
-                "plugin '{}' not found in legacy registry metadata",
+                "plugin '{}' not found in local official plugins",
                 args.plugin_id
             )
         })?;
-    let plugin_dir = registry_plugin_dir(ctx, plugin)?;
-    let wasm = build_plugin_wasm(ctx, &plugin_dir)?;
+    let existing_releases = resolve_existing_child_catalog_releases(
+        ctx,
+        &plugin.plugin_id,
+        args.existing_child_catalog.as_deref(),
+    )?;
+    let wasm = build_plugin_wasm(ctx, &plugin.plugin_dir)?;
     let dist = args
         .out
-        .unwrap_or_else(|| default_child_catalog_dir(ctx, &plugin.id));
+        .unwrap_or_else(|| default_child_catalog_dir(ctx, &plugin.plugin_id));
     let (optimized, compressed) = optimize_and_compress_wasm(ctx, &wasm, &dist)?;
     let descriptor = load_descriptor_from_wasm(&optimized)?;
     validate_descriptor_contract(&descriptor)?;
@@ -3111,9 +2506,12 @@ fn prepare_official_release(
         Some(ChildCatalogReleaseV2 {
             version: manifest.version.clone(),
             sdk_constraint: scryer_plugin_sdk::current_sdk_constraint(),
-            artifact_manifest_url: official_plugin_manifest_url(&plugin.id, &manifest.version),
+            artifact_manifest_url: official_plugin_manifest_url(
+                &plugin.plugin_id,
+                &manifest.version,
+            ),
         }),
-        args.existing_child_catalog.as_deref(),
+        existing_releases,
         &dist,
     )?;
     Ok(OfficialPreparedRelease {
@@ -3148,20 +2546,18 @@ fn run_official_prefetch(ctx: &TaskContext, args: OfficialPrefetchArgs) -> Resul
         bail!("official prefetch requires at least one plugin id");
     }
 
-    let registry = load_registry(ctx)?;
+    let plugins = discover_local_plugins(ctx)?;
     let mut selected = BTreeSet::new();
     for plugin_id in args.plugin_ids {
         if !selected.insert(plugin_id.clone()) {
             continue;
         }
 
-        let plugin = registry
-            .plugins
+        let plugin = plugins
             .iter()
-            .find(|plugin| plugin.id == plugin_id)
-            .ok_or_else(|| anyhow!("plugin '{plugin_id}' not found in registry.json"))?;
-        let plugin_dir = registry_plugin_dir(ctx, plugin)?;
-        prefetch_plugin_dependencies(ctx, &plugin_dir)?;
+            .find(|plugin| plugin.plugin_id == plugin_id)
+            .ok_or_else(|| anyhow!("plugin '{plugin_id}' not found in local official plugins"))?;
+        prefetch_plugin_dependencies(ctx, &plugin.plugin_dir)?;
     }
 
     ok("prefetched plugin release dependencies");
@@ -3212,24 +2608,19 @@ fn run_official_verify_prepared(ctx: &TaskContext, dir: &Path) -> Result<()> {
     Ok(())
 }
 
-fn catalog_entry_from_registry(
-    ctx: &TaskContext,
-    plugin: &RegistryPlugin,
-) -> Result<CatalogV2Entry> {
-    let source_repo = plugin_source_repo(plugin);
-    let plugin_dir = registry_plugin_dir(ctx, plugin)?;
-    let version = plugin_crate_version(&plugin_dir)?;
+fn catalog_entry_from_local_plugin(plugin: &LocalPluginInfo) -> Result<CatalogV2Entry> {
+    let version = plugin_crate_version(&plugin.plugin_dir)?;
     Ok(CatalogV2Entry {
-        id: plugin.id.clone(),
+        id: plugin.plugin_id.clone(),
         name: plugin.name.clone(),
         description: plugin.description.clone(),
         plugin_type: plugin.plugin_type.clone(),
         provider_type: plugin.provider_type.clone(),
         publisher: "scryer".to_string(),
         support_tier: "official".to_string(),
-        docs_url: source_repo.clone(),
-        source_repo,
-        child_catalog_url: official_plugin_child_catalog_url(&plugin.id, &version),
+        docs_url: plugin.source_repo.clone(),
+        source_repo: plugin.source_repo.clone(),
+        child_catalog_url: official_plugin_child_catalog_url(&plugin.plugin_id, &version),
         required_signer: RequiredSignerV2 {
             github_repository: OFFICIAL_GITHUB_REPO.to_string(),
             github_workflow: Some(OFFICIAL_RELEASE_WORKFLOW.to_string()),
@@ -3237,24 +2628,135 @@ fn catalog_entry_from_registry(
     })
 }
 
+fn rule_pack_asset_url(asset_name: &str) -> String {
+    github_release_asset_url(
+        OFFICIAL_GITHUB_REPO,
+        CENTRAL_CATALOG_RELEASE_TAG,
+        asset_name,
+    )
+}
+
+fn load_rule_pack_manifest(path: &Path) -> Result<RulePackManifestV1> {
+    let manifest: RulePackManifestV1 = serde_json::from_slice(&fs::read(path)?)
+        .with_context(|| format!("failed to parse {}", path.display()))?;
+    if manifest.schema_version != 1 {
+        bail!(
+            "{}: unsupported rule pack schema {}",
+            path.display(),
+            manifest.schema_version
+        );
+    }
+    if manifest.id.trim().is_empty() {
+        bail!("{}: rule pack id is required", path.display());
+    }
+    if manifest.name.trim().is_empty() {
+        bail!("{}: rule pack name is required", path.display());
+    }
+    if manifest.author.trim().is_empty() {
+        bail!("{}: rule pack author is required", path.display());
+    }
+    Version::parse(manifest.version.trim()).with_context(|| {
+        format!(
+            "{}: invalid rule pack version {}",
+            path.display(),
+            manifest.version
+        )
+    })?;
+    if manifest.rules.is_empty() {
+        bail!(
+            "{}: rule pack must contain at least one rule",
+            path.display()
+        );
+    }
+    Ok(manifest)
+}
+
+fn load_rule_pack_catalog_entries(ctx: &TaskContext) -> Result<Vec<PreparedRulePack>> {
+    let manifest_path = ctx.repo_root.join(RULE_PACK_SOURCE_MANIFEST);
+    let source: RulePackSourceManifest = serde_json::from_slice(&fs::read(&manifest_path)?)
+        .with_context(|| format!("failed to parse {}", manifest_path.display()))?;
+    let mut prepared = Vec::new();
+    let mut ids = BTreeSet::new();
+    for rule_pack in source.rule_packs {
+        let asset_name = Path::new(&rule_pack.asset)
+            .file_name()
+            .and_then(|value| value.to_str())
+            .ok_or_else(|| anyhow!("invalid rule pack asset {}", rule_pack.asset))?
+            .to_string();
+        if asset_name != rule_pack.asset {
+            bail!(
+                "rule pack asset '{}' must be a bare filename inside rule_packs/",
+                rule_pack.asset
+            );
+        }
+        if let Some(min_scryer_version) = rule_pack.min_scryer_version.as_deref() {
+            Version::parse(min_scryer_version.trim()).with_context(|| {
+                format!(
+                    "rule pack asset '{}' has invalid min_scryer_version {}",
+                    asset_name, min_scryer_version
+                )
+            })?;
+        }
+        let source_path = ctx.repo_root.join("rule_packs").join(&asset_name);
+        let manifest = load_rule_pack_manifest(&source_path)?;
+        if !ids.insert(manifest.id.clone()) {
+            bail!("duplicate rule pack id {}", manifest.id);
+        }
+        prepared.push(PreparedRulePack {
+            entry: RulePackCatalogEntryV2 {
+                id: manifest.id,
+                name: manifest.name,
+                description: manifest.description,
+                author: manifest.author,
+                version: manifest.version,
+                url: rule_pack_asset_url(&asset_name),
+                min_scryer_version: rule_pack.min_scryer_version,
+            },
+            source_path,
+            asset_name,
+        });
+    }
+    Ok(prepared)
+}
+
+fn stage_rule_pack_assets(rule_packs: &[PreparedRulePack], output_dir: &Path) -> Result<()> {
+    for rule_pack in rule_packs {
+        fs::copy(
+            &rule_pack.source_path,
+            output_dir.join(&rule_pack.asset_name),
+        )
+        .with_context(|| {
+            format!(
+                "failed to stage rule pack asset {}",
+                rule_pack.source_path.display()
+            )
+        })?;
+    }
+    Ok(())
+}
+
 fn run_catalog_render_v2(ctx: &TaskContext) -> Result<()> {
     run_catalog_prepare_v2(ctx, None)
 }
 
 fn run_catalog_prepare_v2(ctx: &TaskContext, out: Option<PathBuf>) -> Result<()> {
-    step("Preparing catalog-v2 assets without touching legacy registry.json");
-    let registry = load_registry(ctx)?;
-    let plugins = registry
-        .plugins
+    step("Preparing catalog-v2 assets from local official plugin descriptors");
+    let plugins = discover_local_plugins(ctx)?
         .iter()
-        .map(|plugin| catalog_entry_from_registry(ctx, plugin))
+        .map(catalog_entry_from_local_plugin)
         .collect::<Result<Vec<_>>>()?;
+    let rule_packs = load_rule_pack_catalog_entries(ctx)?;
     let catalog = CatalogV2 {
         schema_version: CATALOG_V2_SCHEMA.to_string(),
         plugins,
+        rule_packs: rule_packs
+            .iter()
+            .map(|rule_pack| rule_pack.entry.clone())
+            .collect(),
     };
     let dist = out.unwrap_or_else(|| ctx.repo_root.join("dist").join("catalog-v2"));
     let central_paths = write_catalog_assets(ctx, &catalog, &dist)?;
+    stage_rule_pack_assets(&rule_packs, &dist)?;
     ok(format!("wrote {}", central_paths.pretty_json.display()));
     ok(format!("wrote {}", central_paths.minified_zst.display()));
     Ok(())
@@ -3379,11 +2881,12 @@ fn github_release_download(
     Ok(path)
 }
 
-fn cosign_verify_blob(ctx: &TaskContext, repo: &str, blob: &Path, bundle: &Path) -> Result<()> {
-    let identity_pattern = format!(
-        "^https://github\\.com/{}/\\.github/workflows/.*@refs/(tags|heads)/.*$",
-        regex_escape_literal(repo)
-    );
+fn cosign_verify_blob_with_identity_pattern(
+    ctx: &TaskContext,
+    blob: &Path,
+    bundle: &Path,
+    identity_pattern: &str,
+) -> Result<()> {
     run_checked(
         ctx.command("cosign")
             .arg("verify-blob")
@@ -3395,6 +2898,29 @@ fn cosign_verify_blob(ctx: &TaskContext, repo: &str, blob: &Path, bundle: &Path)
             .arg("https://token.actions.githubusercontent.com")
             .arg(blob),
     )
+    .with_context(|| {
+        format!(
+            "failed to run cosign verify-blob for {} (ensure cosign is installed and on PATH)",
+            blob.display()
+        )
+    })
+}
+
+fn cosign_verify_blob(ctx: &TaskContext, repo: &str, blob: &Path, bundle: &Path) -> Result<()> {
+    let identity_pattern = format!(
+        "^https://github\\.com/{}/\\.github/workflows/.*@refs/(tags|heads)/.*$",
+        regex_escape_literal(repo)
+    );
+    cosign_verify_blob_with_identity_pattern(ctx, blob, bundle, &identity_pattern)
+}
+
+fn cosign_verify_official_blob(ctx: &TaskContext, blob: &Path, bundle: &Path) -> Result<()> {
+    let identity_pattern = format!(
+        "^https://github\\.com/{}/{}@refs/(tags|heads)/.*$",
+        regex_escape_literal(OFFICIAL_GITHUB_REPO),
+        regex_escape_literal(OFFICIAL_RELEASE_WORKFLOW),
+    );
+    cosign_verify_blob_with_identity_pattern(ctx, blob, bundle, &identity_pattern)
 }
 
 fn require_blake3_file(label: &str, expected: &str, path: &Path) -> Result<()> {
@@ -3452,7 +2978,19 @@ fn validate_community_child_catalog(catalog: &ChildCatalogV2, repo: &str) -> Res
     Ok(())
 }
 
-fn validate_community_release_manifest(
+fn latest_child_catalog_release(catalog: &ChildCatalogV2) -> Result<&ChildCatalogReleaseV2> {
+    catalog
+        .releases
+        .iter()
+        .max_by(|left, right| {
+            Version::parse(&left.version)
+                .ok()
+                .cmp(&Version::parse(&right.version).ok())
+        })
+        .ok_or_else(|| anyhow!("{} child catalog has no releases", catalog.id))
+}
+
+fn validate_release_manifest(
     manifest: &PluginManifestV2,
     child: &ChildCatalogV2,
     release: &ChildCatalogReleaseV2,
@@ -3489,6 +3027,251 @@ fn validate_community_release_manifest(
         };
         if hex.len() != 64 || !hex.chars().all(|ch| ch.is_ascii_hexdigit()) {
             bail!("{label} must contain a 64-character hex BLAKE3 digest");
+        }
+    }
+    Ok(())
+}
+
+fn validate_official_catalog(catalog: &CatalogV2) -> Result<()> {
+    if catalog.schema_version != CATALOG_V2_SCHEMA {
+        bail!(
+            "unsupported central catalog schema {}",
+            catalog.schema_version
+        );
+    }
+
+    let mut plugin_ids = BTreeSet::new();
+    for plugin in &catalog.plugins {
+        for (label, value) in [
+            ("id", &plugin.id),
+            ("name", &plugin.name),
+            ("plugin_type", &plugin.plugin_type),
+            ("provider_type", &plugin.provider_type),
+            ("publisher", &plugin.publisher),
+            ("docs_url", &plugin.docs_url),
+            ("source_repo", &plugin.source_repo),
+            ("child_catalog_url", &plugin.child_catalog_url),
+        ] {
+            if value.trim().is_empty() {
+                bail!("catalog-v2 plugin field {label} is required");
+            }
+        }
+        if !plugin_ids.insert(plugin.id.clone()) {
+            bail!("duplicate official plugin id {}", plugin.id);
+        }
+        if plugin.publisher != "scryer" {
+            bail!("{}: publisher must be scryer", plugin.id);
+        }
+        if plugin.support_tier != "official" {
+            bail!("{}: support_tier must be official", plugin.id);
+        }
+        if plugin.required_signer.github_repository != OFFICIAL_GITHUB_REPO {
+            bail!(
+                "{}: required_signer.github_repository must be {}",
+                plugin.id,
+                OFFICIAL_GITHUB_REPO
+            );
+        }
+        if plugin.required_signer.github_workflow.as_deref() != Some(OFFICIAL_RELEASE_WORKFLOW) {
+            bail!(
+                "{}: required_signer.github_workflow must be {}",
+                plugin.id,
+                OFFICIAL_RELEASE_WORKFLOW
+            );
+        }
+
+        let (_, asset) = release_asset_url_parts(&plugin.child_catalog_url, OFFICIAL_GITHUB_REPO)?;
+        if asset != CATALOG_MINIFIED_ZST {
+            bail!(
+                "{}: child_catalog_url must point at {}",
+                plugin.id,
+                CATALOG_MINIFIED_ZST
+            );
+        }
+    }
+
+    let mut rule_pack_ids = BTreeSet::new();
+    for rule_pack in &catalog.rule_packs {
+        for (label, value) in [
+            ("id", &rule_pack.id),
+            ("name", &rule_pack.name),
+            ("author", &rule_pack.author),
+            ("version", &rule_pack.version),
+            ("url", &rule_pack.url),
+        ] {
+            if value.trim().is_empty() {
+                bail!("catalog-v2 rule pack field {label} is required");
+            }
+        }
+        if !rule_pack_ids.insert(rule_pack.id.clone()) {
+            bail!("duplicate official rule pack id {}", rule_pack.id);
+        }
+        Version::parse(rule_pack.version.trim()).with_context(|| {
+            format!(
+                "{}: invalid rule pack version {}",
+                rule_pack.id, rule_pack.version
+            )
+        })?;
+        if let Some(min_scryer_version) = rule_pack.min_scryer_version.as_deref() {
+            Version::parse(min_scryer_version.trim()).with_context(|| {
+                format!(
+                    "{}: invalid min_scryer_version {}",
+                    rule_pack.id, min_scryer_version
+                )
+            })?;
+        }
+        let (tag, asset) = release_asset_url_parts(&rule_pack.url, OFFICIAL_GITHUB_REPO)?;
+        if tag != CENTRAL_CATALOG_RELEASE_TAG {
+            bail!(
+                "{}: rule pack asset must be published on {}",
+                rule_pack.id,
+                CENTRAL_CATALOG_RELEASE_TAG
+            );
+        }
+        if asset.trim().is_empty() {
+            bail!(
+                "{}: rule pack asset URL must include a filename",
+                rule_pack.id
+            );
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_official_child_catalog(
+    catalog: &ChildCatalogV2,
+    central_entry: &CatalogV2Entry,
+) -> Result<()> {
+    if catalog.schema_version != CHILD_CATALOG_V2_SCHEMA {
+        bail!(
+            "{}: unsupported child catalog schema {}",
+            catalog.id,
+            catalog.schema_version
+        );
+    }
+    for (label, child_value, central_value) in [
+        ("id", &catalog.id, &central_entry.id),
+        ("name", &catalog.name, &central_entry.name),
+        (
+            "description",
+            &catalog.description,
+            &central_entry.description,
+        ),
+        (
+            "plugin_type",
+            &catalog.plugin_type,
+            &central_entry.plugin_type,
+        ),
+        (
+            "provider_type",
+            &catalog.provider_type,
+            &central_entry.provider_type,
+        ),
+        ("publisher", &catalog.publisher, &central_entry.publisher),
+        (
+            "support_tier",
+            &catalog.support_tier,
+            &central_entry.support_tier,
+        ),
+        ("docs_url", &catalog.docs_url, &central_entry.docs_url),
+        (
+            "source_repo",
+            &catalog.source_repo,
+            &central_entry.source_repo,
+        ),
+    ] {
+        if child_value != central_value {
+            bail!(
+                "{}: child catalog {label}={} does not match central catalog {label}={}",
+                catalog.id,
+                child_value,
+                central_value
+            );
+        }
+    }
+
+    let mut versions = BTreeSet::new();
+    for release in &catalog.releases {
+        Version::parse(&release.version).with_context(|| {
+            format!(
+                "{}: invalid release version {}",
+                catalog.id, release.version
+            )
+        })?;
+        semver::VersionReq::parse(&release.sdk_constraint).with_context(|| {
+            format!(
+                "{} {}: invalid SDK constraint {}",
+                catalog.id, release.version, release.sdk_constraint
+            )
+        })?;
+        let supported = catalog_v2_supported_sdk_constraint(&release.sdk_constraint)?;
+        if !supported {
+            bail!(
+                "{} {}: official child catalog release predates the catalog-v2 base SDK {}",
+                catalog.id,
+                release.version,
+                CATALOG_V2_BASE_SDK_VERSION
+            );
+        }
+        if !versions.insert(release.version.clone()) {
+            bail!(
+                "{}: duplicate child release version {}",
+                catalog.id,
+                release.version
+            );
+        }
+        release_asset_url_parts(&release.artifact_manifest_url, OFFICIAL_GITHUB_REPO)?;
+    }
+
+    let latest_release = latest_child_catalog_release(catalog)?;
+    let latest_supported =
+        host_version_matches_constraint(SDK_VERSION, &latest_release.sdk_constraint)
+            .map_err(anyhow::Error::msg)?;
+    if !latest_supported {
+        bail!(
+            "{} {}: latest official child catalog release is not compatible with host SDK {}",
+            catalog.id,
+            latest_release.version,
+            SDK_VERSION
+        );
+    }
+
+    Ok(())
+}
+
+fn validate_official_release_descriptor(
+    descriptor: &PluginDescriptor,
+    child: &ChildCatalogV2,
+    release: &ChildCatalogReleaseV2,
+) -> Result<()> {
+    validate_descriptor_contract(descriptor)?;
+    let expected = [
+        ("id", child.id.as_str(), descriptor.id.as_str()),
+        (
+            "version",
+            release.version.as_str(),
+            descriptor.version.as_str(),
+        ),
+        (
+            "plugin_type",
+            child.plugin_type.as_str(),
+            descriptor.plugin_type(),
+        ),
+        (
+            "provider_type",
+            child.provider_type.as_str(),
+            descriptor.provider_type(),
+        ),
+    ];
+    for (field, expected_value, actual_value) in expected {
+        if expected_value != actual_value {
+            bail!(
+                "{}: latest release descriptor {field}={} does not match published {field}={}",
+                child.id,
+                actual_value,
+                expected_value
+            );
         }
     }
     Ok(())
@@ -3531,7 +3314,7 @@ fn run_community_verify(ctx: &TaskContext, github_repo: &str) -> Result<()> {
 
         let manifest: PluginManifestV2 = serde_json::from_slice(&fs::read(&manifest_path)?)
             .with_context(|| format!("failed to parse {}", manifest_path.display()))?;
-        validate_community_release_manifest(&manifest, &child, release)?;
+        validate_release_manifest(&manifest, &child, release)?;
 
         let artifact = github_release_download(ctx, &repo, &tag, &manifest.artifact, &release_dir)?;
         let artifact_bundle =
@@ -3559,10 +3342,182 @@ fn run_community_verify(ctx: &TaskContext, github_repo: &str) -> Result<()> {
     Ok(())
 }
 
+fn run_catalog_validate_v2(ctx: &TaskContext) -> Result<()> {
+    step("Validating published official catalog-v2 assets");
+
+    let temp = tempfile::tempdir()?;
+    let catalog_dir = temp.path().join("catalog");
+    let central_pretty = github_release_download(
+        ctx,
+        OFFICIAL_GITHUB_REPO,
+        CENTRAL_CATALOG_RELEASE_TAG,
+        CATALOG_PRETTY_JSON,
+        &catalog_dir,
+    )?;
+    let central_pretty_bundle = github_release_download(
+        ctx,
+        OFFICIAL_GITHUB_REPO,
+        CENTRAL_CATALOG_RELEASE_TAG,
+        &format!("{CATALOG_PRETTY_JSON}.bundle"),
+        &catalog_dir,
+    )?;
+    let central_runtime = github_release_download(
+        ctx,
+        OFFICIAL_GITHUB_REPO,
+        CENTRAL_CATALOG_RELEASE_TAG,
+        CATALOG_MINIFIED_ZST,
+        &catalog_dir,
+    )?;
+    let central_runtime_bundle = github_release_download(
+        ctx,
+        OFFICIAL_GITHUB_REPO,
+        CENTRAL_CATALOG_RELEASE_TAG,
+        &format!("{CATALOG_MINIFIED_ZST}.bundle"),
+        &catalog_dir,
+    )?;
+    cosign_verify_official_blob(ctx, &central_pretty, &central_pretty_bundle)?;
+    cosign_verify_official_blob(ctx, &central_runtime, &central_runtime_bundle)?;
+
+    let pretty_value: serde_json::Value = serde_json::from_slice(&fs::read(&central_pretty)?)
+        .with_context(|| format!("failed to parse {}", central_pretty.display()))?;
+    let runtime_value: serde_json::Value =
+        serde_json::from_slice(&read_catalog_bytes(ctx, &central_runtime)?)
+            .with_context(|| format!("failed to parse {}", central_runtime.display()))?;
+    if pretty_value != runtime_value {
+        bail!("published catalog-v2 pretty JSON and zstd runtime asset differ");
+    }
+    let catalog: CatalogV2 = serde_json::from_value(runtime_value)?;
+    validate_official_catalog(&catalog)?;
+
+    for rule_pack in &catalog.rule_packs {
+        let (tag, asset) = release_asset_url_parts(&rule_pack.url, OFFICIAL_GITHUB_REPO)?;
+        let pack_dir = temp.path().join("rule-packs");
+        let path = github_release_download(ctx, OFFICIAL_GITHUB_REPO, &tag, &asset, &pack_dir)?;
+        let manifest = load_rule_pack_manifest(&path)?;
+        if manifest.id != rule_pack.id
+            || manifest.name != rule_pack.name
+            || manifest.author != rule_pack.author
+            || manifest.version != rule_pack.version
+        {
+            bail!(
+                "{}: published rule pack asset does not match central catalog metadata",
+                rule_pack.id
+            );
+        }
+    }
+
+    for plugin in &catalog.plugins {
+        let (tag, asset) =
+            release_asset_url_parts(&plugin.child_catalog_url, OFFICIAL_GITHUB_REPO)?;
+        let child_dir = temp.path().join("plugins").join(&plugin.id);
+        let child_pretty = github_release_download(
+            ctx,
+            OFFICIAL_GITHUB_REPO,
+            &tag,
+            CATALOG_PRETTY_JSON,
+            &child_dir,
+        )?;
+        let child_pretty_bundle = github_release_download(
+            ctx,
+            OFFICIAL_GITHUB_REPO,
+            &tag,
+            &format!("{CATALOG_PRETTY_JSON}.bundle"),
+            &child_dir,
+        )?;
+        let child_runtime =
+            github_release_download(ctx, OFFICIAL_GITHUB_REPO, &tag, &asset, &child_dir)?;
+        let child_runtime_bundle = github_release_download(
+            ctx,
+            OFFICIAL_GITHUB_REPO,
+            &tag,
+            &format!("{asset}.bundle"),
+            &child_dir,
+        )?;
+        cosign_verify_official_blob(ctx, &child_pretty, &child_pretty_bundle)?;
+        cosign_verify_official_blob(ctx, &child_runtime, &child_runtime_bundle)?;
+
+        let child_pretty_value: serde_json::Value =
+            serde_json::from_slice(&fs::read(&child_pretty)?)
+                .with_context(|| format!("failed to parse {}", child_pretty.display()))?;
+        let child_runtime_value: serde_json::Value =
+            serde_json::from_slice(&read_catalog_bytes(ctx, &child_runtime)?)
+                .with_context(|| format!("failed to parse {}", child_runtime.display()))?;
+        if child_pretty_value != child_runtime_value {
+            bail!(
+                "{}: child catalog pretty JSON and zstd runtime asset differ",
+                plugin.id
+            );
+        }
+
+        let child: ChildCatalogV2 = serde_json::from_value(child_runtime_value)?;
+        validate_official_child_catalog(&child, plugin)?;
+        let latest_release = latest_child_catalog_release(&child)?;
+        let (release_tag, manifest_asset) =
+            release_asset_url_parts(&latest_release.artifact_manifest_url, OFFICIAL_GITHUB_REPO)?;
+        let release_dir = temp.path().join(&child.id).join(&latest_release.version);
+        let manifest_path = github_release_download(
+            ctx,
+            OFFICIAL_GITHUB_REPO,
+            &release_tag,
+            &manifest_asset,
+            &release_dir,
+        )?;
+        let manifest_bundle = github_release_download(
+            ctx,
+            OFFICIAL_GITHUB_REPO,
+            &release_tag,
+            &format!("{manifest_asset}.bundle"),
+            &release_dir,
+        )?;
+        cosign_verify_official_blob(ctx, &manifest_path, &manifest_bundle)?;
+
+        let manifest: PluginManifestV2 = serde_json::from_slice(&fs::read(&manifest_path)?)
+            .with_context(|| format!("failed to parse {}", manifest_path.display()))?;
+        validate_release_manifest(&manifest, &child, latest_release)?;
+
+        let artifact = github_release_download(
+            ctx,
+            OFFICIAL_GITHUB_REPO,
+            &release_tag,
+            &manifest.artifact,
+            &release_dir,
+        )?;
+        let artifact_bundle = github_release_download(
+            ctx,
+            OFFICIAL_GITHUB_REPO,
+            &release_tag,
+            &manifest.signature,
+            &release_dir,
+        )?;
+        cosign_verify_official_blob(ctx, &artifact, &artifact_bundle)?;
+        require_blake3_file("compressed artifact", &manifest.artifact_digest, &artifact)?;
+
+        let wasm = release_dir.join("plugin.wasm");
+        run_checked(
+            ctx.command("zstd")
+                .arg("-d")
+                .arg("-f")
+                .arg(&artifact)
+                .arg("-o")
+                .arg(&wasm),
+        )?;
+        require_blake3_file("decompressed WASM", &manifest.wasm_digest, &wasm)?;
+
+        let descriptor = load_descriptor_from_wasm(&wasm)?;
+        validate_official_release_descriptor(&descriptor, &child, latest_release)?;
+    }
+
+    ok(format!(
+        "verified published official catalog-v2 for {} plugin(s)",
+        catalog.plugins.len()
+    ));
+    Ok(())
+}
+
 fn run_release(ctx: &TaskContext, args: ReleaseArgs) -> Result<()> {
-    let registry = load_registry(ctx)?;
-    let target = resolve_release_target(ctx, &registry, &args.plugin_name, &args.options)?;
-    run_release_targets(ctx, registry, vec![target], &args.options)
+    let plugins = discover_local_plugins(ctx)?;
+    let target = resolve_release_target(ctx, &plugins, &args.plugin_name, &args.options)?;
+    run_release_targets(ctx, vec![target], &args.options)
 }
 
 fn run_release_many(ctx: &TaskContext, args: ReleaseManyArgs) -> Result<()> {
@@ -3570,45 +3525,37 @@ fn run_release_many(ctx: &TaskContext, args: ReleaseManyArgs) -> Result<()> {
         bail!("release-many requires at least one plugin id");
     }
 
-    let registry = load_registry(ctx)?;
+    let plugins = discover_local_plugins(ctx)?;
     let mut targets = Vec::new();
     for plugin_name in &args.plugin_names {
         targets.push(resolve_release_target(
             ctx,
-            &registry,
+            &plugins,
             plugin_name,
             &args.options,
         )?);
     }
-    run_release_targets(ctx, registry, targets, &args.options)
+    run_release_targets(ctx, targets, &args.options)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn registry_plugin() -> RegistryPlugin {
-        RegistryPlugin {
-            id: "email".to_string(),
+    fn local_plugin() -> LocalPluginInfo {
+        LocalPluginInfo {
+            plugin_id: "email".to_string(),
             name: "Email".to_string(),
             description: "Email notifications".to_string(),
             plugin_type: "notification".to_string(),
             provider_type: "email".to_string(),
-            author: "scryer".to_string(),
-            official: true,
-            releases: Vec::new(),
-            version: None,
-            sdk_version: None,
-            sdk_constraint: None,
-            builtin: None,
-            wasm_url: None,
-            wasm_sha256: None,
-            source_url: Some(
+            plugin_dir: PathBuf::from("/tmp/email"),
+            cargo_toml: PathBuf::from("/tmp/email/Cargo.toml"),
+            crate_name: "email".to_string(),
+            current_version: Version::new(0, 1, 0),
+            source_repo:
                 "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
                     .to_string(),
-            ),
-            scryer_constraint: None,
-            legacy_min_scryer_version: None,
         }
     }
 
@@ -3617,6 +3564,46 @@ mod tests {
             version: version.to_string(),
             sdk_constraint: sdk_constraint.to_string(),
             artifact_manifest_url: official_plugin_manifest_url("email", version),
+        }
+    }
+
+    fn official_catalog_entry() -> CatalogV2Entry {
+        CatalogV2Entry {
+            id: "email".to_string(),
+            name: "Email".to_string(),
+            description: "Email notifications".to_string(),
+            plugin_type: "notification".to_string(),
+            provider_type: "email".to_string(),
+            publisher: "scryer".to_string(),
+            support_tier: "official".to_string(),
+            docs_url:
+                "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+                    .to_string(),
+            source_repo:
+                "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+                    .to_string(),
+            child_catalog_url: official_plugin_child_catalog_url("email", "0.1.0"),
+            required_signer: RequiredSignerV2 {
+                github_repository: OFFICIAL_GITHUB_REPO.to_string(),
+                github_workflow: Some(OFFICIAL_RELEASE_WORKFLOW.to_string()),
+            },
+        }
+    }
+
+    fn official_child_catalog(releases: Vec<ChildCatalogReleaseV2>) -> ChildCatalogV2 {
+        let entry = official_catalog_entry();
+        ChildCatalogV2 {
+            schema_version: CHILD_CATALOG_V2_SCHEMA.to_string(),
+            id: entry.id,
+            name: entry.name,
+            description: entry.description,
+            plugin_type: entry.plugin_type,
+            provider_type: entry.provider_type,
+            publisher: entry.publisher,
+            support_tier: entry.support_tier,
+            docs_url: entry.docs_url,
+            source_repo: entry.source_repo,
+            releases,
         }
     }
 
@@ -3652,9 +3639,8 @@ mod tests {
 
     #[test]
     fn child_catalog_preserves_historical_compatible_releases() {
-        let plugin = registry_plugin();
-        let catalog = child_catalog_from_registry(
-            &plugin,
+        let catalog = child_catalog_from_local_plugin(
+            &local_plugin(),
             vec![child_release("0.2.0", "^2"), child_release("0.1.0", "^1")],
         )
         .expect("child catalog");
@@ -3675,12 +3661,60 @@ mod tests {
         duplicate.artifact_manifest_url =
             "https://github.com/scryer-media/scryer-plugins/releases/download/plugins%2Femail%2Fv0.1.0/other.manifest.json".to_string();
 
-        let error = child_catalog_from_registry(
-            &registry_plugin(),
+        let error = child_catalog_from_local_plugin(
+            &local_plugin(),
             vec![child_release("0.1.0", "^1"), duplicate],
         )
         .expect_err("duplicate manifest URL should fail");
 
         assert!(error.to_string().contains("multiple manifests"));
+    }
+
+    #[test]
+    fn catalog_v2_supported_child_releases_drops_pre_15_history() {
+        let releases = catalog_v2_supported_child_releases(vec![
+            child_release("0.1.0", ">=1.3.0, <1.4.0"),
+            child_release("0.2.0", ">=1.4.0, <1.5.0"),
+            child_release("0.3.0", ">=1.5.0, <1.6.0"),
+            child_release("0.4.0", ">=1.6.0, <1.7.0"),
+        ])
+        .expect("filtered child releases");
+
+        assert_eq!(
+            releases
+                .iter()
+                .map(|release| release.version.as_str())
+                .collect::<Vec<_>>(),
+            vec!["0.3.0", "0.4.0"]
+        );
+    }
+
+    #[test]
+    fn official_child_catalog_accepts_all_releases_on_current_sdk_line() {
+        let entry = official_catalog_entry();
+        let catalog = official_child_catalog(vec![
+            child_release("0.1.0", ">=1.5.0, <1.6.0"),
+            child_release("0.2.0", ">=1.5.0, <1.6.0"),
+        ]);
+
+        validate_official_child_catalog(&catalog, &entry).expect("catalog should validate");
+    }
+
+    #[test]
+    fn official_child_catalog_rejects_pre_15_release_history() {
+        let entry = official_catalog_entry();
+        let catalog = official_child_catalog(vec![
+            child_release("0.1.0", ">=1.5.0, <1.6.0"),
+            child_release("0.2.0", ">=1.4.0, <1.5.0"),
+        ]);
+
+        let error =
+            validate_official_child_catalog(&catalog, &entry).expect_err("catalog should fail");
+
+        assert!(
+            error
+                .to_string()
+                .contains("predates the catalog-v2 base SDK")
+        );
     }
 }

@@ -82,6 +82,28 @@ impl NewznabConfig {
 pub fn standard_config_fields() -> Vec<ConfigFieldDef> {
     vec![
         ConfigFieldDef {
+            key: "base_url".to_string(),
+            label: "Base URL".to_string(),
+            field_type: ConfigFieldType::String,
+            required: true,
+            default_value: None,
+            value_source: Default::default(),
+            host_binding: None,
+            options: vec![],
+            help_text: Some("Indexer site URL, for example https://indexer.example".to_string()),
+        },
+        ConfigFieldDef {
+            key: "api_key".to_string(),
+            label: "API Key".to_string(),
+            field_type: ConfigFieldType::Password,
+            required: true,
+            default_value: None,
+            value_source: Default::default(),
+            host_binding: None,
+            options: vec![],
+            help_text: Some("Indexer API key".to_string()),
+        },
+        ConfigFieldDef {
             key: "api_path".to_string(),
             label: "API Path".to_string(),
             field_type: ConfigFieldType::String,
@@ -107,6 +129,38 @@ pub fn standard_config_fields() -> Vec<ConfigFieldDef> {
             ),
         },
     ]
+}
+
+pub fn descriptor_json_with_connection_url(
+    descriptor: &PluginDescriptor,
+    connection_key: &str,
+) -> Result<String, Error> {
+    let mut value = serde_json::to_value(descriptor)?;
+    if let Some(provider) = value
+        .pointer_mut("/provider")
+        .and_then(|value| value.as_object_mut())
+    {
+        provider.remove("default_base_url");
+    }
+    let fields = value
+        .pointer_mut("/provider/config_fields")
+        .and_then(|value| value.as_array_mut())
+        .ok_or_else(|| Error::msg("descriptor missing provider.config_fields"))?;
+    let field = fields
+        .iter_mut()
+        .filter_map(|value| value.as_object_mut())
+        .find(|field| {
+            field
+                .get("key")
+                .and_then(|value| value.as_str())
+                .is_some_and(|key| key == connection_key)
+        })
+        .ok_or_else(|| Error::msg("descriptor missing connection URL config field"))?;
+    field.insert(
+        "role".to_string(),
+        serde_json::Value::String("connection_url".to_string()),
+    );
+    Ok(serde_json::to_string(&value)?)
 }
 
 // ---------------------------------------------------------------------------
@@ -2436,8 +2490,12 @@ mod tests {
     #[test]
     fn config_fields_has_api_path_and_additional_params() {
         let fields = standard_config_fields();
-        assert_eq!(fields.len(), 2);
-        assert_eq!(fields[0].key, "api_path");
-        assert_eq!(fields[1].key, "additional_params");
+        assert_eq!(fields.len(), 4);
+        assert_eq!(fields[0].key, "base_url");
+        assert!(fields[0].required);
+        assert_eq!(fields[1].key, "api_key");
+        assert!(fields[1].required);
+        assert_eq!(fields[2].key, "api_path");
+        assert_eq!(fields[3].key, "additional_params");
     }
 }
