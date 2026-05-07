@@ -230,7 +230,7 @@ mod tests {
             },
             title: Some(scryer_plugin_sdk::PluginNotificationTitle {
                 id: None,
-                name: "Breaking Bad".to_string(),
+                name: "Cinder Line".to_string(),
                 facet: "tv".to_string(),
                 year: Some(2008),
                 slug: None,
@@ -262,7 +262,7 @@ mod tests {
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
         assert_eq!(parsed["schema_version"], 1);
         assert_eq!(parsed["event_type"], "test");
-        assert_eq!(parsed["title"]["name"], "Breaking Bad");
+        assert_eq!(parsed["title"]["name"], "Cinder Line");
         assert!(parsed.get("provider_extra").is_none());
     }
 }

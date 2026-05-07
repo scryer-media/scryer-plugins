@@ -1041,7 +1041,7 @@ mod tests {
 <rss>
   <channel>
     <item>
-      <title>Dune.Part.Two.2024.2160p.WEB-DL</title>
+      <title>Glass.Harbor.Part.Two.2024.2160p.WEB-DL</title>
       <link>https://tracker.example/torrents/123</link>
       <guid>https://tracker.example/download/123.torrent</guid>
       <pubDate>Tue, 10 Mar 2026 12:00:00 GMT</pubDate>

@@ -851,16 +851,16 @@ mod tests {
 
     #[test]
     fn build_query_candidates_uses_canonical_title_only() {
-        let candidates = build_query_candidates("Frieren S01E01", &[]);
+        let candidates = build_query_candidates("Silver Horizon S01E01", &[]);
 
-        assert_eq!(candidates, vec!["Frieren"]);
+        assert_eq!(candidates, vec!["Silver Horizon"]);
     }
 
     #[test]
     fn build_animetosho_request_params_id_search_uses_season_and_episode() {
         let params = build_animetosho_request_params(
             Some("18220"),
-            &["Bleach".into()],
+            &["Emberfall".into()],
             Some(17),
             Some(37),
             None,
@@ -872,7 +872,7 @@ mod tests {
     fn build_animetosho_request_params_abs_search_uses_absolute_episode_only() {
         let params = build_animetosho_request_params(
             Some("18220"),
-            &["Bleach".into()],
+            &["Emberfall".into()],
             Some(17),
             Some(37),
             Some(403),
@@ -883,7 +883,7 @@ mod tests {
     #[test]
     fn build_animetosho_request_params_freetext_uses_title_with_season_and_episode() {
         let params =
-            build_animetosho_request_params(None, &["Frieren".into()], Some(1), Some(1), Some(1));
-        assert_eq!(params, vec!["q=Frieren%20S01E01"]);
+            build_animetosho_request_params(None, &["Silver Horizon".into()], Some(1), Some(1), Some(1));
+        assert_eq!(params, vec!["q=Silver%20Horizon%20S01E01"]);
     }
 }

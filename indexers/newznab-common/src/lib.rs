@@ -1930,8 +1930,8 @@ mod tests {
 
     #[test]
     fn build_query_variants_prefers_romanized_anime_alias_before_canonical() {
-        let variants = build_query_variants("Frieren S01E01");
-        assert_eq!(variants, vec!["Frieren"]);
+        let variants = build_query_variants("Silver Horizon S01E01");
+        assert_eq!(variants, vec!["Silver Horizon"]);
     }
 
     #[test]
@@ -1961,7 +1961,7 @@ mod tests {
         let url = build_search_url(
             "https://api.nzbgeek.info/api",
             "tvsearch",
-            Some("Sousou no Frieren"),
+            Some("Sora no Vale"),
             "test-api-key",
             None,
             None,
@@ -1972,7 +1972,7 @@ mod tests {
             "",
         );
 
-        assert!(url.contains("q=Sousou%20no%20Frieren"));
+        assert!(url.contains("q=Sora%20no%20Vale"));
         assert!(url.contains("season=1"));
         assert!(url.contains("ep=1"));
     }
