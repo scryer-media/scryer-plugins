@@ -177,6 +177,7 @@ fn config_field(
         required,
         default_value: default_value.map(str::to_string),
         value_source: ConfigFieldValueSource::User,
+        role: None,
         host_binding: None,
         options: vec![],
         help_text: None,

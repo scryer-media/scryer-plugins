@@ -1104,16 +1104,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "jellyfin-notification"
-version = "0.1.4"
-dependencies = [
- "extism-pdk",
- "scryer-plugin-sdk",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "jobserver"
 version = "0.1.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1424,6 +1414,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "prowlarr-indexer"
+version = "0.1.0"
+dependencies = [
+ "extism-pdk",
+ "scryer-plugin-sdk",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

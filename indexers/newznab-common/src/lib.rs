@@ -11,13 +11,15 @@ use extism_pdk::*;
 use quick_xml::events::Event;
 use quick_xml::Reader;
 pub use scryer_plugin_sdk::{
-    current_sdk_constraint, ConfigFieldDef, ConfigFieldType, IndexerCapabilities as Capabilities,
-    IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode,
-    IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput,
-    IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor, PluginResult,
+    current_sdk_constraint, ConfigFieldDef, ConfigFieldRole, ConfigFieldType,
+    IndexerCapabilities as Capabilities, IndexerCategoryModel, IndexerCategoryValueKind,
+    IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities,
+    IndexerManagementCapabilities, IndexerProtocol, IndexerResponseFeatures,
+    IndexerSearchInput, IndexerSourceKind,
+    IndexerTorrentCapabilities, PluginDescriptor, PluginResult,
     PluginScoringPolicy as ScoringPolicy, PluginSearchRequest as SearchRequest,
-    PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult, ProviderDescriptor,
-    SDK_VERSION,
+    PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult,
+    ProviderDescriptor, SDK_VERSION,
 };
 use serde::Deserialize;
 
@@ -88,6 +90,7 @@ pub fn standard_config_fields() -> Vec<ConfigFieldDef> {
             required: true,
             default_value: None,
             value_source: Default::default(),
+            role: Some(ConfigFieldRole::ConnectionUrl),
             host_binding: None,
             options: vec![],
             help_text: Some("Indexer site URL, for example https://indexer.example".to_string()),
@@ -99,6 +102,7 @@ pub fn standard_config_fields() -> Vec<ConfigFieldDef> {
             required: true,
             default_value: None,
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("Indexer API key".to_string()),
@@ -110,6 +114,7 @@ pub fn standard_config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("/api".to_string()),
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("API endpoint path (e.g. /api, /api/v1/api, /nabapi)".to_string()),
@@ -121,6 +126,7 @@ pub fn standard_config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: None,
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some(

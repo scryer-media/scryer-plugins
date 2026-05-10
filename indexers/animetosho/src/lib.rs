@@ -3,11 +3,13 @@ use std::collections::{HashMap, HashSet};
 use extism_pdk::*;
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
-    ConfigFieldDef, ConfigFieldType, IndexerCapabilities as Capabilities, IndexerDescriptor,
-    IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures,
+    ConfigFieldDef, ConfigFieldRole, ConfigFieldType, IndexerCapabilities as Capabilities,
+    IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities,
+    IndexerManagementCapabilities, IndexerProtocol, IndexerResponseFeatures,
     IndexerSearchInput, IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor,
-    PluginResult, PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
-    PluginSearchResult as SearchResult, ProviderDescriptor, TaggedAlias, SDK_VERSION,
+    PluginResult, PluginSearchRequest as SearchRequest,
+    PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult,
+    ProviderDescriptor, TaggedAlias, SDK_VERSION,
 };
 use serde::Deserialize;
 
@@ -117,11 +119,12 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
                 required: false,
                 default_value: Some("https://feed.animetosho.org".to_string()),
                 value_source: Default::default(),
+                role: Some(ConfigFieldRole::ConnectionUrl),
                 host_binding: None,
                 options: vec![],
                 help_text: Some("AnimeTosho feed API base URL".to_string()),
             }],
-            default_base_url: None,
+            management_capabilities: IndexerManagementCapabilities::default(),
             allowed_hosts: vec![],
             rate_limit_seconds: None,
         }),

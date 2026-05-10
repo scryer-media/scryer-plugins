@@ -4,9 +4,10 @@ use extism_pdk::*;
 use newznab_common::{
     current_sdk_constraint, descriptor_json_with_connection_url, execute_full_search,
     standard_config_fields, Capabilities, IndexerCategoryModel, IndexerCategoryValueKind,
-    IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol,
-    IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind, IndexerTorrentCapabilities,
-    NewznabConfig, PluginDescriptor, PluginResult, ProviderDescriptor, SearchRequest, SDK_VERSION,
+    IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities,
+    IndexerManagementCapabilities, IndexerProtocol, IndexerResponseFeatures,
+    IndexerSearchInput, IndexerSourceKind, IndexerTorrentCapabilities, NewznabConfig,
+    PluginDescriptor, PluginResult, ProviderDescriptor, SearchRequest, SDK_VERSION,
 };
 
 #[plugin_fn]
@@ -24,7 +25,7 @@ fn build_descriptor_json() -> Result<String, Error> {
         socket_permissions: vec![],
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: "torznab".to_string(),
-            provider_aliases: vec!["jackett".to_string(), "prowlarr".to_string()],
+            provider_aliases: vec!["jackett".to_string()],
             source_kind: IndexerSourceKind::Torrent,
             capabilities: Capabilities {
                 supported_ids: HashMap::from([
@@ -103,9 +104,9 @@ fn build_descriptor_json() -> Result<String, Error> {
                     ..IndexerResponseFeatures::default()
                 }),
             },
+            management_capabilities: IndexerManagementCapabilities::default(),
             scoring_policies: vec![],
             config_fields: standard_config_fields(),
-            default_base_url: None,
             allowed_hosts: vec![],
             rate_limit_seconds: Some(2),
         }),

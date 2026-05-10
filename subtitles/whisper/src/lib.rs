@@ -91,6 +91,7 @@ fn descriptor() -> PluginDescriptor {
                     required: true,
                     default_value: None,
                     value_source: ConfigFieldValueSource::User,
+                    role: None,
                     host_binding: None,
                     options: Vec::new(),
                     help_text: Some(
@@ -104,6 +105,7 @@ fn descriptor() -> PluginDescriptor {
                     required: true,
                     default_value: Some("whisper-1".to_string()),
                     value_source: ConfigFieldValueSource::User,
+                    role: None,
                     host_binding: None,
                     options: Vec::new(),
                     help_text: Some("Transcription model to use.".to_string()),
@@ -115,6 +117,7 @@ fn descriptor() -> PluginDescriptor {
                     required: false,
                     default_value: None,
                     value_source: ConfigFieldValueSource::User,
+                    role: None,
                     host_binding: None,
                     options: Vec::new(),
                     help_text: Some(

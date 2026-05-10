@@ -97,7 +97,7 @@
     {
       "id": "torznab",
       "name": "Torznab Indexer",
-      "description": "Generic Torznab-compatible torrent indexer for Jackett, Prowlarr, and native Torznab feeds",
+      "description": "Generic Torznab-compatible torrent indexer for Jackett and native Torznab feeds",
       "plugin_type": "torrent_indexer",
       "provider_type": "torznab",
       "author": "scryer-media",

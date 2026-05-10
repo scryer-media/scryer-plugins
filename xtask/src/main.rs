@@ -37,7 +37,7 @@ const ZSTD_LEVEL: &str = "-10";
 const OFFICIAL_GITHUB_REPO: &str = "scryer-media/scryer-plugins";
 const OFFICIAL_RELEASE_WORKFLOW: &str = ".github/workflows/release-plugin.yml";
 const CENTRAL_CATALOG_RELEASE_TAG: &str = "catalog/v2";
-const CATALOG_V2_BASE_SDK_VERSION: &str = "1.5.0";
+const CATALOG_V2_BASE_SDK_VERSION: &str = "1.6.0";
 const RULE_PACK_SOURCE_MANIFEST: &str = "rule_packs/manifest.json";
 const REPO_RELEASE_TAG_PREFIX: &str = "plugins/release/";
 const CATALOG_PRETTY_JSON: &str = "catalog-v2.json";
@@ -1829,9 +1829,9 @@ fn plugin_scaffold_source(kind: PluginKindArg, plugin_id: &str) -> String {
             provider_aliases: vec![],
             source_kind: IndexerSourceKind::Generic,
             capabilities: IndexerCapabilities::default(),
+            management_capabilities: IndexerManagementCapabilities::default(),
             scoring_policies: vec![],
             config_fields: vec![],
-            default_base_url: None,
             allowed_hosts: vec![],
             rate_limit_seconds: None,
         }})"#

@@ -1,2 +1,5 @@
 [alias]
 xtask = "run --manifest-path xtask/Cargo.toml --"
+
+[patch.crates-io]
+scryer-plugin-sdk = { path = "../scryer/crates/scryer-plugin-sdk" }
