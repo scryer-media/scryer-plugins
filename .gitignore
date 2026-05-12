@@ -3,6 +3,7 @@
 *.swp
 *.swo
 *~
+.github/copilot-instructions.md
 
 # Local agent skills (machine-specific only)
 .agents/skills/claude-context/
