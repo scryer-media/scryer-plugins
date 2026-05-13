@@ -10,6 +10,10 @@ on:
         description: "Release tag or commit to publish"
         required: true
         type: string
+      release_commit:
+        description: "Commit that owns the plugin version tags to publish"
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -63,7 +67,10 @@ jobs:
       - name: Select plugin tags for this release commit
         run: |
           set -euo pipefail
-          RELEASE_SHA="$(git rev-parse HEAD)"
+          RELEASE_SHA="${{ github.event_name == 'workflow_dispatch' && inputs.release_commit || '' }}"
+          if [ -z "${RELEASE_SHA}" ]; then
+            RELEASE_SHA="$(git rev-parse HEAD)"
+          fi
           mapfile -t plugin_tags < <(git tag --points-at "${RELEASE_SHA}" | sort | grep -E '^plugins/[^/]+/v.+$' || true)
           if [ "${#plugin_tags[@]}" -eq 0 ]; then
             echo "No plugin release tags point at ${RELEASE_SHA}" >&2

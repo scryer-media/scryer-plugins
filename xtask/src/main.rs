@@ -929,10 +929,16 @@ fn git_path_is_tracked(ctx: &TaskContext, path: &Path) -> Result<bool> {
 }
 
 fn official_plugin_dirs_from_registry(ctx: &TaskContext) -> Result<BTreeSet<PathBuf>> {
+    Ok(official_plugin_dirs_by_id_from_registry(ctx)?
+        .into_values()
+        .collect())
+}
+
+fn official_plugin_dirs_by_id_from_registry(ctx: &TaskContext) -> Result<BTreeMap<String, PathBuf>> {
     let registry_path = ctx.repo_root.join("registry.json");
     let registry: serde_json::Value = serde_json::from_slice(&fs::read(&registry_path)?)
         .with_context(|| format!("failed to parse {}", registry_path.display()))?;
-    let mut dirs = BTreeSet::new();
+    let mut dirs = BTreeMap::new();
 
     for plugin in registry
         .get("plugins")
@@ -940,6 +946,9 @@ fn official_plugin_dirs_from_registry(ctx: &TaskContext) -> Result<BTreeSet<Path
         .into_iter()
         .flatten()
     {
+        let Some(plugin_id) = plugin.get("id").and_then(|id| id.as_str()) else {
+            continue;
+        };
         if !plugin
             .get("official")
             .and_then(|official| official.as_bool())
@@ -967,7 +976,7 @@ fn official_plugin_dirs_from_registry(ctx: &TaskContext) -> Result<BTreeSet<Path
             if relative.is_empty() {
                 continue;
             }
-            dirs.insert(ctx.repo_root.join(relative));
+            dirs.insert(plugin_id.to_string(), ctx.repo_root.join(relative));
             break;
         }
     }
@@ -2608,18 +2617,17 @@ fn run_official_prefetch(ctx: &TaskContext, args: OfficialPrefetchArgs) -> Resul
         bail!("official prefetch requires at least one plugin id");
     }
 
-    let plugins = discover_local_plugins(ctx)?;
+    let plugins = official_plugin_dirs_by_id_from_registry(ctx)?;
     let mut selected = BTreeSet::new();
     for plugin_id in args.plugin_ids {
         if !selected.insert(plugin_id.clone()) {
             continue;
         }
 
-        let plugin = plugins
-            .iter()
-            .find(|plugin| plugin.plugin_id == plugin_id)
+        let plugin_dir = plugins
+            .get(&plugin_id)
             .ok_or_else(|| anyhow!("plugin '{plugin_id}' not found in local official plugins"))?;
-        prefetch_plugin_dependencies(ctx, &plugin.plugin_dir)?;
+        prefetch_plugin_dependencies(ctx, plugin_dir)?;
     }
 
     ok("prefetched plugin release dependencies");
