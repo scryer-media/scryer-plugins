@@ -934,7 +934,9 @@ fn official_plugin_dirs_from_registry(ctx: &TaskContext) -> Result<BTreeSet<Path
         .collect())
 }
 
-fn official_plugin_dirs_by_id_from_registry(ctx: &TaskContext) -> Result<BTreeMap<String, PathBuf>> {
+fn official_plugin_dirs_by_id_from_registry(
+    ctx: &TaskContext,
+) -> Result<BTreeMap<String, PathBuf>> {
     let registry_path = ctx.repo_root.join("registry.json");
     let registry: serde_json::Value = serde_json::from_slice(&fs::read(&registry_path)?)
         .with_context(|| format!("failed to parse {}", registry_path.display()))?;
