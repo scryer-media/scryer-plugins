@@ -6,14 +6,12 @@ use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
-    ConfigFieldDef, ConfigFieldOption, ConfigFieldRole, ConfigFieldType,
-    IndexerCapabilities as Capabilities, IndexerCategoryModel, IndexerCategoryValueKind,
-    IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities,
-    IndexerManagementCapabilities, IndexerProtocol, IndexerResponseFeatures,
-    IndexerSearchInput, IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor,
-    PluginResult, PluginSearchRequest as SearchRequest,
-    PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult,
-    ProviderDescriptor, SDK_VERSION,
+    ConfigFieldDef, ConfigFieldOption, ConfigFieldType, IndexerCapabilities as Capabilities,
+    IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode,
+    IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput,
+    IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor, PluginResult,
+    PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
+    PluginSearchResult as SearchResult, ProviderDescriptor, SDK_VERSION,
 };
 
 #[derive(Default)]
@@ -107,9 +105,9 @@ fn build_descriptor_json() -> Result<String, Error> {
                     ..IndexerResponseFeatures::default()
                 }),
             },
-            management_capabilities: IndexerManagementCapabilities::default(),
             scoring_policies: vec![],
             config_fields: config_fields(),
+            default_base_url: None,
             allowed_hosts: vec![],
             rate_limit_seconds: Some(2),
         }),
@@ -187,7 +185,6 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: true,
             default_value: None,
             value_source: Default::default(),
-            role: Some(ConfigFieldRole::ConnectionUrl),
             host_binding: None,
             options: vec![],
             help_text: Some(
@@ -201,7 +198,6 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("auto".to_string()),
             value_source: Default::default(),
-            role: None,
             host_binding: None,
             options: vec![
                 ConfigFieldOption {
@@ -237,7 +233,6 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: None,
             value_source: Default::default(),
-            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("Optional username for HTTP basic auth".to_string()),
@@ -249,7 +244,6 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: None,
             value_source: Default::default(),
-            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("Optional password for HTTP basic auth".to_string()),
@@ -261,7 +255,6 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: None,
             value_source: Default::default(),
-            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some(
@@ -276,7 +269,6 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("Scryer Torrent RSS Indexer/0.1".to_string()),
             value_source: Default::default(),
-            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("Optional custom User-Agent header".to_string()),
@@ -288,7 +280,6 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: None,
             value_source: Default::default(),
-            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some(

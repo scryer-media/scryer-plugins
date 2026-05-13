@@ -4,10 +4,9 @@ use extism_pdk::*;
 use newznab_common::{
     current_sdk_constraint, descriptor_json_with_connection_url, execute_full_search,
     standard_config_fields, Capabilities, IndexerCategoryModel, IndexerCategoryValueKind,
-    IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities,
-    IndexerManagementCapabilities, IndexerProtocol, IndexerResponseFeatures,
-    IndexerSearchInput, IndexerSourceKind, NewznabConfig, PluginDescriptor, PluginResult,
-    ProviderDescriptor, ScoringPolicy, SearchRequest, SDK_VERSION,
+    IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol,
+    IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind, NewznabConfig,
+    PluginDescriptor, PluginResult, ProviderDescriptor, ScoringPolicy, SearchRequest, SDK_VERSION,
 };
 
 #[plugin_fn]
@@ -84,13 +83,13 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
                     ..IndexerResponseFeatures::default()
                 }),
             },
-            management_capabilities: IndexerManagementCapabilities::default(),
             scoring_policies: vec![ScoringPolicy {
                 name: "dognzb_rating_bonus".to_string(),
                 rego_source: REGO_RATING_BONUS.to_string(),
                 applied_facets: vec![],
             }],
             config_fields: standard_config_fields(),
+            default_base_url: Some("https://api.dognzb.cr".to_string()),
             allowed_hosts: vec![],
             rate_limit_seconds: None,
         }),

@@ -219,7 +219,6 @@ fn descriptor() -> PluginDescriptor {
                     required: true,
                     default_value: None,
                     value_source: ConfigFieldValueSource::HostBinding,
-                    role: None,
                     host_binding: Some(PluginHostBindingId::SmgOpenSubtitlesApiKey),
                     options: vec![],
                     help_text: Some(
@@ -233,7 +232,6 @@ fn descriptor() -> PluginDescriptor {
                     required: true,
                     default_value: None,
                     value_source: ConfigFieldValueSource::User,
-                    role: None,
                     host_binding: None,
                     options: vec![],
                     help_text: Some("OpenSubtitles account username.".to_string()),
@@ -245,7 +243,6 @@ fn descriptor() -> PluginDescriptor {
                     required: true,
                     default_value: None,
                     value_source: ConfigFieldValueSource::User,
-                    role: None,
                     host_binding: None,
                     options: vec![],
                     help_text: Some("OpenSubtitles account password.".to_string()),
@@ -257,7 +254,6 @@ fn descriptor() -> PluginDescriptor {
                     required: false,
                     default_value: Some("true".to_string()),
                     value_source: ConfigFieldValueSource::User,
-                    role: None,
                     host_binding: None,
                     options: vec![],
                     help_text: Some(

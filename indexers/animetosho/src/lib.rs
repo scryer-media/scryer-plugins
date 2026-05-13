@@ -3,13 +3,11 @@ use std::collections::{HashMap, HashSet};
 use extism_pdk::*;
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
-    ConfigFieldDef, ConfigFieldRole, ConfigFieldType, IndexerCapabilities as Capabilities,
-    IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities,
-    IndexerManagementCapabilities, IndexerProtocol, IndexerResponseFeatures,
+    ConfigFieldDef, ConfigFieldType, IndexerCapabilities as Capabilities, IndexerDescriptor,
+    IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures,
     IndexerSearchInput, IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor,
-    PluginResult, PluginSearchRequest as SearchRequest,
-    PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult,
-    ProviderDescriptor, TaggedAlias, SDK_VERSION,
+    PluginResult, PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
+    PluginSearchResult as SearchResult, ProviderDescriptor, TaggedAlias, SDK_VERSION,
 };
 use serde::Deserialize;
 
@@ -119,12 +117,11 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
                 required: false,
                 default_value: Some("https://feed.animetosho.org".to_string()),
                 value_source: Default::default(),
-                role: Some(ConfigFieldRole::ConnectionUrl),
                 host_binding: None,
                 options: vec![],
                 help_text: Some("AnimeTosho feed API base URL".to_string()),
             }],
-            management_capabilities: IndexerManagementCapabilities::default(),
+            default_base_url: Some("https://feed.animetosho.org".to_string()),
             allowed_hosts: vec![],
             rate_limit_seconds: None,
         }),
@@ -885,8 +882,13 @@ mod tests {
 
     #[test]
     fn build_animetosho_request_params_freetext_uses_title_with_season_and_episode() {
-        let params =
-            build_animetosho_request_params(None, &["Silver Horizon".into()], Some(1), Some(1), Some(1));
+        let params = build_animetosho_request_params(
+            None,
+            &["Silver Horizon".into()],
+            Some(1),
+            Some(1),
+            Some(1),
+        );
         assert_eq!(params, vec!["q=Silver%20Horizon%20S01E01"]);
     }
 }

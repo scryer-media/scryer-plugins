@@ -18,7 +18,7 @@ use std::ffi::OsStr;
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
-use std::process::{Command, ExitStatus};
+use std::process::{Command, ExitStatus, Stdio};
 use std::time::{SystemTime, UNIX_EPOCH};
 use toml_edit::{DocumentMut, value};
 
@@ -37,7 +37,7 @@ const ZSTD_LEVEL: &str = "-10";
 const OFFICIAL_GITHUB_REPO: &str = "scryer-media/scryer-plugins";
 const OFFICIAL_RELEASE_WORKFLOW: &str = ".github/workflows/release-plugin.yml";
 const CENTRAL_CATALOG_RELEASE_TAG: &str = "catalog/v2";
-const CATALOG_V2_BASE_SDK_VERSION: &str = "1.6.0";
+const CATALOG_V2_BASE_SDK_VERSION: &str = "1.5.0";
 const RULE_PACK_SOURCE_MANIFEST: &str = "rule_packs/manifest.json";
 const REPO_RELEASE_TAG_PREFIX: &str = "plugins/release/";
 const CATALOG_PRETTY_JSON: &str = "catalog-v2.json";
@@ -922,6 +922,8 @@ fn git_path_is_tracked(ctx: &TaskContext, path: &Path) -> Result<bool> {
         .to_path_buf();
     let mut command = ctx.command_in("git", &ctx.repo_root);
     command.args(["ls-files", "--error-unmatch"]);
+    command.stdout(Stdio::null());
+    command.stderr(Stdio::null());
     command.arg(relative);
     Ok(run_status(&mut command)?.success())
 }
@@ -1829,7 +1831,6 @@ fn plugin_scaffold_source(kind: PluginKindArg, plugin_id: &str) -> String {
             provider_aliases: vec![],
             source_kind: IndexerSourceKind::Generic,
             capabilities: IndexerCapabilities::default(),
-            management_capabilities: IndexerManagementCapabilities::default(),
             scoring_policies: vec![],
             config_fields: vec![],
             allowed_hosts: vec![],
@@ -2057,7 +2058,10 @@ fn plugin_crate_dirs(ctx: &TaskContext) -> Result<Vec<PathBuf>> {
         {
             let path = entry?.path();
             let manifest_path = path.join("Cargo.toml");
-            if manifest_path.exists() && is_plugin_crate(&manifest_path)? {
+            if manifest_path.exists()
+                && git_path_is_tracked(ctx, &manifest_path)?
+                && is_plugin_crate(&manifest_path)?
+            {
                 dirs.push(path);
             }
         }

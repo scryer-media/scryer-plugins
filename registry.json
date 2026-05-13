@@ -157,37 +157,6 @@
       ]
     },
     {
-      "id": "animetosho",
-      "name": "AnimeTosho Indexer",
-      "description": "Anime release aggregator with torrent and NZB downloads from Nyaa, nekoBT, and other trackers",
-      "plugin_type": "indexer",
-      "provider_type": "animetosho",
-      "author": "scryer-media",
-      "official": true,
-      "releases": [
-        {
-          "version": "0.3.4",
-          "sdk_version": "1.3.0",
-          "sdk_constraint": ">=1.0.0, <2.0.0",
-          "builtin": true,
-          "wasm_url": null,
-          "wasm_sha256": null,
-          "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/animetosho",
-          "scryer_constraint": ">=0.0.5"
-        },
-        {
-          "version": "0.3.5",
-          "sdk_version": "1.4.0",
-          "sdk_constraint": ">=1.4.0, <1.5.0",
-          "builtin": false,
-          "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/animetosho-v0.3.5/dist/animetosho_indexer.wasm",
-          "wasm_sha256": "dba5c7d69dcd5fc9e3d787f5de83b95235cdedfd5d889c2e27538c0d12d17ecf",
-          "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/animetosho",
-          "scryer_constraint": ">=0.0.5"
-        }
-      ]
-    },
-    {
       "id": "webhook",
       "name": "Webhook",
       "description": "Generic webhook notification plugin — POSTs JSON payloads to a configured URL",
@@ -359,37 +328,6 @@
           "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/jimaku-v0.1.1/dist/jimaku_subtitle_provider.wasm",
           "wasm_sha256": "32d45f554e65ad4b1fc36968c7e0a7e2c1c982b0984600f8e3fc668a4e2e1002",
           "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/jimaku",
-          "scryer_constraint": ">=0.11.4"
-        }
-      ]
-    },
-    {
-      "id": "animetosho-subtitles",
-      "name": "AnimeTosho Subtitles",
-      "description": "AnimeTosho subtitle attachment provider for AniDB episode matches",
-      "plugin_type": "subtitle_provider",
-      "provider_type": "animetosho",
-      "author": "scryer-media",
-      "official": true,
-      "releases": [
-        {
-          "version": "0.1.0",
-          "sdk_version": "1.0.0",
-          "sdk_constraint": ">=1.0.0, <2.0.0",
-          "builtin": false,
-          "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/38c8dd28b19d2d64a7afa6aaedf59123579f6ebf/dist/animetosho_subtitle_provider.wasm",
-          "wasm_sha256": "b277f6671439d751f408631a8f9056cfd9b54f59b168ffa13100ebd99da16fdb",
-          "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/animetosho",
-          "scryer_constraint": ">=0.11.4"
-        },
-        {
-          "version": "0.1.1",
-          "sdk_version": "1.4.0",
-          "sdk_constraint": ">=1.4.0, <1.5.0",
-          "builtin": false,
-          "wasm_url": "https://raw.githubusercontent.com/scryer-media/scryer-plugins/animetosho-subtitles-v0.1.1/dist/animetosho_subtitle_provider.wasm",
-          "wasm_sha256": "0e7b5b28295056a1a79b4b5cc5cf15ea49c1750ab17c1d0a4a8d5bac3dafdc29",
-          "source_url": "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/animetosho",
           "scryer_constraint": ">=0.11.4"
         }
       ]

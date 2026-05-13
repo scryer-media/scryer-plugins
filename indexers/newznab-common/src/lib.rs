@@ -11,17 +11,16 @@ use extism_pdk::*;
 use quick_xml::events::Event;
 use quick_xml::Reader;
 pub use scryer_plugin_sdk::{
-    current_sdk_constraint, ConfigFieldDef, ConfigFieldRole, ConfigFieldType,
-    IndexerCapabilities as Capabilities, IndexerCategoryModel, IndexerCategoryValueKind,
-    IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities,
-    IndexerManagementCapabilities, IndexerProtocol, IndexerResponseFeatures,
-    IndexerSearchInput, IndexerSourceKind,
-    IndexerTorrentCapabilities, PluginDescriptor, PluginResult,
+    current_sdk_constraint, ConfigFieldDef, ConfigFieldType, IndexerCapabilities as Capabilities,
+    IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode,
+    IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput,
+    IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor, PluginResult,
     PluginScoringPolicy as ScoringPolicy, PluginSearchRequest as SearchRequest,
-    PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult,
-    ProviderDescriptor, SDK_VERSION,
+    PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult, ProviderDescriptor,
+    SDK_VERSION,
 };
 use serde::Deserialize;
+use url::Url;
 
 // ---------------------------------------------------------------------------
 // Search request / response types
@@ -45,18 +44,26 @@ impl NewznabConfig {
     pub fn from_extism() -> Result<Self, Error> {
         let base_url = config::get("base_url")
             .map_err(|e| Error::msg(format!("missing config base_url: {e}")))?
-            .unwrap_or_default();
+            .unwrap_or_default()
+            .trim()
+            .to_string();
         let api_key = config::get("api_key")
             .map_err(|e| Error::msg(format!("missing config api_key: {e}")))?
-            .unwrap_or_default();
+            .unwrap_or_default()
+            .trim()
+            .to_string();
         let api_path = config::get("api_path")
             .ok()
             .flatten()
-            .unwrap_or_else(|| "/api".to_string());
+            .unwrap_or_else(|| "/api".to_string())
+            .trim()
+            .to_string();
         let additional_params = config::get("additional_params")
             .ok()
             .flatten()
-            .unwrap_or_default();
+            .unwrap_or_default()
+            .trim()
+            .to_string();
 
         if base_url.is_empty() || api_key.is_empty() {
             return Err(Error::msg(
@@ -90,7 +97,6 @@ pub fn standard_config_fields() -> Vec<ConfigFieldDef> {
             required: true,
             default_value: None,
             value_source: Default::default(),
-            role: Some(ConfigFieldRole::ConnectionUrl),
             host_binding: None,
             options: vec![],
             help_text: Some("Indexer site URL, for example https://indexer.example".to_string()),
@@ -102,7 +108,6 @@ pub fn standard_config_fields() -> Vec<ConfigFieldDef> {
             required: true,
             default_value: None,
             value_source: Default::default(),
-            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("Indexer API key".to_string()),
@@ -114,7 +119,6 @@ pub fn standard_config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("/api".to_string()),
             value_source: Default::default(),
-            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("API endpoint path (e.g. /api, /api/v1/api, /nabapi)".to_string()),
@@ -126,7 +130,6 @@ pub fn standard_config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: None,
             value_source: Default::default(),
-            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some(
@@ -275,7 +278,7 @@ pub fn execute_full_search(
     // Build Newznab category parameter (numeric codes only)
     let newznab_cat = build_category_param(&req.categories);
 
-    let endpoint = build_endpoint(&config.base_url, &config.api_path);
+    let endpoint = build_endpoint(&config.base_url, &config.api_path)?;
 
     // Paginated search: fetch up to MAX_PAGES pages.
     // Stop early if a page returns fewer results than the page size.
@@ -397,7 +400,7 @@ fn execute_rss_search(
     req: &SearchRequest,
     extract_fn: MetadataExtractor,
 ) -> Result<SearchResponse, Error> {
-    let endpoint = build_endpoint(&config.base_url, &config.api_path);
+    let endpoint = build_endpoint(&config.base_url, &config.api_path)?;
     let newznab_cat = build_category_param(&req.categories);
 
     // If no categories provided, we can't make a meaningful RSS request
@@ -866,17 +869,34 @@ fn is_empty_response(trimmed: &str) -> bool {
 // HTTP helpers
 // ---------------------------------------------------------------------------
 
-fn build_endpoint(base_url: &str, api_path: &str) -> String {
-    let cleaned = base_url.trim_end_matches('/');
-    let path = api_path
-        .trim()
-        .trim_start_matches('/')
-        .trim_end_matches('/');
-    if path.is_empty() {
-        cleaned.to_string()
+fn build_endpoint(base_url: &str, api_path: &str) -> Result<String, Error> {
+    let trimmed_base = base_url.trim();
+    let mut parsed = Url::parse(trimmed_base)
+        .map_err(|error| Error::msg(format!("invalid base_url: {error}")))?;
+    let base_path = parsed.path().trim_end_matches('/').to_string();
+    let normalized_path = api_path.trim().trim_matches('/');
+    let next_path = if normalized_path.is_empty() {
+        base_path
+    } else if base_path.is_empty() || base_path == "/" {
+        format!("/{normalized_path}")
     } else {
-        format!("{cleaned}/{path}")
+        format!("{base_path}/{normalized_path}")
+    };
+
+    if next_path.is_empty() {
+        parsed.set_path("/");
+    } else {
+        parsed.set_path(&next_path);
     }
+    parsed.set_query(None);
+    parsed.set_fragment(None);
+
+    let mut rendered = parsed.to_string();
+    if next_path.is_empty() && parsed.path() == "/" && !trimmed_base.ends_with('/') {
+        rendered = rendered.trim_end_matches('/').to_string();
+    }
+
+    Ok(rendered)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -905,7 +925,7 @@ fn execute_search(
         season,
         episode,
         additional_params,
-    );
+    )?;
 
     let (status, body) = http_get_with_retry(&url)?;
     Ok((status, body))
@@ -1048,42 +1068,62 @@ fn build_search_url(
     season: Option<u32>,
     episode: Option<u32>,
     additional_params: &str,
-) -> String {
+) -> Result<String, Error> {
     let imdb_id = imdb_id.map(normalize_imdbid_param);
     let mut url =
-        format!("{endpoint}?t={search_type}&apikey={api_key}&o=json&extended=1&limit={limit}");
+        Url::parse(endpoint).map_err(|error| Error::msg(format!("invalid endpoint: {error}")))?;
 
-    if let Some(q) = query {
-        url.push_str("&q=");
-        url.push_str(&url_encode(q));
-    }
-    if let Some(id) = imdb_id.as_deref() {
-        url.push_str("&imdbid=");
-        url.push_str(id);
-    }
-    if let Some(id) = tvdb_id {
-        url.push_str("&tvdbid=");
-        url.push_str(id);
-    }
-    if let Some(c) = cat {
-        url.push_str("&cat=");
-        url.push_str(c);
-    }
-    if let Some(s) = season {
-        url.push_str(&format!("&season={s}"));
-    }
-    if let Some(e) = episode {
-        url.push_str(&format!("&ep={e}"));
-    }
-    if !additional_params.is_empty() {
-        let params = additional_params.trim();
-        if !params.starts_with('&') {
-            url.push('&');
+    {
+        let mut pairs = url.query_pairs_mut();
+        pairs.append_pair("t", search_type);
+        pairs.append_pair("apikey", api_key.trim());
+        pairs.append_pair("o", "json");
+        pairs.append_pair("extended", "1");
+        pairs.append_pair("limit", &limit.to_string());
+
+        if let Some(q) = query.map(str::trim).filter(|value| !value.is_empty()) {
+            pairs.append_pair("q", q);
         }
-        url.push_str(params);
+        if let Some(id) = imdb_id.as_deref() {
+            pairs.append_pair("imdbid", id);
+        }
+        if let Some(id) = tvdb_id.map(str::trim).filter(|value| !value.is_empty()) {
+            pairs.append_pair("tvdbid", id);
+        }
+        if let Some(c) = cat.map(str::trim).filter(|value| !value.is_empty()) {
+            pairs.append_pair("cat", c);
+        }
+        if let Some(s) = season {
+            pairs.append_pair("season", &s.to_string());
+        }
+        if let Some(e) = episode {
+            pairs.append_pair("ep", &e.to_string());
+        }
     }
 
-    url
+    append_additional_query_pairs(&mut url, additional_params);
+
+    Ok(url.to_string())
+}
+
+fn append_additional_query_pairs(url: &mut Url, additional_params: &str) {
+    let normalized = additional_params
+        .trim()
+        .trim_start_matches('?')
+        .trim_start_matches('&');
+    if normalized.is_empty() {
+        return;
+    }
+
+    let mut pairs = url.query_pairs_mut();
+    for (raw_key, raw_value) in url::form_urlencoded::parse(normalized.as_bytes()) {
+        let key = raw_key.trim();
+        if key.is_empty() {
+            continue;
+        }
+
+        pairs.append_pair(key, raw_value.trim());
+    }
 }
 
 fn normalize_imdbid_param(raw: &str) -> String {
@@ -1098,6 +1138,7 @@ fn normalize_imdbid_param(raw: &str) -> String {
     }
 }
 
+#[cfg(test)]
 /// Minimal percent-encoding for query string values.
 fn url_encode(input: &str) -> String {
     let mut output = String::with_capacity(input.len() * 2);
@@ -1793,6 +1834,17 @@ fn parse_enclosure_attrs(
 mod tests {
     use super::*;
 
+    fn assert_parses_as_http_uri(url: &str) {
+        let _: ::http::Uri = url.parse().expect("URL should parse as http::Uri");
+    }
+
+    fn query_value(url: &str, key: &str) -> Option<String> {
+        Url::parse(url)
+            .ok()?
+            .query_pairs()
+            .find_map(|(candidate, value)| (candidate == key).then(|| value.into_owned()))
+    }
+
     // ── determine_search_type ────────────────────────────────────────────
 
     #[test]
@@ -1900,14 +1952,16 @@ mod tests {
             None,
             None,
             "",
-        );
+        )
+        .unwrap();
 
         assert!(url.contains("t=movie"));
-        assert!(url.contains("q=12%20years%20a%20slave"));
+        assert_eq!(query_value(&url, "q").as_deref(), Some("12 years a slave"));
         assert!(url.contains("imdbid=002024544"));
         assert!(url.contains("limit=200"));
         assert!(url.contains("extended=1"));
         assert!(url.contains("o=json"));
+        assert_parses_as_http_uri(&url);
     }
 
     #[test]
@@ -1924,14 +1978,16 @@ mod tests {
             None,
             None,
             "",
-        );
+        )
+        .unwrap();
 
         assert!(url.contains("t=tvsearch"));
-        assert!(url.contains("q=demon%20slayer"));
+        assert_eq!(query_value(&url, "q").as_deref(), Some("demon slayer"));
         assert!(url.contains("tvdbid=123456"));
         assert!(url.contains("limit=200"));
         assert!(url.contains("extended=1"));
         assert!(url.contains("o=json"));
+        assert_parses_as_http_uri(&url);
     }
 
     #[test]
@@ -1954,12 +2010,14 @@ mod tests {
             None,
             Some(403),
             "",
-        );
+        )
+        .unwrap();
 
         assert!(url.contains("tvdbid=74796"));
         assert!(url.contains("ep=403"));
         assert!(!url.contains("q="));
         assert!(!url.contains("season="));
+        assert_parses_as_http_uri(&url);
     }
 
     #[test]
@@ -1976,11 +2034,90 @@ mod tests {
             Some(1),
             Some(1),
             "",
-        );
+        )
+        .unwrap();
 
-        assert!(url.contains("q=Sora%20no%20Vale"));
+        assert_eq!(query_value(&url, "q").as_deref(), Some("Sora no Vale"));
         assert!(url.contains("season=1"));
         assert!(url.contains("ep=1"));
+        assert_parses_as_http_uri(&url);
+    }
+
+    #[test]
+    fn build_search_url_trims_and_reencodes_whitespace_padded_values() {
+        let endpoint = build_endpoint("  https://api.nzbgeek.info/  ", " /api/ ").unwrap();
+        let url = build_search_url(
+            &endpoint,
+            "movie",
+            Some("The Batman"),
+            "  test-api-key \n",
+            Some("tt1877830"),
+            Some(" 12345 \n"),
+            Some(" 2000 , 2040 "),
+            100,
+            None,
+            None,
+            " \n&dl=1&attrs=poster image \n",
+        )
+        .unwrap();
+
+        assert_eq!(query_value(&url, "apikey").as_deref(), Some("test-api-key"));
+        assert_eq!(query_value(&url, "tvdbid").as_deref(), Some("12345"));
+        assert_eq!(query_value(&url, "cat").as_deref(), Some("2000 , 2040"));
+        assert_eq!(query_value(&url, "attrs").as_deref(), Some("poster image"));
+        assert_eq!(query_value(&url, "dl").as_deref(), Some("1"));
+        assert_parses_as_http_uri(&url);
+    }
+
+    #[test]
+    fn build_search_url_accepts_additional_params_with_or_without_prefix_markers() {
+        for additional_params in [
+            "dl=1&attrs=poster",
+            "&dl=1&attrs=poster",
+            "?dl=1&attrs=poster",
+        ] {
+            let url = build_search_url(
+                "https://api.nzbgeek.info/api",
+                "movie",
+                None,
+                "test-api-key",
+                None,
+                None,
+                None,
+                25,
+                None,
+                None,
+                additional_params,
+            )
+            .unwrap();
+
+            assert_eq!(query_value(&url, "dl").as_deref(), Some("1"));
+            assert_eq!(query_value(&url, "attrs").as_deref(), Some("poster"));
+            assert_parses_as_http_uri(&url);
+        }
+    }
+
+    #[test]
+    fn build_search_url_does_not_double_encode_additional_params() {
+        let url = build_search_url(
+            "https://api.nzbgeek.info/api",
+            "movie",
+            None,
+            "test-api-key",
+            None,
+            None,
+            None,
+            25,
+            None,
+            None,
+            "attrs=poster%20image&label=dual+audio",
+        )
+        .unwrap();
+
+        assert_eq!(query_value(&url, "attrs").as_deref(), Some("poster image"));
+        assert_eq!(query_value(&url, "label").as_deref(), Some("dual audio"));
+        assert!(!url.contains("%2520"));
+        assert_parses_as_http_uri(&url);
     }
 
     #[test]
@@ -2018,7 +2155,7 @@ mod tests {
     #[test]
     fn endpoint_normal() {
         assert_eq!(
-            build_endpoint("https://api.nzbgeek.info", "/api"),
+            build_endpoint("https://api.nzbgeek.info", "/api").unwrap(),
             "https://api.nzbgeek.info/api"
         );
     }
@@ -2026,7 +2163,7 @@ mod tests {
     #[test]
     fn endpoint_trailing_slash() {
         assert_eq!(
-            build_endpoint("https://example.com/", "/api/"),
+            build_endpoint("https://example.com/", "/api/").unwrap(),
             "https://example.com/api"
         );
     }
@@ -2034,7 +2171,7 @@ mod tests {
     #[test]
     fn endpoint_empty_path() {
         assert_eq!(
-            build_endpoint("https://example.com", ""),
+            build_endpoint("https://example.com", "").unwrap(),
             "https://example.com"
         );
     }
@@ -2042,8 +2179,16 @@ mod tests {
     #[test]
     fn endpoint_custom_path() {
         assert_eq!(
-            build_endpoint("https://foo.bar", "/api/v1/api"),
+            build_endpoint("https://foo.bar", "/api/v1/api").unwrap(),
             "https://foo.bar/api/v1/api"
+        );
+    }
+
+    #[test]
+    fn endpoint_trims_whitespace_and_discards_query_string() {
+        assert_eq!(
+            build_endpoint("  https://example.com/base/?stale=true  ", " /api/v1/ ").unwrap(),
+            "https://example.com/base/api/v1"
         );
     }
 

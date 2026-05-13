@@ -139,7 +139,6 @@ fn descriptor() -> PluginDescriptor {
                 required: false,
                 default_value: Some(DEFAULT_SEARCH_THRESHOLD.to_string()),
                 value_source: ConfigFieldValueSource::User,
-                role: None,
                 host_binding: None,
                 options: vec![],
                 help_text: Some("Maximum AnimeTosho entries to inspect, from 1 to 15.".to_string()),

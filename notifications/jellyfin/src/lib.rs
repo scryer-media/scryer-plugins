@@ -3,12 +3,11 @@ use std::collections::HashSet;
 use extism_pdk::*;
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
-    ConfigFieldDef, ConfigFieldRole, ConfigFieldType, NotificationCapabilities,
-    NotificationDeliveryMode, NotificationDescriptor,
-    NotificationEventType as SdkNotificationEventType, NotificationPayloadFormat,
-    PluginDescriptor, PluginNotificationFile, PluginNotificationRequest,
-    PluginNotificationResponse, PluginNotificationTitle, PluginResult,
-    ProviderDescriptor, SDK_VERSION,
+    ConfigFieldDef, ConfigFieldType, NotificationCapabilities, NotificationDeliveryMode,
+    NotificationDescriptor, NotificationEventType as SdkNotificationEventType,
+    NotificationPayloadFormat, PluginDescriptor, PluginNotificationFile, PluginNotificationRequest,
+    PluginNotificationResponse, PluginNotificationTitle, PluginResult, ProviderDescriptor,
+    SDK_VERSION,
 };
 use serde::Serialize;
 
@@ -163,7 +162,6 @@ fn default_descriptor() -> PluginDescriptor {
                     required: true,
                     default_value: None,
                     value_source: Default::default(),
-                    role: Some(ConfigFieldRole::ConnectionUrl),
                     host_binding: None,
                     options: vec![],
                     help_text: Some(
@@ -177,7 +175,6 @@ fn default_descriptor() -> PluginDescriptor {
                     required: true,
                     default_value: None,
                     value_source: Default::default(),
-                    role: None,
                     host_binding: None,
                     options: vec![],
                     help_text: Some("Jellyfin API key used for targeted refresh calls.".to_string()),
@@ -189,7 +186,6 @@ fn default_descriptor() -> PluginDescriptor {
                     required: false,
                     default_value: None,
                     value_source: Default::default(),
-                    role: None,
                     host_binding: None,
                     options: vec![],
                     help_text: Some(
