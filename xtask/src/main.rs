@@ -2103,6 +2103,7 @@ fn is_plugin_crate(manifest_path: &Path) -> Result<bool> {
 }
 
 fn plugin_crate_dirs(ctx: &TaskContext) -> Result<Vec<PathBuf>> {
+    let official_dirs = official_plugin_dirs_from_registry(ctx)?;
     let mut dirs = Vec::new();
     for root in ["indexers", "download_clients", "notifications", "subtitles"] {
         let root_path = ctx.repo_root.join(root);
@@ -2115,6 +2116,7 @@ fn plugin_crate_dirs(ctx: &TaskContext) -> Result<Vec<PathBuf>> {
             let path = entry?.path();
             let manifest_path = path.join("Cargo.toml");
             if manifest_path.exists()
+                && official_dirs.contains(&path)
                 && git_path_is_tracked(ctx, &manifest_path)?
                 && is_plugin_crate(&manifest_path)?
             {
