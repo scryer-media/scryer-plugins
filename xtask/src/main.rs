@@ -928,7 +928,55 @@ fn git_path_is_tracked(ctx: &TaskContext, path: &Path) -> Result<bool> {
     Ok(run_status(&mut command)?.success())
 }
 
+fn official_plugin_dirs_from_registry(ctx: &TaskContext) -> Result<BTreeSet<PathBuf>> {
+    let registry_path = ctx.repo_root.join("registry.json");
+    let registry: serde_json::Value = serde_json::from_slice(&fs::read(&registry_path)?)
+        .with_context(|| format!("failed to parse {}", registry_path.display()))?;
+    let mut dirs = BTreeSet::new();
+
+    for plugin in registry
+        .get("plugins")
+        .and_then(|plugins| plugins.as_array())
+        .into_iter()
+        .flatten()
+    {
+        if !plugin
+            .get("official")
+            .and_then(|official| official.as_bool())
+            .unwrap_or(false)
+        {
+            continue;
+        }
+
+        let Some(releases) = plugin
+            .get("releases")
+            .and_then(|releases| releases.as_array())
+        else {
+            continue;
+        };
+
+        for release in releases {
+            let Some(source_url) = release.get("source_url").and_then(|value| value.as_str())
+            else {
+                continue;
+            };
+            let Some(relative) = source_url.strip_prefix(TREE_REPO_PREFIX) else {
+                continue;
+            };
+            let relative = relative.trim_end_matches('/');
+            if relative.is_empty() {
+                continue;
+            }
+            dirs.insert(ctx.repo_root.join(relative));
+            break;
+        }
+    }
+
+    Ok(dirs)
+}
+
 fn local_plugin_directories(ctx: &TaskContext) -> Result<Vec<PathBuf>> {
+    let official_dirs = official_plugin_dirs_from_registry(ctx)?;
     let mut plugin_dirs = Vec::new();
     for prefix in ["indexers", "download_clients", "notifications", "subtitles"] {
         let prefix_dir = ctx.path(prefix);
@@ -940,7 +988,13 @@ fn local_plugin_directories(ctx: &TaskContext) -> Result<Vec<PathBuf>> {
         {
             let entry = entry?;
             let path = entry.path();
-            if path.is_dir() && path.join("Cargo.toml").is_file() {
+            let manifest_path = path.join("Cargo.toml");
+            if path.is_dir()
+                && official_dirs.contains(&path)
+                && manifest_path.is_file()
+                && git_path_is_tracked(ctx, &manifest_path)?
+                && is_plugin_crate(&manifest_path)?
+            {
                 plugin_dirs.push(path);
             }
         }
@@ -967,8 +1021,10 @@ fn package_description(manifest_path: &Path) -> Result<String> {
     let document = fs::read_to_string(manifest_path)?
         .parse::<DocumentMut>()
         .with_context(|| format!("failed to parse {}", manifest_path.display()))?;
-    Ok(document["package"]["description"]
-        .as_str()
+    Ok(document
+        .get("package")
+        .and_then(|package| package.get("description"))
+        .and_then(|description| description.as_str())
         .map(str::trim)
         .unwrap_or_default()
         .to_string())
