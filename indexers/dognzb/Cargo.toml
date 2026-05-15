@@ -1,6 +1,6 @@
 [package]
 name = "dognzb-indexer"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2021"
 license = "GPL-3.0-only"
 description = "DogNZB-specific Newznab indexer with rating, genre, and comment metadata extraction"

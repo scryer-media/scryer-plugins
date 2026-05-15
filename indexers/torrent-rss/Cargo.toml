@@ -1,6 +1,6 @@
 [package]
 name = "torrent-rss-indexer"
-version = "0.1.9"
+version = "0.1.10"
 edition = "2021"
 license = "GPL-3.0-only"
 description = "Generic torrent RSS indexer for trackers and aggregators that expose direct RSS feeds without Torznab"
