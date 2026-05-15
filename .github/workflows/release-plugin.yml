@@ -60,6 +60,8 @@ jobs:
           sudo apt-get install -y binaryen zstd
 
       - uses: sigstore/cosign-installer@v4.1.1
+        with:
+          cosign-release: v3.0.2
 
       - name: Build xtask once
         run: cargo build --locked --manifest-path xtask/Cargo.toml --bin xtask

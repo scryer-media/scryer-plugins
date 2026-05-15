@@ -1,0 +1,4 @@
+    PluginDescriptor, PluginError, PluginErrorCode, PluginResult, ProviderDescriptor,
+    SDK_VERSION, SubtitleCapabilities, SubtitleDescriptor, SubtitlePluginDownloadResponse,
+    SubtitlePluginSearchResponse, SubtitlePluginValidateConfigResponse, SubtitleProviderMode,
+    SubtitleValidateConfigStatus,

@@ -1,0 +1,4 @@
+    DownloadClientCapabilities, DownloadClientDescriptor, PluginCompletedDownload,
+    PluginDescriptor, PluginDownloadClientAddResponse, PluginDownloadClientStatus,
+    PluginDownloadItem, PluginError, PluginErrorCode, PluginResult, ProviderDescriptor,
+    SDK_VERSION,

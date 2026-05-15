@@ -1,0 +1,2 @@
+    NotificationCapabilities, NotificationDescriptor, PluginDescriptor,
+    PluginNotificationResponse, PluginResult, ProviderDescriptor, SDK_VERSION,

@@ -1,6 +1,7 @@
 use anyhow::{Context, Result, anyhow, bail};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use extism::{Manifest, UserData, ValType, host_fn};
+mod plugin_new;
 use scryer_plugin_sdk::{
     EXPORT_DESCRIBE, EXPORT_DOWNLOAD_ADD, EXPORT_DOWNLOAD_CONTROL, EXPORT_DOWNLOAD_LIST_COMPLETED,
     EXPORT_DOWNLOAD_LIST_HISTORY, EXPORT_DOWNLOAD_LIST_QUEUE, EXPORT_DOWNLOAD_MARK_IMPORTED,
@@ -271,7 +272,7 @@ enum CommunityCommand {
     },
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, ValueEnum)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, ValueEnum)]
 enum PluginKindArg {
     Indexer,
     DownloadClient,
@@ -486,7 +487,7 @@ fn main() -> Result<()> {
         Commands::ReleaseMany(args) => run_release_many(&ctx, args),
         Commands::ReleaseChanged(args) => run_release_changed(&ctx, args),
         Commands::Plugin(args) => match args.command {
-            PluginCommand::New(args) => run_plugin_new(&ctx, args),
+            PluginCommand::New(args) => plugin_new::run_plugin_new(&ctx, args),
             PluginCommand::Validate(args) => run_plugin_validate(&ctx, args),
             PluginCommand::BuildAll => run_plugin_build_all(&ctx),
             PluginCommand::ValidateAll => run_plugin_validate_all(&ctx),
@@ -1816,250 +1817,6 @@ fn run_plugin_validate(ctx: &TaskContext, args: PluginValidateArgs) -> Result<()
     Ok(())
 }
 
-fn plugin_kind_directory(kind: PluginKindArg) -> &'static str {
-    match kind {
-        PluginKindArg::Indexer => "indexers",
-        PluginKindArg::DownloadClient => "download_clients",
-        PluginKindArg::Notification => "notifications",
-        PluginKindArg::Subtitle => "subtitles",
-    }
-}
-
-fn plugin_kind_crate_suffix(kind: PluginKindArg) -> &'static str {
-    match kind {
-        PluginKindArg::Indexer => "indexer",
-        PluginKindArg::DownloadClient => "download_client",
-        PluginKindArg::Notification => "notification",
-        PluginKindArg::Subtitle => "subtitle_provider",
-    }
-}
-
-fn normalize_plugin_name(name: &str) -> Result<String> {
-    let normalized = name
-        .trim()
-        .to_ascii_lowercase()
-        .chars()
-        .map(|ch| if ch.is_ascii_alphanumeric() { ch } else { '-' })
-        .collect::<String>()
-        .split('-')
-        .filter(|part| !part.is_empty())
-        .collect::<Vec<_>>()
-        .join("-");
-    if normalized.is_empty() {
-        bail!("plugin name must contain at least one ASCII letter or digit");
-    }
-    Ok(normalized)
-}
-
-fn run_plugin_new(ctx: &TaskContext, args: PluginNewArgs) -> Result<()> {
-    let plugin_id = normalize_plugin_name(&args.name)?;
-    let plugin_dir = ctx
-        .repo_root
-        .join(plugin_kind_directory(args.kind))
-        .join(&plugin_id);
-    if plugin_dir.exists() {
-        bail!("{} already exists", plugin_dir.display());
-    }
-    fs::create_dir_all(plugin_dir.join("src"))?;
-
-    let crate_name = format!(
-        "{}_{}",
-        plugin_id.replace('-', "_"),
-        plugin_kind_crate_suffix(args.kind)
-    );
-    let cargo_toml = format!(
-        r#"[package]
-name = "{crate_name}"
-version = "0.1.0"
-edition = "2024"
-
-[lib]
-crate-type = ["cdylib"]
-
-[dependencies]
-extism-pdk = "1"
-scryer-plugin-sdk = "{SDK_VERSION}"
-serde_json = "1"
-"#
-    );
-    fs::write(plugin_dir.join("Cargo.toml"), cargo_toml)?;
-
-    let lib_rs = plugin_scaffold_source(args.kind, &plugin_id);
-    fs::write(plugin_dir.join("src/lib.rs"), lib_rs)?;
-    ok(format!("Created {}", plugin_dir.display()));
-    Ok(())
-}
-
-fn plugin_scaffold_source(kind: PluginKindArg, plugin_id: &str) -> String {
-    let provider_variant = match kind {
-        PluginKindArg::Indexer => format!(
-            r#"ProviderDescriptor::Indexer(IndexerDescriptor {{
-            provider_type: "{plugin_id}".to_string(),
-            provider_aliases: vec![],
-            source_kind: IndexerSourceKind::Generic,
-            capabilities: IndexerCapabilities::default(),
-            scoring_policies: vec![],
-            config_fields: vec![],
-            allowed_hosts: vec![],
-            rate_limit_seconds: None,
-        }})"#
-        ),
-        PluginKindArg::DownloadClient => format!(
-            r#"ProviderDescriptor::DownloadClient(DownloadClientDescriptor {{
-            provider_type: "{plugin_id}".to_string(),
-            provider_aliases: vec![],
-            config_fields: vec![],
-            default_base_url: None,
-            allowed_hosts: vec![],
-            accepted_inputs: vec![],
-            isolation_modes: vec![],
-            capabilities: DownloadClientCapabilities::default(),
-        }})"#
-        ),
-        PluginKindArg::Notification => format!(
-            r#"ProviderDescriptor::Notification(NotificationDescriptor {{
-            provider_type: "{plugin_id}".to_string(),
-            provider_aliases: vec![],
-            config_fields: vec![],
-            default_base_url: None,
-            allowed_hosts: vec![],
-            capabilities: NotificationCapabilities::default(),
-        }})"#
-        ),
-        PluginKindArg::Subtitle => format!(
-            r#"ProviderDescriptor::Subtitle(SubtitleDescriptor {{
-            provider_type: "{plugin_id}".to_string(),
-            provider_aliases: vec![],
-            config_fields: vec![],
-            default_base_url: None,
-            allowed_hosts: vec![],
-            capabilities: SubtitleCapabilities {{
-                mode: SubtitleProviderMode::Catalog,
-                ..SubtitleCapabilities::default()
-            }},
-        }})"#
-        ),
-    };
-
-    let family_exports = match kind {
-        PluginKindArg::Indexer => {
-            r#"
-#[plugin_fn]
-pub fn scryer_indexer_search(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&PluginResult::Ok(PluginSearchResponse::default()))?)
-}
-"#
-        }
-        PluginKindArg::DownloadClient => {
-            r#"
-#[plugin_fn]
-pub fn scryer_download_add(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&PluginResult::<PluginDownloadClientAddResponse>::Err(PluginError {
-        code: PluginErrorCode::Unsupported,
-        public_message: "download add is not implemented".to_string(),
-        debug_message: None,
-        retry_after_seconds: None,
-    }))?)
-}
-
-#[plugin_fn]
-pub fn scryer_download_list_queue() -> FnResult<String> {
-    Ok(serde_json::to_string(&PluginResult::Ok(Vec::<PluginDownloadItem>::new()))?)
-}
-
-#[plugin_fn]
-pub fn scryer_download_list_history() -> FnResult<String> {
-    Ok(serde_json::to_string(&PluginResult::Ok(Vec::<PluginCompletedDownload>::new()))?)
-}
-
-#[plugin_fn]
-pub fn scryer_download_list_completed() -> FnResult<String> {
-    Ok(serde_json::to_string(&PluginResult::Ok(Vec::<PluginCompletedDownload>::new()))?)
-}
-
-#[plugin_fn]
-pub fn scryer_download_control(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&PluginResult::Ok(()))?)
-}
-
-#[plugin_fn]
-pub fn scryer_download_mark_imported(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&PluginResult::Ok(()))?)
-}
-
-#[plugin_fn]
-pub fn scryer_download_status() -> FnResult<String> {
-    Ok(serde_json::to_string(&PluginResult::Ok(PluginDownloadClientStatus::default()))?)
-}
-
-#[plugin_fn]
-pub fn scryer_download_test_connection() -> FnResult<String> {
-    Ok(serde_json::to_string(&PluginResult::Ok(()))?)
-}
-"#
-        }
-        PluginKindArg::Notification => {
-            r#"
-#[plugin_fn]
-pub fn scryer_notification_send(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&PluginResult::Ok(PluginNotificationResponse {
-        success: true,
-        error: None,
-    }))?)
-}
-"#
-        }
-        PluginKindArg::Subtitle => {
-            r#"
-#[plugin_fn]
-pub fn scryer_validate_config(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&PluginResult::Ok(SubtitlePluginValidateConfigResponse {
-        status: SubtitleValidateConfigStatus::Valid,
-        message: None,
-        retry_after_seconds: None,
-    }))?)
-}
-
-#[plugin_fn]
-pub fn scryer_subtitle_search(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&PluginResult::Ok(SubtitlePluginSearchResponse::default()))?)
-}
-
-#[plugin_fn]
-pub fn scryer_subtitle_download(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&PluginResult::<SubtitlePluginDownloadResponse>::Err(PluginError {
-        code: PluginErrorCode::Unsupported,
-        public_message: "subtitle download is not implemented".to_string(),
-        debug_message: None,
-        retry_after_seconds: None,
-    }))?)
-}
-"#
-        }
-    };
-
-    format!(
-        r#"use extism_pdk::*;
-use scryer_plugin_sdk::*;
-
-#[plugin_fn]
-pub fn scryer_describe(_input: String) -> FnResult<String> {{
-    let descriptor = PluginDescriptor {{
-        id: "{plugin_id}".to_string(),
-        name: "{plugin_id}".to_string(),
-        version: env!("CARGO_PKG_VERSION").to_string(),
-        sdk_version: SDK_VERSION.to_string(),
-        sdk_constraint: current_sdk_constraint(),
-        socket_permissions: vec![],
-        provider: {provider_variant},
-    }};
-    Ok(serde_json::to_string(&descriptor)?)
-}}
-{family_exports}
-"#
-    )
-}
-
 fn run_doctor(ctx: &TaskContext) -> Result<()> {
     step("Checking plugin maintainer toolchain");
     for (tool, args) in [
@@ -2870,7 +2627,7 @@ fn run_community_scaffold(_ctx: &TaskContext, plugin_id: &str, output_dir: &Path
     )?;
     fs::write(
         output_dir.join(".github/workflows/release-plugin.yml"),
-        "name: release-plugin\non:\n  push:\n    tags: ['v*']\npermissions:\n  contents: write\n  id-token: write\njobs:\n  build-sign-release:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: sigstore/cosign-installer@v3\n      - run: echo 'Adapt this workflow to build wasm32-wasip1, wasm-opt -Oz, zstd -10, and cosign sign-blob.'\n",
+        "name: release-plugin\non:\n  push:\n    tags: ['v*']\npermissions:\n  contents: write\n  id-token: write\njobs:\n  build-sign-release:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: sigstore/cosign-installer@v4.1.1\n        with:\n          cosign-release: v3.0.2\n      - run: echo 'Adapt this workflow to build wasm32-wasip1, wasm-opt -Oz, zstd -10, and cosign sign-blob.'\n",
     )?;
     ok(format!("scaffolded {}", output_dir.display()));
     Ok(())
