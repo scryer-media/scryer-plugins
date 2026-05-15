@@ -3,6 +3,11 @@ name = "newznab-indexer"
 version = "0.2.7"
 edition = "2021"
 license = "GPL-3.0-only"
+description = "Generic Newznab protocol indexer for compatible services"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "newznab"
 
 [lib]
 crate-type = ["cdylib"]

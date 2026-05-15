@@ -23,7 +23,7 @@ Enable your terminal under `System Settings -> Privacy & Security -> Developer T
 
 ## Repo Automation
 
-Use `cargo xtask` as the canonical interface for repo automation. See [ARCHITECTURE.md](/Users/jeremy/dev/scryer-media/scryer-plugins/ARCHITECTURE.md) for release and registry workflow rules.
+Use `cargo xtask` as the canonical interface for repo automation. See [ARCHITECTURE.md](/Users/jeremy/dev/scryer-media/scryer-plugins/ARCHITECTURE.md) for release and catalog workflow rules.
 
 For official plugins:
 
@@ -64,9 +64,9 @@ Required exports are validated from the plugin descriptor:
 - `scryer_validate_config` plus `scryer_subtitle_generate` for subtitle generators
 
 Use `cargo xtask plugin new <kind> <name>` to scaffold a plugin and
-`cargo xtask plugin validate <path>` before opening a registry change. The
+`cargo xtask plugin validate <path>` before opening a catalog metadata change. The
 validator builds the Wasm module, calls `scryer_describe`, checks descriptor and
-registry identity, rejects wildcard network permissions, and verifies required
+manifest identity, rejects wildcard network permissions, and verifies required
 exports.
 
 The JSON Schema bundle for non-Rust authors is committed in the Scryer repo at

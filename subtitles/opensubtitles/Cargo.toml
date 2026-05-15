@@ -3,6 +3,11 @@ name = "opensubtitles-subtitle-provider"
 version = "0.1.5"
 edition = "2021"
 license = "GPL-3.0-only"
+description = "OpenSubtitles subtitle provider with provider-managed auth, search, and download"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "opensubtitles"
 
 [lib]
 crate-type = ["cdylib"]

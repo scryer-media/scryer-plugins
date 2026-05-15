@@ -3,6 +3,10 @@ name = "whisper-subtitle-provider"
 version = "0.1.3"
 edition = "2021"
 license = "GPL-3.0-only"
+description = "Whisper subtitle provider with locally generated subtitle output"
+
+[package.metadata.scryer]
+official = false
 
 [lib]
 crate-type = ["cdylib"]

@@ -317,6 +317,13 @@ struct LocalPluginInfo {
     source_repo: String,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct PluginManifestMetadata {
+    description: String,
+    official: bool,
+    plugin_id: Option<String>,
+}
+
 #[derive(Clone, Debug)]
 struct CatalogAssetPaths {
     pretty_json: PathBuf,
@@ -929,68 +936,72 @@ fn git_path_is_tracked(ctx: &TaskContext, path: &Path) -> Result<bool> {
     Ok(run_status(&mut command)?.success())
 }
 
-fn official_plugin_dirs_from_registry(ctx: &TaskContext) -> Result<BTreeSet<PathBuf>> {
-    Ok(official_plugin_dirs_by_id_from_registry(ctx)?
-        .into_values()
-        .collect())
+fn plugin_inventory_roots() -> [&'static str; 4] {
+    ["indexers", "download_clients", "notifications", "subtitles"]
 }
 
-fn official_plugin_dirs_by_id_from_registry(
-    ctx: &TaskContext,
-) -> Result<BTreeMap<String, PathBuf>> {
-    let registry_path = ctx.repo_root.join("registry.json");
-    let registry: serde_json::Value = serde_json::from_slice(&fs::read(&registry_path)?)
-        .with_context(|| format!("failed to parse {}", registry_path.display()))?;
-    let mut dirs = BTreeMap::new();
+fn read_manifest_document(path: &Path) -> Result<DocumentMut> {
+    fs::read_to_string(path)?
+        .parse::<DocumentMut>()
+        .with_context(|| format!("failed to parse {}", path.display()))
+}
 
-    for plugin in registry
-        .get("plugins")
-        .and_then(|plugins| plugins.as_array())
-        .into_iter()
-        .flatten()
-    {
-        let Some(plugin_id) = plugin.get("id").and_then(|id| id.as_str()) else {
-            continue;
-        };
-        if !plugin
-            .get("official")
-            .and_then(|official| official.as_bool())
-            .unwrap_or(false)
-        {
-            continue;
+fn plugin_manifest_metadata(manifest_path: &Path) -> Result<PluginManifestMetadata> {
+    let document = read_manifest_document(manifest_path)?;
+    let description = document
+        .get("package")
+        .and_then(|package| package.get("description"))
+        .and_then(|description| description.as_str())
+        .map(str::trim)
+        .unwrap_or_default()
+        .to_string();
+    let official = document
+        .get("package")
+        .and_then(|package| package.get("metadata"))
+        .and_then(|metadata| metadata.get("scryer"))
+        .and_then(|scryer| scryer.get("official"))
+        .and_then(|official| official.as_bool())
+        .ok_or_else(|| {
+            anyhow!(
+                "{} must define package.metadata.scryer.official as true or false",
+                manifest_path.display()
+            )
+        })?;
+    let plugin_id = document
+        .get("package")
+        .and_then(|package| package.get("metadata"))
+        .and_then(|metadata| metadata.get("scryer"))
+        .and_then(|scryer| scryer.get("plugin_id"))
+        .and_then(|plugin_id| plugin_id.as_str())
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(ToOwned::to_owned);
+
+    if official {
+        if description.is_empty() {
+            bail!(
+                "{} must define a non-empty package.description for official plugins",
+                manifest_path.display()
+            );
         }
-
-        let Some(releases) = plugin
-            .get("releases")
-            .and_then(|releases| releases.as_array())
-        else {
-            continue;
-        };
-
-        for release in releases {
-            let Some(source_url) = release.get("source_url").and_then(|value| value.as_str())
-            else {
-                continue;
-            };
-            let Some(relative) = source_url.strip_prefix(TREE_REPO_PREFIX) else {
-                continue;
-            };
-            let relative = relative.trim_end_matches('/');
-            if relative.is_empty() {
-                continue;
-            }
-            dirs.insert(plugin_id.to_string(), ctx.repo_root.join(relative));
-            break;
+        if plugin_id.is_none() {
+            bail!(
+                "{} must define a non-empty package.metadata.scryer.plugin_id for official plugins",
+                manifest_path.display()
+            );
         }
     }
 
-    Ok(dirs)
+    Ok(PluginManifestMetadata {
+        description,
+        official,
+        plugin_id,
+    })
 }
 
-fn local_plugin_directories(ctx: &TaskContext) -> Result<Vec<PathBuf>> {
-    let official_dirs = official_plugin_dirs_from_registry(ctx)?;
+fn tracked_plugin_crate_dirs(ctx: &TaskContext) -> Result<Vec<PathBuf>> {
     let mut plugin_dirs = Vec::new();
-    for prefix in ["indexers", "download_clients", "notifications", "subtitles"] {
+    for prefix in plugin_inventory_roots() {
         let prefix_dir = ctx.path(prefix);
         if !prefix_dir.is_dir() {
             continue;
@@ -1002,7 +1013,6 @@ fn local_plugin_directories(ctx: &TaskContext) -> Result<Vec<PathBuf>> {
             let path = entry.path();
             let manifest_path = path.join("Cargo.toml");
             if path.is_dir()
-                && official_dirs.contains(&path)
                 && manifest_path.is_file()
                 && git_path_is_tracked(ctx, &manifest_path)?
                 && is_plugin_crate(&manifest_path)?
@@ -1015,10 +1025,44 @@ fn local_plugin_directories(ctx: &TaskContext) -> Result<Vec<PathBuf>> {
     Ok(plugin_dirs)
 }
 
+fn official_plugin_dirs_by_id(ctx: &TaskContext) -> Result<BTreeMap<String, PathBuf>> {
+    let mut dirs = BTreeMap::new();
+    for plugin_dir in tracked_plugin_crate_dirs(ctx)? {
+        let manifest_path = plugin_dir.join("Cargo.toml");
+        let metadata = plugin_manifest_metadata(&manifest_path)?;
+        if !metadata.official {
+            continue;
+        }
+
+        let plugin_id = metadata
+            .plugin_id
+            .expect("official plugin manifest metadata should already be validated");
+        if let Some(existing) = dirs.insert(plugin_id.clone(), plugin_dir.clone()) {
+            bail!(
+                "duplicate official plugin id '{}' in {} and {}",
+                plugin_id,
+                existing.display(),
+                plugin_dir.display()
+            );
+        }
+    }
+    Ok(dirs)
+}
+
+fn local_plugin_directories(ctx: &TaskContext) -> Result<Vec<PathBuf>> {
+    let mut plugin_dirs = Vec::new();
+    for plugin_dir in tracked_plugin_crate_dirs(ctx)? {
+        let manifest_path = plugin_dir.join("Cargo.toml");
+        if plugin_manifest_metadata(&manifest_path)?.official {
+            plugin_dirs.push(plugin_dir);
+        }
+    }
+    plugin_dirs.sort();
+    Ok(plugin_dirs)
+}
+
 fn package_version(manifest_path: &Path) -> Result<String> {
-    let document = fs::read_to_string(manifest_path)?
-        .parse::<DocumentMut>()
-        .with_context(|| format!("failed to parse {}", manifest_path.display()))?;
+    let document = read_manifest_document(manifest_path)?;
     let version = document["package"]["version"]
         .as_str()
         .ok_or_else(|| anyhow!("{} must define package.version", manifest_path.display()))?;
@@ -1027,19 +1071,6 @@ fn package_version(manifest_path: &Path) -> Result<String> {
 
 fn plugin_crate_version(plugin_dir: &Path) -> Result<String> {
     package_version(&plugin_dir.join("Cargo.toml"))
-}
-
-fn package_description(manifest_path: &Path) -> Result<String> {
-    let document = fs::read_to_string(manifest_path)?
-        .parse::<DocumentMut>()
-        .with_context(|| format!("failed to parse {}", manifest_path.display()))?;
-    Ok(document
-        .get("package")
-        .and_then(|package| package.get("description"))
-        .and_then(|description| description.as_str())
-        .map(str::trim)
-        .unwrap_or_default()
-        .to_string())
 }
 
 fn source_url_for_plugin_dir(ctx: &TaskContext, plugin_dir: &Path) -> Result<String> {
@@ -1057,11 +1088,26 @@ fn discover_local_plugin(ctx: &TaskContext, plugin_dir: &Path) -> Result<LocalPl
     let cargo_toml = plugin_dir.join("Cargo.toml");
     let crate_name = crate_name_from_manifest(&cargo_toml)?;
     let current_version = version_from_manifest(&cargo_toml)?;
-    let description = package_description(&cargo_toml)?;
+    let manifest_metadata = plugin_manifest_metadata(&cargo_toml)?;
+    let description = manifest_metadata.description.clone();
     let source_repo = source_url_for_plugin_dir(ctx, plugin_dir)?;
     let wasm = build_plugin_wasm(ctx, plugin_dir)?;
     let descriptor = load_descriptor_from_wasm(&wasm)?;
     validate_descriptor_contract(&descriptor)?;
+    let manifest_plugin_id = manifest_metadata.plugin_id.as_deref().ok_or_else(|| {
+        anyhow!(
+            "{} is missing package.metadata.scryer.plugin_id",
+            cargo_toml.display()
+        )
+    })?;
+    if descriptor.id != manifest_plugin_id {
+        bail!(
+            "{} package.metadata.scryer.plugin_id '{}' does not match descriptor id '{}'",
+            cargo_toml.display(),
+            manifest_plugin_id,
+            descriptor.id
+        );
+    }
 
     Ok(LocalPluginInfo {
         plugin_id: descriptor.id.clone(),
@@ -1573,7 +1619,7 @@ fn run_tag_only_release_targets(
     ));
 
     println!(
-        "\n{GREEN}{BOLD}Released {} plugin tag(s) without touching legacy registry artifacts{RESET}",
+        "\n{GREEN}{BOLD}Released {} plugin tag(s) without touching legacy plugin inventory metadata{RESET}",
         targets.len()
     );
     println!("   Release batch tag: {release_tag}");
@@ -1871,29 +1917,7 @@ fn is_plugin_crate(manifest_path: &Path) -> Result<bool> {
 }
 
 fn plugin_crate_dirs(ctx: &TaskContext) -> Result<Vec<PathBuf>> {
-    let official_dirs = official_plugin_dirs_from_registry(ctx)?;
-    let mut dirs = Vec::new();
-    for root in ["indexers", "download_clients", "notifications", "subtitles"] {
-        let root_path = ctx.repo_root.join(root);
-        if !root_path.exists() {
-            continue;
-        }
-        for entry in fs::read_dir(&root_path)
-            .with_context(|| format!("failed to read {}", root_path.display()))?
-        {
-            let path = entry?.path();
-            let manifest_path = path.join("Cargo.toml");
-            if manifest_path.exists()
-                && official_dirs.contains(&path)
-                && git_path_is_tracked(ctx, &manifest_path)?
-                && is_plugin_crate(&manifest_path)?
-            {
-                dirs.push(path);
-            }
-        }
-    }
-    dirs.sort();
-    Ok(dirs)
+    local_plugin_directories(ctx)
 }
 
 fn ci_project_dirs(ctx: &TaskContext) -> Result<Vec<PathBuf>> {
@@ -2376,7 +2400,7 @@ fn run_official_prefetch(ctx: &TaskContext, args: OfficialPrefetchArgs) -> Resul
         bail!("official prefetch requires at least one plugin id");
     }
 
-    let plugins = official_plugin_dirs_by_id_from_registry(ctx)?;
+    let plugins = official_plugin_dirs_by_id(ctx)?;
     let mut selected = BTreeSet::new();
     for plugin_id in args.plugin_ids {
         if !selected.insert(plugin_id.clone()) {
@@ -3371,6 +3395,12 @@ fn run_release_many(ctx: &TaskContext, args: ReleaseManyArgs) -> Result<()> {
 mod tests {
     use super::*;
 
+    fn write_temp_manifest(contents: &str) -> tempfile::NamedTempFile {
+        let file = tempfile::NamedTempFile::new().expect("create temp manifest");
+        fs::write(file.path(), contents).expect("write temp manifest");
+        file
+    }
+
     fn local_plugin() -> LocalPluginInfo {
         LocalPluginInfo {
             plugin_id: "email".to_string(),
@@ -3464,6 +3494,70 @@ mod tests {
             "notifications/emailer/src/lib.rs",
             "notifications/email"
         ));
+    }
+
+    #[test]
+    fn plugin_manifest_metadata_reads_official_fields_from_cargo_toml() {
+        let manifest = write_temp_manifest(
+            r#"[package]
+name = "email-notification"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-only"
+description = "Email notifications"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "email"
+"#,
+        );
+
+        let metadata = plugin_manifest_metadata(manifest.path()).expect("read manifest metadata");
+
+        assert_eq!(metadata.description, "Email notifications");
+        assert!(metadata.official);
+        assert_eq!(metadata.plugin_id.as_deref(), Some("email"));
+    }
+
+    #[test]
+    fn plugin_manifest_metadata_requires_explicit_official_marker() {
+        let manifest = write_temp_manifest(
+            r#"[package]
+name = "whisper-subtitle-provider"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-only"
+"#,
+        );
+
+        let error = plugin_manifest_metadata(manifest.path()).expect_err("missing marker");
+
+        assert!(
+            error
+                .to_string()
+                .contains("package.metadata.scryer.official")
+        );
+    }
+
+    #[test]
+    fn plugin_manifest_metadata_requires_description_for_official_plugins() {
+        let manifest = write_temp_manifest(
+            r#"[package]
+name = "email-notification"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-only"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "email"
+"#,
+        );
+
+        let error =
+            plugin_manifest_metadata(manifest.path()).expect_err("missing description should fail");
+
+        assert!(error.to_string().contains("package.description"));
     }
 
     #[test]

@@ -3,6 +3,11 @@ name = "webhook-notification"
 version = "0.1.6"
 edition = "2021"
 license = "GPL-3.0-only"
+description = "Generic webhook notification plugin — POSTs JSON payloads to a configured URL"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "webhook"
 
 [lib]
 crate-type = ["cdylib"]

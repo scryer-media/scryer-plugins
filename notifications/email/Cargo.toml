@@ -3,6 +3,11 @@ name = "email-notification"
 version = "0.1.4"
 edition = "2021"
 license = "GPL-3.0-only"
+description = "Plaintext SMTP email notification plugin with plain, STARTTLS, and TLS delivery modes"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "email"
 
 [lib]
 crate-type = ["cdylib"]

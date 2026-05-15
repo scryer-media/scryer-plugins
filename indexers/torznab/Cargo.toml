@@ -3,6 +3,11 @@ name = "torznab-indexer"
 version = "0.1.7"
 edition = "2021"
 license = "GPL-3.0-only"
+description = "Generic Torznab-compatible torrent indexer for Jackett and native Torznab feeds"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "torznab"
 
 [lib]
 crate-type = ["cdylib"]

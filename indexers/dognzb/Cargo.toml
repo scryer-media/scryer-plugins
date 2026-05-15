@@ -3,6 +3,11 @@ name = "dognzb-indexer"
 version = "0.1.5"
 edition = "2021"
 license = "GPL-3.0-only"
+description = "DogNZB-specific Newznab indexer with rating, genre, and comment metadata extraction"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "dognzb"
 
 [lib]
 crate-type = ["cdylib"]

@@ -3,6 +3,11 @@ name = "jimaku-subtitle-provider"
 version = "0.1.5"
 edition = "2021"
 license = "GPL-3.0-only"
+description = "Anime-focused Jimaku subtitle provider using AniList IDs and optional name fallback"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "jimaku"
 
 [lib]
 crate-type = ["cdylib"]

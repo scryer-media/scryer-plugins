@@ -1,6 +1,6 @@
 # Scryer Plugins Architecture Manifesto
 
-This repository is the source of truth for distributable Scryer plugin artifacts and their registry metadata.
+This repository is the source of truth for distributable Scryer plugin artifacts and their catalog metadata.
 
 For humans and agents alike:
 
@@ -12,6 +12,9 @@ For humans and agents alike:
 - `cargo xtask plugin validate <path>` is the SDK-v1 ABI check for a plugin crate
 - `cargo xtask plugin new <kind> <name>` is the scaffold path for new plugin crates
 - `scripts/release.sh` is a compatibility wrapper over xtask, not the source of truth
+- official plugin inventory is declared in each plugin crate `Cargo.toml` under
+  `package.metadata.scryer`, with `package.description` as the canonical
+  published description source
 
 Operational rules:
 

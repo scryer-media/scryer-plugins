@@ -3,6 +3,11 @@ name = "torrent-rss-indexer"
 version = "0.1.9"
 edition = "2021"
 license = "GPL-3.0-only"
+description = "Generic torrent RSS indexer for trackers and aggregators that expose direct RSS feeds without Torznab"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "torrent-rss"
 
 [lib]
 crate-type = ["cdylib"]

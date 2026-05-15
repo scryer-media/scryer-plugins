@@ -115,6 +115,7 @@ impl ScaffoldSpec {
         document["package"]["name"] = value(self.crate_name.as_str());
         document["package"]["version"] = value("0.1.0");
         document["package"]["edition"] = value("2024");
+        document["package"]["metadata"]["scryer"]["official"] = value(false);
 
         let mut crate_types = Array::new();
         crate_types.push("cdylib");
@@ -264,6 +265,19 @@ mod tests {
                 "{kind:?} left template placeholders behind"
             );
         }
+    }
+
+    #[test]
+    fn render_manifest_marks_new_plugins_as_non_official() {
+        let spec = ScaffoldSpec::new(PluginKindArg::Subtitle, "Example Plugin")
+            .expect("build scaffold spec");
+        let manifest = spec.render_manifest();
+        let document = manifest.parse::<DocumentMut>().expect("parse manifest");
+
+        assert_eq!(
+            document["package"]["metadata"]["scryer"]["official"].as_bool(),
+            Some(false)
+        );
     }
 
     #[test]
