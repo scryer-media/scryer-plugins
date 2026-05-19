@@ -256,13 +256,18 @@ pub fn execute_full_search(
         .get("imdb_id")
         .map(|v| v.trim().to_string())
         .filter(|v| !v.is_empty());
+    let tmdb_id = req
+        .ids
+        .get("tmdb_id")
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty());
     let tvdb_id = req
         .ids
         .get("tvdb_id")
         .map(|v| v.trim().to_string())
         .filter(|v| !v.is_empty());
 
-    if query.is_empty() && imdb_id.is_none() && tvdb_id.is_none() {
+    if query.is_empty() && imdb_id.is_none() && tmdb_id.is_none() && tvdb_id.is_none() {
         return execute_rss_search(config, req, extract_fn);
     }
 
@@ -318,6 +323,7 @@ pub fn execute_full_search(
                 &query_variants,
                 &config.api_key,
                 imdb_id.as_deref(),
+                tmdb_id.as_deref(),
                 tvdb_id.as_deref(),
                 newznab_cat.as_deref(),
                 page_size,
@@ -457,6 +463,7 @@ fn execute_rss_search(
             None, // no query
             &config.api_key,
             None, // no imdb_id
+            None, // no tmdb_id
             None, // no tvdb_id
             Some(cat_str),
             config.page_size,
@@ -675,6 +682,7 @@ fn execute_exact_anime_search(
             None,
             api_key,
             None,
+            None,
             Some(tvdb_id),
             cat,
             limit,
@@ -699,6 +707,7 @@ fn execute_exact_anime_search(
             "tvsearch",
             Some(query_text),
             api_key,
+            None,
             None,
             None,
             cat,
@@ -728,6 +737,7 @@ fn execute_tiered_search(
     query_variants: &[String],
     api_key: &str,
     imdb_id: Option<&str>,
+    tmdb_id: Option<&str>,
     tvdb_id: Option<&str>,
     cat: Option<&str>,
     limit: usize,
@@ -742,13 +752,19 @@ fn execute_tiered_search(
     } else {
         None
     };
+    let effective_tmdb =
+        if search_type == "movie" || search_type == "tvsearch" || search_type == "search" {
+            tmdb_id
+        } else {
+            None
+        };
     let effective_tvdb = if search_type == "tvsearch" || search_type == "search" {
         tvdb_id
     } else {
         None
     };
 
-    let has_id = effective_imdb.is_some() || effective_tvdb.is_some();
+    let has_id = effective_imdb.is_some() || effective_tmdb.is_some() || effective_tvdb.is_some();
     let mut last_query_response: Option<(u16, String)> = None;
 
     // Tier 1: Query-based search with IDs when query text is available. This
@@ -764,6 +780,7 @@ fn execute_tiered_search(
             Some(query_text),
             api_key,
             effective_imdb,
+            effective_tmdb,
             effective_tvdb,
             cat,
             limit,
@@ -795,6 +812,7 @@ fn execute_tiered_search(
             None,
             api_key,
             effective_imdb,
+            effective_tmdb,
             effective_tvdb,
             cat,
             limit,
@@ -818,7 +836,12 @@ fn execute_tiered_search(
             .collect();
 
         if fallback_queries.is_empty() {
-            fallback_queries.push(imdb_id.or(tvdb_id).filter(|value| !value.is_empty()));
+            fallback_queries.push(
+                imdb_id
+                    .or(tmdb_id)
+                    .or(tvdb_id)
+                    .filter(|value| !value.is_empty()),
+            );
         }
 
         let mut last_fallback = (200, r#"{"channel":{}}"#.to_string());
@@ -828,6 +851,7 @@ fn execute_tiered_search(
                 "search",
                 fallback_query,
                 api_key,
+                None,
                 None,
                 None,
                 cat,
@@ -906,6 +930,7 @@ fn execute_search(
     query: Option<&str>,
     api_key: &str,
     imdb_id: Option<&str>,
+    tmdb_id: Option<&str>,
     tvdb_id: Option<&str>,
     cat: Option<&str>,
     limit: usize,
@@ -919,6 +944,7 @@ fn execute_search(
         query,
         api_key,
         imdb_id,
+        tmdb_id,
         tvdb_id,
         cat,
         limit,
@@ -1062,6 +1088,7 @@ fn build_search_url(
     query: Option<&str>,
     api_key: &str,
     imdb_id: Option<&str>,
+    tmdb_id: Option<&str>,
     tvdb_id: Option<&str>,
     cat: Option<&str>,
     limit: usize,
@@ -1086,6 +1113,9 @@ fn build_search_url(
         }
         if let Some(id) = imdb_id.as_deref() {
             pairs.append_pair("imdbid", id);
+        }
+        if let Some(id) = tmdb_id.map(str::trim).filter(|value| !value.is_empty()) {
+            pairs.append_pair("tmdbid", id);
         }
         if let Some(id) = tvdb_id.map(str::trim).filter(|value| !value.is_empty()) {
             pairs.append_pair("tvdbid", id);
@@ -1127,8 +1157,23 @@ fn append_additional_query_pairs(url: &mut Url, additional_params: &str) {
 }
 
 fn normalize_imdbid_param(raw: &str) -> String {
+    normalize_imdbid_param_with_mode(raw, use_canonical_imdb_ids())
+}
+
+fn normalize_imdbid_param_with_mode(raw: &str, canonical: bool) -> String {
     let trimmed = raw.trim();
-    if trimmed.len() > 2
+    if canonical {
+        if trimmed.len() > 2
+            && trimmed[..2].eq_ignore_ascii_case("tt")
+            && trimmed[2..].chars().all(|ch| ch.is_ascii_digit())
+        {
+            format!("tt{}", &trimmed[2..])
+        } else if trimmed.chars().all(|ch| ch.is_ascii_digit()) {
+            format!("tt{trimmed}")
+        } else {
+            trimmed.to_string()
+        }
+    } else if trimmed.len() > 2
         && trimmed[..2].eq_ignore_ascii_case("tt")
         && trimmed[2..].chars().all(|ch| ch.is_ascii_digit())
     {
@@ -1136,6 +1181,18 @@ fn normalize_imdbid_param(raw: &str) -> String {
     } else {
         trimmed.to_string()
     }
+}
+
+fn use_canonical_imdb_ids() -> bool {
+    config::get("imdb_id_format")
+        .ok()
+        .flatten()
+        .is_some_and(|value| {
+            matches!(
+                value.trim().to_ascii_lowercase().as_str(),
+                "canonical" | "tt"
+            )
+        })
 }
 
 #[cfg(test)]
@@ -1815,15 +1872,17 @@ fn parse_enclosure_attrs(
     for attr in e.attributes().flatten() {
         match attr.key.as_ref() {
             b"url" => {
-                *download_url = String::from_utf8(attr.value.to_vec()).ok();
+                *download_url = attr.unescape_value().ok().map(|value| value.to_string());
             }
             b"length" => {
-                *size_bytes = String::from_utf8(attr.value.to_vec())
+                *size_bytes = attr
+                    .unescape_value()
                     .ok()
+                    .map(|value| value.to_string())
                     .and_then(|v| v.replace(',', "").parse::<i64>().ok());
             }
             b"type" => {
-                *enclosure_type = String::from_utf8(attr.value.to_vec()).ok();
+                *enclosure_type = attr.unescape_value().ok().map(|value| value.to_string());
             }
             _ => {}
         }
@@ -1948,6 +2007,7 @@ mod tests {
             Some("tt2024544"),
             None,
             None,
+            None,
             200,
             None,
             None,
@@ -1971,6 +2031,7 @@ mod tests {
             "tvsearch",
             Some("demon slayer"),
             "test-api-key",
+            None,
             None,
             Some("123456"),
             None,
@@ -2004,6 +2065,7 @@ mod tests {
             None,
             "test-api-key",
             None,
+            None,
             Some("74796"),
             None,
             200,
@@ -2021,12 +2083,41 @@ mod tests {
     }
 
     #[test]
+    fn build_search_url_tvsearch_includes_tvdbid_and_episode_hints() {
+        let url = build_search_url(
+            "https://api.nzbgeek.info/api",
+            "tvsearch",
+            Some("YATAGARASU: The Raven Does Not Choose Its Master"),
+            "test-api-key",
+            None,
+            None,
+            Some("422695"),
+            None,
+            200,
+            Some(1),
+            Some(18),
+            "",
+        )
+        .unwrap();
+
+        assert_eq!(
+            query_value(&url, "q").as_deref(),
+            Some("YATAGARASU: The Raven Does Not Choose Its Master")
+        );
+        assert_eq!(query_value(&url, "tvdbid").as_deref(), Some("422695"));
+        assert_eq!(query_value(&url, "season").as_deref(), Some("1"));
+        assert_eq!(query_value(&url, "ep").as_deref(), Some("18"));
+        assert_parses_as_http_uri(&url);
+    }
+
+    #[test]
     fn build_search_url_anime_freetext_uses_title_only_with_episode_context() {
         let url = build_search_url(
             "https://api.nzbgeek.info/api",
             "tvsearch",
             Some("Sora no Vale"),
             "test-api-key",
+            None,
             None,
             None,
             None,
@@ -2052,6 +2143,7 @@ mod tests {
             Some("The Batman"),
             "  test-api-key \n",
             Some("tt1877830"),
+            None,
             Some(" 12345 \n"),
             Some(" 2000 , 2040 "),
             100,
@@ -2084,6 +2176,7 @@ mod tests {
                 None,
                 None,
                 None,
+                None,
                 25,
                 None,
                 None,
@@ -2107,6 +2200,7 @@ mod tests {
             None,
             None,
             None,
+            None,
             25,
             None,
             None,
@@ -2117,6 +2211,29 @@ mod tests {
         assert_eq!(query_value(&url, "attrs").as_deref(), Some("poster image"));
         assert_eq!(query_value(&url, "label").as_deref(), Some("dual audio"));
         assert!(!url.contains("%2520"));
+        assert_parses_as_http_uri(&url);
+    }
+
+    #[test]
+    fn build_search_url_includes_tmdbid_when_present() {
+        let url = build_search_url(
+            "https://api.nzbgeek.info/api",
+            "movie",
+            Some("Dune Part Two"),
+            "test-api-key",
+            None,
+            Some("693134"),
+            None,
+            None,
+            50,
+            None,
+            None,
+            "",
+        )
+        .unwrap();
+
+        assert_eq!(query_value(&url, "tmdbid").as_deref(), Some("693134"));
+        assert_eq!(query_value(&url, "q").as_deref(), Some("Dune Part Two"));
         assert_parses_as_http_uri(&url);
     }
 
@@ -2138,10 +2255,35 @@ mod tests {
     }
 
     #[test]
-    fn normalize_imdbid_rewrites_tt_prefix_to_double_zero() {
-        assert_eq!(normalize_imdbid_param("tt2024544"), "002024544");
-        assert_eq!(normalize_imdbid_param("TT1234567"), "001234567");
-        assert_eq!(normalize_imdbid_param("1234567"), "1234567");
+    fn normalize_imdbid_param_defaults_to_legacy_newznab_format() {
+        assert_eq!(
+            normalize_imdbid_param_with_mode("tt2024544", false),
+            "002024544"
+        );
+        assert_eq!(
+            normalize_imdbid_param_with_mode("TT1234567", false),
+            "001234567"
+        );
+        assert_eq!(
+            normalize_imdbid_param_with_mode("1234567", false),
+            "1234567"
+        );
+    }
+
+    #[test]
+    fn normalize_imdbid_param_supports_canonical_tt_format_for_proxy_configs() {
+        assert_eq!(
+            normalize_imdbid_param_with_mode("tt2024544", true),
+            "tt2024544"
+        );
+        assert_eq!(
+            normalize_imdbid_param_with_mode("TT1234567", true),
+            "tt1234567"
+        );
+        assert_eq!(
+            normalize_imdbid_param_with_mode("1234567", true),
+            "tt1234567"
+        );
     }
 
     #[test]
@@ -2564,6 +2706,27 @@ mod tests {
         assert_eq!(
             r.info_url.as_deref(),
             Some("https://example.com/details/def456")
+        );
+    }
+
+    #[test]
+    fn xml_enclosure_url_unescapes_query_delimiters() {
+        let body = r#"<?xml version="1.0"?>
+<rss xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attributes/">
+<channel>
+  <item>
+    <title>Escaped.Link.Release</title>
+    <enclosure url="http://localhost:9696/1/download?apikey=test&amp;link=abc123&amp;file=Escaped.Link.Release" length="1024" type="application/x-nzb"/>
+  </item>
+</channel>
+</rss>"#;
+        let (results, _) = parse_newznab_xml(body, 100, extract_base_metadata);
+        assert_eq!(results.len(), 1);
+        assert_eq!(
+            results[0].download_url.as_deref(),
+            Some(
+                "http://localhost:9696/1/download?apikey=test&link=abc123&file=Escaped.Link.Release"
+            )
         );
     }
 

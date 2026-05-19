@@ -1,6 +1,6 @@
 # Contributing to Scryer Plugins
 
-This file covers contributor setup notes that sit alongside [ARCHITECTURE.md](/Users/jeremy/dev/scryer-media/scryer-plugins/ARCHITECTURE.md).
+This file covers contributor setup notes that sit alongside [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Prerequisites
 
@@ -23,7 +23,7 @@ Enable your terminal under `System Settings -> Privacy & Security -> Developer T
 
 ## Repo Automation
 
-Use `cargo xtask` as the canonical interface for repo automation. See [ARCHITECTURE.md](/Users/jeremy/dev/scryer-media/scryer-plugins/ARCHITECTURE.md) for release and catalog workflow rules.
+Use `cargo xtask` as the canonical interface for repo automation. See [ARCHITECTURE.md](ARCHITECTURE.md) for release and catalog workflow rules.
 
 For official plugins:
 
