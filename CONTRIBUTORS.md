@@ -40,7 +40,7 @@ Use `cargo xtask` as the canonical interface for repo automation. See [ARCHITECT
 For official plugins:
 
 - `cargo xtask catalog validate-v2` is the authoritative health check for the published official catalog, child catalogs, and release manifests
-- current source and published official releases start from the `scryer-plugin-sdk` `1.5.x` line; future SDK lines extend that same child-catalog history
+- current source now targets the `scryer-plugin-sdk` `1.6.x` line, while published official release history still starts from `1.5.x`
 - published child-catalog `releases[]` is the authoritative installable history for supported Scryer hosts
 
 Official plugin publishing is a two-tier tag flow:
@@ -60,10 +60,10 @@ First-party and third-party plugins must use the SDK-v1 ABI from
 `scryer-plugin-sdk`. Do not copy protocol structs into plugin crates.
 
 The SDK is versioned and published independently from the Scryer application.
-After `scryer-plugin-sdk = "1.5.0"` has been published to crates.io,
-maintainers should run `cargo xtask sdk bump 1.5.0` to switch plugin crates
+After `scryer-plugin-sdk = "1.6.0"` has been published to crates.io,
+maintainers should run `cargo xtask sdk bump 1.6.0` to switch plugin crates
 from local transition paths to the published SDK line and refresh lockfiles.
-That `1.5.x` line is the canonical launch/current SDK contract even though
+The `1.5.x` line is the canonical launch baseline, and `1.6.x` is the current SDK line, even though
 earlier false starts existed before the real SDK release flow stabilized.
 
 Required exports are validated from the plugin descriptor:

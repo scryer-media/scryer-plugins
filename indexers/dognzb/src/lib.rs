@@ -2,11 +2,11 @@ use std::collections::HashMap;
 
 use extism_pdk::*;
 use newznab_common::{
-    current_sdk_constraint, descriptor_json_with_connection_url, execute_full_search,
-    standard_config_fields, Capabilities, IndexerCategoryModel, IndexerCategoryValueKind,
-    IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol,
-    IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind, NewznabConfig,
-    PluginDescriptor, PluginResult, ProviderDescriptor, ScoringPolicy, SearchRequest, SDK_VERSION,
+    current_sdk_constraint, execute_full_search, standard_config_fields, Capabilities,
+    IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode,
+    IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput,
+    IndexerSourceKind, NewznabConfig, PluginDescriptor, PluginResult, ProviderDescriptor,
+    ScoringPolicy, SearchRequest, SDK_VERSION,
 };
 
 #[plugin_fn]
@@ -88,16 +88,12 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
                 rego_source: REGO_RATING_BONUS.to_string(),
                 applied_facets: vec![],
             }],
-            config_fields: standard_config_fields(),
-            default_base_url: Some("https://api.dognzb.cr".to_string()),
+            config_fields: standard_config_fields(Some("https://api.dognzb.cr")),
             allowed_hosts: vec![],
             rate_limit_seconds: None,
         }),
     };
-    Ok(descriptor_json_with_connection_url(
-        &descriptor,
-        "base_url",
-    )?)
+    Ok(serde_json::to_string(&descriptor)?)
 }
 
 #[plugin_fn]

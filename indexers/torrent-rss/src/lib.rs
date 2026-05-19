@@ -6,10 +6,11 @@ use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
-    ConfigFieldDef, ConfigFieldOption, ConfigFieldType, IndexerCapabilities as Capabilities,
-    IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode,
-    IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput,
-    IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor, PluginResult,
+    ConfigFieldDef, ConfigFieldOption, ConfigFieldRole,
+    ConfigFieldType, IndexerCapabilities as Capabilities, IndexerCategoryModel,
+    IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities,
+    IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind,
+    IndexerTorrentCapabilities, PluginDescriptor, PluginResult,
     PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
     PluginSearchResult as SearchResult, ProviderDescriptor, SDK_VERSION,
 };
@@ -107,37 +108,11 @@ fn build_descriptor_json() -> Result<String, Error> {
             },
             scoring_policies: vec![],
             config_fields: config_fields(),
-            default_base_url: None,
             allowed_hosts: vec![],
             rate_limit_seconds: Some(2),
         }),
     };
-    let mut value = serde_json::to_value(&descriptor)?;
-    if let Some(provider) = value
-        .pointer_mut("/provider")
-        .and_then(|value| value.as_object_mut())
-    {
-        provider.remove("default_base_url");
-    }
-    let fields = value
-        .pointer_mut("/provider/config_fields")
-        .and_then(|value| value.as_array_mut())
-        .ok_or_else(|| Error::msg("descriptor missing provider.config_fields"))?;
-    let field = fields
-        .iter_mut()
-        .filter_map(|value| value.as_object_mut())
-        .find(|field| {
-            field
-                .get("key")
-                .and_then(|value| value.as_str())
-                .is_some_and(|key| key == "feed_url")
-        })
-        .ok_or_else(|| Error::msg("descriptor missing feed_url config field"))?;
-    field.insert(
-        "role".to_string(),
-        serde_json::Value::String("connection_url".to_string()),
-    );
-    Ok(serde_json::to_string(&value)?)
+    Ok(serde_json::to_string(&descriptor)?)
 }
 
 #[plugin_fn]
@@ -185,6 +160,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: true,
             default_value: None,
             value_source: Default::default(),
+            role: Some(ConfigFieldRole::ConnectionUrl),
             host_binding: None,
             options: vec![],
             help_text: Some(
@@ -198,6 +174,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("auto".to_string()),
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![
                 ConfigFieldOption {
@@ -233,6 +210,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: None,
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("Optional username for HTTP basic auth".to_string()),
@@ -244,6 +222,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: None,
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("Optional password for HTTP basic auth".to_string()),
@@ -255,6 +234,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: None,
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some(
@@ -269,6 +249,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("Scryer Torrent RSS Indexer/0.1".to_string()),
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("Optional custom User-Agent header".to_string()),
@@ -280,6 +261,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: None,
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some(

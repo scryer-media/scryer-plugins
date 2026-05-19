@@ -34,8 +34,8 @@ Operational rules:
   `../scryer` path dependencies after that cutover
 - SDK dependency bumps are explicit maintainer actions via
   `cargo xtask sdk bump <version>` after the SDK crate has been published
-- `1.5.x` is the canonical launch/current SDK line; older failed starts do not
-  change the published compatibility contract for current official releases
+- `1.5.x` is the canonical launch SDK line and `1.6.x` is the current line;
+  older failed starts do not change the published compatibility contract for current official releases
 - release tags are split by product: Scryer app tags use `scryer-v*`, the SDK
   uses `plugin-sdk-v*`, plugin version tags use `plugins/<plugin-id>/v*`, and
   the watched orchestration tag family is `plugins/release/*`

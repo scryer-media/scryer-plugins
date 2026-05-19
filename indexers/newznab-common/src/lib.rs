@@ -11,10 +11,11 @@ use extism_pdk::*;
 use quick_xml::events::Event;
 use quick_xml::Reader;
 pub use scryer_plugin_sdk::{
-    current_sdk_constraint, ConfigFieldDef, ConfigFieldType, IndexerCapabilities as Capabilities,
-    IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode,
-    IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput,
-    IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor, PluginResult,
+    current_sdk_constraint, ConfigFieldDef, ConfigFieldRole,
+    ConfigFieldType, IndexerCapabilities as Capabilities, IndexerCategoryModel,
+    IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities,
+    IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind,
+    IndexerTorrentCapabilities, PluginDescriptor, PluginResult,
     PluginScoringPolicy as ScoringPolicy, PluginSearchRequest as SearchRequest,
     PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult, ProviderDescriptor,
     SDK_VERSION,
@@ -87,16 +88,17 @@ impl NewznabConfig {
     }
 }
 
-/// Returns the standard config field declarations for the generic newznab plugin.
-pub fn standard_config_fields() -> Vec<ConfigFieldDef> {
+/// Returns the standard config field declarations for Newznab-family plugins.
+pub fn standard_config_fields(default_base_url: Option<&str>) -> Vec<ConfigFieldDef> {
     vec![
         ConfigFieldDef {
             key: "base_url".to_string(),
             label: "Base URL".to_string(),
             field_type: ConfigFieldType::String,
             required: true,
-            default_value: None,
+            default_value: default_base_url.map(ToString::to_string),
             value_source: Default::default(),
+            role: Some(ConfigFieldRole::ConnectionUrl),
             host_binding: None,
             options: vec![],
             help_text: Some("Indexer site URL, for example https://indexer.example".to_string()),
@@ -108,6 +110,7 @@ pub fn standard_config_fields() -> Vec<ConfigFieldDef> {
             required: true,
             default_value: None,
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("Indexer API key".to_string()),
@@ -119,6 +122,7 @@ pub fn standard_config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("/api".to_string()),
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("API endpoint path (e.g. /api, /api/v1/api, /nabapi)".to_string()),
@@ -130,6 +134,7 @@ pub fn standard_config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: None,
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some(
@@ -138,38 +143,6 @@ pub fn standard_config_fields() -> Vec<ConfigFieldDef> {
             ),
         },
     ]
-}
-
-pub fn descriptor_json_with_connection_url(
-    descriptor: &PluginDescriptor,
-    connection_key: &str,
-) -> Result<String, Error> {
-    let mut value = serde_json::to_value(descriptor)?;
-    if let Some(provider) = value
-        .pointer_mut("/provider")
-        .and_then(|value| value.as_object_mut())
-    {
-        provider.remove("default_base_url");
-    }
-    let fields = value
-        .pointer_mut("/provider/config_fields")
-        .and_then(|value| value.as_array_mut())
-        .ok_or_else(|| Error::msg("descriptor missing provider.config_fields"))?;
-    let field = fields
-        .iter_mut()
-        .filter_map(|value| value.as_object_mut())
-        .find(|field| {
-            field
-                .get("key")
-                .and_then(|value| value.as_str())
-                .is_some_and(|key| key == connection_key)
-        })
-        .ok_or_else(|| Error::msg("descriptor missing connection URL config field"))?;
-    field.insert(
-        "role".to_string(),
-        serde_json::Value::String("connection_url".to_string()),
-    );
-    Ok(serde_json::to_string(&value)?)
 }
 
 // ---------------------------------------------------------------------------
