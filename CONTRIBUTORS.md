@@ -7,6 +7,18 @@ This file covers contributor setup notes that sit alongside [ARCHITECTURE.md](AR
 - Rustup-managed Rust toolchain for `cargo xtask`
 - The Wasm/tooling dependencies required by the plugin you are releasing or validating
 
+## Git Hooks
+
+`gitleaks` is required for commits in this repo.
+
+After cloning, run:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+The versioned `pre-commit` hook will block commits when `gitleaks` reports staged secrets or when staged diffs contain machine-local usernames or home-directory paths.
+
 This repo pins its Rust toolchain in `rust-toolchain.toml` and declares
 `wasm32-wasip1` there. The `xtask` build flow also runs plugin Wasm builds
 through `rustup run <toolchain> cargo ...` and will install the Wasm target
