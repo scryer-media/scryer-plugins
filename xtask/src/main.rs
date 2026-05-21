@@ -2567,6 +2567,11 @@ fn run_official_prefetch(ctx: &TaskContext, args: OfficialPrefetchArgs) -> Resul
 }
 
 fn run_official_plan_changed(ctx: &TaskContext, args: OfficialPlanChangedArgs) -> Result<()> {
+    let plugin_ids = official_plugin_dirs_by_id(ctx)?
+        .into_keys()
+        .collect::<Vec<_>>();
+    run_official_prefetch(ctx, OfficialPrefetchArgs { plugin_ids })?;
+
     let options = release_options_from_plan_args(&args);
     let plans = collect_changed_release_targets(ctx, &options)?;
     if plans.is_empty() {
