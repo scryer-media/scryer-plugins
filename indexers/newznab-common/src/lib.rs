@@ -2775,7 +2775,7 @@ mod tests {
 
     #[test]
     fn config_fields_has_api_path_and_additional_params() {
-        let fields = standard_config_fields();
+        let fields = standard_config_fields(None);
         assert_eq!(fields.len(), 4);
         assert_eq!(fields[0].key, "base_url");
         assert!(fields[0].required);
