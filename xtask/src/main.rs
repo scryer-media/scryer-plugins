@@ -753,7 +753,7 @@ fn rustup_cargo_command_in(rustup_toolchain: &RustupToolchain, cwd: &Path) -> Re
     command.env("CARGO", &cargo);
     command.env("RUSTC", &rustc);
     command.env("RUSTUP_TOOLCHAIN", rustup_toolchain.toolchain.as_str());
-    command.env_remove("RUSTC_WRAPPER");
+    // Preserve outer wrappers like sccache for rustup-pinned cargo invocations.
     command.env_remove("RUSTC_WORKSPACE_WRAPPER");
     if let Some(rustdoc) = rustdoc {
         command.env("RUSTDOC", rustdoc);

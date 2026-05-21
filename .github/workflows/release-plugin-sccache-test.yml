@@ -1,0 +1,279 @@
+name: release-plugin-sccache-test
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_ref:
+        description: "Branch, tag, or commit to test workflow code from"
+        required: true
+        default: main
+        type: string
+      release_commit:
+        description: "Commit that owns the plugin version tags to rehearse"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      CARGO_INCREMENTAL: "0"
+      CARGO_TERM_COLOR: always
+      RUSTC_WRAPPER: sccache
+      SCCACHE_BASEDIRS: ${{ github.workspace }}
+      SCCACHE_CACHE_SIZE: 10G
+      SCCACHE_DIR: /home/runner/.cache/sccache
+      SCCACHE_IDLE_TIMEOUT: "0"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.release_ref }}
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: gha-rust-cache-linux-release-plugin-sccache-test-validate
+          cache-targets: "false"
+          cache-workspace-crates: "false"
+          key: validate
+
+      - name: Restore sccache directory
+        id: validate-sccache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/sccache
+          key: gha-sccache-release-plugin-sccache-test-validate-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ github.run_id }}
+          restore-keys: |
+            gha-sccache-release-plugin-sccache-test-validate-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
+            gha-sccache-release-plugin-sccache-test-validate-
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
+
+      - name: Install sccache
+        uses: mozilla-actions/sccache-action@v0.0.10
+
+      - name: Prime sccache server
+        run: |
+          sccache --start-server || true
+          sccache --zero-stats || true
+
+      - name: Build xtask once
+        run: cargo build --locked --manifest-path xtask/Cargo.toml --bin xtask
+
+      - name: Select plugin ids for validation
+        run: |
+          set -euo pipefail
+          RELEASE_SHA="${{ inputs.release_commit }}"
+          if [ -z "${RELEASE_SHA}" ]; then
+            RELEASE_SHA="$(git rev-parse HEAD)"
+          fi
+          mapfile -t plugin_ids < <(
+            git tag --points-at "${RELEASE_SHA}" \
+              | sort \
+              | grep -E '^plugins/[^/]+/v.+$' \
+              | while IFS= read -r tag; do
+                  plugin_spec="${tag#plugins/}"
+                  printf '%s\n' "${plugin_spec%/v*}"
+                done \
+              | sort -u
+          )
+          if [ "${#plugin_ids[@]}" -eq 0 ]; then
+            echo "No plugin release tags point at ${RELEASE_SHA}" >&2
+            exit 1
+          fi
+          printf '%s\n' "${plugin_ids[@]}" > selected-plugin-ids.txt
+          printf 'Selected plugin ids for %s\n' "${RELEASE_SHA}"
+          printf ' - %s\n' "${plugin_ids[@]}"
+
+      - name: Verify formatting audit and clippy
+        run: |
+          set -euo pipefail
+          cmd=(./xtask/target/debug/xtask ci strict)
+          while IFS= read -r plugin_id; do
+            cmd+=(--plugin-id "${plugin_id}")
+          done < selected-plugin-ids.txt
+          "${cmd[@]}"
+
+      - name: Show sccache stats
+        if: always()
+        run: |
+          set -euo pipefail
+          sccache --show-stats | tee validate-sccache-stats.txt
+
+      - name: Upload xtask artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-plugin-sccache-test-xtask-${{ github.run_id }}
+          path: xtask/target/debug/xtask
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload validate stats
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-plugin-sccache-test-validate-${{ github.run_id }}
+          path: validate-sccache-stats.txt
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Save sccache directory
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: /home/runner/.cache/sccache
+          key: ${{ steps.validate-sccache-restore.outputs.cache-primary-key }}
+
+  prepare-release-dry-run:
+    needs: [validate]
+    runs-on: ubuntu-latest
+    env:
+      CARGO_INCREMENTAL: "0"
+      CARGO_TERM_COLOR: always
+      RUSTC_WRAPPER: sccache
+      SCCACHE_BASEDIRS: ${{ github.workspace }}
+      SCCACHE_CACHE_SIZE: 10G
+      SCCACHE_DIR: /home/runner/.cache/sccache
+      SCCACHE_IDLE_TIMEOUT: "0"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.release_ref }}
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: gha-rust-cache-linux-release-plugin-sccache-test-prepare
+          cache-targets: "false"
+          cache-workspace-crates: "false"
+          key: prepare
+
+      - name: Restore sccache directory
+        id: prepare-sccache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/sccache
+          key: gha-sccache-release-plugin-sccache-test-prepare-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ github.run_id }}
+          restore-keys: |
+            gha-sccache-release-plugin-sccache-test-prepare-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
+            gha-sccache-release-plugin-sccache-test-prepare-
+
+      - name: Install release tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y binaryen zstd
+
+      - name: Install sccache
+        uses: mozilla-actions/sccache-action@v0.0.10
+
+      - name: Prime sccache server
+        run: |
+          sccache --start-server || true
+          sccache --zero-stats || true
+
+      - name: Download xtask artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: release-plugin-sccache-test-xtask-${{ github.run_id }}
+          path: xtask-artifact
+
+      - name: Restore xtask binary
+        run: |
+          set -euo pipefail
+          install -d xtask/target/debug
+          install -m 0755 xtask-artifact/xtask xtask/target/debug/xtask
+
+      - name: Select plugin tags for this release commit
+        run: |
+          set -euo pipefail
+          RELEASE_SHA="${{ inputs.release_commit }}"
+          if [ -z "${RELEASE_SHA}" ]; then
+            RELEASE_SHA="$(git rev-parse HEAD)"
+          fi
+          mapfile -t plugin_tags < <(git tag --points-at "${RELEASE_SHA}" | sort | grep -E '^plugins/[^/]+/v.+$' || true)
+          if [ "${#plugin_tags[@]}" -eq 0 ]; then
+            echo "No plugin release tags point at ${RELEASE_SHA}" >&2
+            exit 1
+          fi
+          printf '%s\n' "${plugin_tags[@]}" > selected-plugin-tags.txt
+          printf 'Selected plugin tags for %s\n' "${RELEASE_SHA}"
+          printf ' - %s\n' "${plugin_tags[@]}"
+
+      - name: Prefetch selected plugin dependencies
+        run: |
+          set -euo pipefail
+          mapfile -t plugin_ids < <(
+            while IFS= read -r tag; do
+              plugin_spec="${tag#plugins/}"
+              printf '%s\n' "${plugin_spec%/v*}"
+            done < selected-plugin-tags.txt | sort -u
+          )
+          ./xtask/target/debug/xtask official prefetch "${plugin_ids[@]}"
+
+      - name: Prepare selected plugin assets without publishing
+        run: |
+          set -euo pipefail
+          while IFS= read -r tag; do
+            plugin_spec="${tag#plugins/}"
+            plugin_id="${plugin_spec%/v*}"
+            version="${tag##*/v}"
+            prepared_dir="dist/catalog-v2/${plugin_id}"
+
+            ./xtask/target/debug/xtask official prepare "${plugin_id}" \
+              --version "${version}" \
+              --out "${prepared_dir}"
+
+            ./xtask/target/debug/xtask official verify-prepared "${prepared_dir}"
+          done < selected-plugin-tags.txt
+
+      - name: Prepare central catalog without publishing
+        run: |
+          set -euo pipefail
+          mapfile -t plugin_ids < <(
+            while IFS= read -r tag; do
+              plugin_spec="${tag#plugins/}"
+              printf '%s\n' "${plugin_spec%/v*}"
+            done < selected-plugin-tags.txt | sort -u
+          )
+          prepare_args=(--out dist/catalog-v2)
+          for plugin_id in "${plugin_ids[@]}"; do
+            prepare_args+=(--plugin-id "${plugin_id}")
+          done
+          ./xtask/target/debug/xtask catalog prepare-v2 "${prepare_args[@]}"
+
+      - name: Show sccache stats
+        if: always()
+        run: |
+          set -euo pipefail
+          sccache --show-stats | tee prepare-sccache-stats.txt
+
+      - name: Upload dry-run artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-plugin-sccache-test-artifacts-${{ github.run_id }}
+          path: |
+            dist/catalog-v2
+            prepare-sccache-stats.txt
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Save sccache directory
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: /home/runner/.cache/sccache
+          key: ${{ steps.prepare-sccache-restore.outputs.cache-primary-key }}
