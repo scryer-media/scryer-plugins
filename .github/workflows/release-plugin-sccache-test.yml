@@ -16,6 +16,9 @@ on:
 permissions:
   contents: read
 
+env:
+  RELEASE_PLUGIN_CACHE_SCOPE: release-plugin
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -39,7 +42,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: gha-rust-cache-linux-release-plugin-sccache-test-validate
+          shared-key: gha-rust-cache-linux-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-validate
           cache-targets: "false"
           cache-workspace-crates: "false"
           key: validate
@@ -49,10 +52,10 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: /home/runner/.cache/sccache
-          key: gha-sccache-release-plugin-sccache-test-validate-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ github.run_id }}
+          key: gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-validate-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ github.run_id }}
           restore-keys: |
-            gha-sccache-release-plugin-sccache-test-validate-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
-            gha-sccache-release-plugin-sccache-test-validate-
+            gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-validate-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
+            gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-validate-
 
       - uses: taiki-e/install-action@v2
         with:
@@ -156,7 +159,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: gha-rust-cache-linux-release-plugin-sccache-test-prepare
+          shared-key: gha-rust-cache-linux-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-prepare
           cache-targets: "false"
           cache-workspace-crates: "false"
           key: prepare
@@ -166,10 +169,10 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: /home/runner/.cache/sccache
-          key: gha-sccache-release-plugin-sccache-test-prepare-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ github.run_id }}
+          key: gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-prepare-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ github.run_id }}
           restore-keys: |
-            gha-sccache-release-plugin-sccache-test-prepare-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
-            gha-sccache-release-plugin-sccache-test-prepare-
+            gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-prepare-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
+            gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-prepare-
 
       - name: Install release tools
         run: |
