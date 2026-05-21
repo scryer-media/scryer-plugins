@@ -6,13 +6,13 @@ use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
-    ConfigFieldDef, ConfigFieldOption, ConfigFieldRole,
-    ConfigFieldType, IndexerCapabilities as Capabilities, IndexerCategoryModel,
-    IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities,
-    IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind,
-    IndexerTorrentCapabilities, PluginDescriptor, PluginResult,
-    PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
-    PluginSearchResult as SearchResult, ProviderDescriptor, SDK_VERSION,
+    ConfigFieldDef, ConfigFieldOption, ConfigFieldRole, ConfigFieldType,
+    IndexerCapabilities as Capabilities, IndexerCategoryModel, IndexerCategoryValueKind,
+    IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol,
+    IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind, IndexerTorrentCapabilities,
+    PluginDescriptor, PluginResult, PluginSearchRequest as SearchRequest,
+    PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult, ProviderDescriptor,
+    SDK_VERSION,
 };
 
 #[derive(Default)]
