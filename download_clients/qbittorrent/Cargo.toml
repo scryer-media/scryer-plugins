@@ -1,6 +1,6 @@
 [package]
 name = "qbittorrent-download-client"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 license = "GPL-3.0-only"
 description = "Torrent download client plugin for qBittorrent with category/tag routing, queue control, and import handoff support"
