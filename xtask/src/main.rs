@@ -1967,6 +1967,7 @@ fn scoped_ci_project_dirs(ctx: &TaskContext, scope: &CiScopeArgs) -> Result<Vec<
         return ci_project_dirs(ctx);
     }
 
+    let plugin_dirs = official_plugin_dirs_by_id(ctx)?;
     let mut dirs = BTreeSet::new();
     let mut selected = BTreeSet::new();
     for plugin_id in &scope.plugin_ids {
@@ -1974,9 +1975,11 @@ fn scoped_ci_project_dirs(ctx: &TaskContext, scope: &CiScopeArgs) -> Result<Vec<
             continue;
         }
 
-        let plugin = discover_local_official_plugin(ctx, plugin_id)?;
-        let manifest_path = plugin.plugin_dir.join("Cargo.toml");
-        let mut metadata = repo_cargo_command_in(ctx, &plugin.plugin_dir)?;
+        let plugin_dir = plugin_dirs
+            .get(plugin_id)
+            .ok_or_else(|| anyhow!("plugin '{plugin_id}' not found in local official plugins"))?;
+        let manifest_path = plugin_dir.join("Cargo.toml");
+        let mut metadata = repo_cargo_command_in(ctx, plugin_dir)?;
         metadata
             .arg("metadata")
             .args(["--format-version", "1", "--manifest-path"])
