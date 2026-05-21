@@ -142,12 +142,18 @@ struct CiArgs {
     command: CiCommand,
 }
 
+#[derive(Args, Clone, Default)]
+struct CiScopeArgs {
+    #[arg(long = "plugin-id")]
+    plugin_ids: Vec<String>,
+}
+
 #[derive(Subcommand)]
 enum CiCommand {
-    Fmt,
-    Clippy,
-    Audit,
-    Strict,
+    Fmt(CiScopeArgs),
+    Clippy(CiScopeArgs),
+    Audit(CiScopeArgs),
+    Strict(CiScopeArgs),
 }
 
 #[derive(Args)]
@@ -489,10 +495,10 @@ fn main() -> Result<()> {
     match cli.command {
         Commands::Doctor => run_doctor(&ctx),
         Commands::Ci(args) => match args.command {
-            CiCommand::Fmt => run_ci_fmt_check(&ctx),
-            CiCommand::Clippy => run_ci_strict_clippy(&ctx),
-            CiCommand::Audit => run_ci_audit(&ctx),
-            CiCommand::Strict => run_ci_strict(&ctx),
+            CiCommand::Fmt(args) => run_ci_fmt_check(&ctx, &args),
+            CiCommand::Clippy(args) => run_ci_strict_clippy(&ctx, &args),
+            CiCommand::Audit(args) => run_ci_audit(&ctx, &args),
+            CiCommand::Strict(args) => run_ci_strict(&ctx, &args),
         },
         Commands::Release(args) => run_release(&ctx, args),
         Commands::ReleaseMany(args) => run_release_many(&ctx, args),
@@ -1478,7 +1484,15 @@ fn run_tag_only_release_targets(
     println!("   Branch: {branch}");
     prompt_continue_if_dirty(ctx)?;
     require_wasm_target(ctx)?;
-    run_ci_strict(ctx)?;
+    run_ci_strict(
+        ctx,
+        &CiScopeArgs {
+            plugin_ids: targets
+                .iter()
+                .map(|target| target.plugin_id.clone())
+                .collect(),
+        },
+    )?;
     ok("Pre-flight OK");
 
     let lockfiles = targets
@@ -1684,11 +1698,20 @@ fn prefetch_plugin_dependencies(ctx: &TaskContext, plugin_dir: &Path) -> Result<
         "Prefetching dependencies for {}",
         plugin_dir.display()
     ));
-    let mut command = repo_cargo_command_in(ctx, plugin_dir)?;
-    command.args(["fetch", "--locked", "--target", WASM_TARGET]);
-    run_checked(&mut command).with_context(|| {
+    let mut host_command = repo_cargo_command_in(ctx, plugin_dir)?;
+    host_command.args(["fetch", "--locked"]);
+    run_checked(&mut host_command).with_context(|| {
         format!(
-            "failed to prefetch dependencies for {}",
+            "failed to prefetch host dependencies for {}",
+            plugin_dir.display()
+        )
+    })?;
+
+    let mut target_command = repo_cargo_command_in(ctx, plugin_dir)?;
+    target_command.args(["fetch", "--locked", "--target", WASM_TARGET]);
+    run_checked(&mut target_command).with_context(|| {
+        format!(
+            "failed to prefetch {WASM_TARGET} dependencies for {}",
             plugin_dir.display()
         )
     })
@@ -1939,6 +1962,52 @@ fn ci_project_dirs(ctx: &TaskContext) -> Result<Vec<PathBuf>> {
     Ok(dirs)
 }
 
+fn scoped_ci_project_dirs(ctx: &TaskContext, scope: &CiScopeArgs) -> Result<Vec<PathBuf>> {
+    if scope.plugin_ids.is_empty() {
+        return ci_project_dirs(ctx);
+    }
+
+    let mut dirs = BTreeSet::new();
+    let mut selected = BTreeSet::new();
+    for plugin_id in &scope.plugin_ids {
+        if !selected.insert(plugin_id.clone()) {
+            continue;
+        }
+
+        let plugin = discover_local_official_plugin(ctx, plugin_id)?;
+        let manifest_path = plugin.plugin_dir.join("Cargo.toml");
+        let mut metadata = repo_cargo_command_in(ctx, &plugin.plugin_dir)?;
+        metadata
+            .arg("metadata")
+            .args(["--format-version", "1", "--manifest-path"])
+            .arg(&manifest_path)
+            .arg("--locked");
+        let raw = run_capture(&mut metadata)?;
+        let value: serde_json::Value = serde_json::from_str(&raw)
+            .with_context(|| format!("failed to parse cargo metadata for {}", plugin_id))?;
+        let packages = value
+            .get("packages")
+            .and_then(|packages| packages.as_array())
+            .ok_or_else(|| anyhow!("cargo metadata for {} did not contain packages", plugin_id))?;
+
+        for package in packages {
+            let Some(package_manifest) = package.get("manifest_path").and_then(|v| v.as_str())
+            else {
+                continue;
+            };
+            let package_manifest = PathBuf::from(package_manifest);
+            if package_manifest.starts_with(&ctx.repo_root)
+                && let Some(package_dir) = package_manifest.parent()
+            {
+                dirs.insert(package_dir.to_path_buf());
+            }
+        }
+    }
+
+    dirs.insert(ctx.repo_root.join("xtask"));
+    Ok(dirs.into_iter().collect())
+}
+
 fn ensure_cargo_audit(ctx: &TaskContext) -> Result<()> {
     let mut version = repo_cargo_command_in(ctx, &ctx.repo_root)?;
     version.args(["audit", "--version"]);
@@ -1957,12 +2026,16 @@ fn ensure_cargo_audit(ctx: &TaskContext) -> Result<()> {
     Ok(())
 }
 
-fn run_ci_fmt_check(ctx: &TaskContext) -> Result<()> {
-    step("Checking cargo fmt across plugin crates and xtask");
+fn run_ci_fmt_check(ctx: &TaskContext, scope: &CiScopeArgs) -> Result<()> {
+    if scope.plugin_ids.is_empty() {
+        step("Checking cargo fmt across plugin crates and xtask");
+    } else {
+        step("Checking cargo fmt for selected plugin crates and xtask");
+    }
     if let Some(rustup_toolchain) = configured_rustup_toolchain(ctx)? {
         ensure_rustup_component(&rustup_toolchain, "rustfmt")?;
     }
-    for project_dir in ci_project_dirs(ctx)? {
+    for project_dir in scoped_ci_project_dirs(ctx, scope)? {
         let relative = path_relative_to_repo(ctx, &project_dir)?;
         println!("   cargo fmt --check :: {relative}");
         let mut fmt = repo_cargo_command_in(ctx, &project_dir)?;
@@ -1973,12 +2046,16 @@ fn run_ci_fmt_check(ctx: &TaskContext) -> Result<()> {
     Ok(())
 }
 
-fn run_ci_strict_clippy(ctx: &TaskContext) -> Result<()> {
-    step("Running strict clippy across plugin crates and xtask");
+fn run_ci_strict_clippy(ctx: &TaskContext, scope: &CiScopeArgs) -> Result<()> {
+    if scope.plugin_ids.is_empty() {
+        step("Running strict clippy across plugin crates and xtask");
+    } else {
+        step("Running strict clippy for selected plugin crates and xtask");
+    }
     if let Some(rustup_toolchain) = configured_rustup_toolchain(ctx)? {
         ensure_rustup_component(&rustup_toolchain, "clippy")?;
     }
-    for project_dir in ci_project_dirs(ctx)? {
+    for project_dir in scoped_ci_project_dirs(ctx, scope)? {
         let relative = path_relative_to_repo(ctx, &project_dir)?;
         println!("   cargo clippy -D warnings :: {relative}");
         let mut clippy = ci_cargo_command_in(ctx, &project_dir)?;
@@ -1996,14 +2073,18 @@ fn run_ci_strict_clippy(ctx: &TaskContext) -> Result<()> {
     Ok(())
 }
 
-fn run_ci_audit(ctx: &TaskContext) -> Result<()> {
-    step("Running cargo audit across plugin crates and xtask");
+fn run_ci_audit(ctx: &TaskContext, scope: &CiScopeArgs) -> Result<()> {
+    if scope.plugin_ids.is_empty() {
+        step("Running cargo audit across plugin crates and xtask");
+    } else {
+        step("Running cargo audit for selected plugin crates and xtask");
+    }
     ensure_cargo_audit(ctx)?;
     warn(format!(
         "Ignoring advisories pending upstream runtime fixes: {}",
         AUDIT_IGNORE_ADVISORIES.join(" ")
     ));
-    for project_dir in ci_project_dirs(ctx)? {
+    for project_dir in scoped_ci_project_dirs(ctx, scope)? {
         let relative = path_relative_to_repo(ctx, &project_dir)?;
         println!("   cargo audit :: {relative}");
         let mut audit = repo_cargo_command_in(ctx, &project_dir)?;
@@ -2017,10 +2098,10 @@ fn run_ci_audit(ctx: &TaskContext) -> Result<()> {
     Ok(())
 }
 
-fn run_ci_strict(ctx: &TaskContext) -> Result<()> {
-    run_ci_fmt_check(ctx)?;
-    run_ci_audit(ctx)?;
-    run_ci_strict_clippy(ctx)?;
+fn run_ci_strict(ctx: &TaskContext, scope: &CiScopeArgs) -> Result<()> {
+    run_ci_fmt_check(ctx, scope)?;
+    run_ci_audit(ctx, scope)?;
+    run_ci_strict_clippy(ctx, scope)?;
     Ok(())
 }
 
