@@ -167,7 +167,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          ./xtask/target/debug/xtask catalog prepare-v2 --out dist/catalog-v2
+          mapfile -t plugin_ids < <(
+            while IFS= read -r tag; do
+              plugin_spec="${tag#plugins/}"
+              printf '%s\n' "${plugin_spec%/v*}"
+            done < selected-plugin-tags.txt | sort -u
+          )
+          prepare_args=(--out dist/catalog-v2)
+          for plugin_id in "${plugin_ids[@]}"; do
+            prepare_args+=(--plugin-id "${plugin_id}")
+          done
+          ./xtask/target/debug/xtask catalog prepare-v2 "${prepare_args[@]}"
           for asset in catalog-v2.json catalog-v2.min.json.zst; do
             cosign sign-blob \
               --yes \

@@ -250,6 +250,10 @@ enum CatalogCommand {
 struct CatalogPrepareV2Args {
     #[arg(long)]
     out: Option<PathBuf>,
+    #[arg(long = "plugin-id")]
+    plugin_ids: Vec<String>,
+    #[arg(long)]
+    existing_catalog: Option<PathBuf>,
 }
 
 #[derive(Args)]
@@ -510,7 +514,7 @@ fn main() -> Result<()> {
         },
         Commands::Catalog(args) => match args.command {
             CatalogCommand::RenderV2 => run_catalog_render_v2(&ctx),
-            CatalogCommand::PrepareV2(args) => run_catalog_prepare_v2(&ctx, args.out),
+            CatalogCommand::PrepareV2(args) => run_catalog_prepare_v2(&ctx, args),
             CatalogCommand::PublishV2 => run_catalog_publish_v2(&ctx),
             CatalogCommand::ValidateV2 => run_catalog_validate_v2(&ctx),
         },
@@ -1049,6 +1053,14 @@ fn official_plugin_dirs_by_id(ctx: &TaskContext) -> Result<BTreeMap<String, Path
     Ok(dirs)
 }
 
+fn discover_local_official_plugin(ctx: &TaskContext, plugin_id: &str) -> Result<LocalPluginInfo> {
+    let plugin_dirs = official_plugin_dirs_by_id(ctx)?;
+    let plugin_dir = plugin_dirs
+        .get(plugin_id)
+        .ok_or_else(|| anyhow!("plugin '{}' not found in local official plugins", plugin_id))?;
+    discover_local_plugin(ctx, plugin_dir)
+}
+
 fn local_plugin_directories(ctx: &TaskContext) -> Result<Vec<PathBuf>> {
     let mut plugin_dirs = Vec::new();
     for plugin_dir in tracked_plugin_crate_dirs(ctx)? {
@@ -1202,39 +1214,21 @@ fn read_published_child_catalog_releases(
     ctx: &TaskContext,
     plugin_id: &str,
 ) -> Result<Vec<ChildCatalogReleaseV2>> {
-    let temp = tempfile::tempdir()?;
-    let central_path = github_release_download(
-        ctx,
-        OFFICIAL_GITHUB_REPO,
-        CENTRAL_CATALOG_RELEASE_TAG,
-        CATALOG_PRETTY_JSON,
-        temp.path(),
-    )?;
-    let catalog: CatalogV2 = serde_json::from_slice(&fs::read(&central_path)?)
-        .with_context(|| format!("failed to parse {}", central_path.display()))?;
+    let catalog = read_published_official_catalog(ctx)?;
     let Some(entry) = catalog.plugins.iter().find(|plugin| plugin.id == plugin_id) else {
         return Ok(Vec::new());
     };
+    let temp = tempfile::tempdir()?;
     let (tag, asset) = release_asset_url_parts(&entry.child_catalog_url, OFFICIAL_GITHUB_REPO)?;
     let child_path = github_release_download(ctx, OFFICIAL_GITHUB_REPO, &tag, &asset, temp.path())?;
     read_child_catalog_releases_from_path(ctx, &child_path)
 }
 
-fn resolve_release_target(
+fn resolve_release_target_for_plugin(
     ctx: &TaskContext,
-    plugins: &[LocalPluginInfo],
-    plugin_name: &str,
+    plugin: &LocalPluginInfo,
     options: &ReleaseOptions,
 ) -> Result<ReleaseTarget> {
-    let plugin = plugins
-        .iter()
-        .find(|plugin| plugin.plugin_id == plugin_name)
-        .ok_or_else(|| {
-            anyhow!(
-                "Plugin '{}' not found in local official plugins",
-                plugin_name
-            )
-        })?;
     let existing_releases = read_published_child_catalog_releases(ctx, &plugin.plugin_id)?;
     let has_existing_release = !existing_releases.is_empty();
     let (bump, explicit) = parse_bump(options)?;
@@ -1266,6 +1260,24 @@ fn resolve_release_target(
         next_version,
         tag_name,
     })
+}
+
+fn resolve_release_target(
+    ctx: &TaskContext,
+    plugins: &[LocalPluginInfo],
+    plugin_name: &str,
+    options: &ReleaseOptions,
+) -> Result<ReleaseTarget> {
+    let plugin = plugins
+        .iter()
+        .find(|plugin| plugin.plugin_id == plugin_name)
+        .ok_or_else(|| {
+            anyhow!(
+                "Plugin '{}' not found in local official plugins",
+                plugin_name
+            )
+        })?;
+    resolve_release_target_for_plugin(ctx, plugin, options)
 }
 
 fn release_commit_message(targets: &[ReleaseTarget]) -> String {
@@ -2232,6 +2244,24 @@ fn read_catalog_bytes(ctx: &TaskContext, path: &Path) -> Result<Vec<u8>> {
     fs::read(path).with_context(|| format!("failed to read {}", path.display()))
 }
 
+fn read_catalog_v2_from_path(ctx: &TaskContext, path: &Path) -> Result<CatalogV2> {
+    let bytes = read_catalog_bytes(ctx, path)?;
+    serde_json::from_slice(&bytes)
+        .with_context(|| format!("failed to parse catalog {}", path.display()))
+}
+
+fn read_published_official_catalog(ctx: &TaskContext) -> Result<CatalogV2> {
+    let temp = tempfile::tempdir()?;
+    let central_path = github_release_download(
+        ctx,
+        OFFICIAL_GITHUB_REPO,
+        CENTRAL_CATALOG_RELEASE_TAG,
+        CATALOG_PRETTY_JSON,
+        temp.path(),
+    )?;
+    read_catalog_v2_from_path(ctx, &central_path)
+}
+
 fn merge_child_catalog_releases(
     plugin_id: &str,
     releases: Vec<ChildCatalogReleaseV2>,
@@ -2313,16 +2343,7 @@ fn prepare_official_release(
         "Preparing unsigned release assets for {}",
         args.plugin_id
     ));
-    let plugins = discover_local_plugins(ctx)?;
-    let plugin = plugins
-        .iter()
-        .find(|plugin| plugin.plugin_id == args.plugin_id)
-        .ok_or_else(|| {
-            anyhow!(
-                "plugin '{}' not found in local official plugins",
-                args.plugin_id
-            )
-        })?;
+    let plugin = discover_local_official_plugin(ctx, &args.plugin_id)?;
     let existing_releases = resolve_existing_child_catalog_releases(
         ctx,
         &plugin.plugin_id,
@@ -2356,7 +2377,7 @@ fn prepare_official_release(
     )?;
     let child_catalog = write_child_catalog_to_dir(
         ctx,
-        plugin,
+        &plugin,
         Some(ChildCatalogReleaseV2 {
             version: manifest.version.clone(),
             sdk_constraint: scryer_plugin_sdk::current_sdk_constraint(),
@@ -2481,6 +2502,20 @@ fn catalog_entry_from_local_plugin(plugin: &LocalPluginInfo) -> Result<CatalogV2
     })
 }
 
+fn merge_catalog_plugin_entries(
+    existing: Vec<CatalogV2Entry>,
+    updates: Vec<CatalogV2Entry>,
+) -> Vec<CatalogV2Entry> {
+    let mut by_id = BTreeMap::new();
+    for entry in existing {
+        by_id.insert(entry.id.clone(), entry);
+    }
+    for entry in updates {
+        by_id.insert(entry.id.clone(), entry);
+    }
+    by_id.into_values().collect()
+}
+
 fn rule_pack_asset_url(asset_name: &str) -> String {
     github_release_asset_url(
         OFFICIAL_GITHUB_REPO,
@@ -2589,15 +2624,40 @@ fn stage_rule_pack_assets(rule_packs: &[PreparedRulePack], output_dir: &Path) ->
 }
 
 fn run_catalog_render_v2(ctx: &TaskContext) -> Result<()> {
-    run_catalog_prepare_v2(ctx, None)
+    run_catalog_prepare_v2(
+        ctx,
+        CatalogPrepareV2Args {
+            out: None,
+            plugin_ids: Vec::new(),
+            existing_catalog: None,
+        },
+    )
 }
 
-fn run_catalog_prepare_v2(ctx: &TaskContext, out: Option<PathBuf>) -> Result<()> {
-    step("Preparing catalog-v2 assets from local official plugin descriptors");
-    let plugins = discover_local_plugins(ctx)?
-        .iter()
-        .map(catalog_entry_from_local_plugin)
-        .collect::<Result<Vec<_>>>()?;
+fn run_catalog_prepare_v2(ctx: &TaskContext, args: CatalogPrepareV2Args) -> Result<()> {
+    let plugins = if args.plugin_ids.is_empty() {
+        step("Preparing catalog-v2 assets from local official plugin descriptors");
+        discover_local_plugins(ctx)?
+            .iter()
+            .map(catalog_entry_from_local_plugin)
+            .collect::<Result<Vec<_>>>()?
+    } else {
+        step("Preparing catalog-v2 assets for selected official plugin descriptors");
+        let mut selected = BTreeSet::new();
+        let mut updates = Vec::new();
+        for plugin_id in &args.plugin_ids {
+            if !selected.insert(plugin_id.clone()) {
+                continue;
+            }
+            let plugin = discover_local_official_plugin(ctx, plugin_id)?;
+            updates.push(catalog_entry_from_local_plugin(&plugin)?);
+        }
+        let base_catalog = match args.existing_catalog.as_deref() {
+            Some(path) => read_catalog_v2_from_path(ctx, path)?,
+            None => read_published_official_catalog(ctx)?,
+        };
+        merge_catalog_plugin_entries(base_catalog.plugins, updates)
+    };
     let rule_packs = load_rule_pack_catalog_entries(ctx)?;
     let catalog = CatalogV2 {
         schema_version: CATALOG_V2_SCHEMA.to_string(),
@@ -2607,7 +2667,10 @@ fn run_catalog_prepare_v2(ctx: &TaskContext, out: Option<PathBuf>) -> Result<()>
             .map(|rule_pack| rule_pack.entry.clone())
             .collect(),
     };
-    let dist = out.unwrap_or_else(|| ctx.repo_root.join("dist").join("catalog-v2"));
+    validate_official_catalog(&catalog)?;
+    let dist = args
+        .out
+        .unwrap_or_else(|| ctx.repo_root.join("dist").join("catalog-v2"));
     let central_paths = write_catalog_assets(ctx, &catalog, &dist)?;
     stage_rule_pack_assets(&rule_packs, &dist)?;
     ok(format!("wrote {}", central_paths.pretty_json.display()));
@@ -2619,7 +2682,14 @@ fn run_catalog_publish_v2(ctx: &TaskContext) -> Result<()> {
     warn(
         "catalog publish-v2 now prepares unsigned assets only; CI owns signing and GitHub release publication",
     );
-    run_catalog_prepare_v2(ctx, None)
+    run_catalog_prepare_v2(
+        ctx,
+        CatalogPrepareV2Args {
+            out: None,
+            plugin_ids: Vec::new(),
+            existing_catalog: None,
+        },
+    )
 }
 
 fn run_community_scaffold(_ctx: &TaskContext, plugin_id: &str, output_dir: &Path) -> Result<()> {
@@ -3368,8 +3438,8 @@ fn run_catalog_validate_v2(ctx: &TaskContext) -> Result<()> {
 }
 
 fn run_release(ctx: &TaskContext, args: ReleaseArgs) -> Result<()> {
-    let plugins = discover_local_plugins(ctx)?;
-    let target = resolve_release_target(ctx, &plugins, &args.plugin_name, &args.options)?;
+    let plugin = discover_local_official_plugin(ctx, &args.plugin_name)?;
+    let target = resolve_release_target_for_plugin(ctx, &plugin, &args.options)?;
     run_release_targets(ctx, vec![target], &args.options)
 }
 
@@ -3378,13 +3448,12 @@ fn run_release_many(ctx: &TaskContext, args: ReleaseManyArgs) -> Result<()> {
         bail!("release-many requires at least one plugin id");
     }
 
-    let plugins = discover_local_plugins(ctx)?;
     let mut targets = Vec::new();
     for plugin_name in &args.plugin_names {
-        targets.push(resolve_release_target(
+        let plugin = discover_local_official_plugin(ctx, plugin_name)?;
+        targets.push(resolve_release_target_for_plugin(
             ctx,
-            &plugins,
-            plugin_name,
+            &plugin,
             &args.options,
         )?);
     }
@@ -3464,6 +3533,41 @@ mod tests {
             source_repo: entry.source_repo,
             releases,
         }
+    }
+
+    #[test]
+    fn merge_catalog_plugin_entries_replaces_selected_entry_and_preserves_others() {
+        let mut email = official_catalog_entry();
+        email.child_catalog_url = official_plugin_child_catalog_url("email", "0.1.0");
+
+        let mut qbittorrent = official_catalog_entry();
+        qbittorrent.id = "qbittorrent".to_string();
+        qbittorrent.name = "qBittorrent".to_string();
+        qbittorrent.description = "Torrent download client".to_string();
+        qbittorrent.provider_type = "qbittorrent".to_string();
+        qbittorrent.docs_url =
+            "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/qbittorrent"
+                .to_string();
+        qbittorrent.source_repo = qbittorrent.docs_url.clone();
+        qbittorrent.child_catalog_url = official_plugin_child_catalog_url("qbittorrent", "0.1.6");
+
+        let mut qbittorrent_updated = qbittorrent.clone();
+        qbittorrent_updated.child_catalog_url =
+            official_plugin_child_catalog_url("qbittorrent", "0.1.7");
+
+        let merged = merge_catalog_plugin_entries(
+            vec![qbittorrent, email.clone()],
+            vec![qbittorrent_updated.clone()],
+        );
+
+        assert_eq!(merged.len(), 2);
+        assert_eq!(merged[0].id, "email");
+        assert_eq!(merged[0].child_catalog_url, email.child_catalog_url);
+        assert_eq!(merged[1].id, "qbittorrent");
+        assert_eq!(
+            merged[1].child_catalog_url,
+            qbittorrent_updated.child_catalog_url
+        );
     }
 
     #[test]
@@ -3617,7 +3721,7 @@ plugin_id = "email"
         let entry = official_catalog_entry();
         let catalog = official_child_catalog(vec![
             child_release("0.1.0", ">=1.5.0, <1.6.0"),
-            child_release("0.2.0", ">=1.5.0, <1.6.0"),
+            child_release("0.2.0", ">=1.6.0, <1.7.0"),
         ]);
 
         validate_official_child_catalog(&catalog, &entry).expect("catalog should validate");
