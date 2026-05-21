@@ -5,8 +5,8 @@ use newznab_common::{
     current_sdk_constraint, execute_full_search, standard_config_fields, Capabilities,
     IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode,
     IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput,
-    IndexerSourceKind, IndexerTorrentCapabilities, NewznabConfig, PluginDescriptor,
-    PluginResult, ProviderDescriptor, SearchRequest, SDK_VERSION,
+    IndexerSourceKind, IndexerTorrentCapabilities, NewznabConfig, PluginDescriptor, PluginResult,
+    ProviderDescriptor, SearchRequest, SDK_VERSION,
 };
 
 #[plugin_fn]
