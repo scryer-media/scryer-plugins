@@ -38,8 +38,39 @@ jobs:
         with:
           tool: cargo-audit
 
+      - name: Select plugin ids for validation
+        run: |
+          set -euo pipefail
+          RELEASE_SHA="${{ github.event_name == 'workflow_dispatch' && inputs.release_commit || '' }}"
+          if [ -z "${RELEASE_SHA}" ]; then
+            RELEASE_SHA="$(git rev-parse HEAD)"
+          fi
+          mapfile -t plugin_ids < <(
+            git tag --points-at "${RELEASE_SHA}" \
+              | sort \
+              | grep -E '^plugins/[^/]+/v.+$' \
+              | while IFS= read -r tag; do
+                  plugin_spec="${tag#plugins/}"
+                  printf '%s\n' "${plugin_spec%/v*}"
+                done \
+              | sort -u
+          )
+          if [ "${#plugin_ids[@]}" -eq 0 ]; then
+            echo "No plugin release tags point at ${RELEASE_SHA}" >&2
+            exit 1
+          fi
+          printf '%s\n' "${plugin_ids[@]}" > selected-plugin-ids.txt
+          printf 'Selected plugin ids for %s\n' "${RELEASE_SHA}"
+          printf ' - %s\n' "${plugin_ids[@]}"
+
       - name: Verify formatting audit and clippy
-        run: cargo run --locked --manifest-path xtask/Cargo.toml -- ci strict
+        run: |
+          set -euo pipefail
+          cmd=(cargo run --locked --manifest-path xtask/Cargo.toml -- ci strict)
+          while IFS= read -r plugin_id; do
+            cmd+=(--plugin-id "${plugin_id}")
+          done < selected-plugin-ids.txt
+          "${cmd[@]}"
 
   build-sign-release:
     needs: [validate]
