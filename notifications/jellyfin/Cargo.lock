@@ -1105,7 +1105,7 @@ dependencies = [
 
 [[package]]
 name = "jellyfin-notification"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "extism-pdk",
  "scryer-plugin-sdk",
