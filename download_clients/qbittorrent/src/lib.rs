@@ -738,7 +738,6 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: true,
             default_value: None,
             value_source: Default::default(),
-            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("qBittorrent WebUI username".to_string()),
@@ -750,7 +749,6 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: true,
             default_value: None,
             value_source: Default::default(),
-            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("qBittorrent WebUI password".to_string()),
@@ -762,7 +760,6 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("category".to_string()),
             value_source: Default::default(),
-            role: None,
             host_binding: None,
             options: vec![
                 ConfigFieldOption {
@@ -785,7 +782,6 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: None,
             value_source: Default::default(),
-            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("Comma-separated tags added to every torrent".to_string()),
@@ -797,7 +793,6 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("false".to_string()),
             value_source: Default::default(),
-            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some(
@@ -812,7 +807,6 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("false".to_string()),
             value_source: Default::default(),
-            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("Add torrents in a paused state".to_string()),
@@ -824,7 +818,6 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("false".to_string()),
             value_source: Default::default(),
-            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("Force-start torrents after adding them".to_string()),
@@ -836,7 +829,6 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("false".to_string()),
             value_source: Default::default(),
-            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("Skip piece recheck when adding local torrent payloads".to_string()),
@@ -848,7 +840,6 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("tag_imported".to_string()),
             value_source: Default::default(),
-            role: None,
             host_binding: None,
             options: vec![
                 ConfigFieldOption {
@@ -877,7 +868,6 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some(IMPORTED_TAG_DEFAULT.to_string()),
             value_source: Default::default(),
-            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some(

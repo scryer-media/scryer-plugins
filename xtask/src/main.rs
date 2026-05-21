@@ -9,7 +9,8 @@ use scryer_plugin_sdk::{
     EXPORT_NOTIFICATION_SEND, EXPORT_SUBTITLE_DOWNLOAD, EXPORT_SUBTITLE_GENERATE,
     EXPORT_SUBTITLE_SEARCH, EXPORT_VALIDATE_CONFIG, PluginDescriptor, ProviderDescriptor,
     SDK_VERSION, SubtitleProviderMode, host_version_matches_constraint,
-    validate_plugin_descriptor_host_permissions, validate_sdk_contract,
+    plugin_descriptor_sdk_constraint, validate_plugin_descriptor_host_permissions,
+    validate_sdk_contract,
 };
 use semver::Version;
 use serde::{Deserialize, Serialize};
@@ -1855,7 +1856,7 @@ fn validate_descriptor_contract(descriptor: &PluginDescriptor) -> Result<()> {
         &descriptor.id,
         &descriptor.sdk_version,
         &descriptor.sdk_constraint,
-        SDK_VERSION,
+        &descriptor.sdk_version,
     )
     .map_err(anyhow::Error::msg)?;
     if descriptor.id.trim().is_empty() {
@@ -2464,7 +2465,7 @@ fn prepare_official_release(
         &plugin,
         Some(ChildCatalogReleaseV2 {
             version: manifest.version.clone(),
-            sdk_constraint: scryer_plugin_sdk::current_sdk_constraint(),
+            sdk_constraint: plugin_descriptor_sdk_constraint(&descriptor),
             artifact_manifest_url: official_plugin_manifest_url(
                 &plugin.plugin_id,
                 &manifest.version,
@@ -3547,6 +3548,7 @@ fn run_release_many(ctx: &TaskContext, args: ReleaseManyArgs) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use scryer_plugin_sdk::{NotificationCapabilities, NotificationDescriptor};
 
     fn write_temp_manifest(contents: &str) -> tempfile::NamedTempFile {
         let file = tempfile::NamedTempFile::new().expect("create temp manifest");
@@ -3617,6 +3619,32 @@ mod tests {
             source_repo: entry.source_repo,
             releases,
         }
+    }
+
+    #[test]
+    fn validate_descriptor_contract_accepts_older_published_sdk_line() {
+        let descriptor = PluginDescriptor {
+            id: "qbittorrent".to_string(),
+            name: "qBittorrent".to_string(),
+            version: "0.1.8".to_string(),
+            sdk_version: "1.5.0".to_string(),
+            sdk_constraint: ">=1.5.0, <1.6.0".to_string(),
+            socket_permissions: vec![],
+            provider: ProviderDescriptor::Notification(NotificationDescriptor {
+                provider_type: "qbittorrent-test".to_string(),
+                provider_aliases: vec![],
+                config_fields: vec![],
+                default_base_url: None,
+                allowed_hosts: vec![],
+                capabilities: NotificationCapabilities::default(),
+            }),
+        };
+
+        validate_descriptor_contract(&descriptor).expect("descriptor should validate");
+        assert_eq!(
+            plugin_descriptor_sdk_constraint(&descriptor),
+            ">=1.5.0, <1.6.0"
+        );
     }
 
     #[test]
