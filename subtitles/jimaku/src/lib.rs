@@ -178,6 +178,7 @@ fn config_field(
         default_value: default_value.map(str::to_string),
         value_source: ConfigFieldValueSource::User,
         host_binding: None,
+        role: None,
         options: vec![],
         help_text: None,
     }

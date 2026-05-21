@@ -81,6 +81,7 @@ fn descriptor() -> PluginDescriptor {
                     default_value: Some("starttls".to_string()),
                     value_source: Default::default(),
                     host_binding: None,
+                    role: None,
                     options: vec![
                         option("plain", "Plain"),
                         option("starttls", "STARTTLS"),
@@ -153,6 +154,7 @@ fn field(
         default_value: default_value.map(str::to_string),
         value_source: Default::default(),
         host_binding: None,
+        role: None,
         options: vec![],
         help_text: None,
     }

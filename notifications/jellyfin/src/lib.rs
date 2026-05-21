@@ -163,6 +163,7 @@ fn default_descriptor() -> PluginDescriptor {
                     default_value: None,
                     value_source: Default::default(),
                     host_binding: None,
+                    role: None,
                     options: vec![],
                     help_text: Some(
                         "Jellyfin server URL, for example http://jellyfin:8096".to_string(),
@@ -176,6 +177,7 @@ fn default_descriptor() -> PluginDescriptor {
                     default_value: None,
                     value_source: Default::default(),
                     host_binding: None,
+                    role: None,
                     options: vec![],
                     help_text: Some("Jellyfin API key used for targeted refresh calls.".to_string()),
                 },
@@ -187,6 +189,7 @@ fn default_descriptor() -> PluginDescriptor {
                     default_value: None,
                     value_source: Default::default(),
                     host_binding: None,
+                    role: None,
                     options: vec![],
                     help_text: Some(
                         "Pick the Scryer path on the left and enter the matching Jellyfin-visible path on the right. Add up to 10 mappings. Most specific path wins."

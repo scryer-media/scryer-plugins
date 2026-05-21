@@ -92,6 +92,7 @@ fn descriptor() -> PluginDescriptor {
                     default_value: None,
                     value_source: ConfigFieldValueSource::User,
                     host_binding: None,
+                    role: None,
                     options: Vec::new(),
                     help_text: Some(
                         "OpenAI API key used for Whisper transcription requests.".to_string(),
@@ -105,6 +106,7 @@ fn descriptor() -> PluginDescriptor {
                     default_value: Some("whisper-1".to_string()),
                     value_source: ConfigFieldValueSource::User,
                     host_binding: None,
+                    role: None,
                     options: Vec::new(),
                     help_text: Some("Transcription model to use.".to_string()),
                 },
@@ -116,6 +118,7 @@ fn descriptor() -> PluginDescriptor {
                     default_value: None,
                     value_source: ConfigFieldValueSource::User,
                     host_binding: None,
+                    role: None,
                     options: Vec::new(),
                     help_text: Some(
                         "Optional prompt to improve terminology or formatting for the transcription."

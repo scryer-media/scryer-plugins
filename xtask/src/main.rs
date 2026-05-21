@@ -204,6 +204,7 @@ enum OfficialCommand {
     Release(OfficialReleaseArgs),
     Prepare(OfficialPrepareArgs),
     Prefetch(OfficialPrefetchArgs),
+    PlanChanged(OfficialPlanChangedArgs),
     VerifyPrepared(OfficialVerifyPreparedArgs),
 }
 
@@ -232,6 +233,20 @@ struct OfficialPrepareArgs {
 #[derive(Args)]
 struct OfficialPrefetchArgs {
     plugin_ids: Vec<String>,
+}
+
+#[derive(Args, Clone, Default)]
+struct OfficialPlanChangedArgs {
+    #[arg(long, conflicts_with_all = ["minor", "patch", "version"])]
+    major: bool,
+    #[arg(long, conflicts_with_all = ["major", "patch", "version"])]
+    minor: bool,
+    #[arg(long, conflicts_with_all = ["major", "minor", "version"])]
+    patch: bool,
+    #[arg(long)]
+    version: Option<String>,
+    #[arg(long)]
+    out: Option<PathBuf>,
 }
 
 #[derive(Args)]
@@ -312,6 +327,12 @@ struct ReleaseTarget {
     current_version: Version,
     next_version: Version,
     tag_name: String,
+}
+
+#[derive(Clone)]
+struct PlannedReleaseTarget {
+    target: ReleaseTarget,
+    reason: String,
 }
 
 #[derive(Clone)]
@@ -517,6 +538,7 @@ fn main() -> Result<()> {
             OfficialCommand::Release(args) => run_official_release(&ctx, args),
             OfficialCommand::Prepare(args) => run_official_prepare(&ctx, args),
             OfficialCommand::Prefetch(args) => run_official_prefetch(&ctx, args),
+            OfficialCommand::PlanChanged(args) => run_official_plan_changed(&ctx, args),
             OfficialCommand::VerifyPrepared(args) => run_official_verify_prepared(&ctx, &args.dir),
         },
         Commands::Catalog(args) => match args.command {
@@ -868,6 +890,16 @@ fn parse_bump(args: &ReleaseOptions) -> Result<(VersionBump, Option<Version>)> {
         VersionBump::Patch
     };
     Ok((bump, explicit))
+}
+
+fn release_options_from_plan_args(args: &OfficialPlanChangedArgs) -> ReleaseOptions {
+    ReleaseOptions {
+        major: args.major,
+        minor: args.minor,
+        patch: args.patch,
+        dry_run: false,
+        version: args.version.clone(),
+    }
 }
 
 fn next_version(current: &Version, bump: VersionBump) -> Version {
@@ -1411,49 +1443,60 @@ fn release_impact_for_plugin(ctx: &TaskContext, plugin: &LocalPluginInfo) -> Res
 }
 
 fn run_release_changed(ctx: &TaskContext, args: ReleaseChangedArgs) -> Result<()> {
+    let plans = collect_changed_release_targets(ctx, &args.options)?;
+    if plans.is_empty() {
+        ok("No official plugin changes detected since per-plugin release tags");
+        return Ok(());
+    }
+
+    step("Selected changed official plugins");
+    for plan in &plans {
+        println!("   {}: {}", plan.target.plugin_id, plan.reason);
+    }
+
+    let targets = plans.into_iter().map(|plan| plan.target).collect();
+    run_tag_only_release_targets(ctx, targets, &args.options)
+}
+
+fn collect_changed_release_targets(
+    ctx: &TaskContext,
+    options: &ReleaseOptions,
+) -> Result<Vec<PlannedReleaseTarget>> {
     ensure_current_sdk_dependency_is_published(ctx)?;
     let plugins = discover_local_plugins(ctx)?;
     let mut selected = Vec::new();
-    let mut reasons = Vec::new();
     for plugin in &plugins {
         match release_impact_for_plugin(ctx, plugin)? {
             ReleaseImpact::PluginChanged => {
-                selected.push(plugin.plugin_id.clone());
-                reasons.push(format!("{}: plugin-specific changes", plugin.plugin_id));
+                selected.push((
+                    plugin.plugin_id.clone(),
+                    "plugin-specific changes".to_string(),
+                ));
             }
             ReleaseImpact::ArtifactWide(reason) => {
-                selected.push(plugin.plugin_id.clone());
-                reasons.push(format!("{}: {reason}", plugin.plugin_id));
+                selected.push((plugin.plugin_id.clone(), reason));
             }
             ReleaseImpact::Unchanged => {}
         }
     }
 
-    selected.sort();
-    selected.dedup();
+    selected.sort_by(|left, right| left.0.cmp(&right.0));
+    selected.dedup_by(|left, right| left.0 == right.0);
     if selected.is_empty() {
-        ok("No official plugin changes detected since per-plugin release tags");
-        return Ok(());
+        return Ok(Vec::new());
     }
-    if args.options.version.is_some() && selected.len() != 1 {
+    if options.version.is_some() && selected.len() != 1 {
         bail!("--version can only be used when exactly one changed plugin is selected");
     }
 
-    step("Selected changed official plugins");
-    for reason in &reasons {
-        println!("   {reason}");
-    }
-
     let mut targets = Vec::new();
-    for plugin_id in &selected {
-        targets.push(resolve_release_target(
-            ctx,
-            &plugins,
-            plugin_id,
-            &args.options,
-        )?);
+    for (plugin_id, reason) in selected {
+        targets.push(PlannedReleaseTarget {
+            target: resolve_release_target(ctx, &plugins, &plugin_id, options)?,
+            reason,
+        });
     }
-    run_tag_only_release_targets(ctx, targets, &args.options)
+    Ok(targets)
 }
 
 fn run_tag_only_release_targets(
@@ -2520,6 +2563,37 @@ fn run_official_prefetch(ctx: &TaskContext, args: OfficialPrefetchArgs) -> Resul
     }
 
     ok("prefetched plugin release dependencies");
+    Ok(())
+}
+
+fn run_official_plan_changed(ctx: &TaskContext, args: OfficialPlanChangedArgs) -> Result<()> {
+    let options = release_options_from_plan_args(&args);
+    let plans = collect_changed_release_targets(ctx, &options)?;
+    if plans.is_empty() {
+        ok("No official plugin changes detected since per-plugin release tags");
+        return Ok(());
+    }
+
+    step("Planned changed official plugin releases");
+    let mut output = String::new();
+    for plan in &plans {
+        println!(
+            "   {} {} ({})",
+            plan.target.plugin_id, plan.target.next_version, plan.reason
+        );
+        output.push_str(&format!(
+            "{}\t{}\n",
+            plan.target.plugin_id, plan.target.next_version
+        ));
+    }
+
+    if let Some(path) = args.out {
+        fs::write(&path, output)?;
+        ok(format!("Wrote release plan to {}", path.display()));
+    } else {
+        print!("{output}");
+    }
+
     Ok(())
 }
 

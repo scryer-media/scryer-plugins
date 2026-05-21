@@ -220,6 +220,7 @@ fn descriptor() -> PluginDescriptor {
                     default_value: None,
                     value_source: ConfigFieldValueSource::HostBinding,
                     host_binding: Some(PluginHostBindingId::SmgOpenSubtitlesApiKey),
+                    role: None,
                     options: vec![],
                     help_text: Some(
                         "Provided by SMG for the built-in OpenSubtitles plugin.".to_string(),
@@ -233,6 +234,7 @@ fn descriptor() -> PluginDescriptor {
                     default_value: None,
                     value_source: ConfigFieldValueSource::User,
                     host_binding: None,
+                    role: None,
                     options: vec![],
                     help_text: Some("OpenSubtitles account username.".to_string()),
                 },
@@ -244,6 +246,7 @@ fn descriptor() -> PluginDescriptor {
                     default_value: None,
                     value_source: ConfigFieldValueSource::User,
                     host_binding: None,
+                    role: None,
                     options: vec![],
                     help_text: Some("OpenSubtitles account password.".to_string()),
                 },
@@ -255,6 +258,7 @@ fn descriptor() -> PluginDescriptor {
                     default_value: Some("true".to_string()),
                     value_source: ConfigFieldValueSource::User,
                     host_binding: None,
+                    role: None,
                     options: vec![],
                     help_text: Some(
                         "Use OpenSubtitles file-hash lookups when available.".to_string(),
