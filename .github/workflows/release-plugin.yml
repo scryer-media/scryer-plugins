@@ -38,6 +38,9 @@ jobs:
         with:
           tool: cargo-audit
 
+      - name: Build xtask once
+        run: cargo build --locked --manifest-path xtask/Cargo.toml --bin xtask
+
       - name: Select plugin ids for validation
         run: |
           set -euo pipefail
@@ -66,11 +69,19 @@ jobs:
       - name: Verify formatting audit and clippy
         run: |
           set -euo pipefail
-          cmd=(cargo run --locked --manifest-path xtask/Cargo.toml -- ci strict)
+          cmd=(./xtask/target/debug/xtask ci strict)
           while IFS= read -r plugin_id; do
             cmd+=(--plugin-id "${plugin_id}")
           done < selected-plugin-ids.txt
           "${cmd[@]}"
+
+      - name: Upload xtask artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-plugin-xtask-${{ github.run_id }}
+          path: xtask/target/debug/xtask
+          if-no-files-found: error
+          retention-days: 7
 
   build-sign-release:
     needs: [validate]
@@ -94,8 +105,17 @@ jobs:
         with:
           cosign-release: v3.0.2
 
-      - name: Build xtask once
-        run: cargo build --locked --manifest-path xtask/Cargo.toml --bin xtask
+      - name: Download xtask artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: release-plugin-xtask-${{ github.run_id }}
+          path: xtask-artifact
+
+      - name: Restore xtask binary
+        run: |
+          set -euo pipefail
+          install -d xtask/target/debug
+          install -m 0755 xtask-artifact/xtask xtask/target/debug/xtask
 
       - name: Select plugin tags for this release commit
         run: |
