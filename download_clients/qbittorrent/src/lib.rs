@@ -738,6 +738,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: true,
             default_value: None,
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("qBittorrent WebUI username".to_string()),
@@ -749,6 +750,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: true,
             default_value: None,
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("qBittorrent WebUI password".to_string()),
@@ -760,6 +762,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("category".to_string()),
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![
                 ConfigFieldOption {
@@ -782,6 +785,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: None,
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("Comma-separated tags added to every torrent".to_string()),
@@ -793,6 +797,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("false".to_string()),
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some(
@@ -807,6 +812,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("false".to_string()),
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("Add torrents in a paused state".to_string()),
@@ -818,6 +824,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("false".to_string()),
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("Force-start torrents after adding them".to_string()),
@@ -829,6 +836,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("false".to_string()),
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("Skip piece recheck when adding local torrent payloads".to_string()),
@@ -840,6 +848,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some("tag_imported".to_string()),
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![
                 ConfigFieldOption {
@@ -868,6 +877,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             required: false,
             default_value: Some(IMPORTED_TAG_DEFAULT.to_string()),
             value_source: Default::default(),
+            role: None,
             host_binding: None,
             options: vec![],
             help_text: Some(
@@ -923,6 +933,10 @@ fn extract_cookie(response: &HttpResponse) -> Option<String> {
         .map(ToString::to_string)
 }
 
+fn login_response_is_success(body: &str) -> bool {
+    body.is_empty() || body.eq_ignore_ascii_case("ok.") || body.eq_ignore_ascii_case("ok")
+}
+
 fn login(config: &QbittorrentConfig) -> Result<String, Error> {
     let body = form_encode(&[
         ("username".to_string(), config.username.clone()),
@@ -947,7 +961,7 @@ fn login(config: &QbittorrentConfig) -> Result<String, Error> {
     let cookie = extract_cookie(&response)
         .ok_or_else(|| Error::msg("qBittorrent login did not return a session cookie"))?;
     let body = String::from_utf8_lossy(&response.body()).trim().to_string();
-    if !(body.eq_ignore_ascii_case("ok.") || body.eq_ignore_ascii_case("ok")) {
+    if !login_response_is_success(&body) {
         return Err(Error::msg(format!(
             "qBittorrent login rejected credentials: {body}"
         )));
@@ -2208,6 +2222,14 @@ mod tests {
     fn form_encoding_escapes_spaces() {
         let encoded = form_encode(&[("savepath".to_string(), "/downloads/Some Show".to_string())]);
         assert!(encoded.contains("savepath=%2Fdownloads%2FSome+Show"));
+    }
+
+    #[test]
+    fn login_response_accepts_cookie_only_success_body() {
+        assert!(login_response_is_success(""));
+        assert!(login_response_is_success("ok"));
+        assert!(login_response_is_success("ok."));
+        assert!(!login_response_is_success("unauthorized"));
     }
 
     #[test]
