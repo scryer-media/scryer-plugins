@@ -23,7 +23,7 @@ env:
   RELEASE_PLUGIN_CACHE_SCOPE: release-plugin
 
 jobs:
-  validate:
+  plan-release:
     outputs:
       plugin_matrix: ${{ steps.plugin-plans.outputs.matrix }}
     runs-on: ubuntu-latest
@@ -43,8 +43,6 @@ jobs:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_ref || github.ref }}
 
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -62,10 +60,6 @@ jobs:
           restore-keys: |
             gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-validate-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
             gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-validate-
-
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-audit
 
       - name: Install sccache
         uses: mozilla-actions/sccache-action@v0.0.10
@@ -102,7 +96,6 @@ jobs:
             version="${tag##*/v}"
             printf '%s\t%s\n' "${plugin_id}" "${version}" >> release-plan.tsv
           done
-          cut -f1 release-plan.tsv > selected-plugin-ids.txt
           printf 'Selected plugin release plan for %s\n' "${RELEASE_SHA}"
           while IFS=$'\t' read -r plugin_id version; do
             printf ' - %s %s\n' "${plugin_id}" "${version}"
@@ -125,15 +118,6 @@ jobs:
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
               handle.write(f"matrix={json.dumps({'include': rows})}\n")
           PY
-
-      - name: Verify formatting audit and clippy
-        run: |
-          set -euo pipefail
-          cmd=(./xtask/target/debug/xtask ci strict)
-          while IFS= read -r plugin_id; do
-            cmd+=(--plugin-id "${plugin_id}")
-          done < selected-plugin-ids.txt
-          "${cmd[@]}"
 
       - name: Show sccache stats
         if: always()
@@ -175,11 +159,11 @@ jobs:
           key: ${{ steps.validate-sccache-restore.outputs.cache-primary-key }}
 
   build-sign-release-plugin:
-    needs: [validate]
-    name: build-sign-release (${{ matrix.plugin_id }} ${{ matrix.version }})
+    needs: [plan-release]
+    name: validate-build-sign-release (${{ matrix.plugin_id }} ${{ matrix.version }})
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.validate.outputs.plugin_matrix) }}
+      matrix: ${{ fromJson(needs.plan-release.outputs.plugin_matrix) }}
     runs-on: ubuntu-latest
     env:
       CARGO_INCREMENTAL: "0"
@@ -198,6 +182,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
         with:
+          components: rustfmt, clippy
           targets: wasm32-wasip1
 
       - uses: Swatinem/rust-cache@v2
@@ -221,6 +206,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y binaryen zstd
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
 
       - uses: sigstore/cosign-installer@v4.1.1
         with:
@@ -248,6 +237,11 @@ jobs:
 
       - name: Verify release toolchain and Wasm tooling
         run: ./xtask/target/debug/xtask doctor
+
+      - name: Validate plugin formatting audit and clippy
+        run: |
+          set -euo pipefail
+          ./xtask/target/debug/xtask ci strict --plugin-id "${{ matrix.plugin_id }}"
 
       - name: Restore single-plugin release plan
         run: |
@@ -363,7 +357,7 @@ jobs:
           key: ${{ steps.prepare-sccache-restore.outputs.cache-primary-key }}
 
   publish-central-catalog:
-    needs: [validate, build-sign-release-plugin]
+    needs: [plan-release, build-sign-release-plugin]
     runs-on: ubuntu-latest
     env:
       CARGO_INCREMENTAL: "0"
