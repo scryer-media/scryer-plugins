@@ -854,6 +854,13 @@ fn git_capture(ctx: &TaskContext, args: &[&str]) -> Result<String> {
     run_capture(&mut command)
 }
 
+fn git_has_cached_changes(ctx: &TaskContext) -> Result<bool> {
+    let mut command = ctx.command_in("git", &ctx.repo_root);
+    command.args(["diff", "--cached", "--quiet"]);
+    let status = run_status(&mut command)?;
+    Ok(!status.success())
+}
+
 fn current_branch(ctx: &TaskContext) -> Result<String> {
     git_capture(ctx, &["rev-parse", "--abbrev-ref", "HEAD"]).map(|value| value.trim().to_string())
 }
@@ -1635,11 +1642,15 @@ fn run_tag_only_release_targets(
         }
     }
     run_checked(&mut add)?;
-    let mut commit = ctx.command_in("git", &ctx.repo_root);
-    let commit_message = release_commit_message(&targets);
-    commit.args(["commit", "-m", &commit_message]);
-    run_checked(&mut commit)?;
-    ok("Committed");
+    if git_has_cached_changes(ctx)? {
+        let mut commit = ctx.command_in("git", &ctx.repo_root);
+        let commit_message = release_commit_message(&targets);
+        commit.args(["commit", "-m", &commit_message]);
+        run_checked(&mut commit)?;
+        ok("Committed");
+    } else {
+        ok("No release-prep file changes to commit; tagging current HEAD");
+    }
 
     for target in &targets {
         step(format!("Creating signed tag {}", target.tag_name));

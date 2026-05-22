@@ -6,7 +6,8 @@ license = "GPL-3.0-only"
 description = "Subdl subtitle provider with API-key search and zip downloads"
 
 [package.metadata.scryer]
-official = false
+official = true
+plugin_id = "subdl"
 
 [lib]
 crate-type = ["cdylib"]
