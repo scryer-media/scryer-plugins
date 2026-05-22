@@ -1,6 +1,6 @@
 [package]
 name = "subdl-subtitle-provider"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Subdl subtitle provider with API-key search and zip downloads"

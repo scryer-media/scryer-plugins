@@ -1,6 +1,6 @@
 [package]
 name = "nzbgeek-indexer"
-version = "0.2.10"
+version = "0.2.11"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "NZBGeek-specific Newznab indexer with metadata extraction (thumbs, subtitles, password detection)"

@@ -1,6 +1,6 @@
 [package]
 name = "jimaku-subtitle-provider"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Anime-focused Jimaku subtitle provider using AniList IDs and optional name fallback"
