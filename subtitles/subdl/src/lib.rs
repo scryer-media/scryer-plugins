@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 use std::time::Duration;
 
 use base64::engine::general_purpose::STANDARD as BASE64;
@@ -52,6 +52,7 @@ struct SubdlQuery {
     movie_title: Option<String>,
     imdb_id: Option<String>,
     tmdb_id: Option<String>,
+    year: Option<i32>,
     languages: Vec<String>,
     media_kind: SubtitleQueryMediaKind,
     season: Option<i32>,
@@ -69,6 +70,8 @@ struct SearchContext {
 struct SubdlDownloadRef {
     download_url: String,
     filename: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    content_type: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     page_url: Option<String>,
 }
@@ -119,12 +122,33 @@ struct SubdlSubtitleItem {
     episode_from: Option<i32>,
     #[serde(default)]
     episode_end: Option<i32>,
+    #[serde(default)]
+    unpack_files: Vec<SubdlUnpackFile>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct SubdlUnpackFile {
+    #[serde(default)]
+    name: String,
+    #[serde(default)]
+    release_name: Option<String>,
+    #[serde(default)]
+    season: Option<i32>,
+    #[serde(default)]
+    episode: Option<i32>,
+    language: String,
+    #[serde(default)]
+    hi: bool,
+    #[serde(default)]
+    format: Option<String>,
+    url: String,
 }
 
 #[derive(Debug)]
 struct DownloadArtifact {
     bytes: Vec<u8>,
     content_type: Option<String>,
+    filename: Option<String>,
 }
 
 #[plugin_fn]
@@ -256,6 +280,7 @@ fn validate_config_impl(config: &SubdlConfig) -> Result<(), Failure> {
         movie_title: Some(VALIDATION_PROBE_TITLE.to_string()),
         imdb_id: None,
         tmdb_id: None,
+        year: None,
         languages: vec!["EN".to_string()],
         media_kind: SubtitleQueryMediaKind::Movie,
         season: None,
@@ -287,6 +312,7 @@ fn search_subtitles_impl(
             movie_title: None,
             imdb_id: None,
             tmdb_id: query.tmdb_id.clone(),
+            year: query.year,
             languages: query.languages.clone(),
             media_kind: SubtitleQueryMediaKind::Movie,
             season: None,
@@ -323,6 +349,7 @@ fn build_query(request: &SubtitlePluginSearchRequest) -> Option<SubdlQuery> {
         movie_title: if imdb_id.is_some() { None } else { movie_title },
         imdb_id,
         tmdb_id,
+        year: request.year,
         languages,
         media_kind: request.media_kind,
         season: request.season,
@@ -364,7 +391,7 @@ fn execute_search_request(
 }
 
 fn should_try_tmdb_fallback(query: &SubdlQuery, response: &SubdlSearchResponse) -> bool {
-    query.tmdb_id.is_some() && !response.success_flag() && query.imdb_id.is_some()
+    query.tmdb_id.is_some() && !response.success_flag()
 }
 
 fn search_url(config: &SubdlConfig, query: &SubdlQuery) -> String {
@@ -374,12 +401,15 @@ fn search_url(config: &SubdlConfig, query: &SubdlQuery) -> String {
         ("subs_per_page", SUBS_PER_PAGE.to_string()),
         ("comment", "1".to_string()),
         ("releases", "1".to_string()),
+        ("hi", "1".to_string()),
         ("bazarr", "1".to_string()),
     ];
 
     match query.media_kind {
         SubtitleQueryMediaKind::Episode => {
             params.push(("type", "tv".to_string()));
+            params.push(("full_season", "1".to_string()));
+            params.push(("unpack", "1".to_string()));
             if let Some(episode) = query.episode {
                 params.push(("episode_number", episode.to_string()));
             }
@@ -401,6 +431,9 @@ fn search_url(config: &SubdlConfig, query: &SubdlQuery) -> String {
     if let Some(tmdb_id) = query.tmdb_id.as_ref() {
         params.push(("tmdb_id", tmdb_id.clone()));
     }
+    if let Some(year) = query.year {
+        params.push(("year", year.to_string()));
+    }
 
     format!(
         "{}/subtitles?{}",
@@ -417,8 +450,31 @@ fn response_to_candidates(
     response
         .subtitles
         .iter()
-        .filter(|item| !is_season_pack(item, request.media_kind))
-        .filter_map(|item| subtitle_item_to_candidate(request, item, context))
+        .flat_map(|item| subtitle_item_to_candidates(request, item, context))
+        .collect()
+}
+
+fn subtitle_item_to_candidates(
+    request: &SubtitlePluginSearchRequest,
+    item: &SubdlSubtitleItem,
+    context: &SearchContext,
+) -> Vec<SubtitlePluginCandidate> {
+    if request.media_kind == SubtitleQueryMediaKind::Episode
+        && is_season_pack(item, request.media_kind)
+    {
+        let unpacked = item
+            .unpack_files
+            .iter()
+            .filter(|file| unpack_file_matches_request(file, request))
+            .filter_map(|file| unpack_file_to_candidate(request, item, file, context))
+            .collect::<Vec<_>>();
+        if !unpacked.is_empty() {
+            return unpacked;
+        }
+    }
+
+    subtitle_item_to_candidate(request, item, context)
+        .into_iter()
         .collect()
 }
 
@@ -440,58 +496,21 @@ fn subtitle_item_to_candidate(
         .subtitle_page
         .as_deref()
         .map(|url| absolute_url(PAGE_BASE, url));
-    let provider_file_id = serde_json::to_string(&SubdlDownloadRef {
+    let provider_file_id = provider_file_id(
         download_url,
         filename,
+        infer_content_type_from_filename(&subtitle_filename(item)),
         page_url,
-    })
-    .ok()?;
+    )?;
 
-    let mut match_hints = vec![
-        SubtitleMatchHint {
-            kind: SubtitleMatchHintKind::Title,
-            value: None,
-        },
-        SubtitleMatchHint {
-            kind: SubtitleMatchHintKind::Language,
-            value: Some(language.clone()),
-        },
-    ];
-    if context.imdb_hint {
-        match_hints.push(SubtitleMatchHint {
-            kind: SubtitleMatchHintKind::ImdbId,
-            value: None,
-        });
-    }
-    if context.series_imdb_hint {
-        match_hints.push(SubtitleMatchHint {
-            kind: SubtitleMatchHintKind::SeriesImdbId,
-            value: None,
-        });
-    }
-    if request.media_kind == SubtitleQueryMediaKind::Episode
-        && request.season == item.season
-        && request.episode == item.episode
-    {
-        match_hints.push(SubtitleMatchHint {
-            kind: SubtitleMatchHintKind::SeasonEpisode,
-            value: None,
-        });
-    }
-    for external_id in &context.external_id_hints {
-        match_hints.push(SubtitleMatchHint {
-            kind: SubtitleMatchHintKind::ExternalId,
-            value: Some(external_id.clone()),
-        });
-    }
-    for release in &item.releases {
-        if let Some(release) = normalize_non_empty(release) {
-            match_hints.push(SubtitleMatchHint {
-                kind: SubtitleMatchHintKind::Release,
-                value: Some(release),
-            });
-        }
-    }
+    let match_hints = build_match_hints(
+        request,
+        context,
+        &language,
+        item.season,
+        episode_hint_for_item(request, item),
+        item.releases.iter().map(String::as_str),
+    );
 
     Some(SubtitlePluginCandidate {
         provider_file_id,
@@ -499,6 +518,60 @@ fn subtitle_item_to_candidate(
         release_info: (!item.releases.is_empty()).then(|| item.releases.join(", ")),
         hearing_impaired,
         forced,
+        ai_translated: false,
+        machine_translated: false,
+        uploader: normalize_non_empty(item.author.as_deref().unwrap_or_default()),
+        download_count: None,
+        match_hints,
+    })
+}
+
+fn unpack_file_to_candidate(
+    request: &SubtitlePluginSearchRequest,
+    item: &SubdlSubtitleItem,
+    unpack: &SubdlUnpackFile,
+    context: &SearchContext,
+) -> Option<SubtitlePluginCandidate> {
+    let language = from_subdl_language(&unpack.language)?;
+    if !requested_language_matches(&request.languages, &language) {
+        return None;
+    }
+
+    let filename = unpacked_filename(unpack)?;
+    let release_info = unpack
+        .release_name
+        .as_deref()
+        .and_then(normalize_non_empty)
+        .or_else(|| (!item.releases.is_empty()).then(|| item.releases.join(", ")));
+    let provider_file_id = provider_file_id(
+        absolute_url(DOWNLOAD_BASE, unpack.url.as_str()),
+        filename.clone(),
+        infer_content_type_from_filename(filename.as_str()),
+        item.subtitle_page
+            .as_deref()
+            .map(|url| absolute_url(PAGE_BASE, url)),
+    )?;
+
+    let release_hints = unpack
+        .release_name
+        .iter()
+        .map(String::as_str)
+        .chain(item.releases.iter().map(String::as_str));
+    let match_hints = build_match_hints(
+        request,
+        context,
+        &language,
+        unpack.season.or(item.season),
+        unpack.episode,
+        release_hints,
+    );
+
+    Some(SubtitlePluginCandidate {
+        provider_file_id,
+        language,
+        release_info,
+        hearing_impaired: unpack.hi || item.hi || is_hi(item),
+        forced: is_forced(item),
         ai_translated: false,
         machine_translated: false,
         uploader: normalize_non_empty(item.author.as_deref().unwrap_or_default()),
@@ -516,15 +589,34 @@ fn download_subtitle_impl(
         RETRY_AMOUNT,
         RETRY_TIMEOUT_SECS,
     )?;
+    Ok(download_response_from_artifact(reference, artifact))
+}
 
-    Ok(SubtitlePluginDownloadResponse {
+fn download_response_from_artifact(
+    reference: &SubdlDownloadRef,
+    artifact: DownloadArtifact,
+) -> SubtitlePluginDownloadResponse {
+    let filename = artifact
+        .filename
+        .or_else(|| normalize_non_empty(reference.filename.as_str()))
+        .or_else(|| filename_from_url(reference.download_url.as_str()))
+        .unwrap_or_else(|| "subdl.bin".to_string());
+    let format = file_extension(filename.as_str())
+        .or_else(|| format_from_content_type(reference.content_type.as_deref()))
+        .or_else(|| format_from_content_type(artifact.content_type.as_deref()))
+        .unwrap_or("zip")
+        .to_string();
+    let content_type = artifact
+        .content_type
+        .or(reference.content_type.clone())
+        .or_else(|| infer_content_type_from_filename(filename.as_str()));
+
+    SubtitlePluginDownloadResponse {
         content_base64: BASE64.encode(artifact.bytes),
-        format: file_extension(&reference.filename)
-            .unwrap_or("zip")
-            .to_string(),
-        filename: Some(reference.filename.clone()),
-        content_type: artifact.content_type,
-    })
+        format,
+        filename: Some(filename),
+        content_type,
+    }
 }
 
 fn http_get_json(url: &str) -> Result<SubdlSearchResponse, Failure> {
@@ -582,7 +674,10 @@ fn http_get_download(url: &str) -> Result<DownloadArtifact, Failure> {
     map_http_status("Subdl download", &response)?;
     Ok(DownloadArtifact {
         bytes: response.body(),
-        content_type: Some("application/zip".to_string()),
+        content_type: response_header(&response, "content-type")
+            .and_then(|value| normalize_non_empty(value.as_str())),
+        filename: response_header(&response, "content-disposition")
+            .and_then(|value| content_disposition_filename(value.as_str())),
     })
 }
 
@@ -741,6 +836,235 @@ fn absolute_url(base: &str, path: &str) -> String {
 
 fn is_season_pack(item: &SubdlSubtitleItem, media_kind: SubtitleQueryMediaKind) -> bool {
     media_kind == SubtitleQueryMediaKind::Episode && item.episode_from != item.episode_end
+}
+
+fn unpack_file_matches_request(
+    unpack: &SubdlUnpackFile,
+    request: &SubtitlePluginSearchRequest,
+) -> bool {
+    request
+        .season
+        .is_none_or(|season| unpack.season.is_none_or(|value| value == season))
+        && request
+            .episode
+            .is_none_or(|episode| unpack.episode.is_some_and(|value| value == episode))
+}
+
+fn episode_hint_for_item(
+    request: &SubtitlePluginSearchRequest,
+    item: &SubdlSubtitleItem,
+) -> Option<i32> {
+    if request.media_kind != SubtitleQueryMediaKind::Episode {
+        return None;
+    }
+    let episode = request.episode?;
+    if item.episode == Some(episode)
+        || item
+            .episode_from
+            .zip(item.episode_end)
+            .is_some_and(|(start, end)| start <= episode && episode <= end)
+    {
+        Some(episode)
+    } else {
+        None
+    }
+}
+
+fn build_match_hints<'a>(
+    request: &SubtitlePluginSearchRequest,
+    context: &SearchContext,
+    language: &str,
+    season: Option<i32>,
+    episode: Option<i32>,
+    releases: impl IntoIterator<Item = &'a str>,
+) -> Vec<SubtitleMatchHint> {
+    let mut match_hints = vec![
+        SubtitleMatchHint {
+            kind: SubtitleMatchHintKind::Title,
+            value: None,
+        },
+        SubtitleMatchHint {
+            kind: SubtitleMatchHintKind::Language,
+            value: Some(language.to_string()),
+        },
+    ];
+    if context.imdb_hint {
+        match_hints.push(SubtitleMatchHint {
+            kind: SubtitleMatchHintKind::ImdbId,
+            value: None,
+        });
+    }
+    if context.series_imdb_hint {
+        match_hints.push(SubtitleMatchHint {
+            kind: SubtitleMatchHintKind::SeriesImdbId,
+            value: None,
+        });
+    }
+    if request.media_kind == SubtitleQueryMediaKind::Episode
+        && request.season == season
+        && request.episode == episode
+    {
+        match_hints.push(SubtitleMatchHint {
+            kind: SubtitleMatchHintKind::SeasonEpisode,
+            value: None,
+        });
+    }
+    for external_id in &context.external_id_hints {
+        match_hints.push(SubtitleMatchHint {
+            kind: SubtitleMatchHintKind::ExternalId,
+            value: Some(external_id.clone()),
+        });
+    }
+    for release in releases {
+        if let Some(release) = normalize_non_empty(release) {
+            match_hints.push(SubtitleMatchHint {
+                kind: SubtitleMatchHintKind::Release,
+                value: Some(release),
+            });
+        }
+    }
+    match_hints
+}
+
+fn provider_file_id(
+    download_url: String,
+    filename: String,
+    content_type: Option<String>,
+    page_url: Option<String>,
+) -> Option<String> {
+    serde_json::to_string(&SubdlDownloadRef {
+        download_url,
+        filename,
+        content_type,
+        page_url,
+    })
+    .ok()
+}
+
+fn unpacked_filename(unpack: &SubdlUnpackFile) -> Option<String> {
+    let filename = normalize_non_empty(unpack.name.as_str())
+        .or_else(|| filename_from_url(unpack.url.as_str()))
+        .or_else(|| {
+            unpack
+                .format
+                .as_deref()
+                .and_then(normalize_non_empty)
+                .map(|format| format!("subdl.{format}"))
+        })?;
+    Some(ensure_filename_extension(
+        filename,
+        unpack.format.as_deref(),
+    ))
+}
+
+fn ensure_filename_extension(filename: String, format: Option<&str>) -> String {
+    let Some(format) = format.and_then(normalize_non_empty) else {
+        return filename;
+    };
+    if file_extension(filename.as_str()).is_some() {
+        filename
+    } else {
+        format!("{filename}.{format}")
+    }
+}
+
+fn response_header(response: &HttpResponse, name: &str) -> Option<String> {
+    response
+        .headers()
+        .get(name)
+        .or_else(|| response.headers().get(name.to_ascii_lowercase().as_str()))
+        .or_else(|| response.headers().get(name.to_ascii_uppercase().as_str()))
+        .cloned()
+}
+
+fn content_disposition_filename(value: &str) -> Option<String> {
+    for part in value.split(';').skip(1) {
+        let trimmed = part.trim();
+        if let Some(encoded) = trimmed.strip_prefix("filename*=") {
+            let encoded = encoded.trim().trim_matches('"');
+            let encoded = encoded
+                .strip_prefix("UTF-8''")
+                .or_else(|| encoded.strip_prefix("utf-8''"))
+                .unwrap_or(encoded);
+            if let Some(decoded) = percent_decode(encoded) {
+                return normalize_non_empty(decoded.as_str());
+            }
+        }
+        if let Some(raw) = trimmed.strip_prefix("filename=") {
+            return normalize_non_empty(raw.trim().trim_matches('"'));
+        }
+    }
+    None
+}
+
+fn percent_decode(input: &str) -> Option<String> {
+    let bytes = input.as_bytes();
+    let mut output = Vec::with_capacity(bytes.len());
+    let mut index = 0usize;
+    while index < bytes.len() {
+        match bytes[index] {
+            b'%' if index + 2 < bytes.len() => {
+                let hex = std::str::from_utf8(&bytes[index + 1..index + 3]).ok()?;
+                let value = u8::from_str_radix(hex, 16).ok()?;
+                output.push(value);
+                index += 3;
+            }
+            b'+' => {
+                output.push(b' ');
+                index += 1;
+            }
+            byte => {
+                output.push(byte);
+                index += 1;
+            }
+        }
+    }
+    String::from_utf8(output).ok()
+}
+
+fn infer_content_type_from_filename(filename: &str) -> Option<String> {
+    let format = file_extension(filename)?.to_ascii_lowercase();
+    let content_type = match format.as_str() {
+        "srt" => "application/x-subrip",
+        "ass" | "ssa" | "sub" | "idx" => "text/plain",
+        "vtt" => "text/vtt",
+        "zip" => "application/zip",
+        "tar" => "application/x-tar",
+        "7z" => "application/x-7z-compressed",
+        "rar" => "application/vnd.rar",
+        "gz" => "application/gzip",
+        "zst" => "application/zstd",
+        "xz" => "application/x-xz",
+        _ => return None,
+    };
+    Some(content_type.to_string())
+}
+
+fn format_from_content_type(content_type: Option<&str>) -> Option<&'static str> {
+    let lower = content_type?.to_ascii_lowercase();
+    if lower.contains("zip") {
+        Some("zip")
+    } else if lower.contains("x-tar") || lower.contains("tar") {
+        Some("tar")
+    } else if lower.contains("7z") {
+        Some("7z")
+    } else if lower.contains("rar") {
+        Some("rar")
+    } else if lower.contains("gzip") || lower.contains("x-gzip") {
+        Some("gz")
+    } else if lower.contains("zstd") || lower.contains("zst") {
+        Some("zst")
+    } else if lower.contains("xz") || lower.contains("lzma") {
+        Some("xz")
+    } else if lower.contains("subrip") {
+        Some("srt")
+    } else if lower.contains("text/vtt") {
+        Some("vtt")
+    } else if lower.contains("text/plain") {
+        Some("srt")
+    } else {
+        None
+    }
 }
 
 fn is_hi(item: &SubdlSubtitleItem) -> bool {
@@ -1046,6 +1370,7 @@ fn url_encode(input: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::BTreeMap;
 
     fn movie_request() -> SubtitlePluginSearchRequest {
         let mut external_ids = BTreeMap::new();
@@ -1076,6 +1401,12 @@ mod tests {
         }
     }
 
+    fn movie_request_without_imdb() -> SubtitlePluginSearchRequest {
+        let mut request = movie_request();
+        request.imdb_id = None;
+        request
+    }
+
     fn episode_request() -> SubtitlePluginSearchRequest {
         SubtitlePluginSearchRequest {
             media_kind: SubtitleQueryMediaKind::Episode,
@@ -1100,6 +1431,24 @@ mod tests {
             hearing_impaired: Some(false),
             include_ai_translated: false,
             include_machine_translated: false,
+        }
+    }
+
+    fn pack_item() -> SubdlSubtitleItem {
+        SubdlSubtitleItem {
+            language: "EN".to_string(),
+            comment: "Forced SDH".to_string(),
+            hi: false,
+            url: "/subtitle/3197651-3213944.zip".to_string(),
+            subtitle_page: Some("/s/info/pack".to_string()),
+            name: "Season.Pack.zip".to_string(),
+            releases: vec!["Season Pack".to_string()],
+            author: Some("pack-uploader".to_string()),
+            season: Some(1),
+            episode: Some(1),
+            episode_from: Some(1),
+            episode_end: Some(10),
+            unpack_files: vec![],
         }
     }
 
@@ -1138,6 +1487,7 @@ mod tests {
         let query = build_query(&request).expect("query");
         assert_eq!(query.imdb_id.as_deref(), Some("tt1160419"));
         assert_eq!(query.tmdb_id.as_deref(), Some("438631"));
+        assert_eq!(query.year, Some(2021));
         assert_eq!(query.movie_title, None);
         assert_eq!(query.languages, vec!["BR_PT".to_string(), "EN".to_string()]);
     }
@@ -1149,11 +1499,12 @@ mod tests {
         assert_eq!(query.imdb_id.as_deref(), Some("tt0903747"));
         assert_eq!(query.season, Some(1));
         assert_eq!(query.episode, Some(1));
+        assert_eq!(query.year, Some(2008));
         assert_eq!(query.media_kind, SubtitleQueryMediaKind::Episode);
     }
 
     #[test]
-    fn search_url_matches_bazarr_shape() {
+    fn movie_search_url_includes_expected_provider_flags() {
         let config = SubdlConfig {
             api_key: "token".to_string(),
         };
@@ -1163,6 +1514,7 @@ mod tests {
                 movie_title: Some("Dune".to_string()),
                 imdb_id: None,
                 tmdb_id: None,
+                year: Some(2021),
                 languages: vec!["EN".to_string()],
                 media_kind: SubtitleQueryMediaKind::Movie,
                 season: None,
@@ -1173,13 +1525,31 @@ mod tests {
         assert!(url.contains("film_name=Dune"));
         assert!(url.contains("languages=EN"));
         assert!(url.contains("type=movie"));
+        assert!(url.contains("year=2021"));
         assert!(url.contains("comment=1"));
         assert!(url.contains("releases=1"));
+        assert!(url.contains("hi=1"));
         assert!(url.contains("bazarr=1"));
     }
 
     #[test]
-    fn language_round_trip_matches_bazarr_converter() {
+    fn episode_search_url_requests_pack_expansion() {
+        let config = SubdlConfig {
+            api_key: "token".to_string(),
+        };
+        let query = build_query(&episode_request()).expect("query");
+        let url = search_url(&config, &query);
+
+        assert!(url.contains("type=tv"));
+        assert!(url.contains("season_number=1"));
+        assert!(url.contains("episode_number=1"));
+        assert!(url.contains("full_season=1"));
+        assert!(url.contains("unpack=1"));
+        assert!(url.contains("hi=1"));
+    }
+
+    #[test]
+    fn language_round_trip_matches_provider_converter() {
         assert_eq!(to_subdl_language("eng").as_deref(), Some("EN"));
         assert_eq!(to_subdl_language("pob").as_deref(), Some("BR_PT"));
         assert_eq!(to_subdl_language("zht").as_deref(), Some("ZH_BG"));
@@ -1189,27 +1559,14 @@ mod tests {
     }
 
     #[test]
-    fn season_packs_are_ignored_for_episode_queries() {
-        let item = SubdlSubtitleItem {
-            language: "EN".to_string(),
-            comment: String::new(),
-            hi: false,
-            url: "/subtitle/file.zip".to_string(),
-            subtitle_page: None,
-            name: "show-s01-pack.zip".to_string(),
-            releases: vec![],
-            author: None,
-            season: Some(1),
-            episode: Some(1),
-            episode_from: Some(1),
-            episode_end: Some(7),
-        };
+    fn season_pack_detection_matches_provider_shape() {
+        let item = pack_item();
         assert!(is_season_pack(&item, SubtitleQueryMediaKind::Episode));
         assert!(!is_season_pack(&item, SubtitleQueryMediaKind::Movie));
     }
 
     #[test]
-    fn hi_detection_matches_bazarr_heuristics() {
+    fn hi_detection_matches_provider_heuristics() {
         let mut item = SubdlSubtitleItem {
             language: "EN".to_string(),
             comment: "English SDH release".to_string(),
@@ -1223,6 +1580,7 @@ mod tests {
             episode: Some(1),
             episode_from: Some(1),
             episode_end: Some(1),
+            unpack_files: vec![],
         };
         assert!(is_hi(&item));
         item.comment = "non hi cleaned".to_string();
@@ -1233,7 +1591,7 @@ mod tests {
     }
 
     #[test]
-    fn forced_detection_matches_bazarr_heuristics() {
+    fn forced_detection_matches_provider_heuristics() {
         let item = SubdlSubtitleItem {
             language: "EN".to_string(),
             comment: "Forced foreign parts only".to_string(),
@@ -1247,12 +1605,65 @@ mod tests {
             episode: Some(1),
             episode_from: Some(1),
             episode_end: Some(1),
+            unpack_files: vec![],
         };
         assert!(is_forced(&item));
     }
 
     #[test]
-    fn candidate_mapping_flattens_release_names_and_preserves_metadata() {
+    fn movie_search_results_keep_requested_languages_only() {
+        let mut request = movie_request();
+        request.languages = vec!["eng".to_string()];
+        let response = SubdlSearchResponse {
+            status: Some(true),
+            success: None,
+            error: None,
+            results: vec![],
+            subtitles: vec![
+                SubdlSubtitleItem {
+                    language: "EN".to_string(),
+                    comment: String::new(),
+                    hi: false,
+                    url: "/subtitle/en.zip".to_string(),
+                    subtitle_page: None,
+                    name: "movie.en.zip".to_string(),
+                    releases: vec!["English".to_string()],
+                    author: None,
+                    season: None,
+                    episode: None,
+                    episode_from: None,
+                    episode_end: None,
+                    unpack_files: vec![],
+                },
+                SubdlSubtitleItem {
+                    language: "FR".to_string(),
+                    comment: String::new(),
+                    hi: false,
+                    url: "/subtitle/fr.zip".to_string(),
+                    subtitle_page: None,
+                    name: "movie.fr.zip".to_string(),
+                    releases: vec!["French".to_string()],
+                    author: None,
+                    season: None,
+                    episode: None,
+                    episode_from: None,
+                    episode_end: None,
+                    unpack_files: vec![],
+                },
+            ],
+        };
+
+        let candidates = response_to_candidates(
+            &request,
+            &response,
+            &SearchContext::from_response_hint(&request, None),
+        );
+        assert_eq!(candidates.len(), 1);
+        assert_eq!(candidates[0].language, "eng");
+    }
+
+    #[test]
+    fn movie_candidate_mapping_flattens_release_names_and_preserves_metadata() {
         let request = movie_request();
         let response = SubdlSearchResponse {
             status: Some(true),
@@ -1275,6 +1686,7 @@ mod tests {
                 episode: None,
                 episode_from: Some(0),
                 episode_end: Some(0),
+                unpack_files: vec![],
             }],
         };
         let context = SearchContext::from_response_hint(&request, response.results.first());
@@ -1294,6 +1706,148 @@ mod tests {
             "https://dl.subdl.com/subtitle/2808552-2770424.zip"
         );
         assert_eq!(download_ref.filename, "dune-2021-2770424.zip");
+        assert_eq!(
+            download_ref.content_type.as_deref(),
+            Some("application/zip")
+        );
+    }
+
+    #[test]
+    fn tmdb_fallback_triggers_without_imdb_id_when_tmdb_is_available() {
+        let query = build_query(&movie_request_without_imdb()).expect("query");
+        let response = SubdlSearchResponse {
+            status: Some(false),
+            success: None,
+            error: Some("can't find".to_string()),
+            results: vec![],
+            subtitles: vec![],
+        };
+
+        assert!(should_try_tmdb_fallback(&query, &response));
+    }
+
+    #[test]
+    fn season_pack_candidates_expand_to_direct_episode_files() {
+        let request = episode_request();
+        let mut item = pack_item();
+        item.unpack_files = vec![
+            SubdlUnpackFile {
+                name: "Episode.One.srt".to_string(),
+                release_name: Some("Episode One".to_string()),
+                season: Some(1),
+                episode: Some(1),
+                language: "EN".to_string(),
+                hi: false,
+                format: Some("srt".to_string()),
+                url: "/subtitle/3197651/file123".to_string(),
+            },
+            SubdlUnpackFile {
+                name: "Episode.Two.srt".to_string(),
+                release_name: Some("Episode Two".to_string()),
+                season: Some(1),
+                episode: Some(2),
+                language: "EN".to_string(),
+                hi: false,
+                format: Some("srt".to_string()),
+                url: "/subtitle/3197651/file456".to_string(),
+            },
+        ];
+
+        let candidates = subtitle_item_to_candidates(
+            &request,
+            &item,
+            &SearchContext::from_response_hint(&request, None),
+        );
+        assert_eq!(candidates.len(), 1);
+        assert_eq!(candidates[0].release_info.as_deref(), Some("Episode One"));
+        let download_ref: SubdlDownloadRef =
+            serde_json::from_str(&candidates[0].provider_file_id).expect("download ref");
+        assert_eq!(
+            download_ref.download_url,
+            "https://dl.subdl.com/subtitle/3197651/file123"
+        );
+        assert_eq!(download_ref.filename, "Episode.One.srt");
+        assert_eq!(
+            download_ref.content_type.as_deref(),
+            Some("application/x-subrip")
+        );
+    }
+
+    #[test]
+    fn season_pack_candidates_fall_back_to_archive_download_when_needed() {
+        let request = episode_request();
+        let mut item = pack_item();
+        item.unpack_files = vec![SubdlUnpackFile {
+            name: "Episode.Two.srt".to_string(),
+            release_name: Some("Episode Two".to_string()),
+            season: Some(1),
+            episode: Some(2),
+            language: "EN".to_string(),
+            hi: false,
+            format: Some("srt".to_string()),
+            url: "/subtitle/3197651/file456".to_string(),
+        }];
+
+        let candidates = subtitle_item_to_candidates(
+            &request,
+            &item,
+            &SearchContext::from_response_hint(&request, None),
+        );
+        assert_eq!(candidates.len(), 1);
+        let download_ref: SubdlDownloadRef =
+            serde_json::from_str(&candidates[0].provider_file_id).expect("download ref");
+        assert_eq!(
+            download_ref.download_url,
+            "https://dl.subdl.com/subtitle/3197651-3213944.zip"
+        );
+        assert_eq!(download_ref.filename, "Season.Pack.zip");
+    }
+
+    #[test]
+    fn adapted_download_case_preserves_zip_artifact_for_host_normalization() {
+        let reference = SubdlDownloadRef {
+            download_url: "https://dl.subdl.com/subtitle/2808552-2770424.zip".to_string(),
+            filename: "dune-2021-2770424.zip".to_string(),
+            content_type: Some("application/zip".to_string()),
+            page_url: Some("https://subdl.com/s/info/ebC6BrLCOC".to_string()),
+        };
+        let response = download_response_from_artifact(
+            &reference,
+            DownloadArtifact {
+                bytes: b"PK\x03\x04test".to_vec(),
+                content_type: None,
+                filename: None,
+            },
+        );
+
+        assert_eq!(response.format, "zip");
+        assert_eq!(response.filename.as_deref(), Some("dune-2021-2770424.zip"));
+        assert_eq!(response.content_type.as_deref(), Some("application/zip"));
+    }
+
+    #[test]
+    fn unpacked_download_preserves_raw_subtitle_metadata() {
+        let reference = SubdlDownloadRef {
+            download_url: "https://dl.subdl.com/subtitle/3197651/file123".to_string(),
+            filename: "Episode.One.srt".to_string(),
+            content_type: None,
+            page_url: None,
+        };
+        let response = download_response_from_artifact(
+            &reference,
+            DownloadArtifact {
+                bytes: b"1\n00:00:00,000 --> 00:00:01,000\nHello\n".to_vec(),
+                content_type: None,
+                filename: None,
+            },
+        );
+
+        assert_eq!(response.format, "srt");
+        assert_eq!(response.filename.as_deref(), Some("Episode.One.srt"));
+        assert_eq!(
+            response.content_type.as_deref(),
+            Some("application/x-subrip")
+        );
     }
 
     #[test]

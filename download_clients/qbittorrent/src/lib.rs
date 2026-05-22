@@ -2140,6 +2140,26 @@ mod tests {
     }
 
     #[test]
+    fn completed_dest_dir_uses_content_path_for_decypharr_release_folder() {
+        let torrent = QbTorrent {
+            name: "Harry.Potter.and.the.Prisoner.of.Azkaban.2004.BluRay.1080p.AV1.Opus-nAV1gator"
+                .to_string(),
+            save_path: Some("/mnt/symlinks/radarr".to_string()),
+            content_path: Some(
+                "/mnt/symlinks/radarr/Harry.Potter.and.the.Prisoner.of.Azkaban.2004.BluRay.1080p.AV1.Opus-nAV1gator"
+                    .to_string(),
+            ),
+            ..QbTorrent::default()
+        };
+        assert_eq!(
+            derive_completed_dest_dir(&torrent).as_deref(),
+            Some(
+                "/mnt/symlinks/radarr/Harry.Potter.and.the.Prisoner.of.Azkaban.2004.BluRay.1080p.AV1.Opus-nAV1gator"
+            )
+        );
+    }
+
+    #[test]
     fn completed_download_reports_output_kind_for_single_file() {
         let torrent = QbTorrent {
             hash: "abcdef0123456789abcdef0123456789abcdef01".to_string(),

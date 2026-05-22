@@ -1311,9 +1311,11 @@ fn config_bool(key: &str, default: bool) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        append_translation_filter_params, config_auth_fingerprint, is_real_forced,
-        to_opensubtitles_language, OpenSubtitlesConfig,
+        append_translation_filter_params, config_auth_fingerprint, descriptor,
+        from_opensubtitles_language, is_real_forced, to_opensubtitles_language,
+        OpenSubtitlesConfig,
     };
+    use scryer_plugin_sdk::{ConfigFieldValueSource, PluginHostBindingId, ProviderDescriptor};
 
     #[test]
     fn auth_fingerprint_changes_when_credentials_change() {
@@ -1343,12 +1345,63 @@ mod tests {
     }
 
     #[test]
-    fn omits_default_machine_translation_exclude_filter() {
+    fn maps_opensubtitles_language_codes_back_to_internal_codes() {
+        assert_eq!(from_opensubtitles_language("pt-PT").as_deref(), Some("por"));
+        assert_eq!(from_opensubtitles_language("zh-CN").as_deref(), Some("zho"));
+        assert_eq!(from_opensubtitles_language("es-MX").as_deref(), Some("ea"));
+    }
+
+    #[test]
+    fn descriptor_exposes_expected_public_settings() {
+        let ProviderDescriptor::Subtitle(descriptor) = descriptor().provider else {
+            panic!("opensubtitles should be a subtitle provider");
+        };
+
+        let keys = descriptor
+            .config_fields
+            .iter()
+            .map(|field| field.key.as_str())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            keys,
+            vec!["api_key", "username", "password", "enable_hash_lookup"]
+        );
+
+        let api_key = descriptor
+            .config_fields
+            .iter()
+            .find(|field| field.key == "api_key")
+            .expect("api_key field should exist");
+        assert_eq!(api_key.value_source, ConfigFieldValueSource::HostBinding);
+        assert_eq!(
+            api_key.host_binding,
+            Some(PluginHostBindingId::SmgOpenSubtitlesApiKey)
+        );
+
+        let hash_lookup = descriptor
+            .config_fields
+            .iter()
+            .find(|field| field.key == "enable_hash_lookup")
+            .expect("enable_hash_lookup field should exist");
+        assert_eq!(hash_lookup.default_value.as_deref(), Some("true"));
+    }
+
+    #[test]
+    fn omits_default_translation_filters_until_requested() {
         let mut params = Vec::new();
         append_translation_filter_params(&mut params, false, false);
 
         assert!(params.contains(&("ai_translated", "exclude".to_string())));
         assert!(!params.iter().any(|(key, _)| *key == "machine_translated"));
+    }
+
+    #[test]
+    fn includes_translation_filters_when_requested() {
+        let mut params = Vec::new();
+        append_translation_filter_params(&mut params, true, true);
+
+        assert!(!params.iter().any(|(key, _)| *key == "ai_translated"));
+        assert!(params.contains(&("machine_translated", "include".to_string())));
     }
 
     #[test]

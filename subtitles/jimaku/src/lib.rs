@@ -293,7 +293,7 @@ fn search_entries(
         append_anilist_entries(config, request, &mut entries, &mut seen_ids)?;
     }
 
-    if config.enable_name_search_fallback || request.media_kind == SubtitleQueryMediaKind::Movie {
+    if should_attempt_name_search(config, request) {
         let queries = search_query_candidates(request);
         for query in &queries {
             append_search_query_entries(config, query, None, &mut entries, &mut seen_ids)?;
@@ -323,6 +323,13 @@ fn search_entries(
     }
 
     Ok(entries)
+}
+
+fn should_attempt_name_search(
+    config: &JimakuConfig,
+    request: &SubtitlePluginSearchRequest,
+) -> bool {
+    config.enable_name_search_fallback || request.media_kind == SubtitleQueryMediaKind::Movie
 }
 
 fn append_anilist_entries(
@@ -721,6 +728,33 @@ mod tests {
         }
     }
 
+    fn movie_request() -> SubtitlePluginSearchRequest {
+        SubtitlePluginSearchRequest {
+            media_kind: SubtitleQueryMediaKind::Movie,
+            facet: Some("anime".to_string()),
+            file_hash: None,
+            imdb_id: None,
+            series_imdb_id: None,
+            title: "Blue Carbon".to_string(),
+            title_aliases: vec!["Aoi Carbon".to_string()],
+            title_candidates: vec![],
+            year: Some(2024),
+            season: None,
+            episode: None,
+            absolute_episode: None,
+            external_ids: BTreeMap::new(),
+            languages: vec!["jpn".to_string()],
+            release_group: None,
+            source: None,
+            video_codec: None,
+            audio_codec: None,
+            resolution: None,
+            hearing_impaired: None,
+            include_ai_translated: false,
+            include_machine_translated: false,
+        }
+    }
+
     #[test]
     fn season_two_queries_include_season_qualified_aliases_before_bare_aliases() {
         let request = episode_request();
@@ -777,6 +811,52 @@ mod tests {
     }
 
     #[test]
+    fn descriptor_defaults_name_search_fallback_to_enabled() {
+        let ProviderDescriptor::Subtitle(descriptor) = descriptor().provider else {
+            panic!("jimaku should be a subtitle provider");
+        };
+
+        let fallback = descriptor
+            .config_fields
+            .iter()
+            .find(|field| field.key == "enable_name_search_fallback")
+            .expect("enable_name_search_fallback field should exist");
+
+        assert_eq!(fallback.default_value.as_deref(), Some("true"));
+    }
+
+    #[test]
+    fn episodes_respect_name_search_fallback_setting() {
+        let request = episode_request();
+
+        assert!(!should_attempt_name_search(
+            &JimakuConfig {
+                api_key: "token".to_string(),
+                enable_name_search_fallback: false,
+            },
+            &request,
+        ));
+        assert!(should_attempt_name_search(
+            &JimakuConfig {
+                api_key: "token".to_string(),
+                enable_name_search_fallback: true,
+            },
+            &request,
+        ));
+    }
+
+    #[test]
+    fn movies_keep_name_search_even_when_fallback_is_disabled() {
+        assert!(should_attempt_name_search(
+            &JimakuConfig {
+                api_key: "token".to_string(),
+                enable_name_search_fallback: false,
+            },
+            &movie_request(),
+        ));
+    }
+
+    #[test]
     fn archive_files_are_always_search_candidates() {
         let file = JimakuFile {
             name: "Show.S01E01.eng.zip".to_string(),
@@ -797,5 +877,27 @@ mod tests {
 
         assert!(!should_include_search_file(&file, false));
         assert!(should_include_search_file(&file, true));
+    }
+
+    #[test]
+    fn archive_detection_covers_all_supported_download_formats() {
+        for suffix in [
+            ".zip", ".rar", ".7z", ".tar", ".tar.gz", ".tgz", ".tar.zst", ".tzst", ".tar.xz",
+            ".txz", ".gz", ".zst", ".xz",
+        ] {
+            let filename = format!("Show.S01E01{suffix}");
+            assert!(
+                is_archive(&filename),
+                "{suffix} should be treated as an archive"
+            );
+            assert!(should_include_search_file(
+                &JimakuFile {
+                    name: filename,
+                    url: "https://jimaku.cc/file".to_string(),
+                    size: Some(MIN_SUBTITLE_BYTES + 1),
+                },
+                false,
+            ));
+        }
     }
 }
