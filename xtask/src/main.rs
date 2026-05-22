@@ -2137,36 +2137,9 @@ fn scoped_ci_project_dirs(ctx: &TaskContext, scope: &CiScopeArgs) -> Result<Vec<
         let plugin_dir = plugin_dirs
             .get(plugin_id)
             .ok_or_else(|| anyhow!("plugin '{plugin_id}' not found in local official plugins"))?;
-        let manifest_path = plugin_dir.join("Cargo.toml");
-        let mut metadata = repo_cargo_command_in(ctx, plugin_dir)?;
-        metadata
-            .arg("metadata")
-            .args(["--format-version", "1", "--manifest-path"])
-            .arg(&manifest_path)
-            .arg("--locked");
-        let raw = run_capture(&mut metadata)?;
-        let value: serde_json::Value = serde_json::from_str(&raw)
-            .with_context(|| format!("failed to parse cargo metadata for {}", plugin_id))?;
-        let packages = value
-            .get("packages")
-            .and_then(|packages| packages.as_array())
-            .ok_or_else(|| anyhow!("cargo metadata for {} did not contain packages", plugin_id))?;
-
-        for package in packages {
-            let Some(package_manifest) = package.get("manifest_path").and_then(|v| v.as_str())
-            else {
-                continue;
-            };
-            let package_manifest = PathBuf::from(package_manifest);
-            if package_manifest.starts_with(&ctx.repo_root)
-                && let Some(package_dir) = package_manifest.parent()
-            {
-                dirs.insert(package_dir.to_path_buf());
-            }
-        }
+        dirs.insert(plugin_dir.clone());
     }
 
-    dirs.insert(ctx.repo_root.join("xtask"));
     Ok(dirs.into_iter().collect())
 }
 
@@ -2380,8 +2353,7 @@ fn optimize_and_compress_wasm(
     run_checked(
         ctx.command("wasm-opt")
             .arg(WASM_OPT_LEVEL)
-            .arg("--enable-bulk-memory")
-            .arg("--enable-sign-ext")
+            .arg("--all-features")
             .arg(wasm)
             .arg("-o")
             .arg(&optimized),
