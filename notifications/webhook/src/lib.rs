@@ -1,10 +1,10 @@
 use extism_pdk::*;
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
-    to_webhook_json, ConfigFieldDef, ConfigFieldOption, ConfigFieldType, NotificationCapabilities,
+    ConfigFieldDef, ConfigFieldOption, ConfigFieldType, NotificationCapabilities,
     NotificationDeliveryMode, NotificationDescriptor, NotificationPayloadFormat, PluginDescriptor,
     PluginNotificationRequest, PluginNotificationResponse, PluginResult, ProviderDescriptor,
-    SDK_VERSION,
+    SDK_VERSION, to_webhook_json,
 };
 
 // ---------------------------------------------------------------------------
@@ -54,6 +54,7 @@ fn build_descriptor() -> PluginDescriptor {
                     default_value: None,
                     value_source: Default::default(),
                     host_binding: None,
+                    role: None,
                     options: vec![],
                     help_text: Some("The URL to POST notification payloads to.".to_string()),
                 },
@@ -65,6 +66,7 @@ fn build_descriptor() -> PluginDescriptor {
                     default_value: Some("POST".to_string()),
                     value_source: Default::default(),
                     host_binding: None,
+                    role: None,
                     options: vec![
                         ConfigFieldOption {
                             value: "POST".to_string(),
@@ -85,6 +87,7 @@ fn build_descriptor() -> PluginDescriptor {
                     default_value: Some("application/json".to_string()),
                     value_source: Default::default(),
                     host_binding: None,
+                    role: None,
                     options: vec![
                         ConfigFieldOption {
                             value: "application/json".to_string(),

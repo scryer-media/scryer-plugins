@@ -1,6 +1,6 @@
 use std::collections::{BTreeSet, HashMap, HashSet};
 
-use base64::{engine::general_purpose, Engine as _};
+use base64::{Engine as _, engine::general_purpose};
 use extism_pdk::*;
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
@@ -409,21 +409,52 @@ pub fn scryer_download_list_completed(_input: String) -> FnResult<String> {
 }
 
 fn completed_downloads(config: &QbittorrentConfig) -> Result<Vec<PluginCompletedDownload>, Error> {
-    let torrents = list_torrents(config, Some("completed"))?;
+    let torrents = list_completed_torrents(config)?;
     Ok(torrents
         .into_iter()
-        .filter(|torrent| is_completed_state(&torrent.state))
         .filter_map(torrent_to_completed_download)
         .collect::<Vec<_>>())
 }
 
 fn completed_history_items(config: &QbittorrentConfig) -> Result<Vec<PluginDownloadItem>, Error> {
-    let torrents = list_torrents(config, Some("completed"))?;
+    let torrents = list_completed_torrents(config)?;
     Ok(torrents
         .into_iter()
-        .filter(|torrent| is_completed_state(&torrent.state))
         .map(torrent_to_item)
         .collect::<Vec<_>>())
+}
+
+fn list_completed_torrents(config: &QbittorrentConfig) -> Result<Vec<QbTorrent>, Error> {
+    collect_completed_torrents(|filter| list_torrents(config, filter))
+}
+
+fn collect_completed_torrents<F>(mut fetch: F) -> Result<Vec<QbTorrent>, Error>
+where
+    F: FnMut(Option<&str>) -> Result<Vec<QbTorrent>, Error>,
+{
+    let mut first_error: Option<Error> = None;
+    for filter in [Some("completed"), Some("all"), None] {
+        match fetch(filter) {
+            Ok(torrents) => {
+                let completed = torrents
+                    .into_iter()
+                    .filter(|torrent| is_completed_state(&torrent.state))
+                    .collect::<Vec<_>>();
+                if !completed.is_empty() || filter.is_none() {
+                    return Ok(completed);
+                }
+            }
+            Err(error) => {
+                if first_error.is_none() {
+                    first_error = Some(error);
+                }
+            }
+        }
+    }
+
+    Err(first_error.unwrap_or_else(|| {
+        Error::msg("qBittorrent completed torrent listing returned no usable response".to_string())
+    }))
 }
 
 #[plugin_fn]
@@ -739,6 +770,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             default_value: None,
             value_source: Default::default(),
             host_binding: None,
+            role: None,
             options: vec![],
             help_text: Some("qBittorrent WebUI username".to_string()),
         },
@@ -750,6 +782,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             default_value: None,
             value_source: Default::default(),
             host_binding: None,
+            role: None,
             options: vec![],
             help_text: Some("qBittorrent WebUI password".to_string()),
         },
@@ -761,6 +794,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             default_value: Some("category".to_string()),
             value_source: Default::default(),
             host_binding: None,
+            role: None,
             options: vec![
                 ConfigFieldOption {
                     value: "category".to_string(),
@@ -783,6 +817,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             default_value: None,
             value_source: Default::default(),
             host_binding: None,
+            role: None,
             options: vec![],
             help_text: Some("Comma-separated tags added to every torrent".to_string()),
         },
@@ -794,6 +829,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             default_value: Some("false".to_string()),
             value_source: Default::default(),
             host_binding: None,
+            role: None,
             options: vec![],
             help_text: Some(
                 "Enable qBittorrent automatic torrent management unless Scryer provided an explicit download directory"
@@ -808,6 +844,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             default_value: Some("false".to_string()),
             value_source: Default::default(),
             host_binding: None,
+            role: None,
             options: vec![],
             help_text: Some("Add torrents in a paused state".to_string()),
         },
@@ -819,6 +856,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             default_value: Some("false".to_string()),
             value_source: Default::default(),
             host_binding: None,
+            role: None,
             options: vec![],
             help_text: Some("Force-start torrents after adding them".to_string()),
         },
@@ -830,6 +868,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             default_value: Some("false".to_string()),
             value_source: Default::default(),
             host_binding: None,
+            role: None,
             options: vec![],
             help_text: Some("Skip piece recheck when adding local torrent payloads".to_string()),
         },
@@ -841,6 +880,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             default_value: Some("tag_imported".to_string()),
             value_source: Default::default(),
             host_binding: None,
+            role: None,
             options: vec![
                 ConfigFieldOption {
                     value: "tag_imported".to_string(),
@@ -869,6 +909,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             default_value: Some(IMPORTED_TAG_DEFAULT.to_string()),
             value_source: Default::default(),
             host_binding: None,
+            role: None,
             options: vec![],
             help_text: Some(
                 "Tag applied after import when post-import action is set to Tag Imported"
@@ -1169,10 +1210,10 @@ fn build_tags(config: &QbittorrentConfig, request: &PluginDownloadClientAddReque
             tags.push(format!("scryer-tag-{}", sanitize_tag_fragment(&tag)));
         }
     }
-    if matches!(config.routing_mode, RoutingMode::Tag) {
-        if let Some(isolation) = request.routing.isolation_value.as_deref() {
-            tags.push(sanitize_tag_fragment(isolation));
-        }
+    if matches!(config.routing_mode, RoutingMode::Tag)
+        && let Some(isolation) = request.routing.isolation_value.as_deref()
+    {
+        tags.push(sanitize_tag_fragment(isolation));
     }
     dedupe(tags)
 }
@@ -1476,10 +1517,10 @@ fn derive_expected_hash(request: &PluginDownloadClientAddRequest) -> Option<Stri
 fn parse_magnet_info_hash(uri: &str) -> Option<String> {
     let query = uri.strip_prefix("magnet:?")?;
     for part in query.split('&') {
-        if let Some(value) = part.strip_prefix("xt=") {
-            if let Some(urn) = value.strip_prefix("urn:btih:") {
-                return Some(normalize_hash(&percent_decode(urn)));
-            }
+        if let Some(value) = part.strip_prefix("xt=")
+            && let Some(urn) = value.strip_prefix("urn:btih:")
+        {
+            return Some(normalize_hash(&percent_decode(urn)));
         }
     }
     None
@@ -1490,14 +1531,14 @@ fn percent_decode(value: &str) -> String {
     let mut out = Vec::with_capacity(bytes.len());
     let mut idx = 0usize;
     while idx < bytes.len() {
-        if bytes[idx] == b'%' && idx + 2 < bytes.len() {
-            if let Ok(hex) = std::str::from_utf8(&bytes[idx + 1..idx + 3]) {
-                if let Ok(byte) = u8::from_str_radix(hex, 16) {
-                    out.push(byte);
-                    idx += 3;
-                    continue;
-                }
-            }
+        if bytes[idx] == b'%'
+            && idx + 2 < bytes.len()
+            && let Ok(hex) = std::str::from_utf8(&bytes[idx + 1..idx + 3])
+            && let Ok(byte) = u8::from_str_radix(hex, 16)
+        {
+            out.push(byte);
+            idx += 3;
+            continue;
         }
         out.push(bytes[idx]);
         idx += 1;
@@ -2130,6 +2171,90 @@ mod tests {
     }
 
     #[test]
+    fn completed_dest_dir_uses_content_path_for_decypharr_release_folder() {
+        let torrent = QbTorrent {
+            name: "Harry.Potter.and.the.Prisoner.of.Azkaban.2004.BluRay.1080p.AV1.Opus-nAV1gator"
+                .to_string(),
+            save_path: Some("/mnt/symlinks/radarr".to_string()),
+            content_path: Some(
+                "/mnt/symlinks/radarr/Harry.Potter.and.the.Prisoner.of.Azkaban.2004.BluRay.1080p.AV1.Opus-nAV1gator"
+                    .to_string(),
+            ),
+            ..QbTorrent::default()
+        };
+        assert_eq!(
+            derive_completed_dest_dir(&torrent).as_deref(),
+            Some(
+                "/mnt/symlinks/radarr/Harry.Potter.and.the.Prisoner.of.Azkaban.2004.BluRay.1080p.AV1.Opus-nAV1gator"
+            )
+        );
+    }
+
+    #[test]
+    fn completed_torrents_fall_back_to_all_filter_when_completed_filter_is_empty() {
+        let mut requested_filters = Vec::new();
+        let torrents = collect_completed_torrents(|filter| {
+            requested_filters.push(filter.map(str::to_string));
+            match filter {
+                Some("completed") => Ok(Vec::new()),
+                Some("all") => Ok(vec![QbTorrent {
+                    hash: "abcdef0123456789abcdef0123456789abcdef01".to_string(),
+                    name: "Paperman.2012.720p.WEB-DL.AV1.AAC2.0-NTb.DECYPHARR".to_string(),
+                    state: "pausedUP".to_string(),
+                    save_path: Some("/mnt/symlinks/radarr".to_string()),
+                    content_path: Some(
+                        "/mnt/symlinks/radarr/Paperman.2012.720p.WEB-DL.AV1.AAC2.0-NTb.DECYPHARR"
+                            .to_string(),
+                    ),
+                    ..QbTorrent::default()
+                }]),
+                _ => Ok(Vec::new()),
+            }
+        })
+        .unwrap();
+
+        assert_eq!(
+            requested_filters,
+            vec![Some("completed".to_string()), Some("all".to_string())]
+        );
+        assert_eq!(torrents.len(), 1);
+        assert_eq!(torrents[0].state, "pausedUP");
+    }
+
+    #[test]
+    fn completed_torrents_fall_back_to_unfiltered_listing_when_filters_fail() {
+        let mut requested_filters = Vec::new();
+        let torrents = collect_completed_torrents(|filter| {
+            requested_filters.push(filter.map(str::to_string));
+            match filter {
+                Some("completed") | Some("all") => {
+                    Err(Error::msg("unsupported filter".to_string()))
+                }
+                Some(_) => Ok(Vec::new()),
+                None => Ok(vec![QbTorrent {
+                    hash: "abcdef0123456789abcdef0123456789abcdef01".to_string(),
+                    name: "Paperman.2012.720p.WEB-DL.AV1.AAC2.0-NTb.DECYPHARR".to_string(),
+                    state: "pausedUP".to_string(),
+                    save_path: Some("/mnt/symlinks/radarr".to_string()),
+                    content_path: Some(
+                        "/mnt/symlinks/radarr/Paperman.2012.720p.WEB-DL.AV1.AAC2.0-NTb.DECYPHARR"
+                            .to_string(),
+                    ),
+                    ..QbTorrent::default()
+                }]),
+            }
+        })
+        .unwrap();
+
+        assert_eq!(
+            requested_filters,
+            vec![Some("completed".to_string()), Some("all".to_string()), None,]
+        );
+        assert_eq!(torrents.len(), 1);
+        assert_eq!(torrents[0].state, "pausedUP");
+    }
+
+    #[test]
     fn completed_download_reports_output_kind_for_single_file() {
         let torrent = QbTorrent {
             hash: "abcdef0123456789abcdef0123456789abcdef01".to_string(),
@@ -2366,9 +2491,11 @@ mod tests {
         match handle_download_add(test_config(), request).unwrap() {
             PluginResult::Err(error) => {
                 assert_eq!(error.code, PluginErrorCode::Permanent);
-                assert!(error
-                    .public_message
-                    .contains("invalid torrent_bytes_base64"));
+                assert!(
+                    error
+                        .public_message
+                        .contains("invalid torrent_bytes_base64")
+                );
             }
             PluginResult::Ok(_) => panic!("expected structured error"),
         }

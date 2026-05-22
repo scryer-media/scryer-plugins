@@ -163,6 +163,7 @@ fn default_descriptor() -> PluginDescriptor {
                     default_value: None,
                     value_source: Default::default(),
                     host_binding: None,
+                    role: None,
                     options: vec![],
                     help_text: Some(
                         "Jellyfin server URL, for example http://jellyfin:8096".to_string(),
@@ -176,6 +177,7 @@ fn default_descriptor() -> PluginDescriptor {
                     default_value: None,
                     value_source: Default::default(),
                     host_binding: None,
+                    role: None,
                     options: vec![],
                     help_text: Some("Jellyfin API key used for targeted refresh calls.".to_string()),
                 },
@@ -187,6 +189,7 @@ fn default_descriptor() -> PluginDescriptor {
                     default_value: None,
                     value_source: Default::default(),
                     host_binding: None,
+                    role: None,
                     options: vec![],
                     help_text: Some(
                         "Pick the Scryer path on the left and enter the matching Jellyfin-visible path on the right. Add up to 10 mappings. Most specific path wins."
@@ -801,6 +804,27 @@ mod tests {
     }
 
     #[test]
+    fn parse_path_mappings_supports_windows_and_unc_paths() {
+        let mappings = parse_path_mappings(
+            r#"
+                C:\Media\TV => D:\Jellyfin\TV
+                \\nas\anime => /mnt/anime
+            "#,
+        )
+        .unwrap();
+
+        assert_eq!(mappings.len(), 2);
+        assert_eq!(
+            map_path(&mappings, r"C:\Media\TV\Show\S01E01.mkv").as_deref(),
+            Some(r"D:\Jellyfin\TV\Show\S01E01.mkv")
+        );
+        assert_eq!(
+            map_path(&mappings, r"\\nas\anime\Show\E01.mkv").as_deref(),
+            Some("/mnt/anime/Show/E01.mkv")
+        );
+    }
+
+    #[test]
     fn build_request_plans_prefers_mapped_media_updates() {
         let request = request_with_metadata(
             "import_complete",
@@ -821,6 +845,60 @@ mod tests {
                     path: "/mnt/tv/Show/S01E01.mkv".to_string(),
                     update_type: MediaUpdateType::Created,
                 }],
+            }]
+        );
+    }
+
+    #[test]
+    fn build_request_plans_combines_mapped_updates_with_movie_id_fallbacks() {
+        let request = request_with_metadata(
+            "upgrade",
+            "movie",
+            serde_json::json!({
+                "media_updates": [
+                    { "path": "/data/movies/Movie (2024)/Movie.mkv", "update_type": "modified" },
+                    { "path": "/data/other/Movie (2024)/Movie Extras.mkv", "update_type": "created" }
+                ],
+                "external_ids": { "tmdb_id": "987", "imdb_id": "tt1234567" }
+            }),
+        );
+
+        let plans = build_request_plans(&request, &config("/data/movies => /mnt/movies")).unwrap();
+        assert_eq!(
+            plans,
+            vec![
+                JellyfinRequestPlan::MediaUpdated {
+                    updates: vec![MediaUpdate {
+                        path: "/mnt/movies/Movie (2024)/Movie.mkv".to_string(),
+                        update_type: MediaUpdateType::Modified,
+                    }],
+                },
+                JellyfinRequestPlan::MoviesUpdated {
+                    tmdb_id: Some("987".to_string()),
+                    imdb_id: Some("tt1234567".to_string()),
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn build_request_plans_trims_external_ids_before_series_fallback() {
+        let request = request_with_metadata(
+            "rename",
+            "series",
+            serde_json::json!({
+                "media_updates": [
+                    { "path": "/data/tv/Show/S01E01.mkv", "update_type": "modified" }
+                ],
+                "external_ids": { "tvdb_id": " 4242 " }
+            }),
+        );
+
+        let plans = build_request_plans(&request, &config("")).unwrap();
+        assert_eq!(
+            plans,
+            vec![JellyfinRequestPlan::SeriesUpdated {
+                tvdb_id: "4242".to_string(),
             }]
         );
     }

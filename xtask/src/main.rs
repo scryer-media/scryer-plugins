@@ -35,7 +35,7 @@ const CATALOG_V2_SCHEMA: &str = "scryer.plugin.catalog.v2";
 const CHILD_CATALOG_V2_SCHEMA: &str = "scryer.plugin.child_catalog.v2";
 const PLUGIN_MANIFEST_SCHEMA: &str = "scryer.plugin.v1";
 const WASM_OPT_LEVEL: &str = "-Oz";
-const ZSTD_LEVEL: &str = "-10";
+const ZSTD_LEVEL: &str = "-19";
 const OFFICIAL_GITHUB_REPO: &str = "scryer-media/scryer-plugins";
 const OFFICIAL_RELEASE_WORKFLOW: &str = ".github/workflows/release-plugin.yml";
 const CENTRAL_CATALOG_RELEASE_TAG: &str = "catalog/v2";
@@ -204,6 +204,7 @@ enum OfficialCommand {
     Release(OfficialReleaseArgs),
     Prepare(OfficialPrepareArgs),
     Prefetch(OfficialPrefetchArgs),
+    PlanChanged(OfficialPlanChangedArgs),
     VerifyPrepared(OfficialVerifyPreparedArgs),
 }
 
@@ -234,6 +235,20 @@ struct OfficialPrefetchArgs {
     plugin_ids: Vec<String>,
 }
 
+#[derive(Args, Clone, Default)]
+struct OfficialPlanChangedArgs {
+    #[arg(long, conflicts_with_all = ["minor", "patch", "version"])]
+    major: bool,
+    #[arg(long, conflicts_with_all = ["major", "patch", "version"])]
+    minor: bool,
+    #[arg(long, conflicts_with_all = ["major", "minor", "version"])]
+    patch: bool,
+    #[arg(long)]
+    version: Option<String>,
+    #[arg(long)]
+    out: Option<PathBuf>,
+}
+
 #[derive(Args)]
 struct OfficialVerifyPreparedArgs {
     dir: PathBuf,
@@ -261,6 +276,8 @@ struct CatalogPrepareV2Args {
     plugin_ids: Vec<String>,
     #[arg(long)]
     existing_catalog: Option<PathBuf>,
+    #[arg(long)]
+    prepared_child_catalog_root: Option<PathBuf>,
 }
 
 #[derive(Args)]
@@ -312,6 +329,12 @@ struct ReleaseTarget {
     current_version: Version,
     next_version: Version,
     tag_name: String,
+}
+
+#[derive(Clone)]
+struct PlannedReleaseTarget {
+    target: ReleaseTarget,
+    reason: String,
 }
 
 #[derive(Clone)]
@@ -517,6 +540,7 @@ fn main() -> Result<()> {
             OfficialCommand::Release(args) => run_official_release(&ctx, args),
             OfficialCommand::Prepare(args) => run_official_prepare(&ctx, args),
             OfficialCommand::Prefetch(args) => run_official_prefetch(&ctx, args),
+            OfficialCommand::PlanChanged(args) => run_official_plan_changed(&ctx, args),
             OfficialCommand::VerifyPrepared(args) => run_official_verify_prepared(&ctx, &args.dir),
         },
         Commands::Catalog(args) => match args.command {
@@ -613,6 +637,101 @@ fn rustup_toolchain_from_file(path: &Path) -> Result<Option<String>> {
     Ok(document["toolchain"]["channel"]
         .as_str()
         .map(ToOwned::to_owned))
+}
+
+fn validate_plugin_release_profile(cargo_toml: &Path) -> Result<()> {
+    let document = read_manifest_document(cargo_toml)?;
+    let profile = document
+        .get("profile")
+        .and_then(|value| value.get("plugin-release"))
+        .ok_or_else(|| {
+            anyhow!(
+                "{} must define [profile.plugin-release]",
+                cargo_toml.display()
+            )
+        })?;
+
+    let inherits = profile
+        .get("inherits")
+        .and_then(|value| value.as_str())
+        .ok_or_else(|| {
+            anyhow!(
+                "{} must define profile.plugin-release.inherits",
+                cargo_toml.display()
+            )
+        })?;
+    if inherits != "release" {
+        bail!(
+            "{} must set profile.plugin-release.inherits = \"release\"",
+            cargo_toml.display()
+        );
+    }
+
+    let opt_level = profile
+        .get("opt-level")
+        .and_then(|value| value.as_integer())
+        .ok_or_else(|| {
+            anyhow!(
+                "{} must define profile.plugin-release.opt-level = 3",
+                cargo_toml.display()
+            )
+        })?;
+    if opt_level != 3 {
+        bail!(
+            "{} must set profile.plugin-release.opt-level = 3",
+            cargo_toml.display()
+        );
+    }
+
+    let lto = profile
+        .get("lto")
+        .and_then(|value| value.as_str())
+        .ok_or_else(|| {
+            anyhow!(
+                "{} must define profile.plugin-release.lto = \"fat\"",
+                cargo_toml.display()
+            )
+        })?;
+    if lto != "fat" {
+        bail!(
+            "{} must set profile.plugin-release.lto = \"fat\"",
+            cargo_toml.display()
+        );
+    }
+
+    let strip = profile
+        .get("strip")
+        .and_then(|value| value.as_bool())
+        .ok_or_else(|| {
+            anyhow!(
+                "{} must define profile.plugin-release.strip = true",
+                cargo_toml.display()
+            )
+        })?;
+    if !strip {
+        bail!(
+            "{} must set profile.plugin-release.strip = true",
+            cargo_toml.display()
+        );
+    }
+
+    let panic = profile
+        .get("panic")
+        .and_then(|value| value.as_str())
+        .ok_or_else(|| {
+            anyhow!(
+                "{} must define profile.plugin-release.panic = \"abort\"",
+                cargo_toml.display()
+            )
+        })?;
+    if panic != "abort" {
+        bail!(
+            "{} must set profile.plugin-release.panic = \"abort\"",
+            cargo_toml.display()
+        );
+    }
+
+    Ok(())
 }
 
 fn configured_rustup_toolchain(ctx: &TaskContext) -> Result<Option<RustupToolchain>> {
@@ -796,6 +915,12 @@ fn ci_cargo_command_in(ctx: &TaskContext, cwd: &Path) -> Result<Command> {
     Ok(command)
 }
 
+fn cargo_target_dir(cwd: &Path) -> PathBuf {
+    env::var_os("CARGO_TARGET_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| cwd.join("target"))
+}
+
 fn wasm_build_command_in(ctx: &TaskContext, cwd: &Path) -> Result<Command> {
     if let Some(rustup_toolchain) = configured_rustup_toolchain(ctx)? {
         ensure_rustup_wasm_target(ctx, &rustup_toolchain)?;
@@ -830,6 +955,13 @@ fn git_capture(ctx: &TaskContext, args: &[&str]) -> Result<String> {
     let mut command = ctx.command_in("git", &ctx.repo_root);
     command.args(args);
     run_capture(&mut command)
+}
+
+fn git_has_cached_changes(ctx: &TaskContext) -> Result<bool> {
+    let mut command = ctx.command_in("git", &ctx.repo_root);
+    command.args(["diff", "--cached", "--quiet"]);
+    let status = run_status(&mut command)?;
+    Ok(!status.success())
 }
 
 fn current_branch(ctx: &TaskContext) -> Result<String> {
@@ -868,6 +1000,16 @@ fn parse_bump(args: &ReleaseOptions) -> Result<(VersionBump, Option<Version>)> {
         VersionBump::Patch
     };
     Ok((bump, explicit))
+}
+
+fn release_options_from_plan_args(args: &OfficialPlanChangedArgs) -> ReleaseOptions {
+    ReleaseOptions {
+        major: args.major,
+        minor: args.minor,
+        patch: args.patch,
+        dry_run: false,
+        version: args.version.clone(),
+    }
 }
 
 fn next_version(current: &Version, bump: VersionBump) -> Version {
@@ -1411,49 +1553,60 @@ fn release_impact_for_plugin(ctx: &TaskContext, plugin: &LocalPluginInfo) -> Res
 }
 
 fn run_release_changed(ctx: &TaskContext, args: ReleaseChangedArgs) -> Result<()> {
+    let plans = collect_changed_release_targets(ctx, &args.options)?;
+    if plans.is_empty() {
+        ok("No official plugin changes detected since per-plugin release tags");
+        return Ok(());
+    }
+
+    step("Selected changed official plugins");
+    for plan in &plans {
+        println!("   {}: {}", plan.target.plugin_id, plan.reason);
+    }
+
+    let targets = plans.into_iter().map(|plan| plan.target).collect();
+    run_tag_only_release_targets(ctx, targets, &args.options)
+}
+
+fn collect_changed_release_targets(
+    ctx: &TaskContext,
+    options: &ReleaseOptions,
+) -> Result<Vec<PlannedReleaseTarget>> {
     ensure_current_sdk_dependency_is_published(ctx)?;
     let plugins = discover_local_plugins(ctx)?;
     let mut selected = Vec::new();
-    let mut reasons = Vec::new();
     for plugin in &plugins {
         match release_impact_for_plugin(ctx, plugin)? {
             ReleaseImpact::PluginChanged => {
-                selected.push(plugin.plugin_id.clone());
-                reasons.push(format!("{}: plugin-specific changes", plugin.plugin_id));
+                selected.push((
+                    plugin.plugin_id.clone(),
+                    "plugin-specific changes".to_string(),
+                ));
             }
             ReleaseImpact::ArtifactWide(reason) => {
-                selected.push(plugin.plugin_id.clone());
-                reasons.push(format!("{}: {reason}", plugin.plugin_id));
+                selected.push((plugin.plugin_id.clone(), reason));
             }
             ReleaseImpact::Unchanged => {}
         }
     }
 
-    selected.sort();
-    selected.dedup();
+    selected.sort_by(|left, right| left.0.cmp(&right.0));
+    selected.dedup_by(|left, right| left.0 == right.0);
     if selected.is_empty() {
-        ok("No official plugin changes detected since per-plugin release tags");
-        return Ok(());
+        return Ok(Vec::new());
     }
-    if args.options.version.is_some() && selected.len() != 1 {
+    if options.version.is_some() && selected.len() != 1 {
         bail!("--version can only be used when exactly one changed plugin is selected");
     }
 
-    step("Selected changed official plugins");
-    for reason in &reasons {
-        println!("   {reason}");
-    }
-
     let mut targets = Vec::new();
-    for plugin_id in &selected {
-        targets.push(resolve_release_target(
-            ctx,
-            &plugins,
-            plugin_id,
-            &args.options,
-        )?);
+    for (plugin_id, reason) in selected {
+        targets.push(PlannedReleaseTarget {
+            target: resolve_release_target(ctx, &plugins, &plugin_id, options)?,
+            reason,
+        });
     }
-    run_tag_only_release_targets(ctx, targets, &args.options)
+    Ok(targets)
 }
 
 fn run_tag_only_release_targets(
@@ -1592,11 +1745,15 @@ fn run_tag_only_release_targets(
         }
     }
     run_checked(&mut add)?;
-    let mut commit = ctx.command_in("git", &ctx.repo_root);
-    let commit_message = release_commit_message(&targets);
-    commit.args(["commit", "-m", &commit_message]);
-    run_checked(&mut commit)?;
-    ok("Committed");
+    if git_has_cached_changes(ctx)? {
+        let mut commit = ctx.command_in("git", &ctx.repo_root);
+        let commit_message = release_commit_message(&targets);
+        commit.args(["commit", "-m", &commit_message]);
+        run_checked(&mut commit)?;
+        ok("Committed");
+    } else {
+        ok("No release-prep file changes to commit; tagging current HEAD");
+    }
 
     for target in &targets {
         step(format!("Creating signed tag {}", target.tag_name));
@@ -1720,6 +1877,7 @@ fn prefetch_plugin_dependencies(ctx: &TaskContext, plugin_dir: &Path) -> Result<
 
 fn build_plugin_wasm(ctx: &TaskContext, plugin_dir: &Path) -> Result<PathBuf> {
     let cargo_toml = plugin_dir.join("Cargo.toml");
+    validate_plugin_release_profile(&cargo_toml)?;
     let wasm_filename = wasm_filename_for_manifest(&cargo_toml)?;
 
     step(format!("Building {}", plugin_dir.display()));
@@ -1727,7 +1885,8 @@ fn build_plugin_wasm(ctx: &TaskContext, plugin_dir: &Path) -> Result<PathBuf> {
     let mut build = wasm_build_command_in(ctx, plugin_dir)?;
     build.args([
         "build",
-        "--release",
+        "--profile",
+        "plugin-release",
         "--target",
         WASM_TARGET,
         "--locked",
@@ -1735,10 +1894,9 @@ fn build_plugin_wasm(ctx: &TaskContext, plugin_dir: &Path) -> Result<PathBuf> {
     ]);
     run_checked(&mut build)?;
 
-    let built_wasm = plugin_dir
-        .join("target")
+    let built_wasm = cargo_target_dir(plugin_dir)
         .join(WASM_TARGET)
-        .join("release")
+        .join("plugin-release")
         .join(wasm_filename);
     if !built_wasm.is_file() {
         bail!("expected WASM at {} but not found", built_wasm.display());
@@ -1979,36 +2137,9 @@ fn scoped_ci_project_dirs(ctx: &TaskContext, scope: &CiScopeArgs) -> Result<Vec<
         let plugin_dir = plugin_dirs
             .get(plugin_id)
             .ok_or_else(|| anyhow!("plugin '{plugin_id}' not found in local official plugins"))?;
-        let manifest_path = plugin_dir.join("Cargo.toml");
-        let mut metadata = repo_cargo_command_in(ctx, plugin_dir)?;
-        metadata
-            .arg("metadata")
-            .args(["--format-version", "1", "--manifest-path"])
-            .arg(&manifest_path)
-            .arg("--locked");
-        let raw = run_capture(&mut metadata)?;
-        let value: serde_json::Value = serde_json::from_str(&raw)
-            .with_context(|| format!("failed to parse cargo metadata for {}", plugin_id))?;
-        let packages = value
-            .get("packages")
-            .and_then(|packages| packages.as_array())
-            .ok_or_else(|| anyhow!("cargo metadata for {} did not contain packages", plugin_id))?;
-
-        for package in packages {
-            let Some(package_manifest) = package.get("manifest_path").and_then(|v| v.as_str())
-            else {
-                continue;
-            };
-            let package_manifest = PathBuf::from(package_manifest);
-            if package_manifest.starts_with(&ctx.repo_root)
-                && let Some(package_dir) = package_manifest.parent()
-            {
-                dirs.insert(package_dir.to_path_buf());
-            }
-        }
+        dirs.insert(plugin_dir.clone());
     }
 
-    dirs.insert(ctx.repo_root.join("xtask"));
     Ok(dirs.into_iter().collect())
 }
 
@@ -2222,6 +2353,9 @@ fn optimize_and_compress_wasm(
     run_checked(
         ctx.command("wasm-opt")
             .arg(WASM_OPT_LEVEL)
+            .arg("--enable-bulk-memory")
+            .arg("--enable-sign-ext")
+            .arg("--enable-nontrapping-float-to-int")
             .arg(wasm)
             .arg("-o")
             .arg(&optimized),
@@ -2333,6 +2467,27 @@ fn read_catalog_v2_from_path(ctx: &TaskContext, path: &Path) -> Result<CatalogV2
     let bytes = read_catalog_bytes(ctx, path)?;
     serde_json::from_slice(&bytes)
         .with_context(|| format!("failed to parse catalog {}", path.display()))
+}
+
+fn read_child_catalog_v2_from_path(ctx: &TaskContext, path: &Path) -> Result<ChildCatalogV2> {
+    let bytes = read_catalog_bytes(ctx, path)?;
+    serde_json::from_slice(&bytes)
+        .with_context(|| format!("failed to parse child catalog {}", path.display()))
+}
+
+fn read_prepared_child_catalog(ctx: &TaskContext, dir: &Path) -> Result<ChildCatalogV2> {
+    let paths = catalog_asset_paths(dir);
+    if paths.pretty_json.is_file() {
+        return read_child_catalog_v2_from_path(ctx, &paths.pretty_json);
+    }
+    if paths.minified_zst.is_file() {
+        return read_child_catalog_v2_from_path(ctx, &paths.minified_zst);
+    }
+    bail!(
+        "prepared child catalog missing {} or {}",
+        paths.pretty_json.display(),
+        paths.minified_zst.display()
+    );
 }
 
 fn read_published_official_catalog(ctx: &TaskContext) -> Result<CatalogV2> {
@@ -2523,6 +2678,42 @@ fn run_official_prefetch(ctx: &TaskContext, args: OfficialPrefetchArgs) -> Resul
     Ok(())
 }
 
+fn run_official_plan_changed(ctx: &TaskContext, args: OfficialPlanChangedArgs) -> Result<()> {
+    let plugin_ids = official_plugin_dirs_by_id(ctx)?
+        .into_keys()
+        .collect::<Vec<_>>();
+    run_official_prefetch(ctx, OfficialPrefetchArgs { plugin_ids })?;
+
+    let options = release_options_from_plan_args(&args);
+    let plans = collect_changed_release_targets(ctx, &options)?;
+    if plans.is_empty() {
+        ok("No official plugin changes detected since per-plugin release tags");
+        return Ok(());
+    }
+
+    step("Planned changed official plugin releases");
+    let mut output = String::new();
+    for plan in &plans {
+        println!(
+            "   {} {} ({})",
+            plan.target.plugin_id, plan.target.next_version, plan.reason
+        );
+        output.push_str(&format!(
+            "{}\t{}\n",
+            plan.target.plugin_id, plan.target.next_version
+        ));
+    }
+
+    if let Some(path) = args.out {
+        fs::write(&path, output)?;
+        ok(format!("Wrote release plan to {}", path.display()));
+    } else {
+        print!("{output}");
+    }
+
+    Ok(())
+}
+
 fn run_official_verify_prepared(ctx: &TaskContext, dir: &Path) -> Result<()> {
     step(format!(
         "Verifying prepared release assets in {}",
@@ -2580,6 +2771,26 @@ fn catalog_entry_from_local_plugin(plugin: &LocalPluginInfo) -> Result<CatalogV2
         docs_url: plugin.source_repo.clone(),
         source_repo: plugin.source_repo.clone(),
         child_catalog_url: official_plugin_child_catalog_url(&plugin.plugin_id, &version),
+        required_signer: RequiredSignerV2 {
+            github_repository: OFFICIAL_GITHUB_REPO.to_string(),
+            github_workflow: Some(OFFICIAL_RELEASE_WORKFLOW.to_string()),
+        },
+    })
+}
+
+fn catalog_entry_from_child_catalog(catalog: &ChildCatalogV2) -> Result<CatalogV2Entry> {
+    let release = latest_child_catalog_release(catalog)?;
+    Ok(CatalogV2Entry {
+        id: catalog.id.clone(),
+        name: catalog.name.clone(),
+        description: catalog.description.clone(),
+        plugin_type: catalog.plugin_type.clone(),
+        provider_type: catalog.provider_type.clone(),
+        publisher: catalog.publisher.clone(),
+        support_tier: catalog.support_tier.clone(),
+        docs_url: catalog.docs_url.clone(),
+        source_repo: catalog.source_repo.clone(),
+        child_catalog_url: official_plugin_child_catalog_url(&catalog.id, &release.version),
         required_signer: RequiredSignerV2 {
             github_repository: OFFICIAL_GITHUB_REPO.to_string(),
             github_workflow: Some(OFFICIAL_RELEASE_WORKFLOW.to_string()),
@@ -2715,6 +2926,7 @@ fn run_catalog_render_v2(ctx: &TaskContext) -> Result<()> {
             out: None,
             plugin_ids: Vec::new(),
             existing_catalog: None,
+            prepared_child_catalog_root: None,
         },
     )
 }
@@ -2727,15 +2939,32 @@ fn run_catalog_prepare_v2(ctx: &TaskContext, args: CatalogPrepareV2Args) -> Resu
             .map(catalog_entry_from_local_plugin)
             .collect::<Result<Vec<_>>>()?
     } else {
-        step("Preparing catalog-v2 assets for selected official plugin descriptors");
+        if args.prepared_child_catalog_root.is_some() {
+            step("Preparing catalog-v2 assets from prepared official child catalogs");
+        } else {
+            step("Preparing catalog-v2 assets for selected official plugin descriptors");
+        }
         let mut selected = BTreeSet::new();
         let mut updates = Vec::new();
         for plugin_id in &args.plugin_ids {
             if !selected.insert(plugin_id.clone()) {
                 continue;
             }
-            let plugin = discover_local_official_plugin(ctx, plugin_id)?;
-            updates.push(catalog_entry_from_local_plugin(&plugin)?);
+            if let Some(root) = args.prepared_child_catalog_root.as_deref() {
+                let child_catalog = read_prepared_child_catalog(ctx, &root.join(plugin_id))?;
+                if child_catalog.id != *plugin_id {
+                    bail!(
+                        "prepared child catalog at {} has id '{}' but expected '{}'",
+                        root.join(plugin_id).display(),
+                        child_catalog.id,
+                        plugin_id
+                    );
+                }
+                updates.push(catalog_entry_from_child_catalog(&child_catalog)?);
+            } else {
+                let plugin = discover_local_official_plugin(ctx, plugin_id)?;
+                updates.push(catalog_entry_from_local_plugin(&plugin)?);
+            }
         }
         let base_catalog = match args.existing_catalog.as_deref() {
             Some(path) => read_catalog_v2_from_path(ctx, path)?,
@@ -2773,6 +3002,7 @@ fn run_catalog_publish_v2(ctx: &TaskContext) -> Result<()> {
             out: None,
             plugin_ids: Vec::new(),
             existing_catalog: None,
+            prepared_child_catalog_root: None,
         },
     )
 }
@@ -2806,7 +3036,7 @@ fn run_community_scaffold(_ctx: &TaskContext, plugin_id: &str, output_dir: &Path
     )?;
     fs::write(
         output_dir.join(".github/workflows/release-plugin.yml"),
-        "name: release-plugin\non:\n  push:\n    tags: ['v*']\npermissions:\n  contents: write\n  id-token: write\njobs:\n  build-sign-release:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: sigstore/cosign-installer@v4.1.1\n        with:\n          cosign-release: v3.0.2\n      - run: echo 'Adapt this workflow to build wasm32-wasip1, wasm-opt -Oz, zstd -10, and cosign sign-blob.'\n",
+        "name: release-plugin\non:\n  push:\n    tags: ['v*']\npermissions:\n  contents: write\n  id-token: write\njobs:\n  build-sign-release:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: sigstore/cosign-installer@v4.1.1\n        with:\n          cosign-release: v3.0.2\n      - run: echo 'Adapt this workflow to build wasm32-wasip1, wasm-opt -Oz, zstd -19, and cosign sign-blob.'\n",
     )?;
     ok(format!("scaffolded {}", output_dir.display()));
     Ok(())

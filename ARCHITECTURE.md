@@ -45,5 +45,5 @@ Operational rules:
 - Scryer owns built-in pinning; this repo can publish official plugins, but it
   no longer declares built-in candidates
 - release artifacts are optimized with `wasm-opt -Oz`, compressed with
-  `zstd -10`, hashed with BLAKE3, and signed with cosign keyless bundles
+  `zstd -19`, hashed with BLAKE3, and signed with cosign keyless bundles
 - new automation belongs in xtask rather than ad hoc shell or Python helpers

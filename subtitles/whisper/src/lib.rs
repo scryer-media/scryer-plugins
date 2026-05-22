@@ -1,15 +1,15 @@
 use std::fs;
 
-use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD as BASE64;
 use extism_pdk::*;
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginResult,
-    ProviderDescriptor, SubtitleCapabilities, SubtitleDescriptor, SubtitlePluginGenerateRequest,
-    SubtitlePluginGenerateResponse, SubtitlePluginValidateConfigRequest,
-    SubtitlePluginValidateConfigResponse, SubtitleProviderMode, SubtitleQueryMediaKind,
-    SubtitleValidateConfigStatus, SDK_VERSION,
+    ProviderDescriptor, SDK_VERSION, SubtitleCapabilities, SubtitleDescriptor,
+    SubtitlePluginGenerateRequest, SubtitlePluginGenerateResponse,
+    SubtitlePluginValidateConfigRequest, SubtitlePluginValidateConfigResponse,
+    SubtitleProviderMode, SubtitleQueryMediaKind, SubtitleValidateConfigStatus,
 };
 
 const OPENAI_API_BASE: &str = "https://api.openai.com/v1";
@@ -92,6 +92,7 @@ fn descriptor() -> PluginDescriptor {
                     default_value: None,
                     value_source: ConfigFieldValueSource::User,
                     host_binding: None,
+                    role: None,
                     options: Vec::new(),
                     help_text: Some(
                         "OpenAI API key used for Whisper transcription requests.".to_string(),
@@ -105,6 +106,7 @@ fn descriptor() -> PluginDescriptor {
                     default_value: Some("whisper-1".to_string()),
                     value_source: ConfigFieldValueSource::User,
                     host_binding: None,
+                    role: None,
                     options: Vec::new(),
                     help_text: Some("Transcription model to use.".to_string()),
                 },
@@ -116,6 +118,7 @@ fn descriptor() -> PluginDescriptor {
                     default_value: None,
                     value_source: ConfigFieldValueSource::User,
                     host_binding: None,
+                    role: None,
                     options: Vec::new(),
                     help_text: Some(
                         "Optional prompt to improve terminology or formatting for the transcription."
