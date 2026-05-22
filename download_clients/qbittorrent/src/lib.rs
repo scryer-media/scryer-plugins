@@ -2248,11 +2248,7 @@ mod tests {
 
         assert_eq!(
             requested_filters,
-            vec![
-                Some("completed".to_string()),
-                Some("all".to_string()),
-                None,
-            ]
+            vec![Some("completed".to_string()), Some("all".to_string()), None,]
         );
         assert_eq!(torrents.len(), 1);
         assert_eq!(torrents[0].state, "pausedUP");
