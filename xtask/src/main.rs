@@ -644,7 +644,12 @@ fn validate_plugin_release_profile(cargo_toml: &Path) -> Result<()> {
     let profile = document
         .get("profile")
         .and_then(|value| value.get("plugin-release"))
-        .ok_or_else(|| anyhow!("{} must define [profile.plugin-release]", cargo_toml.display()))?;
+        .ok_or_else(|| {
+            anyhow!(
+                "{} must define [profile.plugin-release]",
+                cargo_toml.display()
+            )
+        })?;
 
     let inherits = profile
         .get("inherits")
