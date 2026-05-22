@@ -639,6 +639,96 @@ fn rustup_toolchain_from_file(path: &Path) -> Result<Option<String>> {
         .map(ToOwned::to_owned))
 }
 
+fn validate_plugin_release_profile(cargo_toml: &Path) -> Result<()> {
+    let document = read_manifest_document(cargo_toml)?;
+    let profile = document
+        .get("profile")
+        .and_then(|value| value.get("plugin-release"))
+        .ok_or_else(|| anyhow!("{} must define [profile.plugin-release]", cargo_toml.display()))?;
+
+    let inherits = profile
+        .get("inherits")
+        .and_then(|value| value.as_str())
+        .ok_or_else(|| {
+            anyhow!(
+                "{} must define profile.plugin-release.inherits",
+                cargo_toml.display()
+            )
+        })?;
+    if inherits != "release" {
+        bail!(
+            "{} must set profile.plugin-release.inherits = \"release\"",
+            cargo_toml.display()
+        );
+    }
+
+    let opt_level = profile
+        .get("opt-level")
+        .and_then(|value| value.as_integer())
+        .ok_or_else(|| {
+            anyhow!(
+                "{} must define profile.plugin-release.opt-level = 3",
+                cargo_toml.display()
+            )
+        })?;
+    if opt_level != 3 {
+        bail!(
+            "{} must set profile.plugin-release.opt-level = 3",
+            cargo_toml.display()
+        );
+    }
+
+    let lto = profile
+        .get("lto")
+        .and_then(|value| value.as_str())
+        .ok_or_else(|| {
+            anyhow!(
+                "{} must define profile.plugin-release.lto = \"fat\"",
+                cargo_toml.display()
+            )
+        })?;
+    if lto != "fat" {
+        bail!(
+            "{} must set profile.plugin-release.lto = \"fat\"",
+            cargo_toml.display()
+        );
+    }
+
+    let strip = profile
+        .get("strip")
+        .and_then(|value| value.as_bool())
+        .ok_or_else(|| {
+            anyhow!(
+                "{} must define profile.plugin-release.strip = true",
+                cargo_toml.display()
+            )
+        })?;
+    if !strip {
+        bail!(
+            "{} must set profile.plugin-release.strip = true",
+            cargo_toml.display()
+        );
+    }
+
+    let panic = profile
+        .get("panic")
+        .and_then(|value| value.as_str())
+        .ok_or_else(|| {
+            anyhow!(
+                "{} must define profile.plugin-release.panic = \"abort\"",
+                cargo_toml.display()
+            )
+        })?;
+    if panic != "abort" {
+        bail!(
+            "{} must set profile.plugin-release.panic = \"abort\"",
+            cargo_toml.display()
+        );
+    }
+
+    Ok(())
+}
+
 fn configured_rustup_toolchain(ctx: &TaskContext) -> Result<Option<RustupToolchain>> {
     let Some(rustup) = rustup_binary() else {
         return Ok(None);
@@ -1782,6 +1872,7 @@ fn prefetch_plugin_dependencies(ctx: &TaskContext, plugin_dir: &Path) -> Result<
 
 fn build_plugin_wasm(ctx: &TaskContext, plugin_dir: &Path) -> Result<PathBuf> {
     let cargo_toml = plugin_dir.join("Cargo.toml");
+    validate_plugin_release_profile(&cargo_toml)?;
     let wasm_filename = wasm_filename_for_manifest(&cargo_toml)?;
 
     step(format!("Building {}", plugin_dir.display()));
@@ -2965,7 +3056,7 @@ fn run_community_scaffold(_ctx: &TaskContext, plugin_id: &str, output_dir: &Path
     )?;
     fs::write(
         output_dir.join(".github/workflows/release-plugin.yml"),
-        "name: release-plugin\non:\n  push:\n    tags: ['v*']\npermissions:\n  contents: write\n  id-token: write\njobs:\n  build-sign-release:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: sigstore/cosign-installer@v4.1.1\n        with:\n          cosign-release: v3.0.2\n      - run: echo 'Adapt this workflow to build wasm32-wasip1, wasm-opt -Oz, zstd -10, and cosign sign-blob.'\n",
+        "name: release-plugin\non:\n  push:\n    tags: ['v*']\npermissions:\n  contents: write\n  id-token: write\njobs:\n  build-sign-release:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: sigstore/cosign-installer@v4.1.1\n        with:\n          cosign-release: v3.0.2\n      - run: echo 'Adapt this workflow to build wasm32-wasip1, wasm-opt -Oz, zstd -19, and cosign sign-blob.'\n",
     )?;
     ok(format!("scaffolded {}", output_dir.display()));
     Ok(())

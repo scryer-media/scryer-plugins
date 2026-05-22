@@ -44,7 +44,6 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.95.0
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
@@ -225,7 +224,6 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.95.0
           targets: wasm32-wasip1
 
       - uses: Swatinem/rust-cache@v2
@@ -279,6 +277,9 @@ jobs:
           set -euo pipefail
           install -d xtask/target/debug
           install -m 0755 xtask-artifact/xtask xtask/target/debug/xtask
+
+      - name: Verify release toolchain and Wasm tooling
+        run: ./xtask/target/debug/xtask doctor
 
       - name: Restore release plan
         run: |
@@ -413,8 +414,6 @@ jobs:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_ref || github.ref }}
 
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: 1.95.0
 
       - uses: sigstore/cosign-installer@v4.1.1
         with:
