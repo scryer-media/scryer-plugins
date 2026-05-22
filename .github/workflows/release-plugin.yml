@@ -70,7 +70,7 @@ jobs:
           sccache --zero-stats || true
 
       - name: Build xtask once
-        run: cargo build --locked --manifest-path xtask/Cargo.toml --bin xtask
+        run: cargo build --locked --profile xtask-release --manifest-path xtask/Cargo.toml --bin xtask
 
       - name: Select plugin release plan
         run: |
@@ -129,7 +129,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: release-plugin-xtask-${{ github.run_id }}
-          path: xtask/target/debug/xtask
+          path: xtask/target/xtask-release/xtask
           if-no-files-found: error
           retention-days: 7
 
@@ -232,16 +232,16 @@ jobs:
       - name: Restore xtask binary
         run: |
           set -euo pipefail
-          install -d xtask/target/debug
-          install -m 0755 xtask-artifact/xtask xtask/target/debug/xtask
+          install -d xtask/target/xtask-release
+          install -m 0755 xtask-artifact/xtask xtask/target/xtask-release/xtask
 
       - name: Verify release toolchain and Wasm tooling
-        run: ./xtask/target/debug/xtask doctor
+        run: ./xtask/target/xtask-release/xtask doctor
 
       - name: Validate plugin formatting audit and clippy
         run: |
           set -euo pipefail
-          ./xtask/target/debug/xtask ci strict --plugin-id "${{ matrix.plugin_id }}"
+          ./xtask/target/xtask-release/xtask ci strict --plugin-id "${{ matrix.plugin_id }}"
 
       - name: Restore single-plugin release plan
         run: |
@@ -252,7 +252,7 @@ jobs:
         run: |
           set -euo pipefail
           mapfile -t plugin_ids < <(cut -f1 release-plan.tsv | sort -u)
-          ./xtask/target/debug/xtask official prefetch "${plugin_ids[@]}"
+          ./xtask/target/xtask-release/xtask official prefetch "${plugin_ids[@]}"
 
       - name: Prepare sign and publish selected plugin assets
         run: |
@@ -286,12 +286,12 @@ jobs:
               echo "No existing child catalog found for ${plugin_id}; preparing first catalog."
             fi
 
-            ./xtask/target/debug/xtask official prepare "${plugin_id}" \
+            ./xtask/target/xtask-release/xtask official prepare "${plugin_id}" \
               --version "${version}" \
               --out "${prepared_dir}" \
               "${existing_args[@]}"
 
-            ./xtask/target/debug/xtask official verify-prepared "${prepared_dir}"
+            ./xtask/target/xtask-release/xtask official verify-prepared "${prepared_dir}"
 
             for asset in plugin.wasm.zst plugin.manifest.json catalog-v2.json catalog-v2.min.json.zst; do
               cosign sign-blob \
@@ -397,8 +397,8 @@ jobs:
       - name: Restore xtask binary
         run: |
           set -euo pipefail
-          install -d xtask/target/debug
-          install -m 0755 xtask-artifact/xtask xtask/target/debug/xtask
+          install -d xtask/target/xtask-release
+          install -m 0755 xtask-artifact/xtask xtask/target/xtask-release/xtask
 
       - name: Restore full release plan
         run: |
@@ -413,7 +413,7 @@ jobs:
         run: |
           set -euo pipefail
           while IFS=$'\t' read -r plugin_id _; do
-            ./xtask/target/debug/xtask official verify-prepared "prepared-child-catalogs/${plugin_id}"
+            ./xtask/target/xtask-release/xtask official verify-prepared "prepared-child-catalogs/${plugin_id}"
           done < release-plan.tsv
 
       - name: Prepare sign and publish central catalog
@@ -427,7 +427,7 @@ jobs:
           for plugin_id in "${plugin_ids[@]}"; do
             prepare_args+=(--plugin-id "${plugin_id}")
           done
-          ./xtask/target/debug/xtask catalog prepare-v2 "${prepare_args[@]}"
+          ./xtask/target/xtask-release/xtask catalog prepare-v2 "${prepare_args[@]}"
           for asset in catalog-v2.json catalog-v2.min.json.zst; do
             cosign sign-blob \
               --yes \

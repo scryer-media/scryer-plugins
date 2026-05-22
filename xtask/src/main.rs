@@ -2380,7 +2380,7 @@ fn optimize_and_compress_wasm(
     run_checked(
         ctx.command("wasm-opt")
             .arg(WASM_OPT_LEVEL)
-            .arg("--enable-bulk-memory-opt")
+            .arg("--enable-bulk-memory")
             .arg(wasm)
             .arg("-o")
             .arg(&optimized),
