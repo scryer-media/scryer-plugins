@@ -21,6 +21,8 @@ permissions:
 
 env:
   RELEASE_PLUGIN_CACHE_SCOPE: release-plugin
+  RELEASE_PLUGIN_PLAN_SCCACHE_LANE: linux-host-xtask
+  RELEASE_PLUGIN_BUILD_SCCACHE_LANE: linux-wasm32-wasip1-plugin-release
 
 jobs:
   plan-release:
@@ -56,10 +58,10 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: /home/runner/.cache/sccache
-          key: gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-validate-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ github.run_id }}
+          key: gha-sccache-v1-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_LANE }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-plan-release-${{ github.run_id }}
           restore-keys: |
-            gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-validate-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
-            gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-validate-
+            gha-sccache-v1-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_LANE }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
+            gha-sccache-v1-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_LANE }}-
 
       - name: Install sccache
         uses: mozilla-actions/sccache-action@v0.0.10
@@ -197,10 +199,10 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: /home/runner/.cache/sccache
-          key: gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-prepare-${{ matrix.plugin_id }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ github.run_id }}
+          key: gha-sccache-v1-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_LANE }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ matrix.plugin_id }}-${{ github.run_id }}
           restore-keys: |
-            gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-prepare-${{ matrix.plugin_id }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
-            gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-prepare-${{ matrix.plugin_id }}-
+            gha-sccache-v1-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_LANE }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
+            gha-sccache-v1-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_LANE }}-
 
       - name: Install release tools
         run: |
