@@ -1,12 +1,12 @@
-use base64::{engine::general_purpose::STANDARD, Engine as _};
+use base64::{Engine as _, engine::general_purpose::STANDARD};
 use extism_pdk::*;
 use scryer_plugin_sdk::{
-    current_sdk_constraint, ConfigFieldDef, ConfigFieldOption, ConfigFieldType,
-    NotificationCapabilities, NotificationDeliveryMode, NotificationDescriptor,
-    NotificationPayloadFormat, PluginDescriptor, PluginError, PluginErrorCode,
-    PluginNotificationRequest, PluginNotificationResponse, PluginNotificationTargetResult,
-    PluginResult, ProviderDescriptor, SocketCloseRequest, SocketOpenRequest, SocketPermission,
-    SocketReadRequest, SocketStartTlsRequest, SocketTlsMode, SocketWriteRequest, SDK_VERSION,
+    ConfigFieldDef, ConfigFieldOption, ConfigFieldType, NotificationCapabilities,
+    NotificationDeliveryMode, NotificationDescriptor, NotificationPayloadFormat, PluginDescriptor,
+    PluginError, PluginErrorCode, PluginNotificationRequest, PluginNotificationResponse,
+    PluginNotificationTargetResult, PluginResult, ProviderDescriptor, SDK_VERSION,
+    SocketCloseRequest, SocketOpenRequest, SocketPermission, SocketReadRequest,
+    SocketStartTlsRequest, SocketTlsMode, SocketWriteRequest, current_sdk_constraint,
 };
 use wasm_smtp::{
     AuthError, IoError, ProtocolError, SmtpClient as WasmSmtpClient, SmtpError, SmtpOp,

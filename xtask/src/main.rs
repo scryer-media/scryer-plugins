@@ -35,7 +35,7 @@ const CATALOG_V2_SCHEMA: &str = "scryer.plugin.catalog.v2";
 const CHILD_CATALOG_V2_SCHEMA: &str = "scryer.plugin.child_catalog.v2";
 const PLUGIN_MANIFEST_SCHEMA: &str = "scryer.plugin.v1";
 const WASM_OPT_LEVEL: &str = "-Oz";
-const ZSTD_LEVEL: &str = "-10";
+const ZSTD_LEVEL: &str = "-19";
 const OFFICIAL_GITHUB_REPO: &str = "scryer-media/scryer-plugins";
 const OFFICIAL_RELEASE_WORKFLOW: &str = ".github/workflows/release-plugin.yml";
 const CENTRAL_CATALOG_RELEASE_TAG: &str = "catalog/v2";
@@ -276,6 +276,8 @@ struct CatalogPrepareV2Args {
     plugin_ids: Vec<String>,
     #[arg(long)]
     existing_catalog: Option<PathBuf>,
+    #[arg(long)]
+    prepared_child_catalog_root: Option<PathBuf>,
 }
 
 #[derive(Args)]
@@ -816,6 +818,12 @@ fn ci_cargo_command_in(ctx: &TaskContext, cwd: &Path) -> Result<Command> {
     let mut command = repo_cargo_command_in(ctx, cwd)?;
     command.env("CARGO_TARGET_DIR", ci_target_dir(ctx, cwd)?);
     Ok(command)
+}
+
+fn cargo_target_dir(cwd: &Path) -> PathBuf {
+    env::var_os("CARGO_TARGET_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| cwd.join("target"))
 }
 
 fn wasm_build_command_in(ctx: &TaskContext, cwd: &Path) -> Result<Command> {
@@ -1781,7 +1789,8 @@ fn build_plugin_wasm(ctx: &TaskContext, plugin_dir: &Path) -> Result<PathBuf> {
     let mut build = wasm_build_command_in(ctx, plugin_dir)?;
     build.args([
         "build",
-        "--release",
+        "--profile",
+        "plugin-release",
         "--target",
         WASM_TARGET,
         "--locked",
@@ -1789,10 +1798,9 @@ fn build_plugin_wasm(ctx: &TaskContext, plugin_dir: &Path) -> Result<PathBuf> {
     ]);
     run_checked(&mut build)?;
 
-    let built_wasm = plugin_dir
-        .join("target")
+    let built_wasm = cargo_target_dir(plugin_dir)
         .join(WASM_TARGET)
-        .join("release")
+        .join("plugin-release")
         .join(wasm_filename);
     if !built_wasm.is_file() {
         bail!("expected WASM at {} but not found", built_wasm.display());
@@ -2276,6 +2284,7 @@ fn optimize_and_compress_wasm(
     run_checked(
         ctx.command("wasm-opt")
             .arg(WASM_OPT_LEVEL)
+            .arg("--enable-bulk-memory-opt")
             .arg(wasm)
             .arg("-o")
             .arg(&optimized),
@@ -2387,6 +2396,27 @@ fn read_catalog_v2_from_path(ctx: &TaskContext, path: &Path) -> Result<CatalogV2
     let bytes = read_catalog_bytes(ctx, path)?;
     serde_json::from_slice(&bytes)
         .with_context(|| format!("failed to parse catalog {}", path.display()))
+}
+
+fn read_child_catalog_v2_from_path(ctx: &TaskContext, path: &Path) -> Result<ChildCatalogV2> {
+    let bytes = read_catalog_bytes(ctx, path)?;
+    serde_json::from_slice(&bytes)
+        .with_context(|| format!("failed to parse child catalog {}", path.display()))
+}
+
+fn read_prepared_child_catalog(ctx: &TaskContext, dir: &Path) -> Result<ChildCatalogV2> {
+    let paths = catalog_asset_paths(dir);
+    if paths.pretty_json.is_file() {
+        return read_child_catalog_v2_from_path(ctx, &paths.pretty_json);
+    }
+    if paths.minified_zst.is_file() {
+        return read_child_catalog_v2_from_path(ctx, &paths.minified_zst);
+    }
+    bail!(
+        "prepared child catalog missing {} or {}",
+        paths.pretty_json.display(),
+        paths.minified_zst.display()
+    );
 }
 
 fn read_published_official_catalog(ctx: &TaskContext) -> Result<CatalogV2> {
@@ -2677,6 +2707,26 @@ fn catalog_entry_from_local_plugin(plugin: &LocalPluginInfo) -> Result<CatalogV2
     })
 }
 
+fn catalog_entry_from_child_catalog(catalog: &ChildCatalogV2) -> Result<CatalogV2Entry> {
+    let release = latest_child_catalog_release(catalog)?;
+    Ok(CatalogV2Entry {
+        id: catalog.id.clone(),
+        name: catalog.name.clone(),
+        description: catalog.description.clone(),
+        plugin_type: catalog.plugin_type.clone(),
+        provider_type: catalog.provider_type.clone(),
+        publisher: catalog.publisher.clone(),
+        support_tier: catalog.support_tier.clone(),
+        docs_url: catalog.docs_url.clone(),
+        source_repo: catalog.source_repo.clone(),
+        child_catalog_url: official_plugin_child_catalog_url(&catalog.id, &release.version),
+        required_signer: RequiredSignerV2 {
+            github_repository: OFFICIAL_GITHUB_REPO.to_string(),
+            github_workflow: Some(OFFICIAL_RELEASE_WORKFLOW.to_string()),
+        },
+    })
+}
+
 fn merge_catalog_plugin_entries(
     existing: Vec<CatalogV2Entry>,
     updates: Vec<CatalogV2Entry>,
@@ -2805,6 +2855,7 @@ fn run_catalog_render_v2(ctx: &TaskContext) -> Result<()> {
             out: None,
             plugin_ids: Vec::new(),
             existing_catalog: None,
+            prepared_child_catalog_root: None,
         },
     )
 }
@@ -2817,15 +2868,32 @@ fn run_catalog_prepare_v2(ctx: &TaskContext, args: CatalogPrepareV2Args) -> Resu
             .map(catalog_entry_from_local_plugin)
             .collect::<Result<Vec<_>>>()?
     } else {
-        step("Preparing catalog-v2 assets for selected official plugin descriptors");
+        if args.prepared_child_catalog_root.is_some() {
+            step("Preparing catalog-v2 assets from prepared official child catalogs");
+        } else {
+            step("Preparing catalog-v2 assets for selected official plugin descriptors");
+        }
         let mut selected = BTreeSet::new();
         let mut updates = Vec::new();
         for plugin_id in &args.plugin_ids {
             if !selected.insert(plugin_id.clone()) {
                 continue;
             }
-            let plugin = discover_local_official_plugin(ctx, plugin_id)?;
-            updates.push(catalog_entry_from_local_plugin(&plugin)?);
+            if let Some(root) = args.prepared_child_catalog_root.as_deref() {
+                let child_catalog = read_prepared_child_catalog(ctx, &root.join(plugin_id))?;
+                if child_catalog.id != *plugin_id {
+                    bail!(
+                        "prepared child catalog at {} has id '{}' but expected '{}'",
+                        root.join(plugin_id).display(),
+                        child_catalog.id,
+                        plugin_id
+                    );
+                }
+                updates.push(catalog_entry_from_child_catalog(&child_catalog)?);
+            } else {
+                let plugin = discover_local_official_plugin(ctx, plugin_id)?;
+                updates.push(catalog_entry_from_local_plugin(&plugin)?);
+            }
         }
         let base_catalog = match args.existing_catalog.as_deref() {
             Some(path) => read_catalog_v2_from_path(ctx, path)?,
@@ -2863,6 +2931,7 @@ fn run_catalog_publish_v2(ctx: &TaskContext) -> Result<()> {
             out: None,
             plugin_ids: Vec::new(),
             existing_catalog: None,
+            prepared_child_catalog_root: None,
         },
     )
 }

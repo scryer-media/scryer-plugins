@@ -2,11 +2,11 @@ use std::collections::HashMap;
 
 use extism_pdk::*;
 use newznab_common::{
-    current_sdk_constraint, execute_full_search, standard_config_fields, Capabilities,
-    IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode,
-    IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput,
-    IndexerSourceKind, IndexerTorrentCapabilities, NewznabConfig, PluginDescriptor, PluginResult,
-    ProviderDescriptor, SearchRequest, SDK_VERSION,
+    Capabilities, IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor,
+    IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures,
+    IndexerSearchInput, IndexerSourceKind, IndexerTorrentCapabilities, NewznabConfig,
+    PluginDescriptor, PluginResult, ProviderDescriptor, SDK_VERSION, SearchRequest,
+    current_sdk_constraint, execute_full_search, standard_config_fields,
 };
 
 #[plugin_fn]

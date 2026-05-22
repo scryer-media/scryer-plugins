@@ -3,17 +3,17 @@ use std::collections::BTreeMap;
 use std::collections::HashSet;
 use std::time::Duration;
 
-use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD as BASE64;
 use extism_pdk::*;
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginResult,
-    ProviderDescriptor, SubtitleCapabilities, SubtitleDescriptor, SubtitleMatchHint,
+    ProviderDescriptor, SDK_VERSION, SubtitleCapabilities, SubtitleDescriptor, SubtitleMatchHint,
     SubtitleMatchHintKind, SubtitlePluginCandidate, SubtitlePluginDownloadRequest,
     SubtitlePluginDownloadResponse, SubtitlePluginSearchRequest, SubtitlePluginSearchResponse,
     SubtitlePluginValidateConfigRequest, SubtitlePluginValidateConfigResponse,
-    SubtitleProviderMode, SubtitleQueryMediaKind, SubtitleValidateConfigStatus, SDK_VERSION,
+    SubtitleProviderMode, SubtitleQueryMediaKind, SubtitleValidateConfigStatus,
 };
 use serde::{Deserialize, Serialize};
 
@@ -761,9 +761,11 @@ mod tests {
 
         let queries = search_query_candidates(&request);
 
-        assert!(queries
-            .iter()
-            .any(|query| query == "kusuriya no hitorigoto 2"));
+        assert!(
+            queries
+                .iter()
+                .any(|query| query == "kusuriya no hitorigoto 2")
+        );
         let qualified = queries
             .iter()
             .position(|query| query == "kusuriya no hitorigoto 2")

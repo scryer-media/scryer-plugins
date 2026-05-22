@@ -4,17 +4,18 @@ use std::hash::{Hash, Hasher};
 use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD as BASE64;
 use extism_pdk::*;
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginHostBindingId,
-    PluginResult, ProviderDescriptor, SubtitleCapabilities, SubtitleDescriptor, SubtitleMatchHint,
-    SubtitleMatchHintKind, SubtitlePluginCandidate, SubtitlePluginDownloadRequest,
-    SubtitlePluginDownloadResponse, SubtitlePluginSearchRequest, SubtitlePluginSearchResponse,
-    SubtitlePluginValidateConfigRequest, SubtitlePluginValidateConfigResponse,
-    SubtitleProviderMode, SubtitleQueryMediaKind, SubtitleValidateConfigStatus, SDK_VERSION,
+    PluginResult, ProviderDescriptor, SDK_VERSION, SubtitleCapabilities, SubtitleDescriptor,
+    SubtitleMatchHint, SubtitleMatchHintKind, SubtitlePluginCandidate,
+    SubtitlePluginDownloadRequest, SubtitlePluginDownloadResponse, SubtitlePluginSearchRequest,
+    SubtitlePluginSearchResponse, SubtitlePluginValidateConfigRequest,
+    SubtitlePluginValidateConfigResponse, SubtitleProviderMode, SubtitleQueryMediaKind,
+    SubtitleValidateConfigStatus,
 };
 use serde::{Deserialize, Serialize};
 
@@ -312,10 +313,10 @@ fn search_subtitles_impl(
     let mut movie_identifier_match = false;
     let mut series_identifier_match = false;
 
-    if config.enable_hash_lookup {
-        if let Some(hash) = request.file_hash.clone() {
-            params.push(("moviehash", hash));
-        }
+    if config.enable_hash_lookup
+        && let Some(hash) = request.file_hash.clone()
+    {
+        params.push(("moviehash", hash));
     }
 
     match request.media_kind {
@@ -1311,9 +1312,8 @@ fn config_bool(key: &str, default: bool) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        append_translation_filter_params, config_auth_fingerprint, descriptor,
+        OpenSubtitlesConfig, append_translation_filter_params, config_auth_fingerprint, descriptor,
         from_opensubtitles_language, is_real_forced, to_opensubtitles_language,
-        OpenSubtitlesConfig,
     };
     use scryer_plugin_sdk::{ConfigFieldValueSource, PluginHostBindingId, ProviderDescriptor};
 

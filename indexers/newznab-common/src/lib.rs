@@ -8,16 +8,16 @@
 use std::collections::HashMap;
 
 use extism_pdk::*;
-use quick_xml::events::Event;
 use quick_xml::Reader;
+use quick_xml::events::Event;
 pub use scryer_plugin_sdk::{
-    current_sdk_constraint, ConfigFieldDef, ConfigFieldRole, ConfigFieldType,
-    IndexerCapabilities as Capabilities, IndexerCategoryModel, IndexerCategoryValueKind,
-    IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol,
-    IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind, IndexerTorrentCapabilities,
-    PluginDescriptor, PluginResult, PluginScoringPolicy as ScoringPolicy,
-    PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
-    PluginSearchResult as SearchResult, ProviderDescriptor, SDK_VERSION,
+    ConfigFieldDef, ConfigFieldRole, ConfigFieldType, IndexerCapabilities as Capabilities,
+    IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode,
+    IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput,
+    IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor, PluginResult,
+    PluginScoringPolicy as ScoringPolicy, PluginSearchRequest as SearchRequest,
+    PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult, ProviderDescriptor,
+    SDK_VERSION, current_sdk_constraint,
 };
 use serde::Deserialize;
 use url::Url;
@@ -2445,10 +2445,12 @@ mod tests {
         let mut usenet_date = None;
         apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
         let flags = result.provider_extra.get("indexer_flags").unwrap();
-        assert!(flags
-            .as_array()
-            .unwrap()
-            .contains(&serde_json::Value::from("scene")));
+        assert!(
+            flags
+                .as_array()
+                .unwrap()
+                .contains(&serde_json::Value::from("scene"))
+        );
     }
 
     #[test]
@@ -2458,10 +2460,12 @@ mod tests {
         let mut usenet_date = None;
         apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
         let flags = result.provider_extra.get("indexer_flags").unwrap();
-        assert!(flags
-            .as_array()
-            .unwrap()
-            .contains(&serde_json::Value::from("nuked")));
+        assert!(
+            flags
+                .as_array()
+                .unwrap()
+                .contains(&serde_json::Value::from("nuked"))
+        );
     }
 
     #[test]

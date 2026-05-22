@@ -24,6 +24,8 @@ env:
 
 jobs:
   validate:
+    outputs:
+      family_matrix: ${{ steps.family-plans.outputs.matrix }}
     runs-on: ubuntu-latest
     env:
       CARGO_INCREMENTAL: "0"
@@ -42,6 +44,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: 1.95.0
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
@@ -106,6 +109,50 @@ jobs:
             printf ' - %s %s\n' "${plugin_id}" "${version}"
           done < release-plan.tsv
 
+      - name: Split release plan by provider family
+        id: family-plans
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import tomllib
+          from pathlib import Path
+
+          root = Path(".")
+          mapping = {}
+          for family in ("download_clients", "indexers", "notifications", "subtitles"):
+              for cargo_toml in root.joinpath(family).glob("*/Cargo.toml"):
+                  document = tomllib.loads(cargo_toml.read_text())
+                  metadata = (
+                      document.get("package", {})
+                      .get("metadata", {})
+                      .get("scryer", {})
+                  )
+                  plugin_id = metadata.get("plugin_id")
+                  if metadata.get("official") is True and plugin_id:
+                      mapping[plugin_id] = family
+
+          buckets = {}
+          for line in Path("release-plan.tsv").read_text().splitlines():
+              plugin_id, version = line.split("\t", 1)
+              family = mapping.get(plugin_id)
+              if family is None:
+                  raise SystemExit(f"unknown or non-official plugin family for {plugin_id}")
+              buckets.setdefault(family, []).append((plugin_id, version))
+
+          matrix = []
+          for family, rows in sorted(buckets.items()):
+              plan_path = Path(f"release-plan-{family}.tsv")
+              plan_path.write_text(
+                  "".join(f"{plugin_id}\t{version}\n" for plugin_id, version in rows)
+              )
+              matrix.append({"family": family})
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+              handle.write(f"matrix={json.dumps({'include': matrix})}\n")
+          PY
+
       - name: Verify formatting audit and clippy
         run: |
           set -euo pipefail
@@ -133,7 +180,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: release-plugin-plan-${{ github.run_id }}
-          path: release-plan.tsv
+          path: |
+            release-plan.tsv
+            release-plan-*.tsv
           if-no-files-found: error
           retention-days: 7
 
@@ -153,8 +202,11 @@ jobs:
           path: /home/runner/.cache/sccache
           key: ${{ steps.validate-sccache-restore.outputs.cache-primary-key }}
 
-  build-sign-release:
+  build-sign-release-family:
     needs: [validate]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.validate.outputs.family_matrix) }}
     runs-on: ubuntu-latest
     env:
       CARGO_INCREMENTAL: "0"
@@ -173,24 +225,25 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: 1.95.0
           targets: wasm32-wasip1
 
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: gha-rust-cache-linux-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-prepare
+          shared-key: gha-rust-cache-linux-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-prepare-${{ matrix.family }}
           cache-targets: "false"
           cache-workspace-crates: "false"
-          key: prepare
+          key: prepare-${{ matrix.family }}
 
       - name: Restore sccache directory
         id: prepare-sccache-restore
         uses: actions/cache/restore@v4
         with:
           path: /home/runner/.cache/sccache
-          key: gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-prepare-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ github.run_id }}
+          key: gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-prepare-${{ matrix.family }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ github.run_id }}
           restore-keys: |
-            gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-prepare-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
-            gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-prepare-
+            gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-prepare-${{ matrix.family }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
+            gha-sccache-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-prepare-${{ matrix.family }}-
 
       - name: Install release tools
         run: |
@@ -230,9 +283,9 @@ jobs:
       - name: Restore release plan
         run: |
           set -euo pipefail
-          install -m 0644 release-plan-artifact/release-plan.tsv release-plan.tsv
+          install -m 0644 "release-plan-artifact/release-plan-${{ matrix.family }}.tsv" release-plan.tsv
           if [ ! -s release-plan.tsv ]; then
-            echo "Release plan is empty" >&2
+            echo "Release plan for ${{ matrix.family }} is empty" >&2
             exit 1
           fi
 
@@ -307,11 +360,115 @@ jobs:
               --clobber
           done < release-plan.tsv
 
+      - name: Stage prepared child catalogs
+        run: |
+          set -euo pipefail
+          rm -rf prepared-child-catalogs
+          mkdir -p prepared-child-catalogs
+          while IFS=$'\t' read -r plugin_id _; do
+            cp -R "dist/catalog-v2/${plugin_id}" "prepared-child-catalogs/${plugin_id}"
+          done < release-plan.tsv
+
+      - name: Show sccache stats
+        if: always()
+        run: |
+          set -euo pipefail
+          sccache --show-stats | tee prepare-sccache-stats.txt
+
+      - name: Upload prepared child catalogs
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-plugin-child-catalogs-${{ github.run_id }}-${{ matrix.family }}
+          path: prepared-child-catalogs
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload release stats
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-plugin-artifacts-${{ github.run_id }}-${{ matrix.family }}
+          path: prepare-sccache-stats.txt
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Save sccache directory
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: /home/runner/.cache/sccache
+          key: ${{ steps.prepare-sccache-restore.outputs.cache-primary-key }}
+
+  publish-central-catalog:
+    needs: [validate, build-sign-release-family]
+    runs-on: ubuntu-latest
+    env:
+      CARGO_INCREMENTAL: "0"
+      CARGO_TERM_COLOR: always
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_ref || github.ref }}
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.95.0
+
+      - uses: sigstore/cosign-installer@v4.1.1
+        with:
+          cosign-release: v3.0.2
+
+      - name: Download xtask artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: release-plugin-xtask-${{ github.run_id }}
+          path: xtask-artifact
+
+      - name: Download release plan artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: release-plugin-plan-${{ github.run_id }}
+          path: release-plan-artifact
+
+      - name: Download prepared child catalogs
+        uses: actions/download-artifact@v8
+        with:
+          pattern: release-plugin-child-catalogs-${{ github.run_id }}-*
+          path: prepared-child-catalogs
+          merge-multiple: true
+
+      - name: Restore xtask binary
+        run: |
+          set -euo pipefail
+          install -d xtask/target/debug
+          install -m 0755 xtask-artifact/xtask xtask/target/debug/xtask
+
+      - name: Restore full release plan
+        run: |
+          set -euo pipefail
+          install -m 0644 release-plan-artifact/release-plan.tsv release-plan.tsv
+          if [ ! -s release-plan.tsv ]; then
+            echo "Release plan is empty" >&2
+            exit 1
+          fi
+
+      - name: Verify prepared child catalogs
+        run: |
+          set -euo pipefail
+          while IFS=$'\t' read -r plugin_id _; do
+            ./xtask/target/debug/xtask official verify-prepared "prepared-child-catalogs/${plugin_id}"
+          done < release-plan.tsv
+
       - name: Prepare sign and publish central catalog
         run: |
           set -euo pipefail
           mapfile -t plugin_ids < <(cut -f1 release-plan.tsv | sort -u)
-          prepare_args=(--out dist/catalog-v2)
+          prepare_args=(
+            --out dist/catalog-v2
+            --prepared-child-catalog-root prepared-child-catalogs
+          )
           for plugin_id in "${plugin_ids[@]}"; do
             prepare_args+=(--plugin-id "${plugin_id}")
           done
@@ -336,27 +493,3 @@ jobs:
             "dist/catalog-v2/catalog-v2.min.json.zst.bundle" \
             --repo "${GITHUB_REPOSITORY}" \
             --clobber
-
-      - name: Show sccache stats
-        if: always()
-        run: |
-          set -euo pipefail
-          sccache --show-stats | tee prepare-sccache-stats.txt
-
-      - name: Upload release stats
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: release-plugin-artifacts-${{ github.run_id }}
-          path: |
-            dist/catalog-v2
-            prepare-sccache-stats.txt
-          if-no-files-found: error
-          retention-days: 7
-
-      - name: Save sccache directory
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: /home/runner/.cache/sccache
-          key: ${{ steps.prepare-sccache-restore.outputs.cache-primary-key }}

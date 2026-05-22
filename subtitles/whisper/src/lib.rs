@@ -1,15 +1,15 @@
 use std::fs;
 
-use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD as BASE64;
 use extism_pdk::*;
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginResult,
-    ProviderDescriptor, SubtitleCapabilities, SubtitleDescriptor, SubtitlePluginGenerateRequest,
-    SubtitlePluginGenerateResponse, SubtitlePluginValidateConfigRequest,
-    SubtitlePluginValidateConfigResponse, SubtitleProviderMode, SubtitleQueryMediaKind,
-    SubtitleValidateConfigStatus, SDK_VERSION,
+    ProviderDescriptor, SDK_VERSION, SubtitleCapabilities, SubtitleDescriptor,
+    SubtitlePluginGenerateRequest, SubtitlePluginGenerateResponse,
+    SubtitlePluginValidateConfigRequest, SubtitlePluginValidateConfigResponse,
+    SubtitleProviderMode, SubtitleQueryMediaKind, SubtitleValidateConfigStatus,
 };
 
 const OPENAI_API_BASE: &str = "https://api.openai.com/v1";

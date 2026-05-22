@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use base64::{engine::general_purpose::STANDARD, Engine as _};
+use base64::{Engine as _, engine::general_purpose::STANDARD};
 use extism_pdk::*;
-use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
+use quick_xml::events::{BytesStart, Event};
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldOption, ConfigFieldRole, ConfigFieldType,
@@ -434,10 +434,10 @@ fn parse_rss_feed(body: &str, preference: DownloadPreference) -> Vec<SearchResul
                 let name = tag_name(event);
                 if name == "enclosure" {
                     parse_enclosure(event, &mut item);
-                } else if name == "attr" || name.ends_with(":attr") {
-                    if let Some(pair) = parse_attr_pair(event) {
-                        item.attrs.push(pair);
-                    }
+                } else if (name == "attr" || name.ends_with(":attr"))
+                    && let Some(pair) = parse_attr_pair(event)
+                {
+                    item.attrs.push(pair);
                 }
             }
             Ok(Event::Text(text)) if in_item => {
