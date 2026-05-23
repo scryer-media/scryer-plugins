@@ -26,6 +26,8 @@ env:
   RELEASE_PLUGIN_BUILD_SCCACHE_LANE: linux-wasm32-wasip1-plugin-release
   RELEASE_PLUGIN_BUILD_SCCACHE_BUILD_FLAVOR: plugin-release
   SCCACHE_VERSION: v0.10.0
+  WASI_SDK_VERSION: "33.0"
+  WASI_SDK_RELEASE_TAG: wasi-sdk-33
   CF_JURISDICTION_URL: ${{ secrets.CF_JURISDICTION_URL }}
   CF_R2_PUBLIC_BASE_URL: https://cdn.scryer.media
   SCRYER_OFFICIAL_RELEASE_WORKFLOW_PATH: .github/workflows/release-plugin.yml
@@ -257,17 +259,34 @@ jobs:
 
       - name: Install release tools
         run: |
+          set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y binaryen clang lld llvm python3-pip wasi-libc zstd
+          sudo apt-get install -y binaryen python3-pip zstd
           python3 -m pip install --user awscli
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          for candidate in /usr/share/wasi-sysroot /usr/lib/wasi-libc /usr/share/wasi-libc; do
-            if [ -d "$candidate" ]; then
-              echo "WASI_SYSROOT=$candidate" >> "$GITHUB_ENV"
-              echo "FFMPEG_WASI_SYSROOT=$candidate" >> "$GITHUB_ENV"
-              break
-            fi
-          done
+          wasi_sdk_archive="wasi-sdk-${WASI_SDK_VERSION}-x86_64-linux.tar.gz"
+          wasi_sdk_url="https://github.com/WebAssembly/wasi-sdk/releases/download/${WASI_SDK_RELEASE_TAG}/${wasi_sdk_archive}"
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
+          curl -fsSL "$wasi_sdk_url" -o "$tmpdir/$wasi_sdk_archive"
+          tar -xzf "$tmpdir/$wasi_sdk_archive" -C "$tmpdir"
+          wasi_sdk_root="$(find "$tmpdir" -maxdepth 1 -type d -name 'wasi-sdk-*' | head -n 1)"
+          if [ -z "$wasi_sdk_root" ]; then
+            echo "failed to extract wasi-sdk root" >&2
+            exit 1
+          fi
+          {
+            echo "$wasi_sdk_root/bin"
+          } >> "$GITHUB_PATH"
+          {
+            echo "WASI_SYSROOT=$wasi_sdk_root/share/wasi-sysroot"
+            echo "FFMPEG_WASI_SYSROOT=$wasi_sdk_root/share/wasi-sysroot"
+            echo "CLANG=$wasi_sdk_root/bin/clang"
+            echo "LLVM_AR=$wasi_sdk_root/bin/llvm-ar"
+            echo "LLVM_NM=$wasi_sdk_root/bin/llvm-nm"
+            echo "LLVM_RANLIB=$wasi_sdk_root/bin/llvm-ranlib"
+            echo "LLVM_STRIP=$wasi_sdk_root/bin/llvm-strip"
+          } >> "$GITHUB_ENV"
 
       - uses: taiki-e/install-action@v2
         with:
@@ -282,10 +301,15 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${WASI_SYSROOT:-}" ] || [ ! -d "${WASI_SYSROOT}" ]; then
-            echo "WASI sysroot not found after installing wasi-libc" >&2
+            echo "WASI sysroot not found after installing wasi-sdk" >&2
+            exit 1
+          fi
+          if [ -z "${CLANG:-}" ] || [ ! -x "${CLANG}" ]; then
+            echo "WASI clang not found after installing wasi-sdk" >&2
             exit 1
           fi
           echo "Using WASI_SYSROOT=${WASI_SYSROOT}"
+          echo "Using CLANG=${CLANG}"
 
       - name: Install sccache
         shell: bash
