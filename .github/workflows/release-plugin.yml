@@ -217,6 +217,7 @@ jobs:
             subtitles/jimaku -> subtitles/jimaku/target
             subtitles/opensubtitles -> subtitles/opensubtitles/target
             subtitles/subdl -> subtitles/subdl/target
+            subtitles/enhanced-sync -> subtitles/enhanced-sync/target
           cache-targets: "false"
           cache-workspace-crates: "false"
           key: plugin-release
