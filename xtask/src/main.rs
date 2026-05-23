@@ -29,18 +29,25 @@ const GREEN: &str = "\x1b[0;32m";
 const YELLOW: &str = "\x1b[1;33m";
 const BOLD: &str = "\x1b[1m";
 const RESET: &str = "\x1b[0m";
-const TREE_REPO_PREFIX: &str = "https://github.com/scryer-media/scryer-plugins/tree/main/";
 const WASM_TARGET: &str = "wasm32-wasip1";
 const CATALOG_V2_SCHEMA: &str = "scryer.plugin.catalog.v2";
 const CHILD_CATALOG_V2_SCHEMA: &str = "scryer.plugin.child_catalog.v2";
 const CATALOG_V3_SCHEMA: &str = "scryer.plugin.catalog.v3";
+const CATALOG_V3_REDIRECT_SCHEMA: &str = "scryer.plugin.catalog.v3.redirect";
 const PLUGIN_MANIFEST_SCHEMA: &str = "scryer.plugin.v1";
 const WASM_OPT_LEVEL: &str = "-Oz";
 const ZSTD_LEVEL: &str = "-19";
+const SHORT_CATALOG_HASH_LEN: usize = 12;
 const OFFICIAL_GITHUB_REPO: &str = "scryer-media/scryer-plugins";
-const OFFICIAL_RELEASE_WORKFLOW: &str = ".github/workflows/release-plugin.yml";
+const DEFAULT_OFFICIAL_RELEASE_WORKFLOW: &str = ".github/workflows/release-plugin.yml";
+const OFFICIAL_RELEASE_WORKFLOW_ENV: &str = "SCRYER_OFFICIAL_RELEASE_WORKFLOW_PATH";
+const OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX_ENV: &str = "SCRYER_OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX";
+const DEFAULT_OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX: &str = "plugins";
 const CENTRAL_CATALOG_RELEASE_TAG: &str = "catalog/v2";
-const CENTRAL_CATALOG_V3_RELEASE_TAG: &str = "catalog/v3";
+const DEFAULT_CENTRAL_CATALOG_V3_RELEASE_TAG: &str = "catalog/v3";
+const CENTRAL_CATALOG_V3_RELEASE_TAG_ENV: &str = "SCRYER_CATALOG_V3_RELEASE_TAG";
+const DEFAULT_CENTRAL_CATALOG_V3_PATH_PREFIX: &str = "catalog/v3";
+const CENTRAL_CATALOG_V3_PATH_PREFIX_ENV: &str = "SCRYER_CATALOG_V3_PATH_PREFIX";
 const CATALOG_V2_BASE_SDK_VERSION: &str = "1.5.0";
 const RULE_PACK_SOURCE_MANIFEST: &str = "rule_packs/manifest.json";
 const REPO_RELEASE_TAG_PREFIX: &str = "plugins/release/";
@@ -50,7 +57,13 @@ const CATALOG_MINIFIED_ZST: &str = "catalog-v2.min.json.zst";
 const CATALOG_V3_SNIPPET_JSON: &str = "catalog-v3.json";
 const CATALOG_V3_MINIFIED_JSON: &str = "catalog-v3.min.json";
 const CATALOG_V3_MINIFIED_ZST: &str = "catalog-v3.min.json.zst";
-const CATALOG_V3_MINIFIED_BR: &str = "catalog-v3.min.json.br";
+const CATALOG_V3_REDIRECT_JSON: &str = "catalog-v3.redirect.json";
+const R2_ACCOUNT_ID_ENV: &str = "CF_R2_ACCOUNT_ID";
+const R2_BUCKET_ENV: &str = "CF_R2_BUCKET";
+const R2_ACCESS_KEY_ID_ENV: &str = "CF_R2_ACCESS_KEY_ID";
+const R2_SECRET_ACCESS_KEY_ENV: &str = "CF_R2_SECRET_ACCESS_KEY";
+const R2_PUBLIC_BASE_URL_ENV: &str = "CF_JURISDICTION_URL";
+const DEFAULT_R2_PUBLIC_BASE_URL: &str = "https://cdn.scryer.media";
 const BROTLI_QUALITY: u32 = 11;
 const BROTLI_LGWIN: u32 = 24;
 const AUDIT_IGNORE_ADVISORIES: &[&str] = &[
@@ -214,6 +227,7 @@ enum OfficialCommand {
     Prefetch(OfficialPrefetchArgs),
     PlanChanged(OfficialPlanChangedArgs),
     VerifyPrepared(OfficialVerifyPreparedArgs),
+    UploadR2(OfficialUploadR2Args),
 }
 
 #[derive(Args)]
@@ -263,6 +277,11 @@ struct OfficialVerifyPreparedArgs {
 }
 
 #[derive(Args)]
+struct OfficialUploadR2Args {
+    dir: PathBuf,
+}
+
+#[derive(Args)]
 struct CatalogArgs {
     #[command(subcommand)]
     command: CatalogCommand,
@@ -276,6 +295,7 @@ enum CatalogCommand {
     PrepareV3(CatalogPrepareV3Args),
     PublishV2,
     PublishV3,
+    UploadV3R2(CatalogUploadV3R2Args),
     ValidateV2,
 }
 
@@ -301,6 +321,11 @@ struct CatalogPrepareV3Args {
     existing_catalog: Option<PathBuf>,
     #[arg(long)]
     prepared_plugin_root: Option<PathBuf>,
+}
+
+#[derive(Args)]
+struct CatalogUploadV3R2Args {
+    dir: PathBuf,
 }
 
 #[derive(Args)]
@@ -369,11 +394,13 @@ struct LocalPluginInfo {
     provider_type: String,
     status: PluginCatalogStatus,
     catalog_versions: BTreeSet<CatalogVersion>,
+    docs_url: String,
     plugin_dir: PathBuf,
     cargo_toml: PathBuf,
     crate_name: String,
     current_version: Version,
     source_repo: String,
+    distribution_base_url: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -383,6 +410,9 @@ struct PluginManifestMetadata {
     plugin_id: Option<String>,
     status: PluginCatalogStatus,
     catalog_versions: BTreeSet<CatalogVersion>,
+    docs_url: Option<String>,
+    source_repo: Option<String>,
+    distribution_base_url: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -397,13 +427,15 @@ struct CatalogV3AssetPaths {
     pretty_json: PathBuf,
     minified_json: PathBuf,
     minified_zst: PathBuf,
-    minified_br: PathBuf,
+    redirect_json: PathBuf,
 }
 
 #[derive(Clone, Debug)]
 struct OfficialPreparedRelease {
     dist: PathBuf,
+    optimized_wasm: PathBuf,
     compressed_wasm: PathBuf,
+    compressed_brotli_wasm: PathBuf,
     manifest_json: Option<PathBuf>,
     child_catalog: Option<CatalogAssetPaths>,
     catalog_v3_snippet: Option<PathBuf>,
@@ -527,7 +559,9 @@ struct RulePackSourceManifest {
 
 #[derive(Clone, Debug, Deserialize)]
 struct RulePackSourceEntry {
+    id: String,
     asset: String,
+    distribution_base_url: String,
     #[serde(default)]
     min_scryer_version: Option<String>,
 }
@@ -549,6 +583,11 @@ struct PreparedRulePack {
     entry: RulePackCatalogEntryV2,
     source_path: PathBuf,
     asset_name: String,
+}
+
+#[derive(Clone, Debug)]
+struct PreparedRulePackV3 {
+    entry: CatalogV3RulePackEntry,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -576,9 +615,11 @@ struct ChildCatalogReleaseV2 {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct CatalogV3 {
     schema_version: String,
+    #[serde(default)]
+    catalog_version: u64,
     plugins: Vec<CatalogV3PluginEntry>,
     #[serde(default)]
-    rule_packs: Vec<RulePackCatalogEntryV2>,
+    rule_packs: Vec<CatalogV3RulePackEntry>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -608,10 +649,43 @@ struct CatalogV3Release {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct CatalogV3Artifact {
     url: String,
+    mirror_urls: Vec<String>,
     signature_url: String,
-    size_bytes: u64,
-    content_type: String,
+    signature_mirror_urls: Vec<String>,
     digests: Vec<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct CatalogV3RulePackEntry {
+    id: String,
+    name: String,
+    description: String,
+    author: String,
+    releases: Vec<CatalogV3RulePackRelease>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct CatalogV3RulePackRelease {
+    version: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    min_scryer_version: Option<String>,
+    rule_pack_digests: Vec<String>,
+    artifacts: Vec<CatalogV3Artifact>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct CatalogV3Redirect {
+    schema_version: String,
+    catalog_version: u64,
+    artifacts: Vec<CatalogV3RedirectArtifact>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct CatalogV3RedirectArtifact {
+    url: String,
+    mirror_urls: Vec<String>,
+    signature_url: String,
+    signature_mirror_urls: Vec<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -659,6 +733,7 @@ fn main() -> Result<()> {
             OfficialCommand::Prefetch(args) => run_official_prefetch(&ctx, args),
             OfficialCommand::PlanChanged(args) => run_official_plan_changed(&ctx, args),
             OfficialCommand::VerifyPrepared(args) => run_official_verify_prepared(&ctx, &args.dir),
+            OfficialCommand::UploadR2(args) => run_official_upload_r2(&ctx, &args.dir),
         },
         Commands::Catalog(args) => match args.command {
             CatalogCommand::RenderV2 => run_catalog_render_v2(&ctx),
@@ -667,6 +742,7 @@ fn main() -> Result<()> {
             CatalogCommand::PrepareV3(args) => run_catalog_prepare_v3(&ctx, args),
             CatalogCommand::PublishV2 => run_catalog_publish_v2(&ctx),
             CatalogCommand::PublishV3 => run_catalog_publish_v3(&ctx),
+            CatalogCommand::UploadV3R2(args) => run_catalog_upload_v3_r2(&ctx, &args.dir),
             CatalogCommand::ValidateV2 => run_catalog_validate_v2(&ctx),
         },
         Commands::Community(args) => match args.command {
@@ -1281,6 +1357,24 @@ fn plugin_manifest_metadata(manifest_path: &Path) -> Result<PluginManifestMetada
         }
         None => default_catalog_versions(),
     };
+    let docs_url = scryer_metadata
+        .and_then(|scryer| scryer.get("docs_url"))
+        .and_then(|value| value.as_str())
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(ToOwned::to_owned);
+    let source_repo = scryer_metadata
+        .and_then(|scryer| scryer.get("source_repo"))
+        .and_then(|value| value.as_str())
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(ToOwned::to_owned);
+    let distribution_base_url = scryer_metadata
+        .and_then(|scryer| scryer.get("distribution_base_url"))
+        .and_then(|value| value.as_str())
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(ToOwned::to_owned);
 
     if official {
         if description.is_empty() {
@@ -1295,6 +1389,24 @@ fn plugin_manifest_metadata(manifest_path: &Path) -> Result<PluginManifestMetada
                 manifest_path.display()
             );
         }
+        if docs_url.is_none() {
+            bail!(
+                "{} must define a non-empty package.metadata.scryer.docs_url for official plugins",
+                manifest_path.display()
+            );
+        }
+        if source_repo.is_none() {
+            bail!(
+                "{} must define a non-empty package.metadata.scryer.source_repo for official plugins",
+                manifest_path.display()
+            );
+        }
+        if distribution_base_url.is_none() {
+            bail!(
+                "{} must define a non-empty package.metadata.scryer.distribution_base_url for official plugins",
+                manifest_path.display()
+            );
+        }
     }
 
     Ok(PluginManifestMetadata {
@@ -1303,6 +1415,9 @@ fn plugin_manifest_metadata(manifest_path: &Path) -> Result<PluginManifestMetada
         plugin_id,
         status,
         catalog_versions,
+        docs_url,
+        source_repo,
+        distribution_base_url,
     })
 }
 
@@ -1388,24 +1503,34 @@ fn plugin_crate_version(plugin_dir: &Path) -> Result<String> {
     package_version(&plugin_dir.join("Cargo.toml"))
 }
 
-fn source_url_for_plugin_dir(ctx: &TaskContext, plugin_dir: &Path) -> Result<String> {
-    let relative = plugin_dir.strip_prefix(&ctx.repo_root).with_context(|| {
-        format!(
-            "{} is not inside {}",
-            plugin_dir.display(),
-            ctx.repo_root.display()
-        )
-    })?;
-    Ok(format!("{TREE_REPO_PREFIX}{}", relative.display()))
-}
-
 fn discover_local_plugin(ctx: &TaskContext, plugin_dir: &Path) -> Result<LocalPluginInfo> {
     let cargo_toml = plugin_dir.join("Cargo.toml");
     let crate_name = crate_name_from_manifest(&cargo_toml)?;
     let current_version = version_from_manifest(&cargo_toml)?;
     let manifest_metadata = plugin_manifest_metadata(&cargo_toml)?;
     let description = manifest_metadata.description.clone();
-    let source_repo = source_url_for_plugin_dir(ctx, plugin_dir)?;
+    let docs_url = manifest_metadata.docs_url.clone().ok_or_else(|| {
+        anyhow!(
+            "{} is missing package.metadata.scryer.docs_url",
+            cargo_toml.display()
+        )
+    })?;
+    let source_repo = manifest_metadata.source_repo.clone().ok_or_else(|| {
+        anyhow!(
+            "{} is missing package.metadata.scryer.source_repo",
+            cargo_toml.display()
+        )
+    })?;
+    let distribution_base_url =
+        manifest_metadata
+            .distribution_base_url
+            .clone()
+            .ok_or_else(|| {
+                anyhow!(
+                    "{} is missing package.metadata.scryer.distribution_base_url",
+                    cargo_toml.display()
+                )
+            })?;
     let wasm = build_plugin_wasm(ctx, plugin_dir)?;
     let descriptor = load_descriptor_from_wasm(&wasm)?;
     validate_descriptor_contract(&descriptor)?;
@@ -1432,11 +1557,13 @@ fn discover_local_plugin(ctx: &TaskContext, plugin_dir: &Path) -> Result<LocalPl
         provider_type: descriptor.provider_type().to_string(),
         status: manifest_metadata.status,
         catalog_versions: manifest_metadata.catalog_versions,
+        docs_url,
         plugin_dir: plugin_dir.to_path_buf(),
         cargo_toml,
         crate_name,
         current_version,
         source_repo,
+        distribution_base_url,
     })
 }
 
@@ -2527,6 +2654,127 @@ fn file_digests(path: &Path) -> Result<Vec<String>> {
     Ok(vec![blake3_file(path)?, shake256_file(path)?])
 }
 
+fn digest_value<'a>(digests: &'a [String], algorithm: &str) -> Result<&'a str> {
+    digests
+        .iter()
+        .find_map(|digest| digest.strip_prefix(&format!("{algorithm}:")))
+        .ok_or_else(|| anyhow!("missing {algorithm} digest"))
+}
+
+fn hashed_filename(logical_name: &str, digests: &[String]) -> Result<String> {
+    let digest = digest_value(digests, "blake3")?;
+    if let Some((prefix, suffix)) = logical_name.split_once('.') {
+        Ok(format!("{prefix}.{digest}.{suffix}"))
+    } else {
+        Ok(format!("{logical_name}-{digest}"))
+    }
+}
+
+fn versioned_hashed_filename(
+    logical_name: &str,
+    version: u64,
+    digests: &[String],
+) -> Result<String> {
+    let digest = digest_value(digests, "blake3")?;
+    let short_digest = digest
+        .get(..SHORT_CATALOG_HASH_LEN)
+        .ok_or_else(|| anyhow!("blake3 digest is shorter than {SHORT_CATALOG_HASH_LEN} hex chars"))?;
+    if let Some((prefix, suffix)) = logical_name.split_once('.') {
+        Ok(format!("{prefix}.{version}.{short_digest}.{suffix}"))
+    } else {
+        Ok(format!("{logical_name}.{version}.{short_digest}"))
+    }
+}
+
+fn trim_url_base(url: &str) -> String {
+    url.trim().trim_end_matches('/').to_string()
+}
+
+fn env_override_or_default(key: &str, default: &str) -> String {
+    env::var(key)
+        .ok()
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| default.to_string())
+}
+
+fn versioned_distribution_url(base: &str, version: &str, file_name: &str) -> String {
+    format!("{}/v{version}/{file_name}", trim_url_base(base))
+}
+
+fn signature_bundle_file_name(file_name: &str) -> String {
+    format!("{file_name}.bundle.zst")
+}
+
+fn official_release_workflow() -> String {
+    env_override_or_default(OFFICIAL_RELEASE_WORKFLOW_ENV, DEFAULT_OFFICIAL_RELEASE_WORKFLOW)
+}
+
+fn official_plugin_release_tag_prefix() -> String {
+    env_override_or_default(
+        OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX_ENV,
+        DEFAULT_OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX,
+    )
+}
+
+fn central_catalog_v3_release_tag() -> String {
+    env_override_or_default(
+        CENTRAL_CATALOG_V3_RELEASE_TAG_ENV,
+        DEFAULT_CENTRAL_CATALOG_V3_RELEASE_TAG,
+    )
+}
+
+fn central_catalog_v3_path_prefix() -> String {
+    env_override_or_default(
+        CENTRAL_CATALOG_V3_PATH_PREFIX_ENV,
+        DEFAULT_CENTRAL_CATALOG_V3_PATH_PREFIX,
+    )
+}
+
+fn public_catalog_base_url() -> String {
+    env::var(R2_PUBLIC_BASE_URL_ENV)
+        .ok()
+        .map(|value| trim_url_base(&value))
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| DEFAULT_R2_PUBLIC_BASE_URL.to_string())
+}
+
+fn url_file_name(url: &str) -> Result<String> {
+    let normalized = url.trim().trim_end_matches('/');
+    normalized
+        .rsplit('/')
+        .next()
+        .filter(|value| !value.is_empty())
+        .map(ToOwned::to_owned)
+        .ok_or_else(|| anyhow!("failed to determine file name from URL {url}"))
+}
+
+fn url_path_key(url: &str) -> Result<String> {
+    let Some((_, remainder)) = url.split_once("://") else {
+        bail!("invalid URL {url}");
+    };
+    let Some((_, path)) = remainder.split_once('/') else {
+        bail!("URL {url} does not include an object path");
+    };
+    if path.is_empty() {
+        bail!("URL {url} does not include an object path");
+    }
+    Ok(path.to_string())
+}
+
+fn content_type_for_upload(path: &Path) -> &'static str {
+    let name = path.file_name().and_then(|value| value.to_str()).unwrap_or_default();
+    if name.ends_with(".json") {
+        "application/json"
+    } else if name.ends_with(".zst") {
+        "application/zstd"
+    } else if name.ends_with(".br") {
+        "application/brotli"
+    } else {
+        "application/octet-stream"
+    }
+}
+
 fn validate_digest_string(label: &str, digest: &str) -> Result<()> {
     let Some((algorithm, hex)) = digest.split_once(':') else {
         bail!("{label} must be formatted as <algorithm>:<hex>");
@@ -2610,10 +2858,11 @@ fn optimize_and_compress_wasm(
     ctx: &TaskContext,
     wasm: &Path,
     dist: &Path,
-) -> Result<(PathBuf, PathBuf)> {
+) -> Result<(PathBuf, PathBuf, PathBuf)> {
     fs::create_dir_all(dist)?;
     let optimized = dist.join("plugin.wasm");
     let compressed = dist.join("plugin.wasm.zst");
+    let compressed_br = dist.join("plugin.wasm.br");
     run_checked(
         ctx.command("wasm-opt")
             .arg(WASM_OPT_LEVEL)
@@ -2632,7 +2881,8 @@ fn optimize_and_compress_wasm(
             .arg("-o")
             .arg(&compressed),
     )?;
-    Ok((optimized, compressed))
+    write_brotli_file(&optimized, &compressed_br)?;
+    Ok((optimized, compressed, compressed_br))
 }
 
 fn github_release_asset_url(repo: &str, tag: &str, asset: &str) -> String {
@@ -2640,8 +2890,19 @@ fn github_release_asset_url(repo: &str, tag: &str, asset: &str) -> String {
     format!("https://github.com/{repo}/releases/download/{tag}/{asset}")
 }
 
+fn official_plugin_github_mirror_urls(plugin_id: &str, version: &str, asset_name: &str) -> Vec<String> {
+    vec![github_release_asset_url(
+        OFFICIAL_GITHUB_REPO,
+        &official_plugin_release_tag(plugin_id, version),
+        asset_name,
+    )]
+}
+
 fn official_plugin_release_tag(plugin_id: &str, version: &str) -> String {
-    format!("plugins/{plugin_id}/v{version}")
+    format!(
+        "{}/{plugin_id}/v{version}",
+        official_plugin_release_tag_prefix()
+    )
 }
 
 fn official_plugin_manifest_url(plugin_id: &str, version: &str) -> String {
@@ -2675,7 +2936,7 @@ fn child_catalog_from_local_plugin(
         provider_type: plugin.provider_type.clone(),
         publisher: "scryer".to_string(),
         support_tier: "official".to_string(),
-        docs_url: plugin.source_repo.clone(),
+        docs_url: plugin.docs_url.clone(),
         source_repo: plugin.source_repo.clone(),
         releases,
     })
@@ -2705,7 +2966,7 @@ fn catalog_v3_asset_paths(dir: &Path) -> CatalogV3AssetPaths {
         pretty_json: dir.join(CATALOG_V3_SNIPPET_JSON),
         minified_json: dir.join(CATALOG_V3_MINIFIED_JSON),
         minified_zst: dir.join(CATALOG_V3_MINIFIED_ZST),
-        minified_br: dir.join(CATALOG_V3_MINIFIED_BR),
+        redirect_json: dir.join(CATALOG_V3_REDIRECT_JSON),
     }
 }
 
@@ -2763,8 +3024,74 @@ fn write_catalog_v3_assets(
             .arg("-o")
             .arg(&paths.minified_zst),
     )?;
-    write_brotli_file(&paths.minified_json, &paths.minified_br)?;
     Ok(paths)
+}
+
+fn write_catalog_v3_redirect(locator: &CatalogV3Redirect, path: &Path) -> Result<PathBuf> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(path, serde_json::to_string_pretty(locator)? + "\n")?;
+    Ok(path.to_path_buf())
+}
+
+fn write_catalog_v3_redirects(
+    redirect: &CatalogV3Redirect,
+    paths: &CatalogV3AssetPaths,
+) -> Result<PathBuf> {
+    write_catalog_v3_redirect(redirect, &paths.redirect_json)
+}
+
+fn stage_hashed_central_catalog_v3_artifacts(
+    paths: &CatalogV3AssetPaths,
+    dir: &Path,
+    catalog_version: u64,
+) -> Result<Vec<(PathBuf, CatalogV3Artifact)>> {
+    let base = format!(
+        "{}/{}/{}",
+        public_catalog_base_url(),
+        central_catalog_v3_path_prefix(),
+        catalog_version
+    );
+    let source = &paths.minified_zst;
+    let logical_name = source
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| anyhow!("invalid central catalog asset {}", source.display()))?;
+    let digests = file_digests(source)?;
+    let file_name = versioned_hashed_filename(logical_name, catalog_version, &digests)?;
+    fs::create_dir_all(dir)?;
+    let hashed_path = dir.join(&file_name);
+    fs::copy(source, &hashed_path).with_context(|| {
+        format!(
+            "failed to stage versioned hashed central catalog asset {}",
+            hashed_path.display()
+        )
+    })?;
+    let file_name = hashed_path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| anyhow!("invalid staged catalog asset {}", hashed_path.display()))?
+        .to_string();
+    let signature_name = signature_bundle_file_name(&file_name);
+    Ok(vec![(
+        hashed_path,
+        CatalogV3Artifact {
+            url: format!("{base}/{file_name}"),
+            mirror_urls: vec![github_release_asset_url(
+                OFFICIAL_GITHUB_REPO,
+                &central_catalog_v3_release_tag(),
+                &file_name,
+            )],
+            signature_url: format!("{base}/{signature_name}"),
+            signature_mirror_urls: vec![github_release_asset_url(
+                OFFICIAL_GITHUB_REPO,
+                &central_catalog_v3_release_tag(),
+                &signature_name,
+            )],
+            digests,
+        },
+    )])
 }
 
 fn read_catalog_bytes(ctx: &TaskContext, path: &Path) -> Result<Vec<u8>> {
@@ -2838,13 +3165,27 @@ fn read_published_official_catalog(ctx: &TaskContext) -> Result<CatalogV2> {
 
 fn read_published_official_catalog_v3(ctx: &TaskContext) -> Result<CatalogV3> {
     let temp = tempfile::tempdir()?;
-    let central_path = github_release_download(
+    let redirect_path = github_release_download(
         ctx,
         OFFICIAL_GITHUB_REPO,
-        CENTRAL_CATALOG_V3_RELEASE_TAG,
-        CATALOG_V3_MINIFIED_ZST,
+        &central_catalog_v3_release_tag(),
+        CATALOG_V3_REDIRECT_JSON,
         temp.path(),
     )?;
+    let redirect: CatalogV3Redirect = serde_json::from_slice(&fs::read(&redirect_path)?)
+        .with_context(|| format!("failed to parse redirect {}", redirect_path.display()))?;
+    let zstd_artifact = redirect
+        .artifacts
+        .iter()
+        .find(|artifact| artifact.url.ends_with(".zst"))
+        .or_else(|| redirect.artifacts.first())
+        .ok_or_else(|| anyhow!("catalog-v3 redirect must contain at least one artifact"))?;
+    let mirror_url = zstd_artifact
+        .mirror_urls
+        .first()
+        .ok_or_else(|| anyhow!("catalog-v3 redirect artifact must contain at least one mirror URL"))?;
+    let (tag, asset) = release_asset_url_parts(mirror_url, OFFICIAL_GITHUB_REPO)?;
+    let central_path = github_release_download(ctx, OFFICIAL_GITHUB_REPO, &tag, &asset, temp.path())?;
     read_catalog_v3_from_path(ctx, &central_path)
 }
 
@@ -2939,7 +3280,7 @@ fn prepare_official_release(
     let dist = args
         .out
         .unwrap_or_else(|| default_child_catalog_dir(ctx, &plugin.plugin_id));
-    let (optimized, compressed) = optimize_and_compress_wasm(ctx, &wasm, &dist)?;
+    let (optimized, compressed, compressed_br) = optimize_and_compress_wasm(ctx, &wasm, &dist)?;
     let descriptor = load_descriptor_from_wasm(&optimized)?;
     validate_descriptor_contract(&descriptor)?;
     let version = args.version.unwrap_or_else(|| descriptor.version.clone());
@@ -2957,6 +3298,8 @@ fn prepare_official_release(
         signature: "plugin.wasm.zst.bundle".to_string(),
     };
     let sdk_constraint = plugin_descriptor_sdk_constraint(&descriptor);
+    let (hashed_zst, _) = stage_hashed_asset_copy(&compressed, "plugin.wasm.zst", &dist)?;
+    let (hashed_br, _) = stage_hashed_asset_copy(&compressed_br, "plugin.wasm.br", &dist)?;
     let manifest_json = if plugin_publishes_catalog(&plugin, CatalogVersion::V2) {
         let manifest_path = dist.join("plugin.manifest.json");
         fs::write(
@@ -2993,7 +3336,7 @@ fn prepare_official_release(
             &manifest.version,
             &sdk_constraint,
             &optimized,
-            &compressed,
+            &[hashed_zst.clone(), hashed_br.clone()],
         )?);
         sort_catalog_v3_releases(&mut releases)?;
         Some(write_catalog_v3_snippet(
@@ -3006,7 +3349,7 @@ fn prepare_official_release(
                 publisher: "scryer".to_string(),
                 support_tier: "official".to_string(),
                 status: plugin.status,
-                docs_url: plugin.source_repo.clone(),
+                docs_url: plugin.docs_url.clone(),
                 source_repo: plugin.source_repo.clone(),
                 required_signer: official_required_signer(),
                 releases,
@@ -3018,7 +3361,9 @@ fn prepare_official_release(
     };
     Ok(OfficialPreparedRelease {
         dist,
+        optimized_wasm: optimized,
         compressed_wasm: compressed,
+        compressed_brotli_wasm: compressed_br,
         manifest_json,
         child_catalog,
         catalog_v3_snippet,
@@ -3031,7 +3376,9 @@ fn run_official_prepare(ctx: &TaskContext, args: OfficialPrepareArgs) -> Result<
         "wrote unsigned release assets to {}",
         prepared.dist.display()
     ));
+    println!("   Optimized : {}", prepared.optimized_wasm.display());
     println!("   Artifact : {}", prepared.compressed_wasm.display());
+    println!("   Artifact : {}", prepared.compressed_brotli_wasm.display());
     if let Some(manifest_json) = &prepared.manifest_json {
         println!("   Manifest : {}", manifest_json.display());
     }
@@ -3164,13 +3511,11 @@ fn run_official_verify_prepared(ctx: &TaskContext, dir: &Path) -> Result<()> {
         let expected_id;
         let expected_version;
         let expected_sdk_constraint;
-        let expected_artifact_name;
         if has_v2_assets {
             let manifest: PluginManifestV2 = serde_json::from_slice(&fs::read(&manifest_path)?)
                 .with_context(|| format!("failed to parse {}", manifest_path.display()))?;
             expected_id = manifest.id;
             expected_version = manifest.version;
-            expected_artifact_name = manifest.artifact;
             let descriptor = load_descriptor_from_wasm(&wasm)?;
             expected_sdk_constraint = plugin_descriptor_sdk_constraint(&descriptor);
         } else {
@@ -3179,7 +3524,6 @@ fn run_official_verify_prepared(ctx: &TaskContext, dir: &Path) -> Result<()> {
             expected_id = descriptor.id.clone();
             expected_version = descriptor.version.clone();
             expected_sdk_constraint = plugin_descriptor_sdk_constraint(&descriptor);
-            expected_artifact_name = "plugin.wasm.zst".to_string();
         }
 
         if snippet.id != expected_id {
@@ -3195,27 +3539,27 @@ fn run_official_verify_prepared(ctx: &TaskContext, dir: &Path) -> Result<()> {
         if snippet_release.sdk_constraint != expected_sdk_constraint {
             bail!("catalog-v3 snippet sdk_constraint does not match prepared plugin");
         }
-        let Some(snippet_artifact) = snippet_release
-            .artifacts
-            .iter()
-            .find(|artifact| artifact.url.ends_with(&expected_artifact_name))
-        else {
-            bail!(
-                "catalog-v3 snippet is missing artifact {}",
-                expected_artifact_name
-            );
-        };
-        validate_catalog_v3_release_artifact(
-            snippet_release,
-            snippet_artifact,
-            &compressed_wasm,
-            &wasm,
-        )?;
-        if !snippet_artifact
-            .signature_url
-            .ends_with("plugin.wasm.zst.bundle")
-        {
-            bail!("catalog-v3 snippet signature_url must end with plugin.wasm.zst.bundle");
+        if snippet_artifacts_are_missing(&snippet_release.artifacts, dir)? {
+            bail!("catalog-v3 snippet references missing prepared artifacts");
+        }
+        for snippet_artifact in &snippet_release.artifacts {
+            let artifact_name = url_file_name(&snippet_artifact.url)?;
+            let artifact_path = dir.join(&artifact_name);
+            validate_catalog_v3_release_artifact(
+                snippet_release,
+                snippet_artifact,
+                &artifact_path,
+                &wasm,
+            )?;
+            if !snippet_artifact
+                .signature_url
+                .ends_with(&format!("{artifact_name}.bundle.zst"))
+            {
+                bail!(
+                    "catalog-v3 snippet signature_url must end with {}.bundle.zst",
+                    artifact_name
+                );
+            }
         }
     }
 
@@ -3233,12 +3577,12 @@ fn catalog_entry_from_local_plugin(plugin: &LocalPluginInfo) -> Result<CatalogV2
         provider_type: plugin.provider_type.clone(),
         publisher: "scryer".to_string(),
         support_tier: "official".to_string(),
-        docs_url: plugin.source_repo.clone(),
+        docs_url: plugin.docs_url.clone(),
         source_repo: plugin.source_repo.clone(),
         child_catalog_url: official_plugin_child_catalog_url(&plugin.plugin_id, &version),
         required_signer: RequiredSignerV2 {
             github_repository: OFFICIAL_GITHUB_REPO.to_string(),
-            github_workflow: Some(OFFICIAL_RELEASE_WORKFLOW.to_string()),
+            github_workflow: Some(official_release_workflow()),
         },
     })
 }
@@ -3258,7 +3602,7 @@ fn catalog_entry_from_child_catalog(catalog: &ChildCatalogV2) -> Result<CatalogV
         child_catalog_url: official_plugin_child_catalog_url(&catalog.id, &release.version),
         required_signer: RequiredSignerV2 {
             github_repository: OFFICIAL_GITHUB_REPO.to_string(),
-            github_workflow: Some(OFFICIAL_RELEASE_WORKFLOW.to_string()),
+            github_workflow: Some(official_release_workflow()),
         },
     })
 }
@@ -3280,18 +3624,52 @@ fn merge_catalog_plugin_entries(
 fn official_required_signer() -> RequiredSignerV2 {
     RequiredSignerV2 {
         github_repository: OFFICIAL_GITHUB_REPO.to_string(),
-        github_workflow: Some(OFFICIAL_RELEASE_WORKFLOW.to_string()),
+        github_workflow: Some(official_release_workflow()),
     }
 }
 
-fn plugin_artifact_content_type(asset_name: &str) -> String {
-    if asset_name.contains(".wasm") {
-        "application/wasm".to_string()
-    } else if asset_name.ends_with(".json") {
-        "application/json".to_string()
-    } else {
-        "application/octet-stream".to_string()
-    }
+fn rule_pack_artifact_file_name(rule_pack_id: &str, compression_suffix: &str) -> String {
+    format!("{rule_pack_id}.min.json.{compression_suffix}")
+}
+
+fn rule_pack_minified_json_file_name(rule_pack_id: &str) -> String {
+    format!("{rule_pack_id}.min.json")
+}
+
+fn stage_hashed_asset_copy(
+    source_path: &Path,
+    logical_name: &str,
+    output_dir: &Path,
+) -> Result<(PathBuf, Vec<String>)> {
+    let digests = file_digests(source_path)?;
+    let file_name = hashed_filename(logical_name, &digests)?;
+    let output_path = output_dir.join(file_name);
+    fs::copy(source_path, &output_path).with_context(|| {
+        format!(
+            "failed to stage hashed asset copy {}",
+            output_path.display()
+        )
+    })?;
+    Ok((output_path, digests))
+}
+
+fn catalog_v3_artifact_from_staged_file(
+    digests: Vec<String>,
+    primary_url: String,
+    mirror_urls: Vec<String>,
+) -> Result<CatalogV3Artifact> {
+    let signature_url = format!("{primary_url}.bundle.zst");
+    let signature_mirror_urls = mirror_urls
+        .iter()
+        .map(|url| format!("{url}.bundle.zst"))
+        .collect::<Vec<_>>();
+    Ok(CatalogV3Artifact {
+        url: primary_url,
+        mirror_urls,
+        signature_url,
+        signature_mirror_urls,
+        digests,
+    })
 }
 
 fn sort_catalog_v3_releases(releases: &mut [CatalogV3Release]) -> Result<()> {
@@ -3324,43 +3702,33 @@ fn merge_catalog_v3_plugin_entries(
     by_id.into_values().collect()
 }
 
-fn catalog_v3_artifact_from_release_asset(
-    repo: &str,
-    tag: &str,
-    asset_name: &str,
-    signature_name: &str,
-    artifact_path: &Path,
-) -> Result<CatalogV3Artifact> {
-    Ok(CatalogV3Artifact {
-        url: github_release_asset_url(repo, tag, asset_name),
-        signature_url: github_release_asset_url(repo, tag, signature_name),
-        size_bytes: fs::metadata(artifact_path)
-            .with_context(|| format!("failed to stat {}", artifact_path.display()))?
-            .len(),
-        content_type: plugin_artifact_content_type(asset_name),
-        digests: file_digests(artifact_path)?,
-    })
-}
-
 fn catalog_v3_release_from_prepared_assets(
     plugin: &LocalPluginInfo,
     version: &str,
     sdk_constraint: &str,
     wasm_path: &Path,
-    compressed_path: &Path,
+    compressed_paths: &[PathBuf],
 ) -> Result<CatalogV3Release> {
-    let tag = official_plugin_release_tag(&plugin.plugin_id, version);
+    let mut artifacts = Vec::new();
+    for compressed_path in compressed_paths {
+        let file_name = compressed_path
+            .file_name()
+            .and_then(|value| value.to_str())
+            .ok_or_else(|| anyhow!("invalid artifact path {}", compressed_path.display()))?
+            .to_string();
+        let primary_url =
+            versioned_distribution_url(&plugin.distribution_base_url, version, &file_name);
+        artifacts.push(catalog_v3_artifact_from_staged_file(
+            file_digests(compressed_path)?,
+            primary_url,
+            official_plugin_github_mirror_urls(&plugin.plugin_id, version, &file_name),
+        )?);
+    }
     Ok(CatalogV3Release {
         version: version.to_string(),
         sdk_constraint: sdk_constraint.to_string(),
         wasm_digests: file_digests(wasm_path)?,
-        artifacts: vec![catalog_v3_artifact_from_release_asset(
-            OFFICIAL_GITHUB_REPO,
-            &tag,
-            "plugin.wasm.zst",
-            "plugin.wasm.zst.bundle",
-            compressed_path,
-        )?],
+        artifacts,
     })
 }
 
@@ -3419,13 +3787,13 @@ fn catalog_v3_release_from_published_v2(
         version: release.version.clone(),
         sdk_constraint: release.sdk_constraint.clone(),
         wasm_digests: file_digests(&wasm_path)?,
-        artifacts: vec![catalog_v3_artifact_from_release_asset(
-            OFFICIAL_GITHUB_REPO,
-            &tag,
-            &manifest.artifact,
-            &manifest.signature,
-            &artifact_path,
-        )?],
+        artifacts: vec![CatalogV3Artifact {
+            url: github_release_asset_url(OFFICIAL_GITHUB_REPO, &tag, &manifest.artifact),
+            mirror_urls: Vec::new(),
+            signature_url: github_release_asset_url(OFFICIAL_GITHUB_REPO, &tag, &manifest.signature),
+            signature_mirror_urls: Vec::new(),
+            digests: file_digests(&artifact_path)?,
+        }],
     })
 }
 
@@ -3480,7 +3848,7 @@ fn catalog_v3_entry_from_local_plugin_history(
         publisher: "scryer".to_string(),
         support_tier: "official".to_string(),
         status: plugin.status,
-        docs_url: plugin.source_repo.clone(),
+        docs_url: plugin.docs_url.clone(),
         source_repo: plugin.source_repo.clone(),
         required_signer: official_required_signer(),
         releases,
@@ -3556,8 +3924,24 @@ fn load_rule_pack_catalog_entries(ctx: &TaskContext) -> Result<Vec<PreparedRuleP
                 )
             })?;
         }
+        if rule_pack.id.trim().is_empty() {
+            bail!("rule pack source entry for '{}' is missing id", asset_name);
+        }
+        if rule_pack.distribution_base_url.trim().is_empty() {
+            bail!(
+                "rule pack source entry for '{}' is missing distribution_base_url",
+                asset_name
+            );
+        }
         let source_path = ctx.repo_root.join("rule_packs").join(&asset_name);
         let manifest = load_rule_pack_manifest(&source_path)?;
+        if manifest.id != rule_pack.id {
+            bail!(
+                "rule pack source id '{}' does not match manifest id '{}'",
+                rule_pack.id,
+                manifest.id
+            );
+        }
         if !ids.insert(manifest.id.clone()) {
             bail!("duplicate rule pack id {}", manifest.id);
         }
@@ -3575,6 +3959,129 @@ fn load_rule_pack_catalog_entries(ctx: &TaskContext) -> Result<Vec<PreparedRuleP
             asset_name,
         });
     }
+    Ok(prepared)
+}
+
+fn prepare_rule_pack_v3_entries(
+    ctx: &TaskContext,
+    output_dir: &Path,
+) -> Result<Vec<PreparedRulePackV3>> {
+    fs::create_dir_all(output_dir)?;
+    let manifest_path = ctx.repo_root.join(RULE_PACK_SOURCE_MANIFEST);
+    let source: RulePackSourceManifest = serde_json::from_slice(&fs::read(&manifest_path)?)
+        .with_context(|| format!("failed to parse {}", manifest_path.display()))?;
+    let mut prepared = Vec::new();
+    let mut ids = BTreeSet::new();
+
+    for rule_pack in source.rule_packs {
+        let asset_name = Path::new(&rule_pack.asset)
+            .file_name()
+            .and_then(|value| value.to_str())
+            .ok_or_else(|| anyhow!("invalid rule pack asset {}", rule_pack.asset))?
+            .to_string();
+        let source_path = ctx.repo_root.join("rule_packs").join(&asset_name);
+        let manifest = load_rule_pack_manifest(&source_path)?;
+        if manifest.id != rule_pack.id {
+            bail!(
+                "rule pack source id '{}' does not match manifest id '{}'",
+                rule_pack.id,
+                manifest.id
+            );
+        }
+        if !ids.insert(manifest.id.clone()) {
+            bail!("duplicate rule pack id {}", manifest.id);
+        }
+        let base_name = rule_pack_minified_json_file_name(&manifest.id);
+        let minified_json_path = output_dir.join(&base_name);
+        let minified = serde_json::to_string(
+            &serde_json::from_slice::<serde_json::Value>(&fs::read(&source_path)?)
+                .with_context(|| format!("failed to parse {}", source_path.display()))?,
+        )?;
+        fs::write(&minified_json_path, minified)
+            .with_context(|| format!("failed to write {}", minified_json_path.display()))?;
+
+        let zst_source = output_dir.join(rule_pack_artifact_file_name(&manifest.id, "zst"));
+        run_checked(
+            ctx.command("zstd")
+                .arg(ZSTD_LEVEL)
+                .arg("-f")
+                .arg(&minified_json_path)
+                .arg("-o")
+                .arg(&zst_source),
+        )?;
+        let br_source = output_dir.join(rule_pack_artifact_file_name(&manifest.id, "br"));
+        write_brotli_file(&minified_json_path, &br_source)?;
+        let (hashed_zst, zst_digests) =
+            stage_hashed_asset_copy(&zst_source, &rule_pack_artifact_file_name(&manifest.id, "zst"), output_dir)?;
+        let (hashed_br, br_digests) =
+            stage_hashed_asset_copy(&br_source, &rule_pack_artifact_file_name(&manifest.id, "br"), output_dir)?;
+        let version = manifest.version.clone();
+        let primary_base = trim_url_base(&rule_pack.distribution_base_url);
+        let zst_name = hashed_zst
+            .file_name()
+            .and_then(|value| value.to_str())
+            .ok_or_else(|| anyhow!("invalid staged rule pack asset {}", hashed_zst.display()))?
+            .to_string();
+        let br_name = hashed_br
+            .file_name()
+            .and_then(|value| value.to_str())
+            .ok_or_else(|| anyhow!("invalid staged rule pack asset {}", hashed_br.display()))?
+            .to_string();
+        prepared.push(PreparedRulePackV3 {
+            entry: CatalogV3RulePackEntry {
+                id: manifest.id.clone(),
+                name: manifest.name,
+                description: manifest.description,
+                author: manifest.author,
+                releases: vec![CatalogV3RulePackRelease {
+                    version: version.clone(),
+                    min_scryer_version: rule_pack.min_scryer_version,
+                    rule_pack_digests: file_digests(&minified_json_path)?,
+                    artifacts: vec![
+                        CatalogV3Artifact {
+                            url: versioned_distribution_url(&primary_base, &version, &zst_name),
+                            mirror_urls: vec![github_release_asset_url(
+                                OFFICIAL_GITHUB_REPO,
+                                &central_catalog_v3_release_tag(),
+                                &zst_name,
+                            )],
+                            signature_url: versioned_distribution_url(
+                                &primary_base,
+                                &version,
+                                &signature_bundle_file_name(&zst_name),
+                            ),
+                            signature_mirror_urls: vec![github_release_asset_url(
+                                OFFICIAL_GITHUB_REPO,
+                                &central_catalog_v3_release_tag(),
+                                &signature_bundle_file_name(&zst_name),
+                            )],
+                            digests: zst_digests,
+                        },
+                        CatalogV3Artifact {
+                            url: versioned_distribution_url(&primary_base, &version, &br_name),
+                            mirror_urls: vec![github_release_asset_url(
+                                OFFICIAL_GITHUB_REPO,
+                                &central_catalog_v3_release_tag(),
+                                &br_name,
+                            )],
+                            signature_url: versioned_distribution_url(
+                                &primary_base,
+                                &version,
+                                &signature_bundle_file_name(&br_name),
+                            ),
+                            signature_mirror_urls: vec![github_release_asset_url(
+                                OFFICIAL_GITHUB_REPO,
+                                &central_catalog_v3_release_tag(),
+                                &signature_bundle_file_name(&br_name),
+                            )],
+                            digests: br_digests,
+                        },
+                    ],
+                }],
+            },
+        });
+    }
+
     Ok(prepared)
 }
 
@@ -3684,7 +4191,19 @@ fn run_catalog_prepare_v2(ctx: &TaskContext, args: CatalogPrepareV2Args) -> Resu
 }
 
 fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Result<()> {
-    let rule_packs = load_rule_pack_catalog_entries(ctx)?;
+    let dist = args
+        .out
+        .clone()
+        .unwrap_or_else(|| default_central_catalog_v3_dir(ctx));
+    let prepared_rule_packs = prepare_rule_pack_v3_entries(ctx, &dist)?;
+    let existing_catalog = match args.existing_catalog.as_deref() {
+        Some(path) => Some(read_catalog_v3_from_path(ctx, path)?),
+        None => read_published_official_catalog_v3(ctx).ok(),
+    };
+    let catalog_version = existing_catalog
+        .as_ref()
+        .map(|catalog| catalog.catalog_version.max(1) + 1)
+        .unwrap_or(1);
     let plugins = if args.plugin_ids.is_empty() {
         step("Preparing catalog-v3 assets from official plugin release history");
         let mut entries = Vec::new();
@@ -3724,11 +4243,7 @@ fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Resu
                 updates.push(catalog_v3_entry_from_local_plugin_history(ctx, &plugin)?);
             }
         }
-        let base_catalog = match args.existing_catalog.as_deref() {
-            Some(path) => Some(read_catalog_v3_from_path(ctx, path)?),
-            None => read_published_official_catalog_v3(ctx).ok(),
-        };
-        let base_plugins = if let Some(catalog) = base_catalog {
+        let base_plugins = if let Some(catalog) = existing_catalog.clone() {
             catalog.plugins
         } else {
             discover_local_plugins(ctx)?
@@ -3742,20 +4257,35 @@ fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Resu
 
     let catalog = CatalogV3 {
         schema_version: CATALOG_V3_SCHEMA.to_string(),
+        catalog_version,
         plugins,
-        rule_packs: rule_packs
+        rule_packs: prepared_rule_packs
             .iter()
             .map(|rule_pack| rule_pack.entry.clone())
             .collect(),
     };
     validate_catalog_v3(&catalog)?;
-    let dist = args
-        .out
-        .unwrap_or_else(|| default_central_catalog_v3_dir(ctx));
     let central_paths = write_catalog_v3_assets(ctx, &catalog, &dist)?;
-    stage_rule_pack_assets(&rule_packs, &dist)?;
+    let staged_central_artifacts =
+        stage_hashed_central_catalog_v3_artifacts(&central_paths, &dist, catalog_version)?;
+    let redirect_path = write_catalog_v3_redirects(
+        &CatalogV3Redirect {
+            schema_version: CATALOG_V3_REDIRECT_SCHEMA.to_string(),
+            catalog_version,
+            artifacts: staged_central_artifacts
+                .iter()
+                .map(|(_, artifact)| CatalogV3RedirectArtifact {
+                    url: artifact.url.clone(),
+                    mirror_urls: artifact.mirror_urls.clone(),
+                    signature_url: artifact.signature_url.clone(),
+                    signature_mirror_urls: artifact.signature_mirror_urls.clone(),
+                })
+                .collect(),
+        },
+        &central_paths,
+    )?;
     ok(format!("wrote {}", central_paths.minified_zst.display()));
-    ok(format!("wrote {}", central_paths.minified_br.display()));
+    ok(format!("wrote {}", redirect_path.display()));
     Ok(())
 }
 
@@ -3787,6 +4317,154 @@ fn run_catalog_publish_v3(ctx: &TaskContext) -> Result<()> {
             prepared_plugin_root: None,
         },
     )
+}
+
+struct R2Config {
+    endpoint_url: String,
+    bucket: String,
+    access_key_id: String,
+    secret_access_key: String,
+}
+
+fn r2_config_from_env() -> Result<R2Config> {
+    let account_id = env::var(R2_ACCOUNT_ID_ENV)
+        .map_err(|_| anyhow!("{R2_ACCOUNT_ID_ENV} must be set for R2 uploads"))?;
+    let bucket =
+        env::var(R2_BUCKET_ENV).map_err(|_| anyhow!("{R2_BUCKET_ENV} must be set for R2 uploads"))?;
+    let access_key_id = env::var(R2_ACCESS_KEY_ID_ENV)
+        .map_err(|_| anyhow!("{R2_ACCESS_KEY_ID_ENV} must be set for R2 uploads"))?;
+    let secret_access_key = env::var(R2_SECRET_ACCESS_KEY_ENV)
+        .map_err(|_| anyhow!("{R2_SECRET_ACCESS_KEY_ENV} must be set for R2 uploads"))?;
+    Ok(R2Config {
+        endpoint_url: format!("https://{account_id}.r2.cloudflarestorage.com"),
+        bucket,
+        access_key_id,
+        secret_access_key,
+    })
+}
+
+fn upload_file_to_r2(
+    ctx: &TaskContext,
+    config: &R2Config,
+    local_path: &Path,
+    public_url: &str,
+) -> Result<()> {
+    let object_key = url_path_key(public_url)?;
+    let destination = format!("s3://{}/{}", config.bucket, object_key);
+    let mut command = ctx.command("aws");
+    command
+        .env("AWS_ACCESS_KEY_ID", &config.access_key_id)
+        .env("AWS_SECRET_ACCESS_KEY", &config.secret_access_key)
+        .env("AWS_DEFAULT_REGION", "auto")
+        .env("AWS_EC2_METADATA_DISABLED", "true")
+        .arg("s3")
+        .arg("cp")
+        .arg(local_path)
+        .arg(destination)
+        .arg("--endpoint-url")
+        .arg(&config.endpoint_url)
+        .arg("--content-type")
+        .arg(content_type_for_upload(local_path))
+        .arg("--only-show-errors");
+    run_checked(&mut command)
+}
+
+fn upload_catalog_v3_artifact_from_dir(
+    ctx: &TaskContext,
+    config: &R2Config,
+    dir: &Path,
+    artifact: &CatalogV3Artifact,
+) -> Result<bool> {
+    let artifact_name = url_file_name(&artifact.url)?;
+    let artifact_path = dir.join(&artifact_name);
+    if !artifact_path.is_file() {
+        return Ok(false);
+    }
+    let signature_name = url_file_name(&artifact.signature_url)?;
+    let signature_path = dir.join(&signature_name);
+    if !signature_path.is_file() {
+        bail!("missing signature bundle {}", signature_path.display());
+    }
+    upload_file_to_r2(ctx, config, &artifact_path, &artifact.url)?;
+    upload_file_to_r2(ctx, config, &signature_path, &artifact.signature_url)?;
+    Ok(true)
+}
+
+fn upload_redirected_catalog_from_dir(
+    ctx: &TaskContext,
+    config: &R2Config,
+    dir: &Path,
+    artifact: &CatalogV3RedirectArtifact,
+) -> Result<()> {
+    let catalog_name = url_file_name(&artifact.url)?;
+    let catalog_path = dir.join(&catalog_name);
+    if !catalog_path.is_file() {
+        bail!("missing redirected catalog artifact {}", catalog_path.display());
+    }
+    upload_file_to_r2(ctx, config, &catalog_path, &artifact.url)?;
+    let signature_name = url_file_name(&artifact.signature_url)?;
+    let signature_path = dir.join(&signature_name);
+    if !signature_path.is_file() {
+        bail!(
+            "missing redirected catalog signature bundle {}",
+            signature_path.display()
+        );
+    }
+    upload_file_to_r2(ctx, config, &signature_path, &artifact.signature_url)?;
+    Ok(())
+}
+
+fn run_official_upload_r2(ctx: &TaskContext, dir: &Path) -> Result<()> {
+    step(format!("Uploading official plugin v3 assets to R2 from {}", dir.display()));
+    let config = r2_config_from_env()?;
+    let snippet = read_prepared_catalog_v3_snippet(dir)?;
+    let mut uploaded = 0usize;
+    for release in &snippet.releases {
+        for artifact in &release.artifacts {
+            if upload_catalog_v3_artifact_from_dir(ctx, &config, dir, artifact)? {
+                uploaded += 1;
+            }
+        }
+    }
+    ok(format!("uploaded {uploaded} plugin artifact(s) to R2"));
+    Ok(())
+}
+
+fn run_catalog_upload_v3_r2(ctx: &TaskContext, dir: &Path) -> Result<()> {
+    step(format!("Uploading catalog-v3 assets to R2 from {}", dir.display()));
+    let config = r2_config_from_env()?;
+    let catalog = read_catalog_v3_from_path(ctx, &dir.join(CATALOG_V3_SNIPPET_JSON))?;
+    let redirect_path = dir.join(CATALOG_V3_REDIRECT_JSON);
+    let redirect: CatalogV3Redirect = serde_json::from_slice(&fs::read(&redirect_path)?)
+        .with_context(|| format!("failed to parse {}", redirect_path.display()))?;
+
+    for artifact in &redirect.artifacts {
+        upload_redirected_catalog_from_dir(ctx, &config, dir, artifact)?;
+    }
+
+    let redirect_url = format!(
+        "{}/{}/{}",
+        public_catalog_base_url(),
+        central_catalog_v3_path_prefix(),
+        CATALOG_V3_REDIRECT_JSON
+    );
+    upload_file_to_r2(ctx, &config, &redirect_path, &redirect_url)?;
+
+    let mut uploaded_rule_pack_artifacts = 0usize;
+    for rule_pack in &catalog.rule_packs {
+        for release in &rule_pack.releases {
+            for artifact in &release.artifacts {
+                if upload_catalog_v3_artifact_from_dir(ctx, &config, dir, artifact)? {
+                    uploaded_rule_pack_artifacts += 1;
+                }
+            }
+        }
+    }
+
+    ok(format!(
+        "uploaded catalog redirects and {uploaded_rule_pack_artifacts} rule-pack artifact(s) to R2"
+    ));
+    Ok(())
 }
 
 fn run_community_scaffold(_ctx: &TaskContext, plugin_id: &str, output_dir: &Path) -> Result<()> {
@@ -3843,11 +4521,11 @@ fn run_community_scaffold(_ctx: &TaskContext, plugin_id: &str, output_dir: &Path
                 artifacts: vec![CatalogV3Artifact {
                     url: "https://github.com/OWNER/REPO/releases/download/v0.1.0/plugin.wasm.zst"
                         .to_string(),
+                    mirror_urls: Vec::new(),
                     signature_url:
-                        "https://github.com/OWNER/REPO/releases/download/v0.1.0/plugin.wasm.zst.bundle"
+                        "https://github.com/OWNER/REPO/releases/download/v0.1.0/plugin.wasm.zst.bundle.zst"
                             .to_string(),
-                    size_bytes: 0,
-                    content_type: "application/wasm".to_string(),
+                    signature_mirror_urls: Vec::new(),
                     digests: vec![
                         "blake3:REPLACE_ME".to_string(),
                         "shake256:REPLACE_ME".to_string(),
@@ -3858,7 +4536,7 @@ fn run_community_scaffold(_ctx: &TaskContext, plugin_id: &str, output_dir: &Path
     )?;
     fs::write(
         output_dir.join(".github/workflows/release-plugin.yml"),
-        "name: release-plugin\non:\n  push:\n    tags: ['v*']\npermissions:\n  contents: write\n  id-token: write\njobs:\n  build-sign-release:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: sigstore/cosign-installer@v4.1.1\n        with:\n          cosign-release: v3.0.2\n      - run: echo 'Adapt this workflow to build wasm32-wasip1, run wasm-opt -Oz, compress with zstd -19, sign plugin.wasm.zst, plugin.manifest.json, catalog-v2.json, and catalog-v3.json, then publish catalog/v2 and catalog/v3 assets.'\n",
+        "name: release-plugin\non:\n  push:\n    tags: ['v*']\npermissions:\n  contents: write\n  id-token: write\njobs:\n  build-sign-release:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: sigstore/cosign-installer@v4.1.1\n        with:\n          cosign-release: v3.0.2\n      - run: echo 'Adapt this workflow to build wasm32-wasip1, run wasm-opt -Oz, compress with zstd -19 and brotli, compress v3 bundles to .bundle.zst, then publish catalog/v2 and catalog/v3 assets.'\n",
     )?;
     ok(format!("scaffolded {}", output_dir.display()));
     Ok(())
@@ -3976,11 +4654,20 @@ fn cosign_verify_blob_with_identity_pattern(
     bundle: &Path,
     identity_pattern: &str,
 ) -> Result<()> {
+    let temp_bundle = if matches!(bundle.extension().and_then(OsStr::to_str), Some("zst" | "br")) {
+        let temp_bundle = tempfile::NamedTempFile::new()?;
+        let bundle_bytes = read_catalog_bytes(ctx, bundle)?;
+        fs::write(temp_bundle.path(), bundle_bytes)?;
+        Some(temp_bundle)
+    } else {
+        None
+    };
+    let bundle_path = temp_bundle.as_ref().map_or(bundle, |temp| temp.path());
     run_checked(
         ctx.command("cosign")
             .arg("verify-blob")
             .arg("--bundle")
-            .arg(bundle)
+            .arg(bundle_path)
             .arg("--certificate-identity-regexp")
             .arg(identity_pattern)
             .arg("--certificate-oidc-issuer")
@@ -4007,7 +4694,7 @@ fn cosign_verify_official_blob(ctx: &TaskContext, blob: &Path, bundle: &Path) ->
     let identity_pattern = format!(
         "^https://github\\.com/{}/{}@refs/(tags|heads)/.*$",
         regex_escape_literal(OFFICIAL_GITHUB_REPO),
-        regex_escape_literal(OFFICIAL_RELEASE_WORKFLOW),
+        regex_escape_literal(&official_release_workflow()),
     );
     cosign_verify_blob_with_identity_pattern(ctx, blob, bundle, &identity_pattern)
 }
@@ -4199,19 +4886,30 @@ fn validate_catalog_v3_plugin_entry(plugin: &CatalogV3PluginEntry) -> Result<()>
                     release.version
                 );
             }
-            if artifact.content_type.trim().is_empty() {
-                bail!(
-                    "{} {}: artifact content_type is required",
-                    plugin.id,
-                    release.version
-                );
-            }
             if artifact.digests.is_empty() {
                 bail!(
                     "{} {}: artifact digests are required",
                     plugin.id,
                     release.version
                 );
+            }
+            for mirror_url in &artifact.mirror_urls {
+                if mirror_url.trim().is_empty() {
+                    bail!(
+                        "{} {}: artifact mirror_urls must not contain empty entries",
+                        plugin.id,
+                        release.version
+                    );
+                }
+            }
+            for mirror_url in &artifact.signature_mirror_urls {
+                if mirror_url.trim().is_empty() {
+                    bail!(
+                        "{} {}: artifact signature_mirror_urls must not contain empty entries",
+                        plugin.id,
+                        release.version
+                    );
+                }
             }
             for digest in &artifact.digests {
                 validate_digest_string("artifact digests", digest)?;
@@ -4227,17 +4925,6 @@ fn validate_catalog_v3_release_artifact(
     artifact_path: &Path,
     wasm_path: &Path,
 ) -> Result<()> {
-    if artifact.size_bytes
-        != fs::metadata(artifact_path)
-            .with_context(|| format!("failed to stat {}", artifact_path.display()))?
-            .len()
-    {
-        bail!(
-            "{}: artifact size_bytes does not match downloaded asset",
-            artifact.url
-        );
-    }
-
     let actual_artifact_digests = file_digests(artifact_path)?;
     if artifact.digests != actual_artifact_digests {
         bail!(
@@ -4255,6 +4942,16 @@ fn validate_catalog_v3_release_artifact(
     }
 
     Ok(())
+}
+
+fn snippet_artifacts_are_missing(artifacts: &[CatalogV3Artifact], dir: &Path) -> Result<bool> {
+    for artifact in artifacts {
+        let artifact_name = url_file_name(&artifact.url)?;
+        if !dir.join(artifact_name).is_file() {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 fn validate_catalog_v3(catalog: &CatalogV3) -> Result<()> {
@@ -4284,6 +4981,81 @@ fn validate_catalog_v3(catalog: &CatalogV3) -> Result<()> {
             );
         }
         validate_catalog_v3_plugin_entry(plugin)?;
+    }
+
+    let mut rule_pack_ids = BTreeSet::new();
+    for rule_pack in &catalog.rule_packs {
+        if !rule_pack_ids.insert(rule_pack.id.clone()) {
+            bail!("duplicate rule pack id {}", rule_pack.id);
+        }
+        for (label, value) in [
+            ("id", &rule_pack.id),
+            ("name", &rule_pack.name),
+            ("description", &rule_pack.description),
+            ("author", &rule_pack.author),
+        ] {
+            if value.trim().is_empty() {
+                bail!("catalog-v3 rule pack field {label} is required");
+            }
+        }
+        if rule_pack.releases.is_empty() {
+            bail!("{}: catalog-v3 rule pack must include at least one release", rule_pack.id);
+        }
+        let mut release_versions = BTreeSet::new();
+        for release in &rule_pack.releases {
+            Version::parse(&release.version).with_context(|| {
+                format!("{}: invalid rule pack release version {}", rule_pack.id, release.version)
+            })?;
+            if !release_versions.insert(release.version.clone()) {
+                bail!("{}: duplicate rule pack release {}", rule_pack.id, release.version);
+            }
+            if let Some(min_scryer_version) = release.min_scryer_version.as_deref() {
+                Version::parse(min_scryer_version).with_context(|| {
+                    format!(
+                        "{} {}: invalid min_scryer_version {}",
+                        rule_pack.id, release.version, min_scryer_version
+                    )
+                })?;
+            }
+            if release.rule_pack_digests.is_empty() {
+                bail!(
+                    "{} {}: rule_pack_digests are required",
+                    rule_pack.id,
+                    release.version
+                );
+            }
+            for digest in &release.rule_pack_digests {
+                validate_digest_string("rule_pack_digests", digest)?;
+            }
+            if release.artifacts.is_empty() {
+                bail!("{} {}: rule pack artifacts are required", rule_pack.id, release.version);
+            }
+            for artifact in &release.artifacts {
+                let artifact_name = url_file_name(&artifact.url)?;
+                if !(artifact_name.ends_with(".min.json.zst") || artifact_name.ends_with(".min.json.br")) {
+                    bail!(
+                        "{} {}: rule pack artifact {} must end with .min.json.zst or .min.json.br",
+                        rule_pack.id,
+                        release.version,
+                        artifact_name
+                    );
+                }
+                if artifact.signature_url.trim().is_empty() {
+                    bail!(
+                        "{} {}: rule pack artifact signature_url is required",
+                        rule_pack.id,
+                        release.version
+                    );
+                }
+                if artifact.digests.is_empty() {
+                    bail!(
+                        "{} {}: rule pack artifact digests are required",
+                        rule_pack.id,
+                        release.version
+                    );
+                }
+            }
+        }
     }
 
     Ok(())
@@ -4329,11 +5101,12 @@ fn validate_official_catalog(catalog: &CatalogV2) -> Result<()> {
                 OFFICIAL_GITHUB_REPO
             );
         }
-        if plugin.required_signer.github_workflow.as_deref() != Some(OFFICIAL_RELEASE_WORKFLOW) {
+        let expected_workflow = official_release_workflow();
+        if plugin.required_signer.github_workflow.as_deref() != Some(expected_workflow.as_str()) {
             bail!(
                 "{}: required_signer.github_workflow must be {}",
                 plugin.id,
-                OFFICIAL_RELEASE_WORKFLOW
+                expected_workflow
             );
         }
 
@@ -4883,6 +5656,9 @@ mod tests {
             provider_type: "email".to_string(),
             status: PluginCatalogStatus::Active,
             catalog_versions: default_catalog_versions(),
+            docs_url:
+                "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+                    .to_string(),
             plugin_dir: PathBuf::from("/tmp/email"),
             cargo_toml: PathBuf::from("/tmp/email/Cargo.toml"),
             crate_name: "email".to_string(),
@@ -4890,6 +5666,7 @@ mod tests {
             source_repo:
                 "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
                     .to_string(),
+            distribution_base_url: "https://cdn.scryer.media/plugins/email".to_string(),
         }
     }
 
@@ -4919,7 +5696,7 @@ mod tests {
             child_catalog_url: official_plugin_child_catalog_url("email", "0.1.0"),
             required_signer: RequiredSignerV2 {
                 github_repository: OFFICIAL_GITHUB_REPO.to_string(),
-                github_workflow: Some(OFFICIAL_RELEASE_WORKFLOW.to_string()),
+                github_workflow: Some(official_release_workflow()),
             },
         }
     }
@@ -5031,10 +5808,10 @@ mod tests {
                 ],
                 artifacts: vec![CatalogV3Artifact {
                     url: "https://example.invalid/email/plugin.wasm.zst".to_string(),
-                    signature_url: "https://example.invalid/email/plugin.wasm.zst.bundle"
+                    mirror_urls: vec![],
+                    signature_url: "https://example.invalid/email/plugin.wasm.zst.bundle.zst"
                         .to_string(),
-                    size_bytes: 42,
-                    content_type: "application/wasm".to_string(),
+                    signature_mirror_urls: vec![],
                     digests: vec![
                         "blake3:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
                             .to_string(),
@@ -5108,6 +5885,9 @@ official = true
 plugin_id = "email"
 status = "beta"
 catalog_versions = ["v3"]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+distribution_base_url = "https://cdn.scryer.media/plugins/email"
 "#,
         );
 
@@ -5120,6 +5900,18 @@ catalog_versions = ["v3"]
         assert_eq!(
             metadata.catalog_versions,
             BTreeSet::from([CatalogVersion::V3])
+        );
+        assert_eq!(
+            metadata.docs_url.as_deref(),
+            Some("https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email")
+        );
+        assert_eq!(
+            metadata.source_repo.as_deref(),
+            Some("https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email")
+        );
+        assert_eq!(
+            metadata.distribution_base_url.as_deref(),
+            Some("https://cdn.scryer.media/plugins/email")
         );
     }
 
@@ -5177,6 +5969,9 @@ license = "GPL-3.0-only"
 [package.metadata.scryer]
 official = true
 plugin_id = "email"
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+distribution_base_url = "https://cdn.scryer.media/plugins/email"
 "#,
         );
 
@@ -5199,6 +5994,9 @@ description = "Email notifications"
 [package.metadata.scryer]
 official = true
 plugin_id = "email"
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+distribution_base_url = "https://cdn.scryer.media/plugins/email"
 "#,
         );
 

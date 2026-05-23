@@ -8,7 +8,10 @@ description = "Plaintext SMTP email notification plugin with plain, STARTTLS, an
 [package.metadata.scryer]
 official = true
 plugin_id = "email"
-catalog_versions = ["v2", "v3"]
+catalog_versions = ["v3"]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+distribution_base_url = "https://cdn.scryer.media/plugins/email"
 
 [lib]
 crate-type = ["cdylib"]
