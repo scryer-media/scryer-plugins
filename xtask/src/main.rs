@@ -69,6 +69,7 @@ const DEFAULT_R2_PUBLIC_BASE_URL: &str = "https://cdn.scryer.media";
 const BROTLI_QUALITY: u32 = 11;
 const BROTLI_LGWIN: u32 = 24;
 const ENHANCED_SYNC_FFMPEG_VENDOR_DIR: &str = "subtitles/enhanced-sync/vendor/ffmpeg";
+const ENHANCED_SYNC_FFMPEG_VENDOR_METADATA: &str = "SCRYER_VENDOR_METADATA";
 const FFMPEG_VENDOR_PATHS: &[&str] = &[
     "COPYING.LGPLv2.1",
     "LICENSE.md",
@@ -4320,6 +4321,8 @@ fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Resu
         }
         let base_plugins = if let Some(catalog) = existing_catalog.clone() {
             catalog.plugins
+        } else if args.prepared_plugin_root.is_some() {
+            Vec::new()
         } else {
             discover_local_plugins(ctx)?
                 .iter()
@@ -5763,12 +5766,14 @@ fn run_ffmpeg_revendor(ctx: &TaskContext, args: FfmpegRevendorArgs) -> Result<()
     )
     .context("read FFmpeg commit date")?;
     let source_url = git_capture_in(ctx, &source, ["config", "--get", "remote.origin.url"])
+        .map(|value| value.trim().to_string())
         .unwrap_or_else(|_| args.source.clone());
 
     let staged_vendor = scratch.path().join("ffmpeg-vendor");
     fs::create_dir_all(&staged_vendor).context("create staged FFmpeg vendor directory")?;
     archive_ffmpeg_paths(ctx, &source, &commit, &staged_vendor)?;
     write_ffmpeg_upstream_metadata(&staged_vendor, &source_url, &commit, source_date.trim())?;
+    write_ffmpeg_vendor_metadata(&staged_vendor, &source_url, &commit, source_date.trim())?;
 
     let vendor_dir = ctx.path(ENHANCED_SYNC_FFMPEG_VENDOR_DIR);
     if vendor_dir.exists() {
@@ -5907,6 +5912,22 @@ demuxers/muxer, no filters, and no network support.
 "#
     );
     fs::write(vendor_dir.join("UPSTREAM.md"), metadata).context("write FFmpeg UPSTREAM.md")
+}
+
+fn write_ffmpeg_vendor_metadata(
+    vendor_dir: &Path,
+    source_url: &str,
+    commit: &str,
+    source_date: &str,
+) -> Result<()> {
+    let metadata = format!(
+        "repository={source_url}\ncommit={commit}\nrevision=git-{commit}\nsource_date={source_date}\n"
+    );
+    fs::write(
+        vendor_dir.join(ENHANCED_SYNC_FFMPEG_VENDOR_METADATA),
+        metadata,
+    )
+    .context("write FFmpeg vendor metadata")
 }
 
 fn git_capture_in<const N: usize>(
