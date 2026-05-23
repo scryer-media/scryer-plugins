@@ -65,7 +65,8 @@ const R2_BUCKET_ENV: &str = "CF_R2_BUCKET_ID";
 const R2_BUCKET_ENV_LEGACY: &str = "CF_R2_BUCKET";
 const R2_ACCESS_KEY_ID_ENV: &str = "CF_R2_ACCESS_KEY_ID";
 const R2_SECRET_ACCESS_KEY_ENV: &str = "CF_R2_SECRET_ACCESS_KEY";
-const R2_PUBLIC_BASE_URL_ENV: &str = "CF_JURISDICTION_URL";
+const R2_UPLOAD_ENDPOINT_ENV: &str = "CF_JURISDICTION_URL";
+const R2_PUBLIC_BASE_URL_ENV: &str = "CF_R2_PUBLIC_BASE_URL";
 const DEFAULT_R2_PUBLIC_BASE_URL: &str = "https://cdn.scryer.media";
 const BROTLI_QUALITY: u32 = 11;
 const BROTLI_LGWIN: u32 = 24;
@@ -4431,8 +4432,13 @@ fn r2_config_from_env() -> Result<R2Config> {
         .ok_or_else(|| anyhow!("{R2_ACCESS_KEY_ID_ENV} must be set for R2 uploads"))?;
     let secret_access_key = first_nonempty_env(&[R2_SECRET_ACCESS_KEY_ENV])
         .ok_or_else(|| anyhow!("{R2_SECRET_ACCESS_KEY_ENV} must be set for R2 uploads"))?;
+    let endpoint_url = env::var(R2_UPLOAD_ENDPOINT_ENV)
+        .ok()
+        .map(|value| trim_url_base(&value))
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| format!("https://{account_id}.r2.cloudflarestorage.com"));
     Ok(R2Config {
-        endpoint_url: format!("https://{account_id}.r2.cloudflarestorage.com"),
+        endpoint_url,
         bucket,
         access_key_id,
         secret_access_key,

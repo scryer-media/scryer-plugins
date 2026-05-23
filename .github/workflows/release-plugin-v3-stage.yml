@@ -26,6 +26,7 @@ env:
   RELEASE_PLUGIN_BUILD_SCCACHE_LANE: linux-wasm32-wasip1-plugin-release
   RELEASE_PLUGIN_BUILD_SCCACHE_BUILD_FLAVOR: plugin-release
   CF_JURISDICTION_URL: ${{ secrets.CF_JURISDICTION_URL }}
+  CF_R2_PUBLIC_BASE_URL: https://cdn.scryer.media
   SCRYER_OFFICIAL_RELEASE_WORKFLOW_PATH: .github/workflows/release-plugin-v3-stage.yml
   SCRYER_OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX: plugins-stage
   SCRYER_CATALOG_V3_RELEASE_TAG: catalog/v3-stage
