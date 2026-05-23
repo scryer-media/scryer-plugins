@@ -961,10 +961,7 @@ mod tests {
 
             assert_eq!(transcoded.sample_rate_hz, 16_000, "{env_name}");
             assert_eq!(transcoded.channels, 1, "{env_name}");
-            assert!(
-                transcoded.samples_written > 0,
-                "{env_name}"
-            );
+            assert!(transcoded.samples_written > 0, "{env_name}");
 
             assert_eq!(transcoded.codec, expected_codec, "{env_name}");
             assert_eq!(
@@ -988,7 +985,10 @@ mod tests {
             );
         }
 
-        assert!(ran > 0, "set at least one SCRYER_ENHANCED_SYNC_ACCEPT_* env var");
+        assert!(
+            ran > 0,
+            "set at least one SCRYER_ENHANCED_SYNC_ACCEPT_* env var"
+        );
     }
 
     #[test]
