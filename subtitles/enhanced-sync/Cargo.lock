@@ -76,7 +76,7 @@ checksum = "91622ff5e7162018101f2fea40d6ebf4a78bbe5a49736a2020649edf9693679e"
 
 [[package]]
 name = "enhanced-subtitle-sync-plugin"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "alass-core",
  "base64",
@@ -548,6 +548,7 @@ dependencies = [
 [[package]]
 name = "scryer-plugin-sdk"
 version = "2.0.0"
+source = "git+https://github.com/scryer-media/scryer?tag=plugin-sdk-v2.0.0#c4016f2486764f5901b56f50ba795e0c8094125f"
 dependencies = [
  "base64",
  "extism-manifest",

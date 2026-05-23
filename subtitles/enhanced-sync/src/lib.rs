@@ -256,6 +256,15 @@ struct AlignmentSummary {
     split_score: f64,
 }
 
+#[derive(Debug, Clone, Default)]
+struct SkippedAlignmentDetails {
+    offset_ms: i64,
+    consistency_ratio: Option<f64>,
+    nosplit_score: Option<f64>,
+    split_score: Option<f64>,
+    message: Option<String>,
+}
+
 fn align_impl(request: &SubtitleSyncAlignRequest) -> SubtitleSyncAlignResponse {
     let subtitle_spans = request
         .subtitle_spans
@@ -267,13 +276,12 @@ fn align_impl(request: &SubtitleSyncAlignRequest) -> SubtitleSyncAlignResponse {
         Err(message) => {
             return skipped_align_response(
                 SubtitleSyncAlignSkipReason::AudioDecodeFailed,
-                0,
-                None,
-                None,
-                None,
                 request_backend_label(request).to_string(),
                 Vec::new(),
-                Some(message),
+                SkippedAlignmentDetails {
+                    message: Some(message),
+                    ..Default::default()
+                },
             );
         }
     };
@@ -281,16 +289,15 @@ fn align_impl(request: &SubtitleSyncAlignRequest) -> SubtitleSyncAlignResponse {
     if reference_spans.len() < MIN_REFERENCE_SPANS {
         return skipped_align_response(
             SubtitleSyncAlignSkipReason::NotEnoughReferenceSpans,
-            0,
-            None,
-            None,
-            None,
             backend,
             warnings,
-            Some(format!(
-                "decoded only {} reference speech spans",
-                reference_spans.len()
-            )),
+            SkippedAlignmentDetails {
+                message: Some(format!(
+                    "decoded only {} reference speech spans",
+                    reference_spans.len()
+                )),
+                ..Default::default()
+            },
         );
     }
 
@@ -298,52 +305,60 @@ fn align_impl(request: &SubtitleSyncAlignRequest) -> SubtitleSyncAlignResponse {
     if alignment.nosplit_score <= 0.0 || alignment.split_score <= 0.0 {
         return skipped_align_response(
             SubtitleSyncAlignSkipReason::WeakAlignment,
-            alignment.offset_ms,
-            Some(alignment.consistency_ratio),
-            Some(alignment.nosplit_score),
-            Some(alignment.split_score),
             backend,
             warnings,
-            Some("alignment score too weak".to_string()),
+            SkippedAlignmentDetails {
+                offset_ms: alignment.offset_ms,
+                consistency_ratio: Some(alignment.consistency_ratio),
+                nosplit_score: Some(alignment.nosplit_score),
+                split_score: Some(alignment.split_score),
+                message: Some("alignment score too weak".to_string()),
+            },
         );
     }
 
     if alignment.consistency_ratio < MIN_CONSISTENT_DELTA_RATIO {
         return skipped_align_response(
             SubtitleSyncAlignSkipReason::LowAlignmentConsistency,
-            alignment.offset_ms,
-            Some(alignment.consistency_ratio),
-            Some(alignment.nosplit_score),
-            Some(alignment.split_score),
             backend,
             warnings,
-            Some("alignment consistency below threshold".to_string()),
+            SkippedAlignmentDetails {
+                offset_ms: alignment.offset_ms,
+                consistency_ratio: Some(alignment.consistency_ratio),
+                nosplit_score: Some(alignment.nosplit_score),
+                split_score: Some(alignment.split_score),
+                message: Some("alignment consistency below threshold".to_string()),
+            },
         );
     }
 
     if alignment.offset_ms.unsigned_abs() > (request.max_offset_seconds as u64 * 1000) {
         return skipped_align_response(
             SubtitleSyncAlignSkipReason::OffsetExceedsMaximum,
-            alignment.offset_ms,
-            Some(alignment.consistency_ratio),
-            Some(alignment.nosplit_score),
-            Some(alignment.split_score),
             backend,
             warnings,
-            Some("alignment offset exceeds configured maximum".to_string()),
+            SkippedAlignmentDetails {
+                offset_ms: alignment.offset_ms,
+                consistency_ratio: Some(alignment.consistency_ratio),
+                nosplit_score: Some(alignment.nosplit_score),
+                split_score: Some(alignment.split_score),
+                message: Some("alignment offset exceeds configured maximum".to_string()),
+            },
         );
     }
 
     if alignment.offset_ms.unsigned_abs() < MIN_EFFECTIVE_OFFSET_MS as u64 {
         return skipped_align_response(
             SubtitleSyncAlignSkipReason::OffsetTooSmall,
-            alignment.offset_ms,
-            Some(alignment.consistency_ratio),
-            Some(alignment.nosplit_score),
-            Some(alignment.split_score),
             backend,
             warnings,
-            Some("alignment offset too small to apply".to_string()),
+            SkippedAlignmentDetails {
+                offset_ms: alignment.offset_ms,
+                consistency_ratio: Some(alignment.consistency_ratio),
+                nosplit_score: Some(alignment.nosplit_score),
+                split_score: Some(alignment.split_score),
+                message: Some("alignment offset too small to apply".to_string()),
+            },
         );
     }
 
@@ -471,24 +486,20 @@ fn delta_consistency_ratio(deltas: &[TimeDelta], offset_ms: i64) -> f64 {
 
 fn skipped_align_response(
     skipped_reason: SubtitleSyncAlignSkipReason,
-    offset_ms: i64,
-    consistency_ratio: Option<f64>,
-    nosplit_score: Option<f64>,
-    split_score: Option<f64>,
     backend: String,
     warnings: Vec<String>,
-    message: Option<String>,
+    details: SkippedAlignmentDetails,
 ) -> SubtitleSyncAlignResponse {
     SubtitleSyncAlignResponse {
         applied: false,
-        offset_ms,
-        consistency_ratio,
-        nosplit_score,
-        split_score,
+        offset_ms: details.offset_ms,
+        consistency_ratio: details.consistency_ratio,
+        nosplit_score: details.nosplit_score,
+        split_score: details.split_score,
         skipped_reason: Some(skipped_reason),
         backend,
         warnings,
-        message,
+        message: details.message,
     }
 }
 
