@@ -8,6 +8,7 @@ description = "OpenSubtitles subtitle provider with provider-managed auth, searc
 [package.metadata.scryer]
 official = true
 plugin_id = "opensubtitles"
+catalog_versions = ["v2", "v3"]
 
 [lib]
 crate-type = ["cdylib"]

@@ -8,6 +8,7 @@ description = "NZBGeek-specific Newznab indexer with metadata extraction (thumbs
 [package.metadata.scryer]
 official = true
 plugin_id = "nzbgeek"
+catalog_versions = ["v2", "v3"]
 
 [lib]
 crate-type = ["cdylib"]

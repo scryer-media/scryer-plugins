@@ -116,6 +116,11 @@ impl ScaffoldSpec {
         document["package"]["version"] = value("0.1.0");
         document["package"]["edition"] = value("2024");
         document["package"]["metadata"]["scryer"]["official"] = value(false);
+        let mut catalog_versions = Array::new();
+        catalog_versions.push("v2");
+        catalog_versions.push("v3");
+        document["package"]["metadata"]["scryer"]["catalog_versions"] =
+            Item::Value(catalog_versions.into());
 
         let mut crate_types = Array::new();
         crate_types.push("cdylib");

@@ -8,6 +8,7 @@ description = "Targeted Jellyfin library refresh notifications using mapped medi
 [package.metadata.scryer]
 official = true
 plugin_id = "jellyfin"
+catalog_versions = ["v2", "v3"]
 
 [lib]
 crate-type = ["cdylib"]

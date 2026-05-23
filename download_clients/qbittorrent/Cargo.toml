@@ -8,6 +8,7 @@ description = "Torrent download client plugin for qBittorrent with category/tag 
 [package.metadata.scryer]
 official = true
 plugin_id = "qbittorrent"
+catalog_versions = ["v2", "v3"]
 
 [lib]
 crate-type = ["cdylib"]

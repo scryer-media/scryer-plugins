@@ -295,11 +295,15 @@ jobs:
 
             ./xtask/target/xtask-release/xtask official verify-prepared "${prepared_dir}"
 
-            for asset in plugin.wasm.zst plugin.manifest.json catalog-v2.json catalog-v2.min.json.zst; do
-              cosign sign-blob \
-                --yes \
-                --bundle "${prepared_dir}/${asset}.bundle" \
-                "${prepared_dir}/${asset}"
+            release_assets=("${prepared_dir}/plugin.wasm.zst" "${prepared_dir}/plugin.wasm.zst.bundle")
+            for asset in plugin.manifest.json catalog-v2.json catalog-v2.min.json.zst catalog-v3.json; do
+              if [ -f "${prepared_dir}/${asset}" ]; then
+                cosign sign-blob \
+                  --yes \
+                  --bundle "${prepared_dir}/${asset}.bundle" \
+                  "${prepared_dir}/${asset}"
+                release_assets+=("${prepared_dir}/${asset}" "${prepared_dir}/${asset}.bundle")
+              fi
             done
 
             gh release view "${tag}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 || \
@@ -309,14 +313,7 @@ jobs:
                 --target "$(git rev-parse HEAD)" \
                 --notes "Scryer plugin distribution assets."
             gh release upload "${tag}" \
-              "${prepared_dir}/plugin.wasm.zst" \
-              "${prepared_dir}/plugin.wasm.zst.bundle" \
-              "${prepared_dir}/plugin.manifest.json" \
-              "${prepared_dir}/plugin.manifest.json.bundle" \
-              "${prepared_dir}/catalog-v2.json" \
-              "${prepared_dir}/catalog-v2.json.bundle" \
-              "${prepared_dir}/catalog-v2.min.json.zst" \
-              "${prepared_dir}/catalog-v2.min.json.zst.bundle" \
+              "${release_assets[@]}" \
               --repo "${GITHUB_REPOSITORY}" \
               --clobber
           done < release-plan.tsv
@@ -422,19 +419,31 @@ jobs:
         run: |
           set -euo pipefail
           mapfile -t plugin_ids < <(cut -f1 release-plan.tsv | sort -u)
-          prepare_args=(
+          prepare_v2_args=(
             --out dist/catalog-v2
             --prepared-child-catalog-root prepared-child-catalogs
           )
+          prepare_v3_args=(
+            --out dist/catalog-v3
+            --prepared-plugin-root prepared-child-catalogs
+          )
           for plugin_id in "${plugin_ids[@]}"; do
-            prepare_args+=(--plugin-id "${plugin_id}")
+            prepare_v2_args+=(--plugin-id "${plugin_id}")
+            prepare_v3_args+=(--plugin-id "${plugin_id}")
           done
-          ./xtask/target/xtask-release/xtask catalog prepare-v2 "${prepare_args[@]}"
+          ./xtask/target/xtask-release/xtask catalog prepare-v2 "${prepare_v2_args[@]}"
+          ./xtask/target/xtask-release/xtask catalog prepare-v3 "${prepare_v3_args[@]}"
           for asset in catalog-v2.json catalog-v2.min.json.zst; do
             cosign sign-blob \
               --yes \
               --bundle "dist/catalog-v2/${asset}.bundle" \
               "dist/catalog-v2/${asset}"
+          done
+          for asset in catalog-v3.min.json.zst catalog-v3.min.json.br; do
+            cosign sign-blob \
+              --yes \
+              --bundle "dist/catalog-v3/${asset}.bundle" \
+              "dist/catalog-v3/${asset}"
           done
 
           gh release view "catalog/v2" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 || \
@@ -448,5 +457,19 @@ jobs:
             "dist/catalog-v2/catalog-v2.json.bundle" \
             "dist/catalog-v2/catalog-v2.min.json.zst" \
             "dist/catalog-v2/catalog-v2.min.json.zst.bundle" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --clobber
+
+          gh release view "catalog/v3" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 || \
+            gh release create "catalog/v3" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --title "Scryer plugin central catalog v3" \
+              --target "$(git rev-parse HEAD)" \
+              --notes "Scryer plugin central catalog v3 assets."
+          gh release upload "catalog/v3" \
+            "dist/catalog-v3/catalog-v3.min.json.zst" \
+            "dist/catalog-v3/catalog-v3.min.json.zst.bundle" \
+            "dist/catalog-v3/catalog-v3.min.json.br" \
+            "dist/catalog-v3/catalog-v3.min.json.br.bundle" \
             --repo "${GITHUB_REPOSITORY}" \
             --clobber

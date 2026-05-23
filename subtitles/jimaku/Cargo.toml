@@ -8,6 +8,7 @@ description = "Anime-focused Jimaku subtitle provider using AniList IDs and opti
 [package.metadata.scryer]
 official = true
 plugin_id = "jimaku"
+catalog_versions = ["v2", "v3"]
 
 [lib]
 crate-type = ["cdylib"]

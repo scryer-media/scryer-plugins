@@ -8,6 +8,7 @@ description = "Generic Newznab protocol indexer for compatible services"
 [package.metadata.scryer]
 official = true
 plugin_id = "newznab"
+catalog_versions = ["v2", "v3"]
 
 [lib]
 crate-type = ["cdylib"]

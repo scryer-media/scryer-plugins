@@ -8,6 +8,7 @@ description = "Generic Torznab-compatible torrent indexer for Jackett and native
 [package.metadata.scryer]
 official = true
 plugin_id = "torznab"
+catalog_versions = ["v2", "v3"]
 
 [lib]
 crate-type = ["cdylib"]

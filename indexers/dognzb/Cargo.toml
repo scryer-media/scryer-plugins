@@ -8,6 +8,7 @@ description = "DogNZB-specific Newznab indexer with rating, genre, and comment m
 [package.metadata.scryer]
 official = true
 plugin_id = "dognzb"
+catalog_versions = ["v2", "v3"]
 
 [lib]
 crate-type = ["cdylib"]

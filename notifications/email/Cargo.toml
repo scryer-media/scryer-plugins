@@ -8,6 +8,7 @@ description = "Plaintext SMTP email notification plugin with plain, STARTTLS, an
 [package.metadata.scryer]
 official = true
 plugin_id = "email"
+catalog_versions = ["v2", "v3"]
 
 [lib]
 crate-type = ["cdylib"]

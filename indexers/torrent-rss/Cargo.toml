@@ -8,6 +8,7 @@ description = "Generic torrent RSS indexer for trackers and aggregators that exp
 [package.metadata.scryer]
 official = true
 plugin_id = "torrent-rss"
+catalog_versions = ["v2", "v3"]
 
 [lib]
 crate-type = ["cdylib"]
