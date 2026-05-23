@@ -18,6 +18,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::ffi::OsStr;
 use std::fs;
+use std::io::BufWriter;
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Stdio};
@@ -69,6 +70,7 @@ const DEFAULT_R2_PUBLIC_BASE_URL: &str = "https://cdn.scryer.media";
 const BROTLI_QUALITY: u32 = 11;
 const BROTLI_LGWIN: u32 = 24;
 const ENHANCED_SYNC_FFMPEG_VENDOR_DIR: &str = "subtitles/enhanced-sync/vendor/ffmpeg";
+const ENHANCED_SYNC_FFMPEG_VENDOR_ARCHIVE: &str = "source.tar.zst";
 const ENHANCED_SYNC_FFMPEG_VENDOR_METADATA: &str = "SCRYER_VENDOR_METADATA";
 const FFMPEG_VENDOR_PATHS: &[&str] = &[
     "COPYING.LGPLv2.1",
@@ -1523,6 +1525,14 @@ fn discover_local_official_plugin(ctx: &TaskContext, plugin_id: &str) -> Result<
         .get(plugin_id)
         .ok_or_else(|| anyhow!("plugin '{}' not found in local official plugins", plugin_id))?;
     discover_local_plugin(ctx, plugin_dir)
+}
+
+fn official_plugin_catalog_versions(ctx: &TaskContext, plugin_id: &str) -> Result<BTreeSet<CatalogVersion>> {
+    let plugin_dirs = official_plugin_dirs_by_id(ctx)?;
+    let plugin_dir = plugin_dirs
+        .get(plugin_id)
+        .ok_or_else(|| anyhow!("plugin '{}' not found in local official plugins", plugin_id))?;
+    Ok(plugin_manifest_metadata(&plugin_dir.join("Cargo.toml"))?.catalog_versions)
 }
 
 fn local_plugin_directories(ctx: &TaskContext) -> Result<Vec<PathBuf>> {
@@ -4309,13 +4319,16 @@ fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Resu
             if !selected.insert(plugin_id.clone()) {
                 continue;
             }
-            let plugin = discover_local_official_plugin(ctx, plugin_id)?;
-            if !plugin_publishes_catalog(&plugin, CatalogVersion::V3) {
-                continue;
-            }
             if let Some(root) = args.prepared_plugin_root.as_deref() {
+                if !official_plugin_catalog_versions(ctx, plugin_id)?.contains(&CatalogVersion::V3) {
+                    continue;
+                }
                 updates.push(read_prepared_catalog_v3_snippet(&root.join(plugin_id))?);
             } else {
+                let plugin = discover_local_official_plugin(ctx, plugin_id)?;
+                if !plugin_publishes_catalog(&plugin, CatalogVersion::V3) {
+                    continue;
+                }
                 updates.push(catalog_v3_entry_from_local_plugin_history(ctx, &plugin)?);
             }
         }
@@ -5771,7 +5784,7 @@ fn run_ffmpeg_revendor(ctx: &TaskContext, args: FfmpegRevendorArgs) -> Result<()
 
     let staged_vendor = scratch.path().join("ffmpeg-vendor");
     fs::create_dir_all(&staged_vendor).context("create staged FFmpeg vendor directory")?;
-    archive_ffmpeg_paths(ctx, &source, &commit, &staged_vendor)?;
+    write_ffmpeg_vendor_archive(ctx, &source, &commit, &staged_vendor)?;
     write_ffmpeg_upstream_metadata(&staged_vendor, &source_url, &commit, source_date.trim())?;
     write_ffmpeg_vendor_metadata(&staged_vendor, &source_url, &commit, source_date.trim())?;
 
@@ -5845,12 +5858,13 @@ fn ensure_ffmpeg_commit(ctx: &TaskContext, source: &Path, commit: &str) -> Resul
     )
 }
 
-fn archive_ffmpeg_paths(
+fn write_ffmpeg_vendor_archive(
     ctx: &TaskContext,
     source: &Path,
     commit: &str,
     destination: &Path,
 ) -> Result<()> {
+    let archive_path = destination.join(ENHANCED_SYNC_FFMPEG_VENDOR_ARCHIVE);
     let mut archive = ctx
         .command("git")
         .arg("-C")
@@ -5865,22 +5879,14 @@ fn archive_ffmpeg_paths(
         .stdout
         .take()
         .ok_or_else(|| anyhow!("git archive stdout was not captured"))?;
-    let mut extract = ctx
-        .command("tar")
-        .arg("-x")
-        .arg("-C")
-        .arg(destination)
-        .stdin(Stdio::from(stdout))
-        .spawn()
-        .context("start tar extraction for FFmpeg vendor tree")?;
-
-    let extract_status = extract.wait().context("wait for tar extraction")?;
+    let file = fs::File::create(&archive_path)
+        .with_context(|| format!("create {}", archive_path.display()))?;
+    let writer = BufWriter::new(file);
+    zstd::stream::copy_encode(stdout, writer, 19)
+        .with_context(|| format!("compress FFmpeg vendor archive {}", archive_path.display()))?;
     let archive_status = archive.wait().context("wait for git archive")?;
     if !archive_status.success() {
         bail!("git archive failed with {archive_status}");
-    }
-    if !extract_status.success() {
-        bail!("tar extraction failed with {extract_status}");
     }
     Ok(())
 }
