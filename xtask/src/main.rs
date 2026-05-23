@@ -3123,6 +3123,13 @@ fn signature_bundle_file_name(file_name: &str) -> String {
     format!("{file_name}.bundle.zst")
 }
 
+fn redirect_signature_bundle_file_name(file_name: &str) -> String {
+    if let Some(prefix) = file_name.strip_suffix(".json") {
+        return format!("{prefix}.bundle.json");
+    }
+    format!("{file_name}.bundle.json")
+}
+
 fn official_release_workflow() -> String {
     env_override_or_default(
         OFFICIAL_RELEASE_WORKFLOW_ENV,
@@ -5201,6 +5208,21 @@ fn run_catalog_upload_v3_r2(ctx: &TaskContext, dir: &Path) -> Result<()> {
         CATALOG_V3_REDIRECT_JSON
     );
     upload_file_to_r2(ctx, &config, &redirect_path, &redirect_url)?;
+    let redirect_bundle_name = redirect_signature_bundle_file_name(CATALOG_V3_REDIRECT_JSON);
+    let redirect_bundle_path = dir.join(&redirect_bundle_name);
+    if !redirect_bundle_path.is_file() {
+        bail!(
+            "missing redirect signature bundle {}",
+            redirect_bundle_path.display()
+        );
+    }
+    let redirect_bundle_url = format!(
+        "{}/{}/{}",
+        public_catalog_base_url(),
+        central_catalog_v3_path_prefix(),
+        redirect_bundle_name
+    );
+    upload_file_to_r2(ctx, &config, &redirect_bundle_path, &redirect_bundle_url)?;
 
     let mut uploaded_rule_pack_artifacts = 0usize;
     for rule_pack in &catalog.rule_packs {

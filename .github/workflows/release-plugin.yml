@@ -488,6 +488,10 @@ jobs:
               --bundle "dist/catalog-v3/${asset}.bundle" \
               "dist/catalog-v3/${asset}"
           done
+          cosign sign-blob \
+            --yes \
+            --bundle "dist/catalog-v3/catalog-v3.redirect.bundle.json" \
+            "dist/catalog-v3/catalog-v3.redirect.json"
 
           python3 -c 'import json; from pathlib import Path; root = Path("dist/catalog-v3"); redirect = json.loads((root / "catalog-v3.redirect.json").read_text()); catalog_assets = [artifact["url"].rsplit("/", 1)[-1] for artifact in redirect["artifacts"]]; catalog = json.loads((root / "catalog-v3.json").read_text()); rule_pack_assets = sorted({artifact["url"].rsplit("/", 1)[-1] for rule_pack in catalog["rule_packs"] for release in rule_pack["releases"] for artifact in release["artifacts"]}); print("\n".join(catalog_assets + rule_pack_assets))' > dist/catalog-v3/v3-central-assets.txt
 
@@ -525,6 +529,7 @@ jobs:
               --notes "Scryer plugin central catalog v3 assets."
           central_release_assets=(
             "dist/catalog-v3/catalog-v3.redirect.json"
+            "dist/catalog-v3/catalog-v3.redirect.bundle.json"
           )
           while IFS= read -r asset_name; do
             [ -n "${asset_name}" ] || continue
