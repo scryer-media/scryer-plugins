@@ -1,22 +1,41 @@
+use alass_core::{NoProgressHandler, TimeDelta, TimePoint, TimeSpan};
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use extism_pdk::*;
 use scryer_plugin_sdk::{
-    PluginDescriptor, PluginError, PluginErrorCode, PluginResult, ProviderDescriptor, SDK_VERSION,
-    SubtitleCapabilities, SubtitleDescriptor, SubtitlePluginGenerateRequest,
-    SubtitlePluginGenerateResponse, SubtitlePluginValidateConfigRequest,
-    SubtitlePluginValidateConfigResponse, SubtitleProviderMode, SubtitleQueryMediaKind,
+    AudioStreamSelector as SdkAudioStreamSelector, AudioTranscodeCodec as SdkAudioTranscodeCodec,
+    EXPORT_SUBSYNC_ALIGN, PluginDescriptor, PluginError, PluginErrorCode, PluginResult,
+    ProviderDescriptor, SDK_VERSION, SubtitleCapabilities, SubtitleDescriptor,
+    SubtitlePluginGenerateRequest, SubtitlePluginGenerateResponse,
+    SubtitlePluginValidateConfigRequest, SubtitlePluginValidateConfigResponse,
+    SubtitleProviderMode, SubtitleQueryMediaKind, SubtitleSyncAlignRequest,
+    SubtitleSyncAlignResponse, SubtitleSyncAlignSkipReason, SubtitleTimingSpan,
     SubtitleValidateConfigStatus, current_sdk_constraint,
 };
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 mod ffmpeg_backend;
 
 const PLUGIN_ID: &str = "enhanced-subtitle-sync";
 const PLUGIN_NAME: &str = "Enhanced Subtitle Sync";
 const DECODER_BACKEND: &str = "vendored-ffmpeg-wasm";
+const SYMPHONIA_BACKEND: &str = "plugin-symphonia";
+const HYBRID_BACKEND: &str = "vendored-ffmpeg-wasm+symphonia";
 const MAX_DECODE_INPUT_BYTES: usize = 64 * 1024 * 1024;
+const SYNC_SCRATCH_FLAC_PATH: &str = "/scratch/subsync-reference.flac";
+const SPLIT_PENALTY: f64 = 7.0;
+const MIN_REFERENCE_SPANS: usize = 3;
+const MIN_EFFECTIVE_OFFSET_MS: i64 = 50;
+const DELTA_CONSISTENCY_TOLERANCE_MS: i64 = 350;
+const MIN_CONSISTENT_DELTA_RATIO: f64 = 0.5;
+const WINDOW_MS: i64 = 10;
+const VAD_START_THRESHOLD_MIN: f64 = 500.0;
+const VAD_STOP_THRESHOLD_MIN: f64 = 250.0;
+const VAD_START_MULTIPLIER: f64 = 3.0;
+const VAD_STOP_MULTIPLIER: f64 = 1.8;
+const VAD_NOISE_SMOOTHING: f64 = 0.05;
+const VAD_MIN_SILENCE_WINDOWS: usize = 3;
 
 #[plugin_fn]
 pub fn scryer_describe(_input: String) -> FnResult<String> {
@@ -74,6 +93,13 @@ pub fn scryer_subsync_decode_window(input: String) -> FnResult<String> {
 #[plugin_fn]
 pub fn scryer_audio_transcode(input: String) -> FnResult<String> {
     scryer_audio_transcode_json(input)
+}
+
+#[plugin_fn]
+pub fn scryer_subsync_align(input: String) -> FnResult<String> {
+    let request: SubtitleSyncAlignRequest = serde_json::from_str(&input)?;
+    let response = align_impl(&request);
+    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
 }
 
 fn scryer_subsync_decode_window_json(input: String) -> FnResult<String> {
@@ -136,6 +162,7 @@ fn sync_descriptor() -> EnhancedSubtitleSyncDescriptor {
             "scryer_subsync_describe".to_string(),
             "scryer_subsync_probe".to_string(),
             "scryer_subsync_decode_window".to_string(),
+            EXPORT_SUBSYNC_ALIGN.to_string(),
             "scryer_audio_transcode_describe".to_string(),
             "scryer_audio_transcode".to_string(),
         ],
@@ -218,6 +245,552 @@ fn audio_transcode_failure(
         timeline_start_ms: None,
         warnings: Vec::new(),
         message: Some(message.into()),
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+struct AlignmentSummary {
+    offset_ms: i64,
+    consistency_ratio: f64,
+    nosplit_score: f64,
+    split_score: f64,
+}
+
+fn align_impl(request: &SubtitleSyncAlignRequest) -> SubtitleSyncAlignResponse {
+    let subtitle_spans = request
+        .subtitle_spans
+        .iter()
+        .filter_map(wire_span_to_alass)
+        .collect::<Vec<_>>();
+    let (backend, warnings, reference_spans) = match extract_reference_spans(request) {
+        Ok(result) => result,
+        Err(message) => {
+            return skipped_align_response(
+                SubtitleSyncAlignSkipReason::AudioDecodeFailed,
+                0,
+                None,
+                None,
+                None,
+                request_backend_label(request).to_string(),
+                Vec::new(),
+                Some(message),
+            );
+        }
+    };
+
+    if reference_spans.len() < MIN_REFERENCE_SPANS {
+        return skipped_align_response(
+            SubtitleSyncAlignSkipReason::NotEnoughReferenceSpans,
+            0,
+            None,
+            None,
+            None,
+            backend,
+            warnings,
+            Some(format!(
+                "decoded only {} reference speech spans",
+                reference_spans.len()
+            )),
+        );
+    }
+
+    let alignment = compute_alignment(&reference_spans, &subtitle_spans);
+    if alignment.nosplit_score <= 0.0 || alignment.split_score <= 0.0 {
+        return skipped_align_response(
+            SubtitleSyncAlignSkipReason::WeakAlignment,
+            alignment.offset_ms,
+            Some(alignment.consistency_ratio),
+            Some(alignment.nosplit_score),
+            Some(alignment.split_score),
+            backend,
+            warnings,
+            Some("alignment score too weak".to_string()),
+        );
+    }
+
+    if alignment.consistency_ratio < MIN_CONSISTENT_DELTA_RATIO {
+        return skipped_align_response(
+            SubtitleSyncAlignSkipReason::LowAlignmentConsistency,
+            alignment.offset_ms,
+            Some(alignment.consistency_ratio),
+            Some(alignment.nosplit_score),
+            Some(alignment.split_score),
+            backend,
+            warnings,
+            Some("alignment consistency below threshold".to_string()),
+        );
+    }
+
+    if alignment.offset_ms.unsigned_abs() > (request.max_offset_seconds as u64 * 1000) {
+        return skipped_align_response(
+            SubtitleSyncAlignSkipReason::OffsetExceedsMaximum,
+            alignment.offset_ms,
+            Some(alignment.consistency_ratio),
+            Some(alignment.nosplit_score),
+            Some(alignment.split_score),
+            backend,
+            warnings,
+            Some("alignment offset exceeds configured maximum".to_string()),
+        );
+    }
+
+    if alignment.offset_ms.unsigned_abs() < MIN_EFFECTIVE_OFFSET_MS as u64 {
+        return skipped_align_response(
+            SubtitleSyncAlignSkipReason::OffsetTooSmall,
+            alignment.offset_ms,
+            Some(alignment.consistency_ratio),
+            Some(alignment.nosplit_score),
+            Some(alignment.split_score),
+            backend,
+            warnings,
+            Some("alignment offset too small to apply".to_string()),
+        );
+    }
+
+    SubtitleSyncAlignResponse {
+        applied: true,
+        offset_ms: alignment.offset_ms,
+        consistency_ratio: Some(alignment.consistency_ratio),
+        nosplit_score: Some(alignment.nosplit_score),
+        split_score: Some(alignment.split_score),
+        skipped_reason: None,
+        backend,
+        warnings,
+        message: None,
+    }
+}
+
+fn extract_reference_spans(
+    request: &SubtitleSyncAlignRequest,
+) -> Result<(String, Vec<String>, Vec<TimeSpan>), String> {
+    let selector = request
+        .selector
+        .as_ref()
+        .map(map_sdk_selector)
+        .unwrap_or(AudioStreamSelector::Default);
+    if let Some(expected_codec) = request.expected_codec {
+        let transcoded = ffmpeg_backend::transcode_sync_flac(
+            &request.input.path,
+            Path::new(SYNC_SCRATCH_FLAC_PATH),
+            Some(map_sdk_audio_codec(expected_codec)),
+            &selector,
+        )
+        .map_err(|error| match error {
+            ffmpeg_backend::TranscodeFailure::Unsupported { message }
+            | ffmpeg_backend::TranscodeFailure::Error { message } => message,
+        })?;
+        let spans = decode_audio_to_speech_spans(
+            Path::new(SYNC_SCRATCH_FLAC_PATH),
+            &AudioStreamSelector::Default,
+        )?;
+        return Ok((HYBRID_BACKEND.to_string(), transcoded.warnings, spans));
+    }
+
+    Ok((
+        SYMPHONIA_BACKEND.to_string(),
+        Vec::new(),
+        decode_audio_to_speech_spans(&request.input.path, &selector)?,
+    ))
+}
+
+fn request_backend_label(request: &SubtitleSyncAlignRequest) -> &'static str {
+    if request.expected_codec.is_some() {
+        HYBRID_BACKEND
+    } else {
+        SYMPHONIA_BACKEND
+    }
+}
+
+fn wire_span_to_alass(span: &SubtitleTimingSpan) -> Option<TimeSpan> {
+    (span.end_ms > span.start_ms)
+        .then(|| TimeSpan::new(TimePoint::from(span.start_ms), TimePoint::from(span.end_ms)))
+}
+
+fn map_sdk_selector(selector: &SdkAudioStreamSelector) -> AudioStreamSelector {
+    match selector {
+        SdkAudioStreamSelector::Default => AudioStreamSelector::Default,
+        SdkAudioStreamSelector::StreamIndex { index } => {
+            AudioStreamSelector::StreamIndex { index: *index }
+        }
+        SdkAudioStreamSelector::Language { language } => AudioStreamSelector::Language {
+            language: language.clone(),
+        },
+    }
+}
+
+fn map_sdk_audio_codec(codec: SdkAudioTranscodeCodec) -> AudioTranscodeCodec {
+    match codec {
+        SdkAudioTranscodeCodec::Ac3 => AudioTranscodeCodec::Ac3,
+        SdkAudioTranscodeCodec::Eac3 => AudioTranscodeCodec::Eac3,
+        SdkAudioTranscodeCodec::Dts => AudioTranscodeCodec::Dts,
+        SdkAudioTranscodeCodec::DtsHdMaCore => AudioTranscodeCodec::DtsHdMaCore,
+        SdkAudioTranscodeCodec::TrueHd => AudioTranscodeCodec::TrueHd,
+    }
+}
+
+fn compute_alignment(
+    reference_spans: &[TimeSpan],
+    subtitle_spans: &[TimeSpan],
+) -> AlignmentSummary {
+    let (offset, nosplit_score) = alass_core::align_nosplit(
+        reference_spans,
+        subtitle_spans,
+        alass_core::standard_scoring,
+        NoProgressHandler,
+    );
+    let (split_deltas, split_score) = alass_core::align(
+        reference_spans,
+        subtitle_spans,
+        SPLIT_PENALTY,
+        None,
+        alass_core::standard_scoring,
+        NoProgressHandler,
+    );
+
+    let offset_ms = offset.as_i64();
+    let consistency_ratio = delta_consistency_ratio(&split_deltas, offset_ms);
+    AlignmentSummary {
+        offset_ms,
+        consistency_ratio,
+        nosplit_score,
+        split_score,
+    }
+}
+
+fn delta_consistency_ratio(deltas: &[TimeDelta], offset_ms: i64) -> f64 {
+    if deltas.is_empty() {
+        return 0.0;
+    }
+
+    let consistent = deltas
+        .iter()
+        .filter(|delta| (delta.as_i64() - offset_ms).abs() <= DELTA_CONSISTENCY_TOLERANCE_MS)
+        .count();
+    consistent as f64 / deltas.len() as f64
+}
+
+fn skipped_align_response(
+    skipped_reason: SubtitleSyncAlignSkipReason,
+    offset_ms: i64,
+    consistency_ratio: Option<f64>,
+    nosplit_score: Option<f64>,
+    split_score: Option<f64>,
+    backend: String,
+    warnings: Vec<String>,
+    message: Option<String>,
+) -> SubtitleSyncAlignResponse {
+    SubtitleSyncAlignResponse {
+        applied: false,
+        offset_ms,
+        consistency_ratio,
+        nosplit_score,
+        split_score,
+        skipped_reason: Some(skipped_reason),
+        backend,
+        warnings,
+        message,
+    }
+}
+
+struct SelectedAudioTrack {
+    id: u32,
+    sample_rate: u32,
+    decoder: Box<dyn symphonia::core::codecs::audio::AudioDecoder>,
+}
+
+fn decode_audio_to_speech_spans(
+    path: &Path,
+    selector: &AudioStreamSelector,
+) -> Result<Vec<TimeSpan>, String> {
+    use symphonia::core::codecs::audio::{AudioDecoderOptions, CODEC_ID_NULL_AUDIO};
+    use symphonia::core::formats::{FormatOptions, TrackType, probe::Hint};
+    use symphonia::core::io::MediaSourceStream;
+    use symphonia::core::meta::MetadataOptions;
+
+    let file = std::fs::File::open(path)
+        .map_err(|error| format!("cannot open media for subtitle sync: {error}"))?;
+    let mss = MediaSourceStream::new(Box::new(file), Default::default());
+    let mut hint = Hint::new();
+    if let Some(ext) = path.extension().and_then(|ext| ext.to_str()) {
+        hint.with_extension(ext);
+    }
+
+    let probed = symphonia::default::get_probe()
+        .probe(
+            &hint,
+            mss,
+            FormatOptions::default(),
+            MetadataOptions::default(),
+        )
+        .map_err(|error| format!("audio probe failed: {error}"))?;
+
+    let mut format = probed;
+    let default_track_id = format.default_track(TrackType::Audio).map(|track| track.id);
+    let mut best_track: Option<(i32, SelectedAudioTrack)> = None;
+
+    for (track_index, track) in format.tracks().iter().enumerate() {
+        let Some(priority) =
+            track_selection_priority(track, track_index as u32, default_track_id, selector)
+        else {
+            continue;
+        };
+
+        let Some(audio_params) = track
+            .codec_params
+            .as_ref()
+            .and_then(|params| params.audio())
+        else {
+            continue;
+        };
+
+        if audio_params.codec == CODEC_ID_NULL_AUDIO {
+            continue;
+        }
+
+        let Ok(decoder) = symphonia::default::get_codecs()
+            .make_audio_decoder(audio_params, &AudioDecoderOptions::default())
+        else {
+            continue;
+        };
+
+        let sample_rate = audio_params.sample_rate.unwrap_or(44_100);
+        let channel_count = audio_params
+            .channels
+            .as_ref()
+            .map(|channels| channels.count())
+            .unwrap_or(1);
+        let priority = priority + channel_count as i32 + sample_rate as i32 / 1000;
+        let selected = SelectedAudioTrack {
+            id: track.id,
+            sample_rate,
+            decoder,
+        };
+
+        match &best_track {
+            Some((best_priority, _)) if *best_priority >= priority => {}
+            _ => best_track = Some((priority, selected)),
+        }
+    }
+
+    let SelectedAudioTrack {
+        id: track_id,
+        sample_rate,
+        mut decoder,
+    } = best_track
+        .map(|(_, track)| track)
+        .ok_or_else(|| selector_unavailable_message(selector))?;
+    let mut detector = SpeechSpanDetector::new(sample_rate);
+    let mut decoded_samples = Vec::<i16>::new();
+
+    loop {
+        let packet = match format.next_packet() {
+            Ok(Some(packet)) => packet,
+            Ok(None) => break,
+            Err(symphonia::core::errors::Error::IoError(ref error))
+                if error.kind() == std::io::ErrorKind::UnexpectedEof =>
+            {
+                break;
+            }
+            Err(_) => break,
+        };
+
+        if packet.track_id != track_id {
+            continue;
+        }
+
+        let decoded = match decoder.decode(&packet) {
+            Ok(decoded) => decoded,
+            Err(_) => continue,
+        };
+
+        let channels = decoded.spec().channels().count().max(1);
+        decoded.copy_to_vec_interleaved(&mut decoded_samples);
+        detector.push_interleaved_i16(&decoded_samples, channels);
+    }
+
+    Ok(detector.finish())
+}
+
+fn track_selection_priority(
+    track: &symphonia::core::formats::Track,
+    track_index: u32,
+    default_track_id: Option<u32>,
+    selector: &AudioStreamSelector,
+) -> Option<i32> {
+    if !track_matches_selector(track, track_index, selector) {
+        return None;
+    }
+
+    let mut priority = 0;
+    if Some(track.id) == default_track_id {
+        priority += 10_000;
+    }
+    if track
+        .codec_params
+        .as_ref()
+        .and_then(|params| params.audio())
+        .and_then(|params| params.sample_rate)
+        .is_some()
+    {
+        priority += 1_000;
+    }
+    if track.language.is_some() {
+        priority += 10;
+    }
+    Some(priority)
+}
+
+fn track_matches_selector(
+    track: &symphonia::core::formats::Track,
+    track_index: u32,
+    selector: &AudioStreamSelector,
+) -> bool {
+    match selector {
+        AudioStreamSelector::Default => true,
+        AudioStreamSelector::StreamIndex { index } => *index == track_index,
+        AudioStreamSelector::Language { language } => track
+            .language
+            .as_ref()
+            .is_some_and(|track_language| track_language.eq_ignore_ascii_case(language)),
+    }
+}
+
+fn selector_unavailable_message(selector: &AudioStreamSelector) -> String {
+    match selector {
+        AudioStreamSelector::Default => "no decodable audio track found".to_string(),
+        AudioStreamSelector::StreamIndex { index } => {
+            format!("requested audio stream index {index} was not decodable")
+        }
+        AudioStreamSelector::Language { language } => {
+            format!("requested audio stream language '{language}' was not decodable")
+        }
+    }
+}
+
+struct SpeechSpanDetector {
+    samples_per_window: usize,
+    frames_in_window: usize,
+    window_energy_sum: f64,
+    current_window_start_ms: i64,
+    noise_floor: f64,
+    noise_floor_initialized: bool,
+    below_threshold_windows: usize,
+    in_speech: bool,
+    speech_start_ms: i64,
+    spans: Vec<TimeSpan>,
+}
+
+impl SpeechSpanDetector {
+    fn new(sample_rate: u32) -> Self {
+        Self {
+            samples_per_window: (sample_rate / 100).max(1) as usize,
+            frames_in_window: 0,
+            window_energy_sum: 0.0,
+            current_window_start_ms: 0,
+            noise_floor: 0.0,
+            noise_floor_initialized: false,
+            below_threshold_windows: 0,
+            in_speech: false,
+            speech_start_ms: 0,
+            spans: Vec::new(),
+        }
+    }
+
+    fn push_interleaved_i16(&mut self, samples: &[i16], channels: usize) {
+        let channels = channels.max(1);
+        for frame in samples.chunks_exact(channels) {
+            let mean_sq = frame
+                .iter()
+                .map(|sample| {
+                    let sample = *sample as f64;
+                    sample * sample
+                })
+                .sum::<f64>()
+                / channels as f64;
+            self.push_frame_energy(mean_sq);
+        }
+    }
+
+    fn push_frame_energy(&mut self, mean_sq: f64) {
+        self.window_energy_sum += mean_sq;
+        self.frames_in_window += 1;
+
+        if self.frames_in_window >= self.samples_per_window {
+            let rms = (self.window_energy_sum / self.frames_in_window as f64).sqrt();
+            self.process_window(rms);
+            self.frames_in_window = 0;
+            self.window_energy_sum = 0.0;
+        }
+    }
+
+    fn process_window(&mut self, rms: f64) {
+        if !self.noise_floor_initialized {
+            self.noise_floor = rms.clamp(1.0, VAD_START_THRESHOLD_MIN / VAD_START_MULTIPLIER);
+            self.noise_floor_initialized = true;
+        } else if !self.in_speech || rms < self.noise_floor * VAD_START_MULTIPLIER {
+            self.noise_floor =
+                (1.0 - VAD_NOISE_SMOOTHING) * self.noise_floor + VAD_NOISE_SMOOTHING * rms.max(1.0);
+        }
+
+        let start_threshold =
+            (self.noise_floor * VAD_START_MULTIPLIER).max(VAD_START_THRESHOLD_MIN);
+        let stop_threshold = (self.noise_floor * VAD_STOP_MULTIPLIER).max(VAD_STOP_THRESHOLD_MIN);
+        let window_start_ms = self.current_window_start_ms;
+
+        if rms > start_threshold {
+            self.below_threshold_windows = 0;
+            if !self.in_speech {
+                self.in_speech = true;
+                self.speech_start_ms = window_start_ms;
+            }
+        } else if self.in_speech && rms <= stop_threshold {
+            self.below_threshold_windows += 1;
+            if self.below_threshold_windows >= VAD_MIN_SILENCE_WINDOWS {
+                let end_ms = window_start_ms - ((VAD_MIN_SILENCE_WINDOWS as i64 - 1) * WINDOW_MS);
+                self.push_span(self.speech_start_ms, end_ms);
+                self.in_speech = false;
+                self.below_threshold_windows = 0;
+            }
+        } else if self.in_speech {
+            self.below_threshold_windows = 0;
+        }
+
+        self.current_window_start_ms += WINDOW_MS;
+    }
+
+    fn finish(mut self) -> Vec<TimeSpan> {
+        if self.frames_in_window > 0 {
+            let rms = (self.window_energy_sum / self.frames_in_window as f64).sqrt();
+            self.process_window(rms);
+            self.frames_in_window = 0;
+            self.window_energy_sum = 0.0;
+        }
+
+        if self.in_speech {
+            self.push_span(self.speech_start_ms, self.current_window_start_ms);
+            self.in_speech = false;
+        }
+
+        self.spans
+    }
+
+    fn push_span(&mut self, start_ms: i64, end_ms: i64) {
+        if end_ms <= start_ms {
+            return;
+        }
+
+        if let Some(last) = self.spans.last_mut() {
+            let last_end = last.end.as_i64();
+            if start_ms - last_end <= WINDOW_MS {
+                *last = TimeSpan::new(last.start, TimePoint::from(end_ms));
+                return;
+            }
+        }
+
+        self.spans.push(TimeSpan::new(
+            TimePoint::from(start_ms),
+            TimePoint::from(end_ms),
+        ));
     }
 }
 
@@ -754,6 +1327,11 @@ mod tests {
             descriptor
                 .exports
                 .contains(&"scryer_subsync_probe".to_string())
+        );
+        assert!(
+            descriptor
+                .exports
+                .contains(&EXPORT_SUBSYNC_ALIGN.to_string())
         );
         assert!(
             descriptor

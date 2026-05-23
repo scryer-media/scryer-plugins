@@ -28,6 +28,7 @@ env:
   SCCACHE_VERSION: v0.10.0
   WASI_SDK_VERSION: "33.0"
   WASI_SDK_RELEASE_TAG: wasi-sdk-33
+  BINARYEN_RELEASE_TAG: version_129
   CF_JURISDICTION_URL: ${{ secrets.CF_JURISDICTION_URL }}
   CF_R2_PUBLIC_BASE_URL: https://cdn.scryer.media
   SCRYER_OFFICIAL_RELEASE_WORKFLOW_PATH: .github/workflows/release-plugin.yml
@@ -261,13 +262,26 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y binaryen python3-pip zstd
+          sudo apt-get install -y python3-pip zstd
           python3 -m pip install --user awscli
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          case "$(uname -m)" in
+            x86_64) binaryen_archive="binaryen-${BINARYEN_RELEASE_TAG}-x86_64-linux.tar.gz" ;;
+            aarch64|arm64) binaryen_archive="binaryen-${BINARYEN_RELEASE_TAG}-aarch64-linux.tar.gz" ;;
+            *)
+              echo "Unsupported architecture for binaryen: $(uname -m)" >&2
+              exit 1
+              ;;
+          esac
           wasi_sdk_archive="wasi-sdk-${WASI_SDK_VERSION}-x86_64-linux.tar.gz"
+          binaryen_url="https://github.com/WebAssembly/binaryen/releases/download/${BINARYEN_RELEASE_TAG}/${binaryen_archive}"
           wasi_sdk_url="https://github.com/WebAssembly/wasi-sdk/releases/download/${WASI_SDK_RELEASE_TAG}/${wasi_sdk_archive}"
           tmpdir="$(mktemp -d)"
+          curl -fsSL "$binaryen_url" -o "$tmpdir/$binaryen_archive"
           curl -fsSL "$wasi_sdk_url" -o "$tmpdir/$wasi_sdk_archive"
+          tar -xzf "$tmpdir/$binaryen_archive" -C "$tmpdir"
+          sudo install -m 0755 "$tmpdir"/binaryen-*/bin/wasm-opt /usr/local/bin/wasm-opt
+          wasm-opt --version
           wasi_sdk_root="${RUNNER_TEMP}/wasi-sdk-${WASI_SDK_VERSION}"
           rm -rf "$wasi_sdk_root"
           mkdir -p "$wasi_sdk_root"

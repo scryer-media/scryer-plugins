@@ -45,6 +45,7 @@ const DEFAULT_OFFICIAL_RELEASE_WORKFLOW: &str = ".github/workflows/release-plugi
 const OFFICIAL_RELEASE_WORKFLOW_ENV: &str = "SCRYER_OFFICIAL_RELEASE_WORKFLOW_PATH";
 const OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX_ENV: &str = "SCRYER_OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX";
 const DEFAULT_OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX: &str = "plugins";
+const SDK_LOCAL_OVERRIDE_ENV: &str = "SCRYER_PLUGIN_SDK_LOCAL_PATH";
 const CENTRAL_CATALOG_RELEASE_TAG: &str = "catalog/v2";
 const DEFAULT_CENTRAL_CATALOG_V3_RELEASE_TAG: &str = "catalog/v3";
 const CENTRAL_CATALOG_V3_RELEASE_TAG_ENV: &str = "SCRYER_CATALOG_V3_RELEASE_TAG";
@@ -1397,7 +1398,48 @@ fn rustup_cargo_command_in(rustup_toolchain: &RustupToolchain, cwd: &Path) -> Re
         let joined = env::join_paths(paths).context("join rustup PATH")?;
         command.env("PATH", joined);
     }
+    apply_local_sdk_override(&mut command)?;
     Ok(command)
+}
+
+fn local_sdk_override_path() -> Result<Option<PathBuf>> {
+    let Some(raw) = env::var_os(SDK_LOCAL_OVERRIDE_ENV) else {
+        return Ok(None);
+    };
+    if raw.is_empty() {
+        return Ok(None);
+    }
+
+    let path = PathBuf::from(raw);
+    let absolute = if path.is_absolute() {
+        path
+    } else {
+        env::current_dir()
+            .context("resolve current working directory for local SDK override")?
+            .join(path)
+    };
+    let canonical = absolute.canonicalize().with_context(|| {
+        format!(
+            "{SDK_LOCAL_OVERRIDE_ENV} points to missing or unreadable path '{}'",
+            absolute.display()
+        )
+    })?;
+    Ok(Some(canonical))
+}
+
+fn apply_local_sdk_override(command: &mut Command) -> Result<()> {
+    let Some(path) = local_sdk_override_path()? else {
+        return Ok(());
+    };
+
+    command.args([
+        "--config",
+        &format!(
+            "patch.crates-io.scryer-plugin-sdk.path=\"{}\"",
+            path.display()
+        ),
+    ]);
+    Ok(())
 }
 
 fn repo_cargo_command_in(ctx: &TaskContext, cwd: &Path) -> Result<Command> {
@@ -1405,7 +1447,9 @@ fn repo_cargo_command_in(ctx: &TaskContext, cwd: &Path) -> Result<Command> {
         return rustup_cargo_command_in(&rustup_toolchain, cwd);
     }
 
-    Ok(ctx.command_in("cargo", cwd))
+    let mut command = ctx.command_in("cargo", cwd);
+    apply_local_sdk_override(&mut command)?;
+    Ok(command)
 }
 
 fn ci_target_dir(ctx: &TaskContext, cwd: &Path) -> Result<PathBuf> {
@@ -2766,6 +2810,12 @@ fn run_doctor(ctx: &TaskContext) -> Result<()> {
             _ => warn(format!("{tool} unavailable or not healthy")),
         }
     }
+    if let Some(path) = local_sdk_override_path()? {
+        ok(format!(
+            "temporary local scryer-plugin-sdk override active ({})",
+            path.display()
+        ));
+    }
     require_wasm_target(ctx)?;
     match current_sdk_dependency(ctx) {
         Ok(SdkDependency::Published(version)) => {
@@ -3017,6 +3067,10 @@ fn current_sdk_dependency(ctx: &TaskContext) -> Result<SdkDependency> {
 }
 
 fn ensure_current_sdk_dependency_is_published(ctx: &TaskContext) -> Result<()> {
+    if local_sdk_override_path()?.is_some() {
+        return Ok(());
+    }
+
     match current_sdk_dependency(ctx)? {
         SdkDependency::Published(version) => ensure_published_sdk_version(ctx, &version),
         SdkDependency::GitTag { .. } => Ok(()),
