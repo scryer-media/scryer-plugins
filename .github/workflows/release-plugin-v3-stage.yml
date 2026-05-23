@@ -37,6 +37,7 @@ jobs:
       plugin_matrix: ${{ steps.plugin-plans.outputs.matrix }}
     runs-on: ubuntu-latest
     env:
+      CARGO_HOME: /home/runner/.cargo
       CARGO_INCREMENTAL: "0"
       CARGO_TERM_COLOR: always
       CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
@@ -59,12 +60,10 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: gha-rust-cache-linux-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-validate
-          workspaces: |
-            xtask -> target
+          shared-key: gha-rust-cache-linux-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-xtask
           cache-targets: "false"
           cache-workspace-crates: "false"
-          key: validate
+          key: xtask-release
 
       - name: Restore sccache directory
         id: validate-sccache-restore
@@ -181,6 +180,7 @@ jobs:
       matrix: ${{ fromJson(needs.plan-release.outputs.plugin_matrix) }}
     runs-on: ubuntu-latest
     env:
+      CARGO_HOME: /home/runner/.cargo
       CARGO_INCREMENTAL: "0"
       CARGO_TERM_COLOR: always
       CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
@@ -206,24 +206,10 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: gha-rust-cache-linux-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-prepare-${{ matrix.plugin_id }}
-          workspaces: |
-            xtask -> target
-            download_clients/qbittorrent -> target
-            indexers/dognzb -> target
-            indexers/newznab -> target
-            indexers/nzbgeek -> target
-            indexers/torrent-rss -> target
-            indexers/torznab -> target
-            notifications/email -> target
-            notifications/jellyfin -> target
-            notifications/webhook -> target
-            subtitles/jimaku -> target
-            subtitles/opensubtitles -> target
-            subtitles/subdl -> target
+          shared-key: gha-rust-cache-linux-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-plugin-build
           cache-targets: "false"
           cache-workspace-crates: "false"
-          key: prepare-${{ matrix.plugin_id }}
+          key: plugin-release
 
       - name: Restore sccache directory
         id: prepare-sccache-restore
