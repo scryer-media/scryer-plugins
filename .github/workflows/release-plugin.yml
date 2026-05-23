@@ -258,9 +258,16 @@ jobs:
       - name: Install release tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y binaryen python3-pip zstd
+          sudo apt-get install -y binaryen clang lld llvm python3-pip wasi-libc zstd
           python3 -m pip install --user awscli
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          for candidate in /usr/share/wasi-sysroot /usr/lib/wasi-libc /usr/share/wasi-libc; do
+            if [ -d "$candidate" ]; then
+              echo "WASI_SYSROOT=$candidate" >> "$GITHUB_ENV"
+              echo "FFMPEG_WASI_SYSROOT=$candidate" >> "$GITHUB_ENV"
+              break
+            fi
+          done
 
       - uses: taiki-e/install-action@v2
         with:
@@ -269,6 +276,16 @@ jobs:
       - uses: sigstore/cosign-installer@v4.1.1
         with:
           cosign-release: v3.0.2
+
+      - name: Validate WASI sysroot
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${WASI_SYSROOT:-}" ] || [ ! -d "${WASI_SYSROOT}" ]; then
+            echo "WASI sysroot not found after installing wasi-libc" >&2
+            exit 1
+          fi
+          echo "Using WASI_SYSROOT=${WASI_SYSROOT}"
 
       - name: Install sccache
         shell: bash
