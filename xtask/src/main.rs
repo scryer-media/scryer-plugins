@@ -66,6 +66,26 @@ const R2_PUBLIC_BASE_URL_ENV: &str = "CF_JURISDICTION_URL";
 const DEFAULT_R2_PUBLIC_BASE_URL: &str = "https://cdn.scryer.media";
 const BROTLI_QUALITY: u32 = 11;
 const BROTLI_LGWIN: u32 = 24;
+const ENHANCED_SYNC_FFMPEG_VENDOR_DIR: &str = "subtitles/enhanced-sync/vendor/ffmpeg";
+const FFMPEG_VENDOR_PATHS: &[&str] = &[
+    "COPYING.LGPLv2.1",
+    "LICENSE.md",
+    "Makefile",
+    "RELEASE",
+    "compat",
+    "configure",
+    "doc",
+    "ffbuild",
+    "fftools",
+    "libavcodec",
+    "libavdevice",
+    "libavfilter",
+    "libavformat",
+    "libavutil",
+    "libswresample",
+    "tests",
+    "tools",
+];
 const AUDIT_IGNORE_ADVISORIES: &[&str] = &[
     // Extism currently pins wasmtime 41.x upstream, so these remain blocked on
     // the runtime stack moving onto a patched line.
@@ -118,6 +138,7 @@ enum Commands {
     ReleaseMany(ReleaseManyArgs),
     ReleaseChanged(ReleaseChangedArgs),
     Plugin(PluginArgs),
+    Ffmpeg(FfmpegArgs),
     Sdk(SdkArgs),
     Official(OfficialArgs),
     Catalog(CatalogArgs),
@@ -201,6 +222,25 @@ struct PluginNewArgs {
 #[derive(Args)]
 struct PluginValidateArgs {
     path: PathBuf,
+}
+
+#[derive(Args)]
+struct FfmpegArgs {
+    #[command(subcommand)]
+    command: FfmpegCommand,
+}
+
+#[derive(Subcommand)]
+enum FfmpegCommand {
+    Revendor(FfmpegRevendorArgs),
+}
+
+#[derive(Args)]
+struct FfmpegRevendorArgs {
+    #[arg(long, default_value = "https://github.com/FFmpeg/FFmpeg.git")]
+    source: String,
+    #[arg(long)]
+    commit: String,
 }
 
 #[derive(Args)]
@@ -723,6 +763,9 @@ fn main() -> Result<()> {
             PluginCommand::Validate(args) => run_plugin_validate(&ctx, args),
             PluginCommand::BuildAll => run_plugin_build_all(&ctx),
             PluginCommand::ValidateAll => run_plugin_validate_all(&ctx),
+        },
+        Commands::Ffmpeg(args) => match args.command {
+            FfmpegCommand::Revendor(args) => run_ffmpeg_revendor(&ctx, args),
         },
         Commands::Sdk(args) => match args.command {
             SdkCommand::Bump { version } => run_sdk_bump(&ctx, &version),
@@ -2676,9 +2719,9 @@ fn versioned_hashed_filename(
     digests: &[String],
 ) -> Result<String> {
     let digest = digest_value(digests, "blake3")?;
-    let short_digest = digest
-        .get(..SHORT_CATALOG_HASH_LEN)
-        .ok_or_else(|| anyhow!("blake3 digest is shorter than {SHORT_CATALOG_HASH_LEN} hex chars"))?;
+    let short_digest = digest.get(..SHORT_CATALOG_HASH_LEN).ok_or_else(|| {
+        anyhow!("blake3 digest is shorter than {SHORT_CATALOG_HASH_LEN} hex chars")
+    })?;
     if let Some((prefix, suffix)) = logical_name.split_once('.') {
         Ok(format!("{prefix}.{version}.{short_digest}.{suffix}"))
     } else {
@@ -2707,7 +2750,10 @@ fn signature_bundle_file_name(file_name: &str) -> String {
 }
 
 fn official_release_workflow() -> String {
-    env_override_or_default(OFFICIAL_RELEASE_WORKFLOW_ENV, DEFAULT_OFFICIAL_RELEASE_WORKFLOW)
+    env_override_or_default(
+        OFFICIAL_RELEASE_WORKFLOW_ENV,
+        DEFAULT_OFFICIAL_RELEASE_WORKFLOW,
+    )
 }
 
 fn official_plugin_release_tag_prefix() -> String {
@@ -2763,7 +2809,10 @@ fn url_path_key(url: &str) -> Result<String> {
 }
 
 fn content_type_for_upload(path: &Path) -> &'static str {
-    let name = path.file_name().and_then(|value| value.to_str()).unwrap_or_default();
+    let name = path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or_default();
     if name.ends_with(".json") {
         "application/json"
     } else if name.ends_with(".zst") {
@@ -2890,7 +2939,11 @@ fn github_release_asset_url(repo: &str, tag: &str, asset: &str) -> String {
     format!("https://github.com/{repo}/releases/download/{tag}/{asset}")
 }
 
-fn official_plugin_github_mirror_urls(plugin_id: &str, version: &str, asset_name: &str) -> Vec<String> {
+fn official_plugin_github_mirror_urls(
+    plugin_id: &str,
+    version: &str,
+    asset_name: &str,
+) -> Vec<String> {
     vec![github_release_asset_url(
         OFFICIAL_GITHUB_REPO,
         &official_plugin_release_tag(plugin_id, version),
@@ -3180,12 +3233,12 @@ fn read_published_official_catalog_v3(ctx: &TaskContext) -> Result<CatalogV3> {
         .find(|artifact| artifact.url.ends_with(".zst"))
         .or_else(|| redirect.artifacts.first())
         .ok_or_else(|| anyhow!("catalog-v3 redirect must contain at least one artifact"))?;
-    let mirror_url = zstd_artifact
-        .mirror_urls
-        .first()
-        .ok_or_else(|| anyhow!("catalog-v3 redirect artifact must contain at least one mirror URL"))?;
+    let mirror_url = zstd_artifact.mirror_urls.first().ok_or_else(|| {
+        anyhow!("catalog-v3 redirect artifact must contain at least one mirror URL")
+    })?;
     let (tag, asset) = release_asset_url_parts(mirror_url, OFFICIAL_GITHUB_REPO)?;
-    let central_path = github_release_download(ctx, OFFICIAL_GITHUB_REPO, &tag, &asset, temp.path())?;
+    let central_path =
+        github_release_download(ctx, OFFICIAL_GITHUB_REPO, &tag, &asset, temp.path())?;
     read_catalog_v3_from_path(ctx, &central_path)
 }
 
@@ -3378,7 +3431,10 @@ fn run_official_prepare(ctx: &TaskContext, args: OfficialPrepareArgs) -> Result<
     ));
     println!("   Optimized : {}", prepared.optimized_wasm.display());
     println!("   Artifact : {}", prepared.compressed_wasm.display());
-    println!("   Artifact : {}", prepared.compressed_brotli_wasm.display());
+    println!(
+        "   Artifact : {}",
+        prepared.compressed_brotli_wasm.display()
+    );
     if let Some(manifest_json) = &prepared.manifest_json {
         println!("   Manifest : {}", manifest_json.display());
     }
@@ -3790,7 +3846,11 @@ fn catalog_v3_release_from_published_v2(
         artifacts: vec![CatalogV3Artifact {
             url: github_release_asset_url(OFFICIAL_GITHUB_REPO, &tag, &manifest.artifact),
             mirror_urls: Vec::new(),
-            signature_url: github_release_asset_url(OFFICIAL_GITHUB_REPO, &tag, &manifest.signature),
+            signature_url: github_release_asset_url(
+                OFFICIAL_GITHUB_REPO,
+                &tag,
+                &manifest.signature,
+            ),
             signature_mirror_urls: Vec::new(),
             digests: file_digests(&artifact_path)?,
         }],
@@ -4011,10 +4071,16 @@ fn prepare_rule_pack_v3_entries(
         )?;
         let br_source = output_dir.join(rule_pack_artifact_file_name(&manifest.id, "br"));
         write_brotli_file(&minified_json_path, &br_source)?;
-        let (hashed_zst, zst_digests) =
-            stage_hashed_asset_copy(&zst_source, &rule_pack_artifact_file_name(&manifest.id, "zst"), output_dir)?;
-        let (hashed_br, br_digests) =
-            stage_hashed_asset_copy(&br_source, &rule_pack_artifact_file_name(&manifest.id, "br"), output_dir)?;
+        let (hashed_zst, zst_digests) = stage_hashed_asset_copy(
+            &zst_source,
+            &rule_pack_artifact_file_name(&manifest.id, "zst"),
+            output_dir,
+        )?;
+        let (hashed_br, br_digests) = stage_hashed_asset_copy(
+            &br_source,
+            &rule_pack_artifact_file_name(&manifest.id, "br"),
+            output_dir,
+        )?;
         let version = manifest.version.clone();
         let primary_base = trim_url_base(&rule_pack.distribution_base_url);
         let zst_name = hashed_zst
@@ -4329,8 +4395,8 @@ struct R2Config {
 fn r2_config_from_env() -> Result<R2Config> {
     let account_id = env::var(R2_ACCOUNT_ID_ENV)
         .map_err(|_| anyhow!("{R2_ACCOUNT_ID_ENV} must be set for R2 uploads"))?;
-    let bucket =
-        env::var(R2_BUCKET_ENV).map_err(|_| anyhow!("{R2_BUCKET_ENV} must be set for R2 uploads"))?;
+    let bucket = env::var(R2_BUCKET_ENV)
+        .map_err(|_| anyhow!("{R2_BUCKET_ENV} must be set for R2 uploads"))?;
     let access_key_id = env::var(R2_ACCESS_KEY_ID_ENV)
         .map_err(|_| anyhow!("{R2_ACCESS_KEY_ID_ENV} must be set for R2 uploads"))?;
     let secret_access_key = env::var(R2_SECRET_ACCESS_KEY_ENV)
@@ -4399,7 +4465,10 @@ fn upload_redirected_catalog_from_dir(
     let catalog_name = url_file_name(&artifact.url)?;
     let catalog_path = dir.join(&catalog_name);
     if !catalog_path.is_file() {
-        bail!("missing redirected catalog artifact {}", catalog_path.display());
+        bail!(
+            "missing redirected catalog artifact {}",
+            catalog_path.display()
+        );
     }
     upload_file_to_r2(ctx, config, &catalog_path, &artifact.url)?;
     let signature_name = url_file_name(&artifact.signature_url)?;
@@ -4415,7 +4484,10 @@ fn upload_redirected_catalog_from_dir(
 }
 
 fn run_official_upload_r2(ctx: &TaskContext, dir: &Path) -> Result<()> {
-    step(format!("Uploading official plugin v3 assets to R2 from {}", dir.display()));
+    step(format!(
+        "Uploading official plugin v3 assets to R2 from {}",
+        dir.display()
+    ));
     let config = r2_config_from_env()?;
     let snippet = read_prepared_catalog_v3_snippet(dir)?;
     let mut uploaded = 0usize;
@@ -4431,7 +4503,10 @@ fn run_official_upload_r2(ctx: &TaskContext, dir: &Path) -> Result<()> {
 }
 
 fn run_catalog_upload_v3_r2(ctx: &TaskContext, dir: &Path) -> Result<()> {
-    step(format!("Uploading catalog-v3 assets to R2 from {}", dir.display()));
+    step(format!(
+        "Uploading catalog-v3 assets to R2 from {}",
+        dir.display()
+    ));
     let config = r2_config_from_env()?;
     let catalog = read_catalog_v3_from_path(ctx, &dir.join(CATALOG_V3_SNIPPET_JSON))?;
     let redirect_path = dir.join(CATALOG_V3_REDIRECT_JSON);
@@ -4654,7 +4729,10 @@ fn cosign_verify_blob_with_identity_pattern(
     bundle: &Path,
     identity_pattern: &str,
 ) -> Result<()> {
-    let temp_bundle = if matches!(bundle.extension().and_then(OsStr::to_str), Some("zst" | "br")) {
+    let temp_bundle = if matches!(
+        bundle.extension().and_then(OsStr::to_str),
+        Some("zst" | "br")
+    ) {
         let temp_bundle = tempfile::NamedTempFile::new()?;
         let bundle_bytes = read_catalog_bytes(ctx, bundle)?;
         fs::write(temp_bundle.path(), bundle_bytes)?;
@@ -4999,15 +5077,25 @@ fn validate_catalog_v3(catalog: &CatalogV3) -> Result<()> {
             }
         }
         if rule_pack.releases.is_empty() {
-            bail!("{}: catalog-v3 rule pack must include at least one release", rule_pack.id);
+            bail!(
+                "{}: catalog-v3 rule pack must include at least one release",
+                rule_pack.id
+            );
         }
         let mut release_versions = BTreeSet::new();
         for release in &rule_pack.releases {
             Version::parse(&release.version).with_context(|| {
-                format!("{}: invalid rule pack release version {}", rule_pack.id, release.version)
+                format!(
+                    "{}: invalid rule pack release version {}",
+                    rule_pack.id, release.version
+                )
             })?;
             if !release_versions.insert(release.version.clone()) {
-                bail!("{}: duplicate rule pack release {}", rule_pack.id, release.version);
+                bail!(
+                    "{}: duplicate rule pack release {}",
+                    rule_pack.id,
+                    release.version
+                );
             }
             if let Some(min_scryer_version) = release.min_scryer_version.as_deref() {
                 Version::parse(min_scryer_version).with_context(|| {
@@ -5028,11 +5116,17 @@ fn validate_catalog_v3(catalog: &CatalogV3) -> Result<()> {
                 validate_digest_string("rule_pack_digests", digest)?;
             }
             if release.artifacts.is_empty() {
-                bail!("{} {}: rule pack artifacts are required", rule_pack.id, release.version);
+                bail!(
+                    "{} {}: rule pack artifacts are required",
+                    rule_pack.id,
+                    release.version
+                );
             }
             for artifact in &release.artifacts {
                 let artifact_name = url_file_name(&artifact.url)?;
-                if !(artifact_name.ends_with(".min.json.zst") || artifact_name.ends_with(".min.json.br")) {
+                if !(artifact_name.ends_with(".min.json.zst")
+                    || artifact_name.ends_with(".min.json.br"))
+                {
                     bail!(
                         "{} {}: rule pack artifact {} must end with .min.json.zst or .min.json.br",
                         rule_pack.id,
@@ -5611,6 +5705,176 @@ fn run_catalog_validate_v2(ctx: &TaskContext) -> Result<()> {
         catalog.plugins.len()
     ));
     Ok(())
+}
+
+fn run_ffmpeg_revendor(ctx: &TaskContext, args: FfmpegRevendorArgs) -> Result<()> {
+    step(format!(
+        "Re-vendoring FFmpeg {} into enhanced subtitle sync",
+        args.commit
+    ));
+
+    let scratch = tempfile::tempdir().context("create FFmpeg re-vendor scratch directory")?;
+    let source = prepare_ffmpeg_source(ctx, &args, scratch.path())?;
+    let commit = ensure_ffmpeg_commit(ctx, &source, &args.commit)?;
+    let source_date = git_capture_in(
+        ctx,
+        &source,
+        ["show", "-s", "--format=%cs", commit.as_str()],
+    )
+    .context("read FFmpeg commit date")?;
+    let source_url = git_capture_in(ctx, &source, ["config", "--get", "remote.origin.url"])
+        .unwrap_or_else(|_| args.source.clone());
+
+    let staged_vendor = scratch.path().join("ffmpeg-vendor");
+    fs::create_dir_all(&staged_vendor).context("create staged FFmpeg vendor directory")?;
+    archive_ffmpeg_paths(ctx, &source, &commit, &staged_vendor)?;
+    write_ffmpeg_upstream_metadata(&staged_vendor, &source_url, &commit, source_date.trim())?;
+
+    let vendor_dir = ctx.path(ENHANCED_SYNC_FFMPEG_VENDOR_DIR);
+    if vendor_dir.exists() {
+        fs::remove_dir_all(&vendor_dir)
+            .with_context(|| format!("remove {}", vendor_dir.display()))?;
+    }
+    if let Some(parent) = vendor_dir.parent() {
+        fs::create_dir_all(parent).with_context(|| format!("create {}", parent.display()))?;
+    }
+    fs::rename(&staged_vendor, &vendor_dir).with_context(|| {
+        format!(
+            "move staged FFmpeg vendor tree into {}",
+            vendor_dir.display()
+        )
+    })?;
+
+    ok(format!(
+        "vendored FFmpeg {} into {}",
+        &commit[..12.min(commit.len())],
+        ENHANCED_SYNC_FFMPEG_VENDOR_DIR
+    ));
+    Ok(())
+}
+
+fn prepare_ffmpeg_source(
+    ctx: &TaskContext,
+    args: &FfmpegRevendorArgs,
+    scratch: &Path,
+) -> Result<PathBuf> {
+    let local_source = PathBuf::from(&args.source);
+    if local_source.exists() {
+        return Ok(local_source);
+    }
+
+    let clone_dir = scratch.join("ffmpeg-source");
+    run_checked(
+        ctx.command("git")
+            .arg("clone")
+            .arg("--filter=blob:none")
+            .arg("--no-checkout")
+            .arg(&args.source)
+            .arg(&clone_dir),
+    )
+    .with_context(|| format!("clone FFmpeg source {}", args.source))?;
+    Ok(clone_dir)
+}
+
+fn ensure_ffmpeg_commit(ctx: &TaskContext, source: &Path, commit: &str) -> Result<String> {
+    if let Ok(resolved) =
+        git_capture_in(ctx, source, ["rev-parse", &format!("{commit}^{{commit}}")])
+    {
+        return Ok(resolved.trim().to_string());
+    }
+
+    run_checked(
+        ctx.command("git")
+            .arg("-C")
+            .arg(source)
+            .arg("fetch")
+            .arg("--depth=1")
+            .arg("origin")
+            .arg(commit),
+    )
+    .with_context(|| format!("fetch FFmpeg commit {commit}"))?;
+    Ok(
+        git_capture_in(ctx, source, ["rev-parse", &format!("{commit}^{{commit}}")])?
+            .trim()
+            .to_string(),
+    )
+}
+
+fn archive_ffmpeg_paths(
+    ctx: &TaskContext,
+    source: &Path,
+    commit: &str,
+    destination: &Path,
+) -> Result<()> {
+    let mut archive = ctx
+        .command("git")
+        .arg("-C")
+        .arg(source)
+        .arg("archive")
+        .arg(commit)
+        .args(FFMPEG_VENDOR_PATHS)
+        .stdout(Stdio::piped())
+        .spawn()
+        .with_context(|| format!("start git archive for FFmpeg commit {commit}"))?;
+    let stdout = archive
+        .stdout
+        .take()
+        .ok_or_else(|| anyhow!("git archive stdout was not captured"))?;
+    let mut extract = ctx
+        .command("tar")
+        .arg("-x")
+        .arg("-C")
+        .arg(destination)
+        .stdin(Stdio::from(stdout))
+        .spawn()
+        .context("start tar extraction for FFmpeg vendor tree")?;
+
+    let extract_status = extract.wait().context("wait for tar extraction")?;
+    let archive_status = archive.wait().context("wait for git archive")?;
+    if !archive_status.success() {
+        bail!("git archive failed with {archive_status}");
+    }
+    if !extract_status.success() {
+        bail!("tar extraction failed with {extract_status}");
+    }
+    Ok(())
+}
+
+fn write_ffmpeg_upstream_metadata(
+    vendor_dir: &Path,
+    source_url: &str,
+    commit: &str,
+    source_date: &str,
+) -> Result<()> {
+    let metadata = format!(
+        r#"# FFmpeg Source Snapshot
+
+Vendored from FFmpeg upstream:
+
+- repository: `{source_url}`
+- commit: `{commit}`
+- source date: `{source_date}`
+- vendored for: targeted AC-3, E-AC-3, DTS/DCA, DTS-HD MA core fallback,
+  and TrueHD/MLP decode-to-FLAC support
+
+The plugin build configures this vendored tree as a narrow static FFmpeg
+`avformat`/`avcodec`/`swresample`/`avutil` build and links it into the final
+Rust `wasm32-wasip1` plugin artifact. FFmpeg source files are licensed by
+FFmpeg under LGPL-2.1-or-later unless the individual file states otherwise.
+
+Keep the configured build narrow: no programs, only the targeted audio
+demuxers/muxer, no filters, and no network support.
+"#
+    );
+    fs::write(vendor_dir.join("UPSTREAM.md"), metadata).context("write FFmpeg UPSTREAM.md")
+}
+
+fn git_capture_in<const N: usize>(
+    ctx: &TaskContext,
+    source: &Path,
+    args: [&str; N],
+) -> Result<String> {
+    run_capture(ctx.command("git").arg("-C").arg(source).args(args))
 }
 
 fn run_release(ctx: &TaskContext, args: ReleaseArgs) -> Result<()> {

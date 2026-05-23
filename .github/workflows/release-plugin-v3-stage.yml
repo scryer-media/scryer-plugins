@@ -23,7 +23,7 @@ env:
   RELEASE_PLUGIN_CACHE_SCOPE: release-plugin-v3-stage
   RELEASE_PLUGIN_PLAN_SCCACHE_LANE: linux-host-xtask
   RELEASE_PLUGIN_BUILD_SCCACHE_LANE: linux-wasm32-wasip1-plugin-release
-  CF_JURISDICTION_URL: ${{ vars.CF_JURISDICTION_URL }}
+  CF_JURISDICTION_URL: ${{ secrets.CF_JURISDICTION_URL }}
   SCRYER_OFFICIAL_RELEASE_WORKFLOW_PATH: .github/workflows/release-plugin-v3-stage.yml
   SCRYER_OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX: plugins-stage
   SCRYER_CATALOG_V3_RELEASE_TAG: catalog/v3-stage
@@ -58,6 +58,8 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: gha-rust-cache-linux-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-validate
+          workspaces: |
+            xtask -> target
           cache-targets: "false"
           cache-workspace-crates: "false"
           key: validate
@@ -199,6 +201,20 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: gha-rust-cache-linux-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-prepare-${{ matrix.plugin_id }}
+          workspaces: |
+            xtask -> target
+            download_clients/qbittorrent -> target
+            indexers/dognzb -> target
+            indexers/newznab -> target
+            indexers/nzbgeek -> target
+            indexers/torrent-rss -> target
+            indexers/torznab -> target
+            notifications/email -> target
+            notifications/jellyfin -> target
+            notifications/webhook -> target
+            subtitles/jimaku -> target
+            subtitles/opensubtitles -> target
+            subtitles/subdl -> target
           cache-targets: "false"
           cache-workspace-crates: "false"
           key: prepare-${{ matrix.plugin_id }}

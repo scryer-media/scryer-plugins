@@ -121,6 +121,12 @@ impl ScaffoldSpec {
         catalog_versions.push("v3");
         document["package"]["metadata"]["scryer"]["catalog_versions"] =
             Item::Value(catalog_versions.into());
+        let repo_path = format!("{}/{}", self.kind.directory(), self.plugin_id);
+        let source_url = format!("https://github.com/OWNER/REPO/tree/main/{repo_path}");
+        document["package"]["metadata"]["scryer"]["docs_url"] = value(source_url.as_str());
+        document["package"]["metadata"]["scryer"]["source_repo"] = value(source_url.as_str());
+        document["package"]["metadata"]["scryer"]["distribution_base_url"] =
+            value(format!("https://cdn.scryer.media/plugins/{}", self.plugin_id).as_str());
 
         let mut crate_types = Array::new();
         crate_types.push("cdylib");

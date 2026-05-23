@@ -9,6 +9,9 @@ description = "Targeted Jellyfin library refresh notifications using mapped medi
 official = true
 plugin_id = "jellyfin"
 catalog_versions = ["v2", "v3"]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/jellyfin"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/jellyfin"
+distribution_base_url = "https://cdn.scryer.media/plugins/jellyfin"
 
 [lib]
 crate-type = ["cdylib"]

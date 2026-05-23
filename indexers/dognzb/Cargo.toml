@@ -9,6 +9,9 @@ description = "DogNZB-specific Newznab indexer with rating, genre, and comment m
 official = true
 plugin_id = "dognzb"
 catalog_versions = ["v2", "v3"]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/dognzb"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/dognzb"
+distribution_base_url = "https://cdn.scryer.media/plugins/dognzb"
 
 [lib]
 crate-type = ["cdylib"]

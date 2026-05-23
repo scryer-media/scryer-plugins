@@ -9,6 +9,9 @@ description = "NZBGeek-specific Newznab indexer with metadata extraction (thumbs
 official = true
 plugin_id = "nzbgeek"
 catalog_versions = ["v2", "v3"]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/nzbgeek"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/nzbgeek"
+distribution_base_url = "https://cdn.scryer.media/plugins/nzbgeek"
 
 [lib]
 crate-type = ["cdylib"]

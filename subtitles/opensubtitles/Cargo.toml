@@ -9,6 +9,9 @@ description = "OpenSubtitles subtitle provider with provider-managed auth, searc
 official = true
 plugin_id = "opensubtitles"
 catalog_versions = ["v2", "v3"]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/opensubtitles"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/opensubtitles"
+distribution_base_url = "https://cdn.scryer.media/plugins/opensubtitles"
 
 [lib]
 crate-type = ["cdylib"]

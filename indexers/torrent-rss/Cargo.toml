@@ -9,6 +9,9 @@ description = "Generic torrent RSS indexer for trackers and aggregators that exp
 official = true
 plugin_id = "torrent-rss"
 catalog_versions = ["v2", "v3"]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torrent-rss"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torrent-rss"
+distribution_base_url = "https://cdn.scryer.media/plugins/torrent-rss"
 
 [lib]
 crate-type = ["cdylib"]

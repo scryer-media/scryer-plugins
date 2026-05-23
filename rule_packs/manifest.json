@@ -1,11 +1,15 @@
 {
   "rule_packs": [
     {
+      "id": "anime-scoring-pack",
       "asset": "anime-scoring.json",
+      "distribution_base_url": "https://cdn.scryer.media/rule-packs/anime-scoring-pack",
       "min_scryer_version": "0.9.4"
     },
     {
+      "id": "torrent-optimization-pack",
       "asset": "torrent-optimization.json",
+      "distribution_base_url": "https://cdn.scryer.media/rule-packs/torrent-optimization-pack",
       "min_scryer_version": "0.9.4"
     }
   ]

@@ -9,6 +9,9 @@ description = "Generic webhook notification plugin — POSTs JSON payloads to a 
 official = true
 plugin_id = "webhook"
 catalog_versions = ["v2", "v3"]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/webhook"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/webhook"
+distribution_base_url = "https://cdn.scryer.media/plugins/webhook"
 
 [lib]
 crate-type = ["cdylib"]

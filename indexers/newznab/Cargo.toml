@@ -9,6 +9,9 @@ description = "Generic Newznab protocol indexer for compatible services"
 official = true
 plugin_id = "newznab"
 catalog_versions = ["v2", "v3"]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/newznab"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/newznab"
+distribution_base_url = "https://cdn.scryer.media/plugins/newznab"
 
 [lib]
 crate-type = ["cdylib"]
