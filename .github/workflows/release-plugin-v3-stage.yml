@@ -22,7 +22,9 @@ permissions:
 env:
   RELEASE_PLUGIN_CACHE_SCOPE: release-plugin-v3-stage
   RELEASE_PLUGIN_PLAN_SCCACHE_LANE: linux-host-xtask
+  RELEASE_PLUGIN_PLAN_SCCACHE_BUILD_FLAVOR: xtask-release
   RELEASE_PLUGIN_BUILD_SCCACHE_LANE: linux-wasm32-wasip1-plugin-release
+  RELEASE_PLUGIN_BUILD_SCCACHE_BUILD_FLAVOR: plugin-release
   CF_JURISDICTION_URL: ${{ secrets.CF_JURISDICTION_URL }}
   SCRYER_OFFICIAL_RELEASE_WORKFLOW_PATH: .github/workflows/release-plugin-v3-stage.yml
   SCRYER_OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX: plugins-stage
@@ -43,7 +45,7 @@ jobs:
       CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
       GH_TOKEN: ${{ github.token }}
       RUSTC_WRAPPER: sccache
-      SCCACHE_BASEDIRS: ${{ github.workspace }}
+      SCCACHE_BASEDIRS: /home/runner/work/scryer-plugins/scryer-plugins
       SCCACHE_CACHE_SIZE: 10G
       SCCACHE_DIR: /home/runner/.cache/sccache
       SCCACHE_IDLE_TIMEOUT: "0"
@@ -69,10 +71,10 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: /home/runner/.cache/sccache
-          key: gha-sccache-v1-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_LANE }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-plan-release-${{ github.run_id }}
+          key: gha-sccache-v2-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_LANE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_BUILD_FLAVOR }}-${{ github.run_id }}
           restore-keys: |
-            gha-sccache-v1-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_LANE }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
-            gha-sccache-v1-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_LANE }}-
+            gha-sccache-v2-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_LANE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_BUILD_FLAVOR }}-
+            gha-sccache-v2-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_LANE }}-
 
       - name: Install sccache
         uses: mozilla-actions/sccache-action@v0.0.10
@@ -187,7 +189,7 @@ jobs:
       CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
       GH_TOKEN: ${{ github.token }}
       RUSTC_WRAPPER: sccache
-      SCCACHE_BASEDIRS: ${{ github.workspace }}
+      SCCACHE_BASEDIRS: /home/runner/work/scryer-plugins/scryer-plugins
       SCCACHE_CACHE_SIZE: 10G
       SCCACHE_DIR: /home/runner/.cache/sccache
       SCCACHE_IDLE_TIMEOUT: "0"
@@ -228,10 +230,10 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: /home/runner/.cache/sccache
-          key: gha-sccache-v1-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_LANE }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ matrix.plugin_id }}-${{ github.run_id }}
+          key: gha-sccache-v2-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_LANE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_BUILD_FLAVOR }}-${{ matrix.plugin_id }}-${{ github.run_id }}
           restore-keys: |
-            gha-sccache-v1-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_LANE }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
-            gha-sccache-v1-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_LANE }}-
+            gha-sccache-v2-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_LANE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_BUILD_FLAVOR }}-
+            gha-sccache-v2-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_LANE }}-
 
       - name: Install release tools
         run: |
