@@ -1,9 +1,6 @@
-name: release-plugin-v3
+name: release-plugin-v2-legacy
 
 on:
-  push:
-    tags:
-      - "plugins/release/*"
   workflow_dispatch:
     inputs:
       release_ref:
@@ -20,17 +17,10 @@ permissions:
   id-token: write
 
 env:
-  RELEASE_PLUGIN_CACHE_SCOPE: release-plugin-v3
+  RELEASE_PLUGIN_CACHE_SCOPE: release-plugin-v2-legacy
   RELEASE_PLUGIN_PLAN_SCCACHE_LANE: linux-host-xtask
-  RELEASE_PLUGIN_PLAN_SCCACHE_BUILD_FLAVOR: xtask-release
   RELEASE_PLUGIN_BUILD_SCCACHE_LANE: linux-wasm32-wasip1-plugin-release
-  RELEASE_PLUGIN_BUILD_SCCACHE_BUILD_FLAVOR: plugin-release
-  CF_JURISDICTION_URL: ${{ secrets.CF_JURISDICTION_URL }}
-  CF_R2_PUBLIC_BASE_URL: https://cdn.scryer.media
-  SCRYER_OFFICIAL_RELEASE_WORKFLOW_PATH: .github/workflows/release-plugin-v3.yml
-  SCRYER_OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX: plugins
-  SCRYER_CATALOG_V3_RELEASE_TAG: catalog/v3
-  SCRYER_CATALOG_V3_PATH_PREFIX: catalog/v3
+  SCRYER_OFFICIAL_RELEASE_WORKFLOW_PATH: .github/workflows/release-plugin-v2-legacy.yml
 
 jobs:
   plan-release:
@@ -38,16 +28,11 @@ jobs:
       plugin_matrix: ${{ steps.plugin-plans.outputs.matrix }}
     runs-on: ubuntu-latest
     env:
-      CARGO_HOME: /home/runner/.cargo
       CARGO_INCREMENTAL: "0"
       CARGO_TERM_COLOR: always
-      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-      CF_R2_BUCKET_ID: ${{ vars.CF_R2_BUCKET_ID }}
-      CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
-      CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
       GH_TOKEN: ${{ github.token }}
       RUSTC_WRAPPER: sccache
-      SCCACHE_BASEDIRS: /home/runner/work/scryer-plugins/scryer-plugins
+      SCCACHE_BASEDIRS: ${{ github.workspace }}
       SCCACHE_CACHE_SIZE: 10G
       SCCACHE_DIR: /home/runner/.cache/sccache
       SCCACHE_IDLE_TIMEOUT: "0"
@@ -61,22 +46,20 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: gha-rust-cache-linux-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-xtask
-          workspaces: |
-            xtask -> xtask/target
+          shared-key: gha-rust-cache-linux-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-validate
           cache-targets: "false"
           cache-workspace-crates: "false"
-          key: xtask-release
+          key: validate
 
       - name: Restore sccache directory
-        id: validate-sccache-cache
-        uses: actions/cache@v4
+        id: validate-sccache-restore
+        uses: actions/cache/restore@v4
         with:
           path: /home/runner/.cache/sccache
-          key: gha-sccache-v2-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_LANE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_BUILD_FLAVOR }}-${{ github.run_id }}
+          key: gha-sccache-v1-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_LANE }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-plan-release-${{ github.run_id }}
           restore-keys: |
-            gha-sccache-v2-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_LANE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_BUILD_FLAVOR }}-
-            gha-sccache-v2-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_LANE }}-
+            gha-sccache-v1-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_LANE }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
+            gha-sccache-v1-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_LANE }}-
 
       - name: Install sccache
         uses: mozilla-actions/sccache-action@v0.0.10
@@ -145,7 +128,7 @@ jobs:
       - name: Upload xtask artifact
         uses: actions/upload-artifact@v7
         with:
-          name: release-plugin-v3-xtask-${{ github.run_id }}
+          name: release-plugin-xtask-${{ github.run_id }}
           path: xtask/target/xtask-release/xtask
           if-no-files-found: error
           retention-days: 7
@@ -153,7 +136,7 @@ jobs:
       - name: Upload release plan
         uses: actions/upload-artifact@v7
         with:
-          name: release-plugin-v3-plan-${{ github.run_id }}
+          name: release-plugin-plan-${{ github.run_id }}
           path: |
             release-plan.tsv
           if-no-files-found: error
@@ -163,10 +146,17 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: release-plugin-v3-validate-${{ github.run_id }}
+          name: release-plugin-validate-${{ github.run_id }}
           path: validate-sccache-stats.txt
           if-no-files-found: error
           retention-days: 7
+
+      - name: Save sccache directory
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: /home/runner/.cache/sccache
+          key: ${{ steps.validate-sccache-restore.outputs.cache-primary-key }}
 
   build-sign-release-plugin:
     needs: [plan-release]
@@ -176,16 +166,11 @@ jobs:
       matrix: ${{ fromJson(needs.plan-release.outputs.plugin_matrix) }}
     runs-on: ubuntu-latest
     env:
-      CARGO_HOME: /home/runner/.cargo
       CARGO_INCREMENTAL: "0"
       CARGO_TERM_COLOR: always
-      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-      CF_R2_BUCKET_ID: ${{ vars.CF_R2_BUCKET_ID }}
-      CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
-      CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
       GH_TOKEN: ${{ github.token }}
       RUSTC_WRAPPER: sccache
-      SCCACHE_BASEDIRS: /home/runner/work/scryer-plugins/scryer-plugins
+      SCCACHE_BASEDIRS: ${{ github.workspace }}
       SCCACHE_CACHE_SIZE: 10G
       SCCACHE_DIR: /home/runner/.cache/sccache
       SCCACHE_IDLE_TIMEOUT: "0"
@@ -202,41 +187,25 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: gha-rust-cache-linux-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-plugin-build
-          workspaces: |
-            xtask -> xtask/target
-            download_clients/qbittorrent -> download_clients/qbittorrent/target
-            indexers/dognzb -> indexers/dognzb/target
-            indexers/newznab -> indexers/newznab/target
-            indexers/nzbgeek -> indexers/nzbgeek/target
-            indexers/torrent-rss -> indexers/torrent-rss/target
-            indexers/torznab -> indexers/torznab/target
-            notifications/email -> notifications/email/target
-            notifications/jellyfin -> notifications/jellyfin/target
-            notifications/webhook -> notifications/webhook/target
-            subtitles/jimaku -> subtitles/jimaku/target
-            subtitles/opensubtitles -> subtitles/opensubtitles/target
-            subtitles/subdl -> subtitles/subdl/target
+          shared-key: gha-rust-cache-linux-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-prepare-${{ matrix.plugin_id }}
           cache-targets: "false"
           cache-workspace-crates: "false"
-          key: plugin-release
+          key: prepare-${{ matrix.plugin_id }}
 
       - name: Restore sccache directory
-        id: prepare-sccache-cache
-        uses: actions/cache@v4
+        id: prepare-sccache-restore
+        uses: actions/cache/restore@v4
         with:
           path: /home/runner/.cache/sccache
-          key: gha-sccache-v2-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_LANE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_BUILD_FLAVOR }}-${{ matrix.plugin_id }}-${{ github.run_id }}
+          key: gha-sccache-v1-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_LANE }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ matrix.plugin_id }}-${{ github.run_id }}
           restore-keys: |
-            gha-sccache-v2-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_LANE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_BUILD_FLAVOR }}-
-            gha-sccache-v2-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_LANE }}-
+            gha-sccache-v1-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_LANE }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
+            gha-sccache-v1-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_LANE }}-
 
       - name: Install release tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y binaryen python3-pip zstd
-          python3 -m pip install --user awscli
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          sudo apt-get install -y awscli binaryen zstd
 
       - uses: taiki-e/install-action@v2
         with:
@@ -257,7 +226,7 @@ jobs:
       - name: Download xtask artifact
         uses: actions/download-artifact@v8
         with:
-          name: release-plugin-v3-xtask-${{ github.run_id }}
+          name: release-plugin-xtask-${{ github.run_id }}
           path: xtask-artifact
 
       - name: Restore xtask binary
@@ -285,34 +254,53 @@ jobs:
           mapfile -t plugin_ids < <(cut -f1 release-plan.tsv | sort -u)
           ./xtask/target/xtask-release/xtask official prefetch "${plugin_ids[@]}"
 
-      - name: Prepare sign and publish selected plugin v3 assets
+      - name: Prepare sign and publish selected plugin assets
         run: |
           set -euo pipefail
           shopt -s nullglob
           while IFS=$'\t' read -r plugin_id version; do
             tag="plugins/${plugin_id}/v${version}"
-            prepared_dir="dist/prepared/${plugin_id}"
+            prepared_dir="dist/catalog-v2/${plugin_id}"
+            existing_dir="existing-child-catalog/${plugin_id}"
+            existing_args=()
+            previous_tag="$(
+              git tag --list "plugins/${plugin_id}/v*" --sort=-version:refname \
+                | grep -v -Fx "${tag}" \
+                | head -n1 \
+                || true
+            )"
+
+            mkdir -p "${existing_dir}"
+            if [ -n "${previous_tag}" ] && gh release download "${previous_tag}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --pattern catalog-v2.min.json.zst \
+              --pattern catalog-v2.min.json.zst.bundle \
+              --dir "${existing_dir}" \
+              --clobber; then
+              cosign verify-blob \
+                --bundle "${existing_dir}/catalog-v2.min.json.zst.bundle" \
+                --certificate-identity-regexp "^https://github.com/${GITHUB_REPOSITORY}/\\.github/workflows/release-plugin\\.yml@refs/(tags|heads)/.*$" \
+                --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+                "${existing_dir}/catalog-v2.min.json.zst"
+              existing_args=(--existing-child-catalog "${existing_dir}/catalog-v2.min.json.zst")
+            else
+              echo "No existing child catalog found for ${plugin_id}; preparing first catalog."
+            fi
 
             ./xtask/target/xtask-release/xtask official prepare "${plugin_id}" \
               --version "${version}" \
-              --out "${prepared_dir}"
+              --out "${prepared_dir}" \
+              "${existing_args[@]}"
 
             ./xtask/target/xtask-release/xtask official verify-prepared "${prepared_dir}"
 
-            python3 -c 'import json, sys; from pathlib import Path; prepared_dir = Path(sys.argv[1]); snippet = json.loads((prepared_dir / "catalog-v3.json").read_text()); print("\n".join(sorted({artifact["url"].rsplit("/", 1)[-1] for release in snippet["releases"] for artifact in release["artifacts"]})))' "${prepared_dir}" > "${prepared_dir}/v3-artifacts.txt"
+            cosign sign-blob \
+              --yes \
+              --bundle "${prepared_dir}/plugin.wasm.zst.bundle" \
+              "${prepared_dir}/plugin.wasm.zst"
 
-            while IFS= read -r artifact_name; do
-              [ -n "${artifact_name}" ] || continue
-              cosign sign-blob \
-                --yes \
-                --bundle "${prepared_dir}/${artifact_name}.bundle" \
-                "${prepared_dir}/${artifact_name}"
-              zstd -19 -f "${prepared_dir}/${artifact_name}.bundle" -o "${prepared_dir}/${artifact_name}.bundle.zst"
-              rm -f "${prepared_dir}/${artifact_name}.bundle"
-            done < "${prepared_dir}/v3-artifacts.txt"
-
-            release_assets=()
-            for asset in catalog-v3.json; do
+            release_assets=("${prepared_dir}/plugin.wasm.zst" "${prepared_dir}/plugin.wasm.zst.bundle")
+            for asset in plugin.manifest.json catalog-v2.json catalog-v2.min.json.zst; do
               if [ -f "${prepared_dir}/${asset}" ]; then
                 cosign sign-blob \
                   --yes \
@@ -322,50 +310,36 @@ jobs:
               fi
             done
 
-            while IFS= read -r artifact_name; do
-              [ -n "${artifact_name}" ] || continue
-              release_assets+=(
-                "${prepared_dir}/${artifact_name}"
-                "${prepared_dir}/${artifact_name}.bundle.zst"
-              )
-            done < "${prepared_dir}/v3-artifacts.txt"
-
-            ./xtask/target/xtask-release/xtask official upload-r2 "${prepared_dir}"
-
             gh release view "${tag}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 || \
               gh release create "${tag}" \
                 --repo "${GITHUB_REPOSITORY}" \
                 --title "${plugin_id} ${version}" \
                 --target "$(git rev-parse HEAD)" \
-                --notes "Scryer plugin distribution assets for the catalog-v3 lane."
+                --notes "Scryer plugin distribution assets."
             gh release upload "${tag}" \
               "${release_assets[@]}" \
               --repo "${GITHUB_REPOSITORY}" \
               --clobber
           done < release-plan.tsv
 
-      - name: Stage prepared plugin artifacts
+      - name: Stage prepared child catalogs
         run: |
           set -euo pipefail
-          rm -rf prepared-plugins
-          mkdir -p prepared-plugins
-          cp -R "dist/prepared/${{ matrix.plugin_id }}" "prepared-plugins/${{ matrix.plugin_id }}"
+          rm -rf prepared-child-catalogs
+          mkdir -p prepared-child-catalogs
+          cp -R "dist/catalog-v2/${{ matrix.plugin_id }}" "prepared-child-catalogs/${{ matrix.plugin_id }}"
 
       - name: Show sccache stats
         if: always()
         run: |
           set -euo pipefail
-          if command -v sccache >/dev/null 2>&1; then
-            sccache --show-stats | tee prepare-sccache-stats.txt
-          else
-            echo "sccache unavailable" | tee prepare-sccache-stats.txt
-          fi
+          sccache --show-stats | tee prepare-sccache-stats.txt
 
-      - name: Upload prepared plugin artifacts
+      - name: Upload prepared child catalogs
         uses: actions/upload-artifact@v7
         with:
-          name: release-plugin-v3-prepared-${{ github.run_id }}-${{ matrix.plugin_id }}
-          path: prepared-plugins
+          name: release-plugin-child-catalogs-${{ github.run_id }}-${{ matrix.plugin_id }}
+          path: prepared-child-catalogs
           if-no-files-found: error
           retention-days: 7
 
@@ -373,10 +347,17 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: release-plugin-v3-artifacts-${{ github.run_id }}-${{ matrix.plugin_id }}
+          name: release-plugin-artifacts-${{ github.run_id }}-${{ matrix.plugin_id }}
           path: prepare-sccache-stats.txt
           if-no-files-found: error
           retention-days: 7
+
+      - name: Save sccache directory
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: /home/runner/.cache/sccache
+          key: ${{ steps.prepare-sccache-restore.outputs.cache-primary-key }}
 
   publish-central-catalog:
     needs: [plan-release, build-sign-release-plugin]
@@ -384,10 +365,6 @@ jobs:
     env:
       CARGO_INCREMENTAL: "0"
       CARGO_TERM_COLOR: always
-      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-      CF_R2_BUCKET_ID: ${{ vars.CF_R2_BUCKET_ID }}
-      CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
-      CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v6
@@ -404,27 +381,25 @@ jobs:
       - name: Install central publish tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-pip zstd
-          python3 -m pip install --user awscli
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          sudo apt-get install -y awscli zstd
 
       - name: Download xtask artifact
         uses: actions/download-artifact@v8
         with:
-          name: release-plugin-v3-xtask-${{ github.run_id }}
+          name: release-plugin-xtask-${{ github.run_id }}
           path: xtask-artifact
 
       - name: Download release plan artifact
         uses: actions/download-artifact@v8
         with:
-          name: release-plugin-v3-plan-${{ github.run_id }}
+          name: release-plugin-plan-${{ github.run_id }}
           path: release-plan-artifact
 
-      - name: Download prepared plugin artifacts
+      - name: Download prepared child catalogs
         uses: actions/download-artifact@v8
         with:
-          pattern: release-plugin-v3-prepared-${{ github.run_id }}-*
-          path: prepared-plugins
+          pattern: release-plugin-child-catalogs-${{ github.run_id }}-*
+          path: prepared-child-catalogs
           merge-multiple: true
 
       - name: Restore xtask binary
@@ -442,69 +417,43 @@ jobs:
             exit 1
           fi
 
-      - name: Verify prepared plugin artifacts
+      - name: Verify prepared child catalogs
         run: |
           set -euo pipefail
           while IFS=$'\t' read -r plugin_id _; do
-            ./xtask/target/xtask-release/xtask official verify-prepared "prepared-plugins/${plugin_id}"
+            ./xtask/target/xtask-release/xtask official verify-prepared "prepared-child-catalogs/${plugin_id}"
           done < release-plan.tsv
 
-      - name: Prepare sign and publish central catalog v3
+      - name: Prepare sign and publish central catalog
         run: |
           set -euo pipefail
           shopt -s nullglob
           mapfile -t plugin_ids < <(cut -f1 release-plan.tsv | sort -u)
-          prepare_v3_args=(
-            --out dist/catalog-v3
-            --prepared-plugin-root prepared-plugins
+          prepare_v2_args=(
+            --out dist/catalog-v2
+            --prepared-child-catalog-root prepared-child-catalogs
           )
           for plugin_id in "${plugin_ids[@]}"; do
-            prepare_v3_args+=(--plugin-id "${plugin_id}")
+            prepare_v2_args+=(--plugin-id "${plugin_id}")
           done
-          ./xtask/target/xtask-release/xtask catalog prepare-v3 "${prepare_v3_args[@]}"
-          for asset in catalog-v3.min.json.zst; do
+          ./xtask/target/xtask-release/xtask catalog prepare-v2 "${prepare_v2_args[@]}"
+          for asset in catalog-v2.json catalog-v2.min.json.zst; do
             cosign sign-blob \
               --yes \
-              --bundle "dist/catalog-v3/${asset}.bundle" \
-              "dist/catalog-v3/${asset}"
+              --bundle "dist/catalog-v2/${asset}.bundle" \
+              "dist/catalog-v2/${asset}"
           done
-          cosign sign-blob \
-            --yes \
-            --bundle "dist/catalog-v3/catalog-v3.redirect.bundle.json" \
-            "dist/catalog-v3/catalog-v3.redirect.json"
 
-          python3 -c 'import json; from pathlib import Path; root = Path("dist/catalog-v3"); redirect = json.loads((root / "catalog-v3.redirect.json").read_text()); catalog_assets = [artifact["url"].rsplit("/", 1)[-1] for artifact in redirect["artifacts"]]; catalog = json.loads((root / "catalog-v3.json").read_text()); rule_pack_assets = sorted({artifact["url"].rsplit("/", 1)[-1] for rule_pack in catalog["rule_packs"] for release in rule_pack["releases"] for artifact in release["artifacts"]}); print("\n".join(catalog_assets + rule_pack_assets))' > dist/catalog-v3/v3-central-assets.txt
-
-          while IFS= read -r asset_name; do
-            [ -n "${asset_name}" ] || continue
-            cosign sign-blob \
-              --yes \
-              --bundle "dist/catalog-v3/${asset_name}.bundle" \
-              "dist/catalog-v3/${asset_name}"
-            zstd -19 -f "dist/catalog-v3/${asset_name}.bundle" -o "dist/catalog-v3/${asset_name}.bundle.zst"
-            rm -f "dist/catalog-v3/${asset_name}.bundle"
-          done < dist/catalog-v3/v3-central-assets.txt
-
-          ./xtask/target/xtask-release/xtask catalog upload-v3r2 dist/catalog-v3
-
-          gh release view "catalog/v3" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 || \
-            gh release create "catalog/v3" \
+          gh release view "catalog/v2" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 || \
+            gh release create "catalog/v2" \
               --repo "${GITHUB_REPOSITORY}" \
-              --title "Scryer plugin central catalog v3" \
+              --title "Scryer plugin central catalog v2" \
               --target "$(git rev-parse HEAD)" \
-              --notes "Scryer plugin central catalog v3 assets."
-          central_release_assets=(
-            "dist/catalog-v3/catalog-v3.redirect.json"
-            "dist/catalog-v3/catalog-v3.redirect.bundle.json"
-          )
-          while IFS= read -r asset_name; do
-            [ -n "${asset_name}" ] || continue
-            central_release_assets+=(
-              "dist/catalog-v3/${asset_name}"
-              "dist/catalog-v3/${asset_name}.bundle.zst"
-            )
-          done < dist/catalog-v3/v3-central-assets.txt
-          gh release upload "catalog/v3" \
-            "${central_release_assets[@]}" \
+              --notes "Scryer plugin central catalog assets."
+          gh release upload "catalog/v2" \
+            "dist/catalog-v2/catalog-v2.json" \
+            "dist/catalog-v2/catalog-v2.json.bundle" \
+            "dist/catalog-v2/catalog-v2.min.json.zst" \
+            "dist/catalog-v2/catalog-v2.min.json.zst.bundle" \
             --repo "${GITHUB_REPOSITORY}" \
             --clobber
