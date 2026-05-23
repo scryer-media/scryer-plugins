@@ -480,7 +480,7 @@ jobs:
             rm -f "dist/catalog-v3-stage/${asset_name}.bundle"
           done < dist/catalog-v3-stage/v3-central-assets.txt
 
-          ./xtask/target/xtask-release/xtask catalog upload-v3-r2 dist/catalog-v3-stage
+          ./xtask/target/xtask-release/xtask catalog upload-v3r2 dist/catalog-v3-stage
 
           gh release view "catalog/v3-stage" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 || \
             gh release create "catalog/v3-stage" \
