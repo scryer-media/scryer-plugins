@@ -7,6 +7,7 @@ description = "Whisper subtitle provider with locally generated subtitle output"
 
 [package.metadata.scryer]
 official = false
+feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 
 [lib]
 crate-type = ["cdylib"]

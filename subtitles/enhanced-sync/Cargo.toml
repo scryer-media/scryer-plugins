@@ -8,6 +8,7 @@ description = "Experimental enhanced subtitle sync decoder plugin with FFmpeg-de
 [package.metadata.scryer]
 official = false
 plugin_id = "enhanced-subtitle-sync"
+feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 
 [lib]
 crate-type = ["cdylib"]

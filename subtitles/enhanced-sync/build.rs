@@ -5,7 +5,91 @@ use std::process::{Command, Stdio};
 
 const FFMPEG_VENDOR_ARCHIVE_FILE: &str = "source.tar.zst";
 const FFMPEG_VENDOR_METADATA_FILE: &str = "SCRYER_VENDOR_METADATA";
-const FFMPEG_BUILD_CONFIG_VERSION: &str = "targeted-flac-transcode-v3";
+const FFMPEG_BUILD_CONFIG_VERSION: &str = "targeted-flac-transcode-v4";
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum WasmRequiredFeature {
+    Simd128,
+    RelaxedSimd,
+}
+
+#[derive(Clone, Debug)]
+struct WasmFeatureSet {
+    required_features: Vec<WasmRequiredFeature>,
+}
+
+impl WasmFeatureSet {
+    fn from_env() -> Self {
+        let raw = env::var("SCRYER_WASM_REQUIRED_FEATURES").unwrap_or_default();
+        if raw.trim().is_empty() {
+            return Self {
+                required_features: Vec::new(),
+            };
+        }
+
+        let mut required_features = raw
+            .split(',')
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .map(|value| match value {
+                "simd128" => WasmRequiredFeature::Simd128,
+                "relaxed-simd" => WasmRequiredFeature::RelaxedSimd,
+                other => panic!("unsupported SCRYER_WASM_REQUIRED_FEATURES entry `{other}`"),
+            })
+            .collect::<Vec<_>>();
+        required_features.sort_by_key(|feature| match feature {
+            WasmRequiredFeature::Simd128 => 0_u8,
+            WasmRequiredFeature::RelaxedSimd => 1_u8,
+        });
+        required_features.dedup();
+
+        let feature_set = Self { required_features };
+        if feature_set.has_feature(WasmRequiredFeature::RelaxedSimd)
+            && !feature_set.has_feature(WasmRequiredFeature::Simd128)
+        {
+            panic!("relaxed-simd requires simd128 in SCRYER_WASM_REQUIRED_FEATURES");
+        }
+        feature_set
+    }
+
+    fn has_feature(&self, feature: WasmRequiredFeature) -> bool {
+        self.required_features.contains(&feature)
+    }
+
+    fn is_baseline(&self) -> bool {
+        self.required_features.is_empty()
+    }
+
+    fn c_opt_level_flag(&self) -> &'static str {
+        if self.is_baseline() { "-Oz" } else { "-O3" }
+    }
+
+    fn clang_target_feature_flags(&self) -> Vec<&'static str> {
+        let mut flags = Vec::new();
+        if self.has_feature(WasmRequiredFeature::Simd128) {
+            flags.push("-msimd128");
+        }
+        if self.has_feature(WasmRequiredFeature::RelaxedSimd) {
+            flags.push("-mrelaxed-simd");
+        }
+        flags
+    }
+
+    fn build_stamp_fragment(&self) -> String {
+        if self.is_baseline() {
+            "baseline".to_string()
+        } else {
+            self.required_features
+                .iter()
+                .map(|feature| match feature {
+                    WasmRequiredFeature::Simd128 => "simd128",
+                    WasmRequiredFeature::RelaxedSimd => "relaxed-simd",
+                })
+                .collect::<Vec<_>>()
+                .join(",")
+        }
+    }
+}
 
 fn main() {
     let manifest_dir = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").unwrap());
@@ -16,6 +100,7 @@ fn main() {
     let build_dir = out_dir.join("ffmpeg-build");
     let target = env::var("TARGET").unwrap();
     let is_wasi = target == "wasm32-wasip1";
+    let feature_set = WasmFeatureSet::from_env();
     let vendor_metadata = read_ffmpeg_vendor_metadata(&vendor_dir);
 
     println!("cargo:rerun-if-changed=build.rs");
@@ -28,15 +113,23 @@ fn main() {
     println!("cargo:rerun-if-env-changed=LLVM_NM");
     println!("cargo:rerun-if-env-changed=LLVM_RANLIB");
     println!("cargo:rerun-if-env-changed=LLVM_STRIP");
+    println!("cargo:rerun-if-env-changed=SCRYER_WASM_REQUIRED_FEATURES");
 
     build_ffmpeg(
         &source_archive,
         &source_dir,
         &build_dir,
         is_wasi,
+        &feature_set,
         &vendor_metadata.revision,
     );
-    build_bridge(&manifest_dir, &source_dir, &build_dir, is_wasi);
+    build_bridge(
+        &manifest_dir,
+        &source_dir,
+        &build_dir,
+        is_wasi,
+        &feature_set,
+    );
 
     println!(
         "cargo:rustc-link-search=native={}",
@@ -65,6 +158,7 @@ fn build_ffmpeg(
     source_dir: &Path,
     build_dir: &Path,
     is_wasi: bool,
+    feature_set: &WasmFeatureSet,
     revision: &str,
 ) {
     let avcodec = build_dir.join("libavcodec/libavcodec.a");
@@ -72,7 +166,10 @@ fn build_ffmpeg(
     let swresample = build_dir.join("libswresample/libswresample.a");
     let avutil = build_dir.join("libavutil/libavutil.a");
     let config_stamp = build_dir.join(".scryer-ffmpeg-config");
-    let build_stamp = format!("{FFMPEG_BUILD_CONFIG_VERSION}\nrevision={revision}\n");
+    let build_stamp = format!(
+        "{FFMPEG_BUILD_CONFIG_VERSION}\nrevision={revision}\nfeatures={}\n",
+        feature_set.build_stamp_fragment()
+    );
     if avcodec.exists()
         && avformat.exists()
         && swresample.exists()
@@ -134,23 +231,49 @@ fn build_ffmpeg(
     if is_wasi {
         let sysroot = wasi_sysroot();
         let clang = clang_path();
+        let mut extra_cflags = vec![
+            "--target=wasm32-wasip1".to_string(),
+            format!("--sysroot={}", sysroot.display()),
+            feature_set.c_opt_level_flag().to_string(),
+            "-fvisibility=hidden".to_string(),
+            "-D_GNU_SOURCE".to_string(),
+        ];
+        extra_cflags.extend(
+            feature_set
+                .clang_target_feature_flags()
+                .into_iter()
+                .map(str::to_string),
+        );
+        let mut extra_ldflags = vec![
+            "--target=wasm32-wasip1".to_string(),
+            format!("--sysroot={}", sysroot.display()),
+            "-fuse-ld=lld".to_string(),
+            "-nostdlib".to_string(),
+            "-Wl,--no-entry".to_string(),
+        ];
+        extra_ldflags.extend(
+            feature_set
+                .clang_target_feature_flags()
+                .into_iter()
+                .map(str::to_string),
+        );
         configure.args([
             "--enable-cross-compile",
             "--target-os=none",
             "--arch=wasm32",
             &format!("--cc={}", clang.display()),
             &format!("--ar={}", llvm_tool("LLVM_AR", "llvm-ar").display()),
-            &format!("--ranlib={}", llvm_tool("LLVM_RANLIB", "llvm-ranlib").display()),
+            &format!(
+                "--ranlib={}",
+                llvm_tool("LLVM_RANLIB", "llvm-ranlib").display()
+            ),
             &format!("--nm={}", llvm_tool("LLVM_NM", "llvm-nm").display()),
-            &format!("--strip={}", llvm_tool("LLVM_STRIP", "llvm-strip").display()),
             &format!(
-                "--extra-cflags=--target=wasm32-wasip1 --sysroot={} -Oz -fvisibility=hidden -D_GNU_SOURCE",
-                sysroot.display()
+                "--strip={}",
+                llvm_tool("LLVM_STRIP", "llvm-strip").display()
             ),
-            &format!(
-                "--extra-ldflags=--target=wasm32-wasip1 --sysroot={} -fuse-ld=lld -nostdlib -Wl,--no-entry",
-                sysroot.display()
-            ),
+            &format!("--extra-cflags={}", extra_cflags.join(" ")),
+            &format!("--extra-ldflags={}", extra_ldflags.join(" ")),
         ]);
     }
 
@@ -186,10 +309,7 @@ fn extract_ffmpeg_source_archive(source_archive: &Path, source_dir: &Path) {
         )
     });
     let decoder = zstd::stream::Decoder::new(archive).unwrap_or_else(|error| {
-        panic!(
-            "failed to decompress {}: {error}",
-            source_archive.display()
-        )
+        panic!("failed to decompress {}: {error}", source_archive.display())
     });
     let mut archive = tar::Archive::new(decoder);
     archive.unpack(source_dir).unwrap_or_else(|error| {
@@ -201,7 +321,13 @@ fn extract_ffmpeg_source_archive(source_archive: &Path, source_dir: &Path) {
     });
 }
 
-fn build_bridge(manifest_dir: &Path, source_dir: &Path, build_dir: &Path, is_wasi: bool) {
+fn build_bridge(
+    manifest_dir: &Path,
+    source_dir: &Path,
+    build_dir: &Path,
+    is_wasi: bool,
+    feature_set: &WasmFeatureSet,
+) {
     let mut build = cc::Build::new();
     build
         .file(manifest_dir.join("src/ffmpeg_bridge.c"))
@@ -217,8 +343,11 @@ fn build_bridge(manifest_dir: &Path, source_dir: &Path, build_dir: &Path, is_was
             .compiler(clang_path())
             .flag("--target=wasm32-wasip1")
             .flag(format!("--sysroot={}", sysroot.display()))
-            .flag("-Oz")
+            .flag(feature_set.c_opt_level_flag())
             .flag("-D_GNU_SOURCE");
+        for flag in feature_set.clang_target_feature_flags() {
+            build.flag(flag);
+        }
     }
 
     build.compile("scryer_ffmpeg_bridge");
@@ -320,12 +449,7 @@ fn read_ffmpeg_vendor_metadata(source_dir: &Path) -> FfmpegVendorMetadata {
     let revision = revision
         .or_else(|| commit.map(|commit| format!("git-{commit}")))
         .filter(|revision| !revision.is_empty())
-        .unwrap_or_else(|| {
-            panic!(
-                "missing `revision=` or `commit=` in {}",
-                path.display()
-            )
-        });
+        .unwrap_or_else(|| panic!("missing `revision=` or `commit=` in {}", path.display()));
 
     FfmpegVendorMetadata { revision }
 }

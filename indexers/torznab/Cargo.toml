@@ -9,6 +9,7 @@ description = "Generic Torznab-compatible torrent indexer for Jackett and native
 official = true
 plugin_id = "torznab"
 catalog_versions = ["v2", "v3"]
+feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torznab"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torznab"
 distribution_base_url = "https://cdn.scryer.media/plugins/torznab"

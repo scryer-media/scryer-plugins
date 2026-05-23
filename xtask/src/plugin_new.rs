@@ -1,7 +1,7 @@
 use anyhow::{Context, Result, bail};
 use std::fs;
 use std::path::{Path, PathBuf};
-use toml_edit::{Array, DocumentMut, Item, value};
+use toml_edit::{Array, DocumentMut, InlineTable, Item, value};
 
 use crate::{
     PluginKindArg, PluginNewArgs, SDK_VERSION, TaskContext, ok, repo_cargo_command_in, run_checked,
@@ -121,6 +121,16 @@ impl ScaffoldSpec {
         catalog_versions.push("v3");
         document["package"]["metadata"]["scryer"]["catalog_versions"] =
             Item::Value(catalog_versions.into());
+        let feature_set_required_features = Array::new();
+        let mut feature_set = InlineTable::new();
+        feature_set.insert(
+            "required_features",
+            toml_edit::Value::from(feature_set_required_features),
+        );
+        let mut feature_sets = Array::new();
+        feature_sets.push(feature_set);
+        document["package"]["metadata"]["scryer"]["feature_sets"] =
+            Item::Value(feature_sets.into());
         let repo_path = format!("{}/{}", self.kind.directory(), self.plugin_id);
         let source_url = format!("https://github.com/OWNER/REPO/tree/main/{repo_path}");
         document["package"]["metadata"]["scryer"]["docs_url"] = value(source_url.as_str());
@@ -311,6 +321,7 @@ mod tests {
             Some(SDK_VERSION)
         );
         assert_eq!(document["dependencies"]["serde_json"].as_str(), Some("1"));
+        assert!(manifest.contains("feature_sets = [{ required_features = [] }]"));
     }
 
     #[test]

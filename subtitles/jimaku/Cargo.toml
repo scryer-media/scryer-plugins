@@ -9,6 +9,7 @@ description = "Anime-focused Jimaku subtitle provider using AniList IDs and opti
 official = true
 plugin_id = "jimaku"
 catalog_versions = ["v2", "v3"]
+feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/jimaku"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/jimaku"
 distribution_base_url = "https://cdn.scryer.media/plugins/jimaku"
