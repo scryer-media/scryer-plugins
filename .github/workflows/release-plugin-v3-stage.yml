@@ -61,6 +61,8 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: gha-rust-cache-linux-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-xtask
+          workspaces: |
+            xtask -> xtask/target
           cache-targets: "false"
           cache-workspace-crates: "false"
           key: xtask-release
@@ -200,6 +202,20 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: gha-rust-cache-linux-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-plugin-build
+          workspaces: |
+            xtask -> xtask/target
+            download_clients/qbittorrent -> download_clients/qbittorrent/target
+            indexers/dognzb -> indexers/dognzb/target
+            indexers/newznab -> indexers/newznab/target
+            indexers/nzbgeek -> indexers/nzbgeek/target
+            indexers/torrent-rss -> indexers/torrent-rss/target
+            indexers/torznab -> indexers/torznab/target
+            notifications/email -> notifications/email/target
+            notifications/jellyfin -> notifications/jellyfin/target
+            notifications/webhook -> notifications/webhook/target
+            subtitles/jimaku -> subtitles/jimaku/target
+            subtitles/opensubtitles -> subtitles/opensubtitles/target
+            subtitles/subdl -> subtitles/subdl/target
           cache-targets: "false"
           cache-workspace-crates: "false"
           key: plugin-release
