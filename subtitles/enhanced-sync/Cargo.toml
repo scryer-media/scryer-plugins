@@ -3,12 +3,17 @@ name = "enhanced-subtitle-sync-plugin"
 version = "0.1.0"
 edition = "2024"
 license = "GPL-3.0-only"
-description = "Experimental enhanced subtitle sync decoder plugin with FFmpeg-derived audio codec support"
+description = "Optional enhanced subtitle sync decoder and audio-transcode plugin with FFmpeg-derived audio codec support"
 
 [package.metadata.scryer]
-official = false
+official = true
 plugin_id = "enhanced-subtitle-sync"
+status = "beta"
+catalog_versions = ["v3"]
 feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/enhanced-sync"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/enhanced-sync"
+distribution_base_url = "https://cdn.scryer.media/plugins/enhanced-subtitle-sync"
 
 [lib]
 crate-type = ["cdylib"]

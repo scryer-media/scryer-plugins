@@ -1,12 +1,12 @@
 # Enhanced Subtitle Sync
 
-Experimental subtitle sync decoder plugin.
+Beta subtitle sync decoder and audio-transcode plugin.
 
-This crate is intentionally not an official catalog plugin yet. The current
-public Scryer plugin SDK has subtitle catalog and generator providers, but it
-does not yet expose a subtitle-sync decoder provider contract. This crate starts
-the Wasm-side implementation and keeps the exported contract small while the app
-host interface is designed.
+This crate publishes as an official Scryer catalog plugin, but it remains a
+beta add-on rather than a normal subtitle search provider. The current public
+Scryer plugin SDK still models installation through the subtitle-provider
+surface while Scryer consumes the decoder and audio-transcode exports for
+enhanced subtitle sync.
 
 Initial scope:
 
