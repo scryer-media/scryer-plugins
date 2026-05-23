@@ -181,6 +181,10 @@ jobs:
     env:
       CARGO_INCREMENTAL: "0"
       CARGO_TERM_COLOR: always
+      CF_R2_ACCOUNT_ID: ${{ secrets.CF_R2_ACCOUNT_ID }}
+      CF_R2_BUCKET: ${{ secrets.CF_R2_BUCKET }}
+      CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+      CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
       GH_TOKEN: ${{ github.token }}
       RUSTC_WRAPPER: sccache
       SCCACHE_BASEDIRS: ${{ github.workspace }}
