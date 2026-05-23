@@ -66,8 +66,8 @@ jobs:
           key: xtask-release
 
       - name: Restore sccache directory
-        id: validate-sccache-restore
-        uses: actions/cache/restore@v4
+        id: validate-sccache-cache
+        uses: actions/cache@v4
         with:
           path: /home/runner/.cache/sccache
           key: gha-sccache-v2-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_LANE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_BUILD_FLAVOR }}-${{ github.run_id }}
@@ -165,13 +165,6 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-      - name: Save sccache directory
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: /home/runner/.cache/sccache
-          key: ${{ steps.validate-sccache-restore.outputs.cache-primary-key }}
-
   build-sign-release-plugin:
     needs: [plan-release]
     name: validate-build-sign-release (${{ matrix.plugin_id }} ${{ matrix.version }})
@@ -212,8 +205,8 @@ jobs:
           key: plugin-release
 
       - name: Restore sccache directory
-        id: prepare-sccache-restore
-        uses: actions/cache/restore@v4
+        id: prepare-sccache-cache
+        uses: actions/cache@v4
         with:
           path: /home/runner/.cache/sccache
           key: gha-sccache-v2-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_LANE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_BUILD_FLAVOR }}-${{ matrix.plugin_id }}-${{ github.run_id }}
@@ -367,13 +360,6 @@ jobs:
           path: prepare-sccache-stats.txt
           if-no-files-found: error
           retention-days: 7
-
-      - name: Save sccache directory
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: /home/runner/.cache/sccache
-          key: ${{ steps.prepare-sccache-restore.outputs.cache-primary-key }}
 
   publish-central-catalog:
     needs: [plan-release, build-sign-release-plugin]
