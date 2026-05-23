@@ -58,8 +58,10 @@ const CATALOG_V3_SNIPPET_JSON: &str = "catalog-v3.json";
 const CATALOG_V3_MINIFIED_JSON: &str = "catalog-v3.min.json";
 const CATALOG_V3_MINIFIED_ZST: &str = "catalog-v3.min.json.zst";
 const CATALOG_V3_REDIRECT_JSON: &str = "catalog-v3.redirect.json";
-const R2_ACCOUNT_ID_ENV: &str = "CF_R2_ACCOUNT_ID";
-const R2_BUCKET_ENV: &str = "CF_R2_BUCKET";
+const R2_ACCOUNT_ID_ENV: &str = "CF_ACCOUNT_ID";
+const R2_ACCOUNT_ID_ENV_LEGACY: &str = "CF_R2_ACCOUNT_ID";
+const R2_BUCKET_ENV: &str = "CF_R2_BUCKET_ID";
+const R2_BUCKET_ENV_LEGACY: &str = "CF_R2_BUCKET";
 const R2_ACCESS_KEY_ID_ENV: &str = "CF_R2_ACCESS_KEY_ID";
 const R2_SECRET_ACCESS_KEY_ENV: &str = "CF_R2_SECRET_ACCESS_KEY";
 const R2_PUBLIC_BASE_URL_ENV: &str = "CF_JURISDICTION_URL";
@@ -2741,6 +2743,13 @@ fn env_override_or_default(key: &str, default: &str) -> String {
         .unwrap_or_else(|| default.to_string())
 }
 
+fn first_nonempty_env(keys: &[&str]) -> Option<String> {
+    keys.iter()
+        .find_map(|key| env::var(key).ok())
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
+}
+
 fn versioned_distribution_url(base: &str, version: &str, file_name: &str) -> String {
     format!("{}/v{version}/{file_name}", trim_url_base(base))
 }
@@ -4393,14 +4402,19 @@ struct R2Config {
 }
 
 fn r2_config_from_env() -> Result<R2Config> {
-    let account_id = env::var(R2_ACCOUNT_ID_ENV)
-        .map_err(|_| anyhow!("{R2_ACCOUNT_ID_ENV} must be set for R2 uploads"))?;
-    let bucket = env::var(R2_BUCKET_ENV)
-        .map_err(|_| anyhow!("{R2_BUCKET_ENV} must be set for R2 uploads"))?;
-    let access_key_id = env::var(R2_ACCESS_KEY_ID_ENV)
-        .map_err(|_| anyhow!("{R2_ACCESS_KEY_ID_ENV} must be set for R2 uploads"))?;
-    let secret_access_key = env::var(R2_SECRET_ACCESS_KEY_ENV)
-        .map_err(|_| anyhow!("{R2_SECRET_ACCESS_KEY_ENV} must be set for R2 uploads"))?;
+    let account_id = first_nonempty_env(&[R2_ACCOUNT_ID_ENV, R2_ACCOUNT_ID_ENV_LEGACY])
+        .ok_or_else(|| {
+            anyhow!(
+                "{R2_ACCOUNT_ID_ENV} or {R2_ACCOUNT_ID_ENV_LEGACY} must be set for R2 uploads"
+            )
+        })?;
+    let bucket = first_nonempty_env(&[R2_BUCKET_ENV, R2_BUCKET_ENV_LEGACY]).ok_or_else(|| {
+        anyhow!("{R2_BUCKET_ENV} or {R2_BUCKET_ENV_LEGACY} must be set for R2 uploads")
+    })?;
+    let access_key_id = first_nonempty_env(&[R2_ACCESS_KEY_ID_ENV])
+        .ok_or_else(|| anyhow!("{R2_ACCESS_KEY_ID_ENV} must be set for R2 uploads"))?;
+    let secret_access_key = first_nonempty_env(&[R2_SECRET_ACCESS_KEY_ENV])
+        .ok_or_else(|| anyhow!("{R2_SECRET_ACCESS_KEY_ENV} must be set for R2 uploads"))?;
     Ok(R2Config {
         endpoint_url: format!("https://{account_id}.r2.cloudflarestorage.com"),
         bucket,
@@ -4456,6 +4470,20 @@ fn upload_catalog_v3_artifact_from_dir(
     Ok(true)
 }
 
+fn release_artifacts_are_present(dir: &Path, release: &CatalogV3Release) -> Result<bool> {
+    for artifact in &release.artifacts {
+        let artifact_name = url_file_name(&artifact.url)?;
+        if !dir.join(artifact_name).is_file() {
+            return Ok(false);
+        }
+        let signature_name = url_file_name(&artifact.signature_url)?;
+        if !dir.join(signature_name).is_file() {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
 fn upload_redirected_catalog_from_dir(
     ctx: &TaskContext,
     config: &R2Config,
@@ -4491,12 +4519,24 @@ fn run_official_upload_r2(ctx: &TaskContext, dir: &Path) -> Result<()> {
     let config = r2_config_from_env()?;
     let snippet = read_prepared_catalog_v3_snippet(dir)?;
     let mut uploaded = 0usize;
+    let mut matched_releases = 0usize;
     for release in &snippet.releases {
+        if !release_artifacts_are_present(dir, release)? {
+            continue;
+        }
+        matched_releases += 1;
         for artifact in &release.artifacts {
             if upload_catalog_v3_artifact_from_dir(ctx, &config, dir, artifact)? {
                 uploaded += 1;
             }
         }
+    }
+    if matched_releases == 0 {
+        bail!(
+            "no prepared catalog-v3 release artifacts in {} matched snippet {}",
+            dir.display(),
+            snippet.id
+        );
     }
     ok(format!("uploaded {uploaded} plugin artifact(s) to R2"));
     Ok(())
