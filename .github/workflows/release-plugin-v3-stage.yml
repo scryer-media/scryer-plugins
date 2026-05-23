@@ -267,11 +267,12 @@ jobs:
           wasi_sdk_archive="wasi-sdk-${WASI_SDK_VERSION}-x86_64-linux.tar.gz"
           wasi_sdk_url="https://github.com/WebAssembly/wasi-sdk/releases/download/${WASI_SDK_RELEASE_TAG}/${wasi_sdk_archive}"
           tmpdir="$(mktemp -d)"
-          trap 'rm -rf "$tmpdir"' EXIT
           curl -fsSL "$wasi_sdk_url" -o "$tmpdir/$wasi_sdk_archive"
-          tar -xzf "$tmpdir/$wasi_sdk_archive" -C "$tmpdir"
-          wasi_sdk_root="$(find "$tmpdir" -maxdepth 1 -type d -name 'wasi-sdk-*' | head -n 1)"
-          if [ -z "$wasi_sdk_root" ]; then
+          wasi_sdk_root="${RUNNER_TEMP}/wasi-sdk-${WASI_SDK_VERSION}"
+          rm -rf "$wasi_sdk_root"
+          mkdir -p "$wasi_sdk_root"
+          tar -xzf "$tmpdir/$wasi_sdk_archive" -C "$wasi_sdk_root" --strip-components=1
+          if [ ! -d "$wasi_sdk_root/bin" ] || [ ! -d "$wasi_sdk_root/share/wasi-sysroot" ]; then
             echo "failed to extract wasi-sdk root" >&2
             exit 1
           fi
