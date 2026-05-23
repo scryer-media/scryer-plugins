@@ -3427,6 +3427,7 @@ dependencies = [
  "sha3",
  "tempfile",
  "toml_edit 0.22.27",
+ "zstd",
 ]
 
 [[package]]

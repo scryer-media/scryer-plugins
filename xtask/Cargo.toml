@@ -19,6 +19,7 @@ scryer-plugin-sdk = "1.6.0"
 tempfile = "3"
 toml_edit = "0.22"
 extism = "1.13"
+zstd = "0.13"
 
 [profile.xtask-release]
 inherits = "release"

@@ -1,0 +1,4 @@
+repository=https://github.com/FFmpeg/FFmpeg.git
+commit=268c37fdae607be5d961708140f165cf26ca3483
+revision=git-268c37fdae607be5d961708140f165cf26ca3483
+source_date=2026-05-23

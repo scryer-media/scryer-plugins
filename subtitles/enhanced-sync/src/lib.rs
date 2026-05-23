@@ -1,7 +1,6 @@
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use extism_pdk::*;
-use oxideav_core::{CodecId, CodecParameters, Frame, Packet, SampleFormat, TimeBase};
 use scryer_plugin_sdk::{
     PluginDescriptor, PluginError, PluginErrorCode, PluginResult, ProviderDescriptor, SDK_VERSION,
     SubtitleCapabilities, SubtitleDescriptor, SubtitlePluginGenerateRequest,
@@ -10,11 +9,13 @@ use scryer_plugin_sdk::{
     SubtitleValidateConfigStatus, current_sdk_constraint,
 };
 use serde::{Deserialize, Serialize};
-use truehd::process::{decode, extract, parse};
+use std::path::PathBuf;
+
+mod ffmpeg_backend;
 
 const PLUGIN_ID: &str = "enhanced-subtitle-sync";
 const PLUGIN_NAME: &str = "Enhanced Subtitle Sync";
-const DECODER_BACKEND: &str = "rust-decoders-with-ffmpeg-source-snapshot";
+const DECODER_BACKEND: &str = "vendored-ffmpeg-wasm";
 const MAX_DECODE_INPUT_BYTES: usize = 64 * 1024 * 1024;
 
 #[plugin_fn]
@@ -25,6 +26,11 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
 #[plugin_fn]
 pub fn scryer_subsync_describe(_input: String) -> FnResult<String> {
     Ok(serde_json::to_string(&sync_descriptor())?)
+}
+
+#[plugin_fn]
+pub fn scryer_audio_transcode_describe(_input: String) -> FnResult<String> {
+    Ok(serde_json::to_string(&audio_transcode_descriptor())?)
 }
 
 #[plugin_fn]
@@ -65,9 +71,20 @@ pub fn scryer_subsync_decode_window(input: String) -> FnResult<String> {
     scryer_subsync_decode_window_json(input)
 }
 
+#[plugin_fn]
+pub fn scryer_audio_transcode(input: String) -> FnResult<String> {
+    scryer_audio_transcode_json(input)
+}
+
 fn scryer_subsync_decode_window_json(input: String) -> FnResult<String> {
     let request: SubtitleSyncDecodeWindowRequest = serde_json::from_str(&input)?;
     let response = decode_window_impl(&request).map_err(Error::msg)?;
+    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+}
+
+fn scryer_audio_transcode_json(input: String) -> FnResult<String> {
+    let request: AudioTranscodeRequest = serde_json::from_str(&input)?;
+    let response = audio_transcode_impl(&request);
     Ok(serde_json::to_string(&PluginResult::Ok(response))?)
 }
 
@@ -119,16 +136,88 @@ fn sync_descriptor() -> EnhancedSubtitleSyncDescriptor {
             "scryer_subsync_describe".to_string(),
             "scryer_subsync_probe".to_string(),
             "scryer_subsync_decode_window".to_string(),
+            "scryer_audio_transcode_describe".to_string(),
+            "scryer_audio_transcode".to_string(),
         ],
         capabilities: SubtitleSyncCapabilities {
             backend: DECODER_BACKEND.to_string(),
-            decode_status: DecodeBackendStatus::Partial,
+            decode_status: DecodeBackendStatus::Complete,
             supported_codecs: AudioCodec::all().to_vec(),
-            decoded_codecs: vec![AudioCodec::Ac3, AudioCodec::Eac3, AudioCodec::TrueHd],
-            pending_codecs: vec![AudioCodec::Dts],
+            decoded_codecs: AudioCodec::all().to_vec(),
+            pending_codecs: vec![],
             output_sample_format: "f32le".to_string(),
             supports_mono_mixdown: true,
         },
+    }
+}
+
+fn audio_transcode_descriptor() -> AudioTranscodeDescriptor {
+    AudioTranscodeDescriptor {
+        id: PLUGIN_ID.to_string(),
+        name: PLUGIN_NAME.to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        sdk_version: SDK_VERSION.to_string(),
+        sdk_constraint: current_sdk_constraint(),
+        supported_profiles: vec![AudioTranscodeProfile::SyncFlac],
+        supported_input_codecs: AudioTranscodeCodec::all().to_vec(),
+    }
+}
+
+fn audio_transcode_impl(request: &AudioTranscodeRequest) -> AudioTranscodeResponse {
+    let AudioTranscodeProfile::SyncFlac = request.profile;
+    let selector = request
+        .selector
+        .as_ref()
+        .unwrap_or(&AudioStreamSelector::Default);
+    match ffmpeg_backend::transcode_sync_flac(
+        &request.input.path,
+        &request.output.path,
+        request.expected_codec,
+        selector,
+    ) {
+        Ok(transcoded) => AudioTranscodeResponse {
+            status: AudioTranscodeStatus::Decoded,
+            output: Some(request.output.clone()),
+            stream: Some(AudioTranscodeStreamMetadata {
+                index: transcoded.stream_index,
+                language: transcoded.language,
+                codec: transcoded.codec,
+                source_codec_name: transcoded.source_codec_name,
+                source_profile: transcoded.source_profile,
+                used_core_fallback: transcoded.used_core_fallback,
+            }),
+            sample_rate_hz: Some(transcoded.sample_rate_hz),
+            channels: Some(transcoded.channels),
+            samples_written: Some(transcoded.samples_written),
+            duration_ms: Some(transcoded.duration_ms),
+            timeline_start_ms: Some(transcoded.timeline_start_ms),
+            warnings: transcoded.warnings,
+            message: transcoded.message,
+        },
+        Err(ffmpeg_backend::TranscodeFailure::Unsupported { message }) => {
+            audio_transcode_failure(AudioTranscodeStatus::UnsupportedCodec, message)
+        }
+        Err(ffmpeg_backend::TranscodeFailure::Error { message }) => {
+            audio_transcode_failure(AudioTranscodeStatus::Error, message)
+        }
+    }
+}
+
+fn audio_transcode_failure(
+    status: AudioTranscodeStatus,
+    message: impl Into<String>,
+) -> AudioTranscodeResponse {
+    AudioTranscodeResponse {
+        status,
+        output: None,
+        stream: None,
+        sample_rate_hz: None,
+        channels: None,
+        samples_written: None,
+        duration_ms: None,
+        timeline_start_ms: None,
+        warnings: Vec::new(),
+        message: Some(message.into()),
     }
 }
 
@@ -159,7 +248,7 @@ fn probe_impl(request: &SubtitleSyncProbeRequest) -> Result<SubtitleSyncProbeRes
         notes.push("explicit codec did not match packet sync probe".to_string());
     }
     if codec.is_some() {
-        notes.push("codec is routed to the FFmpeg-derived decoder backend".to_string());
+        notes.push("codec is routed to the vendored FFmpeg decoder backend".to_string());
     } else {
         notes.push("no supported codec could be identified".to_string());
     }
@@ -209,51 +298,24 @@ fn decode_window_impl(
     if let (Some(requested), Some(observed)) = (request.codec, observed_codec)
         && requested != observed
     {
-        return Ok(SubtitleSyncDecodeWindowResponse {
-            status: DecodeWindowStatus::Unsupported,
-            codec: Some(observed),
-            sample_rate_hz: None,
-            channels: None,
-            samples_decoded: 0,
-            pcm_f32le_base64: None,
-            message: Some("requested codec did not match packet sync probe".to_string()),
-        });
+        return Ok(unsupported_response(
+            Some(observed),
+            "requested codec did not match packet sync probe",
+        ));
     }
 
-    let routed_codec = request.codec.or(observed_codec);
-    let Some(routed_codec) = routed_codec else {
-        return Ok(SubtitleSyncDecodeWindowResponse {
-            status: DecodeWindowStatus::Unsupported,
-            codec: None,
-            sample_rate_hz: None,
-            channels: None,
-            samples_decoded: 0,
-            pcm_f32le_base64: None,
-            message: Some("no supported codec could be identified".to_string()),
-        });
+    let Some(routed_codec) = request.codec.or(observed_codec) else {
+        return Ok(unsupported_response(
+            None,
+            "no supported codec could be identified",
+        ));
     };
 
-    let decoded = match routed_codec {
-        AudioCodec::Ac3 | AudioCodec::Eac3 => {
-            decode_ac3_family(routed_codec, &packets, request.mixdown_mono)?
-        }
-        AudioCodec::TrueHd => decode_truehd(&packets, request.mixdown_mono)?,
-        AudioCodec::Dts => {
-            return Ok(SubtitleSyncDecodeWindowResponse {
-                status: DecodeWindowStatus::Unsupported,
-                codec: Some(AudioCodec::Dts),
-                sample_rate_hz: None,
-                channels: None,
-                samples_decoded: 0,
-                pcm_f32le_base64: None,
-                message: Some(
-                    "DTS packet routing is implemented, but the DTS PCM backend still needs the vendored FFmpeg decoder port"
-                        .to_string(),
-                ),
-            });
-        }
+    let decoded = match ffmpeg_backend::decode_window(routed_codec, &packets, request.mixdown_mono)
+    {
+        Ok(decoded) => decoded,
+        Err(message) => return Ok(unsupported_response(Some(routed_codec), &message)),
     };
-
     let sample_rate_hz = decoded
         .sample_rate_hz
         .ok_or_else(|| format!("{routed_codec:?} decoder did not report a sample rate"))?;
@@ -275,160 +337,24 @@ fn decode_window_impl(
         sample_rate_hz: Some(sample_rate_hz),
         channels: Some(channels),
         samples_decoded: decoded.samples_decoded,
-        pcm_f32le_base64: Some(BASE64.encode(f32_samples_as_le_bytes(&decoded.pcm_f32))),
+        pcm_f32le_base64: Some(BASE64.encode(&decoded.pcm_f32le)),
         message,
     })
 }
 
-fn decode_ac3_family(
-    codec: AudioCodec,
-    packets: &[DecodedPacket],
-    mixdown_mono: bool,
-) -> Result<DecodedPcm, String> {
-    let codec_id = match codec {
-        AudioCodec::Ac3 => "ac3",
-        AudioCodec::Eac3 => "eac3",
-        _ => return Err(format!("{codec:?} is not an AC-3 family codec")),
-    };
-    let mut params = CodecParameters::audio(CodecId::new(codec_id));
-    params.channels = mixdown_mono.then_some(1);
-    params.sample_format = Some(SampleFormat::S16);
-
-    let mut decoder = match codec {
-        AudioCodec::Ac3 => oxideav_ac3::decoder::make_decoder(&params),
-        AudioCodec::Eac3 => oxideav_ac3::decoder::make_eac3_decoder(&params),
-        _ => unreachable!("guarded above"),
+fn unsupported_response(
+    codec: Option<AudioCodec>,
+    message: impl Into<String>,
+) -> SubtitleSyncDecodeWindowResponse {
+    SubtitleSyncDecodeWindowResponse {
+        status: DecodeWindowStatus::Unsupported,
+        codec,
+        sample_rate_hz: None,
+        channels: None,
+        samples_decoded: 0,
+        pcm_f32le_base64: None,
+        message: Some(message.into()),
     }
-    .map_err(|error| format!("{codec_id} decoder init failed: {error}"))?;
-
-    let mut output = DecodedPcm::new(codec);
-    for packet in packets {
-        let packet_sample_rate_hz = packet_sample_rate(codec, &packet.data);
-        let time_base = TimeBase::new(1, packet_sample_rate_hz.unwrap_or(48_000) as i64);
-        let mut packet_value = Packet::new(0, time_base, packet.data.clone());
-        packet_value.pts = packet.pts_ms;
-        decoder
-            .send_packet(&packet_value)
-            .map_err(|error| format!("{codec_id} packet decode failed: {error}"))?;
-        receive_oxideav_frames(
-            codec_id,
-            codec,
-            packet_sample_rate_hz,
-            decoder.as_mut(),
-            &mut output,
-        )?;
-    }
-
-    if output.samples_decoded == 0 {
-        return Err(format!("{codec_id} decoder produced no PCM samples"));
-    }
-    Ok(output)
-}
-
-fn receive_oxideav_frames(
-    codec_id: &str,
-    codec: AudioCodec,
-    packet_sample_rate_hz: Option<u32>,
-    decoder: &mut dyn oxideav_core::Decoder,
-    output: &mut DecodedPcm,
-) -> Result<(), String> {
-    loop {
-        match decoder.receive_frame() {
-            Ok(Frame::Audio(frame)) => {
-                let data = frame
-                    .data
-                    .first()
-                    .ok_or_else(|| format!("{codec_id} decoder returned an empty audio frame"))?;
-                let channels = infer_interleaved_s16_channels(data, frame.samples)?;
-                let sample_rate_hz = packet_sample_rate_hz
-                    .or(output.sample_rate_hz)
-                    .or_else(|| codec.default_sample_rate());
-                output.append_s16le_frame(codec, sample_rate_hz, channels, frame.samples, data)?;
-            }
-            Ok(_) => return Err(format!("{codec_id} decoder returned a non-audio frame")),
-            Err(oxideav_core::Error::NeedMore) | Err(oxideav_core::Error::Eof) => break,
-            Err(error) => return Err(format!("{codec_id} frame receive failed: {error}")),
-        }
-    }
-    Ok(())
-}
-
-fn decode_truehd(packets: &[DecodedPacket], mixdown_mono: bool) -> Result<DecodedPcm, String> {
-    let mut extractor = extract::Extractor::default();
-    let mut parser = parse::Parser::default();
-    let mut decoder = decode::Decoder::default();
-    let mut output = DecodedPcm::new(AudioCodec::TrueHd);
-
-    for packet in packets {
-        extractor.push_bytes(&packet.data);
-        for frame in extractor.by_ref() {
-            let frame = match frame {
-                Ok(frame) => frame,
-                Err(truehd::utils::errors::ExtractError::InsufficientData) => break,
-                Err(error) => return Err(format!("truehd frame extraction failed: {error}")),
-            };
-            let access_unit = parser
-                .parse(&frame)
-                .map_err(|error| format!("truehd frame parse failed: {error}"))?;
-            let decoded = decoder
-                .decode_presentation(&access_unit, 0)
-                .map_err(|error| format!("truehd PCM decode failed: {error}"))?;
-            if decoded.is_duplicate || decoded.sample_length == 0 {
-                continue;
-            }
-            output.append_truehd_frame(&decoded, mixdown_mono)?;
-        }
-    }
-
-    if output.samples_decoded == 0 {
-        return Err("truehd decoder produced no PCM samples".to_string());
-    }
-    Ok(output)
-}
-
-fn infer_interleaved_s16_channels(data: &[u8], samples: u32) -> Result<u16, String> {
-    let sample_count = samples as usize;
-    if sample_count == 0 || !data.len().is_multiple_of(2) {
-        return Err("decoder returned invalid S16 frame shape".to_string());
-    }
-    let channels = data.len() / 2 / sample_count;
-    u16::try_from(channels)
-        .ok()
-        .filter(|channels| *channels > 0)
-        .ok_or_else(|| "decoder returned invalid channel count".to_string())
-}
-
-fn packet_sample_rate(codec: AudioCodec, packet: &[u8]) -> Option<u32> {
-    match codec {
-        AudioCodec::Ac3 => (packet.len() >= 5)
-            .then(|| ac3_sample_rate(packet[4] >> 6))
-            .flatten(),
-        AudioCodec::Eac3 => eac3_sample_rate(packet),
-        AudioCodec::Dts | AudioCodec::TrueHd => None,
-    }
-}
-
-fn eac3_sample_rate(packet: &[u8]) -> Option<u32> {
-    let header = *packet.get(4)?;
-    let fscod = header >> 6;
-    if fscod == 3 {
-        match (header >> 4) & 0b11 {
-            0 => Some(24_000),
-            1 => Some(22_050),
-            2 => Some(16_000),
-            _ => None,
-        }
-    } else {
-        ac3_sample_rate(fscod)
-    }
-}
-
-fn f32_samples_as_le_bytes(samples: &[f32]) -> Vec<u8> {
-    let mut bytes = Vec::with_capacity(samples.len() * 4);
-    for sample in samples {
-        bytes.extend_from_slice(&sample.to_le_bytes());
-    }
-    bytes
 }
 
 fn decode_optional_base64(value: Option<&str>) -> Result<Option<Vec<u8>>, String> {
@@ -531,29 +457,148 @@ struct SubtitleSyncCapabilities {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 enum DecodeBackendStatus {
-    Partial,
+    Complete,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct AudioTranscodeDescriptor {
+    id: String,
+    name: String,
+    version: String,
+    sdk_version: String,
+    sdk_constraint: String,
+    supported_profiles: Vec<AudioTranscodeProfile>,
+    supported_input_codecs: Vec<AudioTranscodeCodec>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+enum AudioTranscodeProfile {
+    SyncFlac,
+}
+
+#[repr(u32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum AudioTranscodeCodec {
+    Ac3 = 0,
+    Eac3 = 1,
+    Dts = 2,
+    DtsHdMaCore = 3,
+    TrueHd = 4,
+}
+
+impl AudioTranscodeCodec {
+    fn all() -> &'static [Self] {
+        &[
+            Self::Ac3,
+            Self::Eac3,
+            Self::Dts,
+            Self::DtsHdMaCore,
+            Self::TrueHd,
+        ]
+    }
+
+    fn from_ffi(value: u32) -> Option<Self> {
+        match value {
+            0 => Some(Self::Ac3),
+            1 => Some(Self::Eac3),
+            2 => Some(Self::Dts),
+            3 => Some(Self::DtsHdMaCore),
+            4 => Some(Self::TrueHd),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum AudioTranscodeStatus {
+    Decoded,
+    UnsupportedCodec,
+    Error,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+enum AudioStreamSelector {
+    Default,
+    StreamIndex { index: u32 },
+    Language { language: String },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct AudioTranscodeInputRef {
+    path: PathBuf,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct AudioTranscodeOutputRef {
+    path: PathBuf,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct AudioTranscodeRequest {
+    input: AudioTranscodeInputRef,
+    output: AudioTranscodeOutputRef,
+    profile: AudioTranscodeProfile,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    selector: Option<AudioStreamSelector>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    expected_codec: Option<AudioTranscodeCodec>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct AudioTranscodeStreamMetadata {
+    index: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    language: Option<String>,
+    codec: AudioTranscodeCodec,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    source_codec_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    source_profile: Option<String>,
+    #[serde(default)]
+    used_core_fallback: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct AudioTranscodeResponse {
+    status: AudioTranscodeStatus,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    output: Option<AudioTranscodeOutputRef>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    stream: Option<AudioTranscodeStreamMetadata>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    sample_rate_hz: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    channels: Option<u16>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    samples_written: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    duration_ms: Option<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    timeline_start_ms: Option<i64>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    warnings: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    message: Option<String>,
+}
+
+#[repr(u32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 enum AudioCodec {
-    Ac3,
-    Eac3,
-    Dts,
+    Ac3 = 0,
+    Eac3 = 1,
+    Dts = 2,
     #[serde(rename = "truehd")]
-    TrueHd,
+    TrueHd = 3,
 }
 
 impl AudioCodec {
     fn all() -> &'static [Self] {
         &[Self::Ac3, Self::Eac3, Self::Dts, Self::TrueHd]
-    }
-
-    fn default_sample_rate(self) -> Option<u32> {
-        match self {
-            Self::Ac3 | Self::Eac3 => Some(48_000),
-            Self::Dts | Self::TrueHd => None,
-        }
     }
 
     fn from_label(label: &str) -> Option<Self> {
@@ -635,109 +680,18 @@ struct DetectedCodec {
 }
 
 #[derive(Debug, Clone)]
-struct DecodedPacket {
+pub(crate) struct DecodedPacket {
     pts_ms: Option<i64>,
     data: Vec<u8>,
 }
 
 #[derive(Debug)]
-struct DecodedPcm {
+pub(crate) struct DecodedPcm {
     codec: AudioCodec,
     sample_rate_hz: Option<u32>,
     channels: Option<u16>,
     samples_decoded: u64,
-    pcm_f32: Vec<f32>,
-}
-
-impl DecodedPcm {
-    fn new(codec: AudioCodec) -> Self {
-        Self {
-            codec,
-            sample_rate_hz: None,
-            channels: None,
-            samples_decoded: 0,
-            pcm_f32: Vec::new(),
-        }
-    }
-
-    fn append_s16le_frame(
-        &mut self,
-        codec: AudioCodec,
-        sample_rate_hz: Option<u32>,
-        channels: u16,
-        samples: u32,
-        data: &[u8],
-    ) -> Result<(), String> {
-        if self.codec != codec {
-            return Err("decoded PCM codec changed across frames".to_string());
-        }
-        self.set_shape(sample_rate_hz, channels)?;
-        let expected_bytes = samples as usize * channels as usize * 2;
-        if data.len() != expected_bytes {
-            return Err(format!(
-                "decoder returned {} bytes, expected {expected_bytes}",
-                data.len()
-            ));
-        }
-        for sample in data.chunks_exact(2) {
-            let value = i16::from_le_bytes([sample[0], sample[1]]);
-            self.pcm_f32.push(value as f32 / 32768.0);
-        }
-        self.samples_decoded += samples as u64;
-        Ok(())
-    }
-
-    fn append_truehd_frame(
-        &mut self,
-        decoded: &decode::DecodedAccessUnit,
-        mixdown_mono: bool,
-    ) -> Result<(), String> {
-        let source_channels = u16::try_from(decoded.channel_count)
-            .map_err(|_| "truehd channel count does not fit u16".to_string())?;
-        let channels = if mixdown_mono { 1 } else { source_channels };
-        self.set_shape(Some(decoded.sampling_frequency), channels)?;
-
-        for row in decoded.pcm_data.iter().take(decoded.sample_length) {
-            if mixdown_mono {
-                let mut sum = 0.0f32;
-                for sample in row.iter().take(source_channels as usize) {
-                    sum += truehd_sample_to_f32(*sample);
-                }
-                self.pcm_f32.push(sum / source_channels.max(1) as f32);
-            } else {
-                for sample in row.iter().take(source_channels as usize) {
-                    self.pcm_f32.push(truehd_sample_to_f32(*sample));
-                }
-            }
-        }
-        self.samples_decoded += decoded.sample_length as u64;
-        Ok(())
-    }
-
-    fn set_shape(&mut self, sample_rate_hz: Option<u32>, channels: u16) -> Result<(), String> {
-        if let (Some(existing), Some(next)) = (self.sample_rate_hz, sample_rate_hz)
-            && existing != next
-        {
-            return Err(format!(
-                "decoder sample rate changed from {existing}Hz to {next}Hz"
-            ));
-        }
-        if let Some(existing) = self.channels
-            && existing != channels
-        {
-            return Err(format!(
-                "decoder channel count changed from {existing} to {channels}"
-            ));
-        }
-
-        self.sample_rate_hz = self.sample_rate_hz.or(sample_rate_hz);
-        self.channels = Some(channels);
-        Ok(())
-    }
-}
-
-fn truehd_sample_to_f32(sample: i32) -> f32 {
-    (sample as f32 / 8_388_608.0).clamp(-1.0, 1.0)
+    pcm_f32le: Vec<u8>,
 }
 
 #[cfg(test)]
@@ -746,7 +700,10 @@ mod tests {
     use symphonia::core::codecs::audio::well_known::{
         CODEC_ID_AC3, CODEC_ID_DCA, CODEC_ID_EAC3, CODEC_ID_TRUEHD,
     };
-    use symphonia::core::codecs::audio::{AudioCodecId, AudioCodecParameters};
+    use symphonia::core::codecs::audio::{AudioCodecId, AudioCodecParameters, AudioDecoderOptions};
+    use symphonia::core::formats::{FormatOptions, TrackType, probe::Hint};
+    use symphonia::core::io::MediaSourceStream;
+    use symphonia::core::meta::MetadataOptions;
     use symphonia::core::packet::Packet as SymphoniaPacket;
     use symphonia::core::units::{Duration, Timestamp};
 
@@ -775,26 +732,47 @@ mod tests {
     }
 
     #[test]
-    fn descriptor_advertises_experimental_sync_contract() {
+    fn descriptor_advertises_vendored_ffmpeg_sync_contract() {
         let descriptor = sync_descriptor();
         assert_eq!(descriptor.id, PLUGIN_ID);
         assert_eq!(descriptor.plugin_type, "subtitle_sync");
+        assert_eq!(descriptor.capabilities.backend, DECODER_BACKEND);
+        assert_eq!(
+            descriptor.capabilities.decode_status,
+            DecodeBackendStatus::Complete
+        );
         assert_eq!(
             descriptor.capabilities.supported_codecs.as_slice(),
             AudioCodec::all()
         );
         assert_eq!(
-            descriptor.capabilities.decoded_codecs,
-            vec![AudioCodec::Ac3, AudioCodec::Eac3, AudioCodec::TrueHd]
+            descriptor.capabilities.decoded_codecs.as_slice(),
+            AudioCodec::all()
         );
-        assert_eq!(
-            descriptor.capabilities.pending_codecs,
-            vec![AudioCodec::Dts]
-        );
+        assert!(descriptor.capabilities.pending_codecs.is_empty());
         assert!(
             descriptor
                 .exports
                 .contains(&"scryer_subsync_probe".to_string())
+        );
+        assert!(
+            descriptor
+                .exports
+                .contains(&"scryer_audio_transcode".to_string())
+        );
+    }
+
+    #[test]
+    fn audio_transcode_descriptor_advertises_targeted_flac_contract() {
+        let descriptor = audio_transcode_descriptor();
+        assert_eq!(descriptor.id, PLUGIN_ID);
+        assert_eq!(
+            descriptor.supported_profiles,
+            vec![AudioTranscodeProfile::SyncFlac]
+        );
+        assert_eq!(
+            descriptor.supported_input_codecs,
+            AudioTranscodeCodec::all()
         );
     }
 
@@ -853,27 +831,7 @@ mod tests {
     }
 
     #[test]
-    fn decode_window_reports_dts_backend_gap() {
-        let request = SubtitleSyncDecodeWindowRequest {
-            codec: Some(AudioCodec::Dts),
-            packets: vec![AudioPacket {
-                pts_ms: Some(0),
-                data_base64: BASE64.encode([0x7f, 0xfe, 0x80, 0x01]),
-            }],
-            target_sample_rate_hz: Some(16_000),
-            mixdown_mono: true,
-        };
-
-        let response = decode_window_impl(&request).expect("decode window response");
-        assert_eq!(response.status, DecodeWindowStatus::Unsupported);
-        assert_eq!(response.codec, Some(AudioCodec::Dts));
-        assert_eq!(response.sample_rate_hz, None);
-        assert_eq!(response.channels, None);
-        assert!(response.pcm_f32le_base64.is_none());
-    }
-
-    #[test]
-    fn decode_window_decodes_ac3_fixture() {
+    fn decode_window_decodes_ac3_fixture_with_vendored_ffmpeg() {
         let request = SubtitleSyncDecodeWindowRequest {
             codec: Some(AudioCodec::Ac3),
             packets: vec![AudioPacket {
@@ -900,6 +858,137 @@ mod tests {
         assert_eq!(response.channels, Some(1));
         assert!(response.samples_decoded > 0);
         assert!(response.pcm_f32le_base64.is_some());
+    }
+
+    #[test]
+    fn audio_transcode_decodes_ac3_fixture_to_symphonia_readable_flac() {
+        let temp_dir = tempfile::tempdir().expect("tempdir");
+        let output_path = temp_dir.path().join("sync.flac");
+        let request = AudioTranscodeRequest {
+            input: AudioTranscodeInputRef {
+                path: PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                    .join("tests/fixtures/sine440_stereo.ac3"),
+            },
+            output: AudioTranscodeOutputRef {
+                path: output_path.clone(),
+            },
+            profile: AudioTranscodeProfile::SyncFlac,
+            selector: Some(AudioStreamSelector::Default),
+            expected_codec: Some(AudioTranscodeCodec::Ac3),
+        };
+
+        let raw_response =
+            scryer_audio_transcode_json(serde_json::to_string(&request).expect("encode request"))
+                .expect("transcode export response");
+        let PluginResult::Ok(response) =
+            serde_json::from_str::<PluginResult<AudioTranscodeResponse>>(&raw_response)
+                .expect("decode plugin result")
+        else {
+            panic!("audio transcode export returned plugin error");
+        };
+        assert_eq!(response.status, AudioTranscodeStatus::Decoded);
+        assert_eq!(response.sample_rate_hz, Some(16_000));
+        assert_eq!(response.channels, Some(1));
+        assert!(response.samples_written.unwrap_or_default() > 0);
+        assert_eq!(
+            response.stream.as_ref().map(|stream| stream.codec),
+            Some(AudioTranscodeCodec::Ac3)
+        );
+        assert_eq!(
+            std::fs::read(&output_path).expect("read flac")[..4],
+            *b"fLaC"
+        );
+
+        let (sample_rate_hz, channels, frames) = decode_flac_with_symphonia(&output_path);
+        assert_eq!(sample_rate_hz, 16_000);
+        assert_eq!(channels, 1);
+        assert!(frames > 0);
+    }
+
+    #[test]
+    #[ignore = "requires local media files; set SCRYER_ENHANCED_SYNC_ACCEPT_* env vars"]
+    fn local_media_transcodes_targeted_codecs_to_symphonia_readable_flac() {
+        let cases = [
+            (
+                "SCRYER_ENHANCED_SYNC_ACCEPT_AC3",
+                AudioTranscodeCodec::Ac3,
+                false,
+            ),
+            (
+                "SCRYER_ENHANCED_SYNC_ACCEPT_EAC3",
+                AudioTranscodeCodec::Eac3,
+                false,
+            ),
+            (
+                "SCRYER_ENHANCED_SYNC_ACCEPT_DTS",
+                AudioTranscodeCodec::Dts,
+                false,
+            ),
+            (
+                "SCRYER_ENHANCED_SYNC_ACCEPT_DTS_HD_MA",
+                AudioTranscodeCodec::DtsHdMaCore,
+                true,
+            ),
+            (
+                "SCRYER_ENHANCED_SYNC_ACCEPT_TRUEHD",
+                AudioTranscodeCodec::TrueHd,
+                false,
+            ),
+        ];
+
+        let temp_dir = tempfile::tempdir().expect("tempdir");
+        let mut ran = 0usize;
+        for (env_name, expected_codec, expect_core_fallback) in cases {
+            let Ok(input_path) = std::env::var(env_name) else {
+                eprintln!("skipping {env_name}; env var not set");
+                continue;
+            };
+            ran += 1;
+
+            let output_path = temp_dir
+                .path()
+                .join(format!("{}.flac", env_name.to_ascii_lowercase()));
+            let transcoded = ffmpeg_backend::transcode_sync_flac_with_sample_limit(
+                &PathBuf::from(&input_path),
+                &output_path,
+                Some(expected_codec),
+                &AudioStreamSelector::Default,
+                20 * 16_000,
+            )
+            .unwrap_or_else(|error| {
+                panic!("{env_name} failed for {input_path}: {error:?}");
+            });
+
+            assert_eq!(transcoded.sample_rate_hz, 16_000, "{env_name}");
+            assert_eq!(transcoded.channels, 1, "{env_name}");
+            assert!(
+                transcoded.samples_written > 0,
+                "{env_name}"
+            );
+
+            assert_eq!(transcoded.codec, expected_codec, "{env_name}");
+            assert_eq!(
+                transcoded.used_core_fallback, expect_core_fallback,
+                "{env_name}"
+            );
+
+            assert_eq!(
+                std::fs::read(&output_path).expect("read flac")[..4],
+                *b"fLaC",
+                "{env_name}"
+            );
+            let (sample_rate_hz, channels, frames) = decode_flac_with_symphonia(&output_path);
+            assert_eq!(sample_rate_hz, 16_000, "{env_name}");
+            assert_eq!(channels, 1, "{env_name}");
+            assert!(frames > 0, "{env_name}");
+
+            eprintln!(
+                "{env_name}: decoded {:?} from stream {} into {} samples ({:?})",
+                transcoded.codec, transcoded.stream_index, frames, transcoded.source_profile
+            );
+        }
+
+        assert!(ran > 0, "set at least one SCRYER_ENHANCED_SYNC_ACCEPT_* env var");
     }
 
     #[test]
@@ -936,24 +1025,57 @@ mod tests {
         assert!(response.pcm_f32le_base64.is_some());
     }
 
-    #[test]
-    fn decode_window_decodes_truehd_example_data() {
-        let request = SubtitleSyncDecodeWindowRequest {
-            codec: Some(AudioCodec::TrueHd),
-            packets: vec![AudioPacket {
-                pts_ms: Some(0),
-                data_base64: BASE64.encode(truehd::process::EXAMPLE_DATA),
-            }],
-            target_sample_rate_hz: None,
-            mixdown_mono: true,
-        };
+    fn decode_flac_with_symphonia(path: &std::path::Path) -> (u32, usize, u64) {
+        let file = std::fs::File::open(path).expect("open flac");
+        let mss = MediaSourceStream::new(Box::new(file), Default::default());
+        let mut hint = Hint::new();
+        hint.with_extension("flac");
+        let probed = symphonia::default::get_probe()
+            .probe(
+                &hint,
+                mss,
+                FormatOptions::default(),
+                MetadataOptions::default(),
+            )
+            .expect("probe flac");
+        let mut format = probed;
+        let track = format
+            .default_track(TrackType::Audio)
+            .expect("default flac track");
+        let track_id = track.id;
+        let codec_params = track
+            .codec_params
+            .as_ref()
+            .and_then(|params| params.audio())
+            .expect("flac audio codec params")
+            .clone();
+        let mut decoder = symphonia::default::get_codecs()
+            .make_audio_decoder(&codec_params, &AudioDecoderOptions::default())
+            .expect("make flac decoder");
+        let mut sample_rate_hz = 0;
+        let mut channels = 0;
+        let mut frames = 0;
 
-        let response = decode_window_impl(&request).expect("decode window response");
-        assert_eq!(response.status, DecodeWindowStatus::Decoded);
-        assert_eq!(response.codec, Some(AudioCodec::TrueHd));
-        assert!(response.sample_rate_hz.is_some());
-        assert_eq!(response.channels, Some(1));
-        assert!(response.samples_decoded > 0);
-        assert!(response.pcm_f32le_base64.is_some());
+        loop {
+            let packet = match format.next_packet() {
+                Ok(Some(packet)) => packet,
+                Ok(None) => break,
+                Err(symphonia::core::errors::Error::IoError(error))
+                    if error.kind() == std::io::ErrorKind::UnexpectedEof =>
+                {
+                    break;
+                }
+                Err(_) => break,
+            };
+            if packet.track_id != track_id {
+                continue;
+            }
+            let decoded = decoder.decode(&packet).expect("decode flac packet");
+            sample_rate_hz = decoded.spec().rate();
+            channels = decoded.spec().channels().count();
+            frames += decoded.frames() as u64;
+        }
+
+        (sample_rate_hz, channels, frames)
     }
 }

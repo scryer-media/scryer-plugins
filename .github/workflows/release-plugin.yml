@@ -23,6 +23,7 @@ env:
   RELEASE_PLUGIN_CACHE_SCOPE: release-plugin
   RELEASE_PLUGIN_PLAN_SCCACHE_LANE: linux-host-xtask
   RELEASE_PLUGIN_BUILD_SCCACHE_LANE: linux-wasm32-wasip1-plugin-release
+  CF_JURISDICTION_URL: ${{ vars.CF_JURISDICTION_URL }}
 
 jobs:
   plan-release:
@@ -32,6 +33,10 @@ jobs:
     env:
       CARGO_INCREMENTAL: "0"
       CARGO_TERM_COLOR: always
+      CF_R2_ACCOUNT_ID: ${{ secrets.CF_R2_ACCOUNT_ID }}
+      CF_R2_BUCKET: ${{ secrets.CF_R2_BUCKET }}
+      CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+      CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
       GH_TOKEN: ${{ github.token }}
       RUSTC_WRAPPER: sccache
       SCCACHE_BASEDIRS: ${{ github.workspace }}
@@ -207,7 +212,7 @@ jobs:
       - name: Install release tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y binaryen zstd
+          sudo apt-get install -y awscli binaryen zstd
 
       - uses: taiki-e/install-action@v2
         with:
@@ -259,6 +264,7 @@ jobs:
       - name: Prepare sign and publish selected plugin assets
         run: |
           set -euo pipefail
+          shopt -s nullglob
           while IFS=$'\t' read -r plugin_id version; do
             tag="plugins/${plugin_id}/v${version}"
             prepared_dir="dist/catalog-v2/${plugin_id}"
@@ -295,6 +301,23 @@ jobs:
 
             ./xtask/target/xtask-release/xtask official verify-prepared "${prepared_dir}"
 
+            python3 -c 'import json, sys; from pathlib import Path; prepared_dir = Path(sys.argv[1]); snippet = json.loads((prepared_dir / "catalog-v3.json").read_text()); print("\n".join(sorted({artifact["url"].rsplit("/", 1)[-1] for release in snippet["releases"] for artifact in release["artifacts"]})))' "${prepared_dir}" > "${prepared_dir}/v3-artifacts.txt"
+
+            cosign sign-blob \
+              --yes \
+              --bundle "${prepared_dir}/plugin.wasm.zst.bundle" \
+              "${prepared_dir}/plugin.wasm.zst"
+
+            while IFS= read -r artifact_name; do
+              [ -n "${artifact_name}" ] || continue
+              cosign sign-blob \
+                --yes \
+                --bundle "${prepared_dir}/${artifact_name}.bundle" \
+                "${prepared_dir}/${artifact_name}"
+              zstd -19 -f "${prepared_dir}/${artifact_name}.bundle" -o "${prepared_dir}/${artifact_name}.bundle.zst"
+              rm -f "${prepared_dir}/${artifact_name}.bundle"
+            done < "${prepared_dir}/v3-artifacts.txt"
+
             release_assets=("${prepared_dir}/plugin.wasm.zst" "${prepared_dir}/plugin.wasm.zst.bundle")
             for asset in plugin.manifest.json catalog-v2.json catalog-v2.min.json.zst catalog-v3.json; do
               if [ -f "${prepared_dir}/${asset}" ]; then
@@ -305,6 +328,16 @@ jobs:
                 release_assets+=("${prepared_dir}/${asset}" "${prepared_dir}/${asset}.bundle")
               fi
             done
+
+            while IFS= read -r artifact_name; do
+              [ -n "${artifact_name}" ] || continue
+              release_assets+=(
+                "${prepared_dir}/${artifact_name}"
+                "${prepared_dir}/${artifact_name}.bundle.zst"
+              )
+            done < "${prepared_dir}/v3-artifacts.txt"
+
+            ./xtask/target/xtask-release/xtask official upload-r2 "${prepared_dir}"
 
             gh release view "${tag}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 || \
               gh release create "${tag}" \
@@ -361,6 +394,10 @@ jobs:
     env:
       CARGO_INCREMENTAL: "0"
       CARGO_TERM_COLOR: always
+      CF_R2_ACCOUNT_ID: ${{ secrets.CF_R2_ACCOUNT_ID }}
+      CF_R2_BUCKET: ${{ secrets.CF_R2_BUCKET }}
+      CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
+      CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v6
@@ -373,6 +410,11 @@ jobs:
       - uses: sigstore/cosign-installer@v4.1.1
         with:
           cosign-release: v3.0.2
+
+      - name: Install central publish tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli zstd
 
       - name: Download xtask artifact
         uses: actions/download-artifact@v8
@@ -418,6 +460,7 @@ jobs:
       - name: Prepare sign and publish central catalog
         run: |
           set -euo pipefail
+          shopt -s nullglob
           mapfile -t plugin_ids < <(cut -f1 release-plan.tsv | sort -u)
           prepare_v2_args=(
             --out dist/catalog-v2
@@ -439,12 +482,26 @@ jobs:
               --bundle "dist/catalog-v2/${asset}.bundle" \
               "dist/catalog-v2/${asset}"
           done
-          for asset in catalog-v3.min.json.zst catalog-v3.min.json.br; do
+          for asset in catalog-v3.min.json.zst; do
             cosign sign-blob \
               --yes \
               --bundle "dist/catalog-v3/${asset}.bundle" \
               "dist/catalog-v3/${asset}"
           done
+
+          python3 -c 'import json; from pathlib import Path; root = Path("dist/catalog-v3"); redirect = json.loads((root / "catalog-v3.redirect.json").read_text()); catalog_assets = [artifact["url"].rsplit("/", 1)[-1] for artifact in redirect["artifacts"]]; catalog = json.loads((root / "catalog-v3.json").read_text()); rule_pack_assets = sorted({artifact["url"].rsplit("/", 1)[-1] for rule_pack in catalog["rule_packs"] for release in rule_pack["releases"] for artifact in release["artifacts"]}); print("\n".join(catalog_assets + rule_pack_assets))' > dist/catalog-v3/v3-central-assets.txt
+
+          while IFS= read -r asset_name; do
+            [ -n "${asset_name}" ] || continue
+            cosign sign-blob \
+              --yes \
+              --bundle "dist/catalog-v3/${asset_name}.bundle" \
+              "dist/catalog-v3/${asset_name}"
+            zstd -19 -f "dist/catalog-v3/${asset_name}.bundle" -o "dist/catalog-v3/${asset_name}.bundle.zst"
+            rm -f "dist/catalog-v3/${asset_name}.bundle"
+          done < dist/catalog-v3/v3-central-assets.txt
+
+          ./xtask/target/xtask-release/xtask catalog upload-v3-r2 dist/catalog-v3
 
           gh release view "catalog/v2" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 || \
             gh release create "catalog/v2" \
@@ -466,10 +523,17 @@ jobs:
               --title "Scryer plugin central catalog v3" \
               --target "$(git rev-parse HEAD)" \
               --notes "Scryer plugin central catalog v3 assets."
+          central_release_assets=(
+            "dist/catalog-v3/catalog-v3.redirect.json"
+          )
+          while IFS= read -r asset_name; do
+            [ -n "${asset_name}" ] || continue
+            central_release_assets+=(
+              "dist/catalog-v3/${asset_name}"
+              "dist/catalog-v3/${asset_name}.bundle.zst"
+            )
+          done < dist/catalog-v3/v3-central-assets.txt
           gh release upload "catalog/v3" \
-            "dist/catalog-v3/catalog-v3.min.json.zst" \
-            "dist/catalog-v3/catalog-v3.min.json.zst.bundle" \
-            "dist/catalog-v3/catalog-v3.min.json.br" \
-            "dist/catalog-v3/catalog-v3.min.json.br.bundle" \
+            "${central_release_assets[@]}" \
             --repo "${GITHUB_REPOSITORY}" \
             --clobber
