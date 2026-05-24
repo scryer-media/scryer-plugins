@@ -319,7 +319,7 @@ dependencies = [
 
 [[package]]
 name = "newznab-indexer"
-version = "0.2.10"
+version = "0.2.11"
 dependencies = [
  "extism-pdk",
  "newznab-common",
