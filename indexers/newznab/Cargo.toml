@@ -8,7 +8,7 @@ description = "Generic Newznab protocol indexer for compatible services"
 [package.metadata.scryer]
 official = true
 plugin_id = "newznab"
-catalog_versions = ["v2", "v3"]
+catalog_versions = ["v3"]
 feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/newznab"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/newznab"
@@ -22,7 +22,7 @@ extism-pdk = "1.4"
 newznab-common = { path = "../newznab-common" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-scryer-plugin-sdk = "1.6.0"
+scryer-plugin-sdk = "2.0.0"
 
 [profile.plugin-release]
 inherits = "release"

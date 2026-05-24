@@ -8,7 +8,7 @@ description = "Targeted Jellyfin library refresh notifications using mapped medi
 [package.metadata.scryer]
 official = true
 plugin_id = "jellyfin"
-catalog_versions = ["v2", "v3"]
+catalog_versions = ["v3"]
 feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/jellyfin"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/jellyfin"
@@ -19,7 +19,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 extism-pdk = "1.4"
-scryer-plugin-sdk = "1.6.0"
+scryer-plugin-sdk = "2.0.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
