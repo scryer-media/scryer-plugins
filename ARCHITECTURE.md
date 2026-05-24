@@ -9,7 +9,7 @@ For humans and agents alike:
 - `cargo xtask release-changed` is the canonical official release path
 - `cargo xtask release <plugin-id>` remains available for one-off legacy release prep
 - `cargo xtask catalog validate-v2` is the authoritative official published-catalog validation pass
-- `cargo xtask plugin validate <path>` is the SDK-v1 ABI check for a plugin crate
+- `cargo xtask plugin validate <path>` is the SDK-v2 ABI check for a plugin crate
 - `cargo xtask plugin new <kind> <name>` is the scaffold path for new plugin crates
 - `scripts/release.sh` is a compatibility wrapper over xtask, not the source of truth
 - official plugin inventory is declared in each plugin crate `Cargo.toml` under
@@ -34,7 +34,7 @@ Operational rules:
   `../scryer` path dependencies after that cutover
 - SDK dependency bumps are explicit maintainer actions via
   `cargo xtask sdk bump <version>` after the SDK crate has been published
-- `1.5.x` is the canonical launch SDK line and `1.6.x` is the current line;
+- `1.5.x` is the canonical launch SDK line and `2.0.x` is the current line;
   older failed starts do not change the published compatibility contract for current official releases
 - release tags are split by product: Scryer app tags use `scryer-v*`, the SDK
   uses `plugin-sdk-v*`, plugin version tags use `plugins/<plugin-id>/v*`, and
