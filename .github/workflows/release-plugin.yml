@@ -397,7 +397,8 @@ jobs:
 
             ./xtask/target/xtask-release/xtask official verify-prepared "${prepared_dir}"
 
-            python3 -c 'import json, sys; from pathlib import Path; prepared_dir = Path(sys.argv[1]); snippet = json.loads((prepared_dir / "catalog-v3.json").read_text()); print("\n".join(sorted({artifact["url"].rsplit("/", 1)[-1] for release in snippet["releases"] for artifact in release["artifacts"]})))' "${prepared_dir}" > "${prepared_dir}/v3-artifacts.txt"
+            find "${prepared_dir}" -maxdepth 1 -type f \( -name '*.wasm.zst' -o -name '*.wasm.br' \) \
+              -printf '%f\n' | sort > "${prepared_dir}/v3-artifacts.txt"
 
             while IFS= read -r artifact_name; do
               [ -n "${artifact_name}" ] || continue
