@@ -2049,7 +2049,8 @@ fn resolve_release_target_for_plugin(
     options: &ReleaseOptions,
 ) -> Result<ReleaseTarget> {
     let existing_releases = read_published_child_catalog_releases(ctx, &plugin.plugin_id)?;
-    let has_existing_release = !existing_releases.is_empty();
+    let has_existing_release = !existing_releases.is_empty()
+        || latest_plugin_release_tag(ctx, &plugin.plugin_id)?.is_some();
     let (bump, explicit) = parse_bump(options)?;
     let next_version = match explicit {
         Some(version) => version,
