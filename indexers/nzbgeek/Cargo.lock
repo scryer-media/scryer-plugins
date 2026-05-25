@@ -328,7 +328,7 @@ dependencies = [
 
 [[package]]
 name = "nzbgeek-indexer"
-version = "0.2.12"
+version = "0.2.13"
 dependencies = [
  "extism-pdk",
  "newznab-common",
