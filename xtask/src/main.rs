@@ -69,7 +69,7 @@ const R2_ACCESS_KEY_ID_ENV: &str = "CF_R2_ACCESS_KEY_ID";
 const R2_SECRET_ACCESS_KEY_ENV: &str = "CF_R2_SECRET_ACCESS_KEY";
 const R2_UPLOAD_ENDPOINT_ENV: &str = "CF_JURISDICTION_URL";
 const R2_PUBLIC_BASE_URL_ENV: &str = "CF_R2_PUBLIC_BASE_URL";
-const DEFAULT_R2_PUBLIC_BASE_URL: &str = "https://cdn.scryer.media";
+const DEFAULT_R2_PUBLIC_BASE_URL: &str = "https://cdn.scryer.media/scryer";
 const BROTLI_QUALITY: u32 = 11;
 const BROTLI_LGWIN: u32 = 24;
 const ENHANCED_SYNC_FFMPEG_VENDOR_DIR: &str = "subtitles/enhanced-sync/vendor/ffmpeg";
@@ -6719,7 +6719,9 @@ fn run_release_many(ctx: &TaskContext, args: ReleaseManyArgs) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use scryer_plugin_sdk::{NotificationCapabilities, NotificationDescriptor};
+    use scryer_plugin_sdk::{
+        NotificationCapabilities, NotificationDescriptor, current_sdk_constraint,
+    };
 
     fn write_temp_manifest(contents: &str) -> tempfile::NamedTempFile {
         let file = tempfile::NamedTempFile::new().expect("create temp manifest");
@@ -6747,7 +6749,7 @@ mod tests {
             source_repo:
                 "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
                     .to_string(),
-            distribution_base_url: "https://cdn.scryer.media/plugins/email".to_string(),
+            distribution_base_url: "https://cdn.scryer.media/scryer/plugins/email".to_string(),
         }
     }
 
@@ -7034,7 +7036,7 @@ catalog_versions = ["v3"]
 feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
-distribution_base_url = "https://cdn.scryer.media/plugins/email"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins/email"
 "#,
         );
 
@@ -7068,7 +7070,7 @@ distribution_base_url = "https://cdn.scryer.media/plugins/email"
         );
         assert_eq!(
             metadata.distribution_base_url.as_deref(),
-            Some("https://cdn.scryer.media/plugins/email")
+            Some("https://cdn.scryer.media/scryer/plugins/email")
         );
     }
 
@@ -7128,7 +7130,7 @@ official = true
 plugin_id = "email"
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
-distribution_base_url = "https://cdn.scryer.media/plugins/email"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins/email"
 "#,
         );
 
@@ -7153,7 +7155,7 @@ official = true
 plugin_id = "email"
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
-distribution_base_url = "https://cdn.scryer.media/plugins/email"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins/email"
 "#,
         );
 
@@ -7234,7 +7236,7 @@ catalog_versions = ["v3"]
 feature_sets = [{ required_features = ["threads"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
-distribution_base_url = "https://cdn.scryer.media/plugins/email"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins/email"
 "#,
         );
 
@@ -7265,7 +7267,7 @@ catalog_versions = ["v2", "v3"]
 feature_sets = [{ required_features = ["simd128"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
-distribution_base_url = "https://cdn.scryer.media/plugins/email"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins/email"
 "#,
         );
 
@@ -7292,7 +7294,7 @@ catalog_versions = ["v3"]
 feature_sets = [{ required_features = ["relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
-distribution_base_url = "https://cdn.scryer.media/plugins/email"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins/email"
 "#,
         );
 
@@ -7359,7 +7361,7 @@ distribution_base_url = "https://cdn.scryer.media/plugins/email"
         let entry = official_catalog_entry();
         let catalog = official_child_catalog(vec![
             child_release("0.1.0", ">=1.5.0, <1.6.0"),
-            child_release("0.2.0", ">=1.6.0, <1.7.0"),
+            child_release("0.2.0", &current_sdk_constraint()),
         ]);
 
         validate_official_child_catalog(&catalog, &entry).expect("catalog should validate");

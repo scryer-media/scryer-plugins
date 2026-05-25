@@ -29,7 +29,7 @@ env:
   WASI_SDK_VERSION: "33.0"
   WASI_SDK_RELEASE_TAG: wasi-sdk-33
   CF_JURISDICTION_URL: ${{ secrets.CF_JURISDICTION_URL }}
-  CF_R2_PUBLIC_BASE_URL: https://cdn.scryer.media
+  CF_R2_PUBLIC_BASE_URL: https://cdn.scryer.media/scryer
   SCRYER_OFFICIAL_RELEASE_WORKFLOW_PATH: .github/workflows/release-plugin-v3-stage.yml
   SCRYER_OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX: plugins-stage
   SCRYER_CATALOG_V3_RELEASE_TAG: catalog/v3-stage
