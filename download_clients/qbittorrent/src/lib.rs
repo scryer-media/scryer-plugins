@@ -654,6 +654,10 @@ pub fn scryer_download_test_connection(_input: String) -> FnResult<String> {
 }
 
 impl QbittorrentConfig {
+    fn uses_auth(&self) -> bool {
+        !self.username.trim().is_empty() && !self.password.is_empty()
+    }
+
     fn from_extism() -> Result<Self, Error> {
         let base_url = config::get("base_url")
             .map_err(|e| Error::msg(format!("missing config base_url: {e}")))?
@@ -668,8 +672,12 @@ impl QbittorrentConfig {
         let password = config::get("password")
             .map_err(|e| Error::msg(format!("missing config password: {e}")))?
             .unwrap_or_default();
-        if username.trim().is_empty() || password.is_empty() {
-            return Err(Error::msg("qBittorrent requires username and password"));
+        let has_username = !username.trim().is_empty();
+        let has_password = !password.is_empty();
+        if has_username != has_password {
+            return Err(Error::msg(
+                "qBittorrent requires both username and password, or leave both blank for unauthenticated access",
+            ));
         }
 
         let webui_url = normalize_webui_url(&base_url);
@@ -766,25 +774,31 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             key: "username".to_string(),
             label: "Username".to_string(),
             field_type: ConfigFieldType::String,
-            required: true,
+            required: false,
             default_value: None,
             value_source: Default::default(),
             host_binding: None,
             role: None,
             options: vec![],
-            help_text: Some("qBittorrent WebUI username".to_string()),
+            help_text: Some(
+                "Optional qBittorrent WebUI username; leave blank only when auth bypass is enabled"
+                    .to_string(),
+            ),
         },
         ConfigFieldDef {
             key: "password".to_string(),
             label: "Password".to_string(),
             field_type: ConfigFieldType::Password,
-            required: true,
+            required: false,
             default_value: None,
             value_source: Default::default(),
             host_binding: None,
             role: None,
             options: vec![],
-            help_text: Some("qBittorrent WebUI password".to_string()),
+            help_text: Some(
+                "Optional qBittorrent WebUI password; leave blank only when auth bypass is enabled"
+                    .to_string(),
+            ),
         },
         ConfigFieldDef {
             key: "routing_mode".to_string(),
@@ -1008,19 +1022,23 @@ fn request_with_auth(
     body: Option<Vec<u8>>,
     content_type: Option<&str>,
 ) -> Result<HttpResponse, Error> {
-    let cookie = match var::get::<String>(COOKIE_VAR_KEY)? {
-        Some(cookie) if !cookie.trim().is_empty() => cookie,
-        _ => login(config)?,
+    let cookie = if config.uses_auth() {
+        Some(match var::get::<String>(COOKIE_VAR_KEY)? {
+            Some(cookie) if !cookie.trim().is_empty() => cookie,
+            _ => login(config)?,
+        })
+    } else {
+        None
     };
 
-    let request = build_request(config, method, path, &cookie, content_type);
+    let request = build_request(config, method, path, cookie.as_deref(), content_type);
     let response = http::request::<Vec<u8>>(&request, body.clone())
         .map_err(|e| Error::msg(format!("qBittorrent request failed: {e}")))?;
 
-    if response.status_code() == 403 {
+    if response.status_code() == 403 && config.uses_auth() {
         var::remove(COOKIE_VAR_KEY)?;
         let cookie = login(config)?;
-        let retry = build_request(config, method, path, &cookie, content_type);
+        let retry = build_request(config, method, path, Some(&cookie), content_type);
         return http::request::<Vec<u8>>(&retry, body)
             .map_err(|e| Error::msg(format!("qBittorrent retry failed: {e}")));
     }
@@ -1032,16 +1050,18 @@ fn build_request(
     config: &QbittorrentConfig,
     method: &str,
     path: &str,
-    cookie: &str,
+    cookie: Option<&str>,
     content_type: Option<&str>,
 ) -> HttpRequest {
     let mut request = HttpRequest::new(api_url(config, path))
         .with_method(method)
-        .with_header("Cookie", cookie)
         .with_header("Referer", webui_header_url(config))
         .with_header("Origin", webui_header_url(config))
         .with_header("User-Agent", "scryer-qbittorrent-plugin/0.1")
         .with_header("Accept", "application/json, text/plain;q=0.9, */*;q=0.8");
+    if let Some(cookie) = cookie {
+        request = request.with_header("Cookie", cookie);
+    }
     if let Some(content_type) = content_type {
         request = request.with_header("Content-Type", content_type);
     }
@@ -2219,6 +2239,14 @@ mod tests {
         );
         assert_eq!(torrents.len(), 1);
         assert_eq!(torrents[0].state, "pausedUP");
+        assert_eq!(
+            derive_completed_dest_dir(&torrents[0]).as_deref(),
+            Some("/mnt/symlinks/radarr/Paperman.2012.720p.WEB-DL.AV1.AAC2.0-NTb.DECYPHARR")
+        );
+        assert_eq!(
+            preferred_content_path(&torrents[0]).as_deref(),
+            Some("/mnt/symlinks/radarr/Paperman.2012.720p.WEB-DL.AV1.AAC2.0-NTb.DECYPHARR")
+        );
     }
 
     #[test]
@@ -2252,6 +2280,14 @@ mod tests {
         );
         assert_eq!(torrents.len(), 1);
         assert_eq!(torrents[0].state, "pausedUP");
+        assert_eq!(
+            derive_completed_dest_dir(&torrents[0]).as_deref(),
+            Some("/mnt/symlinks/radarr/Paperman.2012.720p.WEB-DL.AV1.AAC2.0-NTb.DECYPHARR")
+        );
+        assert_eq!(
+            preferred_content_path(&torrents[0]).as_deref(),
+            Some("/mnt/symlinks/radarr/Paperman.2012.720p.WEB-DL.AV1.AAC2.0-NTb.DECYPHARR")
+        );
     }
 
     #[test]
@@ -2345,6 +2381,46 @@ mod tests {
         assert!(login_response_is_success("ok"));
         assert!(login_response_is_success("ok."));
         assert!(!login_response_is_success("unauthorized"));
+    }
+
+    #[test]
+    fn blank_credentials_disable_auth() {
+        let mut config = test_config();
+        assert!(config.uses_auth());
+
+        config.username.clear();
+        config.password.clear();
+
+        assert!(!config.uses_auth());
+    }
+
+    #[test]
+    fn credential_fields_are_optional() {
+        let fields = config_fields();
+        let username = fields.iter().find(|field| field.key == "username").unwrap();
+        let password = fields.iter().find(|field| field.key == "password").unwrap();
+
+        assert!(!username.required);
+        assert!(!password.required);
+    }
+
+    #[test]
+    fn unauthenticated_request_omits_cookie_header() {
+        let config = test_config();
+        let request = build_request(&config, "GET", "/app/version", None, None);
+
+        assert!(!request.headers.contains_key("Cookie"));
+    }
+
+    #[test]
+    fn authenticated_request_includes_cookie_header() {
+        let config = test_config();
+        let request = build_request(&config, "GET", "/app/version", Some("SID=abc"), None);
+
+        assert_eq!(
+            request.headers.get("Cookie").map(String::as_str),
+            Some("SID=abc")
+        );
     }
 
     #[test]
