@@ -8,6 +8,11 @@ description = "Torrent download client plugin for qBittorrent with category/tag 
 [package.metadata.scryer]
 official = true
 plugin_id = "qbittorrent"
+catalog_versions = ["v3"]
+feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/qbittorrent"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/qbittorrent"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins/qbittorrent"
 
 [lib]
 crate-type = ["cdylib"]
@@ -15,7 +20,7 @@ crate-type = ["cdylib"]
 [dependencies]
 base64 = "0.22"
 extism-pdk = "1.4"
-scryer-plugin-sdk = "1.6.0"
+scryer-plugin-sdk = "2.0.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha1 = "0.10"

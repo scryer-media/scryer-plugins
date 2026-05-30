@@ -1,6 +1,6 @@
 [package]
 name = "subdl-subtitle-provider"
-version = "0.1.1"
+version = "0.1.3"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Subdl subtitle provider with API-key search and zip downloads"
@@ -8,6 +8,11 @@ description = "Subdl subtitle provider with API-key search and zip downloads"
 [package.metadata.scryer]
 official = true
 plugin_id = "subdl"
+catalog_versions = ["v3"]
+feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/subdl"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/subdl"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins/subdl"
 
 [lib]
 crate-type = ["cdylib"]
@@ -15,7 +20,7 @@ crate-type = ["cdylib"]
 [dependencies]
 base64 = "0.22"
 extism-pdk = "1.4"
-scryer-plugin-sdk = "1.6.0"
+scryer-plugin-sdk = "2.0.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 

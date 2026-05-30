@@ -1,6 +1,6 @@
 [package]
 name = "torrent-rss-indexer"
-version = "0.1.12"
+version = "0.1.14"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Generic torrent RSS indexer for trackers and aggregators that expose direct RSS feeds without Torznab"
@@ -8,6 +8,11 @@ description = "Generic torrent RSS indexer for trackers and aggregators that exp
 [package.metadata.scryer]
 official = true
 plugin_id = "torrent-rss"
+catalog_versions = ["v3"]
+feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torrent-rss"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torrent-rss"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins/torrent-rss"
 
 [lib]
 crate-type = ["cdylib"]
@@ -16,7 +21,7 @@ crate-type = ["cdylib"]
 base64 = "0.22"
 extism-pdk = "1.4"
 quick-xml = "0.38"
-scryer-plugin-sdk = "1.6.0"
+scryer-plugin-sdk = "2.0.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 

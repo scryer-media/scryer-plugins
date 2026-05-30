@@ -1,6 +1,6 @@
 [package]
 name = "webhook-notification"
-version = "0.1.9"
+version = "0.1.11"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Generic webhook notification plugin — POSTs JSON payloads to a configured URL"
@@ -8,13 +8,18 @@ description = "Generic webhook notification plugin — POSTs JSON payloads to a 
 [package.metadata.scryer]
 official = true
 plugin_id = "webhook"
+catalog_versions = ["v3"]
+feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/webhook"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/webhook"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins/webhook"
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
 extism-pdk = "1.4"
-scryer-plugin-sdk = "1.6.0"
+scryer-plugin-sdk = "2.0.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 

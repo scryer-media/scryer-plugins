@@ -7,16 +7,19 @@ license = "GPL-3.0-only"
 
 [dependencies]
 anyhow = "1"
+brotli = "8"
 clap = { version = "4", features = ["derive"] }
 semver = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
+sha3 = "0.10"
 blake3 = "1"
-scryer-plugin-sdk = "1.6.0"
+scryer-plugin-sdk = "2.0.0"
 tempfile = "3"
 toml_edit = "0.22"
 extism = "1.13"
+zstd = "0.13"
 
 [profile.xtask-release]
 inherits = "release"

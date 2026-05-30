@@ -7,3 +7,9 @@
 
 # Local agent skills (machine-specific only)
 .agents/skills/claude-context/
+
+# Keep only the packed FFmpeg vendor payload and metadata in VCS.
+subtitles/enhanced-sync/vendor/ffmpeg/*
+!subtitles/enhanced-sync/vendor/ffmpeg/UPSTREAM.md
+!subtitles/enhanced-sync/vendor/ffmpeg/SCRYER_VENDOR_METADATA
+!subtitles/enhanced-sync/vendor/ffmpeg/source.tar.zst
