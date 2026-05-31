@@ -1,4 +1,5 @@
 use anyhow::{Context, Result, anyhow, bail};
+use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use extism::{Manifest, UserData, ValType, host_fn};
 mod plugin_new;
@@ -6,11 +7,12 @@ use scryer_plugin_sdk::{
     EXPORT_DESCRIBE, EXPORT_DOWNLOAD_ADD, EXPORT_DOWNLOAD_CONTROL, EXPORT_DOWNLOAD_LIST_COMPLETED,
     EXPORT_DOWNLOAD_LIST_HISTORY, EXPORT_DOWNLOAD_LIST_QUEUE, EXPORT_DOWNLOAD_MARK_IMPORTED,
     EXPORT_DOWNLOAD_STATUS, EXPORT_DOWNLOAD_TEST_CONNECTION, EXPORT_INDEXER_SEARCH,
-    EXPORT_NOTIFICATION_SEND, EXPORT_SUBTITLE_DOWNLOAD, EXPORT_SUBTITLE_GENERATE,
-    EXPORT_SUBTITLE_SEARCH, EXPORT_VALIDATE_CONFIG, PluginDescriptor, ProviderDescriptor,
-    SDK_VERSION, SubtitleProviderMode, host_version_matches_constraint,
-    plugin_descriptor_sdk_constraint, validate_plugin_descriptor_host_permissions,
-    validate_sdk_contract,
+    EXPORT_NOTIFICATION_SEND, EXPORT_SUBSYNC_ALIGN, EXPORT_SUBTITLE_DOWNLOAD,
+    EXPORT_SUBTITLE_GENERATE, EXPORT_SUBTITLE_SEARCH, EXPORT_VALIDATE_CONFIG, PluginDescriptor,
+    PluginResult, ProviderDescriptor, SDK_VERSION, SubtitleProviderMode, SubtitleSyncAlignRequest,
+    SubtitleSyncAlignResponse, SubtitleSyncInputSubtitle, SubtitleSyncReferenceSubtitle,
+    host_version_matches_constraint, plugin_descriptor_sdk_constraint,
+    validate_plugin_descriptor_host_permissions, validate_sdk_contract,
 };
 use semver::Version;
 use serde::{Deserialize, Serialize};
@@ -78,6 +80,9 @@ const ENHANCED_SYNC_FFMPEG_VENDOR_METADATA: &str = "SCRYER_VENDOR_METADATA";
 const ENHANCED_SYNC_LIBFVAD_VENDOR_DIR: &str = "subtitles/enhanced-sync/vendor/libfvad";
 const ENHANCED_SYNC_LIBFVAD_VENDOR_ARCHIVE: &str = "source.tar.zst";
 const ENHANCED_SYNC_LIBFVAD_VENDOR_METADATA: &str = "SCRYER_VENDOR_METADATA";
+const ENHANCED_SUBTITLE_SYNC_PLUGIN_ID: &str = "enhanced-subtitle-sync";
+const SUBTITLE_SYNC_PARITY_FORMATS: &[&str] = &["srt", "vtt", "ass", "ssa"];
+const SUBTITLE_SYNC_FLOAT_TOLERANCE: f64 = 1.0e-9;
 const FFMPEG_VENDOR_PATHS: &[&str] = &[
     "COPYING.LGPLv2.1",
     "LICENSE.md",
@@ -543,6 +548,12 @@ struct PreparedPluginVariant {
     wasm_digests: Vec<String>,
     compressed_zst: PreparedCompressedArtifact,
     compressed_br: PreparedCompressedArtifact,
+}
+
+#[derive(Clone, Debug)]
+struct BuiltPluginVariant {
+    feature_set: WasmFeatureSet,
+    wasm_path: PathBuf,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -2681,13 +2692,15 @@ fn required_exports_for_descriptor(descriptor: &PluginDescriptor) -> Vec<&'stati
     exports
 }
 
-fn load_descriptor_from_wasm(wasm_path: &Path) -> Result<PluginDescriptor> {
+fn instantiate_plugin_from_wasm(
+    wasm_path: &Path,
+    timeout: std::time::Duration,
+) -> Result<extism::Plugin> {
     let bytes =
         fs::read(wasm_path).with_context(|| format!("failed to read {}", wasm_path.display()))?;
-    let manifest =
-        Manifest::new([extism::Wasm::data(bytes)]).with_timeout(std::time::Duration::from_secs(10));
+    let manifest = Manifest::new([extism::Wasm::data(bytes)]).with_timeout(timeout);
     let socket_stubs = UserData::new(());
-    let mut plugin = extism::PluginBuilder::new(manifest)
+    extism::PluginBuilder::new(manifest)
         .with_wasi(true)
         .with_function_in_namespace(
             "extism:host/user",
@@ -2730,7 +2743,11 @@ fn load_descriptor_from_wasm(wasm_path: &Path) -> Result<PluginDescriptor> {
             socket_unsupported,
         )
         .build()
-        .with_context(|| format!("failed to instantiate {}", wasm_path.display()))?;
+        .with_context(|| format!("failed to instantiate {}", wasm_path.display()))
+}
+
+fn load_descriptor_from_wasm(wasm_path: &Path) -> Result<PluginDescriptor> {
+    let mut plugin = instantiate_plugin_from_wasm(wasm_path, std::time::Duration::from_secs(10))?;
 
     if !plugin.function_exists(EXPORT_DESCRIBE) {
         bail!("plugin is missing required export {EXPORT_DESCRIBE}");
@@ -2776,6 +2793,227 @@ fn validate_descriptor_contract(descriptor: &PluginDescriptor) -> Result<()> {
     Ok(())
 }
 
+fn validate_subtitle_sync_variant_parity(
+    plugin_dir: &Path,
+    variants: &[BuiltPluginVariant],
+) -> Result<()> {
+    let Some(baseline) = variants
+        .iter()
+        .find(|variant| variant.feature_set.is_baseline())
+    else {
+        return Ok(());
+    };
+    let optimized_variants = variants
+        .iter()
+        .filter(|variant| !variant.feature_set.is_baseline())
+        .collect::<Vec<_>>();
+    if optimized_variants.is_empty() {
+        return Ok(());
+    }
+
+    for optimized in optimized_variants {
+        for subtitle_format in SUBTITLE_SYNC_PARITY_FORMATS {
+            let request = subtitle_sync_parity_request(plugin_dir, subtitle_format)?;
+            let baseline_response = call_subtitle_sync_align(&baseline.wasm_path, &request)
+                .with_context(|| {
+                    format!("baseline subtitle-sync parity run failed for {subtitle_format}")
+                })?;
+            let optimized_response = call_subtitle_sync_align(&optimized.wasm_path, &request)
+                .with_context(|| {
+                    format!(
+                        "{} subtitle-sync parity run failed for {subtitle_format}",
+                        optimized.feature_set.slug()
+                    )
+                })?;
+            assert_subtitle_sync_parity(
+                subtitle_format,
+                &optimized.feature_set,
+                &baseline_response,
+                &optimized_response,
+            )?;
+        }
+    }
+
+    ok(format!(
+        "subtitle-sync scalar/SIMD parity validated across {} subtitle format(s)",
+        SUBTITLE_SYNC_PARITY_FORMATS.len()
+    ));
+    Ok(())
+}
+
+fn subtitle_sync_parity_request(plugin_dir: &Path, subtitle_format: &str) -> Result<String> {
+    let fixture_root = plugin_dir.join("tests/fixtures/test-data");
+    let subtitle_path = fixture_root
+        .join("subtitles")
+        .join(subtitle_format)
+        .join(format!("late_1750.{subtitle_format}"));
+    let reference_path = fixture_root
+        .join("subtitles")
+        .join(subtitle_format)
+        .join(format!("aligned.{subtitle_format}"));
+    let subtitle_content = fs::read(&subtitle_path)
+        .with_context(|| format!("failed to read {}", subtitle_path.display()))?;
+    let reference_content = fs::read(&reference_path)
+        .with_context(|| format!("failed to read {}", reference_path.display()))?;
+
+    let request = SubtitleSyncAlignRequest {
+        input: scryer_plugin_sdk::SubtitleSyncAlignInputRef {
+            path: fixture_root.join("media/missing-reference.mp4"),
+        },
+        subtitle: SubtitleSyncInputSubtitle {
+            content_base64: BASE64.encode(subtitle_content),
+            format: subtitle_format.to_string(),
+            file_name: subtitle_path
+                .file_name()
+                .and_then(|name| name.to_str())
+                .map(str::to_string),
+            encoding_hint: Some("utf-8".to_string()),
+        },
+        reference_subtitle: Some(SubtitleSyncReferenceSubtitle {
+            content_base64: BASE64.encode(reference_content),
+            format: subtitle_format.to_string(),
+            file_name: reference_path
+                .file_name()
+                .and_then(|name| name.to_str())
+                .map(str::to_string),
+            encoding_hint: Some("utf-8".to_string()),
+        }),
+        subtitle_spans: Vec::new(),
+        max_offset_seconds: 8,
+        sync_options: Some(scryer_plugin_sdk::SubtitleSyncOptions::default()),
+        selector: Some(scryer_plugin_sdk::AudioStreamSelector::Default),
+        expected_codec: None,
+    };
+    serde_json::to_string(&request).context("failed to encode subtitle-sync parity request")
+}
+
+fn call_subtitle_sync_align(
+    wasm_path: &Path,
+    request_json: &str,
+) -> Result<SubtitleSyncAlignResponse> {
+    let mut plugin = instantiate_plugin_from_wasm(wasm_path, std::time::Duration::from_secs(30))?;
+    if !plugin.function_exists(EXPORT_SUBSYNC_ALIGN) {
+        bail!("plugin is missing required export {EXPORT_SUBSYNC_ALIGN}");
+    }
+
+    let output: String = plugin
+        .call::<&str, String>(EXPORT_SUBSYNC_ALIGN, request_json)
+        .with_context(|| format!("{EXPORT_SUBSYNC_ALIGN} failed"))?;
+    match serde_json::from_str::<PluginResult<SubtitleSyncAlignResponse>>(&output)
+        .context("scryer_subsync_align returned invalid JSON")?
+    {
+        PluginResult::Ok(response) => Ok(response),
+        PluginResult::Err(error) => bail!(
+            "scryer_subsync_align returned plugin error: {}",
+            error.public_message
+        ),
+    }
+}
+
+fn assert_subtitle_sync_parity(
+    subtitle_format: &str,
+    optimized_feature_set: &WasmFeatureSet,
+    baseline: &SubtitleSyncAlignResponse,
+    optimized: &SubtitleSyncAlignResponse,
+) -> Result<()> {
+    let context = || {
+        format!(
+            "subtitle-sync scalar/SIMD parity mismatch for {subtitle_format} against {}",
+            optimized_feature_set.slug()
+        )
+    };
+
+    if baseline.applied != optimized.applied {
+        bail!("{}: applied differs", context());
+    }
+    if baseline.offset_ms != optimized.offset_ms {
+        bail!(
+            "{}: offset_ms differs (baseline {}, optimized {})",
+            context(),
+            baseline.offset_ms,
+            optimized.offset_ms
+        );
+    }
+    if baseline.skipped_reason != optimized.skipped_reason {
+        bail!(
+            "{}: skipped_reason differs (baseline {:?}, optimized {:?})",
+            context(),
+            baseline.skipped_reason,
+            optimized.skipped_reason
+        );
+    }
+    if baseline
+        .rewritten_subtitle
+        .as_ref()
+        .map(|rewritten| (rewritten.format.as_str(), rewritten.content_base64.as_str()))
+        != optimized
+            .rewritten_subtitle
+            .as_ref()
+            .map(|rewritten| (rewritten.format.as_str(), rewritten.content_base64.as_str()))
+    {
+        bail!("{}: rewritten subtitle bytes differ", context());
+    }
+    if baseline.warnings != optimized.warnings {
+        bail!(
+            "{}: warnings differ (baseline {:?}, optimized {:?})",
+            context(),
+            baseline.warnings,
+            optimized.warnings
+        );
+    }
+    if baseline.message != optimized.message {
+        bail!(
+            "{}: message differs (baseline {:?}, optimized {:?})",
+            context(),
+            baseline.message,
+            optimized.message
+        );
+    }
+
+    compare_optional_float(context(), "score", baseline.score, optimized.score)?;
+    compare_optional_float(
+        context(),
+        "selected_framerate_ratio",
+        baseline.selected_framerate_ratio,
+        optimized.selected_framerate_ratio,
+    )?;
+    compare_optional_float(
+        context(),
+        "consistency_ratio",
+        baseline.consistency_ratio,
+        optimized.consistency_ratio,
+    )?;
+    compare_optional_float(
+        context(),
+        "nosplit_score",
+        baseline.nosplit_score,
+        optimized.nosplit_score,
+    )?;
+    compare_optional_float(
+        context(),
+        "split_score",
+        baseline.split_score,
+        optimized.split_score,
+    )?;
+
+    Ok(())
+}
+
+fn compare_optional_float(
+    context: String,
+    field: &str,
+    baseline: Option<f64>,
+    optimized: Option<f64>,
+) -> Result<()> {
+    match (baseline, optimized) {
+        (Some(left), Some(right)) if (left - right).abs() <= SUBTITLE_SYNC_FLOAT_TOLERANCE => {
+            Ok(())
+        }
+        (None, None) => Ok(()),
+        _ => bail!("{context}: {field} differs (baseline {baseline:?}, optimized {optimized:?})"),
+    }
+}
+
 fn run_plugin_validate(ctx: &TaskContext, args: PluginValidateArgs) -> Result<()> {
     let plugin_dir = if args.path.is_file() {
         args.path
@@ -2797,6 +3035,7 @@ fn run_plugin_validate(ctx: &TaskContext, args: PluginValidateArgs) -> Result<()
     let manifest_metadata = plugin_manifest_metadata(&plugin_dir.join("Cargo.toml"))?;
     let mut descriptor = None;
     let mut descriptor_json = None;
+    let mut built_variants = Vec::new();
     for feature_set in &manifest_metadata.feature_sets {
         let wasm_path = build_plugin_wasm(ctx, &plugin_dir, feature_set)?;
         let current_descriptor = load_descriptor_from_wasm(&wasm_path)?;
@@ -2813,8 +3052,15 @@ fn run_plugin_validate(ctx: &TaskContext, args: PluginValidateArgs) -> Result<()
             descriptor_json = Some(current_descriptor_json);
             descriptor = Some(current_descriptor);
         }
+        built_variants.push(BuiltPluginVariant {
+            feature_set: feature_set.clone(),
+            wasm_path,
+        });
     }
     let descriptor = descriptor.expect("feature_sets should never be empty");
+    if descriptor.id == ENHANCED_SUBTITLE_SYNC_PLUGIN_ID {
+        validate_subtitle_sync_variant_parity(&plugin_dir, &built_variants)?;
+    }
     ok(format!(
         "Validated {} {} ({}) across {} feature set(s)",
         descriptor.id,

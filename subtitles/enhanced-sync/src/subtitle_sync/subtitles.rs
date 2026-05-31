@@ -1,7 +1,7 @@
 use chardetng::EncodingDetector;
 use encoding_rs::{Encoding, UTF_8, WINDOWS_1252};
 
-use super::transformers::scale_ms;
+use super::simd;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum SubtitleFormat {
@@ -376,12 +376,13 @@ fn rewrite_srt_content(content: &str, ratio: f64, offset_ms: i64) -> String {
         let start = parse_srt_ts(start_raw.trim())?;
         let (end_raw, suffix) = split_timestamp_token(rest.trim_start())?;
         let end = parse_srt_ts(end_raw)?;
+        let (start, end) = simd::transform_ms_pair(start, end, ratio, offset_ms);
         let leading = &start_raw[..start_raw.len() - start_raw.trim_start().len()];
         Some(format!(
             "{}{} --> {}{}",
             leading,
-            format_srt_ts(transform_ms(start, ratio, offset_ms)),
-            format_srt_ts(transform_ms(end, ratio, offset_ms)),
+            format_srt_ts(start),
+            format_srt_ts(end),
             suffix
         ))
     })
@@ -395,12 +396,13 @@ fn rewrite_vtt_content(content: &str, ratio: f64, offset_ms: i64) -> String {
         let start = parse_vtt_ts(start_raw.trim())?;
         let (end_raw, suffix) = split_timestamp_token(rest.trim_start())?;
         let end = parse_vtt_ts(end_raw)?;
+        let (start, end) = simd::transform_ms_pair(start, end, ratio, offset_ms);
         let leading = &start_raw[..start_raw.len() - start_raw.trim_start().len()];
         Some(format!(
             "{}{} --> {}{}",
             leading,
-            format_vtt_ts(transform_ms(start, ratio, offset_ms)),
-            format_vtt_ts(transform_ms(end, ratio, offset_ms)),
+            format_vtt_ts(start),
+            format_vtt_ts(end),
             suffix
         ))
     })
@@ -470,8 +472,9 @@ fn rewrite_ass_event_line(
         .collect::<Vec<_>>();
     let start = parse_ass_ts(fields[event_format.start_index].trim())?;
     let end = parse_ass_ts(fields[event_format.end_index].trim())?;
-    fields[event_format.start_index] = format_ass_ts(transform_ms(start, ratio, offset_ms));
-    fields[event_format.end_index] = format_ass_ts(transform_ms(end, ratio, offset_ms));
+    let (start, end) = simd::transform_ms_pair(start, end, ratio, offset_ms);
+    fields[event_format.start_index] = format_ass_ts(start);
+    fields[event_format.end_index] = format_ass_ts(end);
     Some(format!("{prefix}{leading}{}", fields.join(",")))
 }
 
@@ -566,10 +569,6 @@ fn parse_fixed_millis(value: &str) -> Option<i64> {
         2 => value * 10,
         _ => value,
     })
-}
-
-fn transform_ms(ms: i64, ratio: f64, offset_ms: i64) -> i64 {
-    scale_ms(ms, ratio) + offset_ms
 }
 
 fn is_section_header(line: &str) -> bool {

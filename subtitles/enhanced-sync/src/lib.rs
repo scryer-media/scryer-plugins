@@ -22,9 +22,9 @@ const PLUGIN_NAME: &str = "Enhanced Subtitle Sync";
 const DECODER_BACKEND: &str = "vendored-ffmpeg-wasm";
 const SYMPHONIA_BACKEND: &str = "plugin-symphonia";
 const FFMPEG_SYNC_BACKEND: &str = "vendored-ffmpeg-wasm";
+const REFERENCE_SUBTITLE_BACKEND: &str = "reference-subtitle";
 const SUBTITLE_SYNC_BACKEND: &str = "subtitle-sync-rust";
 const MAX_DECODE_INPUT_BYTES: usize = 64 * 1024 * 1024;
-const MIN_REFERENCE_SPANS: usize = 3;
 const MIN_EFFECTIVE_OFFSET_MS: i64 = 50;
 
 #[plugin_fn]
@@ -167,43 +167,13 @@ struct SkippedAlignmentDetails {
 }
 
 fn align_impl(request: &SubtitleSyncAlignRequest) -> SubtitleSyncAlignResponse {
-    let (backend, mut warnings, reference_spans) = match extract_reference_spans(request) {
-        Ok(result) => result,
-        Err(message) => {
-            return skipped_align_response(
-                SubtitleSyncAlignSkipReason::AudioDecodeFailed,
-                request_backend_label(request).to_string(),
-                Vec::new(),
-                SkippedAlignmentDetails {
-                    message: Some(message),
-                    ..Default::default()
-                },
-            );
-        }
-    };
-
-    if reference_spans.len() < MIN_REFERENCE_SPANS {
-        return skipped_align_response(
-            SubtitleSyncAlignSkipReason::NotEnoughReferenceSpans,
-            backend,
-            warnings,
-            SkippedAlignmentDetails {
-                message: Some(format!(
-                    "decoded only {} reference speech spans",
-                    reference_spans.len()
-                )),
-                ..Default::default()
-            },
-        );
-    }
-
     let subtitle_content = match BASE64.decode(&request.subtitle.content_base64) {
         Ok(content) => content,
         Err(error) => {
             return skipped_align_response(
                 SubtitleSyncAlignSkipReason::WeakAlignment,
-                backend,
-                warnings,
+                request_backend_label(request).to_string(),
+                Vec::new(),
                 SkippedAlignmentDetails {
                     message: Some(format!("invalid subtitle content_base64: {error}")),
                     ..Default::default()
@@ -212,75 +182,119 @@ fn align_impl(request: &SubtitleSyncAlignRequest) -> SubtitleSyncAlignResponse {
         }
     };
     let request_sync_options = request.sync_options.clone().unwrap_or_default();
+    let sync_options = subtitle_sync::SyncOptions {
+        max_offset_seconds: request.max_offset_seconds,
+        min_effective_offset_ms: MIN_EFFECTIVE_OFFSET_MS,
+        start_seconds: request_sync_options.start_seconds,
+        max_subtitle_duration_ms: request_sync_options.max_subtitle_duration_ms as i64,
+        precise_framerate_search: request_sync_options.precise_framerate_search,
+        output_encoding: request_sync_options.output_encoding,
+    };
+
+    let media_failure = match extract_reference_spans(request) {
+        Ok((backend, warnings, reference_spans)) => {
+            match align_with_reference_spans(
+                backend,
+                warnings,
+                reference_spans,
+                &subtitle_content,
+                request,
+                &sync_options,
+            ) {
+                Ok(response) => return response,
+                Err(failure) if !should_try_reference_subtitle_fallback(&failure) => {
+                    return failure.into_response();
+                }
+                Err(failure) => Some(failure),
+            }
+        }
+        Err(message) => Some(AlignmentFailure {
+            skipped_reason: SubtitleSyncAlignSkipReason::AudioDecodeFailed,
+            backend: request_backend_label(request).to_string(),
+            warnings: Vec::new(),
+            details: SkippedAlignmentDetails {
+                message: Some(message),
+                ..Default::default()
+            },
+        }),
+    };
+
+    let Some(reference_subtitle) = request.reference_subtitle.as_ref() else {
+        return media_failure.expect("media failure set").into_response();
+    };
+    let mut fallback_warnings = media_failure
+        .as_ref()
+        .map(|failure| failure.warnings.clone())
+        .unwrap_or_default();
+    if let Some(failure) = media_failure.as_ref() {
+        fallback_warnings.push(format!(
+            "media reference alignment failed on {}: {}",
+            failure.backend,
+            failure
+                .details
+                .message
+                .as_deref()
+                .unwrap_or("alignment was not usable")
+        ));
+    }
+    match align_with_reference_subtitle(
+        reference_subtitle,
+        fallback_warnings,
+        &subtitle_content,
+        request,
+        &sync_options,
+    ) {
+        Ok(response) => response,
+        Err(failure) => failure.into_response(),
+    }
+}
+
+struct AlignmentFailure {
+    skipped_reason: SubtitleSyncAlignSkipReason,
+    backend: String,
+    warnings: Vec<String>,
+    details: SkippedAlignmentDetails,
+}
+
+impl AlignmentFailure {
+    fn into_response(self) -> SubtitleSyncAlignResponse {
+        skipped_align_response(
+            self.skipped_reason,
+            self.backend,
+            self.warnings,
+            self.details,
+        )
+    }
+}
+
+fn align_with_reference_spans(
+    backend: String,
+    mut warnings: Vec<String>,
+    reference_spans: Vec<subtitle_sync::Span>,
+    subtitle_content: &[u8],
+    request: &SubtitleSyncAlignRequest,
+    sync_options: &subtitle_sync::SyncOptions,
+) -> Result<SubtitleSyncAlignResponse, AlignmentFailure> {
     let sync = match subtitle_sync::sync_subtitle(
         &reference_spans,
         &subtitle_content,
         &request.subtitle.format,
         request.subtitle.encoding_hint.as_deref(),
-        &subtitle_sync::SyncOptions {
-            max_offset_seconds: request.max_offset_seconds,
-            min_effective_offset_ms: MIN_EFFECTIVE_OFFSET_MS,
-            start_seconds: request_sync_options.start_seconds,
-            max_subtitle_duration_ms: request_sync_options.max_subtitle_duration_ms as i64,
-            precise_framerate_search: request_sync_options.precise_framerate_search,
-            output_encoding: request_sync_options.output_encoding,
-        },
+        sync_options,
     ) {
         Ok(sync) => sync,
         Err(error) => {
-            let (skipped_reason, offset_ms, score, ratio) = match &error {
-                subtitle_sync::SyncError::NotEnoughReferenceSpans { .. } => (
-                    SubtitleSyncAlignSkipReason::NotEnoughReferenceSpans,
-                    0,
-                    None,
-                    None,
-                ),
-                subtitle_sync::SyncError::OffsetTooSmall {
-                    offset_ms,
-                    score,
-                    ratio,
-                } => (
-                    SubtitleSyncAlignSkipReason::OffsetTooSmall,
-                    *offset_ms,
-                    Some(*score),
-                    Some(*ratio),
-                ),
-                subtitle_sync::SyncError::OffsetExceedsMaximum {
-                    offset_ms,
-                    score,
-                    ratio,
-                } => (
-                    SubtitleSyncAlignSkipReason::OffsetExceedsMaximum,
-                    *offset_ms,
-                    Some(*score),
-                    Some(*ratio),
-                ),
-                subtitle_sync::SyncError::WeakAlignment { offset_ms, score } => (
-                    SubtitleSyncAlignSkipReason::WeakAlignment,
-                    *offset_ms,
-                    Some(*score),
-                    None,
-                ),
-                subtitle_sync::SyncError::Parse(_)
-                | subtitle_sync::SyncError::NotEnoughSubtitleSpans { .. } => {
-                    (SubtitleSyncAlignSkipReason::WeakAlignment, 0, None, None)
-                }
-            };
-            let mut details = SkippedAlignmentDetails {
-                offset_ms,
-                nosplit_score: score,
-                message: Some(error.to_string()),
-                ..Default::default()
-            };
-            if let Some(ratio) = ratio {
-                details.message = Some(format!("{} (framerate ratio {ratio:.6})", error));
-            }
-            return skipped_align_response(skipped_reason, backend, warnings, details);
+            return Err(AlignmentFailure {
+                skipped_reason: skipped_reason_for_sync_error(&error),
+                backend,
+                warnings,
+                details: skipped_details_for_sync_error(&error),
+            });
         }
     };
     warnings.extend(sync.warnings);
 
-    SubtitleSyncAlignResponse {
+    Ok(SubtitleSyncAlignResponse {
         applied: true,
         offset_ms: sync.offset_ms,
         rewritten_subtitle: Some(SubtitleSyncRewrittenSubtitle {
@@ -302,7 +316,105 @@ fn align_impl(request: &SubtitleSyncAlignRequest) -> SubtitleSyncAlignResponse {
             sync.subtitle_max_time_seconds,
             sync.selected_framerate_ratio
         )),
+    })
+}
+
+fn align_with_reference_subtitle(
+    reference_subtitle: &scryer_plugin_sdk::SubtitleSyncReferenceSubtitle,
+    mut warnings: Vec<String>,
+    subtitle_content: &[u8],
+    request: &SubtitleSyncAlignRequest,
+    sync_options: &subtitle_sync::SyncOptions,
+) -> Result<SubtitleSyncAlignResponse, AlignmentFailure> {
+    let content = BASE64
+        .decode(&reference_subtitle.content_base64)
+        .map_err(|error| AlignmentFailure {
+            skipped_reason: SubtitleSyncAlignSkipReason::WeakAlignment,
+            backend: REFERENCE_SUBTITLE_BACKEND.to_string(),
+            warnings: warnings.clone(),
+            details: SkippedAlignmentDetails {
+                message: Some(format!(
+                    "invalid reference_subtitle content_base64: {error}"
+                )),
+                ..Default::default()
+            },
+        })?;
+    let (reference_spans, reference_warnings) = subtitle_sync::subtitle_reference_spans(
+        &content,
+        &reference_subtitle.format,
+        reference_subtitle.encoding_hint.as_deref(),
+        sync_options,
+    )
+    .map_err(|error| AlignmentFailure {
+        skipped_reason: skipped_reason_for_sync_error(&error),
+        backend: REFERENCE_SUBTITLE_BACKEND.to_string(),
+        warnings: warnings.clone(),
+        details: skipped_details_for_sync_error(&error),
+    })?;
+    warnings.extend(reference_warnings);
+    align_with_reference_spans(
+        REFERENCE_SUBTITLE_BACKEND.to_string(),
+        warnings,
+        reference_spans,
+        subtitle_content,
+        request,
+        sync_options,
+    )
+}
+
+fn should_try_reference_subtitle_fallback(failure: &AlignmentFailure) -> bool {
+    !matches!(
+        failure.skipped_reason,
+        SubtitleSyncAlignSkipReason::OffsetTooSmall
+    )
+}
+
+fn skipped_reason_for_sync_error(error: &subtitle_sync::SyncError) -> SubtitleSyncAlignSkipReason {
+    match error {
+        subtitle_sync::SyncError::NotEnoughReferenceSpans { .. } => {
+            SubtitleSyncAlignSkipReason::NotEnoughReferenceSpans
+        }
+        subtitle_sync::SyncError::OffsetTooSmall { .. } => {
+            SubtitleSyncAlignSkipReason::OffsetTooSmall
+        }
+        subtitle_sync::SyncError::OffsetExceedsMaximum { .. } => {
+            SubtitleSyncAlignSkipReason::OffsetExceedsMaximum
+        }
+        subtitle_sync::SyncError::WeakAlignment { .. }
+        | subtitle_sync::SyncError::Parse(_)
+        | subtitle_sync::SyncError::NotEnoughSubtitleSpans { .. } => {
+            SubtitleSyncAlignSkipReason::WeakAlignment
+        }
     }
+}
+
+fn skipped_details_for_sync_error(error: &subtitle_sync::SyncError) -> SkippedAlignmentDetails {
+    let (offset_ms, score, ratio) = match error {
+        subtitle_sync::SyncError::OffsetTooSmall {
+            offset_ms,
+            score,
+            ratio,
+        }
+        | subtitle_sync::SyncError::OffsetExceedsMaximum {
+            offset_ms,
+            score,
+            ratio,
+        } => (*offset_ms, Some(*score), Some(*ratio)),
+        subtitle_sync::SyncError::WeakAlignment { offset_ms, score } => {
+            (*offset_ms, Some(*score), None)
+        }
+        _ => (0, None, None),
+    };
+    let mut details = SkippedAlignmentDetails {
+        offset_ms,
+        nosplit_score: score,
+        message: Some(error.to_string()),
+        ..Default::default()
+    };
+    if let Some(ratio) = ratio {
+        details.message = Some(format!("{} (framerate ratio {ratio:.6})", error));
+    }
+    details
 }
 
 fn extract_reference_spans(
@@ -1106,6 +1218,7 @@ mod tests {
                     .map(str::to_string),
                 encoding_hint: Some("utf-8".to_string()),
             },
+            reference_subtitle: None,
             subtitle_spans: Vec::new(),
             max_offset_seconds: 8,
             sync_options: Some(scryer_plugin_sdk::SubtitleSyncOptions {
@@ -1117,6 +1230,10 @@ mod tests {
             selector: Some(SdkAudioStreamSelector::Default),
             expected_codec,
         };
+        align_request(request)
+    }
+
+    fn align_request(request: SubtitleSyncAlignRequest) -> SubtitleSyncAlignResponse {
         let raw_response =
             scryer_subsync_align_json(serde_json::to_string(&request).expect("encode request"))
                 .expect("align export response");
@@ -1623,6 +1740,87 @@ mod tests {
             );
             assert_rewrite_matches_authoritative("srt", fixture_case, &response);
         }
+    }
+
+    #[test]
+    fn reference_subtitle_fallback_aligns_srt_and_vtt_when_media_fails() {
+        for subtitle_format in ["srt", "vtt"] {
+            let subtitle_path = test_data_subtitle_path(subtitle_format, "late_1750");
+            let reference_path = test_data_subtitle_path(subtitle_format, "aligned");
+            let subtitle_content = std::fs::read(&subtitle_path).expect("read subtitle fixture");
+            let reference_content = std::fs::read(&reference_path).expect("read reference fixture");
+            let request = SubtitleSyncAlignRequest {
+                input: scryer_plugin_sdk::SubtitleSyncAlignInputRef {
+                    path: test_data_fixture_path("media/missing-reference.mp4"),
+                },
+                subtitle: scryer_plugin_sdk::SubtitleSyncInputSubtitle {
+                    content_base64: BASE64.encode(&subtitle_content),
+                    format: subtitle_format.to_string(),
+                    file_name: subtitle_path
+                        .file_name()
+                        .and_then(|name| name.to_str())
+                        .map(str::to_string),
+                    encoding_hint: Some("utf-8".to_string()),
+                },
+                reference_subtitle: Some(scryer_plugin_sdk::SubtitleSyncReferenceSubtitle {
+                    content_base64: BASE64.encode(&reference_content),
+                    format: subtitle_format.to_string(),
+                    file_name: reference_path
+                        .file_name()
+                        .and_then(|name| name.to_str())
+                        .map(str::to_string),
+                    encoding_hint: Some("utf-8".to_string()),
+                }),
+                subtitle_spans: Vec::new(),
+                max_offset_seconds: 8,
+                sync_options: Some(scryer_plugin_sdk::SubtitleSyncOptions::default()),
+                selector: Some(SdkAudioStreamSelector::Default),
+                expected_codec: None,
+            };
+
+            let response = align_request(request);
+            assert!(
+                response.backend.contains(REFERENCE_SUBTITLE_BACKEND),
+                "{subtitle_format} backend: {}",
+                response.backend
+            );
+            assert!(
+                response
+                    .warnings
+                    .iter()
+                    .any(|warning| warning.contains("media reference alignment failed")),
+                "{subtitle_format} warnings: {:?}",
+                response.warnings
+            );
+            assert_rewrite_matches_authoritative(subtitle_format, SUBTITLE_CASES[0], &response);
+        }
+    }
+
+    #[test]
+    fn missing_media_without_reference_subtitle_skips_alignment() {
+        let response = align_request(SubtitleSyncAlignRequest {
+            input: scryer_plugin_sdk::SubtitleSyncAlignInputRef {
+                path: test_data_fixture_path("media/missing-reference.mp4"),
+            },
+            subtitle: scryer_plugin_sdk::SubtitleSyncInputSubtitle {
+                content_base64: BASE64.encode(b"1\n00:00:01,000 --> 00:00:02,000\nHello\n"),
+                format: "srt".to_string(),
+                file_name: Some("subtitle.srt".to_string()),
+                encoding_hint: Some("utf-8".to_string()),
+            },
+            reference_subtitle: None,
+            subtitle_spans: Vec::new(),
+            max_offset_seconds: 8,
+            sync_options: Some(scryer_plugin_sdk::SubtitleSyncOptions::default()),
+            selector: Some(SdkAudioStreamSelector::Default),
+            expected_codec: None,
+        });
+
+        assert!(!response.applied);
+        assert_eq!(
+            response.skipped_reason,
+            Some(SubtitleSyncAlignSkipReason::AudioDecodeFailed)
+        );
     }
 
     #[test]

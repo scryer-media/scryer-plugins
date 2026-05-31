@@ -1,4 +1,4 @@
-use super::subtitles::SubtitleCue;
+use super::{simd, subtitles::SubtitleCue};
 
 pub(crate) const SAMPLE_RATE: u32 = 100;
 pub(crate) const DEFAULT_MAX_SUBTITLE_MS: i64 = 10_000;
@@ -94,7 +94,7 @@ pub(crate) fn spans_to_timeline_at_rate(spans: &[Span], ratio: f64, sample_rate:
             ms_to_sample_at_rate(scale_ms(span.end_ms - span.start_ms, ratio), sample_rate);
         let end = (start + duration).min(timeline.len());
         if end > start {
-            timeline[start..end].fill(1.0);
+            simd::fill_f64(&mut timeline[start..end], 1.0);
         }
     }
     timeline

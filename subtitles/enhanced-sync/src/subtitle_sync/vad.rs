@@ -1,6 +1,6 @@
 use std::ptr::NonNull;
 
-use super::Span;
+use super::{Span, simd};
 
 pub(crate) const WEBRTC_BACKEND_LABEL: &str = "webrtc-vad";
 pub(crate) const RMS_BACKEND_LABEL: &str = "rms-vad";
@@ -62,35 +62,41 @@ impl SpeechSpanDetector {
     pub(crate) fn finish(mut self) -> SpeechDetection {
         let primary = self.primary.take().map(WebRtcSpeechDetector::finish);
         let fallback = self.fallback.finish();
+        select_speech_detection(primary, fallback, self.warnings)
+    }
+}
 
-        let Some(primary) = primary else {
-            self.warnings
-                .push(format!("used {RMS_BACKEND_LABEL} fallback"));
-            return SpeechDetection {
-                spans: fallback,
-                backend: RMS_BACKEND_LABEL,
-                warnings: self.warnings,
-            };
+fn select_speech_detection(
+    primary: Option<WebRtcSpeechDetection>,
+    fallback: Vec<Span>,
+    mut warnings: Vec<String>,
+) -> SpeechDetection {
+    let Some(primary) = primary else {
+        warnings.push(format!("used {RMS_BACKEND_LABEL} fallback"));
+        return SpeechDetection {
+            spans: fallback,
+            backend: RMS_BACKEND_LABEL,
+            warnings,
         };
+    };
 
-        if primary.spans.len() < MIN_ALIGNMENT_SPANS && fallback.len() >= MIN_ALIGNMENT_SPANS {
-            self.warnings.push(format!(
-                "{WEBRTC_BACKEND_LABEL} produced {} speech spans; used {RMS_BACKEND_LABEL} fallback",
-                primary.spans.len()
-            ));
-            return SpeechDetection {
-                spans: fallback,
-                backend: RMS_BACKEND_LABEL,
-                warnings: self.warnings,
-            };
-        }
+    if primary.spans.len() < MIN_ALIGNMENT_SPANS && fallback.len() >= MIN_ALIGNMENT_SPANS {
+        warnings.push(format!(
+            "{WEBRTC_BACKEND_LABEL} produced {} speech spans; used {RMS_BACKEND_LABEL} fallback",
+            primary.spans.len()
+        ));
+        return SpeechDetection {
+            spans: fallback,
+            backend: RMS_BACKEND_LABEL,
+            warnings,
+        };
+    }
 
-        self.warnings.extend(primary.warnings);
-        SpeechDetection {
-            spans: primary.spans,
-            backend: WEBRTC_BACKEND_LABEL,
-            warnings: self.warnings,
-        }
+    warnings.extend(primary.warnings);
+    SpeechDetection {
+        spans: primary.spans,
+        backend: WEBRTC_BACKEND_LABEL,
+        warnings,
     }
 }
 
@@ -484,12 +490,7 @@ fn frame_samples_for_rate(sample_rate_hz: u32) -> usize {
 }
 
 fn downmix_interleaved_frame(frame: &[i16]) -> i16 {
-    if frame.is_empty() {
-        return 0;
-    }
-
-    let sum = frame.iter().map(|sample| i32::from(*sample)).sum::<i32>();
-    (sum / frame.len() as i32).clamp(i32::from(i16::MIN), i32::from(i16::MAX)) as i16
+    simd::mean_i16(frame)
 }
 
 fn push_span(spans: &mut Vec<Span>, start_ms: i64, end_ms: i64, merge_gap_ms: i64) {
@@ -602,6 +603,57 @@ mod tests {
         assert_span_near(spans[0], 500, 1_500, 40);
     }
 
+    #[test]
+    fn rms_is_selected_when_primary_is_unavailable() {
+        let fallback = test_spans(3);
+        let detection = select_speech_detection(None, fallback.clone(), Vec::new());
+
+        assert_eq!(detection.backend, RMS_BACKEND_LABEL);
+        assert_eq!(detection.spans, fallback);
+        assert!(
+            detection
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("rms-vad fallback"))
+        );
+    }
+
+    #[test]
+    fn rms_is_selected_when_primary_is_too_sparse() {
+        let primary = WebRtcSpeechDetection {
+            spans: test_spans(2),
+            warnings: Vec::new(),
+        };
+        let fallback = test_spans(3);
+
+        let detection = select_speech_detection(Some(primary), fallback.clone(), Vec::new());
+
+        assert_eq!(detection.backend, RMS_BACKEND_LABEL);
+        assert_eq!(detection.spans, fallback);
+        assert!(
+            detection
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("produced 2 speech spans"))
+        );
+    }
+
+    #[test]
+    fn primary_is_selected_when_it_has_enough_spans() {
+        let primary_spans = test_spans(3);
+        let primary = WebRtcSpeechDetection {
+            spans: primary_spans.clone(),
+            warnings: vec!["primary warning".to_string()],
+        };
+        let fallback = test_spans(4);
+
+        let detection = select_speech_detection(Some(primary), fallback, Vec::new());
+
+        assert_eq!(detection.backend, WEBRTC_BACKEND_LABEL);
+        assert_eq!(detection.spans, primary_spans);
+        assert_eq!(detection.warnings, vec!["primary warning".to_string()]);
+    }
+
     fn run_fixture(sample_rate_hz: u32, channels: usize, segments: &[Segment]) -> SpeechDetection {
         let mut detector = SpeechSpanDetector::new(sample_rate_hz);
         let mut absolute_sample = 0usize;
@@ -648,6 +700,15 @@ mod tests {
         }
 
         (value.tanh() * 10_000.0).clamp(i16::MIN as f32, i16::MAX as f32) as i16
+    }
+
+    fn test_spans(count: usize) -> Vec<Span> {
+        (0..count)
+            .filter_map(|index| {
+                let start = index as i64 * 1_000;
+                Span::new(start, start + 500)
+            })
+            .collect()
     }
 
     fn assert_span_near(

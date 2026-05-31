@@ -15,6 +15,15 @@ pub(crate) fn mean_square_i16(samples: &[i16]) -> f64 {
     sum_squares_i16(samples) / samples.len() as f64
 }
 
+pub(crate) fn mean_i16(samples: &[i16]) -> i16 {
+    if samples.is_empty() {
+        return 0;
+    }
+
+    let mean = (sum_i16(samples) / samples.len() as f64).trunc() as i32;
+    mean.clamp(i32::from(i16::MIN), i32::from(i16::MAX)) as i16
+}
+
 pub(crate) fn center_binary(values: &[f64]) -> Vec<f64> {
     #[cfg(all(target_arch = "wasm32", target_feature = "simd128"))]
     {
@@ -52,6 +61,38 @@ pub(crate) fn scaled_complex_reals(values: &[Complex<f64>], scale: f64) -> Vec<f
     #[cfg(not(all(target_arch = "wasm32", target_feature = "simd128")))]
     {
         scaled_complex_reals_scalar(values, scale)
+    }
+}
+
+pub(crate) fn fill_f64(values: &mut [f64], value: f64) {
+    #[cfg(all(target_arch = "wasm32", target_feature = "simd128"))]
+    {
+        unsafe { fill_f64_simd(values, value) };
+    }
+
+    #[cfg(not(all(target_arch = "wasm32", target_feature = "simd128")))]
+    {
+        values.fill(value);
+    }
+}
+
+pub(crate) fn transform_ms_pair(
+    start_ms: i64,
+    end_ms: i64,
+    ratio: f64,
+    offset_ms: i64,
+) -> (i64, i64) {
+    #[cfg(all(target_arch = "wasm32", target_feature = "simd128"))]
+    {
+        return unsafe { transform_ms_pair_simd(start_ms, end_ms, ratio, offset_ms) };
+    }
+
+    #[cfg(not(all(target_arch = "wasm32", target_feature = "simd128")))]
+    {
+        (
+            transform_one_ms(start_ms, ratio, offset_ms),
+            transform_one_ms(end_ms, ratio, offset_ms),
+        )
     }
 }
 
@@ -99,6 +140,23 @@ fn sum_squares_i16(samples: &[i16]) -> f64 {
     }
 }
 
+fn sum_i16(samples: &[i16]) -> f64 {
+    #[cfg(all(target_arch = "wasm32", target_feature = "simd128"))]
+    {
+        return unsafe { sum_i16_simd(samples) };
+    }
+
+    #[cfg(not(all(target_arch = "wasm32", target_feature = "simd128")))]
+    {
+        samples.iter().map(|sample| f64::from(*sample)).sum()
+    }
+}
+
+#[cfg(any(test, not(all(target_arch = "wasm32", target_feature = "simd128"))))]
+fn transform_one_ms(ms: i64, ratio: f64, offset_ms: i64) -> i64 {
+    ((ms as f64) * ratio).round() as i64 + offset_ms
+}
+
 #[cfg(all(target_arch = "wasm32", target_feature = "simd128"))]
 unsafe fn sum_squares_i16_simd(samples: &[i16]) -> f64 {
     use core::arch::wasm32::{
@@ -124,6 +182,27 @@ unsafe fn sum_squares_i16_simd(samples: &[i16]) -> f64 {
 }
 
 #[cfg(all(target_arch = "wasm32", target_feature = "simd128"))]
+unsafe fn sum_i16_simd(samples: &[i16]) -> f64 {
+    use core::arch::wasm32::{f64x2_add, f64x2_extract_lane, f64x2_replace_lane, f64x2_splat};
+
+    let mut acc = f64x2_splat(0.0);
+    let mut chunks = samples.chunks_exact(2);
+    for chunk in &mut chunks {
+        let lanes = f64x2_replace_lane::<1>(
+            f64x2_replace_lane::<0>(f64x2_splat(0.0), chunk[0] as f64),
+            chunk[1] as f64,
+        );
+        acc = f64x2_add(acc, lanes);
+    }
+
+    let mut sum = f64x2_extract_lane::<0>(acc) + f64x2_extract_lane::<1>(acc);
+    for sample in chunks.remainder() {
+        sum += *sample as f64;
+    }
+    sum
+}
+
+#[cfg(all(target_arch = "wasm32", target_feature = "simd128"))]
 unsafe fn scaled_complex_reals_simd(values: &[Complex<f64>], scale: f64) -> Vec<f64> {
     use core::arch::wasm32::{f64x2_extract_lane, f64x2_mul, f64x2_replace_lane, f64x2_splat};
 
@@ -141,6 +220,43 @@ unsafe fn scaled_complex_reals_simd(values: &[Complex<f64>], scale: f64) -> Vec<
     }
     out.extend(chunks.remainder().iter().map(|value| value.re / scale));
     out
+}
+
+#[cfg(all(target_arch = "wasm32", target_feature = "simd128"))]
+unsafe fn fill_f64_simd(values: &mut [f64], value: f64) {
+    use core::arch::wasm32::{f64x2_splat, v128_store};
+
+    let lanes = f64x2_splat(value);
+    let mut chunks = values.chunks_exact_mut(2);
+    for chunk in &mut chunks {
+        unsafe { v128_store(chunk.as_mut_ptr().cast(), lanes) };
+    }
+    chunks.into_remainder().fill(value);
+}
+
+#[cfg(all(target_arch = "wasm32", target_feature = "simd128"))]
+unsafe fn transform_ms_pair_simd(
+    start_ms: i64,
+    end_ms: i64,
+    ratio: f64,
+    offset_ms: i64,
+) -> (i64, i64) {
+    use core::arch::wasm32::{
+        f64x2_add, f64x2_extract_lane, f64x2_mul, f64x2_replace_lane, f64x2_splat,
+    };
+
+    let lanes = f64x2_replace_lane::<1>(
+        f64x2_replace_lane::<0>(f64x2_splat(0.0), start_ms as f64),
+        end_ms as f64,
+    );
+    let transformed = f64x2_add(
+        f64x2_mul(lanes, f64x2_splat(ratio)),
+        f64x2_splat(offset_ms as f64),
+    );
+    (
+        f64x2_extract_lane::<0>(transformed).round() as i64,
+        f64x2_extract_lane::<1>(transformed).round() as i64,
+    )
 }
 
 #[cfg(all(target_arch = "wasm32", target_feature = "simd128"))]
@@ -225,6 +341,8 @@ mod tests {
     #[test]
     fn scalar_kernels_match_expected_values() {
         assert_eq!(mean_square_i16(&[2, -2, 4, -4]), 10.0);
+        assert_eq!(mean_i16(&[10, -5, 6]), 3);
+        assert_eq!(mean_i16(&[-10, 5]), -2);
         assert_eq!(center_binary(&[0.0, 1.0, 0.5]), vec![-1.0, 1.0, 0.0]);
         assert_eq!(
             masked_argmax_offset(&[1.0, 4.0, 4.0, 3.0], 1, None),
@@ -244,6 +362,13 @@ mod tests {
                 2.0
             ),
             vec![1.0, -2.0, 0.5]
+        );
+        let mut values = vec![0.0, 1.0, 2.0];
+        fill_f64(&mut values[1..], 9.0);
+        assert_eq!(values, vec![0.0, 9.0, 9.0]);
+        assert_eq!(
+            transform_ms_pair(1_001, 2_002, 25.0 / 24.0, -250),
+            (793, 1835)
         );
     }
 }

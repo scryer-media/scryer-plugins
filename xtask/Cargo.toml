@@ -12,14 +12,18 @@ clap = { version = "4", features = ["derive"] }
 semver = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+base64 = "0.22"
 sha2 = "0.10"
 sha3 = "0.10"
 blake3 = "1"
-scryer-plugin-sdk = "2.0.0"
+scryer-plugin-sdk = "2.2.0"
 tempfile = "3"
 toml_edit = "0.22"
 extism = "1.13"
 zstd = "0.13"
+
+[patch.crates-io]
+scryer-plugin-sdk = { path = "../../scryer/crates/scryer-plugin-sdk" }
 
 [profile.xtask-release]
 inherits = "release"

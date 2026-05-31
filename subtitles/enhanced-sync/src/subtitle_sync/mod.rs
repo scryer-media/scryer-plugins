@@ -15,6 +15,6 @@ mod vad;
 #[cfg(test)]
 mod upstream_parity_tests;
 
-pub(crate) use sync::{SyncError, SyncOptions, sync_subtitle};
+pub(crate) use sync::{SyncError, SyncOptions, subtitle_reference_spans, sync_subtitle};
 pub(crate) use transformers::Span;
 pub(crate) use vad::{SpeechDetection, SpeechSpanDetector, WEBRTC_BACKEND_LABEL};
