@@ -274,6 +274,7 @@ enum OfficialCommand {
     Prepare(OfficialPrepareArgs),
     Prefetch(OfficialPrefetchArgs),
     PlanChanged(OfficialPlanChangedArgs),
+    PlanCurrent(OfficialPlanCurrentArgs),
     VerifyPrepared(OfficialVerifyPreparedArgs),
     UploadR2(OfficialUploadR2Args),
 }
@@ -302,6 +303,11 @@ struct OfficialPrepareArgs {
 
 #[derive(Args)]
 struct OfficialPrefetchArgs {
+    plugin_ids: Vec<String>,
+}
+
+#[derive(Args)]
+struct OfficialPlanCurrentArgs {
     plugin_ids: Vec<String>,
 }
 
@@ -1021,6 +1027,7 @@ fn main() -> Result<()> {
             OfficialCommand::Prepare(args) => run_official_prepare(&ctx, args),
             OfficialCommand::Prefetch(args) => run_official_prefetch(&ctx, args),
             OfficialCommand::PlanChanged(args) => run_official_plan_changed(&ctx, args),
+            OfficialCommand::PlanCurrent(args) => run_official_plan_current(&ctx, args),
             OfficialCommand::VerifyPrepared(args) => run_official_verify_prepared(&ctx, &args.dir),
             OfficialCommand::UploadR2(args) => run_official_upload_r2(&ctx, &args.dir),
         },
@@ -3921,6 +3928,32 @@ fn run_official_prefetch(ctx: &TaskContext, args: OfficialPrefetchArgs) -> Resul
     }
 
     ok("prefetched plugin release dependencies");
+    Ok(())
+}
+
+fn run_official_plan_current(ctx: &TaskContext, args: OfficialPlanCurrentArgs) -> Result<()> {
+    if args.plugin_ids.is_empty() {
+        bail!("official plan-current requires at least one plugin id");
+    }
+
+    let plugin_dirs = official_plugin_dirs_by_id(ctx)?;
+    let mut selected = BTreeSet::new();
+    for plugin_id in args.plugin_ids {
+        if !selected.insert(plugin_id.clone()) {
+            continue;
+        }
+
+        let plugin_dir = plugin_dirs
+            .get(&plugin_id)
+            .ok_or_else(|| anyhow!("plugin '{plugin_id}' not found in local official plugins"))?;
+        let cargo_toml = plugin_dir.join("Cargo.toml");
+        let metadata = plugin_manifest_metadata(&cargo_toml)?;
+        if !metadata.catalog_versions.contains(&CatalogVersion::V3) {
+            bail!("{plugin_id} does not publish catalog-v3");
+        }
+        println!("{}\t{}", plugin_id, package_version(&cargo_toml)?);
+    }
+
     Ok(())
 }
 

@@ -14,6 +14,10 @@ on:
         description: "Commit that owns the plugin version tags to publish"
         required: false
         type: string
+      plugin_ids:
+        description: "Whitespace or comma separated plugin ids to publish from current manifests"
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -114,6 +118,25 @@ jobs:
       - name: Select plugin release plan
         run: |
           set -euo pipefail
+          PLUGIN_IDS_INPUT="${{ github.event_name == 'workflow_dispatch' && inputs.plugin_ids || '' }}"
+          if [ -n "${PLUGIN_IDS_INPUT//[[:space:],]/}" ]; then
+            mapfile -t plugin_ids < <(
+              printf '%s\n' "${PLUGIN_IDS_INPUT}" \
+                | tr ',[:space:]' '\n' \
+                | awk 'NF'
+            )
+            if [ "${#plugin_ids[@]}" -eq 0 ]; then
+              echo "No plugin ids were provided" >&2
+              exit 1
+            fi
+            ./xtask/target/xtask-release/xtask official plan-current "${plugin_ids[@]}" > release-plan.tsv
+            printf 'Selected current plugin release plan\n'
+            while IFS=$'\t' read -r plugin_id version; do
+              printf ' - %s %s\n' "${plugin_id}" "${version}"
+            done < release-plan.tsv
+            exit 0
+          fi
+
           RELEASE_SHA="${{ github.event_name == 'workflow_dispatch' && inputs.release_commit || '' }}"
           if [ -z "${RELEASE_SHA}" ]; then
             RELEASE_SHA="$(git rev-parse HEAD)"
