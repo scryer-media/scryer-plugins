@@ -626,6 +626,30 @@ jobs:
               "dist/catalog-v3/${asset_name}.bundle.zst"
             )
           done < dist/catalog-v3/v3-central-assets.txt
+          keep_assets=()
+          for asset_path in "${central_release_assets[@]}"; do
+            keep_assets+=("$(basename "${asset_path}")")
+          done
+          mapfile -t existing_assets < <(
+            gh release view "catalog/v3" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --json assets \
+              --jq '.assets[].name'
+          )
+          for existing_asset in "${existing_assets[@]}"; do
+            keep_asset=false
+            for asset_name in "${keep_assets[@]}"; do
+              if [ "${existing_asset}" = "${asset_name}" ]; then
+                keep_asset=true
+                break
+              fi
+            done
+            if [ "${keep_asset}" = false ]; then
+              gh release delete-asset "catalog/v3" "${existing_asset}" \
+                --repo "${GITHUB_REPOSITORY}" \
+                --yes
+            fi
+          done
           gh release upload "catalog/v3" \
             "${central_release_assets[@]}" \
             --repo "${GITHUB_REPOSITORY}" \
