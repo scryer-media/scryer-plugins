@@ -172,6 +172,26 @@ pub(crate) fn sync_subtitle(
     })
 }
 
+pub(crate) fn subtitle_reference_spans(
+    subtitle_bytes: &[u8],
+    subtitle_format: &str,
+    encoding_hint: Option<&str>,
+    options: &SyncOptions,
+) -> Result<(Vec<Span>, Vec<String>), SyncError> {
+    let transform_options = SubtitleTransformOptions {
+        start_seconds: options.start_seconds,
+        max_subtitle_duration_ms: options.max_subtitle_duration_ms,
+    };
+    let format = SubtitleFormat::parse(subtitle_format).map_err(SyncError::Parse)?;
+    let (document, warnings) =
+        parse_document(format, subtitle_bytes, encoding_hint).map_err(SyncError::Parse)?;
+    let processed_cues = preprocess_cues(&document.cues, transform_options);
+    Ok((
+        subtitle_speech_spans(&processed_cues, transform_options),
+        warnings,
+    ))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -313,24 +333,4 @@ three
         assert_eq!(outcome.subtitle_span_count, 3);
         assert!((outcome.subtitle_max_time_seconds - 12.0).abs() < 0.001);
     }
-}
-
-pub(crate) fn subtitle_reference_spans(
-    subtitle_bytes: &[u8],
-    subtitle_format: &str,
-    encoding_hint: Option<&str>,
-    options: &SyncOptions,
-) -> Result<(Vec<Span>, Vec<String>), SyncError> {
-    let transform_options = SubtitleTransformOptions {
-        start_seconds: options.start_seconds,
-        max_subtitle_duration_ms: options.max_subtitle_duration_ms,
-    };
-    let format = SubtitleFormat::parse(subtitle_format).map_err(SyncError::Parse)?;
-    let (document, warnings) =
-        parse_document(format, subtitle_bytes, encoding_hint).map_err(SyncError::Parse)?;
-    let processed_cues = preprocess_cues(&document.cues, transform_options);
-    Ok((
-        subtitle_speech_spans(&processed_cues, transform_options),
-        warnings,
-    ))
 }

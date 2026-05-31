@@ -339,7 +339,7 @@ fn parse_ass_cues(content: &str) -> Vec<SubtitleCue> {
             continue;
         }
         if line_starts_with_ignore_ascii_case(trimmed, "Format:") {
-            event_format = parse_ass_event_format(trimmed).unwrap_or_else(AssEventFormat::default);
+            event_format = parse_ass_event_format(trimmed).unwrap_or_default();
             continue;
         }
         if !is_ass_timed_event_line(trimmed) {
@@ -370,9 +370,7 @@ fn parse_ass_cues(content: &str) -> Vec<SubtitleCue> {
 
 fn rewrite_srt_content(content: &str, ratio: f64, offset_ms: i64) -> String {
     rewrite_lines_preserving_endings(content, |line| {
-        let Some((start_raw, rest)) = line.split_once("-->") else {
-            return None;
-        };
+        let (start_raw, rest) = line.split_once("-->")?;
         let start = parse_srt_ts(start_raw.trim())?;
         let (end_raw, suffix) = split_timestamp_token(rest.trim_start())?;
         let end = parse_srt_ts(end_raw)?;
@@ -390,9 +388,7 @@ fn rewrite_srt_content(content: &str, ratio: f64, offset_ms: i64) -> String {
 
 fn rewrite_vtt_content(content: &str, ratio: f64, offset_ms: i64) -> String {
     rewrite_lines_preserving_endings(content, |line| {
-        let Some((start_raw, rest)) = line.split_once("-->") else {
-            return None;
-        };
+        let (start_raw, rest) = line.split_once("-->")?;
         let start = parse_vtt_ts(start_raw.trim())?;
         let (end_raw, suffix) = split_timestamp_token(rest.trim_start())?;
         let end = parse_vtt_ts(end_raw)?;
@@ -421,7 +417,7 @@ fn rewrite_ass_content(content: &str, ratio: f64, offset_ms: i64) -> String {
             return None;
         }
         if line_starts_with_ignore_ascii_case(trimmed, "Format:") {
-            event_format = parse_ass_event_format(trimmed).unwrap_or_else(AssEventFormat::default);
+            event_format = parse_ass_event_format(trimmed).unwrap_or_default();
             return None;
         }
         if is_ass_timed_event_line(trimmed) {

@@ -41,6 +41,7 @@ type PcmCallback = unsafe extern "C" fn(
     sample_rate_hz: u32,
     channels: u16,
 ) -> c_int;
+type PcmChunkCallback<'a> = dyn FnMut(&[i16], u32, u16) -> Result<(), String> + 'a;
 
 unsafe extern "C" {
     fn scryer_ffmpeg_decode_window(
@@ -210,7 +211,7 @@ where
         message: [0; 256],
         warnings: [0; 512],
     };
-    let callback: &mut dyn FnMut(&[i16], u32, u16) -> Result<(), String> = &mut on_pcm;
+    let callback: &mut PcmChunkCallback<'_> = &mut on_pcm;
     let mut callback_state = PcmCallbackState {
         callback,
         error: None,
@@ -262,7 +263,7 @@ where
 }
 
 struct PcmCallbackState<'a> {
-    callback: &'a mut dyn FnMut(&[i16], u32, u16) -> Result<(), String>,
+    callback: &'a mut PcmChunkCallback<'a>,
     error: Option<String>,
 }
 

@@ -38,9 +38,6 @@ zstd = "0.13"
 [dev-dependencies]
 tempfile = "3"
 
-[patch.crates-io]
-scryer-plugin-sdk = { path = "../../../scryer/crates/scryer-plugin-sdk" }
-
 [profile.plugin-release]
 inherits = "release"
 opt-level = 3

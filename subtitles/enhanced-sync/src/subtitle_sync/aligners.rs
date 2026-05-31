@@ -46,15 +46,15 @@ pub(crate) fn best_candidate(
 
     let mut candidates = Vec::new();
     for ratio in dedupe_ratios(ratios) {
-        if (MIN_FRAMERATE_RATIO..=MAX_FRAMERATE_RATIO).contains(&ratio) {
-            if let Some(candidate) = score_candidate(
+        if (MIN_FRAMERATE_RATIO..=MAX_FRAMERATE_RATIO).contains(&ratio)
+            && let Some(candidate) = score_candidate(
                 reference_timeline,
                 subtitle_spans,
                 max_offset_samples,
                 ratio,
-            ) {
-                candidates.push(candidate);
-            }
+            )
+        {
+            candidates.push(candidate);
         }
     }
 
@@ -300,15 +300,14 @@ mod tests {
                 fft_align(&reference, &substring, None).offset_samples,
                 expected_offset
             );
-            assert_eq!(
+            assert!(
                 best_candidate(
                     &reference,
                     &[Span::new(0, substring.len() as i64 * 10).unwrap()],
                     60,
                     false
                 )
-                .is_some(),
-                true
+                .is_some()
             );
         }
     }

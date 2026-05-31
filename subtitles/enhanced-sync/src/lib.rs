@@ -208,7 +208,7 @@ fn align_impl(request: &SubtitleSyncAlignRequest) -> SubtitleSyncAlignResponse {
                 Err(failure) => Some(failure),
             }
         }
-        Err(message) => Some(AlignmentFailure {
+        Err(message) => Some(Box::new(AlignmentFailure {
             skipped_reason: SubtitleSyncAlignSkipReason::AudioDecodeFailed,
             backend: request_backend_label(request).to_string(),
             warnings: Vec::new(),
@@ -216,7 +216,7 @@ fn align_impl(request: &SubtitleSyncAlignRequest) -> SubtitleSyncAlignResponse {
                 message: Some(message),
                 ..Default::default()
             },
-        }),
+        })),
     };
 
     let Some(reference_subtitle) = request.reference_subtitle.as_ref() else {
@@ -256,6 +256,8 @@ struct AlignmentFailure {
     details: SkippedAlignmentDetails,
 }
 
+type AlignmentResult = Result<SubtitleSyncAlignResponse, Box<AlignmentFailure>>;
+
 impl AlignmentFailure {
     fn into_response(self) -> SubtitleSyncAlignResponse {
         skipped_align_response(
@@ -274,22 +276,22 @@ fn align_with_reference_spans(
     subtitle_content: &[u8],
     request: &SubtitleSyncAlignRequest,
     sync_options: &subtitle_sync::SyncOptions,
-) -> Result<SubtitleSyncAlignResponse, AlignmentFailure> {
+) -> AlignmentResult {
     let sync = match subtitle_sync::sync_subtitle(
         &reference_spans,
-        &subtitle_content,
+        subtitle_content,
         &request.subtitle.format,
         request.subtitle.encoding_hint.as_deref(),
         sync_options,
     ) {
         Ok(sync) => sync,
         Err(error) => {
-            return Err(AlignmentFailure {
+            return Err(Box::new(AlignmentFailure {
                 skipped_reason: skipped_reason_for_sync_error(&error),
                 backend,
                 warnings,
                 details: skipped_details_for_sync_error(&error),
-            });
+            }));
         }
     };
     warnings.extend(sync.warnings);
@@ -325,19 +327,21 @@ fn align_with_reference_subtitle(
     subtitle_content: &[u8],
     request: &SubtitleSyncAlignRequest,
     sync_options: &subtitle_sync::SyncOptions,
-) -> Result<SubtitleSyncAlignResponse, AlignmentFailure> {
+) -> AlignmentResult {
     let content = BASE64
         .decode(&reference_subtitle.content_base64)
-        .map_err(|error| AlignmentFailure {
-            skipped_reason: SubtitleSyncAlignSkipReason::WeakAlignment,
-            backend: REFERENCE_SUBTITLE_BACKEND.to_string(),
-            warnings: warnings.clone(),
-            details: SkippedAlignmentDetails {
-                message: Some(format!(
-                    "invalid reference_subtitle content_base64: {error}"
-                )),
-                ..Default::default()
-            },
+        .map_err(|error| {
+            Box::new(AlignmentFailure {
+                skipped_reason: SubtitleSyncAlignSkipReason::WeakAlignment,
+                backend: REFERENCE_SUBTITLE_BACKEND.to_string(),
+                warnings: warnings.clone(),
+                details: SkippedAlignmentDetails {
+                    message: Some(format!(
+                        "invalid reference_subtitle content_base64: {error}"
+                    )),
+                    ..Default::default()
+                },
+            })
         })?;
     let (reference_spans, reference_warnings) = subtitle_sync::subtitle_reference_spans(
         &content,
@@ -345,11 +349,13 @@ fn align_with_reference_subtitle(
         reference_subtitle.encoding_hint.as_deref(),
         sync_options,
     )
-    .map_err(|error| AlignmentFailure {
-        skipped_reason: skipped_reason_for_sync_error(&error),
-        backend: REFERENCE_SUBTITLE_BACKEND.to_string(),
-        warnings: warnings.clone(),
-        details: skipped_details_for_sync_error(&error),
+    .map_err(|error| {
+        Box::new(AlignmentFailure {
+            skipped_reason: skipped_reason_for_sync_error(&error),
+            backend: REFERENCE_SUBTITLE_BACKEND.to_string(),
+            warnings: warnings.clone(),
+            details: skipped_details_for_sync_error(&error),
+        })
     })?;
     warnings.extend(reference_warnings);
     align_with_reference_spans(
@@ -1343,11 +1349,7 @@ mod tests {
 
     fn parse_arrow_timing_line(line: &str) -> Option<ParsedCue> {
         let (start, rest) = line.split_once("-->")?;
-        let end = rest
-            .trim_start()
-            .split_whitespace()
-            .next()
-            .unwrap_or_default();
+        let end = rest.split_whitespace().next().unwrap_or_default();
         Some(ParsedCue {
             start_ms: parse_fixture_ts(start.trim())?,
             end_ms: parse_fixture_ts(end)?,
