@@ -6,6 +6,23 @@ use std::process::{Command, Stdio};
 const FFMPEG_VENDOR_ARCHIVE_FILE: &str = "source.tar.zst";
 const FFMPEG_VENDOR_METADATA_FILE: &str = "SCRYER_VENDOR_METADATA";
 const FFMPEG_BUILD_CONFIG_VERSION: &str = "targeted-flac-transcode-v4";
+const LIBFVAD_VENDOR_ARCHIVE_FILE: &str = "source.tar.zst";
+const LIBFVAD_VENDOR_METADATA_FILE: &str = "SCRYER_VENDOR_METADATA";
+const LIBFVAD_BUILD_CONFIG_VERSION: &str = "webrtc-vad-v1";
+const LIBFVAD_C_SOURCES: &[&str] = &[
+    "src/fvad.c",
+    "src/signal_processing/division_operations.c",
+    "src/signal_processing/energy.c",
+    "src/signal_processing/get_scaling_square.c",
+    "src/signal_processing/resample_48khz.c",
+    "src/signal_processing/resample_by_2_internal.c",
+    "src/signal_processing/resample_fractional.c",
+    "src/signal_processing/spl_inl.c",
+    "src/vad/vad_core.c",
+    "src/vad/vad_filterbank.c",
+    "src/vad/vad_gmm.c",
+    "src/vad/vad_sp.c",
+];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum WasmRequiredFeature {
@@ -98,14 +115,20 @@ fn main() {
     let source_archive = vendor_dir.join(FFMPEG_VENDOR_ARCHIVE_FILE);
     let source_dir = out_dir.join("ffmpeg-source");
     let build_dir = out_dir.join("ffmpeg-build");
+    let libfvad_vendor_dir = manifest_dir.join("vendor/libfvad");
+    let libfvad_source_archive = libfvad_vendor_dir.join(LIBFVAD_VENDOR_ARCHIVE_FILE);
+    let libfvad_source_dir = out_dir.join("libfvad-source");
+    let libfvad_build_dir = out_dir.join("libfvad-build");
     let target = env::var("TARGET").unwrap();
     let is_wasi = target == "wasm32-wasip1";
     let feature_set = WasmFeatureSet::from_env();
     let vendor_metadata = read_ffmpeg_vendor_metadata(&vendor_dir);
+    let libfvad_vendor_metadata = read_libfvad_vendor_metadata(&libfvad_vendor_dir);
 
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=src/ffmpeg_bridge.c");
     println!("cargo:rerun-if-changed=vendor/ffmpeg");
+    println!("cargo:rerun-if-changed=vendor/libfvad");
     println!("cargo:rerun-if-env-changed=FFMPEG_WASI_SYSROOT");
     println!("cargo:rerun-if-env-changed=WASI_SYSROOT");
     println!("cargo:rerun-if-env-changed=CLANG");
@@ -122,6 +145,14 @@ fn main() {
         is_wasi,
         &feature_set,
         &vendor_metadata.revision,
+    );
+    build_libfvad(
+        &libfvad_source_archive,
+        &libfvad_source_dir,
+        &libfvad_build_dir,
+        is_wasi,
+        &feature_set,
+        &libfvad_vendor_metadata.revision,
     );
     build_bridge(
         &manifest_dir,
@@ -301,10 +332,85 @@ fn build_ffmpeg(
     fs::write(config_stamp, build_stamp).unwrap();
 }
 
+fn build_libfvad(
+    source_archive: &Path,
+    source_dir: &Path,
+    build_dir: &Path,
+    is_wasi: bool,
+    feature_set: &WasmFeatureSet,
+    revision: &str,
+) {
+    let config_stamp = build_dir.join(".scryer-libfvad-config");
+    let build_stamp = format!(
+        "{LIBFVAD_BUILD_CONFIG_VERSION}\nrevision={revision}\nfeatures={}\n",
+        feature_set.build_stamp_fragment()
+    );
+    let stamp_matches = fs::read_to_string(&config_stamp).is_ok_and(|stamp| stamp == build_stamp);
+    if !source_dir.join("include/fvad.h").exists() || !stamp_matches {
+        if build_dir.exists() {
+            fs::remove_dir_all(build_dir).unwrap();
+        }
+        if source_dir.exists() {
+            fs::remove_dir_all(source_dir).unwrap();
+        }
+        fs::create_dir_all(build_dir).unwrap();
+        fs::create_dir_all(source_dir).unwrap();
+        extract_libfvad_source_archive(source_archive, source_dir);
+        fs::write(&config_stamp, &build_stamp).unwrap();
+    }
+
+    let mut build = cc::Build::new();
+    for relative in LIBFVAD_C_SOURCES {
+        build.file(source_dir.join(relative));
+    }
+    build
+        .include(source_dir.join("include"))
+        .include(source_dir.join("src"))
+        .out_dir(build_dir)
+        .warnings(false)
+        .flag_if_supported("-std=c11")
+        .flag_if_supported("-fvisibility=hidden");
+
+    if is_wasi {
+        let sysroot = wasi_sysroot();
+        build
+            .compiler(clang_path())
+            .flag("--target=wasm32-wasip1")
+            .flag(format!("--sysroot={}", sysroot.display()))
+            .flag(feature_set.c_opt_level_flag())
+            .flag("-D_GNU_SOURCE");
+        for flag in feature_set.clang_target_feature_flags() {
+            build.flag(flag);
+        }
+    }
+
+    build.compile("scryer_webrtc_vad");
+}
+
 fn extract_ffmpeg_source_archive(source_archive: &Path, source_dir: &Path) {
     let archive = fs::File::open(source_archive).unwrap_or_else(|error| {
         panic!(
             "failed to open {}: {error}. Run `cargo xtask ffmpeg revendor --commit <ffmpeg-commit>` to refresh the vendored FFmpeg archive.",
+            source_archive.display()
+        )
+    });
+    let decoder = zstd::stream::Decoder::new(archive).unwrap_or_else(|error| {
+        panic!("failed to decompress {}: {error}", source_archive.display())
+    });
+    let mut archive = tar::Archive::new(decoder);
+    archive.unpack(source_dir).unwrap_or_else(|error| {
+        panic!(
+            "failed to unpack {} into {}: {error}",
+            source_archive.display(),
+            source_dir.display()
+        )
+    });
+}
+
+fn extract_libfvad_source_archive(source_archive: &Path, source_dir: &Path) {
+    let archive = fs::File::open(source_archive).unwrap_or_else(|error| {
+        panic!(
+            "failed to open {}: {error}. Run `cargo xtask vad revendor --commit <libfvad-commit>` to refresh the vendored libfvad archive.",
             source_archive.display()
         )
     });
@@ -418,6 +524,10 @@ struct FfmpegVendorMetadata {
     revision: String,
 }
 
+struct LibfvadVendorMetadata {
+    revision: String,
+}
+
 fn read_ffmpeg_vendor_metadata(source_dir: &Path) -> FfmpegVendorMetadata {
     let path = source_dir.join(FFMPEG_VENDOR_METADATA_FILE);
     let contents = fs::read_to_string(&path).unwrap_or_else(|error| {
@@ -452,6 +562,42 @@ fn read_ffmpeg_vendor_metadata(source_dir: &Path) -> FfmpegVendorMetadata {
         .unwrap_or_else(|| panic!("missing `revision=` or `commit=` in {}", path.display()));
 
     FfmpegVendorMetadata { revision }
+}
+
+fn read_libfvad_vendor_metadata(source_dir: &Path) -> LibfvadVendorMetadata {
+    let path = source_dir.join(LIBFVAD_VENDOR_METADATA_FILE);
+    let contents = fs::read_to_string(&path).unwrap_or_else(|error| {
+        panic!(
+            "failed to read {}: {error}. Run `cargo xtask vad revendor --commit <libfvad-commit>` to refresh the vendored libfvad metadata.",
+            path.display()
+        )
+    });
+    let mut revision = None;
+    let mut commit = None;
+    for line in contents.lines().map(str::trim) {
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let (key, value) = line.split_once('=').unwrap_or_else(|| {
+            panic!(
+                "invalid libfvad vendor metadata line `{line}` in {}",
+                path.display()
+            )
+        });
+        let value = value.trim();
+        match key.trim() {
+            "revision" => revision = Some(value.to_string()),
+            "commit" => commit = Some(value.to_string()),
+            _ => {}
+        }
+    }
+
+    let revision = revision
+        .or_else(|| commit.map(|commit| format!("git-{commit}")))
+        .filter(|revision| !revision.is_empty())
+        .unwrap_or_else(|| panic!("missing `revision=` or `commit=` in {}", path.display()));
+
+    LibfvadVendorMetadata { revision }
 }
 
 fn run(command: &mut Command, label: &str) {

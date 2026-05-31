@@ -1,15 +1,12 @@
 #include "libavcodec/avcodec.h"
 #include "libavcodec/defs.h"
 #include "libavformat/avformat.h"
-#include "libavutil/audio_fifo.h"
 #include "libavutil/avstring.h"
 #include "libavutil/channel_layout.h"
 #include "libavutil/error.h"
 #include "libavutil/frame.h"
 #include "libavutil/log.h"
 #include "libavutil/mem.h"
-#include "libavutil/opt.h"
-#include "libavutil/timestamp.h"
 #include "libavutil/samplefmt.h"
 #include "libswresample/swresample.h"
 
@@ -25,11 +22,11 @@ enum {
 };
 
 enum {
-    SCRYER_TRANSCODE_CODEC_AC3 = 0,
-    SCRYER_TRANSCODE_CODEC_EAC3 = 1,
-    SCRYER_TRANSCODE_CODEC_DTS = 2,
-    SCRYER_TRANSCODE_CODEC_DTS_HD_MA_CORE = 3,
-    SCRYER_TRANSCODE_CODEC_TRUEHD = 4,
+    SCRYER_SYNC_CODEC_AC3 = 0,
+    SCRYER_SYNC_CODEC_EAC3 = 1,
+    SCRYER_SYNC_CODEC_DTS = 2,
+    SCRYER_SYNC_CODEC_DTS_HD_MA_CORE = 3,
+    SCRYER_SYNC_CODEC_TRUEHD = 4,
 };
 
 enum {
@@ -48,13 +45,18 @@ typedef struct ScryerFfmpegDecodeResult {
     char message[256];
 } ScryerFfmpegDecodeResult;
 
-typedef struct ScryerFfmpegTranscodeResult {
+typedef int32_t (*ScryerFfmpegPcmCallback)(void *userdata, const int16_t *samples,
+                                           uintptr_t sample_count,
+                                           uint32_t sample_rate_hz,
+                                           uint16_t channels);
+
+typedef struct ScryerFfmpegSyncDecodeResult {
     int32_t status_code;
     uint32_t stream_index;
     uint32_t codec;
     uint32_t sample_rate_hz;
     uint16_t channels;
-    uint64_t samples_written;
+    uint64_t samples_decoded;
     int64_t duration_ms;
     int64_t timeline_start_ms;
     int32_t used_core_fallback;
@@ -63,7 +65,7 @@ typedef struct ScryerFfmpegTranscodeResult {
     char language[32];
     char message[256];
     char warnings[512];
-} ScryerFfmpegTranscodeResult;
+} ScryerFfmpegSyncDecodeResult;
 
 static enum AVCodecID codec_id_for_scryer(uint32_t codec)
 {
@@ -306,19 +308,19 @@ void scryer_ffmpeg_free(void *ptr)
     av_free(ptr);
 }
 
-static void set_transcode_message(ScryerFfmpegTranscodeResult *out, const char *message)
+static void set_sync_decode_message(ScryerFfmpegSyncDecodeResult *out, const char *message)
 {
     snprintf(out->message, sizeof(out->message), "%s", message);
 }
 
-static int set_transcode_error(ScryerFfmpegTranscodeResult *out, const char *message)
+static int set_sync_decode_error(ScryerFfmpegSyncDecodeResult *out, const char *message)
 {
     out->status_code = SCRYER_FFMPEG_ERROR;
-    set_transcode_message(out, message);
+    set_sync_decode_message(out, message);
     return SCRYER_FFMPEG_ERROR;
 }
 
-static int set_transcode_av_error(ScryerFfmpegTranscodeResult *out, const char *prefix, int error)
+static int set_sync_decode_av_error(ScryerFfmpegSyncDecodeResult *out, const char *prefix, int error)
 {
     char detail[128] = {0};
     av_strerror(error, detail, sizeof(detail));
@@ -327,35 +329,35 @@ static int set_transcode_av_error(ScryerFfmpegTranscodeResult *out, const char *
     return SCRYER_FFMPEG_ERROR;
 }
 
-static enum AVCodecID codec_id_for_transcode(uint32_t codec)
+static enum AVCodecID codec_id_for_sync_decode(uint32_t codec)
 {
     switch (codec) {
-    case SCRYER_TRANSCODE_CODEC_AC3:
+    case SCRYER_SYNC_CODEC_AC3:
         return AV_CODEC_ID_AC3;
-    case SCRYER_TRANSCODE_CODEC_EAC3:
+    case SCRYER_SYNC_CODEC_EAC3:
         return AV_CODEC_ID_EAC3;
-    case SCRYER_TRANSCODE_CODEC_DTS:
-    case SCRYER_TRANSCODE_CODEC_DTS_HD_MA_CORE:
+    case SCRYER_SYNC_CODEC_DTS:
+    case SCRYER_SYNC_CODEC_DTS_HD_MA_CORE:
         return AV_CODEC_ID_DTS;
-    case SCRYER_TRANSCODE_CODEC_TRUEHD:
+    case SCRYER_SYNC_CODEC_TRUEHD:
         return AV_CODEC_ID_TRUEHD;
     default:
         return AV_CODEC_ID_NONE;
     }
 }
 
-static uint32_t transcode_codec_for_av(enum AVCodecID codec_id, int dts_core)
+static uint32_t sync_decode_codec_for_av(enum AVCodecID codec_id, int dts_core)
 {
     switch (codec_id) {
     case AV_CODEC_ID_AC3:
-        return SCRYER_TRANSCODE_CODEC_AC3;
+        return SCRYER_SYNC_CODEC_AC3;
     case AV_CODEC_ID_EAC3:
-        return SCRYER_TRANSCODE_CODEC_EAC3;
+        return SCRYER_SYNC_CODEC_EAC3;
     case AV_CODEC_ID_DTS:
-        return dts_core ? SCRYER_TRANSCODE_CODEC_DTS_HD_MA_CORE : SCRYER_TRANSCODE_CODEC_DTS;
+        return dts_core ? SCRYER_SYNC_CODEC_DTS_HD_MA_CORE : SCRYER_SYNC_CODEC_DTS;
     case AV_CODEC_ID_TRUEHD:
     case AV_CODEC_ID_MLP:
-        return SCRYER_TRANSCODE_CODEC_TRUEHD;
+        return SCRYER_SYNC_CODEC_TRUEHD;
     default:
         return UINT32_MAX;
     }
@@ -383,9 +385,9 @@ static int stream_matches_language(const AVStream *stream, const char *language)
 
 static int select_audio_stream(AVFormatContext *format, int requested_stream_index,
                                const char *language, uint32_t expected_codec,
-                               ScryerFfmpegTranscodeResult *out)
+                               ScryerFfmpegSyncDecodeResult *out)
 {
-    const enum AVCodecID expected = codec_id_for_transcode(expected_codec);
+    const enum AVCodecID expected = codec_id_for_sync_decode(expected_codec);
     if (requested_stream_index >= 0) {
         if ((unsigned)requested_stream_index >= format->nb_streams) {
             return -1;
@@ -397,7 +399,7 @@ static int select_audio_stream(AVFormatContext *format, int requested_stream_ind
         if (!codec_is_targeted(stream->codecpar->codec_id) ||
             (expected != AV_CODEC_ID_NONE && stream->codecpar->codec_id != expected)) {
             out->status_code = SCRYER_FFMPEG_UNSUPPORTED;
-            set_transcode_message(out, "requested audio stream codec is not handled by this transcoder");
+            set_sync_decode_message(out, "requested audio stream codec is not handled by this sync decoder");
             return -2;
         }
         return requested_stream_index;
@@ -438,213 +440,106 @@ static int select_audio_stream(AVFormatContext *format, int requested_stream_ind
     }
 
     out->status_code = SCRYER_FFMPEG_UNSUPPORTED;
-    set_transcode_message(out, "no targeted audio stream found");
+    set_sync_decode_message(out, "no targeted audio stream found");
     return -2;
 }
 
-static enum AVSampleFormat select_encoder_sample_fmt(const AVCodec *encoder)
+static int emit_pcm_samples(ScryerFfmpegPcmCallback callback, void *userdata,
+                            const int16_t *samples, uintptr_t sample_count,
+                            uint64_t max_output_samples,
+                            ScryerFfmpegSyncDecodeResult *out)
 {
-    if (!encoder->sample_fmts) {
-        return AV_SAMPLE_FMT_S16;
-    }
-    for (const enum AVSampleFormat *fmt = encoder->sample_fmts; *fmt != AV_SAMPLE_FMT_NONE; fmt++) {
-        if (*fmt == AV_SAMPLE_FMT_S16) {
-            return AV_SAMPLE_FMT_S16;
-        }
-    }
-    return encoder->sample_fmts[0];
-}
-
-static int encode_and_write(AVFormatContext *ofmt, AVCodecContext *encoder,
-                            AVFrame *frame, ScryerFfmpegTranscodeResult *out)
-{
-    int ret = avcodec_send_frame(encoder, frame);
-    if (ret < 0) {
-        return set_transcode_av_error(out, "failed to send FLAC encoder frame", ret);
-    }
-
-    AVPacket *packet = av_packet_alloc();
-    if (!packet) {
-        return set_transcode_error(out, "failed to allocate FLAC packet");
-    }
-    for (;;) {
-        ret = avcodec_receive_packet(encoder, packet);
-        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-            av_packet_free(&packet);
-            return SCRYER_FFMPEG_DECODED;
-        }
-        if (ret < 0) {
-            av_packet_free(&packet);
-            return set_transcode_av_error(out, "failed to receive FLAC packet", ret);
-        }
-        av_packet_rescale_ts(packet, encoder->time_base, ofmt->streams[0]->time_base);
-        packet->stream_index = 0;
-        ret = av_interleaved_write_frame(ofmt, packet);
-        av_packet_unref(packet);
-        if (ret < 0) {
-            av_packet_free(&packet);
-            return set_transcode_av_error(out, "failed to write FLAC packet", ret);
-        }
-    }
-}
-
-static int encode_fifo_frame(AVFormatContext *ofmt, AVCodecContext *encoder,
-                             AVAudioFifo *fifo, int nb_samples,
-                             ScryerFfmpegTranscodeResult *out)
-{
-    AVFrame *frame = av_frame_alloc();
-    if (!frame) {
-        return set_transcode_error(out, "failed to allocate FLAC encoder frame");
-    }
-    frame->nb_samples = nb_samples;
-    frame->format = encoder->sample_fmt;
-    frame->sample_rate = encoder->sample_rate;
-    frame->pts = (int64_t)out->samples_written;
-    if (av_channel_layout_copy(&frame->ch_layout, &encoder->ch_layout) < 0) {
-        av_frame_free(&frame);
-        return set_transcode_error(out, "failed to set FLAC frame channel layout");
-    }
-    int ret = av_frame_get_buffer(frame, 0);
-    if (ret < 0) {
-        av_frame_free(&frame);
-        return set_transcode_av_error(out, "failed to allocate FLAC frame buffer", ret);
-    }
-    ret = av_audio_fifo_read(fifo, (void **)frame->extended_data, nb_samples);
-    if (ret < nb_samples) {
-        av_frame_free(&frame);
-        if (ret < 0) {
-            return set_transcode_av_error(out, "failed to read audio FIFO", ret);
-        }
-        return set_transcode_error(out, "audio FIFO returned fewer samples than requested");
-    }
-
-    ret = encode_and_write(ofmt, encoder, frame, out);
-    av_frame_free(&frame);
-    if (ret != SCRYER_FFMPEG_DECODED) {
-        return ret;
-    }
-    out->samples_written += (uint64_t)nb_samples;
-    return SCRYER_FFMPEG_DECODED;
-}
-
-static int drain_audio_fifo(AVFormatContext *ofmt, AVCodecContext *encoder,
-                            AVAudioFifo *fifo, int flush,
-                            ScryerFfmpegTranscodeResult *out)
-{
-    const int frame_size = encoder->frame_size > 0 ? encoder->frame_size : 4096;
-    while (av_audio_fifo_size(fifo) >= frame_size ||
-           (flush && av_audio_fifo_size(fifo) > 0)) {
-        int nb_samples = frame_size;
-        if (flush && av_audio_fifo_size(fifo) < frame_size) {
-            nb_samples = av_audio_fifo_size(fifo);
-        }
-        int ret = encode_fifo_frame(ofmt, encoder, fifo, nb_samples, out);
-        if (ret != SCRYER_FFMPEG_DECODED) {
-            return ret;
-        }
-    }
-    return SCRYER_FFMPEG_DECODED;
-}
-
-static int queue_output_frame(AVFormatContext *ofmt, AVCodecContext *encoder,
-                              AVAudioFifo *fifo, AVFrame *frame,
-                              ScryerFfmpegTranscodeResult *out)
-{
-    if (frame->nb_samples <= 0) {
+    if (sample_count == 0) {
         return SCRYER_FFMPEG_DECODED;
     }
-    int ret = av_audio_fifo_realloc(fifo, av_audio_fifo_size(fifo) + frame->nb_samples);
-    if (ret < 0) {
-        return set_transcode_av_error(out, "failed to grow audio FIFO", ret);
+    if (!callback) {
+        return set_sync_decode_error(out, "sync PCM consumer callback was null");
     }
-    ret = av_audio_fifo_write(fifo, (void **)frame->extended_data, frame->nb_samples);
-    if (ret < frame->nb_samples) {
-        if (ret < 0) {
-            return set_transcode_av_error(out, "failed to write audio FIFO", ret);
+    if (max_output_samples > 0 && out->samples_decoded >= max_output_samples) {
+        return SCRYER_FFMPEG_DECODED;
+    }
+
+    uintptr_t emit_count = sample_count;
+    if (max_output_samples > 0) {
+        const uint64_t remaining = max_output_samples - out->samples_decoded;
+        if (remaining < (uint64_t)emit_count) {
+            emit_count = (uintptr_t)remaining;
         }
-        return set_transcode_error(out, "audio FIFO accepted fewer samples than requested");
     }
-    return drain_audio_fifo(ofmt, encoder, fifo, 0, out);
+    if (emit_count == 0) {
+        return SCRYER_FFMPEG_DECODED;
+    }
+
+    if (callback(userdata, samples, emit_count, out->sample_rate_hz, out->channels) != 0) {
+        return set_sync_decode_error(out, "sync PCM consumer callback failed");
+    }
+    out->samples_decoded += (uint64_t)emit_count;
+    return SCRYER_FFMPEG_DECODED;
 }
 
-static int write_silence(AVFormatContext *ofmt, AVCodecContext *encoder,
-                         AVAudioFifo *fifo, int64_t samples,
-                         ScryerFfmpegTranscodeResult *out)
+static int emit_silence(ScryerFfmpegPcmCallback callback, void *userdata,
+                        int64_t samples, uint64_t max_output_samples,
+                        ScryerFfmpegSyncDecodeResult *out)
 {
+    int16_t silence[4096] = {0};
     while (samples > 0) {
-        const int chunk = samples > 4096 ? 4096 : (int)samples;
-        AVFrame *frame = av_frame_alloc();
-        if (!frame) {
-            return set_transcode_error(out, "failed to allocate silence frame");
-        }
-        frame->nb_samples = chunk;
-        frame->format = encoder->sample_fmt;
-        frame->sample_rate = encoder->sample_rate;
-        frame->pts = (int64_t)out->samples_written;
-        if (av_channel_layout_copy(&frame->ch_layout, &encoder->ch_layout) < 0) {
-            av_frame_free(&frame);
-            return set_transcode_error(out, "failed to set silence channel layout");
-        }
-        int ret = av_frame_get_buffer(frame, 0);
-        if (ret < 0) {
-            av_frame_free(&frame);
-            return set_transcode_av_error(out, "failed to allocate silence buffer", ret);
-        }
-        ret = av_samples_set_silence(frame->extended_data, 0, chunk, 1, encoder->sample_fmt);
-        if (ret < 0) {
-            av_frame_free(&frame);
-            return set_transcode_av_error(out, "failed to initialize silence buffer", ret);
-        }
-        ret = queue_output_frame(ofmt, encoder, fifo, frame, out);
-        av_frame_free(&frame);
+        const uintptr_t chunk = samples > 4096 ? 4096 : (uintptr_t)samples;
+        int ret = emit_pcm_samples(callback, userdata, silence, chunk, max_output_samples, out);
         if (ret != SCRYER_FFMPEG_DECODED) {
             return ret;
         }
-        samples -= chunk;
+        if (max_output_samples > 0 && out->samples_decoded >= max_output_samples) {
+            return SCRYER_FFMPEG_DECODED;
+        }
+        samples -= (int64_t)chunk;
     }
     return SCRYER_FFMPEG_DECODED;
 }
 
-static int convert_and_write_frame(AVFormatContext *ofmt, AVCodecContext *encoder,
-                                   SwrContext *swr, AVAudioFifo *fifo,
-                                   AVFrame *input, ScryerFfmpegTranscodeResult *out)
+static int convert_and_emit_frame(SwrContext *swr, const AVChannelLayout *output_layout,
+                                  AVFrame *input, ScryerFfmpegPcmCallback callback,
+                                  void *userdata, uint64_t max_output_samples,
+                                  ScryerFfmpegSyncDecodeResult *out)
 {
     const int64_t delay = swr_get_delay(swr, input->sample_rate);
     const int dst_samples = (int)av_rescale_rnd(delay + input->nb_samples,
-                                                encoder->sample_rate,
+                                                out->sample_rate_hz,
                                                 input->sample_rate,
                                                 AV_ROUND_UP);
     AVFrame *frame = av_frame_alloc();
     if (!frame) {
-        return set_transcode_error(out, "failed to allocate resampled frame");
+        return set_sync_decode_error(out, "failed to allocate resampled frame");
     }
     frame->nb_samples = dst_samples;
-    frame->format = encoder->sample_fmt;
-    frame->sample_rate = encoder->sample_rate;
-    if (av_channel_layout_copy(&frame->ch_layout, &encoder->ch_layout) < 0) {
+    frame->format = AV_SAMPLE_FMT_S16;
+    frame->sample_rate = (int)out->sample_rate_hz;
+    if (av_channel_layout_copy(&frame->ch_layout, output_layout) < 0) {
         av_frame_free(&frame);
-        return set_transcode_error(out, "failed to set output channel layout");
+        return set_sync_decode_error(out, "failed to set resampled channel layout");
     }
     int ret = av_frame_get_buffer(frame, 0);
     if (ret < 0) {
         av_frame_free(&frame);
-        return set_transcode_av_error(out, "failed to allocate resampled buffer", ret);
+        return set_sync_decode_av_error(out, "failed to allocate resampled buffer", ret);
     }
     ret = swr_convert(swr, frame->extended_data, dst_samples,
                       (const uint8_t **)input->extended_data, input->nb_samples);
     if (ret < 0) {
         av_frame_free(&frame);
-        return set_transcode_av_error(out, "failed to resample decoded audio", ret);
+        return set_sync_decode_av_error(out, "failed to resample decoded audio", ret);
     }
     frame->nb_samples = ret;
-    ret = queue_output_frame(ofmt, encoder, fifo, frame, out);
+    ret = emit_pcm_samples(callback, userdata, (const int16_t *)frame->extended_data[0],
+                           (uintptr_t)ret, max_output_samples, out);
     av_frame_free(&frame);
     return ret;
 }
 
-static int flush_resampler(AVFormatContext *ofmt, AVCodecContext *encoder,
-                           AVCodecContext *decoder, SwrContext *swr,
-                           AVAudioFifo *fifo, ScryerFfmpegTranscodeResult *out)
+static int flush_resampler(SwrContext *swr, AVCodecContext *decoder,
+                           const AVChannelLayout *output_layout,
+                           ScryerFfmpegPcmCallback callback, void *userdata,
+                           uint64_t max_output_samples,
+                           ScryerFfmpegSyncDecodeResult *out)
 {
     for (;;) {
         const int64_t delay = swr_get_delay(swr, decoder->sample_rate);
@@ -652,7 +547,7 @@ static int flush_resampler(AVFormatContext *ofmt, AVCodecContext *encoder,
             return SCRYER_FFMPEG_DECODED;
         }
         const int dst_samples = (int)av_rescale_rnd(delay,
-                                                    encoder->sample_rate,
+                                                    out->sample_rate_hz,
                                                     decoder->sample_rate,
                                                     AV_ROUND_UP);
         if (dst_samples <= 0) {
@@ -660,44 +555,50 @@ static int flush_resampler(AVFormatContext *ofmt, AVCodecContext *encoder,
         }
         AVFrame *frame = av_frame_alloc();
         if (!frame) {
-            return set_transcode_error(out, "failed to allocate resampler flush frame");
+            return set_sync_decode_error(out, "failed to allocate resampler flush frame");
         }
         frame->nb_samples = dst_samples;
-        frame->format = encoder->sample_fmt;
-        frame->sample_rate = encoder->sample_rate;
-        if (av_channel_layout_copy(&frame->ch_layout, &encoder->ch_layout) < 0) {
+        frame->format = AV_SAMPLE_FMT_S16;
+        frame->sample_rate = (int)out->sample_rate_hz;
+        if (av_channel_layout_copy(&frame->ch_layout, output_layout) < 0) {
             av_frame_free(&frame);
-            return set_transcode_error(out, "failed to set resampler flush channel layout");
+            return set_sync_decode_error(out, "failed to set resampler flush channel layout");
         }
         int ret = av_frame_get_buffer(frame, 0);
         if (ret < 0) {
             av_frame_free(&frame);
-            return set_transcode_av_error(out, "failed to allocate resampler flush buffer", ret);
+            return set_sync_decode_av_error(out, "failed to allocate resampler flush buffer", ret);
         }
         ret = swr_convert(swr, frame->extended_data, dst_samples, NULL, 0);
         if (ret < 0) {
             av_frame_free(&frame);
-            return set_transcode_av_error(out, "failed to flush resampler", ret);
+            return set_sync_decode_av_error(out, "failed to flush resampler", ret);
         }
         if (ret == 0) {
             av_frame_free(&frame);
             return SCRYER_FFMPEG_DECODED;
         }
         frame->nb_samples = ret;
-        ret = queue_output_frame(ofmt, encoder, fifo, frame, out);
+        ret = emit_pcm_samples(callback, userdata, (const int16_t *)frame->extended_data[0],
+                               (uintptr_t)ret, max_output_samples, out);
         av_frame_free(&frame);
         if (ret != SCRYER_FFMPEG_DECODED) {
             return ret;
         }
+        if (max_output_samples > 0 && out->samples_decoded >= max_output_samples) {
+            return SCRYER_FFMPEG_DECODED;
+        }
     }
 }
 
-int32_t scryer_ffmpeg_transcode_sync_flac(const char *input_path, const char *output_path,
-                                          int32_t requested_stream_index,
-                                          const char *language,
-                                          uint32_t expected_codec,
-                                          uint64_t max_output_samples,
-                                          ScryerFfmpegTranscodeResult *out)
+int32_t scryer_ffmpeg_decode_sync_audio(const char *input_path,
+                                        int32_t requested_stream_index,
+                                        const char *language,
+                                        uint32_t expected_codec,
+                                        uint64_t max_output_samples,
+                                        ScryerFfmpegPcmCallback callback,
+                                        void *userdata,
+                                        ScryerFfmpegSyncDecodeResult *out)
 {
     av_log_set_level(AV_LOG_QUIET);
     memset(out, 0, sizeof(*out));
@@ -707,20 +608,19 @@ int32_t scryer_ffmpeg_transcode_sync_flac(const char *input_path, const char *ou
     out->timeline_start_ms = 0;
 
     AVFormatContext *ifmt = NULL;
-    AVFormatContext *ofmt = NULL;
     AVCodecContext *decoder = NULL;
-    AVCodecContext *encoder = NULL;
     AVPacket *packet = NULL;
     AVFrame *frame = NULL;
     SwrContext *swr = NULL;
-    AVAudioFifo *fifo = NULL;
+    AVChannelLayout output_layout = {0};
+
     int ret = avformat_open_input(&ifmt, input_path, NULL, NULL);
     if (ret < 0) {
-        return set_transcode_av_error(out, "failed to open input media", ret);
+        return set_sync_decode_av_error(out, "failed to open input media", ret);
     }
     ret = avformat_find_stream_info(ifmt, NULL);
     if (ret < 0) {
-        set_transcode_av_error(out, "failed to read input stream info", ret);
+        set_sync_decode_av_error(out, "failed to read input stream info", ret);
         goto fail;
     }
 
@@ -730,41 +630,41 @@ int32_t scryer_ffmpeg_transcode_sync_flac(const char *input_path, const char *ou
         goto cleanup;
     }
     if (stream_index < 0) {
-        set_transcode_error(out, "requested audio stream was not found");
+        set_sync_decode_error(out, "requested audio stream was not found");
         goto fail;
     }
     AVStream *istream = ifmt->streams[stream_index];
     AVCodecParameters *params = istream->codecpar;
     const int source_is_dts_hd_ma =
         params->codec_id == AV_CODEC_ID_DTS &&
-        expected_codec == SCRYER_TRANSCODE_CODEC_DTS_HD_MA_CORE;
+        expected_codec == SCRYER_SYNC_CODEC_DTS_HD_MA_CORE;
 
-    const enum AVCodecID expected = codec_id_for_transcode(expected_codec);
+    const enum AVCodecID expected = codec_id_for_sync_decode(expected_codec);
     if (expected != AV_CODEC_ID_NONE && params->codec_id != expected) {
         out->status_code = SCRYER_FFMPEG_UNSUPPORTED;
-        set_transcode_message(out, "selected audio stream did not match expected codec");
+        set_sync_decode_message(out, "selected audio stream did not match expected codec");
         goto cleanup;
     }
     if (!codec_is_targeted(params->codec_id)) {
         out->status_code = SCRYER_FFMPEG_UNSUPPORTED;
-        set_transcode_message(out, "selected audio codec is not handled by this transcoder");
+        set_sync_decode_message(out, "selected audio codec is not handled by this sync decoder");
         goto cleanup;
     }
 
     const AVCodec *decoder_codec = avcodec_find_decoder(params->codec_id);
     if (!decoder_codec) {
         out->status_code = SCRYER_FFMPEG_UNSUPPORTED;
-        set_transcode_message(out, "vendored FFmpeg decoder is not enabled");
+        set_sync_decode_message(out, "vendored FFmpeg decoder is not enabled");
         goto cleanup;
     }
     decoder = avcodec_alloc_context3(decoder_codec);
     if (!decoder) {
-        set_transcode_error(out, "failed to allocate decoder context");
+        set_sync_decode_error(out, "failed to allocate decoder context");
         goto fail;
     }
     ret = avcodec_parameters_to_context(decoder, params);
     if (ret < 0) {
-        set_transcode_av_error(out, "failed to copy decoder parameters", ret);
+        set_sync_decode_av_error(out, "failed to copy decoder parameters", ret);
         goto fail;
     }
     if (decoder->ch_layout.nb_channels <= 0) {
@@ -774,85 +674,37 @@ int32_t scryer_ffmpeg_transcode_sync_flac(const char *input_path, const char *ou
     }
     ret = avcodec_open2(decoder, decoder_codec, NULL);
     if (ret < 0) {
-        set_transcode_av_error(out, "failed to open audio decoder", ret);
+        set_sync_decode_av_error(out, "failed to open audio decoder", ret);
+        goto fail;
+    }
+    if (decoder->sample_rate <= 0) {
+        set_sync_decode_error(out, "decoded audio stream did not expose a sample rate");
         goto fail;
     }
 
-    const AVCodec *encoder_codec = avcodec_find_encoder(AV_CODEC_ID_FLAC);
-    if (!encoder_codec) {
-        set_transcode_error(out, "vendored FFmpeg FLAC encoder is not enabled");
-        goto fail;
-    }
-    ret = avformat_alloc_output_context2(&ofmt, NULL, "flac", output_path);
-    if (ret < 0 || !ofmt) {
-        set_transcode_av_error(out, "failed to allocate FLAC output context", ret);
-        goto fail;
-    }
-    AVStream *ostream = avformat_new_stream(ofmt, NULL);
-    if (!ostream) {
-        set_transcode_error(out, "failed to create FLAC output stream");
-        goto fail;
-    }
-    encoder = avcodec_alloc_context3(encoder_codec);
-    if (!encoder) {
-        set_transcode_error(out, "failed to allocate FLAC encoder context");
-        goto fail;
-    }
-    encoder->sample_rate = 16000;
-    encoder->sample_fmt = select_encoder_sample_fmt(encoder_codec);
-    encoder->time_base = (AVRational){1, encoder->sample_rate};
-    av_channel_layout_default(&encoder->ch_layout, 1);
-    av_opt_set_int(encoder->priv_data, "compression_level", 8, 0);
-    ret = avcodec_open2(encoder, encoder_codec, NULL);
-    if (ret < 0) {
-        set_transcode_av_error(out, "failed to open FLAC encoder", ret);
-        goto fail;
-    }
-    ret = avcodec_parameters_from_context(ostream->codecpar, encoder);
-    if (ret < 0) {
-        set_transcode_av_error(out, "failed to copy FLAC encoder parameters", ret);
-        goto fail;
-    }
-    ostream->time_base = encoder->time_base;
-    ret = avio_open(&ofmt->pb, output_path, AVIO_FLAG_WRITE);
-    if (ret < 0) {
-        set_transcode_av_error(out, "failed to open FLAC output", ret);
-        goto fail;
-    }
-    ret = avformat_write_header(ofmt, NULL);
-    if (ret < 0) {
-        set_transcode_av_error(out, "failed to write FLAC header", ret);
-        goto fail;
-    }
-
+    av_channel_layout_default(&output_layout, 1);
     ret = swr_alloc_set_opts2(&swr,
-                              &encoder->ch_layout,
-                              encoder->sample_fmt,
-                              encoder->sample_rate,
+                              &output_layout,
+                              AV_SAMPLE_FMT_S16,
+                              (int)out->sample_rate_hz,
                               &decoder->ch_layout,
                               decoder->sample_fmt,
                               decoder->sample_rate,
                               0, NULL);
     if (ret < 0 || !swr) {
-        set_transcode_av_error(out, "failed to allocate resampler", ret);
+        set_sync_decode_av_error(out, "failed to allocate resampler", ret);
         goto fail;
     }
     ret = swr_init(swr);
     if (ret < 0) {
-        set_transcode_av_error(out, "failed to initialize resampler", ret);
-        goto fail;
-    }
-    fifo = av_audio_fifo_alloc(encoder->sample_fmt, encoder->ch_layout.nb_channels,
-                               encoder->frame_size > 0 ? encoder->frame_size : 4096);
-    if (!fifo) {
-        set_transcode_error(out, "failed to allocate audio FIFO");
+        set_sync_decode_av_error(out, "failed to initialize resampler", ret);
         goto fail;
     }
 
     packet = av_packet_alloc();
     frame = av_frame_alloc();
     if (!packet || !frame) {
-        set_transcode_error(out, "failed to allocate decode packet/frame");
+        set_sync_decode_error(out, "failed to allocate decode packet/frame");
         goto fail;
     }
 
@@ -866,7 +718,7 @@ int32_t scryer_ffmpeg_transcode_sync_flac(const char *input_path, const char *ou
         ret = avcodec_send_packet(decoder, packet);
         av_packet_unref(packet);
         if (ret < 0) {
-            set_transcode_av_error(out, "failed to send audio packet to decoder", ret);
+            set_sync_decode_av_error(out, "failed to send audio packet to decoder", ret);
             goto fail;
         }
         for (;;) {
@@ -875,7 +727,7 @@ int32_t scryer_ffmpeg_transcode_sync_flac(const char *input_path, const char *ou
                 break;
             }
             if (ret < 0) {
-                set_transcode_av_error(out, "failed to receive decoded audio frame", ret);
+                set_sync_decode_av_error(out, "failed to receive decoded audio frame", ret);
                 goto fail;
             }
             if (!inserted_initial_timeline) {
@@ -884,8 +736,9 @@ int32_t scryer_ffmpeg_transcode_sync_flac(const char *input_path, const char *ou
                     int64_t pts_ms = av_rescale_q(pts, istream->time_base, (AVRational){1, 1000});
                     if (pts_ms > 0) {
                         int64_t silence_samples = av_rescale_q(pts_ms, (AVRational){1, 1000},
-                                                               (AVRational){1, encoder->sample_rate});
-                        ret = write_silence(ofmt, encoder, fifo, silence_samples, out);
+                                                               (AVRational){1, (int)out->sample_rate_hz});
+                        ret = emit_silence(callback, userdata, silence_samples,
+                                           max_output_samples, out);
                         if (ret != SCRYER_FFMPEG_DECODED) {
                             goto fail;
                         }
@@ -897,19 +750,20 @@ int32_t scryer_ffmpeg_transcode_sync_flac(const char *input_path, const char *ou
                 }
                 inserted_initial_timeline = 1;
             }
-            ret = convert_and_write_frame(ofmt, encoder, swr, fifo, frame, out);
+            ret = convert_and_emit_frame(swr, &output_layout, frame, callback, userdata,
+                                         max_output_samples, out);
             av_frame_unref(frame);
             if (ret != SCRYER_FFMPEG_DECODED) {
                 goto fail;
             }
-            if (max_output_samples > 0 && out->samples_written >= max_output_samples) {
+            if (max_output_samples > 0 && out->samples_decoded >= max_output_samples) {
                 reached_output_limit = 1;
                 break;
             }
         }
     }
     if (!reached_output_limit && ret != AVERROR_EOF) {
-        set_transcode_av_error(out, "failed while reading input media", ret);
+        set_sync_decode_av_error(out, "failed while reading input media", ret);
         goto fail;
     }
 
@@ -921,41 +775,38 @@ int32_t scryer_ffmpeg_transcode_sync_flac(const char *input_path, const char *ou
                 break;
             }
             if (ret < 0) {
-                set_transcode_av_error(out, "failed to flush audio decoder", ret);
+                set_sync_decode_av_error(out, "failed to flush audio decoder", ret);
                 goto fail;
             }
-            ret = convert_and_write_frame(ofmt, encoder, swr, fifo, frame, out);
+            ret = convert_and_emit_frame(swr, &output_layout, frame, callback, userdata,
+                                         max_output_samples, out);
             av_frame_unref(frame);
             if (ret != SCRYER_FFMPEG_DECODED) {
                 goto fail;
             }
+            if (max_output_samples > 0 && out->samples_decoded >= max_output_samples) {
+                reached_output_limit = 1;
+                break;
+            }
         }
     }
-    ret = flush_resampler(ofmt, encoder, decoder, swr, fifo, out);
-    if (ret != SCRYER_FFMPEG_DECODED) {
-        goto fail;
+    if (!reached_output_limit) {
+        ret = flush_resampler(swr, decoder, &output_layout, callback, userdata,
+                              max_output_samples, out);
+        if (ret != SCRYER_FFMPEG_DECODED) {
+            goto fail;
+        }
     }
-    ret = drain_audio_fifo(ofmt, encoder, fifo, 1, out);
-    if (ret != SCRYER_FFMPEG_DECODED) {
-        goto fail;
-    }
-    ret = encode_and_write(ofmt, encoder, NULL, out);
-    if (ret != SCRYER_FFMPEG_DECODED) {
-        goto fail;
-    }
-    ret = av_write_trailer(ofmt);
-    if (ret < 0) {
-        set_transcode_av_error(out, "failed to finalize FLAC output", ret);
+    if (out->samples_decoded == 0) {
+        set_sync_decode_error(out, "FFmpeg decoder produced no sync PCM samples");
         goto fail;
     }
 
     out->status_code = SCRYER_FFMPEG_DECODED;
     out->stream_index = (uint32_t)stream_index;
-    out->codec = transcode_codec_for_av(params->codec_id, source_is_dts_hd_ma);
-    out->sample_rate_hz = (uint32_t)encoder->sample_rate;
-    out->channels = 1;
-    out->duration_ms = (int64_t)av_rescale_q((int64_t)out->samples_written,
-                                             (AVRational){1, encoder->sample_rate},
+    out->codec = sync_decode_codec_for_av(params->codec_id, source_is_dts_hd_ma);
+    out->duration_ms = (int64_t)av_rescale_q((int64_t)out->samples_decoded,
+                                             (AVRational){1, (int)out->sample_rate_hz},
                                              (AVRational){1, 1000});
     out->used_core_fallback = source_is_dts_hd_ma ? 1 : 0;
     snprintf(out->source_codec_name, sizeof(out->source_codec_name), "%s",
@@ -972,9 +823,9 @@ int32_t scryer_ffmpeg_transcode_sync_flac(const char *input_path, const char *ou
     }
     if (out->used_core_fallback && !out->warnings[0]) {
         snprintf(out->warnings, sizeof(out->warnings),
-                 "DTS-HD MA was transcoded through the DTS core decoder path");
+                 "DTS-HD MA was decoded through the DTS core decoder path");
     }
-    set_transcode_message(out, "transcoded to FLAC by vendored FFmpeg");
+    set_sync_decode_message(out, "decoded sync audio by vendored FFmpeg");
     goto cleanup;
 
 fail:
@@ -983,15 +834,10 @@ fail:
     }
 
 cleanup:
-    if (ofmt && ofmt->pb) {
-        avio_closep(&ofmt->pb);
-    }
-    avformat_free_context(ofmt);
-    av_audio_fifo_free(fifo);
+    av_channel_layout_uninit(&output_layout);
     swr_free(&swr);
     av_frame_free(&frame);
     av_packet_free(&packet);
-    avcodec_free_context(&encoder);
     avcodec_free_context(&decoder);
     avformat_close_input(&ifmt);
     return out->status_code;

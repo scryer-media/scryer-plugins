@@ -13,3 +13,9 @@ subtitles/enhanced-sync/vendor/ffmpeg/*
 !subtitles/enhanced-sync/vendor/ffmpeg/UPSTREAM.md
 !subtitles/enhanced-sync/vendor/ffmpeg/SCRYER_VENDOR_METADATA
 !subtitles/enhanced-sync/vendor/ffmpeg/source.tar.zst
+
+# Keep only the packed libfvad vendor payload and metadata in VCS.
+subtitles/enhanced-sync/vendor/libfvad/*
+!subtitles/enhanced-sync/vendor/libfvad/UPSTREAM.md
+!subtitles/enhanced-sync/vendor/libfvad/SCRYER_VENDOR_METADATA
+!subtitles/enhanced-sync/vendor/libfvad/source.tar.zst

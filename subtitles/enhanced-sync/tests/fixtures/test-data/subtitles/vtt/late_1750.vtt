@@ -1,0 +1,54 @@
+WEBVTT
+Kind: captions
+Language: en
+
+NOTE Generated once as static Scryer subtitle sync test data.
+
+cue-01
+00:00:04.749 --> 00:00:08.787 align:start position:10%
+This fixture begins with a clear voice and enough silence for the detector to settle.
+
+cue-02
+00:00:10.649 --> 00:00:16.280 align:start position:10%
+Each caption line uses ordinary words so subtitle synchronization can focus on timing.
+
+cue-03
+00:00:18.092 --> 00:00:23.372 align:start position:10%
+The third sentence is intentionally longer and gives the alignment code a wider speech island.
+
+cue-04
+00:00:25.184 --> 00:00:29.765 align:start position:10%
+After a pause the speaker continues with another compact sentence for the next cue.
+
+cue-05
+00:00:31.577 --> 00:00:36.382 align:start position:10%
+A reliable fixture needs variation in length without becoming a long audiobook.
+
+cue-06
+00:00:38.194 --> 00:00:43.975 align:start position:10%
+This cue mentions video containers audio codecs and subtitle rewrites in plain language.
+
+cue-07
+00:00:45.787 --> 00:00:50.830 align:start position:10%
+The next phrase arrives after silence so the voice activity detector can split the span.
+
+cue-08
+00:00:52.642 --> 00:00:58.097 align:start position:10%
+Short captions still matter because real subtitle files often mix brief and longer lines.
+
+cue-09
+00:00:59.922 --> 00:01:04.665 align:start position:10%
+Another sentence adds more timing evidence before the final codec cases begin.
+
+cue-10
+00:01:06.477 --> 00:01:11.082 align:start position:10%
+Near the end we keep the same calm delivery and leave room for timing drift checks.
+
+cue-11
+00:01:12.894 --> 00:01:17.250 align:start position:10%
+One more cue gives the stretch test a broader timeline across the fixture.
+
+cue-12
+00:01:19.062 --> 00:01:23.717 align:start position:10%
+The final spoken cue closes the fixture with a simple sentence and a clean ending.
+

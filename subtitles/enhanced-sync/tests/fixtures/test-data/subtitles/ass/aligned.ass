@@ -1,0 +1,22 @@
+[Script Info]
+Title: Scryer Subtitle Sync Test Data
+ScriptType: v4.00+
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H64000000,0,0,1,2,0,2,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:03.00,0:00:07.04,Default,,0000,0000,0000,,This fixture begins with a clear voice and enough silence for the detector to settle.
+Dialogue: 0,0:00:08.90,0:00:14.53,Default,,0000,0000,0000,,Each caption line uses ordinary words so subtitle synchronization can focus on timing.
+Dialogue: 0,0:00:16.34,0:00:21.62,Default,,0000,0000,0000,,The third sentence is intentionally longer and gives the alignment code a wider speech island.
+Dialogue: 0,0:00:23.43,0:00:28.02,Default,,0000,0000,0000,,After a pause the speaker continues with another compact sentence for the next cue.
+Dialogue: 0,0:00:29.83,0:00:34.63,Default,,0000,0000,0000,,A reliable fixture needs variation in length without becoming a long audiobook.
+Dialogue: 0,0:00:36.44,0:00:42.23,Default,,0000,0000,0000,,This cue mentions video containers audio codecs and subtitle rewrites in plain language.
+Dialogue: 0,0:00:44.04,0:00:49.08,Default,,0000,0000,0000,,The next phrase arrives after silence so the voice activity detector can split the span.
+Dialogue: 0,0:00:50.89,0:00:56.35,Default,,0000,0000,0000,,Short captions still matter because real subtitle files often mix brief and longer lines.
+Dialogue: 0,0:00:58.17,0:01:02.92,Default,,0000,0000,0000,,Another sentence adds more timing evidence before the final codec cases begin.
+Dialogue: 0,0:01:04.73,0:01:09.33,Default,,0000,0000,0000,,Near the end we keep the same calm delivery and leave room for timing drift checks.
+Dialogue: 0,0:01:11.14,0:01:15.50,Default,,0000,0000,0000,,One more cue gives the stretch test a broader timeline across the fixture.
+Dialogue: 0,0:01:17.31,0:01:21.97,Default,,0000,0000,0000,,The final spoken cue closes the fixture with a simple sentence and a clean ending.

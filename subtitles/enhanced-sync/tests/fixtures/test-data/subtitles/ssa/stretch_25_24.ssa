@@ -1,0 +1,22 @@
+[Script Info]
+Title: Scryer Subtitle Sync Test Data
+ScriptType: v4.00
+
+[V4 Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, TertiaryColour, BackColour, Bold, Italic, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, AlphaLevel, Encoding
+Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H64000000,0,0,1,2,0,2,20,20,20,0,1
+
+[Events]
+Format: Marked, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: Marked=0,0:00:02.02,0:00:05.89,Default,,0000,0000,0000,,This fixture begins with a clear voice and enough silence for the detector to settle.
+Dialogue: Marked=0,0:00:07.68,0:00:13.09,Default,,0000,0000,0000,,Each caption line uses ordinary words so subtitle synchronization can focus on timing.
+Dialogue: Marked=0,0:00:14.82,0:00:19.89,Default,,0000,0000,0000,,The third sentence is intentionally longer and gives the alignment code a wider speech island.
+Dialogue: Marked=0,0:00:21.63,0:00:26.03,Default,,0000,0000,0000,,After a pause the speaker continues with another compact sentence for the next cue.
+Dialogue: Marked=0,0:00:27.77,0:00:32.38,Default,,0000,0000,0000,,A reliable fixture needs variation in length without becoming a long audiobook.
+Dialogue: Marked=0,0:00:34.12,0:00:39.67,Default,,0000,0000,0000,,This cue mentions video containers audio codecs and subtitle rewrites in plain language.
+Dialogue: Marked=0,0:00:41.41,0:00:46.25,Default,,0000,0000,0000,,The next phrase arrives after silence so the voice activity detector can split the span.
+Dialogue: Marked=0,0:00:47.99,0:00:53.23,Default,,0000,0000,0000,,Short captions still matter because real subtitle files often mix brief and longer lines.
+Dialogue: Marked=0,0:00:54.98,0:00:59.53,Default,,0000,0000,0000,,Another sentence adds more timing evidence before the final codec cases begin.
+Dialogue: Marked=0,0:01:01.27,0:01:05.70,Default,,0000,0000,0000,,Near the end we keep the same calm delivery and leave room for timing drift checks.
+Dialogue: Marked=0,0:01:07.43,0:01:11.62,Default,,0000,0000,0000,,One more cue gives the stretch test a broader timeline across the fixture.
+Dialogue: Marked=0,0:01:13.36,0:01:17.82,Default,,0000,0000,0000,,The final spoken cue closes the fixture with a simple sentence and a clean ending.

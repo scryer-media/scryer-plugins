@@ -75,6 +75,9 @@ const BROTLI_LGWIN: u32 = 24;
 const ENHANCED_SYNC_FFMPEG_VENDOR_DIR: &str = "subtitles/enhanced-sync/vendor/ffmpeg";
 const ENHANCED_SYNC_FFMPEG_VENDOR_ARCHIVE: &str = "source.tar.zst";
 const ENHANCED_SYNC_FFMPEG_VENDOR_METADATA: &str = "SCRYER_VENDOR_METADATA";
+const ENHANCED_SYNC_LIBFVAD_VENDOR_DIR: &str = "subtitles/enhanced-sync/vendor/libfvad";
+const ENHANCED_SYNC_LIBFVAD_VENDOR_ARCHIVE: &str = "source.tar.zst";
+const ENHANCED_SYNC_LIBFVAD_VENDOR_METADATA: &str = "SCRYER_VENDOR_METADATA";
 const FFMPEG_VENDOR_PATHS: &[&str] = &[
     "COPYING.LGPLv2.1",
     "LICENSE.md",
@@ -93,6 +96,14 @@ const FFMPEG_VENDOR_PATHS: &[&str] = &[
     "libswresample",
     "tests",
     "tools",
+];
+const LIBFVAD_VENDOR_PATHS: &[&str] = &[
+    "AUTHORS",
+    "LICENSE",
+    "PATENTS",
+    "README.md",
+    "include",
+    "src",
 ];
 const AUDIT_IGNORE_ADVISORIES: &[&str] = &[
     // Extism currently pins wasmtime 41.x upstream, so these remain blocked on
@@ -147,6 +158,7 @@ enum Commands {
     ReleaseChanged(ReleaseChangedArgs),
     Plugin(PluginArgs),
     Ffmpeg(FfmpegArgs),
+    Vad(VadArgs),
     Sdk(SdkArgs),
     Official(OfficialArgs),
     Catalog(CatalogArgs),
@@ -246,6 +258,25 @@ enum FfmpegCommand {
 #[derive(Args)]
 struct FfmpegRevendorArgs {
     #[arg(long, default_value = "https://github.com/FFmpeg/FFmpeg.git")]
+    source: String,
+    #[arg(long)]
+    commit: String,
+}
+
+#[derive(Args)]
+struct VadArgs {
+    #[command(subcommand)]
+    command: VadCommand,
+}
+
+#[derive(Subcommand)]
+enum VadCommand {
+    Revendor(VadRevendorArgs),
+}
+
+#[derive(Args)]
+struct VadRevendorArgs {
+    #[arg(long, default_value = "https://github.com/dpirch/libfvad.git")]
     source: String,
     #[arg(long)]
     commit: String,
@@ -1018,6 +1049,9 @@ fn main() -> Result<()> {
         },
         Commands::Ffmpeg(args) => match args.command {
             FfmpegCommand::Revendor(args) => run_ffmpeg_revendor(&ctx, args),
+        },
+        Commands::Vad(args) => match args.command {
+            VadCommand::Revendor(args) => run_vad_revendor(&ctx, args),
         },
         Commands::Sdk(args) => match args.command {
             SdkCommand::Bump { version } => run_sdk_bump(&ctx, &version),
@@ -6406,6 +6440,54 @@ fn run_ffmpeg_revendor(ctx: &TaskContext, args: FfmpegRevendorArgs) -> Result<()
     Ok(())
 }
 
+fn run_vad_revendor(ctx: &TaskContext, args: VadRevendorArgs) -> Result<()> {
+    step(format!(
+        "Re-vendoring libfvad {} into enhanced subtitle sync",
+        args.commit
+    ));
+
+    let scratch = tempfile::tempdir().context("create libfvad re-vendor scratch directory")?;
+    let source = prepare_vad_source(ctx, &args, scratch.path())?;
+    let commit = ensure_vad_commit(ctx, &source, &args.commit)?;
+    let source_date = git_capture_in(
+        ctx,
+        &source,
+        ["show", "-s", "--format=%cs", commit.as_str()],
+    )
+    .context("read libfvad commit date")?;
+    let source_url = git_capture_in(ctx, &source, ["config", "--get", "remote.origin.url"])
+        .map(|value| value.trim().to_string())
+        .unwrap_or_else(|_| args.source.clone());
+
+    let staged_vendor = scratch.path().join("libfvad-vendor");
+    fs::create_dir_all(&staged_vendor).context("create staged libfvad vendor directory")?;
+    write_libfvad_vendor_archive(ctx, &source, &commit, &staged_vendor)?;
+    write_libfvad_upstream_metadata(&staged_vendor, &source_url, &commit, source_date.trim())?;
+    write_libfvad_vendor_metadata(&staged_vendor, &source_url, &commit, source_date.trim())?;
+
+    let vendor_dir = ctx.path(ENHANCED_SYNC_LIBFVAD_VENDOR_DIR);
+    if vendor_dir.exists() {
+        fs::remove_dir_all(&vendor_dir)
+            .with_context(|| format!("remove {}", vendor_dir.display()))?;
+    }
+    if let Some(parent) = vendor_dir.parent() {
+        fs::create_dir_all(parent).with_context(|| format!("create {}", parent.display()))?;
+    }
+    fs::rename(&staged_vendor, &vendor_dir).with_context(|| {
+        format!(
+            "move staged libfvad vendor tree into {}",
+            vendor_dir.display()
+        )
+    })?;
+
+    ok(format!(
+        "vendored libfvad {} into {}",
+        &commit[..12.min(commit.len())],
+        ENHANCED_SYNC_LIBFVAD_VENDOR_DIR
+    ));
+    Ok(())
+}
+
 fn prepare_ffmpeg_source(
     ctx: &TaskContext,
     args: &FfmpegRevendorArgs,
@@ -6429,6 +6511,29 @@ fn prepare_ffmpeg_source(
     Ok(clone_dir)
 }
 
+fn prepare_vad_source(
+    ctx: &TaskContext,
+    args: &VadRevendorArgs,
+    scratch: &Path,
+) -> Result<PathBuf> {
+    let local_source = PathBuf::from(&args.source);
+    if local_source.exists() {
+        return Ok(local_source);
+    }
+
+    let clone_dir = scratch.join("libfvad-source");
+    run_checked(
+        ctx.command("git")
+            .arg("clone")
+            .arg("--filter=blob:none")
+            .arg("--no-checkout")
+            .arg(&args.source)
+            .arg(&clone_dir),
+    )
+    .with_context(|| format!("clone libfvad source {}", args.source))?;
+    Ok(clone_dir)
+}
+
 fn ensure_ffmpeg_commit(ctx: &TaskContext, source: &Path, commit: &str) -> Result<String> {
     if let Ok(resolved) =
         git_capture_in(ctx, source, ["rev-parse", &format!("{commit}^{{commit}}")])
@@ -6446,6 +6551,30 @@ fn ensure_ffmpeg_commit(ctx: &TaskContext, source: &Path, commit: &str) -> Resul
             .arg(commit),
     )
     .with_context(|| format!("fetch FFmpeg commit {commit}"))?;
+    Ok(
+        git_capture_in(ctx, source, ["rev-parse", &format!("{commit}^{{commit}}")])?
+            .trim()
+            .to_string(),
+    )
+}
+
+fn ensure_vad_commit(ctx: &TaskContext, source: &Path, commit: &str) -> Result<String> {
+    if let Ok(resolved) =
+        git_capture_in(ctx, source, ["rev-parse", &format!("{commit}^{{commit}}")])
+    {
+        return Ok(resolved.trim().to_string());
+    }
+
+    run_checked(
+        ctx.command("git")
+            .arg("-C")
+            .arg(source)
+            .arg("fetch")
+            .arg("--depth=1")
+            .arg("origin")
+            .arg(commit),
+    )
+    .with_context(|| format!("fetch libfvad commit {commit}"))?;
     Ok(
         git_capture_in(ctx, source, ["rev-parse", &format!("{commit}^{{commit}}")])?
             .trim()
@@ -6486,6 +6615,39 @@ fn write_ffmpeg_vendor_archive(
     Ok(())
 }
 
+fn write_libfvad_vendor_archive(
+    ctx: &TaskContext,
+    source: &Path,
+    commit: &str,
+    destination: &Path,
+) -> Result<()> {
+    let archive_path = destination.join(ENHANCED_SYNC_LIBFVAD_VENDOR_ARCHIVE);
+    let mut archive = ctx
+        .command("git")
+        .arg("-C")
+        .arg(source)
+        .arg("archive")
+        .arg(commit)
+        .args(LIBFVAD_VENDOR_PATHS)
+        .stdout(Stdio::piped())
+        .spawn()
+        .with_context(|| format!("start git archive for libfvad commit {commit}"))?;
+    let stdout = archive
+        .stdout
+        .take()
+        .ok_or_else(|| anyhow!("git archive stdout was not captured"))?;
+    let file = fs::File::create(&archive_path)
+        .with_context(|| format!("create {}", archive_path.display()))?;
+    let writer = BufWriter::new(file);
+    zstd::stream::copy_encode(stdout, writer, 19)
+        .with_context(|| format!("compress libfvad vendor archive {}", archive_path.display()))?;
+    let archive_status = archive.wait().context("wait for git archive")?;
+    if !archive_status.success() {
+        bail!("git archive failed with {archive_status}");
+    }
+    Ok(())
+}
+
 fn write_ffmpeg_upstream_metadata(
     vendor_dir: &Path,
     source_url: &str,
@@ -6515,6 +6677,42 @@ demuxers/muxer, no filters, and no network support.
     fs::write(vendor_dir.join("UPSTREAM.md"), metadata).context("write FFmpeg UPSTREAM.md")
 }
 
+fn write_libfvad_upstream_metadata(
+    vendor_dir: &Path,
+    source_url: &str,
+    commit: &str,
+    source_date: &str,
+) -> Result<()> {
+    fs::write(
+        vendor_dir.join("UPSTREAM.md"),
+        render_libfvad_upstream_metadata(source_url, commit, source_date),
+    )
+    .context("write libfvad UPSTREAM.md")
+}
+
+fn render_libfvad_upstream_metadata(source_url: &str, commit: &str, source_date: &str) -> String {
+    format!(
+        r#"# libfvad Source Snapshot
+
+Vendored from libfvad upstream:
+
+- repository: `{source_url}`
+- commit: `{commit}`
+- source date: `{source_date}`
+- vendored for: WebRTC voice activity detection in the enhanced subtitle sync
+  plugin
+
+The plugin build compiles this vendored tree as a narrow static C library and
+links it into the final Rust `wasm32-wasip1` plugin artifact. libfvad is a
+standalone extraction of the WebRTC VAD engine; it is licensed under
+BSD-3-Clause, with the additional patent grant included in `PATENTS`.
+
+Keep the vendored archive narrow: only `include`, `src`, and attribution files
+needed to rebuild and document the VAD backend belong in the archive.
+"#
+    )
+}
+
 fn write_ffmpeg_vendor_metadata(
     vendor_dir: &Path,
     source_url: &str,
@@ -6529,6 +6727,25 @@ fn write_ffmpeg_vendor_metadata(
         metadata,
     )
     .context("write FFmpeg vendor metadata")
+}
+
+fn write_libfvad_vendor_metadata(
+    vendor_dir: &Path,
+    source_url: &str,
+    commit: &str,
+    source_date: &str,
+) -> Result<()> {
+    fs::write(
+        vendor_dir.join(ENHANCED_SYNC_LIBFVAD_VENDOR_METADATA),
+        render_vendor_metadata(source_url, commit, source_date),
+    )
+    .context("write libfvad vendor metadata")
+}
+
+fn render_vendor_metadata(source_url: &str, commit: &str, source_date: &str) -> String {
+    format!(
+        "repository={source_url}\ncommit={commit}\nrevision=git-{commit}\nsource_date={source_date}\n"
+    )
 }
 
 fn git_capture_in<const N: usize>(
@@ -6646,6 +6863,49 @@ mod tests {
             source_repo: entry.source_repo,
             releases,
         }
+    }
+
+    #[test]
+    fn libfvad_vendor_metadata_matches_ffmpeg_style_keys() {
+        let metadata = render_vendor_metadata(
+            "https://github.com/dpirch/libfvad.git",
+            "532ab666c20d3cfda38bca63abbb0f152706c369",
+            "2024-01-02",
+        );
+
+        assert!(metadata.contains("repository=https://github.com/dpirch/libfvad.git\n"));
+        assert!(metadata.contains("commit=532ab666c20d3cfda38bca63abbb0f152706c369\n"));
+        assert!(metadata.contains("revision=git-532ab666c20d3cfda38bca63abbb0f152706c369\n"));
+        assert!(metadata.contains("source_date=2024-01-02\n"));
+    }
+
+    #[test]
+    fn libfvad_upstream_metadata_documents_vad_vendor_scope() {
+        let metadata = render_libfvad_upstream_metadata(
+            "https://github.com/dpirch/libfvad.git",
+            "532ab666c20d3cfda38bca63abbb0f152706c369",
+            "2024-01-02",
+        );
+
+        assert!(metadata.contains("# libfvad Source Snapshot"));
+        assert!(metadata.contains("WebRTC voice activity detection"));
+        assert!(metadata.contains("BSD-3-Clause"));
+        assert!(metadata.contains("PATENTS"));
+    }
+
+    #[test]
+    fn libfvad_vendor_archive_keeps_only_required_source_paths() {
+        assert_eq!(
+            LIBFVAD_VENDOR_PATHS,
+            &[
+                "AUTHORS",
+                "LICENSE",
+                "PATENTS",
+                "README.md",
+                "include",
+                "src"
+            ]
+        );
     }
 
     #[test]
