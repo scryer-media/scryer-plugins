@@ -411,6 +411,8 @@ struct CatalogPrepareV3Args {
     existing_catalog: Option<PathBuf>,
     #[arg(long)]
     prepared_plugin_root: Option<PathBuf>,
+    #[arg(long, hide = true)]
+    allow_selected_rebuild: bool,
 }
 
 #[derive(Args)]
@@ -4950,6 +4952,7 @@ fn run_catalog_render_v3(ctx: &TaskContext) -> Result<()> {
             plugin_ids: Vec::new(),
             existing_catalog: None,
             prepared_plugin_root: None,
+            allow_selected_rebuild: false,
         },
     )
 }
@@ -5029,10 +5032,16 @@ fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Resu
         Some(path) => Some(read_catalog_v3_from_path(ctx, path)?),
         None => None,
     };
-    if !args.plugin_ids.is_empty() && existing_catalog.is_none() {
+    if !args.plugin_ids.is_empty() && existing_catalog.is_none() && !args.allow_selected_rebuild {
         bail!(
-            "catalog prepare-v3 with --plugin-id requires --existing-catalog; use no --plugin-id for an intentional full catalog rebuild"
+            "catalog prepare-v3 with --plugin-id requires --existing-catalog; use --allow-selected-rebuild only for an intentional full catalog rebuild from prepared plugin snippets"
         );
+    }
+    if args.allow_selected_rebuild && args.prepared_plugin_root.is_none() {
+        bail!("catalog prepare-v3 --allow-selected-rebuild requires --prepared-plugin-root");
+    }
+    if args.allow_selected_rebuild && args.plugin_ids.is_empty() {
+        bail!("catalog prepare-v3 --allow-selected-rebuild requires at least one --plugin-id");
     }
     if args.prepared_plugin_root.is_none() {
         ensure_current_sdk_dependency_is_published(ctx)?;
@@ -5159,6 +5168,7 @@ fn run_catalog_publish_v3(ctx: &TaskContext) -> Result<()> {
             plugin_ids: Vec::new(),
             existing_catalog: None,
             prepared_plugin_root: None,
+            allow_selected_rebuild: false,
         },
     )
 }

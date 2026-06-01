@@ -587,7 +587,11 @@ jobs:
             --prepared-plugin-root prepared-plugins
           )
           if [ "${rebuild_catalog_v3}" = "true" ]; then
-            echo "Rebuilding full catalog-v3 from current manifests"
+            echo "Rebuilding full catalog-v3 from prepared plugin snippets"
+            prepare_v3_args+=(--allow-selected-rebuild)
+            for plugin_id in "${plugin_ids[@]}"; do
+              prepare_v3_args+=(--plugin-id "${plugin_id}")
+            done
           else
             existing_dir="existing-central-catalog-v3"
             mkdir -p "${existing_dir}"
