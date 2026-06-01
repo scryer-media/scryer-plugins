@@ -41,7 +41,7 @@ env:
   CF_JURISDICTION_URL: ${{ secrets.CF_JURISDICTION_URL }}
   CF_R2_PUBLIC_BASE_URL: https://cdn.scryer.media/scryer
   SCRYER_OFFICIAL_RELEASE_WORKFLOW_PATH: .github/workflows/release-plugin.yml
-  SCRYER_OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX: plugins
+  SCRYER_OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX: plugins-v3
   SCRYER_CATALOG_V3_RELEASE_TAG: catalog/v3
   SCRYER_CATALOG_V3_PATH_PREFIX: catalog/v3
 
@@ -149,7 +149,7 @@ jobs:
           mapfile -t plugin_tags < <(
             git tag --points-at "${RELEASE_SHA}" \
               | sort \
-              | grep -E '^plugins/[^/]+/v.+$' \
+              | grep -E '^plugins-v3/[^/]+/v.+$' \
               || true
           )
           if [ "${#plugin_tags[@]}" -eq 0 ]; then
@@ -158,7 +158,7 @@ jobs:
           fi
           : > release-plan.tsv
           for tag in "${plugin_tags[@]}"; do
-            plugin_spec="${tag#plugins/}"
+            plugin_spec="${tag#plugins-v3/}"
             plugin_id="${plugin_spec%/v*}"
             version="${tag##*/v}"
             printf '%s\t%s\n' "${plugin_id}" "${version}" >> release-plan.tsv
@@ -416,12 +416,13 @@ jobs:
           set -euo pipefail
           shopt -s nullglob
           while IFS=$'\t' read -r plugin_id version; do
-            tag="plugins/${plugin_id}/v${version}"
+            tag="plugins-v3/${plugin_id}/v${version}"
             prepared_dir="dist/prepared/${plugin_id}"
 
             ./xtask/target/xtask-release/xtask official prepare "${plugin_id}" \
               --version "${version}" \
-              --out "${prepared_dir}"
+              --out "${prepared_dir}" \
+              --catalog-version v3
 
             ./xtask/target/xtask-release/xtask official verify-prepared "${prepared_dir}"
 

@@ -335,6 +335,8 @@ struct OfficialPrepareArgs {
     out: Option<PathBuf>,
     #[arg(long)]
     existing_child_catalog: Option<PathBuf>,
+    #[arg(long, value_enum)]
+    catalog_version: Option<CatalogVersion>,
 }
 
 #[derive(Args)]
@@ -538,7 +540,7 @@ struct OfficialPreparedRelease {
 #[derive(Clone, Debug)]
 struct PreparedCompressedArtifact {
     source_path: PathBuf,
-    staged_path: PathBuf,
+    staged_path: Option<PathBuf>,
     digests: Vec<String>,
 }
 
@@ -629,9 +631,15 @@ impl PluginCatalogStatus {
     }
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, ValueEnum, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "lowercase")]
 enum CatalogVersion {
+    V2,
+    V3,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PluginArtifactLane {
     V2,
     V3,
 }
@@ -2172,8 +2180,13 @@ fn legacy_release_tag_prefix(plugin_id: &str) -> String {
     format!("{plugin_id}-v")
 }
 
+fn release_tag_v3_prefix(plugin_id: &str) -> String {
+    format!("plugins-v3/{plugin_id}/v")
+}
+
 fn release_tag_version(plugin_id: &str, tag: &str) -> Option<Version> {
     tag.strip_prefix(&release_tag_prefix(plugin_id))
+        .or_else(|| tag.strip_prefix(&release_tag_v3_prefix(plugin_id)))
         .or_else(|| tag.strip_prefix(&legacy_release_tag_prefix(plugin_id)))
         .and_then(|version| Version::parse(version).ok())
 }
@@ -3616,15 +3629,35 @@ fn decompress_plugin_wasm_artifact(
     );
 }
 
-fn plugin_variant_uncompressed_file_name(feature_set: &WasmFeatureSet) -> String {
-    format!("{}.wasm", feature_set.artifact_stem())
+fn plugin_variant_artifact_stem(feature_set: &WasmFeatureSet, lane: PluginArtifactLane) -> String {
+    match lane {
+        PluginArtifactLane::V2 => feature_set.artifact_stem(),
+        PluginArtifactLane::V3 => {
+            if feature_set.is_baseline() {
+                "plugin-v3".to_string()
+            } else {
+                format!("plugin-v3-{}", feature_set.slug())
+            }
+        }
+    }
+}
+
+fn plugin_variant_uncompressed_file_name(
+    feature_set: &WasmFeatureSet,
+    lane: PluginArtifactLane,
+) -> String {
+    format!("{}.wasm", plugin_variant_artifact_stem(feature_set, lane))
 }
 
 fn plugin_variant_logical_file_name(
     feature_set: &WasmFeatureSet,
+    lane: PluginArtifactLane,
     compression_suffix: &str,
 ) -> String {
-    format!("{}.wasm.{compression_suffix}", feature_set.artifact_stem())
+    format!(
+        "{}.wasm.{compression_suffix}",
+        plugin_variant_artifact_stem(feature_set, lane)
+    )
 }
 
 fn optimize_and_compress_wasm(
@@ -3632,11 +3665,12 @@ fn optimize_and_compress_wasm(
     wasm: &Path,
     dist: &Path,
     feature_set: &WasmFeatureSet,
+    lane: PluginArtifactLane,
 ) -> Result<(PathBuf, PathBuf, PathBuf)> {
     fs::create_dir_all(dist)?;
-    let optimized = dist.join(plugin_variant_uncompressed_file_name(feature_set));
-    let compressed = dist.join(plugin_variant_logical_file_name(feature_set, "zst"));
-    let compressed_br = dist.join(plugin_variant_logical_file_name(feature_set, "br"));
+    let optimized = dist.join(plugin_variant_uncompressed_file_name(feature_set, lane));
+    let compressed = dist.join(plugin_variant_logical_file_name(feature_set, lane, "zst"));
+    let compressed_br = dist.join(plugin_variant_logical_file_name(feature_set, lane, "br"));
     let mut wasm_opt = ctx.command("wasm-opt");
     wasm_opt
         .arg(feature_set.wasm_opt_level())
@@ -3665,14 +3699,20 @@ fn github_release_asset_url(repo: &str, tag: &str, asset: &str) -> String {
     format!("https://github.com/{repo}/releases/download/{tag}/{asset}")
 }
 
-fn official_plugin_github_mirror_urls(
+fn official_plugin_v3_distribution_base_url(plugin: &LocalPluginInfo) -> String {
+    plugin
+        .distribution_base_url
+        .replace("/plugins/", "/plugins-v3/")
+}
+
+fn official_plugin_v3_github_mirror_urls(
     plugin_id: &str,
     version: &str,
     asset_name: &str,
 ) -> Vec<String> {
     vec![github_release_asset_url(
         OFFICIAL_GITHUB_REPO,
-        &official_plugin_release_tag(plugin_id, version),
+        &official_plugin_v3_release_tag(plugin_id, version),
         asset_name,
     )]
 }
@@ -3682,6 +3722,10 @@ fn official_plugin_release_tag(plugin_id: &str, version: &str) -> String {
         "{}/{plugin_id}/v{version}",
         official_plugin_release_tag_prefix()
     )
+}
+
+fn official_plugin_v3_release_tag(plugin_id: &str, version: &str) -> String {
+    format!("plugins-v3/{plugin_id}/v{version}")
 }
 
 fn official_plugin_manifest_url(plugin_id: &str, version: &str) -> String {
@@ -3998,6 +4042,7 @@ fn run_official_release(ctx: &TaskContext, args: OfficialReleaseArgs) -> Result<
             version: args.version,
             out: args.out,
             existing_child_catalog: args.existing_child_catalog,
+            catalog_version: None,
         },
     )
 }
@@ -4024,7 +4069,35 @@ fn prepare_official_release(
         args.plugin_id
     ));
     let plugin = discover_local_official_plugin(ctx, &args.plugin_id)?;
-    let existing_releases = if plugin_publishes_catalog(&plugin, CatalogVersion::V2) {
+    let catalog_version = match args.catalog_version {
+        Some(version) => {
+            if !plugin.catalog_versions.contains(&version) {
+                bail!("{} does not publish catalog-{version:?}", plugin.plugin_id);
+            }
+            version
+        }
+        None => {
+            if plugin.catalog_versions.len() != 1 {
+                bail!(
+                    "{} publishes multiple catalog lanes; pass --catalog-version v2 or --catalog-version v3",
+                    plugin.plugin_id
+                );
+            }
+            *plugin
+                .catalog_versions
+                .iter()
+                .next()
+                .expect("catalog_versions should not be empty")
+        }
+    };
+    let lane = match catalog_version {
+        CatalogVersion::V2 => PluginArtifactLane::V2,
+        CatalogVersion::V3 => PluginArtifactLane::V3,
+    };
+    if catalog_version == CatalogVersion::V3 && args.existing_child_catalog.is_some() {
+        bail!("--existing-child-catalog is only valid for catalog-v2 preparation");
+    }
+    let existing_releases = if catalog_version == CatalogVersion::V2 {
         resolve_existing_child_catalog_releases(
             ctx,
             &plugin.plugin_id,
@@ -4036,12 +4109,32 @@ fn prepare_official_release(
     let dist = args
         .out
         .unwrap_or_else(|| default_child_catalog_dir(ctx, &plugin.plugin_id));
-    let primary_feature_set = primary_feature_set(&plugin.feature_sets).clone();
-    let variants = plugin
-        .feature_sets
+    let selected_feature_sets = if catalog_version == CatalogVersion::V2 {
+        vec![
+            plugin
+                .feature_sets
+                .iter()
+                .find(|feature_set| feature_set.is_baseline())
+                .cloned()
+                .ok_or_else(|| {
+                    anyhow!(
+                        "{} publishes catalog-v2 but does not define a baseline wasm variant",
+                        plugin.plugin_id
+                    )
+                })?,
+        ]
+    } else {
+        plugin.feature_sets.clone()
+    };
+    let primary_feature_set = if catalog_version == CatalogVersion::V2 {
+        WasmFeatureSet::baseline()
+    } else {
+        primary_feature_set(&plugin.feature_sets).clone()
+    };
+    let variants = selected_feature_sets
         .iter()
         .map(|feature_set| {
-            build_prepared_plugin_variant(ctx, &plugin.plugin_dir, &dist, feature_set)
+            build_prepared_plugin_variant(ctx, &plugin.plugin_dir, &dist, feature_set, lane)
         })
         .collect::<Result<Vec<_>>>()?;
     let descriptor_variant = variants
@@ -4054,7 +4147,7 @@ fn prepare_official_release(
     let baseline_variant = variants
         .iter()
         .find(|variant| variant.feature_set.is_baseline());
-    if plugin_publishes_catalog(&plugin, CatalogVersion::V2) && baseline_variant.is_none() {
+    if catalog_version == CatalogVersion::V2 && baseline_variant.is_none() {
         bail!(
             "{} publishes catalog-v2 but did not produce a baseline wasm variant",
             plugin.plugin_id
@@ -4076,7 +4169,7 @@ fn prepare_official_release(
             .expect("baseline variant zstd digest should be readable"),
         signature: "plugin.wasm.zst.bundle".to_string(),
     });
-    let manifest_json = if plugin_publishes_catalog(&plugin, CatalogVersion::V2) {
+    let manifest_json = if catalog_version == CatalogVersion::V2 {
         let manifest_path = dist.join("plugin.manifest.json");
         fs::write(
             &manifest_path,
@@ -4090,7 +4183,7 @@ fn prepare_official_release(
     } else {
         None
     };
-    let child_catalog = if plugin_publishes_catalog(&plugin, CatalogVersion::V2) {
+    let child_catalog = if catalog_version == CatalogVersion::V2 {
         Some(write_child_catalog_to_dir(
             ctx,
             &plugin,
@@ -4115,7 +4208,7 @@ fn prepare_official_release(
     } else {
         None
     };
-    let catalog_v3_snippet = if plugin_publishes_catalog(&plugin, CatalogVersion::V3) {
+    let catalog_v3_snippet = if catalog_version == CatalogVersion::V3 {
         let release = catalog_v3_release_from_prepared_assets(
             &plugin,
             &version,
@@ -4169,14 +4262,12 @@ fn run_official_prepare(ctx: &TaskContext, args: OfficialPrepareArgs) -> Result<
             "   Artifact : {}",
             variant.compressed_br.source_path.display()
         );
-        println!(
-            "   V3 Asset : {}",
-            variant.compressed_zst.staged_path.display()
-        );
-        println!(
-            "   V3 Asset : {}",
-            variant.compressed_br.staged_path.display()
-        );
+        if let Some(staged_path) = &variant.compressed_zst.staged_path {
+            println!("   V3 Asset : {}", staged_path.display());
+        }
+        if let Some(staged_path) = &variant.compressed_br.staged_path {
+            println!("   V3 Asset : {}", staged_path.display());
+        }
     }
     if let Some(manifest_json) = &prepared.manifest_json {
         println!("   Manifest : {}", manifest_json.display());
@@ -4331,6 +4422,22 @@ fn run_official_verify_prepared(ctx: &TaskContext, dir: &Path) -> Result<()> {
     }
 
     if has_v3_assets {
+        for legacy_asset in [
+            "plugin.wasm.zst",
+            "plugin.wasm.br",
+            "plugin.manifest.json",
+            CATALOG_PRETTY_JSON,
+            CATALOG_MINIFIED_JSON,
+            CATALOG_MINIFIED_ZST,
+        ] {
+            let path = dir.join(legacy_asset);
+            if path.is_file() {
+                bail!(
+                    "catalog-v3 prepared release must not contain legacy catalog-v2 asset {}",
+                    path.display()
+                );
+            }
+        }
         let snippet = read_catalog_v3_snippet_from_path(&catalog_v3_snippet)?;
         validate_catalog_v3_plugin_entry(&snippet)?;
         let expected_id;
@@ -4541,20 +4648,31 @@ fn build_prepared_plugin_variant(
     plugin_dir: &Path,
     dist: &Path,
     feature_set: &WasmFeatureSet,
+    lane: PluginArtifactLane,
 ) -> Result<PreparedPluginVariant> {
     let wasm = build_plugin_wasm(ctx, plugin_dir, feature_set)?;
     let (optimized, compressed_zst_source, compressed_br_source) =
-        optimize_and_compress_wasm(ctx, &wasm, dist, feature_set)?;
-    let (staged_zst, zst_digests) = stage_hashed_asset_copy(
-        &compressed_zst_source,
-        &plugin_variant_logical_file_name(feature_set, "zst"),
-        dist,
-    )?;
-    let (staged_br, br_digests) = stage_hashed_asset_copy(
-        &compressed_br_source,
-        &plugin_variant_logical_file_name(feature_set, "br"),
-        dist,
-    )?;
+        optimize_and_compress_wasm(ctx, &wasm, dist, feature_set, lane)?;
+    let (staged_zst, zst_digests) = if lane == PluginArtifactLane::V3 {
+        let (path, digests) = stage_hashed_asset_copy(
+            &compressed_zst_source,
+            &plugin_variant_logical_file_name(feature_set, lane, "zst"),
+            dist,
+        )?;
+        (Some(path), digests)
+    } else {
+        (None, file_digests(&compressed_zst_source)?)
+    };
+    let (staged_br, br_digests) = if lane == PluginArtifactLane::V3 {
+        let (path, digests) = stage_hashed_asset_copy(
+            &compressed_br_source,
+            &plugin_variant_logical_file_name(feature_set, lane, "br"),
+            dist,
+        )?;
+        (Some(path), digests)
+    } else {
+        (None, file_digests(&compressed_br_source)?)
+    };
 
     Ok(PreparedPluginVariant {
         feature_set: feature_set.clone(),
@@ -4598,28 +4716,33 @@ fn catalog_v3_release_from_prepared_assets(
     variants: &[PreparedPluginVariant],
 ) -> Result<CatalogV3Release> {
     let mut artifacts = Vec::new();
+    let distribution_base_url = official_plugin_v3_distribution_base_url(plugin);
     for variant in variants {
         for compressed_artifact in [&variant.compressed_zst, &variant.compressed_br] {
+            let staged_path = compressed_artifact.staged_path.as_ref().ok_or_else(|| {
+                anyhow!(
+                    "{} catalog-v3 release is missing staged v3 artifact for {}",
+                    plugin.plugin_id,
+                    compressed_artifact.source_path.display()
+                )
+            })?;
             let file_name = compressed_artifact
                 .staged_path
+                .as_ref()
+                .expect("staged_path should be present")
                 .file_name()
                 .and_then(|value| value.to_str())
-                .ok_or_else(|| {
-                    anyhow!(
-                        "invalid artifact path {}",
-                        compressed_artifact.staged_path.display()
-                    )
-                })?
+                .ok_or_else(|| anyhow!("invalid artifact path {}", staged_path.display()))?
                 .to_string();
             let primary_url =
-                versioned_distribution_url(&plugin.distribution_base_url, version, &file_name);
+                versioned_distribution_url(&distribution_base_url, version, &file_name);
             artifacts.push(catalog_v3_plugin_artifact_from_staged_file(
                 &variant.feature_set,
                 variant.wasm_digests.clone(),
                 variant.bytes,
                 compressed_artifact.digests.clone(),
                 primary_url,
-                official_plugin_github_mirror_urls(&plugin.plugin_id, version, &file_name),
+                official_plugin_v3_github_mirror_urls(&plugin.plugin_id, version, &file_name),
             )?);
         }
     }
@@ -4661,7 +4784,13 @@ fn catalog_v3_entry_from_current_plugin_build(
         .feature_sets
         .iter()
         .map(|feature_set| {
-            build_prepared_plugin_variant(ctx, &plugin.plugin_dir, dist, feature_set)
+            build_prepared_plugin_variant(
+                ctx,
+                &plugin.plugin_dir,
+                dist,
+                feature_set,
+                PluginArtifactLane::V3,
+            )
         })
         .collect::<Result<Vec<_>>>()?;
     let descriptor_variant = variants
@@ -5758,6 +5887,11 @@ fn validate_release_manifest(
     Ok(())
 }
 
+fn catalog_v3_url_uses_v3_lane(url: &str) -> bool {
+    let trimmed = url.trim();
+    trimmed.contains("/plugins-v3/") || trimmed.contains("/download/plugins-v3%2F")
+}
+
 fn validate_catalog_v3_plugin_entry(plugin: &CatalogV3PluginEntry) -> Result<()> {
     for (label, value) in [
         ("id", &plugin.id),
@@ -5854,6 +5988,19 @@ fn validate_catalog_v3_plugin_entry(plugin: &CatalogV3PluginEntry) -> Result<()>
                     release.version
                 );
             }
+            for (label, url) in [
+                ("artifact url", &artifact.url),
+                ("artifact signature_url", &artifact.signature_url),
+            ] {
+                if !catalog_v3_url_uses_v3_lane(url) {
+                    bail!(
+                        "{} {}: catalog-v3 {label} must use the plugins-v3 lane: {}",
+                        plugin.id,
+                        release.version,
+                        url
+                    );
+                }
+            }
             if artifact.digests.is_empty() {
                 bail!(
                     "{} {}: artifact digests are required",
@@ -5876,6 +6023,14 @@ fn validate_catalog_v3_plugin_entry(plugin: &CatalogV3PluginEntry) -> Result<()>
                         release.version
                     );
                 }
+                if !catalog_v3_url_uses_v3_lane(mirror_url) {
+                    bail!(
+                        "{} {}: catalog-v3 artifact mirror_url must use the plugins-v3 lane: {}",
+                        plugin.id,
+                        release.version,
+                        mirror_url
+                    );
+                }
             }
             for mirror_url in &artifact.signature_mirror_urls {
                 if mirror_url.trim().is_empty() {
@@ -5883,6 +6038,14 @@ fn validate_catalog_v3_plugin_entry(plugin: &CatalogV3PluginEntry) -> Result<()>
                         "{} {}: artifact signature_mirror_urls must not contain empty entries",
                         plugin.id,
                         release.version
+                    );
+                }
+                if !catalog_v3_url_uses_v3_lane(mirror_url) {
+                    bail!(
+                        "{} {}: catalog-v3 artifact signature_mirror_url must use the plugins-v3 lane: {}",
+                        plugin.id,
+                        release.version,
+                        mirror_url
                     );
                 }
             }
@@ -7266,11 +7429,14 @@ mod tests {
                             .to_string(),
                     ],
                     bytes: 1234,
-                    url: "https://example.invalid/email/plugin.wasm.zst".to_string(),
-                    mirror_urls: vec![],
-                    signature_url: "https://example.invalid/email/plugin.wasm.zst.bundle.zst"
-                        .to_string(),
-                    signature_mirror_urls: vec![],
+                    url: "https://cdn.scryer.media/scryer/plugins-v3/email/v0.1.0/plugin-v3.abc123.wasm.zst".to_string(),
+                    mirror_urls: vec![
+                        "https://github.com/scryer-media/scryer-plugins/releases/download/plugins-v3%2Femail%2Fv0.1.0/plugin-v3.abc123.wasm.zst".to_string(),
+                    ],
+                    signature_url: "https://cdn.scryer.media/scryer/plugins-v3/email/v0.1.0/plugin-v3.abc123.wasm.zst.bundle.zst".to_string(),
+                    signature_mirror_urls: vec![
+                        "https://github.com/scryer-media/scryer-plugins/releases/download/plugins-v3%2Femail%2Fv0.1.0/plugin-v3.abc123.wasm.zst.bundle.zst".to_string(),
+                    ],
                     digests: vec![
                         "blake3:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
                             .to_string(),
@@ -7300,9 +7466,88 @@ mod tests {
     }
 
     #[test]
+    fn plugin_artifact_lane_file_names_do_not_overlap() {
+        let baseline = WasmFeatureSet::baseline();
+        let simd = WasmFeatureSet::new(vec![
+            WasmRequiredFeature::Simd128,
+            WasmRequiredFeature::RelaxedSimd,
+        ]);
+
+        assert_eq!(
+            plugin_variant_logical_file_name(&baseline, PluginArtifactLane::V2, "zst"),
+            "plugin.wasm.zst"
+        );
+        assert_eq!(
+            plugin_variant_logical_file_name(&baseline, PluginArtifactLane::V3, "zst"),
+            "plugin-v3.wasm.zst"
+        );
+        assert_eq!(
+            plugin_variant_logical_file_name(&simd, PluginArtifactLane::V2, "br"),
+            "plugin-simd128-relaxed-simd.wasm.br"
+        );
+        assert_eq!(
+            plugin_variant_logical_file_name(&simd, PluginArtifactLane::V3, "br"),
+            "plugin-v3-simd128-relaxed-simd.wasm.br"
+        );
+    }
+
+    #[test]
+    fn catalog_v3_validation_rejects_v2_release_lane_urls() {
+        let mut entry = catalog_v3_plugin_entry(
+            &local_plugin(),
+            vec![CatalogV3Release {
+                version: "0.1.0".to_string(),
+                sdk_constraint: "^1.6.0".to_string(),
+                min_scryer_version: None,
+                artifacts: vec![CatalogV3PluginArtifact {
+                    runtime: WASM_TARGET.to_string(),
+                    required_features: Vec::new(),
+                    wasm_digests: vec![
+                        "blake3:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                            .to_string(),
+                    ],
+                    bytes: 1234,
+                    url: "https://cdn.scryer.media/scryer/plugins/email/v0.1.0/plugin.abc.wasm.zst"
+                        .to_string(),
+                    mirror_urls: vec![
+                        "https://github.com/scryer-media/scryer-plugins/releases/download/plugins%2Femail%2Fv0.1.0/plugin.abc.wasm.zst".to_string(),
+                    ],
+                    signature_url: "https://cdn.scryer.media/scryer/plugins/email/v0.1.0/plugin.abc.wasm.zst.bundle.zst"
+                        .to_string(),
+                    signature_mirror_urls: Vec::new(),
+                    digests: vec![
+                        "blake3:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+                            .to_string(),
+                    ],
+                }],
+            }],
+        );
+
+        let error = validate_catalog_v3_plugin_entry(&entry)
+            .expect_err("catalog-v3 should reject v2 lane URLs");
+        assert!(error.to_string().contains("plugins-v3 lane"));
+
+        entry.releases[0].artifacts[0].url =
+            "https://cdn.scryer.media/scryer/plugins-v3/email/v0.1.0/plugin-v3.abc.wasm.zst"
+                .to_string();
+        entry.releases[0].artifacts[0].signature_url =
+            "https://cdn.scryer.media/scryer/plugins-v3/email/v0.1.0/plugin-v3.abc.wasm.zst.bundle.zst"
+                .to_string();
+        entry.releases[0].artifacts[0].mirror_urls = vec![
+            "https://github.com/scryer-media/scryer-plugins/releases/download/plugins-v3%2Femail%2Fv0.1.0/plugin-v3.abc.wasm.zst".to_string(),
+        ];
+
+        validate_catalog_v3_plugin_entry(&entry).expect("catalog-v3 should accept v3 lane URLs");
+    }
+
+    #[test]
     fn release_tag_version_accepts_new_and_legacy_tag_families() {
         assert_eq!(
             release_tag_version("email", "plugins/email/v1.2.3"),
+            Some(Version::new(1, 2, 3))
+        );
+        assert_eq!(
+            release_tag_version("email", "plugins-v3/email/v1.2.3"),
             Some(Version::new(1, 2, 3))
         );
         assert_eq!(

@@ -323,7 +323,7 @@ jobs:
               --clobber; then
               cosign verify-blob \
                 --bundle "${existing_dir}/catalog-v2.min.json.zst.bundle" \
-                --certificate-identity-regexp "^https://github.com/${GITHUB_REPOSITORY}/\\.github/workflows/release-plugin\\.yml@refs/(tags|heads)/.*$" \
+                --certificate-identity-regexp "^https://github.com/${GITHUB_REPOSITORY}/\\.github/workflows/release-plugin(-v2-legacy)?\\.yml@refs/(tags|heads)/.*$" \
                 --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
                 "${existing_dir}/catalog-v2.min.json.zst"
               existing_args=(--existing-child-catalog "${existing_dir}/catalog-v2.min.json.zst")
@@ -331,9 +331,15 @@ jobs:
               echo "No existing child catalog found for ${plugin_id}; preparing first catalog."
             fi
 
+            catalog_version_args=()
+            if ./xtask/target/xtask-release/xtask official prepare --help | grep -q -- '--catalog-version'; then
+              catalog_version_args=(--catalog-version v2)
+            fi
+
             ./xtask/target/xtask-release/xtask official prepare "${plugin_id}" \
               --version "${version}" \
               --out "${prepared_dir}" \
+              "${catalog_version_args[@]}" \
               "${existing_args[@]}"
 
             ./xtask/target/xtask-release/xtask official verify-prepared "${prepared_dir}"
