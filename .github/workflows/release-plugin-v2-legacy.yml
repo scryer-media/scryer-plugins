@@ -22,6 +22,7 @@ env:
   RELEASE_PLUGIN_BUILD_SCCACHE_LANE: linux-wasm32-wasip1-plugin-release
   SCCACHE_VERSION: v0.10.0
   SCRYER_OFFICIAL_RELEASE_WORKFLOW_PATH: .github/workflows/release-plugin-v2-legacy.yml
+  SCRYER_PLUGIN_RELEASE_SOURCE_ROOT: ${{ github.workspace }}/release-source
 
 jobs:
   plan-release:
@@ -41,7 +42,13 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_ref || github.ref }}
+
+      - name: Checkout release source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.release_ref }}
+          path: release-source
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -96,10 +103,10 @@ jobs:
           set -euo pipefail
           RELEASE_SHA="${{ github.event_name == 'workflow_dispatch' && inputs.release_commit || '' }}"
           if [ -z "${RELEASE_SHA}" ]; then
-            RELEASE_SHA="$(git rev-parse HEAD)"
+            RELEASE_SHA="$(git -C "${SCRYER_PLUGIN_RELEASE_SOURCE_ROOT}" rev-parse HEAD)"
           fi
           mapfile -t plugin_tags < <(
-            git tag --points-at "${RELEASE_SHA}" \
+            git -C "${SCRYER_PLUGIN_RELEASE_SOURCE_ROOT}" tag --points-at "${RELEASE_SHA}" \
               | sort \
               | grep -E '^plugins/[^/]+/v.+$' \
               || true
@@ -201,7 +208,13 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_ref || github.ref }}
+
+      - name: Checkout release source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.release_ref }}
+          path: release-source
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -308,7 +321,7 @@ jobs:
             existing_dir="existing-child-catalog/${plugin_id}"
             existing_args=()
             previous_tag="$(
-              git tag --list "plugins/${plugin_id}/v*" --sort=-version:refname \
+              git -C "${SCRYER_PLUGIN_RELEASE_SOURCE_ROOT}" tag --list "plugins/${plugin_id}/v*" --sort=-version:refname \
                 | grep -v -Fx "${tag}" \
                 | head -n1 \
                 || true
@@ -364,7 +377,7 @@ jobs:
               gh release create "${tag}" \
                 --repo "${GITHUB_REPOSITORY}" \
                 --title "${plugin_id} ${version}" \
-                --target "$(git rev-parse HEAD)" \
+                --target "$(git -C "${SCRYER_PLUGIN_RELEASE_SOURCE_ROOT}" rev-parse HEAD)" \
                 --notes "Scryer plugin distribution assets."
             gh release upload "${tag}" \
               "${release_assets[@]}" \
@@ -420,7 +433,13 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_ref || github.ref }}
+
+      - name: Checkout release source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.release_ref }}
+          path: release-source
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -507,7 +526,7 @@ jobs:
             gh release create "catalog/v2" \
               --repo "${GITHUB_REPOSITORY}" \
               --title "Scryer plugin central catalog v2" \
-              --target "$(git rev-parse HEAD)" \
+              --target "$(git -C "${SCRYER_PLUGIN_RELEASE_SOURCE_ROOT}" rev-parse HEAD)" \
               --notes "Scryer plugin central catalog assets."
           gh release upload "catalog/v2" \
             "dist/catalog-v2/catalog-v2.json" \

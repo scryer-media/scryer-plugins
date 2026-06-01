@@ -47,6 +47,7 @@ const DEFAULT_OFFICIAL_RELEASE_WORKFLOW: &str = ".github/workflows/release-plugi
 const OFFICIAL_RELEASE_WORKFLOW_ENV: &str = "SCRYER_OFFICIAL_RELEASE_WORKFLOW_PATH";
 const OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX_ENV: &str = "SCRYER_OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX";
 const DEFAULT_OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX: &str = "plugins";
+const RELEASE_SOURCE_ROOT_ENV: &str = "SCRYER_PLUGIN_RELEASE_SOURCE_ROOT";
 const SDK_LOCAL_OVERRIDE_ENV: &str = "SCRYER_PLUGIN_SDK_LOCAL_PATH";
 const CENTRAL_CATALOG_RELEASE_TAG: &str = "catalog/v2";
 const DEFAULT_CENTRAL_CATALOG_V3_RELEASE_TAG: &str = "catalog/v3";
@@ -141,6 +142,12 @@ struct RustupToolchain {
 }
 
 fn repo_root() -> PathBuf {
+    if let Ok(path) = env::var(RELEASE_SOURCE_ROOT_ENV) {
+        let trimmed = path.trim();
+        if !trimmed.is_empty() {
+            return PathBuf::from(trimmed);
+        }
+    }
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .expect("xtask has a repo root parent")
@@ -1798,24 +1805,6 @@ fn plugin_manifest_metadata(manifest_path: &Path) -> Result<PluginManifestMetada
                 manifest_path.display()
             );
         }
-        if docs_url.is_none() {
-            bail!(
-                "{} must define a non-empty package.metadata.scryer.docs_url for official plugins",
-                manifest_path.display()
-            );
-        }
-        if source_repo.is_none() {
-            bail!(
-                "{} must define a non-empty package.metadata.scryer.source_repo for official plugins",
-                manifest_path.display()
-            );
-        }
-        if distribution_base_url.is_none() {
-            bail!(
-                "{} must define a non-empty package.metadata.scryer.distribution_base_url for official plugins",
-                manifest_path.display()
-            );
-        }
         if catalog_versions.contains(&CatalogVersion::V2)
             && !feature_sets_include_baseline(&feature_sets)
         {
@@ -1939,38 +1928,31 @@ fn discover_local_plugin(ctx: &TaskContext, plugin_dir: &Path) -> Result<LocalPl
     let current_version = version_from_manifest(&cargo_toml)?;
     let manifest_metadata = plugin_manifest_metadata(&cargo_toml)?;
     let description = manifest_metadata.description.clone();
-    let docs_url = manifest_metadata.docs_url.clone().ok_or_else(|| {
-        anyhow!(
-            "{} is missing package.metadata.scryer.docs_url",
-            cargo_toml.display()
-        )
-    })?;
-    let source_repo = manifest_metadata.source_repo.clone().ok_or_else(|| {
-        anyhow!(
-            "{} is missing package.metadata.scryer.source_repo",
-            cargo_toml.display()
-        )
-    })?;
-    let distribution_base_url =
-        manifest_metadata
-            .distribution_base_url
-            .clone()
-            .ok_or_else(|| {
-                anyhow!(
-                    "{} is missing package.metadata.scryer.distribution_base_url",
-                    cargo_toml.display()
-                )
-            })?;
-    let descriptor_feature_set = primary_feature_set(&manifest_metadata.feature_sets);
-    let wasm = build_plugin_wasm(ctx, plugin_dir, descriptor_feature_set)?;
-    let descriptor = load_descriptor_from_wasm(&wasm)?;
-    validate_descriptor_contract(&descriptor)?;
     let manifest_plugin_id = manifest_metadata.plugin_id.as_deref().ok_or_else(|| {
         anyhow!(
             "{} is missing package.metadata.scryer.plugin_id",
             cargo_toml.display()
         )
     })?;
+    let plugin_repo_path = path_relative_to_repo(ctx, plugin_dir)?;
+    let default_repo_url =
+        format!("https://github.com/scryer-media/scryer-plugins/tree/main/{plugin_repo_path}");
+    let docs_url = manifest_metadata
+        .docs_url
+        .clone()
+        .unwrap_or_else(|| default_repo_url.clone());
+    let source_repo = manifest_metadata
+        .source_repo
+        .clone()
+        .unwrap_or(default_repo_url);
+    let distribution_base_url = manifest_metadata
+        .distribution_base_url
+        .clone()
+        .unwrap_or_else(|| format!("{}/plugins/{manifest_plugin_id}", public_catalog_base_url()));
+    let descriptor_feature_set = primary_feature_set(&manifest_metadata.feature_sets);
+    let wasm = build_plugin_wasm(ctx, plugin_dir, descriptor_feature_set)?;
+    let descriptor = load_descriptor_from_wasm(&wasm)?;
+    validate_descriptor_contract(&descriptor)?;
     if descriptor.id != manifest_plugin_id {
         bail!(
             "{} package.metadata.scryer.plugin_id '{}' does not match descriptor id '{}'",
