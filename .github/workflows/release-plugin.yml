@@ -575,14 +575,10 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          mapfile -t plugin_ids < <(cut -f1 release-plan.tsv | sort -u)
           prepare_v3_args=(
             --out dist/catalog-v3
             --prepared-plugin-root prepared-plugins
           )
-          for plugin_id in "${plugin_ids[@]}"; do
-            prepare_v3_args+=(--plugin-id "${plugin_id}")
-          done
           ./xtask/target/xtask-release/xtask catalog prepare-v3 "${prepare_v3_args[@]}"
           for asset in catalog-v3.min.json.zst; do
             cosign sign-blob \
