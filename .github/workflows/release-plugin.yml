@@ -546,12 +546,20 @@ jobs:
               "dist/catalog-v2/${asset}"
           done
 
-          gh release view "catalog/v2" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 || \
-            gh release create "catalog/v2" \
-              --repo "${GITHUB_REPOSITORY}" \
-              --title "Scryer plugin central catalog v2" \
-              --target "$(git -C "${SCRYER_PLUGIN_RELEASE_SOURCE_ROOT}" rev-parse HEAD)" \
-              --notes "Scryer plugin central catalog assets."
+          if ! gh release view "catalog/v2" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            if git ls-remote --exit-code --tags origin "catalog/v2" >/dev/null 2>&1; then
+              gh release create "catalog/v2" \
+                --repo "${GITHUB_REPOSITORY}" \
+                --title "Scryer plugin central catalog v2" \
+                --notes "Scryer plugin central catalog assets."
+            else
+              gh release create "catalog/v2" \
+                --repo "${GITHUB_REPOSITORY}" \
+                --title "Scryer plugin central catalog v2" \
+                --target "$(git -C "${SCRYER_PLUGIN_RELEASE_SOURCE_ROOT}" rev-parse HEAD)" \
+                --notes "Scryer plugin central catalog assets."
+            fi
+          fi
           gh release upload "catalog/v2" \
             "dist/catalog-v2/catalog-v2.json" \
             "dist/catalog-v2/catalog-v2.json.bundle" \
