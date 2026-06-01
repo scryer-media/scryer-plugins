@@ -6127,7 +6127,11 @@ fn validate_official_catalog(catalog: &CatalogV2) -> Result<()> {
             );
         }
         let expected_workflow = official_release_workflow();
-        if plugin.required_signer.github_workflow.as_deref() != Some(expected_workflow.as_str()) {
+        let default_workflow = DEFAULT_OFFICIAL_RELEASE_WORKFLOW;
+        let signer_workflow = plugin.required_signer.github_workflow.as_deref();
+        if signer_workflow != Some(expected_workflow.as_str())
+            && signer_workflow != Some(default_workflow)
+        {
             bail!(
                 "{}: required_signer.github_workflow must be {}",
                 plugin.id,
