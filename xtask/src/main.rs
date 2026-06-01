@@ -5029,6 +5029,11 @@ fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Resu
         Some(path) => Some(read_catalog_v3_from_path(ctx, path)?),
         None => None,
     };
+    if !args.plugin_ids.is_empty() && existing_catalog.is_none() {
+        bail!(
+            "catalog prepare-v3 with --plugin-id requires --existing-catalog; use no --plugin-id for an intentional full catalog rebuild"
+        );
+    }
     if args.prepared_plugin_root.is_none() {
         ensure_current_sdk_dependency_is_published(ctx)?;
     }

@@ -18,6 +18,11 @@ on:
         description: "Whitespace or comma separated plugin ids to publish from current manifests"
         required: false
         type: string
+      rebuild_catalog_v3:
+        description: "Rebuild the full catalog-v3 from current manifests instead of merging with the published catalog"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -575,10 +580,47 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
+          rebuild_catalog_v3="${{ github.event_name == 'workflow_dispatch' && inputs.rebuild_catalog_v3 || 'false' }}"
+          mapfile -t plugin_ids < <(cut -f1 release-plan.tsv | sort -u)
           prepare_v3_args=(
             --out dist/catalog-v3
             --prepared-plugin-root prepared-plugins
           )
+          if [ "${rebuild_catalog_v3}" = "true" ]; then
+            echo "Rebuilding full catalog-v3 from current manifests"
+          else
+            existing_dir="existing-central-catalog-v3"
+            mkdir -p "${existing_dir}"
+            gh release download "catalog/v3" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --pattern catalog-v3.redirect.json \
+              --pattern catalog-v3.redirect.bundle.json \
+              --dir "${existing_dir}" \
+              --clobber
+            identity_regexp="^https://github.com/${GITHUB_REPOSITORY}/\\.github/workflows/release-plugin\\.yml@refs/(tags|heads)/.*$"
+            cosign verify-blob \
+              --bundle "${existing_dir}/catalog-v3.redirect.bundle.json" \
+              --certificate-identity-regexp "${identity_regexp}" \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+              "${existing_dir}/catalog-v3.redirect.json"
+            catalog_asset="$(python3 -c 'import json, sys; from pathlib import Path; redirect = json.loads(Path("existing-central-catalog-v3/catalog-v3.redirect.json").read_text()); artifacts = redirect.get("artifacts") or []; sys.exit("catalog-v3 redirect does not contain any artifacts") if not artifacts else None; print(artifacts[0]["url"].rsplit("/", 1)[-1])')"
+            gh release download "catalog/v3" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --pattern "${catalog_asset}" \
+              --pattern "${catalog_asset}.bundle.zst" \
+              --dir "${existing_dir}" \
+              --clobber
+            zstd -dc "${existing_dir}/${catalog_asset}.bundle.zst" > "${existing_dir}/${catalog_asset}.bundle"
+            cosign verify-blob \
+              --bundle "${existing_dir}/${catalog_asset}.bundle" \
+              --certificate-identity-regexp "${identity_regexp}" \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+              "${existing_dir}/${catalog_asset}"
+            prepare_v3_args+=(--existing-catalog "${existing_dir}/${catalog_asset}")
+            for plugin_id in "${plugin_ids[@]}"; do
+              prepare_v3_args+=(--plugin-id "${plugin_id}")
+            done
+          fi
           ./xtask/target/xtask-release/xtask catalog prepare-v3 "${prepare_v3_args[@]}"
           for asset in catalog-v3.min.json.zst; do
             cosign sign-blob \
@@ -622,30 +664,6 @@ jobs:
               "dist/catalog-v3/${asset_name}.bundle.zst"
             )
           done < dist/catalog-v3/v3-central-assets.txt
-          keep_assets=()
-          for asset_path in "${central_release_assets[@]}"; do
-            keep_assets+=("$(basename "${asset_path}")")
-          done
-          mapfile -t existing_assets < <(
-            gh release view "catalog/v3" \
-              --repo "${GITHUB_REPOSITORY}" \
-              --json assets \
-              --jq '.assets[].name'
-          )
-          for existing_asset in "${existing_assets[@]}"; do
-            keep_asset=false
-            for asset_name in "${keep_assets[@]}"; do
-              if [ "${existing_asset}" = "${asset_name}" ]; then
-                keep_asset=true
-                break
-              fi
-            done
-            if [ "${keep_asset}" = false ]; then
-              gh release delete-asset "catalog/v3" "${existing_asset}" \
-                --repo "${GITHUB_REPOSITORY}" \
-                --yes
-            fi
-          done
           gh release upload "catalog/v3" \
             "${central_release_assets[@]}" \
             --repo "${GITHUB_REPOSITORY}" \
