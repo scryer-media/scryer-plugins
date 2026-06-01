@@ -227,8 +227,11 @@ jobs:
 
       - name: Install release tools
         run: |
+          set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y awscli binaryen zstd
+          sudo apt-get install -y binaryen python3-pip zstd
+          python3 -m pip install --user awscli
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - uses: taiki-e/install-action@v2
         with:
@@ -421,8 +424,11 @@ jobs:
 
       - name: Install central publish tools
         run: |
+          set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y awscli zstd
+          sudo apt-get install -y python3-pip zstd
+          python3 -m pip install --user awscli
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Download xtask artifact
         uses: actions/download-artifact@v8
