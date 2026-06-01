@@ -471,6 +471,12 @@ jobs:
             ./xtask/target/xtask-release/xtask official verify-prepared "prepared-child-catalogs/${plugin_id}"
           done < release-plan.tsv
 
+      - name: Prefetch catalog plugin dependencies
+        run: |
+          set -euo pipefail
+          mapfile -t plugin_ids < <(cut -f1 release-plan.tsv | sort -u)
+          ./xtask/target/xtask-release/xtask official prefetch "${plugin_ids[@]}"
+
       - name: Prepare sign and publish central catalog
         run: |
           set -euo pipefail
