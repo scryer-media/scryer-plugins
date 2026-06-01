@@ -1,6 +1,6 @@
 [package]
 name = "jimaku-subtitle-provider"
-version = "0.1.11"
+version = "0.2.0"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Anime-focused Jimaku subtitle provider using AniList IDs and optional name fallback"
@@ -8,7 +8,7 @@ description = "Anime-focused Jimaku subtitle provider using AniList IDs and opti
 [package.metadata.scryer]
 official = true
 plugin_id = "jimaku"
-catalog_versions = ["v2"]
+catalog_versions = ["v3"]
 feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/jimaku"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/jimaku"
@@ -20,7 +20,7 @@ crate-type = ["cdylib"]
 [dependencies]
 base64 = "0.22"
 extism-pdk = "1.4"
-scryer-plugin-sdk = "1.6.0"
+scryer-plugin-sdk = "2.2.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
