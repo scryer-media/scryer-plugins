@@ -5069,6 +5069,7 @@ fn run_catalog_render_v3(ctx: &TaskContext) -> Result<()> {
 }
 
 fn run_catalog_prepare_v2(ctx: &TaskContext, args: CatalogPrepareV2Args) -> Result<()> {
+    let mut preserved_rule_packs = None;
     let plugins = if args.plugin_ids.is_empty() {
         step("Preparing catalog-v2 assets from local official plugin descriptors");
         discover_local_plugins(ctx)?
@@ -5111,23 +5112,31 @@ fn run_catalog_prepare_v2(ctx: &TaskContext, args: CatalogPrepareV2Args) -> Resu
             Some(path) => read_catalog_v2_from_path(ctx, path)?,
             None => read_published_official_catalog(ctx)?,
         };
+        preserved_rule_packs = Some(base_catalog.rule_packs.clone());
         merge_catalog_plugin_entries(base_catalog.plugins, updates)
     };
-    let rule_packs = load_rule_pack_catalog_entries(ctx)?;
+    let local_rule_packs = if preserved_rule_packs.is_some() {
+        Vec::new()
+    } else {
+        load_rule_pack_catalog_entries(ctx)?
+    };
+    let rule_packs = preserved_rule_packs.unwrap_or_else(|| {
+        local_rule_packs
+            .iter()
+            .map(|rule_pack| rule_pack.entry.clone())
+            .collect()
+    });
     let catalog = CatalogV2 {
         schema_version: CATALOG_V2_SCHEMA.to_string(),
         plugins,
-        rule_packs: rule_packs
-            .iter()
-            .map(|rule_pack| rule_pack.entry.clone())
-            .collect(),
+        rule_packs,
     };
     validate_official_catalog(&catalog)?;
     let dist = args
         .out
         .unwrap_or_else(|| ctx.repo_root.join("dist").join("catalog-v2"));
     let central_paths = write_catalog_assets(ctx, &catalog, &dist)?;
-    stage_rule_pack_assets(&rule_packs, &dist)?;
+    stage_rule_pack_assets(&local_rule_packs, &dist)?;
     ok(format!("wrote {}", central_paths.pretty_json.display()));
     ok(format!("wrote {}", central_paths.minified_zst.display()));
     Ok(())
