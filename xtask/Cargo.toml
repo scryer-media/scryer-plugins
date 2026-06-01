@@ -22,9 +22,6 @@ toml_edit = "0.22"
 extism = "1.13"
 zstd = "0.13"
 
-[patch.crates-io]
-scryer-plugin-sdk = { path = "../../scryer/crates/scryer-plugin-sdk" }
-
 [profile.xtask-release]
 inherits = "release"
 codegen-units = 64

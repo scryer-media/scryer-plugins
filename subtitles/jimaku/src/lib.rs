@@ -38,6 +38,28 @@ struct JimakuEntry {
     flags: JimakuEntryFlags,
 }
 
+#[derive(Debug, Clone)]
+struct JimakuMatchedEntry {
+    entry: JimakuEntry,
+    match_kind: JimakuEntryMatchKind,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum JimakuEntryMatchKind {
+    ExternalId,
+    NameSearch,
+}
+
+impl JimakuEntryMatchKind {
+    fn trusts_title_and_episode(self) -> bool {
+        matches!(self, Self::ExternalId)
+    }
+
+    fn outranks(self, other: Self) -> bool {
+        matches!((self, other), (Self::ExternalId, Self::NameSearch))
+    }
+}
+
 #[derive(Debug, Clone, Default, Deserialize)]
 struct JimakuEntryFlags {
     #[serde(default)]
@@ -190,8 +212,13 @@ fn search_subtitles_impl(
 ) -> Result<Vec<SubtitlePluginCandidate>, String> {
     let entries = search_entries(config, request)?;
     let mut results = Vec::new();
-    for entry in entries.into_iter().take(MAX_SEARCH_ENTRY_CANDIDATES) {
-        let mut entry_results = search_entry_subtitles(config, request, entry)?;
+    for matched_entry in entries.into_iter().take(MAX_SEARCH_ENTRY_CANDIDATES) {
+        let mut entry_results = search_entry_subtitles(
+            config,
+            request,
+            matched_entry.entry,
+            matched_entry.match_kind,
+        )?;
         results.append(&mut entry_results);
     }
 
@@ -202,12 +229,17 @@ fn search_entry_subtitles(
     config: &JimakuConfig,
     request: &SubtitlePluginSearchRequest,
     entry: JimakuEntry,
+    match_kind: JimakuEntryMatchKind,
 ) -> Result<Vec<SubtitlePluginCandidate>, String> {
     let files = if request.media_kind == SubtitleQueryMediaKind::Episode && !entry.flags.movie {
         if let Some(episode) = request.episode.or(request.absolute_episode) {
             let files = entry_files(config, entry.id, Some(episode))?;
             if files.is_empty() {
-                entry_files(config, entry.id, None)?
+                if match_kind.trusts_title_and_episode() {
+                    entry_files(config, entry.id, None)?
+                } else {
+                    files
+                }
             } else {
                 files
             }
@@ -237,28 +269,7 @@ fn search_entry_subtitles(
         })
         .map_err(|error| format!("failed to encode Jimaku download ref: {error}"))?;
 
-        let mut match_hints = vec![
-            SubtitleMatchHint {
-                kind: SubtitleMatchHintKind::Title,
-                value: None,
-            },
-            SubtitleMatchHint {
-                kind: SubtitleMatchHintKind::Language,
-                value: Some(language.clone()),
-            },
-        ];
-        if request.media_kind == SubtitleQueryMediaKind::Episode && request.episode.is_some() {
-            match_hints.push(SubtitleMatchHint {
-                kind: SubtitleMatchHintKind::SeasonEpisode,
-                value: None,
-            });
-        }
-        if let Some(anilist_id) = entry.anilist_id {
-            match_hints.push(SubtitleMatchHint {
-                kind: SubtitleMatchHintKind::ExternalId,
-                value: Some(format!("anilist:{anilist_id}")),
-            });
-        }
+        let match_hints = build_match_hints(request, &entry, match_kind, &language);
 
         let ai_translated = looks_like_ai_subtitle(&file.name);
         results.push(SubtitlePluginCandidate {
@@ -278,10 +289,42 @@ fn search_entry_subtitles(
     Ok(results)
 }
 
+fn build_match_hints(
+    request: &SubtitlePluginSearchRequest,
+    entry: &JimakuEntry,
+    match_kind: JimakuEntryMatchKind,
+    language: &str,
+) -> Vec<SubtitleMatchHint> {
+    let mut match_hints = Vec::new();
+    if match_kind.trusts_title_and_episode() {
+        match_hints.push(SubtitleMatchHint {
+            kind: SubtitleMatchHintKind::Title,
+            value: None,
+        });
+        if request.media_kind == SubtitleQueryMediaKind::Episode && request.episode.is_some() {
+            match_hints.push(SubtitleMatchHint {
+                kind: SubtitleMatchHintKind::SeasonEpisode,
+                value: None,
+            });
+        }
+    }
+    match_hints.push(SubtitleMatchHint {
+        kind: SubtitleMatchHintKind::Language,
+        value: Some(language.to_string()),
+    });
+    if let Some(anilist_id) = entry.anilist_id {
+        match_hints.push(SubtitleMatchHint {
+            kind: SubtitleMatchHintKind::ExternalId,
+            value: Some(format!("anilist:{anilist_id}")),
+        });
+    }
+    match_hints
+}
+
 fn search_entries(
     config: &JimakuConfig,
     request: &SubtitlePluginSearchRequest,
-) -> Result<Vec<JimakuEntry>, String> {
+) -> Result<Vec<JimakuMatchedEntry>, String> {
     let mut entries = Vec::new();
     let mut seen_ids = HashSet::<i64>::new();
 
@@ -291,18 +334,22 @@ fn search_entries(
 
     if !should_prefer_season_name_search {
         append_anilist_entries(config, request, &mut entries, &mut seen_ids)?;
+        if !entries.is_empty() {
+            return Ok(entries);
+        }
     }
 
     if should_attempt_name_search(config, request) {
         let queries = search_query_candidates(request);
+        let anime_filter = search_query_anime_filter(request);
         for query in &queries {
-            append_search_query_entries(config, query, None, &mut entries, &mut seen_ids)?;
+            append_search_query_entries(config, query, anime_filter, &mut entries, &mut seen_ids)?;
             if entries.len() >= MAX_SEARCH_ENTRY_CANDIDATES {
                 return Ok(entries);
             }
         }
 
-        if entries.is_empty() {
+        if entries.is_empty() && anime_filter.is_none() {
             for query in &queries {
                 append_search_query_entries(
                     config,
@@ -335,7 +382,7 @@ fn should_attempt_name_search(
 fn append_anilist_entries(
     config: &JimakuConfig,
     request: &SubtitlePluginSearchRequest,
-    entries: &mut Vec<JimakuEntry>,
+    entries: &mut Vec<JimakuMatchedEntry>,
     seen_ids: &mut HashSet<i64>,
 ) -> Result<(), String> {
     for id in request
@@ -346,7 +393,12 @@ fn append_anilist_entries(
         .filter(|id| !id.trim().is_empty())
     {
         let path = format!("entries/search?anilist_id={}", url_encode(id.trim()));
-        append_entries(jimaku_get_json(config, &path)?, entries, seen_ids);
+        append_entries(
+            jimaku_get_json(config, &path)?,
+            JimakuEntryMatchKind::ExternalId,
+            entries,
+            seen_ids,
+        );
         if entries.len() >= MAX_SEARCH_ENTRY_CANDIDATES {
             break;
         }
@@ -358,7 +410,7 @@ fn append_search_query_entries(
     config: &JimakuConfig,
     query: &str,
     anime: Option<bool>,
-    entries: &mut Vec<JimakuEntry>,
+    entries: &mut Vec<JimakuMatchedEntry>,
     seen_ids: &mut HashSet<i64>,
 ) -> Result<(), String> {
     let path = match anime {
@@ -368,20 +420,36 @@ fn append_search_query_entries(
         ),
         None => format!("entries/search?query={}", url_encode(query.trim())),
     };
-    append_entries(jimaku_get_json(config, &path)?, entries, seen_ids);
+    append_entries(
+        jimaku_get_json(config, &path)?,
+        JimakuEntryMatchKind::NameSearch,
+        entries,
+        seen_ids,
+    );
     Ok(())
 }
 
 fn append_entries(
     found: Vec<JimakuEntry>,
-    entries: &mut Vec<JimakuEntry>,
+    match_kind: JimakuEntryMatchKind,
+    entries: &mut Vec<JimakuMatchedEntry>,
     seen_ids: &mut HashSet<i64>,
 ) {
     for entry in found {
         if seen_ids.insert(entry.id) {
-            entries.push(entry);
+            entries.push(JimakuMatchedEntry { entry, match_kind });
+        } else if let Some(existing) = entries
+            .iter_mut()
+            .find(|matched| matched.entry.id == entry.id)
+            .filter(|matched| match_kind.outranks(matched.match_kind))
+        {
+            existing.match_kind = match_kind;
         }
     }
+}
+
+fn search_query_anime_filter(request: &SubtitlePluginSearchRequest) -> Option<bool> {
+    (request.facet.as_deref() == Some("anime")).then_some(true)
 }
 
 fn search_query_candidates(request: &SubtitlePluginSearchRequest) -> Vec<String> {
@@ -624,13 +692,29 @@ fn detect_language(filename: &str, requested: &[String]) -> String {
         || lower.contains(".ja[")
         || lower.contains(".jp.")
         || lower.contains(".jp[")
+        || lower.contains(".jpn.")
+        || lower.contains(".jpn[")
         || lower.contains("ja-jp")
         || lower.contains("[ja]")
         || lower.contains("[jp]")
+        || lower.contains("[jpn]")
+        || lower.contains("jpn]")
+        || lower.contains("jpn,")
         || lower.contains("japanese")
         || lower.contains("jpsc")
     {
         "jpn".to_string()
+    } else if lower.contains("[chs")
+        || lower.contains("chs]")
+        || lower.contains("chs,")
+        || lower.contains("[cht")
+        || lower.contains("cht]")
+        || lower.contains("cht,")
+        || lower.contains(".zh.")
+        || lower.contains("[zh")
+        || lower.contains("chinese")
+    {
+        "zho".to_string()
     } else if let Some(language) = requested_single_language(requested) {
         language
     } else {
@@ -795,6 +879,102 @@ mod tests {
         );
 
         assert_eq!(language, "jpn");
+    }
+
+    #[test]
+    fn jpn_marker_wins_over_requested_english() {
+        let language = detect_language(
+            "[VCB-Studio&Ylbud-Sub]Recently, my sister is unusual.[10][Hi10p_1080p][x264_flac][CHS, JPN].ass",
+            &["eng".to_string()],
+        );
+
+        assert_eq!(language, "jpn");
+    }
+
+    #[test]
+    fn chinese_marker_does_not_default_to_requested_english() {
+        let language = detect_language(
+            "[VCB-Studio&Ylbud-Sub]Recently, my sister is unusual.[10][Hi10p_1080p][x264_flac][CHS].ass",
+            &["eng".to_string()],
+        );
+
+        assert_eq!(language, "zho");
+    }
+
+    #[test]
+    fn name_search_entries_do_not_claim_title_or_episode_matches() {
+        let request = episode_request();
+        let entry = JimakuEntry {
+            id: 42,
+            anilist_id: Some(123),
+            flags: JimakuEntryFlags::default(),
+        };
+
+        let hints = build_match_hints(&request, &entry, JimakuEntryMatchKind::NameSearch, "eng");
+
+        assert!(!has_hint_kind(&hints, SubtitleMatchHintKind::Title));
+        assert!(!has_hint_kind(&hints, SubtitleMatchHintKind::SeasonEpisode));
+        assert!(has_hint_kind(&hints, SubtitleMatchHintKind::Language));
+        assert!(has_hint_kind(&hints, SubtitleMatchHintKind::ExternalId));
+    }
+
+    #[test]
+    fn external_id_entries_can_claim_title_and_episode_matches() {
+        let request = episode_request();
+        let entry = JimakuEntry {
+            id: 42,
+            anilist_id: Some(123),
+            flags: JimakuEntryFlags::default(),
+        };
+
+        let hints = build_match_hints(&request, &entry, JimakuEntryMatchKind::ExternalId, "eng");
+
+        assert!(has_hint_kind(&hints, SubtitleMatchHintKind::Title));
+        assert!(has_hint_kind(&hints, SubtitleMatchHintKind::SeasonEpisode));
+        assert!(has_hint_kind(&hints, SubtitleMatchHintKind::Language));
+        assert!(has_hint_kind(&hints, SubtitleMatchHintKind::ExternalId));
+    }
+
+    #[test]
+    fn anime_name_search_uses_anime_filter() {
+        let mut request = episode_request();
+        assert_eq!(search_query_anime_filter(&request), Some(true));
+
+        request.facet = None;
+        assert_eq!(search_query_anime_filter(&request), None);
+    }
+
+    #[test]
+    fn external_id_match_upgrades_name_search_entry() {
+        let entry = JimakuEntry {
+            id: 42,
+            anilist_id: Some(123),
+            flags: JimakuEntryFlags::default(),
+        };
+        let mut entries = Vec::new();
+        let mut seen_ids = HashSet::new();
+
+        append_entries(
+            vec![entry.clone()],
+            JimakuEntryMatchKind::NameSearch,
+            &mut entries,
+            &mut seen_ids,
+        );
+        append_entries(
+            vec![entry],
+            JimakuEntryMatchKind::ExternalId,
+            &mut entries,
+            &mut seen_ids,
+        );
+
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].match_kind, JimakuEntryMatchKind::ExternalId);
+    }
+
+    fn has_hint_kind(hints: &[SubtitleMatchHint], kind: SubtitleMatchHintKind) -> bool {
+        hints
+            .iter()
+            .any(|hint| std::mem::discriminant(&hint.kind) == std::mem::discriminant(&kind))
     }
 
     #[test]
