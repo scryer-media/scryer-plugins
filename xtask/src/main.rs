@@ -4038,7 +4038,15 @@ fn resolve_existing_child_catalog_releases(
         return read_child_catalog_releases_from_path(ctx, path);
     }
 
-    read_published_child_catalog_releases(ctx, plugin_id)
+    match read_published_child_catalog_releases(ctx, plugin_id) {
+        Ok(releases) => Ok(releases),
+        Err(error) => {
+            warn(format!(
+                "published catalog-v2 was unavailable; preparing {plugin_id} without prior child catalog releases: {error:#}"
+            ));
+            Ok(Vec::new())
+        }
+    }
 }
 
 fn prepare_official_release(
@@ -5110,7 +5118,20 @@ fn run_catalog_prepare_v2(ctx: &TaskContext, args: CatalogPrepareV2Args) -> Resu
         }
         let base_catalog = match args.existing_catalog.as_deref() {
             Some(path) => read_catalog_v2_from_path(ctx, path)?,
-            None => read_published_official_catalog(ctx)?,
+            None => match read_published_official_catalog(ctx) {
+                Ok(catalog) => catalog,
+                Err(error) if args.prepared_child_catalog_root.is_some() => {
+                    warn(format!(
+                        "published catalog-v2 was unavailable; rebuilding selected catalog entries from prepared child catalogs: {error:#}"
+                    ));
+                    CatalogV2 {
+                        schema_version: CATALOG_V2_SCHEMA.to_string(),
+                        plugins: Vec::new(),
+                        rule_packs: Vec::new(),
+                    }
+                }
+                Err(error) => return Err(error),
+            },
         };
         preserved_rule_packs = Some(base_catalog.rule_packs.clone());
         merge_catalog_plugin_entries(base_catalog.plugins, updates)
