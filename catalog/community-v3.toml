@@ -1,0 +1,10 @@
+# Approved verified-community catalog v3 delegates.
+#
+# Add one [[plugins]] entry per approved community plugin:
+#
+# [[plugins]]
+# id = "example-plugin"
+# github_repository = "owner/repo"
+# support_tier = "verified_community"
+
+plugins = []

@@ -56,6 +56,7 @@ const DEFAULT_CENTRAL_CATALOG_V3_PATH_PREFIX: &str = "catalog/v3";
 const CENTRAL_CATALOG_V3_PATH_PREFIX_ENV: &str = "SCRYER_CATALOG_V3_PATH_PREFIX";
 const CATALOG_V2_BASE_SDK_VERSION: &str = "1.5.0";
 const RULE_PACK_SOURCE_MANIFEST: &str = "rule_packs/manifest.json";
+const COMMUNITY_CATALOG_V3_MANIFEST: &str = "catalog/community-v3.toml";
 const REPO_RELEASE_TAG_PREFIX: &str = "plugins/release/";
 const CATALOG_PRETTY_JSON: &str = "catalog-v2.json";
 const CATALOG_MINIFIED_JSON: &str = "catalog-v2.min.json";
@@ -952,8 +953,17 @@ struct CatalogV3 {
     #[serde(default)]
     catalog_version: u64,
     plugins: Vec<CatalogV3PluginEntry>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    community_sources: Vec<CatalogV3CommunitySource>,
     #[serde(default)]
     rule_packs: Vec<CatalogV3RulePackEntry>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+struct CatalogV3CommunitySource {
+    id: String,
+    github_repository: String,
+    support_tier: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -5253,6 +5263,7 @@ fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Resu
         schema_version: CATALOG_V3_SCHEMA.to_string(),
         catalog_version,
         plugins,
+        community_sources: load_community_catalog_v3_sources(ctx)?,
         rule_packs: prepared_rule_packs
             .iter()
             .map(|rule_pack| rule_pack.entry.clone())
@@ -5649,6 +5660,68 @@ fn parse_github_repo(value: &str) -> Result<String> {
         bail!("community repo must be owner/repo or a GitHub URL");
     }
     Ok(format!("{}/{}", parts[0], parts[1]))
+}
+
+fn required_toml_string<'a>(
+    table: &'a toml_edit::Table,
+    field: &str,
+    label: &str,
+) -> Result<&'a str> {
+    table
+        .get(field)
+        .and_then(|value| value.as_str())
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| anyhow!("{label}.{field} is required"))
+}
+
+fn load_community_catalog_v3_sources(ctx: &TaskContext) -> Result<Vec<CatalogV3CommunitySource>> {
+    let path = ctx.path(COMMUNITY_CATALOG_V3_MANIFEST);
+    if !path.is_file() {
+        return Ok(Vec::new());
+    }
+
+    let document = fs::read_to_string(&path)?
+        .parse::<DocumentMut>()
+        .with_context(|| format!("failed to parse {}", path.display()))?;
+    let Some(plugins) = document.get("plugins") else {
+        return Ok(Vec::new());
+    };
+    if let Some(empty_array) = plugins.as_array()
+        && empty_array.is_empty()
+    {
+        return Ok(Vec::new());
+    }
+    let plugins = plugins.as_array_of_tables().ok_or_else(|| {
+        anyhow!(
+            "{} must define plugins as [[plugins]] entries or an empty plugins = [] array",
+            path.display()
+        )
+    })?;
+
+    let mut sources = Vec::new();
+    let mut ids = BTreeSet::new();
+    for (index, plugin) in plugins.iter().enumerate() {
+        let label = format!("plugins[{index}]");
+        let id = required_toml_string(plugin, "id", &label)?.to_string();
+        let github_repository =
+            parse_github_repo(required_toml_string(plugin, "github_repository", &label)?)
+                .with_context(|| format!("{label}.github_repository is invalid"))?;
+        let support_tier = required_toml_string(plugin, "support_tier", &label)?.to_string();
+        if support_tier != "verified_community" {
+            bail!("{label}.support_tier must be verified_community");
+        }
+        if !ids.insert(id.clone()) {
+            bail!("duplicate community catalog-v3 plugin id {id}");
+        }
+        sources.push(CatalogV3CommunitySource {
+            id,
+            github_repository,
+            support_tier,
+        });
+    }
+
+    Ok(sources)
 }
 
 fn regex_escape_literal(value: &str) -> String {
@@ -6180,6 +6253,34 @@ fn validate_catalog_v3(catalog: &CatalogV3) -> Result<()> {
             );
         }
         validate_catalog_v3_plugin_entry(plugin)?;
+    }
+
+    let mut community_source_ids = BTreeSet::new();
+    for source in &catalog.community_sources {
+        for (label, value) in [
+            ("id", &source.id),
+            ("github_repository", &source.github_repository),
+            ("support_tier", &source.support_tier),
+        ] {
+            if value.trim().is_empty() {
+                bail!("catalog-v3 community source field {label} is required");
+            }
+        }
+        if !community_source_ids.insert(source.id.clone()) {
+            bail!("duplicate community catalog-v3 plugin id {}", source.id);
+        }
+        parse_github_repo(&source.github_repository).with_context(|| {
+            format!(
+                "community catalog-v3 source '{}' has invalid github_repository",
+                source.id
+            )
+        })?;
+        if source.support_tier != "verified_community" {
+            bail!(
+                "{}: community catalog-v3 support_tier must be verified_community",
+                source.id
+            );
+        }
     }
 
     let mut rule_pack_ids = BTreeSet::new();
@@ -7303,6 +7404,112 @@ mod tests {
             source_repo: entry.source_repo,
             releases,
         }
+    }
+
+    fn temp_task_context() -> (tempfile::TempDir, TaskContext) {
+        let dir = tempfile::tempdir().expect("create temp repo");
+        let ctx = TaskContext {
+            repo_root: dir.path().to_path_buf(),
+        };
+        (dir, ctx)
+    }
+
+    fn write_community_v3_manifest(ctx: &TaskContext, contents: &str) {
+        let path = ctx.path(COMMUNITY_CATALOG_V3_MANIFEST);
+        fs::create_dir_all(path.parent().expect("manifest has parent")).expect("create catalog");
+        fs::write(path, contents).expect("write community manifest");
+    }
+
+    #[test]
+    fn community_catalog_v3_toml_parses_approved_sources() {
+        let (_dir, ctx) = temp_task_context();
+        write_community_v3_manifest(
+            &ctx,
+            r#"
+[[plugins]]
+id = "subdl-community"
+github_repository = "https://github.com/example/subdl-community"
+support_tier = "verified_community"
+"#,
+        );
+
+        let sources =
+            load_community_catalog_v3_sources(&ctx).expect("community sources should parse");
+
+        assert_eq!(
+            sources,
+            vec![CatalogV3CommunitySource {
+                id: "subdl-community".to_string(),
+                github_repository: "example/subdl-community".to_string(),
+                support_tier: "verified_community".to_string(),
+            }]
+        );
+    }
+
+    #[test]
+    fn community_catalog_v3_toml_rejects_duplicate_ids() {
+        let (_dir, ctx) = temp_task_context();
+        write_community_v3_manifest(
+            &ctx,
+            r#"
+[[plugins]]
+id = "subdl-community"
+github_repository = "example/subdl-community"
+support_tier = "verified_community"
+
+[[plugins]]
+id = "subdl-community"
+github_repository = "example/subdl-community-fork"
+support_tier = "verified_community"
+"#,
+        );
+
+        let error = load_community_catalog_v3_sources(&ctx)
+            .expect_err("duplicate community ids should fail");
+
+        assert!(
+            error
+                .to_string()
+                .contains("duplicate community catalog-v3 plugin id subdl-community")
+        );
+    }
+
+    #[test]
+    fn catalog_v3_serializes_community_sources_from_toml() {
+        let (_dir, ctx) = temp_task_context();
+        write_community_v3_manifest(
+            &ctx,
+            r#"
+[[plugins]]
+id = "subdl-community"
+github_repository = "example/subdl-community"
+support_tier = "verified_community"
+"#,
+        );
+
+        let catalog = CatalogV3 {
+            schema_version: CATALOG_V3_SCHEMA.to_string(),
+            catalog_version: 1,
+            plugins: Vec::new(),
+            community_sources: load_community_catalog_v3_sources(&ctx).unwrap(),
+            rule_packs: Vec::new(),
+        };
+
+        validate_catalog_v3(&catalog).expect("catalog with community sources should validate");
+        let json = serde_json::to_value(&catalog).expect("catalog should serialize");
+
+        assert_eq!(
+            json["community_sources"][0]["id"].as_str(),
+            Some("subdl-community")
+        );
+        assert_eq!(
+            json["community_sources"][0]["github_repository"].as_str(),
+            Some("example/subdl-community")
+        );
+        assert_eq!(
+            json["community_sources"][0]["support_tier"].as_str(),
+            Some("verified_community")
+        );
     }
 
     #[test]

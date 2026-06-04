@@ -1,0 +1,32 @@
+[package]
+name = "animetosho-archive-indexer"
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-only"
+description = "AnimeTosho archive Newznab feed indexer for older anime Usenet releases"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "animetosho-archive"
+catalog_versions = ["v3"]
+feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/animetosho-archive"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/animetosho-archive"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins/animetosho-archive"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+extism-pdk = "1.4"
+newznab-common = { path = "../newznab-common" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+scryer-plugin-sdk = "2.0.0"
+
+[profile.plugin-release]
+inherits = "release"
+opt-level = 3
+lto = "fat"
+strip = true
+panic = "abort"

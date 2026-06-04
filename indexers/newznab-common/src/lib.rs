@@ -1841,23 +1841,41 @@ fn parse_enclosure_attrs(
     size_bytes: &mut Option<i64>,
     enclosure_type: &mut Option<String>,
 ) {
+    let mut candidate_url = None;
+    let mut candidate_size = None;
+    let mut candidate_type = None;
+
     for attr in e.attributes().flatten() {
         match attr.key.as_ref() {
             b"url" => {
-                *download_url = attr.unescape_value().ok().map(|value| value.to_string());
+                candidate_url = attr.unescape_value().ok().map(|value| value.to_string());
             }
             b"length" => {
-                *size_bytes = attr
+                candidate_size = attr
                     .unescape_value()
                     .ok()
                     .map(|value| value.to_string())
                     .and_then(|v| v.replace(',', "").parse::<i64>().ok());
             }
             b"type" => {
-                *enclosure_type = attr.unescape_value().ok().map(|value| value.to_string());
+                candidate_type = attr.unescape_value().ok().map(|value| value.to_string());
             }
             _ => {}
         }
+    }
+
+    let candidate_is_nzb = candidate_type
+        .as_deref()
+        .is_some_and(|value| value.eq_ignore_ascii_case("application/x-nzb"));
+    let current_is_nzb = enclosure_type
+        .as_deref()
+        .is_some_and(|value| value.eq_ignore_ascii_case("application/x-nzb"));
+    let should_replace = download_url.is_none() || (candidate_is_nzb && !current_is_nzb);
+
+    if should_replace && candidate_url.is_some() {
+        *download_url = candidate_url;
+        *size_bytes = candidate_size;
+        *enclosure_type = candidate_type;
     }
 }
 
@@ -2704,6 +2722,29 @@ mod tests {
                 "http://localhost:9696/1/download?apikey=test&link=abc123&file=Escaped.Link.Release"
             )
         );
+    }
+
+    #[test]
+    fn xml_prefers_nzb_enclosure_over_torrent_enclosure() {
+        let body = r#"<?xml version="1.0"?>
+<rss xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attributes/">
+<channel>
+  <item>
+    <title>AnimeTosho.Style.Release</title>
+    <enclosure url="https://storage.example/torrent/release.torrent" length="0" type="application/x-bittorrent"/>
+    <enclosure url="https://storage.example/nzbs/release.nzb" length="0" type="application/x-nzb"/>
+    <newznab:attr name="size" value="123456789"/>
+  </item>
+</channel>
+</rss>"#;
+        let (results, _) = parse_newznab_xml(body, 100, extract_base_metadata);
+        assert_eq!(results.len(), 1);
+        assert_eq!(
+            results[0].download_url.as_deref(),
+            Some("https://storage.example/nzbs/release.nzb")
+        );
+        assert_eq!(results[0].size_bytes, Some(123456789));
+        assert!(!results[0].provider_extra.contains_key("enclosure_type"));
     }
 
     #[test]
