@@ -602,7 +602,7 @@ jobs:
               --pattern catalog-v3.redirect.bundle.json \
               --dir "${existing_dir}" \
               --clobber
-            identity_regexp="^https://github.com/${GITHUB_REPOSITORY}/\\.github/workflows/release-plugin-v3\\.yml@refs/(tags|heads)/.*$"
+            identity_regexp="^https://github.com/${GITHUB_REPOSITORY}/\\.github/workflows/release-plugin(-v3)?\\.yml@refs/(tags|heads)/.*$"
             cosign verify-blob \
               --bundle "${existing_dir}/catalog-v3.redirect.bundle.json" \
               --certificate-identity-regexp "${identity_regexp}" \
