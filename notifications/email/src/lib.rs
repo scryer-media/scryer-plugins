@@ -2,11 +2,12 @@ use base64::{Engine as _, engine::general_purpose::STANDARD};
 use extism_pdk::*;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldOption, ConfigFieldType, NotificationCapabilities,
-    NotificationDeliveryMode, NotificationDescriptor, NotificationPayloadFormat, PluginDescriptor,
-    PluginError, PluginErrorCode, PluginNotificationRequest, PluginNotificationResponse,
-    PluginNotificationTargetResult, PluginResult, ProviderDescriptor, SDK_VERSION,
-    SocketCloseRequest, SocketOpenRequest, SocketPermission, SocketReadRequest,
-    SocketStartTlsRequest, SocketTlsMode, SocketWriteRequest, current_sdk_constraint,
+    NotificationDeliveryMode, NotificationDescriptor, NotificationEventType,
+    NotificationPayloadFormat, PluginDescriptor, PluginError, PluginErrorCode,
+    PluginNotificationRequest, PluginNotificationResponse, PluginNotificationTargetResult,
+    PluginResult, ProviderDescriptor, SDK_VERSION, SocketCloseRequest, SocketOpenRequest,
+    SocketPermission, SocketReadRequest, SocketStartTlsRequest, SocketTlsMode, SocketWriteRequest,
+    current_sdk_constraint,
 };
 use wasm_smtp::{
     AuthError, IoError, ProtocolError, SmtpClient as WasmSmtpClient, SmtpError, SmtpOp,
@@ -55,7 +56,7 @@ fn descriptor() -> PluginDescriptor {
                 requires_host_process: false,
                 delivery_modes: vec![NotificationDeliveryMode::Email],
                 payload_formats: vec![NotificationPayloadFormat::PlainText],
-                supported_events: vec![],
+                supported_events: general_notification_events(),
                 event_options: Default::default(),
             },
             config_fields: vec![
@@ -137,6 +138,28 @@ fn descriptor() -> PluginDescriptor {
             ],
         }),
     }
+}
+
+fn general_notification_events() -> Vec<NotificationEventType> {
+    vec![
+        NotificationEventType::Grab,
+        NotificationEventType::Download,
+        NotificationEventType::Upgrade,
+        NotificationEventType::ImportComplete,
+        NotificationEventType::ImportRejected,
+        NotificationEventType::Rename,
+        NotificationEventType::TitleAdded,
+        NotificationEventType::TitleDeleted,
+        NotificationEventType::FileDeleted,
+        NotificationEventType::FileDeletedForUpgrade,
+        NotificationEventType::PostProcessingCompleted,
+        NotificationEventType::SubtitleDownloaded,
+        NotificationEventType::SubtitleSearchFailed,
+        NotificationEventType::MediaRequestSubmitted,
+        NotificationEventType::MediaRequestApproved,
+        NotificationEventType::MediaRequestRejected,
+        NotificationEventType::MediaRequestCanceled,
+    ]
 }
 
 fn field(
@@ -688,6 +711,38 @@ mod tests {
     }
 
     #[test]
+    fn descriptor_supports_media_request_lifecycle_events() {
+        let notification = match descriptor().provider {
+            ProviderDescriptor::Notification(notification) => notification,
+            provider => panic!("expected notification provider, got {provider:?}"),
+        };
+        assert!(
+            notification
+                .capabilities
+                .supported_events
+                .contains(&NotificationEventType::MediaRequestSubmitted)
+        );
+        assert!(
+            notification
+                .capabilities
+                .supported_events
+                .contains(&NotificationEventType::MediaRequestApproved)
+        );
+        assert!(
+            notification
+                .capabilities
+                .supported_events
+                .contains(&NotificationEventType::MediaRequestRejected)
+        );
+        assert!(
+            notification
+                .capabilities
+                .supported_events
+                .contains(&NotificationEventType::MediaRequestCanceled)
+        );
+    }
+
+    #[test]
     fn parses_recipients_from_commas_and_newlines() {
         let recipients = parse_recipients("a@example.com, b@example.com\nc@example.com").unwrap();
         assert_eq!(
@@ -774,7 +829,6 @@ mod tests {
                 path: None,
                 overview: None,
                 sort_title: None,
-                banner_url: None,
                 background_url: None,
                 poster_url: None,
                 genres: Vec::new(),
@@ -794,6 +848,7 @@ mod tests {
             media_files: Vec::new(),
             application_update: None,
             manual_interaction: None,
+            media_request: None,
         }
     }
 }
