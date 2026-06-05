@@ -242,22 +242,30 @@ mod tests {
             ProviderDescriptor::Notification(notification) => notification,
             provider => panic!("expected notification provider, got {provider:?}"),
         };
-        assert!(notification
-            .capabilities
-            .supported_events
-            .contains(&NotificationEventType::MediaRequestSubmitted));
-        assert!(notification
-            .capabilities
-            .supported_events
-            .contains(&NotificationEventType::MediaRequestApproved));
-        assert!(notification
-            .capabilities
-            .supported_events
-            .contains(&NotificationEventType::MediaRequestRejected));
-        assert!(notification
-            .capabilities
-            .supported_events
-            .contains(&NotificationEventType::MediaRequestCanceled));
+        assert!(
+            notification
+                .capabilities
+                .supported_events
+                .contains(&NotificationEventType::MediaRequestSubmitted)
+        );
+        assert!(
+            notification
+                .capabilities
+                .supported_events
+                .contains(&NotificationEventType::MediaRequestApproved)
+        );
+        assert!(
+            notification
+                .capabilities
+                .supported_events
+                .contains(&NotificationEventType::MediaRequestRejected)
+        );
+        assert!(
+            notification
+                .capabilities
+                .supported_events
+                .contains(&NotificationEventType::MediaRequestCanceled)
+        );
     }
 
     #[test]
