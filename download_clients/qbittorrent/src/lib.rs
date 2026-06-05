@@ -1,4 +1,5 @@
 use std::collections::{BTreeSet, HashMap, HashSet};
+use std::time::Duration;
 
 use base64::{Engine as _, engine::general_purpose};
 use extism_pdk::*;
@@ -1147,16 +1148,31 @@ fn resolve_added_hash(
     before_hashes: &HashSet<String>,
     expected_hash: Option<String>,
 ) -> Result<String, Error> {
-    if let Some(hash) = expected_hash {
-        return Ok(hash);
-    }
-
+    let expected_hash = expected_hash
+        .map(|hash| normalize_hash(&hash))
+        .filter(|hash| !hash.is_empty());
     let expected_names = candidate_names(request);
-    for _ in 0..4 {
+    for attempt in 0..8 {
         let after = list_torrents(config, Some("all"))?;
+        if let Some(expected_hash) = expected_hash.as_deref()
+            && after
+                .iter()
+                .any(|torrent| normalize_hash(&torrent.hash) == expected_hash)
+        {
+            return Ok(expected_hash.to_string());
+        }
         if let Some(hash) = discover_hash_candidate(&after, before_hashes, &expected_names) {
             return Ok(hash);
         }
+        if attempt < 7 {
+            std::thread::sleep(Duration::from_millis(250));
+        }
+    }
+
+    if let Some(expected_hash) = expected_hash {
+        return Err(Error::msg(format!(
+            "torrent add was submitted to qBittorrent, but expected info hash {expected_hash} never appeared in the torrent list"
+        )));
     }
 
     Err(Error::msg(

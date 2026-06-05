@@ -2,9 +2,9 @@ use extism_pdk::*;
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldOption, ConfigFieldType, NotificationCapabilities,
-    NotificationDeliveryMode, NotificationDescriptor, NotificationPayloadFormat, PluginDescriptor,
-    PluginNotificationRequest, PluginNotificationResponse, PluginResult, ProviderDescriptor,
-    SDK_VERSION, to_webhook_json,
+    NotificationDeliveryMode, NotificationDescriptor, NotificationEventType,
+    NotificationPayloadFormat, PluginDescriptor, PluginNotificationRequest,
+    PluginNotificationResponse, PluginResult, ProviderDescriptor, SDK_VERSION, to_webhook_json,
 };
 
 // ---------------------------------------------------------------------------
@@ -42,7 +42,7 @@ fn build_descriptor() -> PluginDescriptor {
                     NotificationPayloadFormat::StructuredJson,
                     NotificationPayloadFormat::PlainText,
                 ],
-                supported_events: vec![],
+                supported_events: general_notification_events(),
                 event_options: Default::default(),
             },
             config_fields: vec![
@@ -103,6 +103,28 @@ fn build_descriptor() -> PluginDescriptor {
             ],
         }),
     }
+}
+
+fn general_notification_events() -> Vec<NotificationEventType> {
+    vec![
+        NotificationEventType::Grab,
+        NotificationEventType::Download,
+        NotificationEventType::Upgrade,
+        NotificationEventType::ImportComplete,
+        NotificationEventType::ImportRejected,
+        NotificationEventType::Rename,
+        NotificationEventType::TitleAdded,
+        NotificationEventType::TitleDeleted,
+        NotificationEventType::FileDeleted,
+        NotificationEventType::FileDeletedForUpgrade,
+        NotificationEventType::PostProcessingCompleted,
+        NotificationEventType::SubtitleDownloaded,
+        NotificationEventType::SubtitleSearchFailed,
+        NotificationEventType::MediaRequestSubmitted,
+        NotificationEventType::MediaRequestApproved,
+        NotificationEventType::MediaRequestRejected,
+        NotificationEventType::MediaRequestCanceled,
+    ]
 }
 
 #[plugin_fn]
@@ -215,6 +237,30 @@ mod tests {
     }
 
     #[test]
+    fn descriptor_supports_media_request_lifecycle_events() {
+        let notification = match build_descriptor().provider {
+            ProviderDescriptor::Notification(notification) => notification,
+            provider => panic!("expected notification provider, got {provider:?}"),
+        };
+        assert!(notification
+            .capabilities
+            .supported_events
+            .contains(&NotificationEventType::MediaRequestSubmitted));
+        assert!(notification
+            .capabilities
+            .supported_events
+            .contains(&NotificationEventType::MediaRequestApproved));
+        assert!(notification
+            .capabilities
+            .supported_events
+            .contains(&NotificationEventType::MediaRequestRejected));
+        assert!(notification
+            .capabilities
+            .supported_events
+            .contains(&NotificationEventType::MediaRequestCanceled));
+    }
+
+    #[test]
     fn webhook_payload_serialization() {
         let payload = PluginNotificationRequest {
             schema_version: 1,
@@ -240,7 +286,6 @@ mod tests {
                 path: None,
                 overview: None,
                 sort_title: None,
-                banner_url: None,
                 background_url: None,
                 poster_url: None,
                 genres: Vec::new(),
@@ -260,6 +305,7 @@ mod tests {
             media_files: Vec::new(),
             application_update: None,
             manual_interaction: None,
+            media_request: None,
         };
         let json = serde_json::to_string(&payload).unwrap();
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();

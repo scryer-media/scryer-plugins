@@ -151,7 +151,7 @@ fn default_descriptor() -> PluginDescriptor {
                 requires_host_process: false,
                 delivery_modes: vec![NotificationDeliveryMode::MediaServerUpdate],
                 payload_formats: vec![NotificationPayloadFormat::StructuredJson],
-                supported_events: vec![],
+                supported_events: media_refresh_events(),
                 event_options: Default::default(),
             },
             config_fields: vec![
@@ -199,6 +199,16 @@ fn default_descriptor() -> PluginDescriptor {
             ],
         }),
     }
+}
+
+fn media_refresh_events() -> Vec<SdkNotificationEventType> {
+    vec![
+        SdkNotificationEventType::ImportComplete,
+        SdkNotificationEventType::Upgrade,
+        SdkNotificationEventType::Rename,
+        SdkNotificationEventType::FileDeleted,
+        SdkNotificationEventType::FileDeletedForUpgrade,
+    ]
 }
 
 #[plugin_fn]
@@ -701,7 +711,6 @@ mod tests {
                 path: None,
                 overview: None,
                 sort_title: None,
-                banner_url: None,
                 background_url: None,
                 poster_url: None,
                 genres: Vec::new(),
@@ -743,6 +752,7 @@ mod tests {
             media_files: Vec::new(),
             application_update: None,
             manual_interaction: None,
+            media_request: None,
         }
     }
 
@@ -764,6 +774,24 @@ mod tests {
             json["provider"]["config_fields"][2]["field_type"],
             "multiline"
         );
+    }
+
+    #[test]
+    fn descriptor_supports_only_media_refresh_events() {
+        let notification = match default_descriptor().provider {
+            ProviderDescriptor::Notification(notification) => notification,
+            provider => panic!("expected notification provider, got {provider:?}"),
+        };
+        let events = notification.capabilities.supported_events;
+        assert!(events.contains(&SdkNotificationEventType::ImportComplete));
+        assert!(events.contains(&SdkNotificationEventType::Upgrade));
+        assert!(events.contains(&SdkNotificationEventType::Rename));
+        assert!(events.contains(&SdkNotificationEventType::FileDeleted));
+        assert!(events.contains(&SdkNotificationEventType::FileDeletedForUpgrade));
+        assert!(!events.contains(&SdkNotificationEventType::MediaRequestSubmitted));
+        assert!(!events.contains(&SdkNotificationEventType::MediaRequestApproved));
+        assert!(!events.contains(&SdkNotificationEventType::MediaRequestRejected));
+        assert!(!events.contains(&SdkNotificationEventType::MediaRequestCanceled));
     }
 
     #[test]
