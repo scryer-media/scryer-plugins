@@ -1,6 +1,6 @@
 [package]
 name = "webhook-notification"
-version = "0.1.11"
+version = "0.1.12"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Generic webhook notification plugin — POSTs JSON payloads to a configured URL"
