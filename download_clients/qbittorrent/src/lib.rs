@@ -1169,10 +1169,15 @@ fn resolve_added_hash(
         }
     }
 
+    resolve_unlisted_added_hash(expected_hash)
+}
+
+fn resolve_unlisted_added_hash(expected_hash: Option<String>) -> Result<String, Error> {
     if let Some(expected_hash) = expected_hash {
-        return Err(Error::msg(format!(
-            "torrent add was submitted to qBittorrent, but expected info hash {expected_hash} never appeared in the torrent list"
-        )));
+        eprintln!(
+            "torrent add was accepted but expected info hash {expected_hash} did not appear in qBittorrent's list before the visibility probe timed out; returning the expected hash"
+        );
+        return Ok(expected_hash);
     }
 
     Err(Error::msg(
@@ -2456,6 +2461,27 @@ mod tests {
         ];
         let hash = discover_hash_candidate(&torrents, &before, &["Example Release".to_string()]);
         assert_eq!(hash.as_deref(), Some("bbbb"));
+    }
+
+    #[test]
+    fn unlisted_added_hash_returns_expected_hash_when_known() {
+        let hash = resolve_unlisted_added_hash(Some(
+            "92160d9a0e31d1e45b30b6b8101aa0c170e6bdbb".to_string(),
+        ))
+        .expect("expected hash should be accepted after visibility timeout");
+
+        assert_eq!(hash, "92160d9a0e31d1e45b30b6b8101aa0c170e6bdbb");
+    }
+
+    #[test]
+    fn unlisted_added_hash_without_expected_hash_still_errors() {
+        let error = resolve_unlisted_added_hash(None).expect_err("missing hash should error");
+
+        assert!(
+            error
+                .to_string()
+                .contains("provide an info-hash hint or magnet URI")
+        );
     }
 
     #[test]
