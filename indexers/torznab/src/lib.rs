@@ -120,6 +120,11 @@ pub fn scryer_indexer_search(input: String) -> FnResult<String> {
     Ok(serde_json::to_string(&PluginResult::Ok(response))?)
 }
 
+#[plugin_fn]
+pub fn scryer_indexer_action(input: String) -> FnResult<String> {
+    Ok(newznab_common::execute_provider_action(&input)?)
+}
+
 fn torznab_metadata_extractor(
     pairs: &[(String, String)],
 ) -> (Vec<String>, Option<i64>, HashMap<String, serde_json::Value>) {

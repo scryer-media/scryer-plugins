@@ -136,6 +136,13 @@ host_fn!(socket_unsupported(_state: (); _input: String) -> String {
     )
 });
 
+host_fn!(process_unsupported(_state: (); _input: String) -> String {
+    Ok(
+        r#"{"ok":false,"error":{"code":"unsupported","message":"process host calls are unavailable during descriptor validation"}}"#
+            .to_string(),
+    )
+});
+
 #[derive(Clone)]
 struct RustupToolchain {
     rustup: PathBuf,
@@ -2746,8 +2753,16 @@ fn instantiate_plugin_from_wasm(
             "scryer_socket_close",
             [ValType::I64],
             [ValType::I64],
-            socket_stubs,
+            socket_stubs.clone(),
             socket_unsupported,
+        )
+        .with_function_in_namespace(
+            "extism:host/user",
+            "scryer_process_exec",
+            [ValType::I64],
+            [ValType::I64],
+            socket_stubs,
+            process_unsupported,
         )
         .build()
         .with_context(|| format!("failed to instantiate {}", wasm_path.display()))

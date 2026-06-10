@@ -102,3 +102,8 @@ pub fn scryer_indexer_search(input: String) -> FnResult<String> {
     let response = execute_full_search(&config, &req, extract_base_metadata)?;
     Ok(serde_json::to_string(&PluginResult::Ok(response))?)
 }
+
+#[plugin_fn]
+pub fn scryer_indexer_action(input: String) -> FnResult<String> {
+    Ok(newznab_common::execute_provider_action(&input)?)
+}

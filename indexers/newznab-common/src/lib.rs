@@ -1879,6 +1879,249 @@ fn parse_enclosure_attrs(
     }
 }
 
+#[derive(Debug, Clone)]
+struct NewznabCategoryOption {
+    id: i64,
+    name: String,
+    subcategories: Vec<NewznabCategoryOption>,
+}
+
+#[derive(Debug, Default)]
+struct CapsConfig {
+    base_url: String,
+    api_key: String,
+    api_path: String,
+}
+
+pub fn execute_provider_action(input: &str) -> Result<String, Error> {
+    let request: serde_json::Value = serde_json::from_str(input)?;
+    let response = match action_name(&request).as_deref() {
+        Some("newznabCategories") => newznab_categories(),
+        _ => serde_json::json!({}),
+    };
+
+    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+}
+
+fn newznab_categories() -> serde_json::Value {
+    let categories = caps_config()
+        .filter(|config| !config.base_url.is_empty() && !config.api_path.is_empty())
+        .and_then(|config| fetch_categories(&config).ok());
+
+    serde_json::json!({
+        "options": category_options(categories),
+    })
+}
+
+fn caps_config() -> Option<CapsConfig> {
+    Some(CapsConfig {
+        base_url: config::get("base_url").ok().flatten()?.trim().to_string(),
+        api_key: config::get("api_key")
+            .ok()
+            .flatten()
+            .unwrap_or_default()
+            .trim()
+            .to_string(),
+        api_path: config::get("api_path")
+            .ok()
+            .flatten()
+            .unwrap_or_else(|| "/api".to_string())
+            .trim()
+            .to_string(),
+    })
+}
+
+fn fetch_categories(config: &CapsConfig) -> Result<Vec<NewznabCategoryOption>, Error> {
+    let endpoint = build_endpoint(&config.base_url, &config.api_path)?;
+    let mut params = vec![("t".to_string(), "caps".to_string())];
+    if !config.api_key.is_empty() {
+        params.push(("apikey".to_string(), config.api_key.clone()));
+    }
+    let url = append_query_pairs(endpoint.as_str(), &params);
+    let request = HttpRequest::new(url)
+        .with_method("GET")
+        .with_header("User-Agent", "scryer-newznab-plugin/0.1")
+        .with_header("Accept", "application/rss+xml, application/xml, text/xml");
+    let response = http::request::<Vec<u8>>(&request, None)?;
+    let status = response.status_code();
+    if !(200..300).contains(&status) {
+        let body = String::from_utf8_lossy(&response.body()).to_string();
+        return Err(Error::msg(format!(
+            "Newznab capabilities request failed: HTTP {status}: {body}"
+        )));
+    }
+
+    Ok(parse_categories(&response.body()))
+}
+
+fn append_query_pairs(base_url: &str, params: &[(String, String)]) -> String {
+    let Ok(mut url) = Url::parse(base_url) else {
+        return base_url.to_string();
+    };
+    {
+        let mut pairs = url.query_pairs_mut();
+        for (key, value) in params {
+            pairs.append_pair(key, value);
+        }
+    }
+    url.to_string()
+}
+
+fn parse_categories(body: &[u8]) -> Vec<NewznabCategoryOption> {
+    let mut reader = Reader::from_reader(body);
+    reader.config_mut().trim_text(true);
+    let mut categories = Vec::new();
+    let mut current_category: Option<NewznabCategoryOption> = None;
+    let mut in_categories = false;
+    let mut buf = Vec::new();
+
+    loop {
+        match reader.read_event_into(&mut buf) {
+            Ok(Event::Start(event)) if event.name().as_ref() == b"categories" => {
+                in_categories = true;
+            }
+            Ok(Event::End(event)) if event.name().as_ref() == b"categories" => {
+                if let Some(category) = current_category.take() {
+                    categories.push(category);
+                }
+                break;
+            }
+            Ok(Event::Start(event)) if in_categories && event.name().as_ref() == b"category" => {
+                if let Some(category) = current_category.take() {
+                    categories.push(category);
+                }
+                current_category = category_from_attrs(&event);
+            }
+            Ok(Event::Empty(event)) if in_categories && event.name().as_ref() == b"category" => {
+                if let Some(category) = category_from_attrs(&event) {
+                    categories.push(category);
+                }
+            }
+            Ok(Event::Empty(event)) if in_categories && event.name().as_ref() == b"subcat" => {
+                if let (Some(category), Some(subcategory)) =
+                    (current_category.as_mut(), category_from_attrs(&event))
+                {
+                    category.subcategories.push(subcategory);
+                }
+            }
+            Ok(Event::Start(event)) if in_categories && event.name().as_ref() == b"subcat" => {
+                if let (Some(category), Some(subcategory)) =
+                    (current_category.as_mut(), category_from_attrs(&event))
+                {
+                    category.subcategories.push(subcategory);
+                }
+            }
+            Ok(Event::Eof) => {
+                if let Some(category) = current_category.take() {
+                    categories.push(category);
+                }
+                break;
+            }
+            Err(_) => break,
+            _ => {}
+        }
+        buf.clear();
+    }
+
+    categories
+}
+
+fn category_from_attrs(event: &quick_xml::events::BytesStart<'_>) -> Option<NewznabCategoryOption> {
+    let id = attr_value(event, b"id")?.parse::<i64>().ok()?;
+    let name = attr_value(event, b"name").unwrap_or_else(|| id.to_string());
+    Some(NewznabCategoryOption {
+        id,
+        name,
+        subcategories: Vec::new(),
+    })
+}
+
+fn attr_value(event: &quick_xml::events::BytesStart<'_>, name: &[u8]) -> Option<String> {
+    event
+        .attributes()
+        .flatten()
+        .find(|attr| attr.key.as_ref() == name)
+        .and_then(|attr| {
+            attr.unescape_value()
+                .ok()
+                .map(|value| value.trim().to_string())
+        })
+        .filter(|value| !value.is_empty())
+}
+
+fn category_options(categories: Option<Vec<NewznabCategoryOption>>) -> Vec<serde_json::Value> {
+    let mut categories = categories.unwrap_or_else(default_newznab_categories);
+    categories.retain(|category| !matches!(category.id, 1000 | 3000 | 4000 | 6000 | 7000));
+    categories.sort_by_key(|category| {
+        let unimportant = matches!(category.id, 0 | 2000);
+        (unimportant, category.id)
+    });
+
+    let mut options = Vec::new();
+    for category in categories {
+        options.push(serde_json::json!({
+            "value": category.id,
+            "name": category.name,
+            "hint": format!("({})", category.id),
+        }));
+
+        let mut subcategories = category.subcategories;
+        subcategories.sort_by_key(|subcategory| subcategory.id);
+        for subcategory in subcategories {
+            options.push(serde_json::json!({
+                "value": subcategory.id,
+                "name": subcategory.name,
+                "hint": format!("({})", subcategory.id),
+                "parentValue": category.id,
+            }));
+        }
+    }
+
+    options
+}
+
+fn default_newznab_categories() -> Vec<NewznabCategoryOption> {
+    vec![NewznabCategoryOption {
+        id: 5000,
+        name: "TV".to_string(),
+        subcategories: vec![
+            (5070, "Anime"),
+            (5080, "Documentary"),
+            (5020, "Foreign"),
+            (5040, "HD"),
+            (5045, "UHD"),
+            (5050, "Other"),
+            (5030, "SD"),
+            (5060, "Sport"),
+            (5010, "WEB-DL"),
+        ]
+        .into_iter()
+        .map(|(id, name)| NewznabCategoryOption {
+            id,
+            name: name.to_string(),
+            subcategories: Vec::new(),
+        })
+        .collect(),
+    }]
+}
+
+fn action_name(request: &serde_json::Value) -> Option<String> {
+    string_member(request, &["action", "name", "providerAction"])
+}
+
+fn string_member(value: &serde_json::Value, keys: &[&str]) -> Option<String> {
+    keys.iter()
+        .find_map(|key| {
+            value.get(*key).and_then(|value| match value {
+                serde_json::Value::String(value) => Some(value.trim().to_string()),
+                serde_json::Value::Number(value) => Some(value.to_string()),
+                serde_json::Value::Bool(value) => Some(value.to_string()),
+                _ => None,
+            })
+        })
+        .filter(|value| !value.is_empty())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

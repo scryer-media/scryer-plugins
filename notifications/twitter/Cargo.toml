@@ -1,0 +1,35 @@
+[package]
+name = "twitter-notification"
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-only"
+description = "Twitter notification plugin"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "twitter"
+status = "beta"
+catalog_versions = ["v3"]
+min_scryer_version = "0.16.0"
+feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/twitter"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/twitter"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins/twitter"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+base64 = "0.22"
+extism-pdk = "1.4"
+hmac = "0.12"
+notify-common = { path = "../notify-common" }
+serde_json = "1"
+sha1 = "0.10"
+
+[profile.plugin-release]
+inherits = "release"
+opt-level = 3
+lto = "fat"
+strip = true
+panic = "abort"
