@@ -441,7 +441,7 @@ checksum = "e6e4313cd5fcd3dad5cafa179702e2b244f760991f45397d14d4ebf38247da75"
 
 [[package]]
 name = "webhook-notification"
-version = "0.1.12"
+version = "0.1.13"
 dependencies = [
  "extism-pdk",
  "scryer-plugin-sdk",

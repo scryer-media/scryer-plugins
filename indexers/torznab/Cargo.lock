@@ -627,7 +627,7 @@ dependencies = [
 
 [[package]]
 name = "torznab-indexer"
-version = "0.1.12"
+version = "0.1.13"
 dependencies = [
  "extism-pdk",
  "newznab-common",

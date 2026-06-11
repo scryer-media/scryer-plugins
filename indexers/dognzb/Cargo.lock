@@ -45,7 +45,7 @@ dependencies = [
 
 [[package]]
 name = "dognzb-indexer"
-version = "0.1.10"
+version = "0.1.11"
 dependencies = [
  "extism-pdk",
  "newznab-common",

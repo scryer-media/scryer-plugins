@@ -1,6 +1,6 @@
 [package]
 name = "jellyfin-notification"
-version = "0.1.11"
+version = "0.1.12"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Targeted Jellyfin library refresh notifications using mapped media paths and provider-id fallbacks"
