@@ -230,9 +230,7 @@ pub fn scryer_download_list_queue(_input: String) -> FnResult<String> {
     let config = RqbitConfig::from_extism()?;
     let items = list_torrents(&config)?
         .into_iter()
-        .filter(|torrent| {
-            !torrent.output_path().trim().is_empty() && !torrent.output_path().starts_with('.')
-        })
+        .filter(is_visible_torrent)
         .map(torrent_to_item)
         .collect::<Vec<_>>();
     Ok(serde_json::to_string(&PluginResult::Ok(items))?)
@@ -243,6 +241,7 @@ pub fn scryer_download_list_history(_input: String) -> FnResult<String> {
     let config = RqbitConfig::from_extism()?;
     let items = list_torrents(&config)?
         .into_iter()
+        .filter(is_visible_torrent)
         .map(torrent_to_item)
         .collect::<Vec<_>>();
     Ok(serde_json::to_string(&PluginResult::Ok(items))?)
@@ -253,6 +252,7 @@ pub fn scryer_download_list_completed(_input: String) -> FnResult<String> {
     let config = RqbitConfig::from_extism()?;
     let downloads = list_torrents(&config)?
         .into_iter()
+        .filter(is_visible_torrent)
         .filter(|torrent| torrent.stats.finished)
         .map(torrent_to_completed)
         .collect::<Vec<_>>();
@@ -318,6 +318,15 @@ pub fn scryer_download_test_connection(_input: String) -> FnResult<String> {
     let config = RqbitConfig::from_extism()?;
     let root: RootResponse = serde_json::from_str(&get_text(&config, "")?)
         .map_err(|error| Error::msg(format!("RQBit root response parse failed: {error}")))?;
+    if version_lt(&root.version, "8.0.0") {
+        return Ok(serde_json::to_string(&plugin_error::<String>(
+            PluginErrorCode::Permanent,
+            format!(
+                "RQBit {} is older than Sonarr's required 8.0.0",
+                root.version
+            ),
+        ))?);
+    }
     Ok(serde_json::to_string(&PluginResult::Ok(root.version))?)
 }
 
@@ -343,6 +352,11 @@ impl TorrentWithStats {
     fn output_path(&self) -> String {
         format!("{}{}", self.output_folder, self.name)
     }
+}
+
+fn is_visible_torrent(torrent: &TorrentWithStats) -> bool {
+    let path = torrent.output_path();
+    !path.trim().is_empty() && !path.starts_with('.')
 }
 
 fn config_fields() -> Vec<ConfigFieldDef> {
@@ -451,6 +465,7 @@ fn torrent_to_item(torrent: TorrentWithStats) -> PluginDownloadItem {
 
     PluginDownloadItem {
         client_item_id: hash.clone(),
+        download_id: None,
         info_hash: Some(hash.clone()),
         title: torrent.name,
         state: map_state(&torrent.stats),
@@ -486,6 +501,7 @@ fn torrent_to_completed(torrent: TorrentWithStats) -> PluginCompletedDownload {
     let path = torrent.output_path();
     PluginCompletedDownload {
         client_item_id: hash.clone(),
+        download_id: None,
         info_hash: Some(hash),
         name: torrent.name,
         dest_dir: path.clone(),
@@ -511,16 +527,16 @@ fn can_remove(hash: &str, torrent: &TorrentWithStats, ratio: Option<f64>) -> boo
         return false;
     };
 
-    if let (Some(current), Some(limit)) = (ratio, seed_config.ratio) {
-        if current >= limit {
-            return true;
-        }
+    if let (Some(current), Some(limit)) = (ratio, seed_config.ratio)
+        && current >= limit
+    {
+        return true;
     }
 
-    if let Some(seed_time_seconds) = seed_config.seed_time_seconds {
-        if let Some(finished_at) = finished_at(hash, torrent) {
-            return now_unix_seconds().saturating_sub(finished_at) >= seed_time_seconds;
-        }
+    if let Some(seed_time_seconds) = seed_config.seed_time_seconds
+        && let Some(finished_at) = finished_at(hash, torrent)
+    {
+        return now_unix_seconds().saturating_sub(finished_at) >= seed_time_seconds;
     }
 
     false
@@ -540,10 +556,10 @@ fn store_seed_config(hash: &str, request: &PluginDownloadClientAddRequest) -> Re
             .or(request.release.seed_goal_seconds),
     };
 
-    let _ = var::remove(&finished_at_var_key(hash));
+    let _ = var::remove(finished_at_var_key(hash));
     if seed_config.ratio.is_some() || seed_config.seed_time_seconds.is_some() {
         var::set(
-            &seed_config_var_key(hash),
+            seed_config_var_key(hash),
             serde_json::to_string(&seed_config)?,
         )?;
     }
@@ -599,9 +615,7 @@ fn map_state(stats: &TorrentStats) -> DownloadItemState {
     } else {
         match stats.state {
             0 | 2 => DownloadItemState::Downloading,
-            1 => DownloadItemState::Paused,
-            3 | 4 => DownloadItemState::Failed,
-            _ => DownloadItemState::Warning,
+            _ => DownloadItemState::Paused,
         }
     }
 }
@@ -642,6 +656,27 @@ fn path_looks_like_file(path: &str) -> bool {
         return false;
     };
     ext != last
+}
+
+fn version_lt(left: &str, right: &str) -> bool {
+    let parse = |value: &str| -> Vec<u32> {
+        value
+            .split(|ch: char| !ch.is_ascii_digit())
+            .filter(|part| !part.is_empty())
+            .take(3)
+            .map(|part| part.parse::<u32>().unwrap_or_default())
+            .collect()
+    };
+    let left = parse(left);
+    let right = parse(right);
+    for index in 0..left.len().max(right.len()) {
+        let l = left.get(index).copied().unwrap_or_default();
+        let r = right.get(index).copied().unwrap_or_default();
+        if l != r {
+            return l < r;
+        }
+    }
+    false
 }
 
 fn config_value(key: &str) -> Option<String> {

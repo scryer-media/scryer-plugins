@@ -39,6 +39,12 @@ fn config_fields() -> Vec<ConfigFieldDef> {
 pub fn scryer_notification_send(input: String) -> FnResult<String> {
     let req: PluginNotificationRequest = serde_json::from_str(&input)?;
     let headers = [("X-API-Key", required_config("api_key")?)];
-    let response = send_json(NOTIFIARR_URL, "POST", &headers, to_webhook_json(&req));
+    let mut response = send_json(NOTIFIARR_URL, "POST", &headers, to_webhook_json(&req));
+    if response.provider_status.as_deref() == Some("http_400") {
+        if let Some(error) = response.error.take() {
+            response.warnings.push(error);
+        }
+        response.success = true;
+    }
     Ok(serde_json::to_string(&PluginResult::Ok(response))?)
 }

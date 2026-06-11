@@ -76,6 +76,12 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
     let token = required_config("app_token")?;
     let (title, message) = title_and_body(&req);
     let priority = config_i64("priority", 5);
+    if let Err(message) = validate_metadata_link_config() {
+        return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+            message,
+            Some("invalid_metadata_links".to_string()),
+        )))?);
+    }
     let (message, extras) = gotify_message_parts(&req, message);
     let body = serde_json::json!({
         "title": title,
@@ -187,4 +193,43 @@ fn metadata_links(req: &PluginNotificationRequest) -> Vec<(&'static str, &'stati
             }
         })
         .collect()
+}
+
+fn validate_metadata_link_config() -> Result<(), String> {
+    let links = config_csv("metadata_links");
+    for link in &links {
+        if !valid_metadata_link_kind(link) {
+            return Err(format!("invalid gotify metadata link: {link}"));
+        }
+    }
+
+    if links.is_empty() {
+        return Ok(());
+    }
+
+    let preferred = config_value("preferred_metadata_link")
+        .unwrap_or_else(|| "tvdb".to_string())
+        .to_ascii_lowercase();
+    if !valid_metadata_link_kind(&preferred) {
+        return Err(format!(
+            "invalid gotify preferred metadata link: {preferred}"
+        ));
+    }
+    if !links
+        .iter()
+        .any(|link| link.eq_ignore_ascii_case(&preferred))
+    {
+        return Err(
+            "gotify preferred_metadata_link must be one of the selected metadata_links".to_string(),
+        );
+    }
+
+    Ok(())
+}
+
+fn valid_metadata_link_kind(kind: &str) -> bool {
+    matches!(
+        kind.to_ascii_lowercase().as_str(),
+        "imdb" | "tvdb" | "trakt" | "tvmaze"
+    )
 }

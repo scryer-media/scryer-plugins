@@ -1718,6 +1718,7 @@ fn torrent_to_item(torrent: QbTorrent) -> PluginDownloadItem {
     let raw_state = normalize_non_empty(Some(torrent.state.clone()));
     PluginDownloadItem {
         client_item_id: normalize_hash(&torrent.hash),
+        download_id: None,
         info_hash: Some(normalize_hash(&torrent.hash)),
         title: torrent.name,
         state,
@@ -1776,6 +1777,7 @@ fn torrent_to_completed_download(torrent: QbTorrent) -> Option<PluginCompletedDo
     };
     Some(PluginCompletedDownload {
         client_item_id: hash.clone(),
+        download_id: None,
         info_hash: Some(hash),
         name: torrent.name.clone(),
         dest_dir,

@@ -180,19 +180,28 @@ fn build_urls(config: &FileListConfig, req: &SearchRequest) -> Vec<String> {
     };
 
     let mut urls = Vec::new();
-    let categories = if req.absolute_episode.is_some() && !config.anime_categories.is_empty() {
+    let categories = if req.absolute_episode.is_some() {
         &config.anime_categories
     } else {
         &config.categories
     };
 
-    if req.query.trim().is_empty() && req.ids.is_empty() {
+    if req.query.trim().is_empty()
+        && req.ids.is_empty()
+        && req.season.is_none()
+        && req.episode.is_none()
+        && req.absolute_episode.is_none()
+    {
         urls.push(request_url(
             &config.base_url,
             "latest-torrents",
             &union_categories(&config.categories, &config.anime_categories),
             "",
         ));
+        return urls;
+    }
+
+    if categories.is_empty() {
         return urls;
     }
 

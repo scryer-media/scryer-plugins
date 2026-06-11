@@ -102,6 +102,12 @@ fn config_fields() -> Vec<ConfigFieldDef> {
 #[plugin_fn]
 pub fn scryer_notification_send(input: String) -> FnResult<String> {
     let req: PluginNotificationRequest = serde_json::from_str(&input)?;
+    if let Err(message) = validate_plex_config() {
+        return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+            message,
+            Some("invalid_config".to_string()),
+        )))?);
+    }
     if !config_bool("update_library") || !should_update_library(&req) {
         return Ok(serde_json::to_string(&PluginResult::Ok(ok_response()))?);
     }
@@ -418,16 +424,31 @@ fn normalize_media_path(path: &str) -> String {
 }
 
 fn update_path(req: &PluginNotificationRequest) -> Option<String> {
-    req.file
+    req.title
         .as_ref()
-        .and_then(|file| file.primary_path.clone())
-        .or_else(|| req.title.as_ref().and_then(|title| title.path.clone()))
+        .and_then(|title| title.path.clone())
+        .or_else(|| req.file.as_ref().and_then(|file| file.primary_path.clone()))
 }
 
 fn map_path(path: &str) -> String {
     match (config_value("map_from"), config_value("map_to")) {
         (Some(from), Some(to)) if path.starts_with(&from) => path.replacen(&from, &to, 1),
         _ => path.to_string(),
+    }
+}
+
+fn validate_plex_config() -> Result<(), String> {
+    required_config("host").map_err(|_| "plex host is not configured".to_string())?;
+
+    let port = config_i64("port", 32400);
+    if !(1..=65535).contains(&port) {
+        return Err("plex port must be between 1 and 65535".to_string());
+    }
+
+    match (config_value("map_from"), config_value("map_to")) {
+        (Some(_), Some(_)) | (None, None) => Ok(()),
+        (Some(_), None) => Err("plex map_to is required when map_from is configured".to_string()),
+        (None, Some(_)) => Err("plex map_from is required when map_to is configured".to_string()),
     }
 }
 

@@ -253,13 +253,12 @@ pub fn scryer_download_add(input: String) -> FnResult<String> {
         .ok_or_else(|| Error::msg("Transmission did not return an added torrent hash"))?;
 
     apply_seed_limits(&config, &hash, &request)?;
-    if matches!(
-        request
-            .torrent
-            .as_ref()
-            .and_then(|torrent| torrent.queue_placement),
-        Some(_)
-    ) {
+    if request
+        .torrent
+        .as_ref()
+        .and_then(|torrent| torrent.queue_placement)
+        .is_some()
+    {
         let _ = rpc(
             &config,
             "queue-move-top",
@@ -812,10 +811,10 @@ fn labels_for_request(
     if !config.category.is_empty() {
         labels.push(config.category.clone());
     }
-    if let Some(value) = request.routing.isolation_value.as_deref() {
-        if !value.trim().is_empty() {
-            labels.push(value.trim().to_string());
-        }
+    if let Some(value) = request.routing.isolation_value.as_deref()
+        && !value.trim().is_empty()
+    {
+        labels.push(value.trim().to_string());
     }
     labels.sort();
     labels.dedup();
@@ -892,6 +891,7 @@ fn torrent_to_item(
 
     PluginDownloadItem {
         client_item_id: hash.clone(),
+        download_id: None,
         info_hash: Some(hash.clone()),
         title: torrent.name.clone(),
         state,
@@ -937,6 +937,7 @@ fn torrent_to_completed(torrent: TransmissionTorrent) -> PluginCompletedDownload
     let path = output_path(&torrent);
     PluginCompletedDownload {
         client_item_id: hash.clone(),
+        download_id: None,
         info_hash: Some(hash),
         name: torrent.name.clone(),
         dest_dir: path.clone(),
@@ -972,6 +973,9 @@ fn map_state(torrent: &TransmissionTorrent) -> DownloadItemState {
     if !torrent.error_string.trim().is_empty() {
         return DownloadItemState::Warning;
     }
+    if torrent.total_size == 0 {
+        return DownloadItemState::Queued;
+    }
     if is_completed(torrent) {
         return DownloadItemState::Completed;
     }
@@ -986,6 +990,9 @@ fn map_state(torrent: &TransmissionTorrent) -> DownloadItemState {
 }
 
 fn is_completed(torrent: &TransmissionTorrent) -> bool {
+    if torrent.total_size == 0 {
+        return false;
+    }
     torrent.left_until_done == 0 && matches!(torrent.status, 0 | 5 | 6)
         || torrent.is_finished && !matches!(torrent.status, 1 | 2)
 }
@@ -1015,42 +1022,34 @@ fn has_reached_seed_limit(
     let is_seeding = torrent.status == 6;
 
     match torrent.seed_ratio_mode.unwrap_or_default() {
-        1 => {
-            if is_stopped
-                && ratio.is_some_and(|ratio| {
-                    torrent.seed_ratio_limit.is_some_and(|limit| ratio >= limit)
-                })
-            {
-                return true;
-            }
+        1 if is_stopped
+            && ratio.is_some_and(|ratio| {
+                torrent.seed_ratio_limit.is_some_and(|limit| ratio >= limit)
+            }) =>
+        {
+            return true;
         }
-        0 => {
-            if is_stopped
-                && session.seed_ratio_limited.unwrap_or(false)
-                && ratio.is_some_and(|ratio| {
-                    session.seed_ratio_limit.is_some_and(|limit| ratio >= limit)
-                })
-            {
-                return true;
-            }
+        0 if is_stopped
+            && session.seed_ratio_limited.unwrap_or(false)
+            && ratio.is_some_and(|ratio| {
+                session.seed_ratio_limit.is_some_and(|limit| ratio >= limit)
+            }) =>
+        {
+            return true;
         }
         _ => {}
     }
 
     match torrent.seed_idle_mode.unwrap_or_default() {
-        1 => {
-            if (is_stopped || is_seeding)
-                && torrent
-                    .seed_idle_limit
-                    .is_some_and(|limit| torrent.seconds_seeding > limit * 60)
-            {
-                return true;
-            }
+        1 if (is_stopped || is_seeding)
+            && torrent
+                .seed_idle_limit
+                .is_some_and(|limit| torrent.seconds_seeding > limit * 60) =>
+        {
+            return true;
         }
-        0 => {
-            if is_stopped && session.idle_seeding_limit_enabled.unwrap_or(false) {
-                return true;
-            }
+        0 if is_stopped && session.idle_seeding_limit_enabled.unwrap_or(false) => {
+            return true;
         }
         _ => {}
     }
@@ -1081,8 +1080,8 @@ fn torrent_matches_scope(config: &TransmissionConfig, torrent: &TransmissionTorr
 }
 
 fn path_is_or_under(path: &str, root: &str) -> bool {
-    let path = path.trim_end_matches(|ch| ch == '/' || ch == '\\');
-    let root = root.trim_end_matches(|ch| ch == '/' || ch == '\\');
+    let path = path.trim_end_matches(['/', '\\']);
+    let root = root.trim_end_matches(['/', '\\']);
     path.eq_ignore_ascii_case(root)
         || path
             .get(root.len()..)

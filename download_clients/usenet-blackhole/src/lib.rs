@@ -395,6 +395,7 @@ fn entry_to_item(_config: &BlackholeConfig, entry: WatchFolderEntry) -> PluginDo
     };
     PluginDownloadItem {
         client_item_id: id.clone(),
+        download_id: None,
         info_hash: None,
         title,
         state,
@@ -428,6 +429,7 @@ fn entry_to_completed(entry: WatchFolderEntry) -> PluginCompletedDownload {
         .to_string();
     PluginCompletedDownload {
         client_item_id: id.clone(),
+        download_id: None,
         info_hash: None,
         name,
         dest_dir: id.clone(),

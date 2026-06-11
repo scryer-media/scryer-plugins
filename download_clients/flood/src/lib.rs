@@ -618,6 +618,7 @@ fn torrent_to_item(
     let removable = can_remove(config, &hash, &torrent, state);
     PluginDownloadItem {
         client_item_id: normalize_hash(&hash),
+        download_id: None,
         info_hash: Some(normalize_hash(&hash)),
         title: torrent.name.clone(),
         state,
@@ -672,6 +673,7 @@ fn torrent_to_completed(
     let dest_dir = derive_import_path(&torrent, &content_paths);
     Ok(PluginCompletedDownload {
         client_item_id: normalize_hash(&hash),
+        download_id: None,
         info_hash: Some(normalize_hash(&hash)),
         name: torrent.name,
         dest_dir: dest_dir.clone(),
@@ -765,10 +767,9 @@ fn can_remove(
 
     if let (Some(finished), Some(seed_time)) =
         (torrent.date_finished, seed_config.seed_time_seconds)
+        && now_unix_seconds().saturating_sub(finished) >= seed_time
     {
-        if now_unix_seconds().saturating_sub(finished) >= seed_time {
-            return true;
-        }
+        return true;
     }
 
     false
@@ -798,7 +799,7 @@ fn store_seed_config(hash: &str, request: &PluginDownloadClientAddRequest) -> Re
 
     if seed_config.ratio.is_some() || seed_config.seed_time_seconds.is_some() {
         var::set(
-            &seed_config_var_key(hash),
+            seed_config_var_key(hash),
             serde_json::to_string(&seed_config)?,
         )?;
     }

@@ -688,18 +688,17 @@ fn request_with_auth(
         .with_header("Authorization", basic_auth(config))
         .with_header("User-Agent", "scryer-utorrent-plugin/0.1");
     let mut actual_body = body;
-    if let Some(bytes) = actual_body.as_mut() {
-        if bytes.starts_with(b"Content-Type: ") {
-            if let Some(pos) = bytes.iter().position(|byte| *byte == b'\n') {
-                let header = String::from_utf8_lossy(&bytes[..pos]).to_string();
-                let content_type = header
-                    .trim_start_matches("Content-Type: ")
-                    .trim()
-                    .to_string();
-                request = request.with_header("Content-Type", content_type);
-                bytes.drain(..=pos);
-            }
-        }
+    if let Some(bytes) = actual_body.as_mut()
+        && bytes.starts_with(b"Content-Type: ")
+        && let Some(pos) = bytes.iter().position(|byte| *byte == b'\n')
+    {
+        let header = String::from_utf8_lossy(&bytes[..pos]).to_string();
+        let content_type = header
+            .trim_start_matches("Content-Type: ")
+            .trim()
+            .to_string();
+        request = request.with_header("Content-Type", content_type);
+        bytes.drain(..=pos);
     }
     let response = http::request::<Vec<u8>>(&request, actual_body)
         .map_err(|error| Error::msg(format!("uTorrent request failed: {error}")))?;
@@ -813,6 +812,7 @@ fn torrent_to_item(config: &UTorrentConfig, torrent: UTorrentTorrent) -> PluginD
     };
     PluginDownloadItem {
         client_item_id: torrent.hash.clone(),
+        download_id: None,
         info_hash: Some(torrent.hash.clone()),
         title: torrent.name.clone(),
         state,
@@ -857,6 +857,7 @@ fn torrent_to_completed(torrent: UTorrentTorrent) -> PluginCompletedDownload {
     };
     PluginCompletedDownload {
         client_item_id: torrent.hash.clone(),
+        download_id: None,
         info_hash: Some(torrent.hash),
         name: torrent.name,
         dest_dir: output_path.clone(),

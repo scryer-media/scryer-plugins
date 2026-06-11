@@ -160,7 +160,12 @@ fn build_queries(req: &SearchRequest) -> Vec<BtnQuery> {
     let tvrage = req.ids.get("tvrage_id").filter(|value| !value.is_empty());
 
     if tvdb.is_none() && tvrage.is_none() {
-        if req.query.trim().is_empty() && req.ids.is_empty() {
+        if req.query.trim().is_empty()
+            && req.ids.is_empty()
+            && req.season.is_none()
+            && req.episode.is_none()
+            && req.absolute_episode.is_none()
+        {
             queries.push(BtnQuery {
                 age: Some("<=86400".to_string()),
                 ..BtnQuery::default()
@@ -277,8 +282,8 @@ fn parse_response(base_url: &str, response: BtnTorrents) -> Result<Vec<SearchRes
     Ok(torrents
         .into_values()
         .map(|torrent| {
-            let seeders = torrent.seeders.unwrap_or_default() as i64;
-            let leechers = torrent.leechers.unwrap_or_default() as i64;
+            let seeders = torrent.seeders.unwrap_or_default();
+            let leechers = torrent.leechers.unwrap_or_default();
             let mut external_ids = HashMap::new();
             if let Some(tvdb_id) = torrent.tvdb_id.filter(|value| *value > 0) {
                 external_ids.insert("tvdb_id".to_string(), tvdb_id.to_string());
@@ -375,7 +380,7 @@ fn replace_protocol(value: &str, protocol: &str) -> String {
 
 fn request_limit(req: &SearchRequest) -> usize {
     if req.limit == 0 {
-        PAGE_SIZE
+        PAGE_SIZE * MAX_PAGES
     } else {
         req.limit.min(PAGE_SIZE * MAX_PAGES)
     }

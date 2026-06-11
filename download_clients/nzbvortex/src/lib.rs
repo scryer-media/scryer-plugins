@@ -587,6 +587,7 @@ fn map_queue_item(
     let progress = item.progress.round().clamp(0.0, 100.0) as u8;
     Ok(PluginDownloadItem {
         client_item_id,
+        download_id: None,
         info_hash: None,
         title: item.ui_title,
         state,
@@ -616,6 +617,7 @@ fn map_completed(
         .unwrap_or_else(|| item.destination_path.clone());
     Ok(PluginCompletedDownload {
         client_item_id: item.add_uuid.clone().unwrap_or_else(|| item.id.to_string()),
+        download_id: None,
         info_hash: None,
         name: item.ui_title,
         dest_dir: output_path.clone(),

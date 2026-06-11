@@ -39,7 +39,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             "refresh_token",
             "Refresh Token",
             ConfigFieldType::Password,
-            false,
+            true,
             None,
             Some("Trakt OAuth refresh token. Used to renew the access token before sync."),
         ),
@@ -47,7 +47,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             "expires",
             "Expires",
             ConfigFieldType::String,
-            false,
+            true,
             None,
             Some("Sonarr-compatible token expiry value retained for import parity."),
         ),
@@ -65,7 +65,8 @@ fn config_fields() -> Vec<ConfigFieldDef> {
 #[plugin_fn]
 pub fn scryer_notification_send(input: String) -> FnResult<String> {
     let req: PluginNotificationRequest = serde_json::from_str(&input)?;
-    let Some(body) = trakt_payload(&req) else {
+    let raw_req: serde_json::Value = serde_json::from_str(&input)?;
+    let Some(body) = trakt_payload(&req, &raw_req) else {
         return Ok(serde_json::to_string(&PluginResult::Ok(ok_response()))?);
     };
     let endpoint = if remove_event(&req) {
@@ -178,7 +179,10 @@ fn get_user_name(access_token: &str) -> Result<String, Error> {
         .ok_or_else(|| Error::msg("Trakt user settings response did not include username"))
 }
 
-fn trakt_payload(req: &PluginNotificationRequest) -> Option<serde_json::Value> {
+fn trakt_payload(
+    req: &PluginNotificationRequest,
+    raw_req: &serde_json::Value,
+) -> Option<serde_json::Value> {
     let title = req.title.as_ref()?;
     let mut show = serde_json::json!({
         "title": title.name,
@@ -189,7 +193,7 @@ fn trakt_payload(req: &PluginNotificationRequest) -> Option<serde_json::Value> {
         },
     });
 
-    let seasons = seasons_payload(req);
+    let seasons = seasons_payload(req, raw_req);
     if !seasons.is_empty() {
         show["seasons"] = serde_json::Value::Array(seasons);
     }
@@ -199,17 +203,34 @@ fn trakt_payload(req: &PluginNotificationRequest) -> Option<serde_json::Value> {
     }))
 }
 
-fn seasons_payload(req: &PluginNotificationRequest) -> Vec<serde_json::Value> {
+fn seasons_payload(
+    req: &PluginNotificationRequest,
+    raw_req: &serde_json::Value,
+) -> Vec<serde_json::Value> {
     let mut by_season: std::collections::BTreeMap<i64, Vec<serde_json::Value>> =
         std::collections::BTreeMap::new();
+    let common_media_metadata = common_media_metadata(&req.media_files);
 
+    let raw_episodes = raw_req.get("episodes").and_then(|value| value.as_array());
     let episodes = if req.episodes.is_empty() {
-        req.episode.iter().cloned().collect::<Vec<_>>()
+        req.episode
+            .as_ref()
+            .map(|episode| vec![(episode, raw_req.get("episode"))])
+            .unwrap_or_default()
     } else {
-        req.episodes.clone()
+        req.episodes
+            .iter()
+            .enumerate()
+            .map(|(index, episode)| {
+                (
+                    episode,
+                    raw_episodes.and_then(|episodes| episodes.get(index)),
+                )
+            })
+            .collect()
     };
 
-    for episode in episodes {
+    for (episode, raw_episode) in episodes {
         let Some(season) = parse_i64(episode.season_number.as_deref()) else {
             continue;
         };
@@ -221,6 +242,13 @@ fn seasons_payload(req: &PluginNotificationRequest) -> Vec<serde_json::Value> {
             if let Some(occurred_at) = req.occurred_at.clone() {
                 episode_json["collected_at"] = serde_json::Value::String(occurred_at);
             }
+            let episode_media_metadata = episode_media_metadata(raw_episode, &req.media_files);
+            apply_episode_media_metadata(
+                &mut episode_json,
+                episode_media_metadata
+                    .as_ref()
+                    .or(common_media_metadata.as_ref()),
+            );
         }
         by_season.entry(season).or_default().push(episode_json);
     }
@@ -234,6 +262,156 @@ fn seasons_payload(req: &PluginNotificationRequest) -> Vec<serde_json::Value> {
             })
         })
         .collect()
+}
+
+fn episode_media_metadata(
+    raw_episode: Option<&serde_json::Value>,
+    media_files: &[PluginNotificationMediaFile],
+) -> Option<TraktMediaMetadata> {
+    let raw_episode = raw_episode?;
+    if let Some(media_file_id) = string_value(raw_episode, "media_file_id")
+        && let Some(media_file) = media_files
+            .iter()
+            .find(|media_file| media_file.id.as_deref() == Some(media_file_id.as_str()))
+    {
+        return Some(media_metadata(media_file));
+    }
+
+    if let Some(media_file_path) = string_value(raw_episode, "media_file_path")
+        && let Some(media_file) = media_files
+            .iter()
+            .find(|media_file| media_file.path == media_file_path)
+    {
+        return Some(media_metadata(media_file));
+    }
+
+    None
+}
+
+fn apply_episode_media_metadata(
+    episode_json: &mut serde_json::Value,
+    metadata: Option<&TraktMediaMetadata>,
+) {
+    let Some(metadata) = metadata else {
+        return;
+    };
+
+    set_string_field(episode_json, "resolution", metadata.resolution.clone());
+    set_string_field(episode_json, "hdr", metadata.hdr.clone());
+    set_string_field(episode_json, "media_type", metadata.media_type.clone());
+    set_string_field(
+        episode_json,
+        "audio_channels",
+        metadata.audio_channels.clone(),
+    );
+    set_string_field(episode_json, "audio", metadata.audio.clone());
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct TraktMediaMetadata {
+    resolution: Option<String>,
+    hdr: Option<String>,
+    media_type: Option<String>,
+    audio_channels: Option<String>,
+    audio: Option<String>,
+}
+
+fn common_media_metadata(
+    media_files: &[PluginNotificationMediaFile],
+) -> Option<TraktMediaMetadata> {
+    let mut iter = media_files.iter().map(media_metadata);
+    let first = iter.next()?;
+    iter.all(|metadata| metadata == first).then_some(first)
+}
+
+fn media_metadata(media_file: &PluginNotificationMediaFile) -> TraktMediaMetadata {
+    TraktMediaMetadata {
+        resolution: map_resolution(media_file),
+        hdr: map_hdr(media_file),
+        media_type: map_media_type(media_file),
+        audio_channels: media_file.audio_channels.clone(),
+        audio: map_audio(media_file),
+    }
+}
+
+fn set_string_field(episode_json: &mut serde_json::Value, key: &str, value: Option<String>) {
+    if let Some(value) = value.filter(|value| !value.trim().is_empty()) {
+        episode_json[key] = serde_json::Value::String(value);
+    }
+}
+
+fn map_resolution(media_file: &PluginNotificationMediaFile) -> Option<String> {
+    match media_file.video_height? {
+        height if height >= 2160 => Some("uhd_4k".to_string()),
+        1080 => Some("hd_1080p".to_string()),
+        720 => Some("hd_720p".to_string()),
+        576 => Some("sd_576p".to_string()),
+        480 => Some("sd_480p".to_string()),
+        _ => None,
+    }
+}
+
+fn map_hdr(media_file: &PluginNotificationMediaFile) -> Option<String> {
+    let normalized = media_file
+        .video_hdr_format
+        .as_ref()?
+        .to_ascii_lowercase()
+        .replace([' ', '-', '_'], "");
+
+    if normalized.contains("dolbyvision") || normalized == "dv" {
+        Some("dolby_vision".to_string())
+    } else if normalized.contains("hdr10plus") || normalized.contains("hdr10+") {
+        Some("hdr10_plus".to_string())
+    } else if normalized.contains("hdr10") {
+        Some("hdr10".to_string())
+    } else if normalized.contains("hlg") {
+        Some("hlg".to_string())
+    } else {
+        None
+    }
+}
+
+fn map_media_type(media_file: &PluginNotificationMediaFile) -> Option<String> {
+    let quality = media_file.quality.as_ref()?.to_ascii_lowercase();
+    if quality.contains("web") {
+        Some("digital".to_string())
+    } else if quality.contains("blu") || quality.contains("bd") {
+        Some("bluray".to_string())
+    } else if quality.contains("dvd") {
+        Some("dvd".to_string())
+    } else if quality.contains("hdtv") || quality.contains("tv") {
+        Some("vhs".to_string())
+    } else {
+        None
+    }
+}
+
+fn map_audio(media_file: &PluginNotificationMediaFile) -> Option<String> {
+    let normalized = media_file.audio_codec.as_ref()?.trim().to_ascii_uppercase();
+    match normalized.as_str() {
+        value if value.contains("EAC3") && value.contains("ATMOS") => {
+            Some("dolby_digital_plus_atmos".to_string())
+        }
+        value if value.contains("TRUEHD") && value.contains("ATMOS") => {
+            Some("dolby_atmos".to_string())
+        }
+        "AC3" => Some("dolby_digital".to_string()),
+        "EAC3" => Some("dolby_digital_plus".to_string()),
+        "TRUEHD" => Some("dolby_truehd".to_string()),
+        "DTS" | "DTS-ES" => Some("dts".to_string()),
+        "DTS-HD MA" => Some("dts_ma".to_string()),
+        "DTS-HD HRA" => Some("dts_hr".to_string()),
+        "DTS-X" | "DTS:X" => Some("dts_x".to_string()),
+        "MP3" => Some("mp3".to_string()),
+        "MP2" => Some("mp2".to_string()),
+        "VORBIS" => Some("ogg".to_string()),
+        "WMA" => Some("wma".to_string()),
+        "AAC" => Some("aac".to_string()),
+        "PCM" => Some("lpcm".to_string()),
+        "FLAC" => Some("flac".to_string()),
+        "OPUS" => Some("ogg_opus".to_string()),
+        _ => None,
+    }
 }
 
 fn remove_event(req: &PluginNotificationRequest) -> bool {
@@ -321,4 +499,103 @@ fn civil_from_days(days: i64) -> (i64, i64, i64) {
     let year = year + if month <= 2 { 1 } else { 0 };
 
     (year, month, day)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn request(
+        episodes: Vec<serde_json::Value>,
+        media_files: Vec<serde_json::Value>,
+    ) -> PluginNotificationRequest {
+        serde_json::from_value(serde_json::json!({
+            "schema_version": 3,
+            "event_type": "import_complete",
+            "occurred_at": "2026-06-10T12:00:00Z",
+            "summary_title": "Imported",
+            "summary_message": "Imported",
+            "app": {
+                "name": "Scryer",
+                "version": "0.16.0"
+            },
+            "episodes": episodes,
+            "media_files": media_files
+        }))
+        .unwrap()
+    }
+
+    fn episode(season: &str, number: &str) -> serde_json::Value {
+        serde_json::json!({
+            "season_number": season,
+            "episode_number": number
+        })
+    }
+
+    fn media_file(id: &str, path: &str, height: i32) -> serde_json::Value {
+        serde_json::json!({
+            "id": id,
+            "path": path,
+            "quality": if height >= 1080 { "Bluray" } else { "WEBDL" },
+            "video_height": height,
+            "audio_codec": "AC3",
+            "audio_channels": "5.1"
+        })
+    }
+
+    #[test]
+    fn seasons_payload_uses_associated_media_file_metadata() {
+        let req = request(
+            vec![episode("1", "1"), episode("1", "2")],
+            vec![
+                media_file("file-720", "/show/s01e01.mkv", 720),
+                media_file("file-1080", "/show/s01e02.mkv", 1080),
+            ],
+        );
+        let raw_req = serde_json::json!({
+            "episodes": [
+                { "media_file_id": "file-720" },
+                { "media_file_path": "/show/s01e02.mkv" }
+            ]
+        });
+
+        let seasons = seasons_payload(&req, &raw_req);
+        let episodes = seasons[0]["episodes"].as_array().unwrap();
+
+        assert_eq!(episodes[0]["resolution"], "hd_720p");
+        assert_eq!(episodes[0]["media_type"], "digital");
+        assert_eq!(episodes[1]["resolution"], "hd_1080p");
+        assert_eq!(episodes[1]["media_type"], "bluray");
+    }
+
+    #[test]
+    fn seasons_payload_keeps_single_file_metadata_fallback() {
+        let req = request(
+            vec![episode("1", "1")],
+            vec![media_file("file-1080", "/show/s01e01.mkv", 1080)],
+        );
+
+        let seasons = seasons_payload(&req, &serde_json::json!({}));
+        let episode = &seasons[0]["episodes"][0];
+
+        assert_eq!(episode["resolution"], "hd_1080p");
+        assert_eq!(episode["audio_channels"], "5.1");
+    }
+
+    #[test]
+    fn seasons_payload_does_not_guess_differing_multi_file_metadata() {
+        let req = request(
+            vec![episode("1", "1"), episode("1", "2")],
+            vec![
+                media_file("file-720", "/show/s01e01.mkv", 720),
+                media_file("file-1080", "/show/s01e02.mkv", 1080),
+            ],
+        );
+
+        let seasons = seasons_payload(&req, &serde_json::json!({}));
+        let episodes = seasons[0]["episodes"].as_array().unwrap();
+
+        assert!(episodes[0].get("resolution").is_none());
+        assert!(episodes[1].get("resolution").is_none());
+    }
 }

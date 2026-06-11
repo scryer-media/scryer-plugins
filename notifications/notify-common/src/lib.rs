@@ -4,8 +4,8 @@ use scryer_plugin_sdk::current_sdk_constraint;
 pub use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldOption, ConfigFieldRole, ConfigFieldType, NotificationCapabilities,
     NotificationDeliveryMode, NotificationEventType, NotificationPayloadFormat, PluginDescriptor,
-    PluginNotificationRequest, PluginNotificationResponse, PluginResult, ProviderDescriptor,
-    SDK_VERSION,
+    PluginNotificationMediaFile, PluginNotificationRequest, PluginNotificationResponse,
+    PluginResult, ProviderDescriptor, SDK_VERSION,
 };
 
 pub fn build_notification_descriptor(
@@ -298,6 +298,10 @@ pub fn append_query(url: &str, params: &[(&str, String)]) -> String {
     }
 }
 
+pub fn path_segment(value: &str) -> String {
+    urlencoding::encode(value).into_owned()
+}
+
 pub fn form_body(params: &[(String, String)]) -> Vec<u8> {
     params
         .iter()
@@ -464,6 +468,7 @@ mod process_guest {
     }
 }
 
+#[cfg(target_arch = "wasm32")]
 fn decode_process_response(raw: &str) -> Result<ProcessExecResponse, ProcessError> {
     let response: ProcessResponse<ProcessExecResponse> =
         serde_json::from_str(raw).map_err(|error| ProcessError {

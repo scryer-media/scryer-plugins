@@ -98,17 +98,41 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
             None,
         )))?);
     }
+    for topic in &topics {
+        if !valid_ntfy_topic(topic) {
+            return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+                format!("invalid ntfy topic: {topic}"),
+                Some("invalid_topic".to_string()),
+            )))?);
+        }
+    }
+
+    let priority_value = config_i64("priority", 3);
+    if !(1..=5).contains(&priority_value) {
+        return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+            "ntfy priority must be between 1 and 5",
+            Some("invalid_priority".to_string()),
+        )))?);
+    }
+
+    let access_token = config_value("access_token");
+    let username = config_value("username");
+    let password = config_value("password");
+    if access_token.is_none() && (username.is_some() ^ password.is_some()) {
+        return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+            "ntfy username and password must be configured together",
+            Some("invalid_auth".to_string()),
+        )))?);
+    }
 
     let (title, message) = title_and_body(&req);
-    let priority = config_i64("priority", 3).to_string();
+    let priority = priority_value.to_string();
     let tags = config_csv("tags").join(",");
     let click = config_value("click_url");
     let mut headers = configured_headers();
-    if let Some(token) = config_value("access_token") {
+    if let Some(token) = access_token {
         headers.push(("Authorization", format!("Bearer {token}")));
-    } else if let (Some(username), Some(password)) =
-        (config_value("username"), config_value("password"))
-    {
+    } else if let (Some(username), Some(password)) = (username, password) {
         headers.push(("Authorization", basic_auth_header(&username, &password)));
     }
 
@@ -147,6 +171,24 @@ fn configured_headers() -> Vec<(&'static str, String)> {
                 .collect()
         })
         .unwrap_or_default()
+}
+
+fn valid_ntfy_topic(topic: &str) -> bool {
+    const INVALID_TOPICS: &[&str] = &[
+        "announcements",
+        "app",
+        "docs",
+        "settings",
+        "stats",
+        "mytopic-rw",
+        "mytopic-ro",
+        "mytopic-wo",
+    ];
+
+    !INVALID_TOPICS.contains(&topic)
+        && topic
+            .chars()
+            .all(|ch| ch.is_ascii_alphanumeric() || ch == '_' || ch == '-')
 }
 
 fn leak_header_key(key: &str) -> &'static str {

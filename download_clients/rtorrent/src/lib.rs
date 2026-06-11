@@ -218,7 +218,7 @@ pub fn scryer_download_list_queue(_input: String) -> FnResult<String> {
     let items = list_torrents(&config)?
         .into_iter()
         .filter(|torrent| torrent_matches_scope(&config, torrent))
-        .map(torrent_to_item)
+        .map(|torrent| torrent_to_item(&config, torrent))
         .collect::<Vec<_>>();
     Ok(serde_json::to_string(&PluginResult::Ok(items))?)
 }
@@ -229,7 +229,7 @@ pub fn scryer_download_list_history(_input: String) -> FnResult<String> {
     let items = list_torrents(&config)?
         .into_iter()
         .filter(|torrent| torrent_matches_scope(&config, torrent))
-        .map(torrent_to_item)
+        .map(|torrent| torrent_to_item(&config, torrent))
         .collect::<Vec<_>>();
     Ok(serde_json::to_string(&PluginResult::Ok(items))?)
 }
@@ -289,17 +289,18 @@ pub fn scryer_download_mark_imported(input: String) -> FnResult<String> {
             .clone()
             .unwrap_or_else(|| request.client_item_id.clone()),
     );
-    if !config.post_import_category.is_empty() && config.post_import_category != config.category {
-        if let Ok(response) = call_document(
+    if !config.post_import_category.is_empty()
+        && config.post_import_category != config.category
+        && let Ok(response) = call_document(
             &config,
             "d.custom1.set",
             &[
                 XmlValue::String(hash.clone()),
                 XmlValue::String(config.post_import_category.clone()),
             ],
-        ) {
-            let _ = string_response(&response);
-        }
+        )
+    {
+        let _ = string_response(&response);
     }
     let _ = call_document(
         &config,
@@ -325,7 +326,7 @@ pub fn scryer_download_status(_input: String) -> FnResult<String> {
             } else {
                 vec![config.directory]
             },
-            removes_completed_downloads: Some(false),
+            removes_completed_downloads: Some(!config.post_import_category.is_empty()),
             sorting_mode: Some("rtorrent-xmlrpc".to_string()),
             warnings: vec![
                 "Remove with data is unavailable because Sonarr's rTorrent implementation deletes files through the host filesystem".to_string(),
@@ -583,7 +584,7 @@ fn parse_torrents(xml: &str) -> Result<Vec<RTorrentTorrent>, Error> {
     Ok(out)
 }
 
-fn torrent_to_item(torrent: RTorrentTorrent) -> PluginDownloadItem {
+fn torrent_to_item(config: &RTorrentConfig, torrent: RTorrentTorrent) -> PluginDownloadItem {
     let state = if torrent.is_finished {
         DownloadItemState::Completed
     } else if torrent.is_active {
@@ -596,9 +597,10 @@ fn torrent_to_item(torrent: RTorrentTorrent) -> PluginDownloadItem {
     } else {
         Some(0)
     };
-    let can_remove = can_remove(&torrent);
+    let can_remove = !config.post_import_category.is_empty() && can_remove(&torrent);
     PluginDownloadItem {
         client_item_id: torrent.hash.clone(),
+        download_id: None,
         info_hash: Some(torrent.hash.clone()),
         title: torrent.name.clone(),
         state,
@@ -651,6 +653,7 @@ fn torrent_matches_scope(config: &RTorrentConfig, torrent: &RTorrentTorrent) -> 
 fn torrent_to_completed(torrent: RTorrentTorrent) -> PluginCompletedDownload {
     PluginCompletedDownload {
         client_item_id: torrent.hash.clone(),
+        download_id: None,
         info_hash: Some(torrent.hash),
         name: torrent.name,
         dest_dir: torrent.path.clone(),
@@ -681,10 +684,10 @@ fn can_remove(torrent: &RTorrentTorrent) -> bool {
         return true;
     }
 
-    if let Some(seed_time_seconds) = seed_config.seed_time_seconds {
-        if torrent.finished_time > 0 {
-            return now_unix_seconds().saturating_sub(torrent.finished_time) >= seed_time_seconds;
-        }
+    if let Some(seed_time_seconds) = seed_config.seed_time_seconds
+        && torrent.finished_time > 0
+    {
+        return now_unix_seconds().saturating_sub(torrent.finished_time) >= seed_time_seconds;
     }
 
     false
@@ -706,7 +709,7 @@ fn store_seed_config(hash: &str, request: &PluginDownloadClientAddRequest) -> Re
 
     if seed_config.ratio.is_some() || seed_config.seed_time_seconds.is_some() {
         var::set(
-            &seed_config_var_key(hash),
+            seed_config_var_key(hash),
             serde_json::to_string(&seed_config)?,
         )?;
     }

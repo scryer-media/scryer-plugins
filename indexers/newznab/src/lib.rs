@@ -68,7 +68,7 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
                 limits: Some(IndexerLimitCapabilities {
                     page_size: Some(100),
                     max_page_size: Some(100),
-                    max_pages: Some(10),
+                    max_pages: Some(30),
                     api_quota_supported: true,
                     grab_quota_supported: true,
                     ..IndexerLimitCapabilities::default()

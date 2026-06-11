@@ -73,12 +73,20 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
         "https://api.mailgun.net/v3"
     };
     let domain = required_config("sender_domain")?;
+    let recipients = config_csv("recipients");
+    if recipients.is_empty() {
+        return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+            "mailgun recipients is not configured",
+            None,
+        )))?);
+    }
+
     let mut params = vec![
         ("from".to_string(), required_config("from")?),
         ("subject".to_string(), title),
         ("text".to_string(), message),
     ];
-    for recipient in config_csv("recipients") {
+    for recipient in recipients {
         params.push(("to".to_string(), recipient));
     }
     let headers = [(

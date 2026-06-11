@@ -740,13 +740,15 @@ fn add_file(
         api_multipart(
             config,
             apis,
-            &apis.task,
-            true,
-            &fields,
-            "fileData",
-            file_name,
-            content_type,
-            &bytes,
+            MultipartUpload {
+                info: &apis.task,
+                sid_in_query: true,
+                fields: &fields,
+                file_field: "fileData",
+                file_name,
+                content_type,
+                file_bytes: &bytes,
+            },
         )?;
     } else {
         let mut fields = vec![
@@ -760,62 +762,69 @@ fn add_file(
         api_multipart(
             config,
             apis,
-            &apis.task,
-            false,
-            &fields,
-            "file",
-            file_name,
-            content_type,
-            &bytes,
+            MultipartUpload {
+                info: &apis.task,
+                sid_in_query: false,
+                fields: &fields,
+                file_field: "file",
+                file_name,
+                content_type,
+                file_bytes: &bytes,
+            },
         )?;
     }
     Ok(())
 }
 
+struct MultipartUpload<'a> {
+    info: &'a ApiInfo,
+    sid_in_query: bool,
+    fields: &'a [(String, String)],
+    file_field: &'a str,
+    file_name: &'a str,
+    content_type: &'a str,
+    file_bytes: &'a [u8],
+}
+
 fn api_multipart(
     config: &DsConfig,
     apis: &ApiSelection,
-    info: &ApiInfo,
-    sid_in_query: bool,
-    fields: &[(String, String)],
-    file_field: &str,
-    file_name: &str,
-    content_type: &str,
-    file_bytes: &[u8],
+    upload: MultipartUpload<'_>,
 ) -> Result<serde_json::Value, Error> {
     let boundary = "scryer-downloadstation-boundary";
     let sid = authenticate(config, &apis.auth, false)?;
-    let url = if sid_in_query {
+    let url = if upload.sid_in_query {
         format!(
             "{}/webapi/{}?_sid={}",
             config.base_url,
-            info.path.trim_start_matches('/'),
+            upload.info.path.trim_start_matches('/'),
             urlencoding::encode(&sid)
         )
     } else {
         format!(
             "{}/webapi/{}",
             config.base_url,
-            info.path.trim_start_matches('/')
+            upload.info.path.trim_start_matches('/')
         )
     };
     let mut body = Vec::new();
-    if !sid_in_query {
+    if !upload.sid_in_query {
         write_form_field(&mut body, boundary, "_sid", &sid);
     }
-    for (key, value) in fields {
+    for (key, value) in upload.fields {
         write_form_field(&mut body, boundary, key, value);
     }
     body.extend_from_slice(format!("--{boundary}\r\n").as_bytes());
     body.extend_from_slice(
         format!(
-            "Content-Disposition: form-data; name=\"{file_field}\"; filename=\"{}\"\r\n",
-            file_name.replace('"', "")
+            "Content-Disposition: form-data; name=\"{}\"; filename=\"{}\"\r\n",
+            upload.file_field,
+            upload.file_name.replace('"', "")
         )
         .as_bytes(),
     );
-    body.extend_from_slice(format!("Content-Type: {content_type}\r\n\r\n").as_bytes());
-    body.extend_from_slice(file_bytes);
+    body.extend_from_slice(format!("Content-Type: {}\r\n\r\n", upload.content_type).as_bytes());
+    body.extend_from_slice(upload.file_bytes);
     body.extend_from_slice(format!("\r\n--{boundary}--\r\n").as_bytes());
     let request = HttpRequest::new(url)
         .with_method("POST")
@@ -1024,6 +1033,7 @@ fn task_to_item(config: &DsConfig, serial: &str, task: DsTask) -> PluginDownload
     let status = map_status(&task);
     PluginDownloadItem {
         client_item_id: format!("{serial}:{}", task.id),
+        download_id: None,
         info_hash: None,
         title: task.title.clone(),
         state: status,
@@ -1091,6 +1101,7 @@ fn task_to_completed(config: &DsConfig, serial: &str, task: DsTask) -> PluginCom
     let path = format!("{}/{}", output_dir.trim_end_matches('/'), task.title);
     PluginCompletedDownload {
         client_item_id: format!("{serial}:{}", task.id),
+        download_id: None,
         info_hash: None,
         name: task.title,
         dest_dir: path.clone(),
@@ -1273,8 +1284,6 @@ fn source_kind(request: &DownloadStationAddRequest) -> DownloadInputKind {
             DownloadInputKind::TorrentUrl
         } else if request.source.torrent_bytes_base64.is_some() {
             DownloadInputKind::TorrentBytes
-        } else if request.source.nzb_url.is_some() {
-            DownloadInputKind::NzbUrl
         } else {
             DownloadInputKind::NzbUrl
         }

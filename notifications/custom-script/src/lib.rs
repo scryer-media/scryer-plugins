@@ -169,25 +169,37 @@ fn add_sonarr_environment(req: &PluginNotificationRequest, env: &mut BTreeMap<St
             "Sonarr_EpisodeFile_SeasonNumber",
             episode.season_number.as_deref(),
         );
-        insert_opt(
-            env,
-            "Sonarr_EpisodeFile_EpisodeNumbers",
-            episode.episode_number.as_deref(),
+        env.insert(
+            "Sonarr_EpisodeFile_EpisodeNumbers".to_string(),
+            episodes
+                .iter()
+                .filter_map(|episode| episode.episode_number.clone())
+                .collect::<Vec<_>>()
+                .join(","),
         );
-        insert_opt(
-            env,
-            "Sonarr_EpisodeFile_EpisodeTitles",
-            episode.title.as_deref(),
+        env.insert(
+            "Sonarr_EpisodeFile_EpisodeTitles".to_string(),
+            episodes
+                .iter()
+                .filter_map(|episode| episode.title.clone())
+                .collect::<Vec<_>>()
+                .join("|"),
         );
-        insert_opt(
-            env,
-            "Sonarr_EpisodeFile_EpisodeAirDates",
-            episode.air_date.as_deref(),
+        env.insert(
+            "Sonarr_EpisodeFile_EpisodeAirDates".to_string(),
+            episodes
+                .iter()
+                .filter_map(|episode| episode.air_date.clone())
+                .collect::<Vec<_>>()
+                .join(","),
         );
-        insert_opt(
-            env,
-            "Sonarr_EpisodeFile_EpisodeAirDatesUtc",
-            episode.air_date_utc.as_deref(),
+        env.insert(
+            "Sonarr_EpisodeFile_EpisodeAirDatesUtc".to_string(),
+            episodes
+                .iter()
+                .filter_map(|episode| episode.air_date_utc.clone())
+                .collect::<Vec<_>>()
+                .join(","),
         );
         env.insert(
             "Sonarr_EpisodeFile_AbsoluteEpisodeNumbers".to_string(),
@@ -648,8 +660,8 @@ fn insert_or_empty(env: &mut BTreeMap<String, String>, key: &str, value: Option<
 }
 
 fn parent_path(path: &str) -> Option<String> {
-    let trimmed = path.trim_end_matches(|ch| ch == '/' || ch == '\\');
-    let index = trimmed.rfind(|ch| ch == '/' || ch == '\\')?;
+    let trimmed = path.trim_end_matches(['/', '\\']);
+    let index = trimmed.rfind(['/', '\\'])?;
     if index == 0 {
         Some(trimmed[..=index].to_string())
     } else {

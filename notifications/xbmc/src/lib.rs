@@ -79,7 +79,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             "GUI Notification",
             ConfigFieldType::Bool,
             false,
-            Some("true"),
+            Some("false"),
             None,
         ),
         field(
@@ -87,7 +87,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             "Update Library",
             ConfigFieldType::Bool,
             false,
-            Some("true"),
+            Some("false"),
             None,
         ),
         field(
@@ -112,6 +112,12 @@ fn config_fields() -> Vec<ConfigFieldDef> {
 #[plugin_fn]
 pub fn scryer_notification_send(input: String) -> FnResult<String> {
     let req: PluginNotificationRequest = serde_json::from_str(&input)?;
+    if let Err(message) = validate_xbmc_config() {
+        return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+            message,
+            Some("invalid_config".to_string()),
+        )))?);
+    }
     let mut responses = Vec::new();
     if config_bool("notify") {
         responses.push(json_rpc(
@@ -187,7 +193,8 @@ fn json_rpc_value(method: &str, params: serde_json::Value) -> serde_json::Value 
         "id": 1,
     });
     let mut headers = Vec::new();
-    if let (Some(username), Some(password)) = (config_value("username"), config_value("password")) {
+    if let Some(username) = config_value("username") {
+        let password = config_value("password").unwrap_or_default();
         headers.push(("Authorization", basic_auth_header(&username, &password)));
     }
     let mut request = HttpRequest::new(base_url())
@@ -293,6 +300,14 @@ fn numeric_ids_equal(actual: &str, expected: &str) -> bool {
     }
 }
 
+fn validate_xbmc_config() -> Result<(), String> {
+    required_config("host").map_err(|_| "kodi host is not configured".to_string())?;
+    if config_i64("display_time", 5) < 2 {
+        return Err("kodi display_time must be greater than or equal to 2".to_string());
+    }
+    Ok(())
+}
+
 fn string_member(value: &serde_json::Value, keys: &[&str]) -> Option<String> {
     keys.iter()
         .find_map(|key| {
@@ -323,8 +338,8 @@ fn should_update_library(req: &PluginNotificationRequest) -> bool {
 fn should_clean_library(req: &PluginNotificationRequest) -> bool {
     matches!(
         req.event_type,
-        NotificationEventType::Download
-            | NotificationEventType::Upgrade
+        NotificationEventType::Upgrade
+            | NotificationEventType::ImportComplete
             | NotificationEventType::FileDeleted
             | NotificationEventType::FileDeletedForUpgrade
             | NotificationEventType::TitleAdded

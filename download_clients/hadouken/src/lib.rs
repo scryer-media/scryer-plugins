@@ -473,6 +473,7 @@ fn torrent_to_item(torrent: HadoukenTorrent) -> PluginDownloadItem {
     };
     PluginDownloadItem {
         client_item_id: normalize_hash(&torrent.info_hash),
+        download_id: None,
         info_hash: Some(normalize_hash(&torrent.info_hash)),
         title: torrent.name.clone(),
         state,
@@ -513,6 +514,7 @@ fn torrent_to_completed(torrent: HadoukenTorrent) -> PluginCompletedDownload {
     let output_path = join_path(&torrent.save_path, &torrent.name);
     PluginCompletedDownload {
         client_item_id: normalize_hash(&torrent.info_hash),
+        download_id: None,
         info_hash: Some(normalize_hash(&torrent.info_hash)),
         name: torrent.name,
         dest_dir: output_path.clone(),

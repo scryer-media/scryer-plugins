@@ -133,14 +133,14 @@ fn discord_fields(req: &PluginNotificationRequest) -> Vec<serde_json::Value> {
             }));
         }
     }
-    if let Some(download) = req.download.as_ref() {
-        if let Some(client_name) = download.client_name.clone() {
-            fields.push(serde_json::json!({
-                "name": "Download Client",
-                "value": client_name,
-                "inline": true,
-            }));
-        }
+    if let Some(download) = req.download.as_ref()
+        && let Some(client_name) = download.client_name.clone()
+    {
+        fields.push(serde_json::json!({
+            "name": "Download Client",
+            "value": client_name,
+            "inline": true,
+        }));
     }
     fields
 }

@@ -61,16 +61,20 @@ fn config_fields() -> Vec<ConfigFieldDef> {
 pub fn scryer_notification_send(input: String) -> FnResult<String> {
     let req: PluginNotificationRequest = serde_json::from_str(&input)?;
     let (title, message) = title_and_body(&req);
-    let target_key = if config_value("device_names").is_some() {
+    if config_value("device_ids").is_some() {
+        return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+            "join device_ids is deprecated; use device_names instead",
+            Some("deprecated_device_ids".to_string()),
+        )))?);
+    }
+
+    let device_names = config_value("device_names");
+    let target_key = if device_names.is_some() {
         "deviceNames"
-    } else if config_value("device_ids").is_some() {
-        "deviceIds"
     } else {
         "deviceId"
     };
-    let target_value = config_value("device_names")
-        .or_else(|| config_value("device_ids"))
-        .unwrap_or_else(|| "group.all".to_string());
+    let target_value = device_names.unwrap_or_else(|| "group.all".to_string());
     let url = append_query(
         JOIN_URL,
         &[

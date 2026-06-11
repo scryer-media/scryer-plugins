@@ -96,6 +96,12 @@ fn config_fields() -> Vec<ConfigFieldDef> {
 #[plugin_fn]
 pub fn scryer_notification_send(input: String) -> FnResult<String> {
     let req: PluginNotificationRequest = serde_json::from_str(&input)?;
+    if let Err(message) = validate_mediabrowser_config() {
+        return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+            message,
+            Some("invalid_config".to_string()),
+        )))?);
+    }
     let mut responses = Vec::new();
     if config_bool("notify") {
         responses.push(send_admin_notification(&req));
@@ -215,6 +221,25 @@ fn map_path(path: &str) -> String {
     match (config_value("map_from"), config_value("map_to")) {
         (Some(from), Some(to)) if path.starts_with(&from) => path.replacen(&from, &to, 1),
         _ => path.to_string(),
+    }
+}
+
+fn validate_mediabrowser_config() -> Result<(), String> {
+    required_config("host").map_err(|_| "mediabrowser host is not configured".to_string())?;
+    required_config("api_key").map_err(|_| "mediabrowser api_key is not configured".to_string())?;
+
+    if config_i64("port", 8096) <= 0 {
+        return Err("mediabrowser port must be greater than 0".to_string());
+    }
+
+    match (config_value("map_from"), config_value("map_to")) {
+        (Some(_), Some(_)) | (None, None) => Ok(()),
+        (Some(_), None) => {
+            Err("mediabrowser map_to is required when map_from is configured".to_string())
+        }
+        (None, Some(_)) => {
+            Err("mediabrowser map_from is required when map_to is configured".to_string())
+        }
     }
 }
 

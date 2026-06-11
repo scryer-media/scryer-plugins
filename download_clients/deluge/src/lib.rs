@@ -737,15 +737,15 @@ fn list_torrents(config: &DelugeConfig) -> Result<Vec<DelugeTorrent>, Error> {
 
 fn get_version(config: &DelugeConfig) -> Result<String, Error> {
     let methods = call_value(config, "system.listMethods", serde_json::json!([]))?;
-    let method = methods
-        .as_array()
-        .is_some_and(|methods| {
-            methods
-                .iter()
-                .any(|value| value.as_str() == Some("daemon.get_version"))
-        })
-        .then_some("daemon.get_version")
-        .unwrap_or("daemon.info");
+    let method = if methods.as_array().is_some_and(|methods| {
+        methods
+            .iter()
+            .any(|value| value.as_str() == Some("daemon.get_version"))
+    }) {
+        "daemon.get_version"
+    } else {
+        "daemon.info"
+    };
     call_value(config, method, serde_json::json!([]))?
         .as_str()
         .map(str::to_string)
@@ -800,8 +800,14 @@ fn torrent_to_item(config: &DelugeConfig, torrent: DelugeTorrent) -> PluginDownl
     let remaining = (torrent.size - torrent.bytes_downloaded).max(0);
     let path = output_path(&torrent);
     let state = map_state(&torrent);
+    let ratio_goal_met = !matches!(config.post_import_action, PostImportAction::Retain)
+        && torrent.is_auto_managed
+        && torrent.stop_at_ratio
+        && torrent.ratio >= torrent.stop_ratio
+        && torrent.state == "Paused";
     PluginDownloadItem {
         client_item_id: hash.clone(),
+        download_id: None,
         info_hash: Some(hash.clone()),
         title: torrent.name.clone(),
         state,
@@ -835,18 +841,8 @@ fn torrent_to_item(config: &DelugeConfig, torrent: DelugeTorrent) -> PluginDownl
         remaining_size_bytes: Some(remaining),
         eta_seconds: (torrent.eta >= 0.0).then_some(torrent.eta as i64),
         progress_percent: Some(torrent.progress.round().clamp(0.0, 100.0) as u8),
-        can_move_files: Some(
-            torrent.is_auto_managed
-                && torrent.stop_at_ratio
-                && torrent.ratio >= torrent.stop_ratio
-                && torrent.state == "Paused",
-        ),
-        can_remove: Some(
-            torrent.is_auto_managed
-                && torrent.stop_at_ratio
-                && torrent.ratio >= torrent.stop_ratio
-                && torrent.state == "Paused",
-        ),
+        can_move_files: Some(ratio_goal_met),
+        can_remove: Some(ratio_goal_met),
         removed: Some(false),
         raw_state: Some(torrent.state),
         completed_at: None,
@@ -858,6 +854,7 @@ fn torrent_to_completed(config: &DelugeConfig, torrent: DelugeTorrent) -> Plugin
     let path = output_path(&torrent);
     PluginCompletedDownload {
         client_item_id: hash.clone(),
+        download_id: None,
         info_hash: Some(hash),
         name: torrent.name,
         dest_dir: path.clone(),

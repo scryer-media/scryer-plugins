@@ -75,7 +75,7 @@ fn build_descriptor_json() -> Result<String, Error> {
                 limits: Some(IndexerLimitCapabilities {
                     page_size: Some(100),
                     max_page_size: Some(100),
-                    max_pages: Some(10),
+                    max_pages: Some(30),
                     rate_limit_hint_seconds: Some(2),
                     api_quota_supported: true,
                     grab_quota_supported: true,
@@ -130,6 +130,7 @@ fn torznab_metadata_extractor(
 ) -> (Vec<String>, Option<i64>, HashMap<String, serde_json::Value>) {
     let mut grabs: Option<i64> = None;
     let mut seeders: Option<i64> = None;
+    let mut leechers: Option<i64> = None;
     let mut peers: Option<i64> = None;
     let mut downloads: Option<i64> = None;
     let mut downloadvolumefactor: Option<f64> = None;
@@ -160,8 +161,11 @@ fn torznab_metadata_extractor(
             "seeders" => {
                 seeders = parse_i64(trimmed);
             }
-            "peers" | "leechers" => {
+            "peers" => {
                 peers = parse_i64(trimmed);
+            }
+            "leechers" => {
+                leechers = parse_i64(trimmed);
             }
             "downloads" => {
                 downloads = parse_i64(trimmed);
@@ -201,7 +205,15 @@ fn torznab_metadata_extractor(
     if let Some(value) = seeders {
         extra.insert("seeders".to_string(), serde_json::Value::from(value));
     }
-    if let Some(value) = peers {
+    if let Some(value) = leechers {
+        extra.insert("leechers".to_string(), serde_json::Value::from(value));
+    }
+    let derived_peers = peers.or_else(|| {
+        seeders
+            .zip(leechers)
+            .map(|(seeders, leechers)| seeders + leechers)
+    });
+    if let Some(value) = derived_peers {
         extra.insert("peers".to_string(), serde_json::Value::from(value));
     }
     if let Some(value) = downloads {
@@ -364,6 +376,16 @@ mod tests {
             Some(&serde_json::Value::from("magnet:?xt=urn:btih:abcdef"))
         );
         assert_eq!(extra.get("freeleech"), Some(&serde_json::Value::from(true)));
+    }
+
+    #[test]
+    fn derives_peers_from_seeders_and_leechers_when_peers_missing() {
+        let p = pairs(&[("seeders", "42"), ("leechers", "9")]);
+        let (_, _, extra) = torznab_metadata_extractor(&p);
+
+        assert_eq!(extra.get("seeders"), Some(&serde_json::Value::from(42)));
+        assert_eq!(extra.get("leechers"), Some(&serde_json::Value::from(9)));
+        assert_eq!(extra.get("peers"), Some(&serde_json::Value::from(51)));
     }
 
     #[test]

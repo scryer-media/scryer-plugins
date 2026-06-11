@@ -96,8 +96,24 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
         "disable_notification": config_bool("send_silently"),
         "link_preview_options": { "is_disabled": true },
     });
-    if let Some(topic_id) = config_value("topic_id").and_then(|value| value.parse::<i64>().ok()) {
-        payload["message_thread_id"] = serde_json::Value::from(topic_id);
+    if let Some(raw_topic_id) = config_value("topic_id") {
+        match raw_topic_id.parse::<i64>() {
+            Ok(topic_id) if topic_id > 1 => {
+                payload["message_thread_id"] = serde_json::Value::from(topic_id);
+            }
+            Ok(_) => {
+                return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+                    "Topic ID must be greater than 1 or empty",
+                    None,
+                )))?);
+            }
+            Err(_) => {
+                return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+                    "Topic ID must be a number",
+                    None,
+                )))?);
+            }
+        }
     }
     let url = format!(
         "{TELEGRAM_API_URL}/bot{}/sendmessage",

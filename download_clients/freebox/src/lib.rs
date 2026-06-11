@@ -743,6 +743,7 @@ fn torrent_to_item(config: &FreeboxConfig, torrent: FreeboxDownloadTask) -> Plug
     let state = map_state(&torrent);
     PluginDownloadItem {
         client_item_id: torrent.id.clone(),
+        download_id: None,
         info_hash: non_empty(normalize_hash(&torrent.info_hash)),
         title: torrent.name.clone(),
         state,
@@ -793,6 +794,7 @@ fn torrent_to_completed(
     let output = decode_base64(&torrent.download_directory);
     PluginCompletedDownload {
         client_item_id: torrent.id,
+        download_id: None,
         info_hash: non_empty(normalize_hash(&torrent.info_hash)),
         name: torrent.name,
         dest_dir: output.clone(),
@@ -846,7 +848,7 @@ fn error_description(error: &str) -> String {
         "nzb_missing_segments" => "Missing article segments.".to_string(),
         "nzb_error" => "Other nzb error.".to_string(),
         "nzb_authentication_required" => "Nzb server need authentication.".to_string(),
-        value if value.is_empty() => "Unknown error.".to_string(),
+        "" => "Unknown error.".to_string(),
         value => format!("{value} - Unknown error"),
     }
 }

@@ -966,7 +966,7 @@ fn resolve_url(feed_url: &str, value: &str) -> Option<String> {
 }
 
 fn filter_results(results: Vec<SearchResult>, req: &SearchRequest) -> Vec<SearchResult> {
-    let normalized_query = normalize_for_match(&req.query);
+    let title_terms = requested_title_terms(req);
     let imdb_id = req.ids.get("imdb_id").map(|value| normalize_imdb(value));
     let tvdb_id = req.ids.get("tvdb_id").map(|value| value.trim().to_string());
     let anidb_id = req
@@ -983,7 +983,7 @@ fn filter_results(results: Vec<SearchResult>, req: &SearchRequest) -> Vec<Search
     results
         .into_iter()
         .filter(|result| {
-            title_matches(result, &normalized_query)
+            title_matches(result, &title_terms)
                 && external_id_matches(result, "imdb_id", imdb_id.as_deref())
                 && external_id_matches(result, "tvdb_id", tvdb_id.as_deref())
                 && external_id_matches(result, "anidb_id", anidb_id.as_deref())
@@ -993,19 +993,18 @@ fn filter_results(results: Vec<SearchResult>, req: &SearchRequest) -> Vec<Search
         .collect()
 }
 
-fn title_matches(result: &SearchResult, normalized_query: &str) -> bool {
-    if normalized_query.is_empty() {
+fn title_matches(result: &SearchResult, title_terms: &[String]) -> bool {
+    if title_terms.is_empty() {
         return true;
     }
 
     let title = normalize_for_match(&result.title);
-    if title.contains(normalized_query) {
-        return true;
-    }
-
-    normalized_query
-        .split_whitespace()
-        .all(|token| !token.is_empty() && title.contains(token))
+    title_terms.iter().any(|term| {
+        title.contains(term)
+            || term
+                .split_whitespace()
+                .all(|token| !token.is_empty() && title.contains(token))
+    })
 }
 
 fn external_id_matches(result: &SearchResult, key: &str, requested: Option<&str>) -> bool {
@@ -1044,6 +1043,21 @@ fn build_episode_token(season: Option<u32>, episode: Option<u32>) -> Option<Stri
         (Some(season), Some(episode)) => Some(format!("s{season:02}e{episode:02}")),
         _ => None,
     }
+}
+
+fn requested_title_terms(req: &SearchRequest) -> Vec<String> {
+    let mut terms = Vec::new();
+    let query = normalize_for_match(&req.query);
+    if !query.is_empty() {
+        terms.push(query);
+    }
+    for alias in &req.tagged_aliases {
+        let normalized = normalize_for_match(&alias.name);
+        if !normalized.is_empty() {
+            terms.push(normalized);
+        }
+    }
+    dedupe(terms)
 }
 
 fn requested_category_terms(req: &SearchRequest) -> Vec<String> {

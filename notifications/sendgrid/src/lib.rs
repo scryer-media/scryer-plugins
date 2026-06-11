@@ -1,6 +1,8 @@
 use extism_pdk::*;
 use notify_common::*;
 
+const SENDGRID_BASE_URL: &str = "https://api.sendgrid.com/v3";
+
 #[plugin_fn]
 pub fn scryer_describe(_input: String) -> FnResult<String> {
     let mut descriptor = build_notification_descriptor(
@@ -20,13 +22,6 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
 
 fn config_fields() -> Vec<ConfigFieldDef> {
     vec![
-        connection_field(
-            "base_url",
-            "Base URL",
-            false,
-            Some("https://api.sendgrid.com/v3/"),
-            None,
-        ),
         field(
             "api_key",
             "API Key",
@@ -58,14 +53,36 @@ fn config_fields() -> Vec<ConfigFieldDef> {
 pub fn scryer_notification_send(input: String) -> FnResult<String> {
     let req: PluginNotificationRequest = serde_json::from_str(&input)?;
     let (title, message) = title_and_body(&req);
-    let base_url =
-        config_value("base_url").unwrap_or_else(|| "https://api.sendgrid.com/v3/".to_string());
-    let recipients = config_csv("recipients")
+    let from = required_config("from")?;
+    if !valid_email_address(&from) {
+        return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+            "sendgrid from address must be a valid email address",
+            Some("invalid_from".to_string()),
+        )))?);
+    }
+
+    let recipient_addresses = config_csv("recipients");
+    if recipient_addresses.is_empty() {
+        return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+            "sendgrid recipients is not configured",
+            None,
+        )))?);
+    }
+    for recipient in &recipient_addresses {
+        if !valid_email_address(recipient) {
+            return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+                format!("sendgrid recipient must be a valid email address: {recipient}"),
+                Some("invalid_recipient".to_string()),
+            )))?);
+        }
+    }
+
+    let recipients = recipient_addresses
         .into_iter()
         .map(|email| serde_json::json!({ "email": email }))
         .collect::<Vec<_>>();
     let body = serde_json::json!({
-        "from": { "email": required_config("from")? },
+        "from": { "email": from },
         "personalizations": [{
             "subject": title,
             "to": recipients,
@@ -80,10 +97,22 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
         format!("Bearer {}", required_config("api_key")?),
     )];
     let response = send_json(
-        &format!("{}/mail/send", base_url.trim_end_matches('/')),
+        &format!("{SENDGRID_BASE_URL}/mail/send"),
         "POST",
         &headers,
         body,
     );
     Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+}
+
+fn valid_email_address(value: &str) -> bool {
+    let value = value.trim();
+    if value.is_empty() || value.chars().any(char::is_whitespace) {
+        return false;
+    }
+
+    let Some((local, domain)) = value.split_once('@') else {
+        return false;
+    };
+    !local.is_empty() && !domain.is_empty() && !domain.contains('@')
 }

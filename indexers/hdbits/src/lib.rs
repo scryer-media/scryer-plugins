@@ -97,7 +97,12 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
 pub fn scryer_indexer_search(input: String) -> FnResult<String> {
     let req: SearchRequest = serde_json::from_str(&input)?;
     let config = HdbitsConfig::from_extism()?;
-    let query = build_query(&config, &req);
+    let Some(query) = build_query(&config, &req) else {
+        return Ok(serde_json::to_string(&PluginResult::Ok(SearchResponse {
+            results: Vec::new(),
+            ..Default::default()
+        }))?);
+    };
     let body = post_query(&config, &query)?;
     let mut results = parse_response(&config, &body)?;
     let limit = if req.limit == 0 {
@@ -173,7 +178,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
     ]
 }
 
-fn build_query(config: &HdbitsConfig, req: &SearchRequest) -> TorrentQuery {
+fn build_query(config: &HdbitsConfig, req: &SearchRequest) -> Option<TorrentQuery> {
     let mut query = TorrentQuery {
         username: config.username.clone(),
         passkey: config.api_key.clone(),
@@ -183,6 +188,16 @@ fn build_query(config: &HdbitsConfig, req: &SearchRequest) -> TorrentQuery {
         limit: Some(PAGE_SIZE as i64),
         ..TorrentQuery::default()
     };
+
+    let has_search_criteria = !req.query.trim().is_empty()
+        || !req.ids.is_empty()
+        || req.season.is_some()
+        || req.episode.is_some()
+        || req.absolute_episode.is_some();
+
+    if !has_search_criteria {
+        return Some(query);
+    }
 
     if let Some(tvdb_id) = req
         .ids
@@ -194,11 +209,11 @@ fn build_query(config: &HdbitsConfig, req: &SearchRequest) -> TorrentQuery {
             season: req.season.map(i64::from),
             episode: req.episode.map(i64::from),
         });
-    } else if !req.query.trim().is_empty() {
-        query.search = Some(req.query.trim().to_string());
-    }
 
-    query
+        Some(query)
+    } else {
+        None
+    }
 }
 
 fn post_query(config: &HdbitsConfig, query: &TorrentQuery) -> Result<String, Error> {

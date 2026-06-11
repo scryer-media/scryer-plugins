@@ -35,7 +35,7 @@ pub struct NewznabConfig {
     pub api_key: String,
     pub api_path: String,
     pub additional_params: String,
-    /// Maximum results the indexer returns per page. Defaults to 200.
+    /// Maximum results the indexer returns per page. Defaults to 100.
     pub page_size: usize,
 }
 
@@ -65,9 +65,9 @@ impl NewznabConfig {
             .trim()
             .to_string();
 
-        if base_url.is_empty() || api_key.is_empty() {
+        if base_url.is_empty() {
             return Err(Error::msg(
-                "Newznab indexer requires base_url and api_key configuration",
+                "Newznab indexer requires base_url configuration",
             ));
         }
 
@@ -75,8 +75,8 @@ impl NewznabConfig {
             .ok()
             .flatten()
             .and_then(|v| v.parse::<usize>().ok())
-            .unwrap_or(200)
-            .clamp(1, 500);
+            .unwrap_or(100)
+            .clamp(1, 100);
         Ok(Self {
             base_url,
             api_key,
@@ -106,7 +106,7 @@ pub fn standard_config_fields(default_base_url: Option<&str>) -> Vec<ConfigField
             key: "api_key".to_string(),
             label: "API Key".to_string(),
             field_type: ConfigFieldType::Password,
-            required: true,
+            required: false,
             default_value: None,
             value_source: Default::default(),
             role: None,
@@ -238,8 +238,24 @@ pub fn execute_full_search(
         .get("tvdb_id")
         .map(|v| v.trim().to_string())
         .filter(|v| !v.is_empty());
+    let tvrage_id = req
+        .ids
+        .get("tvrage_id")
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty());
+    let tvmaze_id = req
+        .ids
+        .get("tvmaze_id")
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty());
 
-    if query.is_empty() && imdb_id.is_none() && tmdb_id.is_none() && tvdb_id.is_none() {
+    if query.is_empty()
+        && imdb_id.is_none()
+        && tmdb_id.is_none()
+        && tvdb_id.is_none()
+        && tvrage_id.is_none()
+        && tvmaze_id.is_none()
+    {
         return execute_rss_search(config, req, extract_fn);
     }
 
@@ -250,6 +266,8 @@ pub fn execute_full_search(
         req.category.as_deref(),
         imdb_id.as_deref(),
         tvdb_id.as_deref(),
+        tvrage_id.as_deref(),
+        tvmaze_id.as_deref(),
     );
 
     // Build Newznab category parameter (numeric codes only)
@@ -260,9 +278,13 @@ pub fn execute_full_search(
     // Paginated search: fetch up to MAX_PAGES pages.
     // Stop early if a page returns fewer results than the page size.
     let page_size = config.page_size;
-    const MAX_PAGES: usize = 5;
+    const MAX_PAGES: usize = 30;
     let max_results = page_size * MAX_PAGES;
-    let limit = req.limit.clamp(1, max_results);
+    let limit = if req.limit == 0 {
+        max_results
+    } else {
+        req.limit.min(max_results)
+    };
 
     let mut all_results: Vec<SearchResult> = Vec::new();
     let mut last_limits = ApiLimits::default();
@@ -280,7 +302,10 @@ pub fn execute_full_search(
                 &endpoint,
                 &query_variants,
                 &config.api_key,
+                tmdb_id.as_deref(),
                 tvdb_id.as_deref(),
+                tvrage_id.as_deref(),
+                tvmaze_id.as_deref(),
                 newznab_cat.as_deref(),
                 page_size,
                 req.season,
@@ -297,6 +322,8 @@ pub fn execute_full_search(
                 imdb_id.as_deref(),
                 tmdb_id.as_deref(),
                 tvdb_id.as_deref(),
+                tvrage_id.as_deref(),
+                tvmaze_id.as_deref(),
                 newznab_cat.as_deref(),
                 page_size,
                 req.season,
@@ -437,6 +464,8 @@ fn execute_rss_search(
             None, // no imdb_id
             None, // no tmdb_id
             None, // no tvdb_id
+            None, // no tvrage_id
+            None, // no tvmaze_id
             Some(cat_str),
             config.page_size,
             None, // no season
@@ -523,6 +552,8 @@ fn determine_search_type(
     category_hint: Option<&str>,
     imdb_id: Option<&str>,
     tvdb_id: Option<&str>,
+    tvrage_id: Option<&str>,
+    tvmaze_id: Option<&str>,
 ) -> String {
     let cats_movie = categories.iter().any(|c| c.starts_with('2'));
     let cats_tv = categories.iter().any(|c| c.starts_with('5'));
@@ -546,7 +577,7 @@ fn determine_search_type(
         "tvsearch".to_string()
     } else if imdb_id.is_some() {
         "movie".to_string()
-    } else if tvdb_id.is_some() {
+    } else if tvdb_id.is_some() || tvrage_id.is_some() || tvmaze_id.is_some() {
         "tvsearch".to_string()
     } else {
         "search".to_string()
@@ -639,7 +670,10 @@ fn execute_exact_anime_search(
     endpoint: &str,
     query_variants: &[String],
     api_key: &str,
+    tmdb_id: Option<&str>,
     tvdb_id: Option<&str>,
+    tvrage_id: Option<&str>,
+    tvmaze_id: Option<&str>,
     cat: Option<&str>,
     limit: usize,
     season: Option<u32>,
@@ -647,15 +681,17 @@ fn execute_exact_anime_search(
     absolute_episode: Option<u32>,
     additional_params: &str,
 ) -> Result<(u16, String), Error> {
-    if let Some(tvdb_id) = tvdb_id {
+    if tvdb_id.is_some() || tmdb_id.is_some() || tvrage_id.is_some() || tvmaze_id.is_some() {
         return execute_search(
             endpoint,
             "tvsearch",
             None,
             api_key,
             None,
-            None,
-            Some(tvdb_id),
+            tmdb_id,
+            tvdb_id,
+            tvrage_id,
+            tvmaze_id,
             cat,
             limit,
             if absolute_episode.is_some() {
@@ -679,6 +715,8 @@ fn execute_exact_anime_search(
             "tvsearch",
             Some(query_text),
             api_key,
+            None,
+            None,
             None,
             None,
             None,
@@ -711,19 +749,21 @@ fn execute_tiered_search(
     imdb_id: Option<&str>,
     tmdb_id: Option<&str>,
     tvdb_id: Option<&str>,
+    tvrage_id: Option<&str>,
+    tvmaze_id: Option<&str>,
     cat: Option<&str>,
     limit: usize,
     season: Option<u32>,
     episode: Option<u32>,
     additional_params: &str,
 ) -> Result<(u16, String), Error> {
-    // Determine effective IDs for the search type:
-    // t=movie doesn't support tvdbid; t=tvsearch doesn't support imdbid
-    let effective_imdb = if search_type == "movie" || search_type == "search" {
-        imdb_id
-    } else {
-        None
-    };
+    // Determine effective IDs for the search type.
+    let effective_imdb =
+        if search_type == "movie" || search_type == "tvsearch" || search_type == "search" {
+            imdb_id
+        } else {
+            None
+        };
     let effective_tmdb =
         if search_type == "movie" || search_type == "tvsearch" || search_type == "search" {
             tmdb_id
@@ -735,8 +775,22 @@ fn execute_tiered_search(
     } else {
         None
     };
+    let effective_tvrage = if search_type == "tvsearch" || search_type == "search" {
+        tvrage_id
+    } else {
+        None
+    };
+    let effective_tvmaze = if search_type == "tvsearch" || search_type == "search" {
+        tvmaze_id
+    } else {
+        None
+    };
 
-    let has_id = effective_imdb.is_some() || effective_tmdb.is_some() || effective_tvdb.is_some();
+    let has_id = effective_imdb.is_some()
+        || effective_tmdb.is_some()
+        || effective_tvdb.is_some()
+        || effective_tvrage.is_some()
+        || effective_tvmaze.is_some();
     let mut last_query_response: Option<(u16, String)> = None;
 
     // Tier 1: Query-based search with IDs when query text is available. This
@@ -754,6 +808,8 @@ fn execute_tiered_search(
             effective_imdb,
             effective_tmdb,
             effective_tvdb,
+            effective_tvrage,
+            effective_tvmaze,
             cat,
             limit,
             season,
@@ -786,6 +842,8 @@ fn execute_tiered_search(
             effective_imdb,
             effective_tmdb,
             effective_tvdb,
+            effective_tvrage,
+            effective_tvmaze,
             cat,
             limit,
             season,
@@ -812,6 +870,8 @@ fn execute_tiered_search(
                 imdb_id
                     .or(tmdb_id)
                     .or(tvdb_id)
+                    .or(tvrage_id)
+                    .or(tvmaze_id)
                     .filter(|value| !value.is_empty()),
             );
         }
@@ -823,6 +883,8 @@ fn execute_tiered_search(
                 "search",
                 fallback_query,
                 api_key,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -904,6 +966,8 @@ fn execute_search(
     imdb_id: Option<&str>,
     tmdb_id: Option<&str>,
     tvdb_id: Option<&str>,
+    tvrage_id: Option<&str>,
+    tvmaze_id: Option<&str>,
     cat: Option<&str>,
     limit: usize,
     season: Option<u32>,
@@ -918,6 +982,8 @@ fn execute_search(
         imdb_id,
         tmdb_id,
         tvdb_id,
+        tvrage_id,
+        tvmaze_id,
         cat,
         limit,
         season,
@@ -1062,6 +1128,8 @@ fn build_search_url(
     imdb_id: Option<&str>,
     tmdb_id: Option<&str>,
     tvdb_id: Option<&str>,
+    tvrage_id: Option<&str>,
+    tvmaze_id: Option<&str>,
     cat: Option<&str>,
     limit: usize,
     season: Option<u32>,
@@ -1075,8 +1143,9 @@ fn build_search_url(
     {
         let mut pairs = url.query_pairs_mut();
         pairs.append_pair("t", search_type);
-        pairs.append_pair("apikey", api_key.trim());
-        pairs.append_pair("o", "json");
+        if !api_key.trim().is_empty() {
+            pairs.append_pair("apikey", api_key.trim());
+        }
         pairs.append_pair("extended", "1");
         pairs.append_pair("limit", &limit.to_string());
 
@@ -1091,6 +1160,12 @@ fn build_search_url(
         }
         if let Some(id) = tvdb_id.map(str::trim).filter(|value| !value.is_empty()) {
             pairs.append_pair("tvdbid", id);
+        }
+        if let Some(id) = tvrage_id.map(str::trim).filter(|value| !value.is_empty()) {
+            pairs.append_pair("rid", id);
+        }
+        if let Some(id) = tvmaze_id.map(str::trim).filter(|value| !value.is_empty()) {
+            pairs.append_pair("tvmazeid", id);
         }
         if let Some(c) = cat.map(str::trim).filter(|value| !value.is_empty()) {
             pairs.append_pair("cat", c);
@@ -1526,6 +1601,7 @@ fn parse_newznab_json(
             // Apply standard attrs (usenetdate, prematch, nuked, response IDs)
             let mut usenet_date = None;
             apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
+            apply_provider_extra_fields(&mut result);
 
             // Prefer usenetdate over pubDate
             if usenet_date.is_some() {
@@ -1599,6 +1675,134 @@ fn parse_error_xml(body: &str) -> Option<(String, String)> {
         buf.clear();
     }
     None
+}
+
+fn apply_provider_extra_fields(result: &mut SearchResult) {
+    let seeders = extra_i64(&result.provider_extra, "seeders");
+    let peers = extra_i64(&result.provider_extra, "peers");
+    let leechers = extra_i64(&result.provider_extra, "leechers").or_else(|| {
+        seeders
+            .zip(peers)
+            .and_then(|(seeders, peers)| peers.checked_sub(seeders))
+    });
+
+    if result.seeders.is_none() {
+        result.seeders = seeders;
+    }
+    if result.peers.is_none() {
+        result.peers = peers;
+    }
+    if result.leechers.is_none() {
+        result.leechers = leechers;
+    }
+    if result.download_volume_factor.is_none() {
+        result.download_volume_factor = extra_f64(&result.provider_extra, "downloadvolumefactor");
+    }
+    if result.upload_volume_factor.is_none() {
+        result.upload_volume_factor = extra_f64(&result.provider_extra, "uploadvolumefactor");
+    }
+    if result.minimum_seed_ratio.is_none() {
+        result.minimum_seed_ratio = extra_f64(&result.provider_extra, "minimumratio");
+    }
+    if result.minimum_seed_time_minutes.is_none() {
+        result.minimum_seed_time_minutes = extra_i64(&result.provider_extra, "minimumseedtime");
+    }
+    if result.info_hash_v1.is_none() {
+        result.info_hash_v1 = extra_string(&result.provider_extra, "info_hash");
+    }
+    if result.magnet_url.is_none() {
+        result.magnet_url = extra_string(&result.provider_extra, "magnet_uri");
+    }
+
+    let mut flags = result.indexer_flags.clone();
+    extend_flags(
+        &mut flags,
+        extra_string_array(&result.provider_extra, "indexer_flags"),
+    );
+
+    if result
+        .provider_extra
+        .get("freeleech")
+        .and_then(|value| value.as_bool())
+        .unwrap_or(false)
+    {
+        push_flag(&mut flags, "freeleech");
+    }
+
+    if let Some(download_factor) = result.download_volume_factor {
+        if (download_factor - 0.5).abs() < f64::EPSILON {
+            push_flag(&mut flags, "halfleech");
+        } else if (download_factor - 0.75).abs() < f64::EPSILON {
+            push_flag(&mut flags, "freeleech25");
+        } else if (download_factor - 0.25).abs() < f64::EPSILON {
+            push_flag(&mut flags, "freeleech75");
+        } else if (download_factor - 0.0).abs() < f64::EPSILON {
+            push_flag(&mut flags, "freeleech");
+        }
+    }
+
+    if result
+        .upload_volume_factor
+        .is_some_and(|value| (value - 2.0).abs() < f64::EPSILON)
+    {
+        push_flag(&mut flags, "doubleupload");
+    }
+
+    for tag in extra_string_array(&result.provider_extra, "tags") {
+        match tag.trim().to_ascii_lowercase().as_str() {
+            "internal" => push_flag(&mut flags, "internal"),
+            "scene" => push_flag(&mut flags, "scene"),
+            _ => {}
+        }
+    }
+
+    result.indexer_flags = flags;
+}
+
+fn extra_i64(extra: &HashMap<String, serde_json::Value>, key: &str) -> Option<i64> {
+    extra.get(key).and_then(|value| value.as_i64())
+}
+
+fn extra_f64(extra: &HashMap<String, serde_json::Value>, key: &str) -> Option<f64> {
+    extra.get(key).and_then(|value| value.as_f64())
+}
+
+fn extra_string(extra: &HashMap<String, serde_json::Value>, key: &str) -> Option<String> {
+    extra
+        .get(key)
+        .and_then(|value| value.as_str())
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(ToString::to_string)
+}
+
+fn extra_string_array(extra: &HashMap<String, serde_json::Value>, key: &str) -> Vec<String> {
+    extra
+        .get(key)
+        .and_then(|value| value.as_array())
+        .map(|values| {
+            values
+                .iter()
+                .filter_map(|value| value.as_str())
+                .map(str::trim)
+                .filter(|value| !value.is_empty())
+                .map(ToString::to_string)
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+fn extend_flags(flags: &mut Vec<String>, values: Vec<String>) {
+    for value in values {
+        push_flag(flags, &value);
+    }
+}
+
+fn push_flag(flags: &mut Vec<String>, value: &str) {
+    let normalized = value.trim().to_ascii_lowercase();
+    if !normalized.is_empty() && !flags.iter().any(|existing| existing == &normalized) {
+        flags.push(normalized);
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1800,6 +2004,7 @@ fn parse_newznab_xml(
                             // Apply standard attrs
                             let mut usenet_date = None;
                             apply_standard_attrs(&attrs, &mut result, &mut usenet_date);
+                            apply_provider_extra_fields(&mut result);
 
                             if usenet_date.is_some() {
                                 result.published_at = usenet_date;
@@ -2137,13 +2342,59 @@ mod tests {
             .find_map(|(candidate, value)| (candidate == key).then(|| value.into_owned()))
     }
 
+    fn extract_torrent_test_metadata(
+        pairs: &[(String, String)],
+    ) -> (Vec<String>, Option<i64>, HashMap<String, serde_json::Value>) {
+        let mut extra = HashMap::new();
+        let mut tags = Vec::new();
+
+        for (name, value) in pairs {
+            let normalized = name
+                .chars()
+                .filter(|ch| ch.is_ascii_alphanumeric())
+                .collect::<String>()
+                .to_ascii_lowercase();
+            let trimmed = value.trim();
+
+            match normalized.as_str() {
+                "seeders" | "leechers" | "peers" | "minimumseedtime" => {
+                    if let Ok(value) = trimmed.parse::<i64>() {
+                        extra.insert(normalized, serde_json::Value::from(value));
+                    }
+                }
+                "downloadvolumefactor" | "uploadvolumefactor" | "minimumratio" => {
+                    if let Ok(value) = trimmed.parse::<f64>() {
+                        extra.insert(normalized, serde_json::Value::from(value));
+                    }
+                }
+                "infohash" => {
+                    extra.insert(
+                        "info_hash".to_string(),
+                        serde_json::Value::from(trimmed.to_ascii_lowercase()),
+                    );
+                }
+                "magneturl" => {
+                    extra.insert("magnet_uri".to_string(), serde_json::Value::from(trimmed));
+                }
+                "tag" => tags.push(trimmed.to_string()),
+                _ => {}
+            }
+        }
+
+        if !tags.is_empty() {
+            extra.insert("tags".to_string(), serde_json::json!(tags));
+        }
+
+        (Vec::new(), None, extra)
+    }
+
     // ── determine_search_type ────────────────────────────────────────────
 
     #[test]
     fn search_type_movie_category() {
         let cats = vec!["2000".into()];
         assert_eq!(
-            determine_search_type(&cats, None, None, None, None),
+            determine_search_type(&cats, None, None, None, None, None, None),
             "movie"
         );
     }
@@ -2152,7 +2403,7 @@ mod tests {
     fn search_type_tv_category() {
         let cats = vec!["5000".into()];
         assert_eq!(
-            determine_search_type(&cats, None, None, None, None),
+            determine_search_type(&cats, None, None, None, None, None, None),
             "tvsearch"
         );
     }
@@ -2160,7 +2411,7 @@ mod tests {
     #[test]
     fn search_type_movie_hint() {
         assert_eq!(
-            determine_search_type(&[], None, Some("movie"), None, None),
+            determine_search_type(&[], None, Some("movie"), None, None, None, None),
             "movie"
         );
     }
@@ -2168,7 +2419,7 @@ mod tests {
     #[test]
     fn search_type_tv_hint() {
         assert_eq!(
-            determine_search_type(&[], None, Some("series"), None, None),
+            determine_search_type(&[], None, Some("series"), None, None, None, None),
             "tvsearch"
         );
     }
@@ -2176,7 +2427,7 @@ mod tests {
     #[test]
     fn search_type_anime_hint() {
         assert_eq!(
-            determine_search_type(&[], None, Some("anime"), None, None),
+            determine_search_type(&[], None, Some("anime"), None, None, None, None),
             "tvsearch"
         );
     }
@@ -2184,7 +2435,7 @@ mod tests {
     #[test]
     fn search_type_prefers_explicit_facet() {
         assert_eq!(
-            determine_search_type(&[], Some("series"), Some("movie"), None, None),
+            determine_search_type(&[], Some("series"), Some("movie"), None, None, None, None),
             "tvsearch"
         );
     }
@@ -2192,7 +2443,7 @@ mod tests {
     #[test]
     fn search_type_imdb_id_fallback() {
         assert_eq!(
-            determine_search_type(&[], None, None, Some("1234567"), None),
+            determine_search_type(&[], None, None, Some("1234567"), None, None, None),
             "movie"
         );
     }
@@ -2200,14 +2451,29 @@ mod tests {
     #[test]
     fn search_type_tvdb_id_fallback() {
         assert_eq!(
-            determine_search_type(&[], None, None, None, Some("12345")),
+            determine_search_type(&[], None, None, None, Some("12345"), None, None),
+            "tvsearch"
+        );
+    }
+
+    #[test]
+    fn search_type_tvmaze_and_tvrage_id_fallbacks() {
+        assert_eq!(
+            determine_search_type(&[], None, None, None, None, Some("70399"), None),
+            "tvsearch"
+        );
+        assert_eq!(
+            determine_search_type(&[], None, None, None, None, None, Some("39852")),
             "tvsearch"
         );
     }
 
     #[test]
     fn search_type_generic_fallback() {
-        assert_eq!(determine_search_type(&[], None, None, None, None), "search");
+        assert_eq!(
+            determine_search_type(&[], None, None, None, None, None, None),
+            "search"
+        );
     }
 
     // ── build_category_param ─────────────────────────────────────────────
@@ -2241,6 +2507,8 @@ mod tests {
             None,
             None,
             None,
+            None,
+            None,
             200,
             None,
             None,
@@ -2253,7 +2521,7 @@ mod tests {
         assert!(url.contains("imdbid=002024544"));
         assert!(url.contains("limit=200"));
         assert!(url.contains("extended=1"));
-        assert!(url.contains("o=json"));
+        assert!(query_value(&url, "o").is_none());
         assert_parses_as_http_uri(&url);
     }
 
@@ -2268,6 +2536,8 @@ mod tests {
             None,
             Some("123456"),
             None,
+            None,
+            None,
             200,
             None,
             None,
@@ -2280,7 +2550,7 @@ mod tests {
         assert!(url.contains("tvdbid=123456"));
         assert!(url.contains("limit=200"));
         assert!(url.contains("extended=1"));
-        assert!(url.contains("o=json"));
+        assert!(query_value(&url, "o").is_none());
         assert_parses_as_http_uri(&url);
     }
 
@@ -2300,6 +2570,8 @@ mod tests {
             None,
             None,
             Some("74796"),
+            None,
+            None,
             None,
             200,
             None,
@@ -2325,6 +2597,8 @@ mod tests {
             None,
             None,
             Some("422695"),
+            None,
+            None,
             None,
             200,
             Some(1),
@@ -2354,6 +2628,8 @@ mod tests {
             None,
             None,
             None,
+            None,
+            None,
             200,
             Some(1),
             Some(1),
@@ -2378,6 +2654,8 @@ mod tests {
             Some("tt1877830"),
             None,
             Some(" 12345 \n"),
+            Some(" 70399 \n"),
+            Some(" 39852 \n"),
             Some(" 2000 , 2040 "),
             100,
             None,
@@ -2388,6 +2666,8 @@ mod tests {
 
         assert_eq!(query_value(&url, "apikey").as_deref(), Some("test-api-key"));
         assert_eq!(query_value(&url, "tvdbid").as_deref(), Some("12345"));
+        assert_eq!(query_value(&url, "rid").as_deref(), Some("70399"));
+        assert_eq!(query_value(&url, "tvmazeid").as_deref(), Some("39852"));
         assert_eq!(query_value(&url, "cat").as_deref(), Some("2000 , 2040"));
         assert_eq!(query_value(&url, "attrs").as_deref(), Some("poster image"));
         assert_eq!(query_value(&url, "dl").as_deref(), Some("1"));
@@ -2406,6 +2686,8 @@ mod tests {
                 "movie",
                 None,
                 "test-api-key",
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -2434,6 +2716,8 @@ mod tests {
             None,
             None,
             None,
+            None,
+            None,
             25,
             None,
             None,
@@ -2456,6 +2740,8 @@ mod tests {
             "test-api-key",
             None,
             Some("693134"),
+            None,
+            None,
             None,
             None,
             50,
@@ -2944,6 +3230,47 @@ mod tests {
             r.info_url.as_deref(),
             Some("https://example.com/details/def456")
         );
+    }
+
+    #[test]
+    fn xml_maps_torrent_extra_to_typed_fields() {
+        let body = r#"<?xml version="1.0"?>
+<rss xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attributes/">
+<channel>
+  <item>
+    <title>Torrent.Release.1080p</title>
+    <enclosure url="https://example.com/dl/release.torrent" length="1234" type="application/x-bittorrent"/>
+    <newznab:attr name="seeders" value="42"/>
+    <newznab:attr name="leechers" value="9"/>
+    <newznab:attr name="downloadvolumefactor" value="0.5"/>
+    <newznab:attr name="uploadvolumefactor" value="2"/>
+    <newznab:attr name="minimumratio" value="1.5"/>
+    <newznab:attr name="minimumseedtime" value="60"/>
+    <newznab:attr name="infohash" value="ABCDEF1234567890ABCDEF1234567890ABCDEF12"/>
+    <newznab:attr name="magneturl" value="magnet:?xt=urn:btih:abcdef"/>
+    <newznab:attr name="tag" value="internal"/>
+  </item>
+</channel>
+</rss>"#;
+        let (results, _) = parse_newznab_xml(body, 100, extract_torrent_test_metadata);
+        assert_eq!(results.len(), 1);
+        let r = &results[0];
+
+        assert_eq!(r.seeders, Some(42));
+        assert_eq!(r.leechers, Some(9));
+        assert_eq!(r.peers, Some(51));
+        assert_eq!(r.download_volume_factor, Some(0.5));
+        assert_eq!(r.upload_volume_factor, Some(2.0));
+        assert_eq!(r.minimum_seed_ratio, Some(1.5));
+        assert_eq!(r.minimum_seed_time_minutes, Some(60));
+        assert_eq!(
+            r.info_hash_v1.as_deref(),
+            Some("abcdef1234567890abcdef1234567890abcdef12")
+        );
+        assert_eq!(r.magnet_url.as_deref(), Some("magnet:?xt=urn:btih:abcdef"));
+        assert!(r.indexer_flags.iter().any(|flag| flag == "halfleech"));
+        assert!(r.indexer_flags.iter().any(|flag| flag == "doubleupload"));
+        assert!(r.indexer_flags.iter().any(|flag| flag == "internal"));
     }
 
     #[test]

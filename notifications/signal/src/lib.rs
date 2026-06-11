@@ -95,7 +95,7 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
         config_i64("port", 8080)
     );
     let payload = serde_json::json!({
-        "message": format!("{}\n{}", req.summary_title, req.summary_message),
+        "message": format!("{}\n{}\n", req.summary_title, req.summary_message),
         "number": required_config("sender_number")?,
         "recipients": [required_config("receiver_id")?],
     });

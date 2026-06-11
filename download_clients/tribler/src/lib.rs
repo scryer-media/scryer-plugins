@@ -246,7 +246,7 @@ pub fn scryer_download_list_queue(_input: String) -> FnResult<String> {
     let settings = get_settings(&config)?;
     let items = get_downloads(&config)?
         .into_iter()
-        .filter(|download| download.size.unwrap_or_default() > 0)
+        .filter(is_visible_download)
         .map(|download| torrent_to_item(&config, &settings, download))
         .collect::<Result<Vec<_>, _>>()?;
     Ok(serde_json::to_string(&PluginResult::Ok(items))?)
@@ -262,7 +262,7 @@ fn scryer_download_list_queue_inner() -> FnResult<String> {
     let settings = get_settings(&config)?;
     let items = get_downloads(&config)?
         .into_iter()
-        .filter(|download| download.size.unwrap_or_default() > 0)
+        .filter(is_visible_download)
         .map(|download| torrent_to_item(&config, &settings, download))
         .collect::<Result<Vec<_>, _>>()?;
     Ok(serde_json::to_string(&PluginResult::Ok(items))?)
@@ -271,9 +271,14 @@ fn scryer_download_list_queue_inner() -> FnResult<String> {
 #[plugin_fn]
 pub fn scryer_download_list_completed(_input: String) -> FnResult<String> {
     let config = TriblerConfig::from_extism()?;
+    let settings = get_settings(&config)?;
     let downloads = get_downloads(&config)?
         .into_iter()
-        .filter(|download| matches!(download.status.as_deref(), Some("SEEDING" | "STOPPED")))
+        .filter(is_visible_download)
+        .filter(|download| {
+            matches!(download.status.as_deref(), Some("SEEDING" | "STOPPED"))
+                && has_reached_seed_limit(download, &settings.lib_torrent.download_defaults)
+        })
         .map(|download| torrent_to_completed(&config, download))
         .collect::<Result<Vec<_>, _>>()?;
     Ok(serde_json::to_string(&PluginResult::Ok(downloads))?)
@@ -553,6 +558,7 @@ fn torrent_to_item(
     let can_remove = has_reached_seed_limit(&download, &settings.lib_torrent.download_defaults);
     Ok(PluginDownloadItem {
         client_item_id: hash.clone(),
+        download_id: None,
         info_hash: Some(hash.clone()),
         title: download.name.clone(),
         state,
@@ -596,6 +602,7 @@ fn torrent_to_completed(
     let hash = normalize_hash(&download.infohash);
     Ok(PluginCompletedDownload {
         client_item_id: hash.clone(),
+        download_id: None,
         info_hash: Some(hash),
         name: download.name,
         dest_dir: output_path.clone(),
@@ -618,6 +625,10 @@ fn output_path(download: &TriblerDownload, files: &[TriblerFile]) -> String {
     } else {
         join_path(&download.destination, &download.name)
     }
+}
+
+fn is_visible_download(download: &TriblerDownload) -> bool {
+    download.size.unwrap_or_default() > 0
 }
 
 fn map_state(download: &TriblerDownload) -> DownloadItemState {

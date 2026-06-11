@@ -75,15 +75,13 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
         "isTimeSensitive": config_bool("time_sensitive"),
         "actions": metadata_actions(&req),
     });
-    if config_bool("include_poster") {
-        if let Some(poster) = poster_url(&req) {
-            payload["image"] = serde_json::Value::String(poster);
-        }
+    if config_bool("include_poster")
+        && let Some(poster) = poster_url(&req)
+    {
+        payload["image"] = serde_json::Value::String(poster);
     }
-    let url = format!(
-        "https://api.pushcut.io/v1/notifications/{}",
-        required_config("notification_name")?
-    );
+    let notification_name = path_segment(&required_config("notification_name")?);
+    let url = format!("https://api.pushcut.io/v1/notifications/{notification_name}");
     let headers = [("API-Key", required_config("api_key")?)];
     let response = send_json(&url, "POST", &headers, payload);
     Ok(serde_json::to_string(&PluginResult::Ok(response))?)

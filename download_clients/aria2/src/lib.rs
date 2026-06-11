@@ -147,19 +147,11 @@ pub fn scryer_download_add(input: String) -> FnResult<String> {
             ],
         )?
     } else if let Some(source) = source_url(&request) {
-        if source.starts_with("magnet:") {
-            call_string(
-                &config,
-                "aria2.addUri",
-                &[xml_array(vec![xml_string(&source)]), xml_struct(&options)],
-            )?
-        } else {
-            call_string(
-                &config,
-                "aria2.addUri",
-                &[xml_array(vec![xml_string(&source)]), xml_struct(&options)],
-            )?
-        }
+        call_string(
+            &config,
+            "aria2.addUri",
+            &[xml_array(vec![xml_string(&source)]), xml_struct(&options)],
+        )?
     } else {
         return Ok(serde_json::to_string(&plugin_error::<
             PluginDownloadClientAddResponse,
@@ -574,14 +566,12 @@ fn struct_members(node: Node<'_, '_>) -> std::collections::HashMap<String, Strin
             .children()
             .find(|child| child.has_tag_name("name"))
             .and_then(|child| child.text())
-        {
-            if let Some(value) = member
+            && let Some(value) = member
                 .children()
                 .find(|child| child.has_tag_name("value"))
                 .and_then(node_text)
-            {
-                out.insert(name.to_string(), value);
-            }
+        {
+            out.insert(name.to_string(), value);
         }
     }
     out
@@ -666,6 +656,7 @@ fn torrent_to_item(torrent: Aria2Status) -> PluginDownloadItem {
 
     PluginDownloadItem {
         client_item_id: id.clone(),
+        download_id: None,
         info_hash: hash.clone(),
         title,
         state: map_state(&torrent),
@@ -703,6 +694,7 @@ fn torrent_to_completed(torrent: Aria2Status) -> PluginCompletedDownload {
     let hash = torrent.info_hash.as_deref().map(normalize_hash);
     PluginCompletedDownload {
         client_item_id: hash.clone().unwrap_or_else(|| torrent.gid.clone()),
+        download_id: None,
         info_hash: hash,
         name: torrent.bittorrent_name.unwrap_or_default(),
         dest_dir: path.clone(),

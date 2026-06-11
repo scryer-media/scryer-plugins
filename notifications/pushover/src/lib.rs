@@ -101,6 +101,31 @@ fn config_fields() -> Vec<ConfigFieldDef> {
 #[plugin_fn]
 pub fn scryer_notification_send(input: String) -> FnResult<String> {
     let req: PluginNotificationRequest = serde_json::from_str(&input)?;
+    let priority = config_i64("priority", 0);
+    let retry = config_i64("retry", 0);
+    let expire = config_i64("expire", 0);
+    let ttl = config_i64("ttl", 0);
+
+    if !(-2..=2).contains(&priority) {
+        return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+            "pushover priority must be between -2 and 2",
+            Some("invalid_priority".to_string()),
+        )))?);
+    }
+
+    if priority == 2 && !(30..=86400).contains(&retry) {
+        return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+            "pushover retry must be between 30 and 86400 seconds for emergency priority",
+            Some("invalid_retry".to_string()),
+        )))?);
+    }
+
+    if ttl < 0 {
+        return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+            "pushover ttl must be greater than or equal to 0",
+            Some("invalid_ttl".to_string()),
+        )))?);
+    }
 
     let mut title = req.summary_title;
     let mut message = req.summary_message;
@@ -143,20 +168,17 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
         ("device".to_string(), config_csv("devices").join(",")),
         ("title".to_string(), title),
         ("message".to_string(), message),
-        (
-            "priority".to_string(),
-            config_i64("priority", 0).to_string(),
-        ),
+        ("priority".to_string(), priority.to_string()),
     ];
     if encrypted {
         params.push(("encrypted".to_string(), "1".to_string()));
     }
-    if config_i64("priority", 0) == 2 {
-        params.push(("retry".to_string(), config_i64("retry", 30).to_string()));
-        params.push(("expire".to_string(), config_i64("expire", 0).to_string()));
+    if priority == 2 {
+        params.push(("retry".to_string(), retry.to_string()));
+        params.push(("expire".to_string(), expire.to_string()));
     }
-    if config_i64("ttl", 0) > 0 {
-        params.push(("ttl".to_string(), config_i64("ttl", 0).to_string()));
+    if ttl > 0 {
+        params.push(("ttl".to_string(), ttl.to_string()));
     }
     if let Some(sound) = config_value("sound") {
         params.push(("sound".to_string(), sound));
@@ -195,8 +217,8 @@ fn encrypt_field(plaintext: &str, key: &[u8; 32]) -> Result<String, String> {
     iv_and_ciphertext.extend_from_slice(&iv);
     iv_and_ciphertext.extend_from_slice(&ciphertext);
 
-    let mut mac =
-        HmacSha256::new_from_slice(key).map_err(|err| format!("failed to sign pushover payload: {err}"))?;
+    let mut mac = HmacSha256::new_from_slice(key)
+        .map_err(|err| format!("failed to sign pushover payload: {err}"))?;
     mac.update(&iv_and_ciphertext);
     let signature = mac.finalize().into_bytes();
 

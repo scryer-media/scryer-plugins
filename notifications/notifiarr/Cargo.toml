@@ -22,7 +22,7 @@ crate-type = ["cdylib"]
 [dependencies]
 extism-pdk = "1.4"
 notify-common = { path = "../notify-common" }
-scryer-plugin-sdk = "2.3.0"
+scryer-plugin-sdk = "3.0.0"
 serde_json = "1"
 
 [profile.plugin-release]

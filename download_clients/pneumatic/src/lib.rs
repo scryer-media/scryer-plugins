@@ -333,11 +333,12 @@ fn entry_to_item(path: PathBuf) -> PluginDownloadItem {
     let size = path_size(&path);
     PluginDownloadItem {
         client_item_id: id.clone(),
+        download_id: None,
         info_hash: None,
         title,
         state: DownloadItemState::Completed,
         message: None,
-        category: Some("sonarr".to_string()),
+        category: None,
         remote_output_path: Some(id.clone()),
         torrent: None,
         total_size_bytes: Some(size),
@@ -361,10 +362,11 @@ fn entry_to_completed(path: PathBuf) -> PluginCompletedDownload {
         .to_string();
     PluginCompletedDownload {
         client_item_id: id.clone(),
+        download_id: None,
         info_hash: None,
         name,
         dest_dir: id.clone(),
-        category: Some("sonarr".to_string()),
+        category: None,
         output_kind: Some(PluginDownloadOutputKind::File),
         content_paths: vec![id],
         size_bytes: Some(path_size(&path)),
@@ -392,15 +394,20 @@ fn ensure_directory(path: &str, label: &str) -> Result<(), Error> {
 }
 
 fn clean_file_name(value: &str) -> String {
+    let value = value.replace(": ", " - ").replace(':', "-");
     let cleaned = value
         .chars()
         .map(|ch| match ch {
-            '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|' => '_',
+            '/' | '\\' => '+',
+            '?' => '!',
+            '*' => '-',
+            '"' | '<' | '>' | '|' => '\0',
             _ => ch,
         })
+        .filter(|ch| *ch != '\0')
         .collect::<String>()
-        .trim()
-        .trim_matches('.')
+        .trim_start_matches([' ', '.'])
+        .trim_end_matches(' ')
         .to_string();
     if cleaned.is_empty() {
         "download".to_string()

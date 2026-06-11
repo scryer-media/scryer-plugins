@@ -134,15 +134,13 @@ fn run_synoindex(args: Vec<String>) -> PluginNotificationResponse {
             ),
             None,
         ),
-        Ok(output) if has_output(&output.stdout_base64) && !allow_stdout => {
-            error_response(
-                format!(
-                    "synoindex returned output{}",
-                    process_output_suffix(&output)
-                ),
-                None,
-            )
-        }
+        Ok(output) if has_output(&output.stdout_base64) && !allow_stdout => error_response(
+            format!(
+                "synoindex returned output{}",
+                process_output_suffix(&output)
+            ),
+            None,
+        ),
         Ok(_) => ok_response(),
         Err(error) => error_response(format!("synoindex failed: {}", error.message), None),
     }
