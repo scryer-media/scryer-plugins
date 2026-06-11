@@ -57,7 +57,6 @@ const CENTRAL_CATALOG_V3_PATH_PREFIX_ENV: &str = "SCRYER_CATALOG_V3_PATH_PREFIX"
 const CATALOG_V2_BASE_SDK_VERSION: &str = "1.5.0";
 const RULE_PACK_SOURCE_MANIFEST: &str = "rule_packs/manifest.json";
 const COMMUNITY_CATALOG_V3_MANIFEST: &str = "catalog/community-v3.toml";
-const REPO_RELEASE_TAG_PREFIX: &str = "plugins/release/";
 const CATALOG_PRETTY_JSON: &str = "catalog-v2.json";
 const CATALOG_MINIFIED_JSON: &str = "catalog-v2.min.json";
 const CATALOG_MINIFIED_ZST: &str = "catalog-v2.min.json.zst";
@@ -2171,8 +2170,8 @@ fn release_tag_prefix(plugin_id: &str) -> String {
     format!("plugins/{plugin_id}/v")
 }
 
-fn repo_release_tag_prefix() -> &'static str {
-    REPO_RELEASE_TAG_PREFIX
+fn repo_release_tag_prefix() -> String {
+    format!("{}/release/", official_plugin_release_tag_prefix())
 }
 
 fn legacy_release_tag_prefix(plugin_id: &str) -> String {
