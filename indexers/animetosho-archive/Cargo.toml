@@ -6,13 +6,13 @@ license = "GPL-3.0-only"
 description = "AnimeTosho archive Newznab feed indexer for older anime Usenet releases"
 
 [package.metadata.scryer]
-official = true
+# Intentionally not official/published; do not include this archive feed in public catalog releases.
+official = false
 plugin_id = "animetosho-archive"
 catalog_versions = ["v3"]
 feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/animetosho-archive"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/animetosho-archive"
-distribution_base_url = "https://cdn.scryer.media/scryer/plugins/animetosho-archive"
 
 [lib]
 crate-type = ["cdylib"]
