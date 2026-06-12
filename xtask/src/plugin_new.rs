@@ -135,8 +135,13 @@ impl ScaffoldSpec {
         let source_url = format!("https://github.com/OWNER/REPO/tree/main/{repo_path}");
         document["package"]["metadata"]["scryer"]["docs_url"] = value(source_url.as_str());
         document["package"]["metadata"]["scryer"]["source_repo"] = value(source_url.as_str());
-        document["package"]["metadata"]["scryer"]["distribution_base_url"] =
-            value(format!("https://cdn.scryer.media/scryer/plugins/{}", self.plugin_id).as_str());
+        document["package"]["metadata"]["scryer"]["distribution_base_url"] = value(
+            format!(
+                "https://cdn.scryer.media/scryer/plugins-v3/{}",
+                self.plugin_id
+            )
+            .as_str(),
+        );
 
         let mut crate_types = Array::new();
         crate_types.push("cdylib");

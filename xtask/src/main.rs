@@ -1964,7 +1964,12 @@ fn discover_local_plugin(ctx: &TaskContext, plugin_dir: &Path) -> Result<LocalPl
     let distribution_base_url = manifest_metadata
         .distribution_base_url
         .clone()
-        .unwrap_or_else(|| format!("{}/plugins/{manifest_plugin_id}", public_catalog_base_url()));
+        .unwrap_or_else(|| {
+            format!(
+                "{}/plugins-v3/{manifest_plugin_id}",
+                public_catalog_base_url()
+            )
+        });
     let descriptor_feature_set = primary_feature_set(&manifest_metadata.feature_sets);
     let wasm = build_plugin_wasm(ctx, plugin_dir, descriptor_feature_set)?;
     let descriptor = load_descriptor_from_wasm(&wasm)?;
@@ -3705,12 +3710,6 @@ fn github_release_asset_url(repo: &str, tag: &str, asset: &str) -> String {
     format!("https://github.com/{repo}/releases/download/{tag}/{asset}")
 }
 
-fn official_plugin_v3_distribution_base_url(plugin: &LocalPluginInfo) -> String {
-    plugin
-        .distribution_base_url
-        .replace("/plugins/", "/plugins-v3/")
-}
-
 fn official_plugin_v3_github_mirror_urls(
     plugin_id: &str,
     version: &str,
@@ -4730,7 +4729,7 @@ fn catalog_v3_release_from_prepared_assets(
     variants: &[PreparedPluginVariant],
 ) -> Result<CatalogV3Release> {
     let mut artifacts = Vec::new();
-    let distribution_base_url = official_plugin_v3_distribution_base_url(plugin);
+    let distribution_base_url = plugin.distribution_base_url.clone();
     for variant in variants {
         for compressed_artifact in [&variant.compressed_zst, &variant.compressed_br] {
             let staged_path = compressed_artifact.staged_path.as_ref().ok_or_else(|| {
@@ -7368,7 +7367,7 @@ mod tests {
             source_repo:
                 "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
                     .to_string(),
-            distribution_base_url: "https://cdn.scryer.media/scryer/plugins/email".to_string(),
+            distribution_base_url: "https://cdn.scryer.media/scryer/plugins-v3/email".to_string(),
         }
     }
 
@@ -7825,7 +7824,7 @@ catalog_versions = ["v3"]
 feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
-distribution_base_url = "https://cdn.scryer.media/scryer/plugins/email"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
 min_scryer_version = "1.4.0"
 "#,
         );
@@ -7860,7 +7859,7 @@ min_scryer_version = "1.4.0"
         );
         assert_eq!(
             metadata.distribution_base_url.as_deref(),
-            Some("https://cdn.scryer.media/scryer/plugins/email")
+            Some("https://cdn.scryer.media/scryer/plugins-v3/email")
         );
         assert_eq!(metadata.min_scryer_version.as_deref(), Some("1.4.0"));
     }
@@ -7921,7 +7920,7 @@ official = true
 plugin_id = "email"
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
-distribution_base_url = "https://cdn.scryer.media/scryer/plugins/email"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
 "#,
         );
 
@@ -7946,7 +7945,7 @@ official = true
 plugin_id = "email"
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
-distribution_base_url = "https://cdn.scryer.media/scryer/plugins/email"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
 "#,
         );
 
@@ -7973,7 +7972,7 @@ official = true
 plugin_id = "email"
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
-distribution_base_url = "https://cdn.scryer.media/scryer/plugins/email"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
 min_scryer_version = "soon"
 "#,
         );
@@ -8054,7 +8053,7 @@ catalog_versions = ["v3"]
 feature_sets = [{ required_features = ["threads"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
-distribution_base_url = "https://cdn.scryer.media/scryer/plugins/email"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
 "#,
         );
 
@@ -8085,7 +8084,7 @@ catalog_versions = ["v2", "v3"]
 feature_sets = [{ required_features = ["simd128"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
-distribution_base_url = "https://cdn.scryer.media/scryer/plugins/email"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
 "#,
         );
 
@@ -8112,7 +8111,7 @@ catalog_versions = ["v3"]
 feature_sets = [{ required_features = ["relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
-distribution_base_url = "https://cdn.scryer.media/scryer/plugins/email"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
 "#,
         );
 
