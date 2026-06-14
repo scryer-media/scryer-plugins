@@ -29,12 +29,28 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
 
 fn config_fields() -> Vec<ConfigFieldDef> {
     vec![
-        field("host", "Host", ConfigFieldType::String, true, None, None),
+        field(
+            "base_url",
+            "Base URL",
+            ConfigFieldType::String,
+            true,
+            None,
+            Some("Plex server URL, for example http://plex:32400."),
+        ),
+        field(
+            "api_key",
+            "API Key",
+            ConfigFieldType::Password,
+            false,
+            None,
+            Some("Plex token supplied by the Scryer media server integration."),
+        ),
+        field("host", "Host", ConfigFieldType::String, false, None, None),
         field(
             "port",
             "Port",
             ConfigFieldType::Number,
-            true,
+            false,
             Some("32400"),
             None,
         ),
@@ -81,6 +97,16 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             ),
         ),
         field(
+            "path_mappings",
+            "Path Mappings",
+            ConfigFieldType::Multiline,
+            false,
+            None,
+            Some(
+                "Map Scryer-visible paths to Plex-visible paths using SOURCE => DESTINATION lines.",
+            ),
+        ),
+        field(
             "map_from",
             "Map Paths From",
             ConfigFieldType::String,
@@ -111,7 +137,16 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
     if !config_bool("update_library") || !should_update_library(&req) {
         return Ok(serde_json::to_string(&PluginResult::Ok(ok_response()))?);
     }
-    let path = update_path(&req).map(|path| map_path(&path));
+    let path_mappings = match configured_path_mappings() {
+        Ok(mappings) => mappings,
+        Err(message) => {
+            return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+                message,
+                Some("invalid_config".to_string()),
+            )))?);
+        }
+    };
+    let path = update_path(&req).map(|path| map_path(&path, &path_mappings));
     let targets = match refresh_targets(path.as_deref()) {
         Ok(targets) => targets,
         Err(error) => {
@@ -192,7 +227,7 @@ fn get_oauth_token(request: &serde_json::Value) -> Result<serde_json::Value, Err
 }
 
 fn servers() -> Result<serde_json::Value, Error> {
-    let Some(auth_token) = config_value("auth_token") else {
+    let Some(auth_token) = plex_token() else {
         return Ok(serde_json::json!({}));
     };
     let url = append_query(
@@ -265,7 +300,7 @@ fn refresh_section(section_id: &str, path: Option<&str>) -> PluginNotificationRe
         ("X-Plex-Device-Name", "Scryer".to_string()),
         ("X-Plex-Version", "0".to_string()),
     ];
-    if let Some(token) = config_value("auth_token") {
+    if let Some(token) = plex_token() {
         params.push(("X-Plex-Token", token));
     }
     if let Some(path) = path {
@@ -279,19 +314,40 @@ fn refresh_section(section_id: &str, path: Option<&str>) -> PluginNotificationRe
 }
 
 fn base_url() -> String {
-    let scheme = if config_bool("use_ssl") {
-        "https"
-    } else {
-        "http"
-    };
+    if let Some(base_url) = config_value("base_url").and_then(|value| normalize_base_url(&value)) {
+        return base_url;
+    }
+
     let host = required_config("host").unwrap_or_default();
     let port = config_i64("port", 32400);
     let url_base = config_value("url_base").unwrap_or_default();
+    legacy_base_url(config_bool("use_ssl"), &host, port, &url_base)
+}
+
+fn legacy_base_url(use_ssl: bool, host: &str, port: i64, url_base: &str) -> String {
+    let scheme = if use_ssl { "https" } else { "http" };
     if url_base.is_empty() {
         format!("{scheme}://{host}:{port}")
     } else {
         format!("{scheme}://{host}:{port}/{}", url_base.trim_matches('/'))
     }
+}
+
+fn normalize_base_url(value: &str) -> Option<String> {
+    let normalized = value.trim().trim_end_matches('/').to_string();
+    if normalized.is_empty() {
+        None
+    } else {
+        Some(normalized)
+    }
+}
+
+fn plex_token() -> Option<String> {
+    select_plex_token(config_value("api_key"), config_value("auth_token"))
+}
+
+fn select_plex_token(api_key: Option<String>, auth_token: Option<String>) -> Option<String> {
+    api_key.or(auth_token)
 }
 
 #[derive(Debug, Clone)]
@@ -304,6 +360,13 @@ struct PlexRefreshTarget {
 struct PlexSection {
     id: String,
     locations: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct PathMapping {
+    source_prefix: String,
+    source_prefix_normalized: String,
+    destination_prefix: String,
 }
 
 fn refresh_targets(path: Option<&str>) -> Result<Vec<PlexRefreshTarget>, Error> {
@@ -430,7 +493,11 @@ fn update_path(req: &PluginNotificationRequest) -> Option<String> {
         .or_else(|| req.file.as_ref().and_then(|file| file.primary_path.clone()))
 }
 
-fn map_path(path: &str) -> String {
+fn map_path(path: &str, mappings: &[PathMapping]) -> String {
+    if let Some(mapped_path) = map_path_with_mappings(mappings, path) {
+        return mapped_path;
+    }
+
     match (config_value("map_from"), config_value("map_to")) {
         (Some(from), Some(to)) if path.starts_with(&from) => path.replacen(&from, &to, 1),
         _ => path.to_string(),
@@ -438,18 +505,134 @@ fn map_path(path: &str) -> String {
 }
 
 fn validate_plex_config() -> Result<(), String> {
-    required_config("host").map_err(|_| "plex host is not configured".to_string())?;
+    if config_value("base_url")
+        .as_deref()
+        .and_then(normalize_base_url)
+        .is_none()
+    {
+        required_config("host")
+            .map_err(|_| "plex base_url or host is not configured".to_string())?;
 
-    let port = config_i64("port", 32400);
-    if !(1..=65535).contains(&port) {
-        return Err("plex port must be between 1 and 65535".to_string());
+        let port = config_i64("port", 32400);
+        if !(1..=65535).contains(&port) {
+            return Err("plex port must be between 1 and 65535".to_string());
+        }
     }
+
+    configured_path_mappings()?;
 
     match (config_value("map_from"), config_value("map_to")) {
         (Some(_), Some(_)) | (None, None) => Ok(()),
         (Some(_), None) => Err("plex map_to is required when map_from is configured".to_string()),
         (None, Some(_)) => Err("plex map_from is required when map_to is configured".to_string()),
     }
+}
+
+fn configured_path_mappings() -> Result<Vec<PathMapping>, String> {
+    config_value("path_mappings")
+        .map(|value| parse_path_mappings(&value))
+        .transpose()
+        .map(Option::unwrap_or_default)
+}
+
+fn parse_path_mappings(input: &str) -> Result<Vec<PathMapping>, String> {
+    let mut mappings = Vec::new();
+
+    for (index, raw_line) in input.lines().enumerate() {
+        let line = raw_line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+
+        let Some((source_prefix, destination_prefix)) = line.split_once("=>") else {
+            return Err(format!(
+                "invalid path mapping on line {}: expected SOURCE => DESTINATION",
+                index + 1
+            ));
+        };
+        let source_prefix = source_prefix.trim();
+        let destination_prefix = destination_prefix.trim();
+        if !is_absolute_path(source_prefix) || !is_absolute_path(destination_prefix) {
+            return Err(format!(
+                "invalid path mapping on line {}: both sides must be absolute paths",
+                index + 1
+            ));
+        }
+
+        mappings.push(PathMapping {
+            source_prefix: trim_trailing_separator(source_prefix),
+            source_prefix_normalized: trim_trailing_separator(&normalize_separators(source_prefix)),
+            destination_prefix: trim_trailing_separator(destination_prefix),
+        });
+    }
+
+    mappings.sort_by(|left, right| {
+        right
+            .source_prefix_normalized
+            .len()
+            .cmp(&left.source_prefix_normalized.len())
+    });
+
+    Ok(mappings)
+}
+
+fn map_path_with_mappings(mappings: &[PathMapping], source_path: &str) -> Option<String> {
+    let normalized_path = trim_trailing_separator(&normalize_separators(source_path));
+
+    for mapping in mappings {
+        if !prefix_matches(&mapping.source_prefix_normalized, &normalized_path) {
+            continue;
+        }
+
+        let suffix = &normalized_path[mapping.source_prefix_normalized.len()..];
+        let preferred_separator = if mapping.destination_prefix.contains('\\')
+            && !mapping.destination_prefix.contains('/')
+        {
+            '\\'
+        } else {
+            '/'
+        };
+        let mut converted_suffix = suffix.replace('/', &preferred_separator.to_string());
+        if !converted_suffix.is_empty() && !converted_suffix.starts_with(preferred_separator) {
+            converted_suffix.insert(0, preferred_separator);
+        }
+        return Some(format!(
+            "{}{}",
+            mapping.destination_prefix, converted_suffix
+        ));
+    }
+
+    None
+}
+
+fn prefix_matches(prefix: &str, full_path: &str) -> bool {
+    full_path == prefix
+        || (full_path.starts_with(prefix)
+            && full_path
+                .as_bytes()
+                .get(prefix.len())
+                .is_some_and(|byte| *byte == b'/'))
+}
+
+fn is_absolute_path(value: &str) -> bool {
+    let bytes = value.as_bytes();
+    value.starts_with('/')
+        || value.starts_with("\\\\")
+        || (bytes.len() >= 3
+            && bytes[1] == b':'
+            && (bytes[2] == b'\\' || bytes[2] == b'/')
+            && bytes[0].is_ascii_alphabetic())
+}
+
+fn normalize_separators(value: &str) -> String {
+    value.replace('\\', "/")
+}
+
+fn trim_trailing_separator(value: &str) -> String {
+    if value == "/" {
+        return value.to_string();
+    }
+    value.trim_end_matches(['/', '\\']).to_string()
 }
 
 fn should_update_library(req: &PluginNotificationRequest) -> bool {
@@ -486,7 +669,7 @@ fn plex_query_params(
 
 fn plex_server_query_params() -> Vec<(&'static str, String)> {
     let mut params = plex_query_params(std::iter::empty::<(&str, String)>());
-    if let Some(token) = config_value("auth_token") {
+    if let Some(token) = plex_token() {
         params.push(("X-Plex-Token", token));
     }
     params
@@ -632,4 +815,123 @@ fn host_from_uri(uri: &str) -> Option<String> {
 
 fn locality_hint(local: bool) -> &'static str {
     if local { "Local" } else { "Remote" }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn normalize_base_url_trims_trailing_slashes() {
+        assert_eq!(
+            normalize_base_url("  http://plex:32400/  "),
+            Some("http://plex:32400".to_string())
+        );
+        assert_eq!(normalize_base_url("   "), None);
+    }
+
+    #[test]
+    fn legacy_base_url_builds_from_host_parts() {
+        assert_eq!(
+            legacy_base_url(false, "plex", 32400, ""),
+            "http://plex:32400"
+        );
+        assert_eq!(
+            legacy_base_url(true, "plex", 32400, "/plex/"),
+            "https://plex:32400/plex"
+        );
+    }
+
+    #[test]
+    fn select_plex_token_prefers_api_key() {
+        assert_eq!(
+            select_plex_token(
+                Some("api-token".to_string()),
+                Some("auth-token".to_string())
+            ),
+            Some("api-token".to_string())
+        );
+        assert_eq!(
+            select_plex_token(None, Some("auth-token".to_string())),
+            Some("auth-token".to_string())
+        );
+    }
+
+    #[test]
+    fn parse_path_mappings_ignores_comments_and_prefers_longest_prefix() {
+        let mappings = parse_path_mappings(
+            r#"
+            # comment
+            /data/media => /mnt/plex
+            /data/media/anime => /srv/anime
+            "#,
+        )
+        .expect("mappings should parse");
+
+        assert_eq!(mappings.len(), 2);
+        assert_eq!(mappings[0].source_prefix, "/data/media/anime");
+        assert_eq!(
+            map_path_with_mappings(&mappings, "/data/media/anime/Show/E01.mkv"),
+            Some("/srv/anime/Show/E01.mkv".to_string())
+        );
+    }
+
+    #[test]
+    fn path_mappings_are_boundary_safe() {
+        let mappings =
+            parse_path_mappings("/data/media => /mnt/plex").expect("mappings should parse");
+
+        assert_eq!(
+            map_path_with_mappings(&mappings, "/data/media/Show/E01.mkv"),
+            Some("/mnt/plex/Show/E01.mkv".to_string())
+        );
+        assert_eq!(
+            map_path_with_mappings(&mappings, "/data/media2/E01.mkv"),
+            None
+        );
+    }
+
+    #[test]
+    fn path_mappings_support_windows_destinations() {
+        let mappings = parse_path_mappings(r"C:\Media => D:\Plex").expect("mappings should parse");
+
+        assert_eq!(
+            map_path_with_mappings(&mappings, r"C:\Media\Show\E01.mkv"),
+            Some(r"D:\Plex\Show\E01.mkv".to_string())
+        );
+    }
+
+    #[test]
+    fn parse_path_mappings_rejects_relative_paths() {
+        let error = parse_path_mappings("relative => /mnt/plex")
+            .expect_err("relative paths should be rejected");
+
+        assert!(error.contains("both sides must be absolute paths"));
+    }
+
+    #[test]
+    fn descriptor_uses_media_server_facade_fields() {
+        let fields = config_fields();
+        let base_url = fields
+            .iter()
+            .find(|field| field.key == "base_url")
+            .expect("base_url field should exist");
+        let host = fields
+            .iter()
+            .find(|field| field.key == "host")
+            .expect("host field should exist");
+        let api_key = fields
+            .iter()
+            .find(|field| field.key == "api_key")
+            .expect("api_key field should exist");
+        let path_mappings = fields
+            .iter()
+            .find(|field| field.key == "path_mappings")
+            .expect("path_mappings field should exist");
+
+        assert!(base_url.required);
+        assert!(!host.required);
+        assert!(!api_key.required);
+        assert_eq!(path_mappings.field_type, ConfigFieldType::Multiline);
+    }
 }

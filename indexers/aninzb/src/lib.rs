@@ -5,8 +5,9 @@ use newznab_common::{
     Capabilities, IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor,
     IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures,
     IndexerSearchInput, IndexerSourceKind, NewznabConfig, PluginDescriptor, PluginResult,
-    ProviderDescriptor, SDK_VERSION, SearchRequest, SearchResponse, SearchResult,
-    current_sdk_constraint, execute_full_search, extract_base_metadata, standard_config_fields,
+    PluginSearchSubjectKind, ProviderDescriptor, SDK_VERSION, SearchRequest, SearchResponse,
+    SearchResult, current_sdk_constraint, execute_full_search, extract_base_metadata,
+    standard_config_fields,
 };
 use url::Url;
 
@@ -101,12 +102,16 @@ pub fn scryer_indexer_search(input: String) -> FnResult<String> {
     config.page_size = config.page_size.min(100);
     let anidb_id = request_id(&req, "anidb_id");
     let has_tvdb_id = request_id(&req, "tvdb_id").is_some();
+    let movie_shaped = request_is_movie_shaped(&req);
 
-    let response = if let Some(anidb_id) = anidb_id.as_deref().filter(|_| !has_tvdb_id) {
+    let response = if let Some(anidb_id) = anidb_id
+        .as_deref()
+        .filter(|_| !has_tvdb_id && !movie_shaped)
+    {
         execute_anidb_public_ui_search(&config, &req, anidb_id)?
     } else {
         let api_response = execute_full_search(&config, &req, extract_base_metadata)?;
-        if api_response.results.is_empty() {
+        if api_response.results.is_empty() && !movie_shaped {
             if let Some(anidb_id) = anidb_id.as_deref() {
                 match execute_anidb_public_ui_search(&config, &req, anidb_id) {
                     Ok(ui_response) if !ui_response.results.is_empty() => ui_response,
@@ -129,6 +134,16 @@ pub fn scryer_indexer_search(input: String) -> FnResult<String> {
         }
     };
     Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+}
+
+fn request_is_movie_shaped(req: &SearchRequest) -> bool {
+    req.context
+        .as_ref()
+        .is_some_and(|context| context.subject_kind == PluginSearchSubjectKind::Movie)
+        || req
+            .facet
+            .as_deref()
+            .is_some_and(|facet| facet.trim().eq_ignore_ascii_case("movie"))
 }
 
 fn request_id(req: &SearchRequest, key: &str) -> Option<String> {
@@ -418,7 +433,7 @@ mod tests {
             .expect("api_key field");
 
         assert_eq!(base_url.default_value.as_deref(), Some(ANINZB_BASE_URL));
-        assert!(api_key.required);
+        assert!(!api_key.required);
         assert_eq!(
             indexer.capabilities.supported_ids.get("anime"),
             Some(&vec!["tvdb_id".to_string(), "anidb_id".to_string()])

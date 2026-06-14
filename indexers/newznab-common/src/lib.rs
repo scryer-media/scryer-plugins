@@ -16,8 +16,8 @@ pub use scryer_plugin_sdk::{
     IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput,
     IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor, PluginResult,
     PluginScoringPolicy as ScoringPolicy, PluginSearchRequest as SearchRequest,
-    PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult, ProviderDescriptor,
-    SDK_VERSION, current_sdk_constraint,
+    PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult,
+    PluginSearchSubjectKind, ProviderDescriptor, SDK_VERSION, current_sdk_constraint,
 };
 use serde::Deserialize;
 use url::Url;
@@ -220,7 +220,6 @@ pub fn execute_full_search(
     extract_fn: MetadataExtractor,
 ) -> Result<SearchResponse, Error> {
     let query = req.query.trim().to_string();
-    let is_anime = is_anime_request(req.facet.as_deref(), req.category.as_deref());
     let query_variants = build_query_variants(&query);
 
     let imdb_id = req
@@ -248,6 +247,16 @@ pub fn execute_full_search(
         .get("tvmaze_id")
         .map(|v| v.trim().to_string())
         .filter(|v| !v.is_empty());
+    let anidb_id = req
+        .ids
+        .get("anidb_id")
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty());
+    let mal_id = req
+        .ids
+        .get("mal_id")
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty());
 
     if query.is_empty()
         && imdb_id.is_none()
@@ -255,20 +264,26 @@ pub fn execute_full_search(
         && tvdb_id.is_none()
         && tvrage_id.is_none()
         && tvmaze_id.is_none()
+        && anidb_id.is_none()
+        && mal_id.is_none()
     {
         return execute_rss_search(config, req, extract_fn);
     }
 
-    // Determine search type from categories and hints
-    let search_type = determine_search_type(
-        &req.categories,
-        req.facet.as_deref(),
-        req.category.as_deref(),
-        imdb_id.as_deref(),
-        tvdb_id.as_deref(),
-        tvrage_id.as_deref(),
-        tvmaze_id.as_deref(),
+    // Determine search shape from typed context first, then legacy hints.
+    let search_shape = determine_nab_search_shape(
+        req,
+        NabSearchShapeHints {
+            categories: &req.categories,
+            facet: req.facet.as_deref(),
+            category: req.category.as_deref(),
+            imdb_id: imdb_id.as_deref(),
+            tvdb_id: tvdb_id.as_deref(),
+            tvrage_id: tvrage_id.as_deref(),
+            tvmaze_id: tvmaze_id.as_deref(),
+        },
     );
+    let search_type = search_shape.search_type();
 
     // Build Newznab category parameter (numeric codes only)
     let newznab_cat = build_category_param(&req.categories);
@@ -297,7 +312,7 @@ pub fn execute_full_search(
             format!("{}&offset={offset}", config.additional_params)
         };
 
-        let (status, body) = if is_anime {
+        let (status, body) = if search_shape == NabSearchShape::AnimeExact {
             execute_exact_anime_search(
                 &endpoint,
                 &query_variants,
@@ -316,7 +331,7 @@ pub fn execute_full_search(
         } else {
             execute_tiered_search(
                 &endpoint,
-                &search_type,
+                search_type,
                 &query_variants,
                 &config.api_key,
                 imdb_id.as_deref(),
@@ -545,6 +560,87 @@ fn execute_rss_search(
 // ---------------------------------------------------------------------------
 // Search type determination
 // ---------------------------------------------------------------------------
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum NabSearchShape {
+    Movie,
+    Tv,
+    AnimeExact,
+    Generic,
+}
+
+impl NabSearchShape {
+    fn search_type(self) -> &'static str {
+        match self {
+            Self::Movie => "movie",
+            Self::Tv | Self::AnimeExact => "tvsearch",
+            Self::Generic => "search",
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+struct NabSearchShapeHints<'a> {
+    categories: &'a [String],
+    facet: Option<&'a str>,
+    category: Option<&'a str>,
+    imdb_id: Option<&'a str>,
+    tvdb_id: Option<&'a str>,
+    tvrage_id: Option<&'a str>,
+    tvmaze_id: Option<&'a str>,
+}
+
+fn determine_nab_search_shape(
+    req: &SearchRequest,
+    hints: NabSearchShapeHints<'_>,
+) -> NabSearchShape {
+    if let Some(context) = req.context.as_ref() {
+        match context.subject_kind {
+            PluginSearchSubjectKind::Movie => return NabSearchShape::Movie,
+            PluginSearchSubjectKind::AnimeEpisode => return NabSearchShape::AnimeExact,
+            PluginSearchSubjectKind::Episode
+            | PluginSearchSubjectKind::Season
+            | PluginSearchSubjectKind::Special => {
+                if is_anime_request(hints.facet, hints.category) {
+                    return NabSearchShape::AnimeExact;
+                }
+                return NabSearchShape::Tv;
+            }
+            PluginSearchSubjectKind::Title => {
+                if matches!(hints.facet.map(str::trim), Some("movie")) {
+                    return NabSearchShape::Movie;
+                }
+                if is_anime_request(hints.facet, hints.category) {
+                    return NabSearchShape::AnimeExact;
+                }
+                if matches!(hints.facet.map(str::trim), Some("series")) {
+                    return NabSearchShape::Tv;
+                }
+            }
+            PluginSearchSubjectKind::Collection | PluginSearchSubjectKind::Unknown => {}
+        }
+    }
+
+    if is_anime_request(hints.facet, hints.category) {
+        return NabSearchShape::AnimeExact;
+    }
+
+    match determine_search_type(
+        hints.categories,
+        hints.facet,
+        hints.category,
+        hints.imdb_id,
+        hints.tvdb_id,
+        hints.tvrage_id,
+        hints.tvmaze_id,
+    )
+    .as_str()
+    {
+        "movie" => NabSearchShape::Movie,
+        "tvsearch" => NabSearchShape::Tv,
+        _ => NabSearchShape::Generic,
+    }
+}
 
 fn determine_search_type(
     categories: &[String],
@@ -791,48 +887,11 @@ fn execute_tiered_search(
         || effective_tvdb.is_some()
         || effective_tvrage.is_some()
         || effective_tvmaze.is_some();
-    let mut last_query_response: Option<(u16, String)> = None;
+    let mut last_response: Option<(u16, String)> = None;
 
-    // Tier 1: Query-based search with IDs when query text is available. This
-    // matches the documented Newznab/NZBGeek movie and TV search forms.
-    for query_text in query_variants
-        .iter()
-        .map(String::as_str)
-        .filter(|query| !query.is_empty())
-    {
-        let (status, body) = execute_search(
-            endpoint,
-            search_type,
-            Some(query_text),
-            api_key,
-            effective_imdb,
-            effective_tmdb,
-            effective_tvdb,
-            effective_tvrage,
-            effective_tvmaze,
-            cat,
-            limit,
-            season,
-            episode,
-            additional_params,
-        )?;
-
-        last_query_response = Some((status, body.clone()));
-
-        if is_success_status(status) {
-            let trimmed = body.trim_start();
-            let looks_empty = is_empty_response(trimmed);
-            if !looks_empty {
-                return Ok((status, body));
-            }
-        }
-    }
-
-    if search_type == "search" && !has_id {
-        return Ok(last_query_response.unwrap_or((200, r#"{"channel":{}}"#.to_string())));
-    }
-
-    // Tier 2: ID-only search when we have an authoritative ID.
+    // Tier 1: ID-only search when we have authoritative IDs. Do not mix q with
+    // IDs; some nab providers treat that as a narrower text search and return
+    // stale/low-quality matches before the authoritative ID lane is tried.
     if has_id {
         let (status, body) = execute_search(
             endpoint,
@@ -851,60 +910,44 @@ fn execute_tiered_search(
             additional_params,
         )?;
 
-        if is_success_status(status) {
+        let looks_empty = is_empty_response(body.trim_start());
+        last_response = Some((status, body.clone()));
+        if is_success_status(status) && !looks_empty {
             return Ok((status, body));
         }
     }
 
-    // Tier 3: Generic search fallback (t=search, no IDs, no season/ep)
-    if search_type != "search" {
-        let mut fallback_queries: Vec<Option<&str>> = query_variants
-            .iter()
-            .map(String::as_str)
-            .filter(|query| !query.is_empty())
-            .map(Some)
-            .collect();
+    // Tier 2: focused text fallback without IDs.
+    for query_text in query_variants
+        .iter()
+        .map(String::as_str)
+        .filter(|query| !query.is_empty())
+    {
+        let (status, body) = execute_search(
+            endpoint,
+            search_type,
+            Some(query_text),
+            api_key,
+            None,
+            None,
+            None,
+            None,
+            None,
+            cat,
+            limit,
+            season,
+            episode,
+            additional_params,
+        )?;
 
-        if fallback_queries.is_empty() {
-            fallback_queries.push(
-                imdb_id
-                    .or(tmdb_id)
-                    .or(tvdb_id)
-                    .or(tvrage_id)
-                    .or(tvmaze_id)
-                    .filter(|value| !value.is_empty()),
-            );
+        let looks_empty = is_empty_response(body.trim_start());
+        last_response = Some((status, body.clone()));
+        if is_success_status(status) && !looks_empty {
+            return Ok((status, body));
         }
-
-        let mut last_fallback = (200, r#"{"channel":{}}"#.to_string());
-        for fallback_query in fallback_queries {
-            let (status, body) = execute_search(
-                endpoint,
-                "search",
-                fallback_query,
-                api_key,
-                None,
-                None,
-                None,
-                None,
-                None,
-                cat,
-                limit,
-                None,
-                None,
-                additional_params,
-            )?;
-            let looks_empty = is_empty_response(body.trim_start());
-            last_fallback = (status, body.clone());
-            if is_success_status(status) && !looks_empty {
-                return Ok((status, body));
-            }
-        }
-        return Ok(last_fallback);
     }
 
-    // Shouldn't reach here, but return empty
-    Ok((200, r#"{"channel":{}}"#.to_string()))
+    Ok(last_response.unwrap_or((200, r#"{"channel":{}}"#.to_string())))
 }
 
 fn is_success_status(status: u16) -> bool {
@@ -2476,6 +2519,172 @@ mod tests {
         );
     }
 
+    #[test]
+    fn typed_movie_context_overrides_legacy_anime_category_hint() {
+        let req = SearchRequest {
+            query: String::new(),
+            ids: std::collections::HashMap::from([(
+                "imdb_id".to_string(),
+                "tt11032374".to_string(),
+            )]),
+            facet: Some("movie".to_string()),
+            category: Some("anime".to_string()),
+            categories: vec!["5070".to_string(), "2000".to_string()],
+            context: Some(scryer_plugin_sdk::PluginSearchContext {
+                subject_kind: PluginSearchSubjectKind::Movie,
+                ..scryer_plugin_sdk::PluginSearchContext::default()
+            }),
+            ..SearchRequest::default()
+        };
+
+        assert_eq!(
+            determine_nab_search_shape(
+                &req,
+                NabSearchShapeHints {
+                    categories: &req.categories,
+                    facet: req.facet.as_deref(),
+                    category: req.category.as_deref(),
+                    imdb_id: Some("tt11032374"),
+                    tvdb_id: None,
+                    tvrage_id: None,
+                    tvmaze_id: None,
+                },
+            ),
+            NabSearchShape::Movie
+        );
+    }
+
+    #[test]
+    fn typed_movie_context_with_full_series_movie_ids_stays_movie_shape() {
+        let req = SearchRequest {
+            query: String::new(),
+            ids: std::collections::HashMap::from([
+                ("imdb_id".to_string(), "tt11032374".to_string()),
+                ("tmdb_id".to_string(), "635302".to_string()),
+                ("tvdb_id".to_string(), "131963".to_string()),
+                ("anidb_id".to_string(), "15646".to_string()),
+                ("mal_id".to_string(), "40456".to_string()),
+            ]),
+            facet: Some("movie".to_string()),
+            category: Some("movie".to_string()),
+            categories: vec!["6050".to_string(), "2000".to_string(), "5070".to_string()],
+            context: Some(scryer_plugin_sdk::PluginSearchContext {
+                subject_kind: PluginSearchSubjectKind::Movie,
+                ..scryer_plugin_sdk::PluginSearchContext::default()
+            }),
+            ..SearchRequest::default()
+        };
+
+        assert_eq!(
+            determine_nab_search_shape(
+                &req,
+                NabSearchShapeHints {
+                    categories: &req.categories,
+                    facet: req.facet.as_deref(),
+                    category: req.category.as_deref(),
+                    imdb_id: Some("tt11032374"),
+                    tvdb_id: Some("131963"),
+                    tvrage_id: None,
+                    tvmaze_id: None,
+                },
+            ),
+            NabSearchShape::Movie
+        );
+    }
+
+    #[test]
+    fn typed_movie_context_with_only_anime_ids_does_not_become_anime_exact() {
+        let req = SearchRequest {
+            query: String::new(),
+            ids: std::collections::HashMap::from([
+                ("anidb_id".to_string(), "15646".to_string()),
+                ("mal_id".to_string(), "40456".to_string()),
+            ]),
+            facet: Some("movie".to_string()),
+            category: Some("movie".to_string()),
+            categories: vec!["5070".to_string(), "2000".to_string()],
+            context: Some(scryer_plugin_sdk::PluginSearchContext {
+                subject_kind: PluginSearchSubjectKind::Movie,
+                ..scryer_plugin_sdk::PluginSearchContext::default()
+            }),
+            ..SearchRequest::default()
+        };
+
+        assert_eq!(
+            determine_nab_search_shape(
+                &req,
+                NabSearchShapeHints {
+                    categories: &req.categories,
+                    facet: req.facet.as_deref(),
+                    category: req.category.as_deref(),
+                    imdb_id: None,
+                    tvdb_id: None,
+                    tvrage_id: None,
+                    tvmaze_id: None,
+                },
+            ),
+            NabSearchShape::Movie
+        );
+    }
+
+    #[test]
+    fn legacy_anime_category_hint_still_uses_anime_exact_shape() {
+        let req = SearchRequest {
+            query: "Demon Slayer".to_string(),
+            category: Some("anime".to_string()),
+            categories: vec!["5070".to_string()],
+            ..SearchRequest::default()
+        };
+
+        assert_eq!(
+            determine_nab_search_shape(
+                &req,
+                NabSearchShapeHints {
+                    categories: &req.categories,
+                    facet: req.facet.as_deref(),
+                    category: req.category.as_deref(),
+                    imdb_id: None,
+                    tvdb_id: Some("131963"),
+                    tvrage_id: None,
+                    tvmaze_id: None,
+                },
+            ),
+            NabSearchShape::AnimeExact
+        );
+    }
+
+    #[test]
+    fn typed_anime_episode_context_uses_anime_exact_shape() {
+        let req = SearchRequest {
+            query: "Demon Slayer".to_string(),
+            facet: Some("anime".to_string()),
+            category: Some("anime".to_string()),
+            categories: vec!["5070".to_string()],
+            episode: Some(1),
+            context: Some(scryer_plugin_sdk::PluginSearchContext {
+                subject_kind: PluginSearchSubjectKind::AnimeEpisode,
+                ..scryer_plugin_sdk::PluginSearchContext::default()
+            }),
+            ..SearchRequest::default()
+        };
+
+        assert_eq!(
+            determine_nab_search_shape(
+                &req,
+                NabSearchShapeHints {
+                    categories: &req.categories,
+                    facet: req.facet.as_deref(),
+                    category: req.category.as_deref(),
+                    imdb_id: None,
+                    tvdb_id: Some("131963"),
+                    tvrage_id: None,
+                    tvmaze_id: None,
+                },
+            ),
+            NabSearchShape::AnimeExact
+        );
+    }
+
     // ── build_category_param ─────────────────────────────────────────────
 
     #[test]
@@ -2522,6 +2731,37 @@ mod tests {
         assert!(url.contains("limit=200"));
         assert!(url.contains("extended=1"));
         assert!(query_value(&url, "o").is_none());
+        assert_parses_as_http_uri(&url);
+    }
+
+    #[test]
+    fn build_search_url_movie_id_search_uses_imdbid_and_category_filter_without_query() {
+        let url = build_search_url(
+            "https://api.nzbgeek.info/api",
+            "movie",
+            None,
+            "test-api-key",
+            Some("tt11032374"),
+            None,
+            None,
+            None,
+            None,
+            Some("6050,2000,5070"),
+            200,
+            None,
+            None,
+            "",
+        )
+        .unwrap();
+
+        assert_eq!(query_value(&url, "t").as_deref(), Some("movie"));
+        assert_eq!(query_value(&url, "imdbid").as_deref(), Some("011032374"));
+        assert_eq!(query_value(&url, "cat").as_deref(), Some("6050,2000,5070"));
+        assert!(query_value(&url, "q").is_none());
+        assert_eq!(
+            query_value(&redact_url_for_log(&url), "apikey").as_deref(),
+            Some("REDACTED")
+        );
         assert_parses_as_http_uri(&url);
     }
 
