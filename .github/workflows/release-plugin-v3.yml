@@ -65,14 +65,14 @@ jobs:
       SCCACHE_DIR: /home/runner/.cache/sccache
       SCCACHE_IDLE_TIMEOUT: "0"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.3
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_ref || github.ref }}
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2.9.1
         with:
           shared-key: gha-rust-cache-linux-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-xtask
           workspaces: |
@@ -83,7 +83,7 @@ jobs:
 
       - name: Restore sccache directory
         id: validate-sccache-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5.0.5
         with:
           path: /home/runner/.cache/sccache
           key: gha-sccache-v2-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_LANE }}-${{ env.RELEASE_PLUGIN_PLAN_SCCACHE_BUILD_FLAVOR }}-${{ github.run_id }}
@@ -197,7 +197,7 @@ jobs:
           fi
 
       - name: Upload xtask artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: release-plugin-v3-xtask-${{ github.run_id }}
           path: xtask/target/xtask-release/xtask
@@ -205,7 +205,7 @@ jobs:
           retention-days: 7
 
       - name: Upload release plan
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: release-plugin-v3-plan-${{ github.run_id }}
           path: |
@@ -215,7 +215,7 @@ jobs:
 
       - name: Upload validate stats
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: release-plugin-v3-validate-${{ github.run_id }}
           path: validate-sccache-stats.txt
@@ -244,7 +244,7 @@ jobs:
       SCCACHE_DIR: /home/runner/.cache/sccache
       SCCACHE_IDLE_TIMEOUT: "0"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.3
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_ref || github.ref }}
@@ -254,7 +254,7 @@ jobs:
           components: rustfmt, clippy
           targets: wasm32-wasip1
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2.9.1
         with:
           shared-key: gha-rust-cache-linux-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-plugin-build
           workspaces: |
@@ -278,7 +278,7 @@ jobs:
 
       - name: Restore sccache directory
         id: prepare-sccache-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5.0.5
         with:
           path: /home/runner/.cache/sccache
           key: gha-sccache-v2-${{ env.RELEASE_PLUGIN_CACHE_SCOPE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_LANE }}-${{ env.RELEASE_PLUGIN_BUILD_SCCACHE_BUILD_FLAVOR }}-${{ matrix.plugin_id }}-${{ github.run_id }}
@@ -331,11 +331,11 @@ jobs:
             echo "LLVM_STRIP=$wasi_sdk_root/bin/llvm-strip"
           } >> "$GITHUB_ENV"
 
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@v2.81.11
         with:
           tool: cargo-audit
 
-      - uses: sigstore/cosign-installer@v4.1.1
+      - uses: sigstore/cosign-installer@v4.1.2
         with:
           cosign-release: v3.0.2
 
@@ -381,7 +381,7 @@ jobs:
           sccache --zero-stats || true
 
       - name: Download xtask artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.1
         with:
           name: release-plugin-v3-xtask-${{ github.run_id }}
           path: xtask-artifact
@@ -490,7 +490,7 @@ jobs:
           fi
 
       - name: Upload prepared plugin artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: release-plugin-v3-prepared-${{ github.run_id }}-${{ matrix.plugin_id }}
           path: prepared-plugins
@@ -499,7 +499,7 @@ jobs:
 
       - name: Upload release stats
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: release-plugin-v3-artifacts-${{ github.run_id }}-${{ matrix.plugin_id }}
           path: prepare-sccache-stats.txt
@@ -518,14 +518,14 @@ jobs:
       CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.3
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_ref || github.ref }}
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - uses: sigstore/cosign-installer@v4.1.1
+      - uses: sigstore/cosign-installer@v4.1.2
         with:
           cosign-release: v3.0.2
 
@@ -537,19 +537,19 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Download xtask artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.1
         with:
           name: release-plugin-v3-xtask-${{ github.run_id }}
           path: xtask-artifact
 
       - name: Download release plan artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.1
         with:
           name: release-plugin-v3-plan-${{ github.run_id }}
           path: release-plan-artifact
 
       - name: Download prepared plugin artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.1
         with:
           pattern: release-plugin-v3-prepared-${{ github.run_id }}-*
           path: prepared-plugins
