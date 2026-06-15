@@ -13,7 +13,6 @@ catalog_versions = ["v3"]
 feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/nzbvortex"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/nzbvortex"
-distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/nzbvortex"
 
 [lib]
 crate-type = ["cdylib"]

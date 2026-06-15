@@ -511,6 +511,7 @@ struct LocalPluginInfo {
     current_version: Version,
     source_repo: String,
     distribution_base_url: String,
+    local_dependency_dirs: BTreeSet<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -1845,6 +1846,81 @@ fn plugin_manifest_metadata(manifest_path: &Path) -> Result<PluginManifestMetada
     })
 }
 
+fn local_path_dependency_dirs(
+    ctx: &TaskContext,
+    manifest_path: &Path,
+    plugin_dir: &Path,
+) -> Result<BTreeSet<String>> {
+    let document = read_manifest_document(manifest_path)?;
+    let plugin_dir = Path::new(&path_relative_to_repo(ctx, plugin_dir)?).to_path_buf();
+    let mut dirs = BTreeSet::new();
+
+    collect_local_path_dependency_dirs(document.get("dependencies"), &plugin_dir, &mut dirs);
+    collect_local_path_dependency_dirs(document.get("build-dependencies"), &plugin_dir, &mut dirs);
+
+    if let Some(targets) = document.get("target").and_then(|item| item.as_table_like()) {
+        for (_, target) in targets.iter() {
+            collect_local_path_dependency_dirs(target.get("dependencies"), &plugin_dir, &mut dirs);
+            collect_local_path_dependency_dirs(
+                target.get("build-dependencies"),
+                &plugin_dir,
+                &mut dirs,
+            );
+        }
+    }
+
+    Ok(dirs)
+}
+
+fn collect_local_path_dependency_dirs(
+    dependencies: Option<&toml_edit::Item>,
+    plugin_dir: &Path,
+    dirs: &mut BTreeSet<String>,
+) {
+    let Some(dependencies) = dependencies.and_then(|item| item.as_table_like()) else {
+        return;
+    };
+
+    for (_, dependency) in dependencies.iter() {
+        let Some(path) = dependency_path(dependency) else {
+            continue;
+        };
+        let path = Path::new(path);
+        if path.is_absolute() {
+            continue;
+        }
+        dirs.insert(normalize_repo_relative_path(plugin_dir.join(path)));
+    }
+}
+
+fn dependency_path(dependency: &toml_edit::Item) -> Option<&str> {
+    dependency
+        .as_inline_table()
+        .and_then(|table| table.get("path"))
+        .and_then(|path| path.as_str())
+        .or_else(|| {
+            dependency
+                .as_table()
+                .and_then(|table| table.get("path"))
+                .and_then(|path| path.as_str())
+        })
+}
+
+fn normalize_repo_relative_path(path: impl AsRef<Path>) -> String {
+    let mut normalized = PathBuf::new();
+    for component in path.as_ref().components() {
+        match component {
+            std::path::Component::CurDir => {}
+            std::path::Component::ParentDir => {
+                normalized.pop();
+            }
+            std::path::Component::Normal(part) => normalized.push(part),
+            std::path::Component::RootDir | std::path::Component::Prefix(_) => {}
+        }
+    }
+    normalized.to_string_lossy().replace('\\', "/")
+}
+
 fn tracked_plugin_crate_dirs(ctx: &TaskContext) -> Result<Vec<PathBuf>> {
     let mut plugin_dirs = Vec::new();
     for prefix in plugin_inventory_roots() {
@@ -1961,15 +2037,12 @@ fn discover_local_plugin(ctx: &TaskContext, plugin_dir: &Path) -> Result<LocalPl
         .source_repo
         .clone()
         .unwrap_or(default_repo_url);
-    let distribution_base_url = manifest_metadata
-        .distribution_base_url
-        .clone()
-        .unwrap_or_else(|| {
-            format!(
-                "{}/plugins-v3/{manifest_plugin_id}",
-                public_catalog_base_url()
-            )
-        });
+    let distribution_base_url = plugin_distribution_base_url(
+        manifest_metadata.distribution_base_url.as_deref(),
+        manifest_plugin_id,
+        &public_catalog_base_url(),
+    );
+    let local_dependency_dirs = local_path_dependency_dirs(ctx, &cargo_toml, plugin_dir)?;
     let descriptor_feature_set = primary_feature_set(&manifest_metadata.feature_sets);
     let wasm = build_plugin_wasm(ctx, plugin_dir, descriptor_feature_set)?;
     let descriptor = load_descriptor_from_wasm(&wasm)?;
@@ -2000,6 +2073,7 @@ fn discover_local_plugin(ctx: &TaskContext, plugin_dir: &Path) -> Result<LocalPl
         current_version,
         source_repo,
         distribution_base_url,
+        local_dependency_dirs,
     })
 }
 
@@ -2245,6 +2319,38 @@ fn changed_paths_since(ctx: &TaskContext, tag: &str) -> Result<BTreeSet<String>>
     )
 }
 
+fn diff_only_touches_distribution_base_url(diff: &str) -> bool {
+    let mut saw_distribution_base_url_change = false;
+    for line in diff.lines() {
+        if line.starts_with("+++") || line.starts_with("---") {
+            continue;
+        }
+        let Some(changed_line) = line.strip_prefix('+').or_else(|| line.strip_prefix('-')) else {
+            continue;
+        };
+        if changed_line
+            .trim_start()
+            .starts_with("distribution_base_url = ")
+        {
+            saw_distribution_base_url_change = true;
+            continue;
+        }
+        return false;
+    }
+    saw_distribution_base_url_change
+}
+
+fn plugin_path_requires_release(ctx: &TaskContext, tag: &str, path: &str) -> Result<bool> {
+    if !path.ends_with("/Cargo.toml") {
+        return Ok(true);
+    }
+    let diff = git_capture(
+        ctx,
+        &["diff", "--unified=0", &format!("{tag}..HEAD"), "--", path],
+    )?;
+    Ok(!diff_only_touches_distribution_base_url(&diff))
+}
+
 fn artifact_wide_change_reason(path: &str) -> Option<&'static str> {
     match path {
         "rust-toolchain.toml" => Some("Rust toolchain changed"),
@@ -2274,8 +2380,23 @@ fn release_impact_for_plugin(ctx: &TaskContext, plugin: &LocalPluginInfo) -> Res
     }
 
     let plugin_dir = path_relative_to_repo(ctx, &plugin.plugin_dir)?;
-    if changed.iter().any(|path| path_is_under(path, &plugin_dir)) {
-        return Ok(ReleaseImpact::PluginChanged);
+    for path in changed
+        .iter()
+        .filter(|path| path_is_under(path, &plugin_dir))
+    {
+        if plugin_path_requires_release(ctx, &tag, path)? {
+            return Ok(ReleaseImpact::PluginChanged);
+        }
+    }
+    for dependency_dir in &plugin.local_dependency_dirs {
+        for path in changed
+            .iter()
+            .filter(|path| path_is_under(path, dependency_dir))
+        {
+            if plugin_path_requires_release(ctx, &tag, path)? {
+                return Ok(ReleaseImpact::PluginChanged);
+            }
+        }
     }
 
     Ok(ReleaseImpact::Unchanged)
@@ -3520,6 +3641,18 @@ fn public_catalog_base_url() -> String {
         .map(|value| trim_url_base(&value))
         .filter(|value| !value.is_empty())
         .unwrap_or_else(|| DEFAULT_R2_PUBLIC_BASE_URL.to_string())
+}
+
+fn plugin_distribution_base_url(
+    manifest_distribution_base_url: Option<&str>,
+    plugin_id: &str,
+    public_base_url: &str,
+) -> String {
+    manifest_distribution_base_url
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(ToOwned::to_owned)
+        .unwrap_or_else(|| format!("{}/plugins-v3/{plugin_id}", trim_url_base(public_base_url)))
 }
 
 fn url_file_name(url: &str) -> Result<String> {
@@ -7368,6 +7501,7 @@ mod tests {
                 "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
                     .to_string(),
             distribution_base_url: "https://cdn.scryer.media/scryer/plugins-v3/email".to_string(),
+            local_dependency_dirs: BTreeSet::new(),
         }
     }
 
@@ -7807,7 +7941,69 @@ support_tier = "verified_community"
     }
 
     #[test]
-    fn plugin_manifest_metadata_reads_official_fields_from_cargo_toml() {
+    fn distribution_base_url_only_manifest_diff_is_not_release_relevant() {
+        let diff = r#"diff --git a/notifications/email/Cargo.toml b/notifications/email/Cargo.toml
+index 1234567..89abcde 100644
+--- a/notifications/email/Cargo.toml
++++ b/notifications/email/Cargo.toml
+@@ -15 +14,0 @@ source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+-distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
+"#;
+
+        assert!(diff_only_touches_distribution_base_url(diff));
+    }
+
+    #[test]
+    fn manifest_diff_with_real_compatibility_change_is_release_relevant() {
+        let diff = r#"diff --git a/notifications/plex/Cargo.toml b/notifications/plex/Cargo.toml
+index 1234567..89abcde 100644
+--- a/notifications/plex/Cargo.toml
++++ b/notifications/plex/Cargo.toml
+@@ -12,2 +12 @@ catalog_versions = ["v3"]
+-min_scryer_version = "0.16.0"
+-distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/plex"
++min_scryer_version = "0.16.1"
+"#;
+
+        assert!(!diff_only_touches_distribution_base_url(diff));
+    }
+
+    #[test]
+    fn local_path_dependency_dirs_normalizes_repo_relative_dependencies() {
+        let (_dir, ctx) = temp_task_context();
+        let plugin_dir = ctx.path("indexers/aninzb");
+        fs::create_dir_all(&plugin_dir).expect("create plugin dir");
+        let manifest = plugin_dir.join("Cargo.toml");
+        fs::write(
+            &manifest,
+            r#"[package]
+name = "aninzb"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+newznab-common = { path = "../newznab-common" }
+serde_json = "1"
+
+[build-dependencies]
+local-build = { path = "../../build-support/local-build" }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-shared = { path = "../wasm-shared" }
+"#,
+        )
+        .expect("write manifest");
+
+        let dirs =
+            local_path_dependency_dirs(&ctx, &manifest, &plugin_dir).expect("dependency dirs");
+
+        assert!(dirs.contains("indexers/newznab-common"));
+        assert!(dirs.contains("build-support/local-build"));
+        assert!(dirs.contains("indexers/wasm-shared"));
+    }
+
+    #[test]
+    fn plugin_manifest_metadata_reads_official_fields_and_distribution_override() {
         let manifest = write_temp_manifest(
             r#"[package]
 name = "email-notification"
@@ -7861,7 +8057,46 @@ min_scryer_version = "1.4.0"
             metadata.distribution_base_url.as_deref(),
             Some("https://cdn.scryer.media/scryer/plugins-v3/email")
         );
+        assert_eq!(
+            plugin_distribution_base_url(
+                metadata.distribution_base_url.as_deref(),
+                "email",
+                "https://example.invalid/scryer",
+            ),
+            "https://cdn.scryer.media/scryer/plugins-v3/email"
+        );
         assert_eq!(metadata.min_scryer_version.as_deref(), Some("1.4.0"));
+    }
+
+    #[test]
+    fn plugin_distribution_base_url_defaults_to_first_party_v3_lane() {
+        let manifest = write_temp_manifest(
+            r#"[package]
+name = "email-notification"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-only"
+description = "Email notifications"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "email"
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+"#,
+        );
+
+        let metadata = plugin_manifest_metadata(manifest.path()).expect("read manifest metadata");
+
+        assert_eq!(metadata.distribution_base_url, None);
+        assert_eq!(
+            plugin_distribution_base_url(
+                metadata.distribution_base_url.as_deref(),
+                "email",
+                "https://cdn.scryer.media/scryer/",
+            ),
+            "https://cdn.scryer.media/scryer/plugins-v3/email"
+        );
     }
 
     #[test]
