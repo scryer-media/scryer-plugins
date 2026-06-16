@@ -387,16 +387,24 @@ fn refresh_targets(path: Option<&str>) -> Result<Vec<PlexRefreshTarget>, Error> 
     }
 
     if let Some(path) = path {
-        let matching = sections
-            .iter()
-            .filter(|section| section.matches_path(path))
-            .map(|section| PlexRefreshTarget {
-                section_id: section.id.clone(),
-                path: Some(path.to_string()),
+        let mut matching = sections.iter().filter(|section| section.matches_path(path));
+        let targets = matching
+            .by_ref()
+            .flat_map(|section| {
+                [
+                    PlexRefreshTarget {
+                        section_id: section.id.clone(),
+                        path: Some(path.to_string()),
+                    },
+                    PlexRefreshTarget {
+                        section_id: section.id.clone(),
+                        path: None,
+                    },
+                ]
             })
             .collect::<Vec<_>>();
-        if !matching.is_empty() {
-            return Ok(matching);
+        if !targets.is_empty() {
+            return Ok(targets);
         }
     }
 
@@ -1061,6 +1069,37 @@ mod tests {
             Some("/".to_string())
         );
         assert_eq!(parent_directory_for_refresh("S01E01.mkv"), None);
+    }
+
+    #[test]
+    fn matching_path_refresh_targets_include_section_fallback() {
+        let section = PlexSection {
+            id: "1".to_string(),
+            locations: vec!["/data/series".to_string()],
+        };
+        let path = "/data/series/Bluey (2018)/Season 01";
+        let targets = [section]
+            .iter()
+            .filter(|section| section.matches_path(path))
+            .flat_map(|section| {
+                [
+                    PlexRefreshTarget {
+                        section_id: section.id.clone(),
+                        path: Some(path.to_string()),
+                    },
+                    PlexRefreshTarget {
+                        section_id: section.id.clone(),
+                        path: None,
+                    },
+                ]
+            })
+            .collect::<Vec<_>>();
+
+        assert_eq!(targets.len(), 2);
+        assert_eq!(targets[0].section_id, "1");
+        assert_eq!(targets[0].path.as_deref(), Some(path));
+        assert_eq!(targets[1].section_id, "1");
+        assert_eq!(targets[1].path, None);
     }
 
     #[test]
