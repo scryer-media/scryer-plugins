@@ -489,8 +489,25 @@ fn normalize_media_path(path: &str) -> String {
 fn update_path(req: &PluginNotificationRequest) -> Option<String> {
     req.file
         .as_ref()
-        .and_then(|file| file.primary_path.clone())
+        .and_then(|file| {
+            file.primary_path
+                .as_deref()
+                .and_then(parent_directory_for_refresh)
+        })
         .or_else(|| req.title.as_ref().and_then(|title| title.path.clone()))
+}
+
+fn parent_directory_for_refresh(path: &str) -> Option<String> {
+    let trimmed = path.trim_end_matches(['/', '\\']);
+    if trimmed.is_empty() {
+        return None;
+    }
+
+    let separator = trimmed.rfind(['/', '\\'])?;
+    if separator == 0 {
+        return Some(trimmed[..=separator].to_string());
+    }
+    Some(trimmed[..separator].to_string())
 }
 
 fn map_path(path: &str, mappings: &[PathMapping]) -> String {
@@ -961,10 +978,89 @@ mod tests {
 
         assert_eq!(
             update_path(&request),
-            Some(
-                "/data/series/Bluey (2018)/Season 01/Bluey (2018) - S01E01 - 720p.mkv".to_string(),
-            )
+            Some("/data/series/Bluey (2018)/Season 01".to_string())
         );
+    }
+
+    #[test]
+    fn update_path_falls_back_to_title_folder_without_primary_file() {
+        let mut request = PluginNotificationRequest {
+            schema_version: 1,
+            event_type: NotificationEventType::ImportComplete,
+            event_id: None,
+            occurred_at: None,
+            correlation_id: None,
+            actor: None,
+            severity: None,
+            is_test: false,
+            summary_title: "Import complete".to_string(),
+            summary_message: "Imported one file.".to_string(),
+            app: PluginNotificationApp {
+                name: "Scryer".to_string(),
+                version: "0.16.1".to_string(),
+            },
+            title: Some(PluginNotificationTitle {
+                id: Some("title-1".to_string()),
+                name: "Bluey".to_string(),
+                facet: "series".to_string(),
+                year: Some(2018),
+                slug: None,
+                path: Some("/data/series/Bluey (2018)".to_string()),
+                overview: None,
+                sort_title: None,
+                background_url: None,
+                poster_url: None,
+                genres: Vec::new(),
+                tags: Vec::new(),
+                aliases: Vec::new(),
+                original_language: None,
+                original_country: None,
+                external_ids: PluginNotificationExternalIds::default(),
+            }),
+            episode: None,
+            episodes: Vec::new(),
+            release: None,
+            download: None,
+            import: None,
+            health: None,
+            file: None,
+            media_files: Vec::new(),
+            application_update: None,
+            manual_interaction: None,
+            media_request: None,
+        };
+
+        assert_eq!(
+            update_path(&request),
+            Some("/data/series/Bluey (2018)".to_string())
+        );
+
+        request.file = Some(PluginNotificationFile {
+            primary_path: None,
+            media_updates: Vec::new(),
+        });
+
+        assert_eq!(
+            update_path(&request),
+            Some("/data/series/Bluey (2018)".to_string())
+        );
+    }
+
+    #[test]
+    fn parent_directory_for_refresh_handles_unix_and_windows_paths() {
+        assert_eq!(
+            parent_directory_for_refresh("/data/series/Show/S01E01.mkv"),
+            Some("/data/series/Show".to_string())
+        );
+        assert_eq!(
+            parent_directory_for_refresh(r"C:\Media\Show\S01E01.mkv"),
+            Some(r"C:\Media\Show".to_string())
+        );
+        assert_eq!(
+            parent_directory_for_refresh("/S01E01.mkv"),
+            Some("/".to_string())
+        );
+        assert_eq!(parent_directory_for_refresh("S01E01.mkv"), None);
     }
 
     #[test]
