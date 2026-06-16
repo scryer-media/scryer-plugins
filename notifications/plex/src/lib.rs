@@ -487,10 +487,10 @@ fn normalize_media_path(path: &str) -> String {
 }
 
 fn update_path(req: &PluginNotificationRequest) -> Option<String> {
-    req.title
+    req.file
         .as_ref()
-        .and_then(|title| title.path.clone())
-        .or_else(|| req.file.as_ref().and_then(|file| file.primary_path.clone()))
+        .and_then(|file| file.primary_path.clone())
+        .or_else(|| req.title.as_ref().and_then(|title| title.path.clone()))
 }
 
 fn map_path(path: &str, mappings: &[PathMapping]) -> String {
@@ -820,6 +820,10 @@ fn locality_hint(local: bool) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use scryer_plugin_sdk::{
+        PluginNotificationApp, PluginNotificationExternalIds, PluginNotificationFile,
+        PluginNotificationTitle,
+    };
 
     #[test]
     fn normalize_base_url_trims_trailing_slashes() {
@@ -898,6 +902,68 @@ mod tests {
         assert_eq!(
             map_path_with_mappings(&mappings, r"C:\Media\Show\E01.mkv"),
             Some(r"D:\Plex\Show\E01.mkv".to_string())
+        );
+    }
+
+    #[test]
+    fn update_path_prefers_primary_file_over_title_folder() {
+        let request = PluginNotificationRequest {
+            schema_version: 1,
+            event_type: NotificationEventType::ImportComplete,
+            event_id: None,
+            occurred_at: None,
+            correlation_id: None,
+            actor: None,
+            severity: None,
+            is_test: false,
+            summary_title: "Import complete".to_string(),
+            summary_message: "Imported one file.".to_string(),
+            app: PluginNotificationApp {
+                name: "Scryer".to_string(),
+                version: "0.16.1".to_string(),
+            },
+            title: Some(PluginNotificationTitle {
+                id: Some("title-1".to_string()),
+                name: "Bluey".to_string(),
+                facet: "series".to_string(),
+                year: Some(2018),
+                slug: None,
+                path: Some("/data/series/Bluey (2018)".to_string()),
+                overview: None,
+                sort_title: None,
+                background_url: None,
+                poster_url: None,
+                genres: Vec::new(),
+                tags: Vec::new(),
+                aliases: Vec::new(),
+                original_language: None,
+                original_country: None,
+                external_ids: PluginNotificationExternalIds::default(),
+            }),
+            episode: None,
+            episodes: Vec::new(),
+            release: None,
+            download: None,
+            import: None,
+            health: None,
+            file: Some(PluginNotificationFile {
+                primary_path: Some(
+                    "/data/series/Bluey (2018)/Season 01/Bluey (2018) - S01E01 - 720p.mkv"
+                        .to_string(),
+                ),
+                media_updates: Vec::new(),
+            }),
+            media_files: Vec::new(),
+            application_update: None,
+            manual_interaction: None,
+            media_request: None,
+        };
+
+        assert_eq!(
+            update_path(&request),
+            Some(
+                "/data/series/Bluey (2018)/Season 01/Bluey (2018) - S01E01 - 720p.mkv".to_string(),
+            )
         );
     }
 
