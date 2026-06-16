@@ -147,7 +147,8 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
         }
     };
     let path = update_path(&req).map(|path| map_path(&path, &path_mappings));
-    let targets = match refresh_targets(path.as_deref()) {
+    let section_types = section_types_for_request(&req);
+    let targets = match refresh_targets(path.as_deref(), &section_types) {
         Ok(targets) => targets,
         Err(error) => {
             return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
@@ -369,7 +370,10 @@ struct PathMapping {
     destination_prefix: String,
 }
 
-fn refresh_targets(path: Option<&str>) -> Result<Vec<PlexRefreshTarget>, Error> {
+fn refresh_targets(
+    path: Option<&str>,
+    section_types: &[&str],
+) -> Result<Vec<PlexRefreshTarget>, Error> {
     let ids = config_csv("section_ids");
     if !ids.is_empty() && !ids.iter().any(|id| id.eq_ignore_ascii_case("all")) {
         return Ok(ids
@@ -381,9 +385,9 @@ fn refresh_targets(path: Option<&str>) -> Result<Vec<PlexRefreshTarget>, Error> 
             .collect());
     }
 
-    let sections = tv_sections()?;
+    let sections = plex_sections(section_types)?;
     if sections.is_empty() {
-        return Err(Error::msg("Plex returned no TV library sections"));
+        return Err(Error::msg("Plex returned no matching library sections"));
     }
 
     if let Some(path) = path {
@@ -417,7 +421,7 @@ fn refresh_targets(path: Option<&str>) -> Result<Vec<PlexRefreshTarget>, Error> 
         .collect())
 }
 
-fn tv_sections() -> Result<Vec<PlexSection>, Error> {
+fn plex_sections(section_types: &[&str]) -> Result<Vec<PlexSection>, Error> {
     let url = append_query(
         &format!("{}/library/sections", base_url()),
         &plex_server_query_params(),
@@ -436,10 +440,10 @@ fn tv_sections() -> Result<Vec<PlexSection>, Error> {
     }
 
     let value: serde_json::Value = serde_json::from_slice(&response.body())?;
-    Ok(parse_tv_sections(&value))
+    Ok(parse_plex_sections(&value, section_types))
 }
 
-fn parse_tv_sections(value: &serde_json::Value) -> Vec<PlexSection> {
+fn parse_plex_sections(value: &serde_json::Value, section_types: &[&str]) -> Vec<PlexSection> {
     let section_values = value
         .pointer("/MediaContainer/Directory")
         .or_else(|| value.pointer("/MediaContainer/_children"))
@@ -451,8 +455,11 @@ fn parse_tv_sections(value: &serde_json::Value) -> Vec<PlexSection> {
         .into_iter()
         .flatten()
         .filter(|section| {
-            string_member(section, &["type"])
-                .is_some_and(|section_type| section_type.eq_ignore_ascii_case("show"))
+            string_member(section, &["type"]).is_some_and(|section_type| {
+                section_types
+                    .iter()
+                    .any(|expected| section_type.eq_ignore_ascii_case(expected))
+            })
         })
         .filter_map(|section| {
             let id = string_member(section, &["key", "id"])?;
@@ -462,6 +469,20 @@ fn parse_tv_sections(value: &serde_json::Value) -> Vec<PlexSection> {
             })
         })
         .collect()
+}
+
+fn section_types_for_request(req: &PluginNotificationRequest) -> Vec<&'static str> {
+    let Some(facet) = req.title.as_ref().map(|title| title.facet.as_str()) else {
+        return vec!["show", "movie"];
+    };
+
+    if facet.eq_ignore_ascii_case("movie") {
+        vec!["movie"]
+    } else if facet.eq_ignore_ascii_case("series") {
+        vec!["show"]
+    } else {
+        vec!["show", "movie"]
+    }
 }
 
 fn plex_section_locations(section: &serde_json::Value) -> Vec<String> {
@@ -852,6 +873,54 @@ mod tests {
         PluginNotificationTitle,
     };
 
+    fn request_with_title(facet: &str, path: Option<&str>) -> PluginNotificationRequest {
+        PluginNotificationRequest {
+            schema_version: 1,
+            event_type: NotificationEventType::ImportComplete,
+            event_id: None,
+            occurred_at: None,
+            correlation_id: None,
+            actor: None,
+            severity: None,
+            is_test: false,
+            summary_title: "Import complete".to_string(),
+            summary_message: "Imported one file.".to_string(),
+            app: PluginNotificationApp {
+                name: "Scryer".to_string(),
+                version: "0.16.1".to_string(),
+            },
+            title: Some(PluginNotificationTitle {
+                id: Some("title-1".to_string()),
+                name: "Example".to_string(),
+                facet: facet.to_string(),
+                year: Some(2024),
+                slug: None,
+                path: path.map(str::to_string),
+                overview: None,
+                sort_title: None,
+                background_url: None,
+                poster_url: None,
+                genres: Vec::new(),
+                tags: Vec::new(),
+                aliases: Vec::new(),
+                original_language: None,
+                original_country: None,
+                external_ids: PluginNotificationExternalIds::default(),
+            }),
+            episode: None,
+            episodes: Vec::new(),
+            release: None,
+            download: None,
+            import: None,
+            health: None,
+            file: None,
+            media_files: Vec::new(),
+            application_update: None,
+            manual_interaction: None,
+            media_request: None,
+        }
+    }
+
     #[test]
     fn normalize_base_url_trims_trailing_slashes() {
         assert_eq!(
@@ -930,6 +999,60 @@ mod tests {
             map_path_with_mappings(&mappings, r"C:\Media\Show\E01.mkv"),
             Some(r"D:\Plex\Show\E01.mkv".to_string())
         );
+    }
+
+    #[test]
+    fn section_types_follow_arr_facets() {
+        let movie = request_with_title("movie", Some("/data/movies/Movie (2024)"));
+        let series = request_with_title("series", Some("/data/series/Bluey (2018)"));
+        let anime = request_with_title("anime", Some("/data/anime/Example"));
+        let mut titleless = request_with_title("movie", None);
+        titleless.title = None;
+
+        assert_eq!(section_types_for_request(&movie), vec!["movie"]);
+        assert_eq!(section_types_for_request(&series), vec!["show"]);
+        assert_eq!(section_types_for_request(&anime), vec!["show", "movie"]);
+        assert_eq!(section_types_for_request(&titleless), vec!["show", "movie"]);
+    }
+
+    #[test]
+    fn parse_plex_sections_filters_movie_and_show_sections() {
+        let value = serde_json::json!({
+            "MediaContainer": {
+                "Directory": [
+                    {
+                        "key": "1",
+                        "type": "show",
+                        "Location": [{ "path": "/data/series" }]
+                    },
+                    {
+                        "key": "2",
+                        "type": "movie",
+                        "Location": [{ "path": "/data/movies" }]
+                    },
+                    {
+                        "key": "3",
+                        "type": "artist",
+                        "Location": [{ "path": "/data/music" }]
+                    }
+                ]
+            }
+        });
+
+        let movie_sections = parse_plex_sections(&value, &["movie"]);
+        assert_eq!(movie_sections.len(), 1);
+        assert_eq!(movie_sections[0].id, "2");
+        assert_eq!(movie_sections[0].locations, vec!["/data/movies"]);
+
+        let show_sections = parse_plex_sections(&value, &["show"]);
+        assert_eq!(show_sections.len(), 1);
+        assert_eq!(show_sections[0].id, "1");
+        assert_eq!(show_sections[0].locations, vec!["/data/series"]);
+
+        let mixed_sections = parse_plex_sections(&value, &["show", "movie"]);
+        assert_eq!(mixed_sections.len(), 2);
+        assert_eq!(mixed_sections[0].id, "1");
+        assert_eq!(mixed_sections[1].id, "2");
     }
 
     #[test]
