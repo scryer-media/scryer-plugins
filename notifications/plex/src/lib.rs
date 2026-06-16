@@ -495,14 +495,16 @@ fn normalize_media_path(path: &str) -> String {
 }
 
 fn update_path(req: &PluginNotificationRequest) -> Option<String> {
-    req.file
+    req.title
         .as_ref()
-        .and_then(|file| {
-            file.primary_path
-                .as_deref()
-                .and_then(parent_directory_for_refresh)
+        .and_then(|title| title.path.clone())
+        .or_else(|| {
+            req.file.as_ref().and_then(|file| {
+                file.primary_path
+                    .as_deref()
+                    .and_then(parent_directory_for_refresh)
+            })
         })
-        .or_else(|| req.title.as_ref().and_then(|title| title.path.clone()))
 }
 
 fn parent_directory_for_refresh(path: &str) -> Option<String> {
@@ -931,7 +933,7 @@ mod tests {
     }
 
     #[test]
-    fn update_path_prefers_primary_file_over_title_folder() {
+    fn update_path_prefers_title_folder_over_primary_file() {
         let request = PluginNotificationRequest {
             schema_version: 1,
             event_type: NotificationEventType::ImportComplete,
@@ -986,7 +988,7 @@ mod tests {
 
         assert_eq!(
             update_path(&request),
-            Some("/data/series/Bluey (2018)/Season 01".to_string())
+            Some("/data/series/Bluey (2018)".to_string())
         );
     }
 
