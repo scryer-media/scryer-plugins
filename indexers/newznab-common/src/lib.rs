@@ -22,6 +22,80 @@ pub use scryer_plugin_sdk::{
 use serde::Deserialize;
 use url::Url;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PasswordMetadataClassification {
+    Real(String),
+    ProtectedFlag,
+    UnprotectedFlag,
+    Empty,
+}
+
+pub fn classify_password_metadata(raw: Option<&str>) -> PasswordMetadataClassification {
+    let Some(value) = raw.map(str::trim).filter(|value| !value.is_empty()) else {
+        return PasswordMetadataClassification::Empty;
+    };
+
+    match value.to_ascii_lowercase().as_str() {
+        "1" | "true" | "yes" | "passworded" | "protected" => {
+            PasswordMetadataClassification::ProtectedFlag
+        }
+        "0" | "false" | "no" => PasswordMetadataClassification::UnprotectedFlag,
+        _ => PasswordMetadataClassification::Real(value.to_string()),
+    }
+}
+
+fn classify_password_metadata_value(
+    value: &serde_json::Value,
+) -> Option<PasswordMetadataClassification> {
+    if value.as_bool() == Some(true) {
+        return Some(PasswordMetadataClassification::ProtectedFlag);
+    }
+    if value.as_bool() == Some(false) {
+        return Some(PasswordMetadataClassification::UnprotectedFlag);
+    }
+    value
+        .as_str()
+        .map(|raw| classify_password_metadata(Some(raw)))
+}
+
+fn password_hint_from_metadata_value(value: &serde_json::Value) -> Option<String> {
+    match classify_password_metadata_value(value)? {
+        PasswordMetadataClassification::Real(password) => Some(password),
+        PasswordMetadataClassification::ProtectedFlag
+        | PasswordMetadataClassification::UnprotectedFlag
+        | PasswordMetadataClassification::Empty => None,
+    }
+}
+
+fn protection_hint_from_metadata_value(value: &serde_json::Value) -> Option<bool> {
+    match classify_password_metadata_value(value)? {
+        PasswordMetadataClassification::Real(_) | PasswordMetadataClassification::ProtectedFlag => {
+            Some(true)
+        }
+        PasswordMetadataClassification::UnprotectedFlag => Some(false),
+        PasswordMetadataClassification::Empty => None,
+    }
+}
+
+fn password_hint_from_extra(extra: &HashMap<String, serde_json::Value>) -> Option<String> {
+    extra
+        .get("password")
+        .and_then(password_hint_from_metadata_value)
+}
+
+fn protected_from_extra(extra: &HashMap<String, serde_json::Value>) -> Option<bool> {
+    if let Some(value) = extra
+        .get("password_protected")
+        .and_then(|value| value.as_bool())
+    {
+        return Some(value);
+    }
+
+    extra
+        .get("password")
+        .and_then(protection_hint_from_metadata_value)
+}
+
 // ---------------------------------------------------------------------------
 // Search request / response types
 // ---------------------------------------------------------------------------
@@ -155,12 +229,13 @@ pub fn standard_config_fields(default_base_url: Option<&str>) -> Vec<ConfigField
 pub type MetadataExtractor =
     fn(&[(String, String)]) -> (Vec<String>, Option<i64>, HashMap<String, serde_json::Value>);
 
-/// Default extractor for generic Newznab indexers: extracts only `grabs` and `language`.
+/// Default extractor for generic Newznab indexers: extracts common attributes.
 pub fn extract_base_metadata(
     pairs: &[(String, String)],
 ) -> (Vec<String>, Option<i64>, HashMap<String, serde_json::Value>) {
     let mut grabs = None;
     let mut languages = Vec::new();
+    let mut extra = HashMap::new();
 
     for (name, value) in pairs {
         let normalized: String = name
@@ -182,11 +257,35 @@ pub fn extract_base_metadata(
             "grabs" => {
                 grabs = value.trim().replace(',', "").parse::<i64>().ok();
             }
+            "password" => {
+                match classify_password_metadata(Some(value)) {
+                    PasswordMetadataClassification::Real(password) => {
+                        extra.insert("password".to_string(), serde_json::Value::from(password));
+                        extra.insert(
+                            "password_protected".to_string(),
+                            serde_json::Value::from(true),
+                        );
+                    }
+                    PasswordMetadataClassification::ProtectedFlag => {
+                        extra.insert(
+                            "password_protected".to_string(),
+                            serde_json::Value::from(true),
+                        );
+                    }
+                    PasswordMetadataClassification::UnprotectedFlag => {
+                        extra.insert(
+                            "password_protected".to_string(),
+                            serde_json::Value::from(false),
+                        );
+                    }
+                    PasswordMetadataClassification::Empty => {}
+                }
+            }
             _ => {}
         }
     }
 
-    (languages, grabs, HashMap::new())
+    (languages, grabs, extra)
 }
 
 // ---------------------------------------------------------------------------
@@ -1624,13 +1723,8 @@ fn parse_newznab_json(
                     .get("subtitles")
                     .and_then(|value| serde_json::from_value(value.clone()).ok())
                     .unwrap_or_default(),
-                password_hint: extra
-                    .get("password")
-                    .and_then(|value| value.as_str())
-                    .map(ToString::to_string),
-                protected: extra
-                    .get("password_protected")
-                    .and_then(|value| value.as_bool()),
+                password_hint: password_hint_from_extra(&extra),
+                protected: protected_from_extra(&extra),
                 provider_extra: extra,
                 guid: item.guid,
                 info_url: item
@@ -2031,13 +2125,8 @@ fn parse_newznab_xml(
                                     .get("subtitles")
                                     .and_then(|value| serde_json::from_value(value.clone()).ok())
                                     .unwrap_or_default(),
-                                password_hint: extra
-                                    .get("password")
-                                    .and_then(|value| value.as_str())
-                                    .map(ToString::to_string),
-                                protected: extra
-                                    .get("password_protected")
-                                    .and_then(|value| value.as_bool()),
+                                password_hint: password_hint_from_extra(&extra),
+                                protected: protected_from_extra(&extra),
                                 provider_extra: extra,
                                 guid: guid.clone(),
                                 info_url,
@@ -2373,6 +2462,59 @@ fn string_member(value: &serde_json::Value, keys: &[&str]) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn password_metadata_classification_handles_flags_and_real_values() {
+        for raw in [None, Some(""), Some("  ")] {
+            assert_eq!(
+                classify_password_metadata(raw),
+                PasswordMetadataClassification::Empty
+            );
+        }
+        for raw in [
+            Some("1"),
+            Some("true"),
+            Some("yes"),
+            Some("passworded"),
+            Some("protected"),
+        ] {
+            assert_eq!(
+                classify_password_metadata(raw),
+                PasswordMetadataClassification::ProtectedFlag
+            );
+        }
+        for raw in [Some("0"), Some("false"), Some("no")] {
+            assert_eq!(
+                classify_password_metadata(raw),
+                PasswordMetadataClassification::UnprotectedFlag
+            );
+        }
+        assert_eq!(
+            classify_password_metadata(Some("  actual-secret  ")),
+            PasswordMetadataClassification::Real("actual-secret".to_string())
+        );
+    }
+
+    #[test]
+    fn password_extra_helpers_share_classification() {
+        let cases = [
+            (serde_json::Value::from("1"), None, Some(true)),
+            (serde_json::Value::from("false"), None, Some(false)),
+            (
+                serde_json::Value::from("actual-secret"),
+                Some("actual-secret".to_string()),
+                Some(true),
+            ),
+            (serde_json::Value::from(true), None, Some(true)),
+            (serde_json::Value::from(false), None, Some(false)),
+        ];
+
+        for (value, expected_password, expected_protected) in cases {
+            let extra = HashMap::from([("password".to_string(), value)]);
+            assert_eq!(password_hint_from_extra(&extra), expected_password);
+            assert_eq!(protected_from_extra(&extra), expected_protected);
+        }
+    }
 
     fn assert_parses_as_http_uri(url: &str) {
         let _: ::http::Uri = url.parse().expect("URL should parse as http::Uri");
@@ -3473,6 +3615,92 @@ mod tests {
     }
 
     #[test]
+    fn xml_extracts_password_hint() {
+        let body = r#"<?xml version="1.0"?>
+<rss xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attributes/">
+<channel>
+  <item>
+    <title>Protected.Release.1080p</title>
+    <newznab:attr name="password" value=" archive-password "/>
+  </item>
+</channel>
+</rss>"#;
+        let (results, _) = parse_newznab_xml(body, 100, extract_base_metadata);
+        assert_eq!(results.len(), 1);
+        assert_eq!(
+            results[0].password_hint.as_deref(),
+            Some("archive-password")
+        );
+        assert_eq!(
+            results[0]
+                .provider_extra
+                .get("password")
+                .and_then(|value| value.as_str()),
+            Some("archive-password")
+        );
+        assert_eq!(
+            results[0]
+                .provider_extra
+                .get("password_protected")
+                .and_then(|value| value.as_bool()),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn xml_treats_password_flags_as_protection_only() {
+        for marker in ["1", "true", "yes", "passworded", "protected"] {
+            let body = format!(
+                r#"<?xml version="1.0"?>
+<rss xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attributes/">
+<channel>
+  <item>
+    <title>Protected.Release.1080p</title>
+    <newznab:attr name="password" value="{marker}"/>
+  </item>
+</channel>
+</rss>"#
+            );
+            let (results, _) = parse_newznab_xml(&body, 100, extract_base_metadata);
+            assert_eq!(results.len(), 1);
+            assert_eq!(results[0].password_hint, None);
+            assert!(!results[0].provider_extra.contains_key("password"));
+            assert_eq!(
+                results[0]
+                    .provider_extra
+                    .get("password_protected")
+                    .and_then(|value| value.as_bool()),
+                Some(true),
+                "marker {marker:?} should be protection metadata only"
+            );
+        }
+    }
+
+    #[test]
+    fn xml_ignores_zero_password_hint() {
+        let body = r#"<?xml version="1.0"?>
+<rss xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attributes/">
+<channel>
+  <item>
+    <title>Unprotected.Release.1080p</title>
+    <newznab:attr name="password" value="0"/>
+  </item>
+</channel>
+</rss>"#;
+        let (results, _) = parse_newznab_xml(body, 100, extract_base_metadata);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].password_hint, None);
+        assert!(!results[0].provider_extra.contains_key("password"));
+        assert_eq!(
+            results[0]
+                .provider_extra
+                .get("password_protected")
+                .and_then(|value| value.as_bool()),
+            Some(false)
+        );
+    }
+
+    #[test]
     fn xml_maps_torrent_extra_to_typed_fields() {
         let body = r#"<?xml version="1.0"?>
 <rss xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attributes/">
@@ -3624,6 +3852,62 @@ mod tests {
         assert!(languages.is_empty());
         assert_eq!(grabs, None);
         assert!(extra.is_empty());
+    }
+
+    #[test]
+    fn base_extracts_password_hint() {
+        let pairs = vec![("password".into(), " correct horse battery staple ".into())];
+        let (_, _, extra) = extract_base_metadata(&pairs);
+        assert_eq!(
+            extra.get("password"),
+            Some(&serde_json::Value::from("correct horse battery staple"))
+        );
+        assert_eq!(
+            extra.get("password_protected"),
+            Some(&serde_json::Value::from(true))
+        );
+    }
+
+    #[test]
+    fn base_ignores_empty_and_zero_password_hints() {
+        for value in ["", "  "] {
+            let pairs = vec![("password".into(), value.into())];
+            let (_, _, extra) = extract_base_metadata(&pairs);
+            assert!(
+                !extra.contains_key("password"),
+                "password attr {value:?} should not become a password hint"
+            );
+            assert!(!extra.contains_key("password_protected"));
+        }
+
+        for value in ["0", " 0 ", "false", "no"] {
+            let pairs = vec![("password".into(), value.into())];
+            let (_, _, extra) = extract_base_metadata(&pairs);
+            assert!(
+                !extra.contains_key("password"),
+                "password attr {value:?} should not become a password hint"
+            );
+            assert_eq!(
+                extra.get("password_protected"),
+                Some(&serde_json::Value::from(false))
+            );
+        }
+    }
+
+    #[test]
+    fn base_treats_password_flags_as_protection_only() {
+        for value in ["1", "true", "yes", "passworded", "protected"] {
+            let pairs = vec![("password".into(), value.into())];
+            let (_, _, extra) = extract_base_metadata(&pairs);
+            assert!(
+                !extra.contains_key("password"),
+                "password attr {value:?} should not become a password hint"
+            );
+            assert_eq!(
+                extra.get("password_protected"),
+                Some(&serde_json::Value::from(true))
+            );
+        }
     }
 
     // ── standard_config_fields ───────────────────────────────────────────

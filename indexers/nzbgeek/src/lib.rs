@@ -4,9 +4,10 @@ use extism_pdk::*;
 use newznab_common::{
     Capabilities, IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor,
     IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures,
-    IndexerSearchInput, IndexerSourceKind, NewznabConfig, PluginDescriptor, PluginResult,
-    ProviderDescriptor, SDK_VERSION, ScoringPolicy, SearchRequest, current_sdk_constraint,
-    execute_full_search, standard_config_fields,
+    IndexerSearchInput, IndexerSourceKind, NewznabConfig, PasswordMetadataClassification,
+    PluginDescriptor, PluginResult, ProviderDescriptor, SDK_VERSION, ScoringPolicy, SearchRequest,
+    classify_password_metadata, current_sdk_constraint, execute_full_search,
+    standard_config_fields,
 };
 
 #[plugin_fn]
@@ -128,6 +129,7 @@ fn nzbgeek_metadata_extractor(
     let mut subtitles: Vec<String> = Vec::new();
     let mut grabs: Option<i64> = None;
     let mut password: Option<String> = None;
+    let mut password_protected = None;
 
     for (name, value) in pairs {
         let normalized: String = name
@@ -164,12 +166,19 @@ fn nzbgeek_metadata_extractor(
             "grabs" => {
                 grabs = value.trim().replace(',', "").parse().ok();
             }
-            "password" => {
-                let trimmed = value.trim();
-                if !trimmed.is_empty() && trimmed != "0" {
-                    password = Some(trimmed.to_string());
+            "password" => match classify_password_metadata(Some(value)) {
+                PasswordMetadataClassification::Real(value) => {
+                    password = Some(value);
+                    password_protected = Some(true);
                 }
-            }
+                PasswordMetadataClassification::ProtectedFlag => {
+                    password_protected = Some(true);
+                }
+                PasswordMetadataClassification::UnprotectedFlag
+                | PasswordMetadataClassification::Empty => {
+                    password_protected = Some(false);
+                }
+            },
             _ => {}
         }
     }
@@ -189,6 +198,12 @@ fn nzbgeek_metadata_extractor(
     }
     if let Some(ref pw) = password {
         extra.insert("password".to_string(), serde_json::Value::from(pw.as_str()));
+    }
+    if let Some(password_protected) = password_protected {
+        extra.insert(
+            "password_protected".to_string(),
+            serde_json::Value::from(password_protected),
+        );
     }
 
     (languages, grabs, extra)
@@ -263,16 +278,40 @@ mod tests {
     }
 
     #[test]
-    fn extracts_password() {
+    fn treats_password_one_as_protection_hint() {
         let p = pairs(&[("password", "1")]);
         let (_, _, extra) = nzbgeek_metadata_extractor(&p);
-        assert_eq!(extra.get("password"), Some(&serde_json::Value::from("1")));
+        assert!(!extra.contains_key("password"));
+        assert_eq!(
+            extra.get("password_protected"),
+            Some(&serde_json::Value::from(true))
+        );
+    }
+
+    #[test]
+    fn extracts_real_password() {
+        let p = pairs(&[("password", "actual-secret")]);
+        let (_, _, extra) = nzbgeek_metadata_extractor(&p);
+        assert_eq!(
+            extra.get("password"),
+            Some(&serde_json::Value::from("actual-secret"))
+        );
+        assert_eq!(
+            extra.get("password_protected"),
+            Some(&serde_json::Value::from(true))
+        );
     }
 
     #[test]
     fn ignores_password_zero() {
-        let p = pairs(&[("password", "0")]);
-        let (_, _, extra) = nzbgeek_metadata_extractor(&p);
-        assert!(!extra.contains_key("password"));
+        for marker in ["0", "false", "no", ""] {
+            let p = pairs(&[("password", marker)]);
+            let (_, _, extra) = nzbgeek_metadata_extractor(&p);
+            assert!(!extra.contains_key("password"));
+            assert_eq!(
+                extra.get("password_protected"),
+                Some(&serde_json::Value::from(false))
+            );
+        }
     }
 }
