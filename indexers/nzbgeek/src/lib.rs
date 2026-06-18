@@ -174,10 +174,10 @@ fn nzbgeek_metadata_extractor(
                 PasswordMetadataClassification::ProtectedFlag => {
                     password_protected = Some(true);
                 }
-                PasswordMetadataClassification::UnprotectedFlag
-                | PasswordMetadataClassification::Empty => {
+                PasswordMetadataClassification::UnprotectedFlag => {
                     password_protected = Some(false);
                 }
+                PasswordMetadataClassification::Empty => {}
             },
             _ => {}
         }
@@ -304,7 +304,7 @@ mod tests {
 
     #[test]
     fn ignores_password_zero() {
-        for marker in ["0", "false", "no", ""] {
+        for marker in ["0", "false", "no"] {
             let p = pairs(&[("password", marker)]);
             let (_, _, extra) = nzbgeek_metadata_extractor(&p);
             assert!(!extra.contains_key("password"));
@@ -313,5 +313,13 @@ mod tests {
                 Some(&serde_json::Value::from(false))
             );
         }
+    }
+
+    #[test]
+    fn ignores_empty_password_marker_without_protection_hint() {
+        let p = pairs(&[("password", "")]);
+        let (_, _, extra) = nzbgeek_metadata_extractor(&p);
+        assert!(!extra.contains_key("password"));
+        assert!(!extra.contains_key("password_protected"));
     }
 }
