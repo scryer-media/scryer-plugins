@@ -1038,6 +1038,8 @@ struct CatalogV3RulePackRelease {
     #[serde(skip_serializing_if = "Option::is_none")]
     min_scryer_version: Option<String>,
     rule_pack_digests: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    rule_pack_bytes: Option<u64>,
     artifacts: Vec<CatalogV3Artifact>,
 }
 
@@ -5143,6 +5145,7 @@ fn prepare_rule_pack_v3_entries(
                     version: version.clone(),
                     min_scryer_version: rule_pack.min_scryer_version,
                     rule_pack_digests: file_digests(&minified_json_path)?,
+                    rule_pack_bytes: Some(fs::metadata(&minified_json_path)?.len()),
                     artifacts: vec![
                         CatalogV3Artifact {
                             url: versioned_distribution_url(&primary_base, &version, &zst_name),
@@ -6482,6 +6485,13 @@ fn validate_catalog_v3(catalog: &CatalogV3) -> Result<()> {
             }
             for digest in &release.rule_pack_digests {
                 validate_digest_string("rule_pack_digests", digest)?;
+            }
+            if release.rule_pack_bytes == Some(0) {
+                bail!(
+                    "{} {}: rule_pack_bytes must be greater than zero when present",
+                    rule_pack.id,
+                    release.version
+                );
             }
             if release.artifacts.is_empty() {
                 bail!(
