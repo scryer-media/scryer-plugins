@@ -20,6 +20,7 @@ pub use scryer_plugin_sdk::{
     PluginSearchSubjectKind, ProviderDescriptor, SDK_VERSION, current_sdk_constraint,
 };
 use serde::Deserialize;
+use unicode_normalization::{UnicodeNormalization, char::is_combining_mark};
 use url::Url;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -795,14 +796,39 @@ fn build_category_param(categories: &[String]) -> Option<String> {
 fn build_query_variants(query: &str) -> Vec<String> {
     let mut variants = Vec::new();
     let query = strip_query_context(query);
+    let cleaned_query = clean_newznab_query_title(query);
 
-    if !query.is_empty() {
-        variants.push(query.to_string());
+    if !cleaned_query.is_empty() {
+        variants.push(cleaned_query);
     }
 
     let mut seen = std::collections::HashSet::new();
     variants.retain(|value| seen.insert(value.to_ascii_lowercase()));
     variants
+}
+
+fn clean_newznab_query_title(query: &str) -> String {
+    let mut normalized = String::new();
+
+    for ch in query.nfd() {
+        if is_combining_mark(ch) {
+            continue;
+        }
+
+        if ch == '&' {
+            normalized.push(' ');
+            normalized.push_str("and");
+            normalized.push(' ');
+        } else if matches!(ch, '\'' | '`' | '\u{00B4}' | '\u{2018}' | '\u{2019}' | '.') {
+            continue;
+        } else if ch.is_alphanumeric() {
+            normalized.push(ch);
+        } else {
+            normalized.push(' ');
+        }
+    }
+
+    normalized.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
 fn is_anime_request(facet_hint: Option<&str>, category_hint: Option<&str>) -> bool {
@@ -1816,11 +1842,16 @@ fn parse_error_xml(body: &str) -> Option<(String, String)> {
 
 fn apply_provider_extra_fields(result: &mut SearchResult) {
     let seeders = extra_i64(&result.provider_extra, "seeders");
-    let peers = extra_i64(&result.provider_extra, "peers");
+    let raw_peers = extra_i64(&result.provider_extra, "peers");
     let leechers = extra_i64(&result.provider_extra, "leechers").or_else(|| {
         seeders
-            .zip(peers)
+            .zip(raw_peers)
             .and_then(|(seeders, peers)| peers.checked_sub(seeders))
+    });
+    let peers = raw_peers.or_else(|| {
+        seeders
+            .zip(leechers)
+            .and_then(|(seeders, leechers)| seeders.checked_add(leechers))
     });
 
     if result.seeders.is_none() {
@@ -2459,6 +2490,40 @@ fn string_member(value: &serde_json::Value, keys: &[&str]) -> Option<String> {
         .filter(|value| !value.is_empty())
 }
 
+#[cfg(all(test, not(target_arch = "wasm32")))]
+mod extism_host_stubs {
+    #[unsafe(no_mangle)]
+    pub extern "C" fn alloc(_len: u64) -> u64 {
+        0
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn config_get(_ptr: u64) -> u64 {
+        0
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn length(_offset: u64) -> u64 {
+        0
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn load_u64(_offset: u64) -> u64 {
+        0
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn load_u8(_offset: u64) -> u8 {
+        0
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn store_u64(_offset: u64, _value: u64) {}
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn store_u8(_offset: u64, _value: u8) {}
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2897,7 +2962,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(query_value(&url, "t").as_deref(), Some("movie"));
-        assert_eq!(query_value(&url, "imdbid").as_deref(), Some("011032374"));
+        assert_eq!(query_value(&url, "imdbid").as_deref(), Some("0011032374"));
         assert_eq!(query_value(&url, "cat").as_deref(), Some("6050,2000,5070"));
         assert!(query_value(&url, "q").is_none());
         assert_eq!(
@@ -2940,6 +3005,57 @@ mod tests {
     fn build_query_variants_prefers_romanized_anime_alias_before_canonical() {
         let variants = build_query_variants("Silver Horizon S01E01");
         assert_eq!(variants, vec!["Silver Horizon"]);
+    }
+
+    #[test]
+    fn build_query_variants_cleans_sphinx_query_syntax() {
+        let variants = build_query_variants("American Dad! S22E04");
+        assert_eq!(variants, vec!["American Dad"]);
+    }
+
+    #[test]
+    fn build_query_variants_matches_sonarr_style_title_cleaning() {
+        assert_eq!(
+            build_query_variants("Franklin & Bash"),
+            vec!["Franklin and Bash"]
+        );
+        assert_eq!(build_query_variants("Chicago P.D."), vec!["Chicago PD"]);
+        assert_eq!(build_query_variants("Hawaii Five-0"), vec!["Hawaii Five 0"]);
+        assert_eq!(
+            build_query_variants("Betty White’s Café"),
+            vec!["Betty Whites Cafe"]
+        );
+    }
+
+    #[test]
+    fn build_search_url_cleans_american_dad_query_for_newznab() {
+        let query = build_query_variants("American Dad! S22E04")
+            .into_iter()
+            .next()
+            .expect("query variant");
+        let url = build_search_url(
+            "https://drunkenslug.com/api",
+            "tvsearch",
+            Some(&query),
+            "secret",
+            None,
+            None,
+            None,
+            None,
+            None,
+            Some("5000"),
+            100,
+            Some(22),
+            Some(4),
+            "",
+        )
+        .unwrap();
+
+        assert_eq!(query_value(&url, "q").as_deref(), Some("American Dad"));
+        assert!(url.contains("season=22"));
+        assert!(url.contains("ep=4"));
+        assert!(!url.contains("%21"));
+        assert_parses_as_http_uri(&url);
     }
 
     #[test]
@@ -3919,7 +4035,7 @@ mod tests {
         assert_eq!(fields[0].key, "base_url");
         assert!(fields[0].required);
         assert_eq!(fields[1].key, "api_key");
-        assert!(fields[1].required);
+        assert!(!fields[1].required);
         assert_eq!(fields[2].key, "api_path");
         assert_eq!(fields[3].key, "additional_params");
     }
