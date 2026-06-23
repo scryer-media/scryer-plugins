@@ -11,7 +11,7 @@ For humans and agents alike:
 - `cargo xtask catalog validate-v2` is the authoritative official published-catalog validation pass
 - `cargo xtask plugin validate <path>` is the SDK-v2 ABI check for a plugin crate
 - `cargo xtask plugin new <kind> <name>` is the scaffold path for new plugin crates
-- `scripts/release.sh` is a compatibility wrapper over xtask, not the source of truth
+- release automation must stay in `cargo xtask`; do not add shell wrappers
 - official plugin inventory is declared in each plugin crate `Cargo.toml` under
   `package.metadata.scryer`, with `package.description` as the canonical
   published description source
