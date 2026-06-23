@@ -106,8 +106,11 @@ struct SearchFile {
 struct FeatureDetails {
     movie_name: Option<String>,
     #[allow(dead_code)]
+    #[serde(default, deserialize_with = "deserialize_optional_provider_i32")]
     year: Option<i32>,
+    #[serde(default, deserialize_with = "deserialize_optional_provider_i32")]
     season_number: Option<i32>,
+    #[serde(default, deserialize_with = "deserialize_optional_provider_i32")]
     episode_number: Option<i32>,
 }
 
@@ -125,7 +128,34 @@ struct FeatureLookupResult {
 #[derive(Deserialize)]
 struct FeatureLookupAttributes {
     title: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_optional_provider_i32")]
     year: Option<i32>,
+}
+
+fn deserialize_optional_provider_i32<'de, D>(deserializer: D) -> Result<Option<i32>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = Option::<serde_json::Value>::deserialize(deserializer)?;
+    let Some(value) = value else {
+        return Ok(None);
+    };
+
+    let parsed = match value {
+        serde_json::Value::Number(number) => {
+            number.as_i64().and_then(|value| i32::try_from(value).ok())
+        }
+        serde_json::Value::String(value) => {
+            let trimmed = value.trim();
+            if trimmed.is_empty() {
+                None
+            } else {
+                trimmed.parse::<i32>().ok()
+            }
+        }
+        _ => None,
+    };
+    Ok(parsed)
 }
 
 #[derive(Serialize)]
@@ -1312,10 +1342,65 @@ fn config_bool(key: &str, default: bool) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        OpenSubtitlesConfig, append_translation_filter_params, config_auth_fingerprint, descriptor,
+        FeatureDetails, FeatureLookupResponse, OpenSubtitlesConfig,
+        append_translation_filter_params, config_auth_fingerprint, descriptor,
         from_opensubtitles_language, is_real_forced, to_opensubtitles_language,
     };
     use scryer_plugin_sdk::{ConfigFieldValueSource, PluginHostBindingId, ProviderDescriptor};
+
+    #[test]
+    fn feature_lookup_accepts_numeric_and_string_years() {
+        let numeric: FeatureLookupResponse = serde_json::from_str(
+            r#"{"data":[{"id":"feature-1","attributes":{"title":"10 Steps to Murder","year":2014}}]}"#,
+        )
+        .expect("numeric feature lookup year should parse");
+        assert_eq!(numeric.data[0].attributes.year, Some(2014));
+
+        let quoted: FeatureLookupResponse = serde_json::from_str(
+            r#"{"data":[{"id":"feature-2","attributes":{"title":"10 Steps to Murder","year":"2014"}}]}"#,
+        )
+        .expect("string feature lookup year should parse");
+        assert_eq!(quoted.data[0].attributes.year, Some(2014));
+    }
+
+    #[test]
+    fn feature_lookup_ignores_absent_blank_or_invalid_years() {
+        let response: FeatureLookupResponse = serde_json::from_str(
+            r#"{
+                "data": [
+                    {"id":"missing","attributes":{"title":"Missing"}},
+                    {"id":"null","attributes":{"title":"Null","year":null}},
+                    {"id":"blank","attributes":{"title":"Blank","year":"  "}},
+                    {"id":"invalid","attributes":{"title":"Invalid","year":"unknown"}}
+                ]
+            }"#,
+        )
+        .expect("optional provider years should not fail the whole response");
+
+        assert!(
+            response
+                .data
+                .iter()
+                .all(|result| result.attributes.year.is_none())
+        );
+    }
+
+    #[test]
+    fn feature_details_accepts_numeric_strings_for_optional_indexes() {
+        let details: FeatureDetails = serde_json::from_str(
+            r#"{
+                "movie_name": "11.22.63",
+                "year": "2020",
+                "season_number": "1",
+                "episode_number": "2"
+            }"#,
+        )
+        .expect("feature details numeric strings should parse");
+
+        assert_eq!(details.year, Some(2020));
+        assert_eq!(details.season_number, Some(1));
+        assert_eq!(details.episode_number, Some(2));
+    }
 
     #[test]
     fn auth_fingerprint_changes_when_credentials_change() {
