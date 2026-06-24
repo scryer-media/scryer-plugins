@@ -1303,12 +1303,20 @@ fn normalize_line_endings(body: Vec<u8>) -> Vec<u8> {
     text.into_bytes()
 }
 
+const ERROR_BODY_PREVIEW_LIMIT: usize = 240;
+
 fn compact_error_body(body: &str) -> String {
     let trimmed = body.trim();
     if trimmed.is_empty() {
         "empty response".to_string()
-    } else if trimmed.len() > 240 {
-        format!("{}...", &trimmed[..240])
+    } else if trimmed.len() > ERROR_BODY_PREVIEW_LIMIT {
+        let preview_end = trimmed
+            .char_indices()
+            .map(|(index, _)| index)
+            .take_while(|index| *index <= ERROR_BODY_PREVIEW_LIMIT)
+            .last()
+            .unwrap_or(0);
+        format!("{}...", &trimmed[..preview_end])
     } else {
         trimmed.to_string()
     }
@@ -1342,11 +1350,38 @@ fn config_bool(key: &str, default: bool) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        FeatureDetails, FeatureLookupResponse, OpenSubtitlesConfig,
-        append_translation_filter_params, config_auth_fingerprint, descriptor,
+        ERROR_BODY_PREVIEW_LIMIT, FeatureDetails, FeatureLookupResponse, OpenSubtitlesConfig,
+        append_translation_filter_params, compact_error_body, config_auth_fingerprint, descriptor,
         from_opensubtitles_language, is_real_forced, to_opensubtitles_language,
     };
     use scryer_plugin_sdk::{ConfigFieldValueSource, PluginHostBindingId, ProviderDescriptor};
+
+    #[test]
+    fn compact_error_body_truncates_ascii_body() {
+        let body = format!("{}tail", "a".repeat(ERROR_BODY_PREVIEW_LIMIT));
+
+        assert_eq!(
+            compact_error_body(&body),
+            format!("{}...", "a".repeat(ERROR_BODY_PREVIEW_LIMIT))
+        );
+    }
+
+    #[test]
+    fn compact_error_body_truncates_utf8_body_on_char_boundary() {
+        let body = format!("{}\u{00e9}x", "a".repeat(239));
+
+        assert_eq!(compact_error_body(&body), format!("{}...", "a".repeat(239)));
+    }
+
+    #[test]
+    fn compact_error_body_reports_empty_body() {
+        assert_eq!(compact_error_body(" \n\t "), "empty response");
+    }
+
+    #[test]
+    fn compact_error_body_preserves_short_utf8_body() {
+        assert_eq!(compact_error_body("  café  "), "café");
+    }
 
     #[test]
     fn feature_lookup_accepts_numeric_and_string_years() {
