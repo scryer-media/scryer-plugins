@@ -139,6 +139,7 @@ pub struct DescriptorSpec {
     pub protocols: Vec<IndexerProtocol>,
     pub search: bool,
     pub rss: bool,
+    pub query_only: bool,
     pub feed_modes: Vec<IndexerFeedMode>,
     pub search_inputs: Vec<IndexerSearchInput>,
     pub config_fields: Vec<ConfigFieldDef>,
@@ -149,6 +150,17 @@ pub struct DescriptorSpec {
 
 pub fn build_indexer_descriptor(spec: DescriptorSpec) -> PluginDescriptor {
     let max_page_size = spec.page_size;
+    let (supported_ids, supported_external_ids) = if spec.query_only {
+        (HashMap::new(), Vec::new())
+    } else {
+        (
+            HashMap::from([(
+                "anime".to_string(),
+                vec!["tvdb_id".to_string(), "anidb_id".to_string()],
+            )]),
+            vec!["tvdb_id".to_string(), "anidb_id".to_string()],
+        )
+    };
     PluginDescriptor {
         id: spec.id.to_string(),
         name: spec.name.to_string(),
@@ -161,10 +173,7 @@ pub fn build_indexer_descriptor(spec: DescriptorSpec) -> PluginDescriptor {
             provider_aliases: spec.provider_aliases,
             source_kind: spec.source_kind,
             capabilities: Capabilities {
-                supported_ids: HashMap::from([(
-                    "anime".to_string(),
-                    vec!["tvdb_id".to_string(), "anidb_id".to_string()],
-                )]),
+                supported_ids,
                 deduplicates_aliases: false,
                 season_param: Some("season".to_string()),
                 episode_param: Some("episode".to_string()),
@@ -177,7 +186,7 @@ pub fn build_indexer_descriptor(spec: DescriptorSpec) -> PluginDescriptor {
                 protocols: spec.protocols,
                 feed_modes: spec.feed_modes,
                 search_inputs: spec.search_inputs,
-                supported_external_ids: vec!["tvdb_id".to_string(), "anidb_id".to_string()],
+                supported_external_ids,
                 category_model: Some(IndexerCategoryModel {
                     value_kinds: vec![IndexerCategoryValueKind::String],
                     provider_category_metadata: true,

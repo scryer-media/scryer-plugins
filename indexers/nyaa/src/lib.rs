@@ -7,7 +7,11 @@ const DEFAULT_USER_AGENT: &str = "Scryer Nyaa Indexer/0.1";
 
 #[plugin_fn]
 pub fn scryer_describe(_input: String) -> FnResult<String> {
-    let descriptor = build_indexer_descriptor(DescriptorSpec {
+    Ok(serde_json::to_string(&build_descriptor())?)
+}
+
+fn build_descriptor() -> PluginDescriptor {
+    build_indexer_descriptor(DescriptorSpec {
         id: "nyaa",
         name: "Nyaa Indexer",
         version: env!("CARGO_PKG_VERSION"),
@@ -17,6 +21,7 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
         protocols: vec![IndexerProtocol::Torrent],
         search: true,
         rss: true,
+        query_only: true,
         feed_modes: vec![
             IndexerFeedMode::Recent,
             IndexerFeedMode::Rss,
@@ -41,9 +46,7 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
             supports_private_tracker_flags: false,
             ..IndexerTorrentCapabilities::default()
         }),
-    });
-
-    Ok(serde_json::to_string(&descriptor)?)
+    })
 }
 
 #[plugin_fn]
@@ -183,4 +186,100 @@ fn search_titles(req: &SearchRequest) -> Vec<String> {
 
 fn prepare_query(query: &str) -> String {
     query.trim().replace(' ', "+")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn descriptor_is_query_only_for_scryer_dispatch() {
+        let descriptor = build_descriptor();
+        let ProviderDescriptor::Indexer(indexer) = descriptor.provider else {
+            panic!("expected indexer descriptor");
+        };
+
+        assert!(indexer.capabilities.supported_ids.is_empty());
+        assert!(indexer.capabilities.supported_external_ids.is_empty());
+        assert_eq!(indexer.capabilities.query_param.as_deref(), Some("q"));
+        assert!(
+            indexer
+                .capabilities
+                .search_inputs
+                .contains(&IndexerSearchInput::TextQuery)
+        );
+    }
+
+    #[test]
+    fn movie_freetext_search_uses_nyaa_term_query() {
+        let req = SearchRequest {
+            query: "JUJUTSU KAISEN 0".to_string(),
+            facet: Some("movie".to_string()),
+            ..SearchRequest::default()
+        };
+
+        let urls = nyaa_urls("https://nyaa.si/", DEFAULT_ADDITIONAL_PARAMS, &req, false);
+
+        assert_eq!(
+            urls,
+            vec!["https://nyaa.si/?page=rss&cats=1_0&filter=1&term=JUJUTSU+KAISEN+0"]
+        );
+    }
+
+    #[test]
+    fn anime_absolute_episode_search_matches_sonarr_terms() {
+        let req = SearchRequest {
+            query: "Naruto Shippuuden".to_string(),
+            absolute_episode: Some(9),
+            ..SearchRequest::default()
+        };
+
+        let urls = nyaa_urls("https://nyaa.si", DEFAULT_ADDITIONAL_PARAMS, &req, false);
+
+        assert_eq!(
+            urls,
+            vec![
+                "https://nyaa.si/?page=rss&cats=1_0&filter=1&term=Naruto+Shippuuden+9",
+                "https://nyaa.si/?page=rss&cats=1_0&filter=1&term=Naruto+Shippuuden+09",
+            ]
+        );
+    }
+
+    #[test]
+    fn anime_standard_format_search_adds_season_episode_term() {
+        let req = SearchRequest {
+            query: "Naruto Shippuuden".to_string(),
+            absolute_episode: Some(9),
+            season: Some(1),
+            episode: Some(9),
+            ..SearchRequest::default()
+        };
+
+        let urls = nyaa_urls("https://nyaa.si", DEFAULT_ADDITIONAL_PARAMS, &req, true);
+
+        assert_eq!(
+            urls,
+            vec![
+                "https://nyaa.si/?page=rss&cats=1_0&filter=1&term=Naruto+Shippuuden+9",
+                "https://nyaa.si/?page=rss&cats=1_0&filter=1&term=Naruto+Shippuuden+09",
+                "https://nyaa.si/?page=rss&cats=1_0&filter=1&term=Naruto+Shippuuden+s01e09",
+            ]
+        );
+    }
+
+    #[test]
+    fn anime_standard_format_search_adds_season_pack_term() {
+        let req = SearchRequest {
+            query: "Naruto Shippuuden".to_string(),
+            season: Some(3),
+            ..SearchRequest::default()
+        };
+
+        let urls = nyaa_urls("https://nyaa.si", DEFAULT_ADDITIONAL_PARAMS, &req, true);
+
+        assert_eq!(
+            urls,
+            vec!["https://nyaa.si/?page=rss&cats=1_0&filter=1&term=Naruto+Shippuuden+s03"]
+        );
+    }
 }

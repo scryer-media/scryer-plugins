@@ -17,6 +17,7 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
         protocols: vec![IndexerProtocol::Torrent],
         search: false,
         rss: true,
+        query_only: false,
         feed_modes: vec![IndexerFeedMode::Recent, IndexerFeedMode::Rss],
         search_inputs: vec![IndexerSearchInput::Limit],
         config_fields: config_fields(),
