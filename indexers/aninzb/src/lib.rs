@@ -42,6 +42,7 @@ fn build_descriptor() -> PluginDescriptor {
                 season_param: Some("season".into()),
                 episode_param: Some("ep".into()),
                 query_param: Some("q".into()),
+                supported_query_facets: vec!["anime".into()],
                 search: true,
                 imdb_search: false,
                 tvdb_search: true,

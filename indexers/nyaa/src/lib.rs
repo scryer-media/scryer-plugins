@@ -21,7 +21,9 @@ fn build_descriptor() -> PluginDescriptor {
         protocols: vec![IndexerProtocol::Torrent],
         search: true,
         rss: true,
-        query_only: true,
+        supported_ids: no_supported_ids(),
+        supported_external_ids: vec![],
+        supported_query_facets: vec!["movie".to_string(), "anime".to_string()],
         feed_modes: vec![
             IndexerFeedMode::Recent,
             IndexerFeedMode::Rss,
@@ -193,8 +195,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn descriptor_is_query_only_for_scryer_dispatch() {
+    fn descriptor_is_id_free_and_movie_anime_text_capable_for_scryer_dispatch() {
         let descriptor = build_descriptor();
+        assert_eq!(descriptor.sdk_version, "3.1.0");
+        assert_eq!(descriptor.sdk_constraint, ">=3.1.0, <4.0.0");
+
         let ProviderDescriptor::Indexer(indexer) = descriptor.provider else {
             panic!("expected indexer descriptor");
         };
@@ -202,6 +207,10 @@ mod tests {
         assert!(indexer.capabilities.supported_ids.is_empty());
         assert!(indexer.capabilities.supported_external_ids.is_empty());
         assert_eq!(indexer.capabilities.query_param.as_deref(), Some("q"));
+        assert_eq!(
+            indexer.capabilities.supported_query_facets,
+            vec!["movie".to_string(), "anime".to_string()]
+        );
         assert!(
             indexer
                 .capabilities

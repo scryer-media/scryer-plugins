@@ -61,6 +61,7 @@ fn build_descriptor_json() -> Result<String, Error> {
                 season_param: None,
                 episode_param: None,
                 query_param: None,
+                supported_query_facets: vec![],
                 search: false,
                 imdb_search: false,
                 tvdb_search: false,

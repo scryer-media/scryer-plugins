@@ -33,6 +33,7 @@ fn build_descriptor() -> PluginDescriptor {
                 season_param: None,
                 episode_param: None,
                 query_param: Some("q".into()),
+                supported_query_facets: vec!["anime".into()],
                 search: true,
                 imdb_search: false,
                 tvdb_search: false,
@@ -157,7 +158,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn descriptor_is_query_only_for_scryer_dispatch() {
+    fn descriptor_is_id_free_and_anime_text_capable_for_scryer_dispatch() {
         let descriptor = build_descriptor();
         let ProviderDescriptor::Indexer(indexer) = descriptor.provider else {
             panic!("expected indexer descriptor");
@@ -165,6 +166,10 @@ mod tests {
 
         assert!(indexer.capabilities.supported_ids.is_empty());
         assert_eq!(indexer.capabilities.query_param.as_deref(), Some("q"));
+        assert_eq!(
+            indexer.capabilities.supported_query_facets,
+            vec!["anime".to_string()]
+        );
         assert!(!indexer.capabilities.tvdb_search);
         assert!(!indexer.capabilities.rss);
 

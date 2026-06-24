@@ -139,7 +139,9 @@ pub struct DescriptorSpec {
     pub protocols: Vec<IndexerProtocol>,
     pub search: bool,
     pub rss: bool,
-    pub query_only: bool,
+    pub supported_ids: HashMap<String, Vec<String>>,
+    pub supported_external_ids: Vec<String>,
+    pub supported_query_facets: Vec<String>,
     pub feed_modes: Vec<IndexerFeedMode>,
     pub search_inputs: Vec<IndexerSearchInput>,
     pub config_fields: Vec<ConfigFieldDef>,
@@ -150,17 +152,6 @@ pub struct DescriptorSpec {
 
 pub fn build_indexer_descriptor(spec: DescriptorSpec) -> PluginDescriptor {
     let max_page_size = spec.page_size;
-    let (supported_ids, supported_external_ids) = if spec.query_only {
-        (HashMap::new(), Vec::new())
-    } else {
-        (
-            HashMap::from([(
-                "anime".to_string(),
-                vec!["tvdb_id".to_string(), "anidb_id".to_string()],
-            )]),
-            vec!["tvdb_id".to_string(), "anidb_id".to_string()],
-        )
-    };
     PluginDescriptor {
         id: spec.id.to_string(),
         name: spec.name.to_string(),
@@ -173,11 +164,12 @@ pub fn build_indexer_descriptor(spec: DescriptorSpec) -> PluginDescriptor {
             provider_aliases: spec.provider_aliases,
             source_kind: spec.source_kind,
             capabilities: Capabilities {
-                supported_ids,
+                supported_ids: spec.supported_ids,
                 deduplicates_aliases: false,
                 season_param: Some("season".to_string()),
                 episode_param: Some("episode".to_string()),
-                query_param: Some("q".to_string()),
+                query_param: spec.search.then(|| "q".to_string()),
+                supported_query_facets: spec.supported_query_facets,
                 search: spec.search,
                 imdb_search: false,
                 tvdb_search: false,
@@ -186,7 +178,7 @@ pub fn build_indexer_descriptor(spec: DescriptorSpec) -> PluginDescriptor {
                 protocols: spec.protocols,
                 feed_modes: spec.feed_modes,
                 search_inputs: spec.search_inputs,
-                supported_external_ids,
+                supported_external_ids: spec.supported_external_ids,
                 category_model: Some(IndexerCategoryModel {
                     value_kinds: vec![IndexerCategoryValueKind::String],
                     provider_category_metadata: true,
@@ -214,6 +206,21 @@ pub fn build_indexer_descriptor(spec: DescriptorSpec) -> PluginDescriptor {
             rate_limit_seconds: spec.rate_limit_seconds.map(i64::from),
         }),
     }
+}
+
+pub fn anime_supported_ids() -> HashMap<String, Vec<String>> {
+    HashMap::from([(
+        "anime".to_string(),
+        vec!["tvdb_id".to_string(), "anidb_id".to_string()],
+    )])
+}
+
+pub fn anime_supported_external_ids() -> Vec<String> {
+    vec!["tvdb_id".to_string(), "anidb_id".to_string()]
+}
+
+pub fn no_supported_ids() -> HashMap<String, Vec<String>> {
+    HashMap::new()
 }
 
 pub fn field(

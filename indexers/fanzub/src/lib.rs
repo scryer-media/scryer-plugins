@@ -7,7 +7,11 @@ const DEFAULT_USER_AGENT: &str = "Scryer Fanzub Indexer/0.1";
 
 #[plugin_fn]
 pub fn scryer_describe(_input: String) -> FnResult<String> {
-    let descriptor = build_indexer_descriptor(DescriptorSpec {
+    Ok(serde_json::to_string(&build_descriptor())?)
+}
+
+fn build_descriptor() -> PluginDescriptor {
+    build_indexer_descriptor(DescriptorSpec {
         id: "fanzub",
         name: "Fanzub Indexer",
         version: env!("CARGO_PKG_VERSION"),
@@ -17,7 +21,9 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
         protocols: vec![IndexerProtocol::Usenet],
         search: true,
         rss: true,
-        query_only: false,
+        supported_ids: anime_supported_ids(),
+        supported_external_ids: anime_supported_external_ids(),
+        supported_query_facets: vec!["anime".to_string()],
         feed_modes: vec![
             IndexerFeedMode::Recent,
             IndexerFeedMode::Rss,
@@ -35,9 +41,7 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
         rate_limit_seconds: Some(2),
         page_size: Some(100),
         torrent: None,
-    });
-
-    Ok(serde_json::to_string(&descriptor)?)
+    })
 }
 
 #[plugin_fn]
@@ -141,4 +145,32 @@ fn clean_title(title: &str) -> String {
         .chars()
         .filter(|ch| !matches!(ch, '!' | '?' | '`'))
         .collect::<String>()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn descriptor_is_anime_text_capable_and_preserves_anime_ids() {
+        let descriptor = build_descriptor();
+        let ProviderDescriptor::Indexer(indexer) = descriptor.provider else {
+            panic!("expected indexer descriptor");
+        };
+
+        assert_eq!(
+            indexer.capabilities.supported_query_facets,
+            vec!["anime".to_string()]
+        );
+        assert_eq!(
+            indexer.capabilities.supported_ids.get("anime"),
+            Some(&vec!["tvdb_id".to_string(), "anidb_id".to_string()])
+        );
+        assert!(
+            indexer
+                .capabilities
+                .search_inputs
+                .contains(&IndexerSearchInput::TextQuery)
+        );
+    }
 }
