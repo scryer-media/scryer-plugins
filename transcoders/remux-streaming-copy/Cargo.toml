@@ -11,6 +11,7 @@ official = false
 plugin_id = "remux-streaming-copy"
 status = "experimental"
 catalog_versions = ["v3"]
+min_scryer_version = "0.17.0"
 feature_sets = [
   { required_features = [] },
   { required_features = ["simd128", "relaxed-simd"] },
@@ -24,7 +25,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 extism-pdk = "1.4"
-scryer-plugin-sdk = "3.0.0"
+scryer-plugin-sdk = "3.2.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 

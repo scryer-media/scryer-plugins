@@ -33,6 +33,7 @@ fn build_descriptor() -> PluginDescriptor {
                 season_param: None,
                 episode_param: None,
                 query_param: Some("q".into()),
+                supported_query_facets: vec![],
                 search: true,
                 imdb_search: false,
                 tvdb_search: false,
