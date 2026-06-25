@@ -1,6 +1,6 @@
 [package]
 name = "newznab-indexer"
-version = "0.2.17"
+version = "0.2.18"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Generic Newznab protocol indexer for compatible services"

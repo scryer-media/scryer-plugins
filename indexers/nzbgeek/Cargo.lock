@@ -329,7 +329,7 @@ dependencies = [
 
 [[package]]
 name = "nzbgeek-indexer"
-version = "0.2.17"
+version = "0.2.18"
 dependencies = [
  "extism-pdk",
  "newznab-common",

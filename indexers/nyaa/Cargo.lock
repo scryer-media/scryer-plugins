@@ -325,7 +325,7 @@ dependencies = [
 
 [[package]]
 name = "nyaa-indexer"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "extism-pdk",
  "rss-indexer-common",

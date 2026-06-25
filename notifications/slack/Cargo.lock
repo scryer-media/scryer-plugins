@@ -400,7 +400,7 @@ dependencies = [
 
 [[package]]
 name = "slack-notification"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "extism-pdk",
  "notify-common",

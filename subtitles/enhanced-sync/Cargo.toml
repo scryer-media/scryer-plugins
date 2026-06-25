@@ -1,6 +1,6 @@
 [package]
 name = "enhanced-subtitle-sync-plugin"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Optional enhanced subtitle sync decoder and audio-transcode plugin with FFmpeg-derived audio codec support"
