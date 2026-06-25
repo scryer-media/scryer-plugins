@@ -33,7 +33,6 @@ fn build_descriptor() -> PluginDescriptor {
                 season_param: None,
                 episode_param: None,
                 query_param: Some("q".into()),
-                supported_query_facets: vec!["anime".into()],
                 search: true,
                 imdb_search: false,
                 tvdb_search: false,
@@ -166,10 +165,6 @@ mod tests {
 
         assert!(indexer.capabilities.supported_ids.is_empty());
         assert_eq!(indexer.capabilities.query_param.as_deref(), Some("q"));
-        assert_eq!(
-            indexer.capabilities.supported_query_facets,
-            vec!["anime".to_string()]
-        );
         assert!(!indexer.capabilities.tvdb_search);
         assert!(!indexer.capabilities.rss);
 

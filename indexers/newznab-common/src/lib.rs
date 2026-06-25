@@ -1166,14 +1166,11 @@ fn execute_search(
 const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
     (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-/// HTTP GET with 429 retry handling.
+/// HTTP GET with explicit 429 reporting.
 ///
-/// On a 429 response, retries with escalating backoff: 2s → 5s → 10s.
-/// Respects `Retry-After` / `X-Retry-After` headers if present.
-/// If the 429 persists after 10s (or Retry-After > 10s), returns an error.
+/// On a 429 response, returns a clear rate-limit error and includes
+/// `Retry-After` / `X-Retry-After` seconds when the server supplies them.
 fn http_get_with_retry(url: &str) -> Result<(u16, String), Error> {
-    const BACKOFF_SECS: &[u64] = &[2, 5, 10];
-
     let logged_url = redact_url_for_log(url);
 
     let http_req = HttpRequest::new(url)
@@ -1182,78 +1179,48 @@ fn http_get_with_retry(url: &str) -> Result<(u16, String), Error> {
         .with_header("Accept-Language", "en-US,en;q=0.9")
         .with_header("User-Agent", USER_AGENT);
 
-    let mut next_delay: u64 = 0;
-    for (attempt, fallback_delay) in BACKOFF_SECS
-        .iter()
-        .copied()
-        .map(Some)
-        .chain(std::iter::once(None))
-        .enumerate()
-    {
-        if next_delay > 0 {
-            let start = std::time::Instant::now();
-            let wait = std::time::Duration::from_secs(next_delay);
-            while start.elapsed() < wait {
-                std::hint::spin_loop();
-            }
-        }
+    log!(
+        LogLevel::Debug,
+        "http_trace plugin=newznab method=GET attempt=1 url={}",
+        logged_url
+    );
 
+    let resp = http::request::<Vec<u8>>(&http_req, None).map_err(|e| {
         log!(
             LogLevel::Debug,
-            "http_trace plugin=newznab method=GET attempt={} url={}",
-            attempt + 1,
-            logged_url
+            "http_trace_error plugin=newznab method=GET attempt=1 url={} error={}",
+            logged_url,
+            e
         );
+        Error::msg(format!("HTTP request failed: {e}"))
+    })?;
 
-        let resp = http::request::<Vec<u8>>(&http_req, None).map_err(|e| {
-            log!(
-                LogLevel::Debug,
-                "http_trace_error plugin=newznab method=GET attempt={} url={} error={}",
-                attempt + 1,
-                logged_url,
-                e
-            );
-            Error::msg(format!("HTTP request failed: {e}"))
-        })?;
+    log!(
+        LogLevel::Debug,
+        "http_trace_response plugin=newznab method=GET attempt=1 status={} url={}",
+        resp.status_code(),
+        logged_url
+    );
 
-        log!(
-            LogLevel::Debug,
-            "http_trace_response plugin=newznab method=GET attempt={} status={} url={}",
-            attempt + 1,
-            resp.status_code(),
-            logged_url
-        );
+    if resp.status_code() == 429 {
+        let retry_after = resp
+            .headers()
+            .get("retry-after")
+            .or_else(|| resp.headers().get("x-retry-after"))
+            .and_then(|v| v.parse::<u64>().ok());
 
-        if resp.status_code() == 429 {
-            let Some(fallback_delay) = fallback_delay else {
-                return Err(Error::msg("HTTP 429: rate limited after all retries"));
-            };
-
-            let server_delay = resp
-                .headers()
-                .get("retry-after")
-                .or_else(|| resp.headers().get("x-retry-after"))
-                .and_then(|v| v.parse::<u64>().ok());
-
-            next_delay = match server_delay {
-                Some(secs) if secs > 10 => {
-                    return Err(Error::msg(format!(
-                        "HTTP 429: Retry-After {secs}s exceeds maximum"
-                    )));
-                }
-                Some(secs) => secs,
-                None => fallback_delay,
-            };
-            continue;
-        }
-
-        return Ok((
-            resp.status_code(),
-            String::from_utf8_lossy(&resp.body()).to_string(),
-        ));
+        return match retry_after {
+            Some(secs) => Err(Error::msg(format!(
+                "HTTP 429: rate limited; retry_after_seconds={secs}"
+            ))),
+            None => Err(Error::msg("HTTP 429: rate limited")),
+        };
     }
 
-    Err(Error::msg("HTTP request exhausted all retries"))
+    Ok((
+        resp.status_code(),
+        String::from_utf8_lossy(&resp.body()).to_string(),
+    ))
 }
 
 fn redact_url_for_log(url: &str) -> String {

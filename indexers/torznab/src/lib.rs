@@ -36,7 +36,6 @@ fn build_descriptor_json() -> Result<String, Error> {
                 season_param: Some("season".into()),
                 episode_param: Some("ep".into()),
                 query_param: Some("q".into()),
-                supported_query_facets: vec!["movie".into(), "series".into(), "anime".into()],
                 search: true,
                 imdb_search: true,
                 tvdb_search: true,
