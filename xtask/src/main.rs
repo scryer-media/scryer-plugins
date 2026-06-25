@@ -16,7 +16,7 @@ use scryer_plugin_sdk::{
 };
 use semver::Version;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::env;
 use std::ffi::OsStr;
 use std::fs;
@@ -41,6 +41,7 @@ const PLUGIN_MANIFEST_SCHEMA: &str = "scryer.plugin.v1";
 const WASM_OPT_LEVEL_SIZE: &str = "-Oz";
 const WASM_OPT_LEVEL_SPEED: &str = "-O3";
 const ZSTD_LEVEL: &str = "-19";
+const BOUNDED_TASK_CONCURRENCY: usize = 8;
 const SHORT_CATALOG_HASH_LEN: usize = 12;
 const OFFICIAL_GITHUB_REPO: &str = "scryer-media/scryer-plugins";
 const DEFAULT_OFFICIAL_RELEASE_WORKFLOW: &str = ".github/workflows/release-plugin.yml";
@@ -1156,6 +1157,75 @@ fn run_checked(command: &mut Command) -> Result<()> {
         bail!("command failed: {debug}");
     }
     Ok(())
+}
+
+fn run_bounded<T, F>(items: Vec<T>, worker: F) -> Result<()>
+where
+    T: Send,
+    F: Fn(T) -> Result<()> + Sync,
+{
+    let worker_count = items.len().min(BOUNDED_TASK_CONCURRENCY);
+    if worker_count == 0 {
+        return Ok(());
+    }
+
+    let queue = std::sync::Arc::new(std::sync::Mutex::new(VecDeque::from(items)));
+    let first_error = std::sync::Arc::new(std::sync::Mutex::new(None::<anyhow::Error>));
+
+    std::thread::scope(|scope| -> Result<()> {
+        let mut handles = Vec::with_capacity(worker_count);
+        for _ in 0..worker_count {
+            let queue = std::sync::Arc::clone(&queue);
+            let first_error = std::sync::Arc::clone(&first_error);
+            let worker = &worker;
+            handles.push(scope.spawn(move || {
+                loop {
+                    if first_error
+                        .lock()
+                        .expect("bounded task error lock poisoned")
+                        .is_some()
+                    {
+                        break;
+                    }
+
+                    let item = queue
+                        .lock()
+                        .expect("bounded task queue lock poisoned")
+                        .pop_front();
+                    let Some(item) = item else {
+                        break;
+                    };
+
+                    if let Err(error) = worker(item) {
+                        let mut first_error = first_error
+                            .lock()
+                            .expect("bounded task error lock poisoned");
+                        if first_error.is_none() {
+                            *first_error = Some(error);
+                        }
+                        break;
+                    }
+                }
+            }));
+        }
+
+        for handle in handles {
+            handle
+                .join()
+                .map_err(|_| anyhow!("bounded task worker panicked"))?;
+        }
+        Ok(())
+    })?;
+
+    if let Some(error) = first_error
+        .lock()
+        .expect("bounded task error lock poisoned")
+        .take()
+    {
+        Err(error)
+    } else {
+        Ok(())
+    }
 }
 
 fn run_capture(command: &mut Command) -> Result<String> {
@@ -2510,7 +2580,9 @@ fn run_tag_only_release_targets(
         .map(|lockfile| git_path_is_tracked(ctx, lockfile))
         .collect::<Result<Vec<_>>>()?;
 
-    for target in &targets {
+    let target_indices = (0..targets.len()).collect::<Vec<_>>();
+    run_bounded(target_indices.clone(), |index| {
+        let target = &targets[index];
         step(format!(
             "Bumping {} to {}",
             target.crate_name, target.next_version
@@ -2518,9 +2590,11 @@ fn run_tag_only_release_targets(
         write_manifest_version(&target.cargo_toml, &target.next_version)?;
         refresh_lockfile(ctx, &target.plugin_dir)?;
         ok(format!("{} Cargo.toml updated", target.crate_name));
-    }
+        Ok(())
+    })?;
 
-    for target in &targets {
+    run_bounded(target_indices, |index| {
+        let target = &targets[index];
         step(format!(
             "Building {} (release, wasm32-wasip1)",
             target.crate_name
@@ -2576,7 +2650,8 @@ fn run_tag_only_release_targets(
             descriptor.version,
             descriptor.plugin_type()
         ));
-    }
+        Ok(())
+    })?;
 
     if options.dry_run {
         println!("\n{YELLOW}{BOLD}Dry run complete — stopping before commit/tag/push.{RESET}");
@@ -3339,13 +3414,14 @@ fn run_ci_fmt_check(ctx: &TaskContext, scope: &CiScopeArgs) -> Result<()> {
     if let Some(rustup_toolchain) = configured_rustup_toolchain(ctx)? {
         ensure_rustup_component(&rustup_toolchain, "rustfmt")?;
     }
-    for project_dir in scoped_ci_project_dirs(ctx, scope)? {
+    let project_dirs = scoped_ci_project_dirs(ctx, scope)?;
+    run_bounded(project_dirs, |project_dir| {
         let relative = path_relative_to_repo(ctx, &project_dir)?;
         println!("   cargo fmt --check :: {relative}");
         let mut fmt = repo_cargo_command_in(ctx, &project_dir)?;
         fmt.args(["fmt", "--check"]);
-        run_checked(&mut fmt)?;
-    }
+        run_checked(&mut fmt)
+    })?;
     ok("cargo fmt passed");
     Ok(())
 }
@@ -3359,7 +3435,8 @@ fn run_ci_strict_clippy(ctx: &TaskContext, scope: &CiScopeArgs) -> Result<()> {
     if let Some(rustup_toolchain) = configured_rustup_toolchain(ctx)? {
         ensure_rustup_component(&rustup_toolchain, "clippy")?;
     }
-    for project_dir in scoped_ci_project_dirs(ctx, scope)? {
+    let project_dirs = scoped_ci_project_dirs(ctx, scope)?;
+    run_bounded(project_dirs, |project_dir| {
         let relative = path_relative_to_repo(ctx, &project_dir)?;
         println!("   cargo clippy -D warnings :: {relative}");
         let mut clippy = ci_cargo_command_in(ctx, &project_dir)?;
@@ -3371,8 +3448,8 @@ fn run_ci_strict_clippy(ctx: &TaskContext, scope: &CiScopeArgs) -> Result<()> {
             "--",
         ]);
         clippy.args(["-D", "warnings"]);
-        run_checked(&mut clippy)?;
-    }
+        run_checked(&mut clippy)
+    })?;
     ok("strict clippy passed");
     Ok(())
 }
@@ -3388,7 +3465,8 @@ fn run_ci_audit(ctx: &TaskContext, scope: &CiScopeArgs) -> Result<()> {
         "Ignoring advisories pending upstream runtime fixes: {}",
         AUDIT_IGNORE_ADVISORIES.join(" ")
     ));
-    for project_dir in scoped_ci_project_dirs(ctx, scope)? {
+    let project_dirs = scoped_ci_project_dirs(ctx, scope)?;
+    run_bounded(project_dirs, |project_dir| {
         let relative = path_relative_to_repo(ctx, &project_dir)?;
         println!("   cargo audit :: {relative}");
         let mut audit = repo_cargo_command_in(ctx, &project_dir)?;
@@ -3396,8 +3474,8 @@ fn run_ci_audit(ctx: &TaskContext, scope: &CiScopeArgs) -> Result<()> {
         for advisory in AUDIT_IGNORE_ADVISORIES {
             audit.args(["--ignore", advisory]);
         }
-        run_checked(&mut audit)?;
-    }
+        run_checked(&mut audit)
+    })?;
     ok("cargo audit passed");
     Ok(())
 }
@@ -3413,12 +3491,14 @@ fn run_plugin_build_all(ctx: &TaskContext) -> Result<()> {
     step("Building all plugin crates");
     ensure_current_sdk_dependency_is_published(ctx)?;
     require_wasm_target(ctx)?;
-    for dir in plugin_crate_dirs(ctx)? {
+    let plugin_dirs = plugin_crate_dirs(ctx)?;
+    run_bounded(plugin_dirs, |dir| {
         let manifest_metadata = plugin_manifest_metadata(&dir.join("Cargo.toml"))?;
         for feature_set in &manifest_metadata.feature_sets {
             build_plugin_wasm(ctx, &dir, feature_set)?;
         }
-    }
+        Ok(())
+    })?;
     ok("all plugin crates built");
     Ok(())
 }
@@ -3426,9 +3506,11 @@ fn run_plugin_build_all(ctx: &TaskContext) -> Result<()> {
 fn run_plugin_validate_all(ctx: &TaskContext) -> Result<()> {
     step("Validating all plugin crates");
     ensure_current_sdk_dependency_is_published(ctx)?;
-    for dir in plugin_crate_dirs(ctx)? {
+    let plugin_dirs = plugin_crate_dirs(ctx)?;
+    run_bounded(plugin_dirs, |dir| {
         run_plugin_validate(ctx, PluginValidateArgs { path: dir })?;
-    }
+        Ok(())
+    })?;
     ok("all plugin descriptors validated");
     Ok(())
 }
@@ -4431,22 +4513,25 @@ fn run_official_prepare(ctx: &TaskContext, args: OfficialPrepareArgs) -> Result<
 }
 
 fn run_official_prefetch(ctx: &TaskContext, args: OfficialPrefetchArgs) -> Result<()> {
-    if args.plugin_ids.is_empty() {
-        bail!("official prefetch requires at least one plugin id");
-    }
-
     let plugins = official_plugin_dirs_by_id(ctx)?;
-    let mut selected = BTreeSet::new();
-    for plugin_id in args.plugin_ids {
-        if !selected.insert(plugin_id.clone()) {
-            continue;
-        }
+    let plugin_ids = if args.plugin_ids.is_empty() {
+        plugins.keys().cloned().collect()
+    } else {
+        args.plugin_ids
+    };
 
+    let mut selected = BTreeSet::new();
+    let plugin_ids = plugin_ids
+        .into_iter()
+        .filter(|plugin_id| selected.insert(plugin_id.clone()))
+        .collect::<Vec<_>>();
+
+    run_bounded(plugin_ids, |plugin_id| {
         let plugin_dir = plugins
             .get(&plugin_id)
             .ok_or_else(|| anyhow!("plugin '{plugin_id}' not found in local official plugins"))?;
-        prefetch_plugin_dependencies(ctx, plugin_dir)?;
-    }
+        prefetch_plugin_dependencies(ctx, plugin_dir)
+    })?;
 
     ok("prefetched plugin release dependencies");
     Ok(())

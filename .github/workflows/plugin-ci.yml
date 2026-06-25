@@ -69,5 +69,8 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2.9.1
 
+      - name: Prefetch official plugin dependencies
+        run: cargo run --locked --manifest-path xtask/Cargo.toml -- official prefetch
+
       - name: Validate official plugins through the release Wasm path
         run: cargo run --locked --manifest-path xtask/Cargo.toml -- plugin validate-all
