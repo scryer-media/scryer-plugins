@@ -240,7 +240,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         field(
             "nzb_folder",
             "NZB Folder",
-            ConfigFieldType::String,
+            ConfigFieldType::Path,
             true,
             None,
             Some("Folder where .nzb files are written."),
@@ -248,7 +248,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         field(
             "watch_folder",
             "Watch Folder",
-            ConfigFieldType::String,
+            ConfigFieldType::Path,
             true,
             None,
             Some("Folder scanned for completed downloads."),

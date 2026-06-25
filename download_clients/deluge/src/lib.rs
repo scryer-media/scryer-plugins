@@ -11,7 +11,7 @@ use scryer_plugin_sdk::{
     PluginDownloadClientControlRequest, PluginDownloadClientMarkImportedRequest,
     PluginDownloadClientStatus, PluginDownloadItem, PluginDownloadOutputKind, PluginError,
     PluginErrorCode, PluginResult, PluginTorrentInitialState, PluginTorrentItem,
-    ProviderDescriptor, SDK_VERSION,
+    PluginTorrentQueuePlacement, ProviderDescriptor, SDK_VERSION,
 };
 use serde::Deserialize;
 
@@ -42,6 +42,8 @@ struct DelugeConfig {
     password: String,
     category: String,
     imported_category: String,
+    recent_priority: PluginTorrentQueuePlacement,
+    older_priority: PluginTorrentQueuePlacement,
     add_paused: bool,
     download_directory: String,
     completed_directory: String,
@@ -241,12 +243,7 @@ pub fn scryer_download_add(input: String) -> FnResult<String> {
     if !config.category.is_empty() {
         set_label(&config, &hash, &config.category)?;
     }
-    if request
-        .torrent
-        .as_ref()
-        .and_then(|torrent| torrent.queue_placement)
-        .is_some()
-    {
+    if should_move_to_top(&config, &request) {
         let _ = call_value(
             &config,
             "core.queue_top",
@@ -415,6 +412,8 @@ impl DelugeConfig {
             password: config_value("password").unwrap_or_else(|| "deluge".to_string()),
             category: config_value("category").unwrap_or_else(|| "tv-sonarr".to_string()),
             imported_category: config_value("post_import_category").unwrap_or_default(),
+            recent_priority: queue_placement_config("recent_priority"),
+            older_priority: queue_placement_config("older_priority"),
             add_paused: config_bool("add_paused", false),
             download_directory: config_value("download_directory").unwrap_or_default(),
             completed_directory: config_value("completed_directory").unwrap_or_default(),
@@ -478,6 +477,16 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             None,
             None,
         ),
+        queue_placement_field(
+            "recent_priority",
+            "Recent Priority",
+            "Queue placement for recent releases",
+        ),
+        queue_placement_field(
+            "older_priority",
+            "Older Priority",
+            "Queue placement for older releases",
+        ),
         field(
             "add_paused",
             "Add Paused",
@@ -489,7 +498,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         field(
             "download_directory",
             "Download Directory",
-            ConfigFieldType::String,
+            ConfigFieldType::Path,
             false,
             None,
             None,
@@ -497,7 +506,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         field(
             "completed_directory",
             "Completed Directory",
-            ConfigFieldType::String,
+            ConfigFieldType::Path,
             false,
             None,
             None,
@@ -574,6 +583,25 @@ fn add_options(
         options.insert("move_completed".to_string(), serde_json::Value::Bool(true));
     }
     serde_json::Value::Object(options)
+}
+
+fn should_move_to_top(config: &DelugeConfig, request: &PluginDownloadClientAddRequest) -> bool {
+    match request
+        .torrent
+        .as_ref()
+        .and_then(|torrent| torrent.queue_placement)
+    {
+        Some(PluginTorrentQueuePlacement::First) => true,
+        Some(PluginTorrentQueuePlacement::Last) => false,
+        Some(PluginTorrentQueuePlacement::Default) | None => {
+            let placement = if request.release.is_recent.unwrap_or(false) {
+                config.recent_priority
+            } else {
+                config.older_priority
+            };
+            placement == PluginTorrentQueuePlacement::First
+        }
+    }
 }
 
 fn authenticate(config: &DelugeConfig, force: bool) -> Result<String, Error> {
@@ -987,6 +1015,38 @@ fn config_bool(key: &str, default: bool) -> bool {
             )
         })
         .unwrap_or(default)
+}
+
+fn queue_placement_config(key: &str) -> PluginTorrentQueuePlacement {
+    match config_value(key).as_deref() {
+        Some("first") => PluginTorrentQueuePlacement::First,
+        Some("last") => PluginTorrentQueuePlacement::Last,
+        _ => PluginTorrentQueuePlacement::Last,
+    }
+}
+
+fn queue_placement_field(key: &str, label: &str, help_text: &str) -> ConfigFieldDef {
+    ConfigFieldDef {
+        key: key.to_string(),
+        label: label.to_string(),
+        field_type: ConfigFieldType::Select,
+        required: false,
+        default_value: Some("last".to_string()),
+        value_source: Default::default(),
+        host_binding: None,
+        role: None,
+        options: vec![
+            ConfigFieldOption {
+                value: "last".to_string(),
+                label: "Last".to_string(),
+            },
+            ConfigFieldOption {
+                value: "first".to_string(),
+                label: "First".to_string(),
+            },
+        ],
+        help_text: Some(help_text.to_string()),
+    }
 }
 
 fn field(

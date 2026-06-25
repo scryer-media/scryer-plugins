@@ -9,7 +9,7 @@ use scryer_plugin_sdk::{
     PluginDownloadClientControlRequest, PluginDownloadClientMarkImportedRequest,
     PluginDownloadClientStatus, PluginDownloadItem, PluginDownloadOutputKind, PluginError,
     PluginErrorCode, PluginResult, PluginTorrentInitialState, PluginTorrentItem,
-    ProviderDescriptor, SDK_VERSION,
+    PluginTorrentQueuePlacement, ProviderDescriptor, SDK_VERSION,
 };
 use serde::Deserialize;
 
@@ -29,6 +29,8 @@ struct TransmissionConfig {
     password: String,
     category: String,
     imported_category: String,
+    recent_priority: PluginTorrentQueuePlacement,
+    older_priority: PluginTorrentQueuePlacement,
     directory: String,
     add_paused: bool,
     post_import_action: PostImportAction,
@@ -253,12 +255,7 @@ pub fn scryer_download_add(input: String) -> FnResult<String> {
         .ok_or_else(|| Error::msg("Transmission did not return an added torrent hash"))?;
 
     apply_seed_limits(&config, &hash, &request)?;
-    if request
-        .torrent
-        .as_ref()
-        .and_then(|torrent| torrent.queue_placement)
-        .is_some()
-    {
+    if should_move_to_top(&config, &request) {
         let _ = rpc(
             &config,
             "queue-move-top",
@@ -272,6 +269,28 @@ pub fn scryer_download_add(input: String) -> FnResult<String> {
             info_hash: Some(hash),
         },
     ))?)
+}
+
+fn should_move_to_top(
+    config: &TransmissionConfig,
+    request: &PluginDownloadClientAddRequest,
+) -> bool {
+    match request
+        .torrent
+        .as_ref()
+        .and_then(|torrent| torrent.queue_placement)
+    {
+        Some(PluginTorrentQueuePlacement::First) => true,
+        Some(PluginTorrentQueuePlacement::Last) => false,
+        Some(PluginTorrentQueuePlacement::Default) | None => {
+            let placement = if request.release.is_recent.unwrap_or(false) {
+                config.recent_priority
+            } else {
+                config.older_priority
+            };
+            placement == PluginTorrentQueuePlacement::First
+        }
+    }
 }
 
 #[plugin_fn]
@@ -466,6 +485,8 @@ impl TransmissionConfig {
             password: config_value("password").unwrap_or_default(),
             category,
             imported_category: config_value("post_import_category").unwrap_or_default(),
+            recent_priority: queue_placement_config("recent_priority"),
+            older_priority: queue_placement_config("older_priority"),
             directory: config_value("directory").unwrap_or_default(),
             add_paused: config_bool("add_paused", false),
             post_import_action: match config_value("post_import_action")
@@ -545,10 +566,20 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             None,
             Some("Label applied after Scryer imports the download"),
         ),
+        queue_placement_field(
+            "recent_priority",
+            "Recent Priority",
+            "Queue placement for recent releases",
+        ),
+        queue_placement_field(
+            "older_priority",
+            "Older Priority",
+            "Queue placement for older releases",
+        ),
         field(
             "directory",
             "Directory",
-            ConfigFieldType::String,
+            ConfigFieldType::Path,
             false,
             None,
             Some("Optional download directory"),
@@ -1114,6 +1145,38 @@ fn config_bool(key: &str, default: bool) -> bool {
             )
         })
         .unwrap_or(default)
+}
+
+fn queue_placement_config(key: &str) -> PluginTorrentQueuePlacement {
+    match config_value(key).as_deref() {
+        Some("first") => PluginTorrentQueuePlacement::First,
+        Some("last") => PluginTorrentQueuePlacement::Last,
+        _ => PluginTorrentQueuePlacement::Last,
+    }
+}
+
+fn queue_placement_field(key: &str, label: &str, help_text: &str) -> ConfigFieldDef {
+    ConfigFieldDef {
+        key: key.to_string(),
+        label: label.to_string(),
+        field_type: ConfigFieldType::Select,
+        required: false,
+        default_value: Some("last".to_string()),
+        value_source: Default::default(),
+        host_binding: None,
+        role: None,
+        options: vec![
+            ConfigFieldOption {
+                value: "last".to_string(),
+                label: "Last".to_string(),
+            },
+            ConfigFieldOption {
+                value: "first".to_string(),
+                label: "First".to_string(),
+            },
+        ],
+        help_text: Some(help_text.to_string()),
+    }
 }
 
 fn field(

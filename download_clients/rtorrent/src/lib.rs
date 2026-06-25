@@ -443,7 +443,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         field(
             "directory",
             "Directory",
-            ConfigFieldType::String,
+            ConfigFieldType::Path,
             false,
             None,
             None,

@@ -374,7 +374,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         field(
             "destination_directory",
             "Destination",
-            ConfigFieldType::String,
+            ConfigFieldType::Path,
             false,
             None,
             None,

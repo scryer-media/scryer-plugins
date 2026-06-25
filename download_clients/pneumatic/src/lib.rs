@@ -228,7 +228,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         field(
             "nzb_folder",
             "NZB Folder",
-            ConfigFieldType::String,
+            ConfigFieldType::Path,
             true,
             None,
             Some("Folder where Pneumatic .nzb files are written."),
@@ -236,7 +236,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         field(
             "strm_folder",
             "STRM Folder",
-            ConfigFieldType::String,
+            ConfigFieldType::Path,
             true,
             None,
             Some("Folder where Pneumatic .strm files are written and scanned."),

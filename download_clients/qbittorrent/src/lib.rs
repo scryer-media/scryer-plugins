@@ -827,7 +827,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         ConfigFieldDef {
             key: "static_tags".to_string(),
             label: "Static Tags".to_string(),
-            field_type: ConfigFieldType::String,
+            field_type: ConfigFieldType::Tag,
             required: false,
             default_value: None,
             value_source: Default::default(),
@@ -919,7 +919,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         ConfigFieldDef {
             key: "imported_tag".to_string(),
             label: "Imported Tag".to_string(),
-            field_type: ConfigFieldType::String,
+            field_type: ConfigFieldType::Tag,
             required: false,
             default_value: Some(IMPORTED_TAG_DEFAULT.to_string()),
             value_source: Default::default(),

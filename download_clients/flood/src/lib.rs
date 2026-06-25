@@ -4,10 +4,10 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use extism_pdk::*;
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
-    ConfigFieldDef, ConfigFieldRole, ConfigFieldType, DownloadClientCapabilities,
-    DownloadClientDescriptor, DownloadControlAction, DownloadInputKind, DownloadIsolationMode,
-    DownloadItemState, DownloadTorrentCapabilities, PluginCompletedDownload, PluginDescriptor,
-    PluginDownloadClientAddRequest, PluginDownloadClientAddResponse,
+    ConfigFieldDef, ConfigFieldOption, ConfigFieldRole, ConfigFieldType,
+    DownloadClientCapabilities, DownloadClientDescriptor, DownloadControlAction, DownloadInputKind,
+    DownloadIsolationMode, DownloadItemState, DownloadTorrentCapabilities, PluginCompletedDownload,
+    PluginDescriptor, PluginDownloadClientAddRequest, PluginDownloadClientAddResponse,
     PluginDownloadClientControlRequest, PluginDownloadClientMarkImportedRequest,
     PluginDownloadClientStatus, PluginDownloadItem, PluginDownloadOutputKind, PluginError,
     PluginErrorCode, PluginResult, PluginTorrentItem, ProviderDescriptor, SDK_VERSION,
@@ -25,6 +25,7 @@ struct FloodConfig {
     destination: String,
     tags: Vec<String>,
     post_import_tags: Vec<String>,
+    additional_tags: Vec<String>,
     start_on_add: bool,
 }
 
@@ -376,6 +377,7 @@ impl FloodConfig {
             destination: config_value("destination").unwrap_or_default(),
             tags: config_list("tags", &["sonarr"]),
             post_import_tags: config_list("post_import_tags", &[]),
+            additional_tags: config_list("additional_tags", &[]),
             start_on_add: config_bool("start_on_add", true),
         })
     }
@@ -427,7 +429,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         field(
             "destination",
             "Destination",
-            ConfigFieldType::String,
+            ConfigFieldType::Path,
             false,
             None,
             None,
@@ -435,7 +437,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         field(
             "tags",
             "Tags",
-            ConfigFieldType::String,
+            ConfigFieldType::Tag,
             false,
             Some("sonarr"),
             None,
@@ -443,11 +445,12 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         field(
             "post_import_tags",
             "Post Import Tags",
-            ConfigFieldType::String,
+            ConfigFieldType::Tag,
             false,
             None,
             None,
         ),
+        additional_tags_field(),
         field(
             "start_on_add",
             "Start On Add",
@@ -600,12 +603,63 @@ fn extract_cookie(response: &RawResponse) -> Option<String> {
 
 fn tags_for_request(config: &FloodConfig, request: &PluginDownloadClientAddRequest) -> Vec<String> {
     let mut tags = config.tags.clone();
+    tags.extend(additional_tags_for_request(config, request));
     if let Some(isolation) = request.routing.isolation_value.as_deref()
         && !isolation.trim().is_empty()
     {
         tags.push(isolation.trim().to_string());
     }
     dedupe(tags)
+}
+
+fn additional_tags_for_request(
+    config: &FloodConfig,
+    request: &PluginDownloadClientAddRequest,
+) -> Vec<String> {
+    let mut tags = Vec::new();
+    for tag in &config.additional_tags {
+        match tag.as_str() {
+            "title_slug" => push_optional_tag(&mut tags, title_slug_for_request(request)),
+            "title_tags" => tags.extend(request.title.tags.iter().cloned()),
+            "year" => push_optional_tag(&mut tags, request.title.year.map(|year| year.to_string())),
+            "indexer" => push_optional_tag(&mut tags, request.release.indexer_name.clone()),
+            "languages" => push_optional_tag(&mut tags, request.title.language.clone()),
+            "network" => push_optional_tag(&mut tags, request.title.network.clone()),
+            _ => {}
+        }
+    }
+    tags
+}
+
+fn push_optional_tag(tags: &mut Vec<String>, value: Option<String>) {
+    if let Some(value) = value
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
+    {
+        tags.push(value);
+    }
+}
+
+fn title_slug_for_request(request: &PluginDownloadClientAddRequest) -> Option<String> {
+    request.title.title_slug.clone().or_else(|| {
+        let fallback = slug_tag(&request.title.title_name);
+        (!fallback.is_empty()).then_some(fallback)
+    })
+}
+
+fn slug_tag(value: &str) -> String {
+    let mut out = String::new();
+    let mut last_was_separator = false;
+    for ch in value.trim().chars() {
+        if ch.is_ascii_alphanumeric() {
+            out.push(ch.to_ascii_lowercase());
+            last_was_separator = false;
+        } else if !last_was_separator && !out.is_empty() {
+            out.push('-');
+            last_was_separator = true;
+        }
+    }
+    out.trim_matches('-').to_string()
 }
 
 fn torrent_to_item(
@@ -896,6 +950,46 @@ fn config_bool(key: &str, default: bool) -> bool {
             )
         })
         .unwrap_or(default)
+}
+
+fn additional_tags_field() -> ConfigFieldDef {
+    ConfigFieldDef {
+        key: "additional_tags".to_string(),
+        label: "Additional Tags".to_string(),
+        field_type: ConfigFieldType::Tag,
+        required: false,
+        default_value: None,
+        value_source: Default::default(),
+        host_binding: None,
+        role: None,
+        options: vec![
+            ConfigFieldOption {
+                value: "title_slug".to_string(),
+                label: "Title Slug".to_string(),
+            },
+            ConfigFieldOption {
+                value: "title_tags".to_string(),
+                label: "Title Tags".to_string(),
+            },
+            ConfigFieldOption {
+                value: "year".to_string(),
+                label: "Year".to_string(),
+            },
+            ConfigFieldOption {
+                value: "indexer".to_string(),
+                label: "Indexer".to_string(),
+            },
+            ConfigFieldOption {
+                value: "languages".to_string(),
+                label: "Language".to_string(),
+            },
+            ConfigFieldOption {
+                value: "network".to_string(),
+                label: "Network".to_string(),
+            },
+        ],
+        help_text: Some("Metadata-derived tags added to new torrents".to_string()),
+    }
 }
 
 fn field(

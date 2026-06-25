@@ -302,7 +302,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         field(
             "torrent_folder",
             "Torrent Folder",
-            ConfigFieldType::String,
+            ConfigFieldType::Path,
             true,
             None,
             None,
@@ -310,7 +310,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         field(
             "watch_folder",
             "Watch Folder",
-            ConfigFieldType::String,
+            ConfigFieldType::Path,
             true,
             None,
             None,
