@@ -33,6 +33,7 @@ const YELLOW: &str = "\x1b[1;33m";
 const BOLD: &str = "\x1b[1m";
 const RESET: &str = "\x1b[0m";
 const WASM_TARGET: &str = "wasm32-wasip1";
+#[allow(dead_code)]
 const CATALOG_V2_SCHEMA: &str = "scryer.plugin.catalog.v2";
 const CHILD_CATALOG_V2_SCHEMA: &str = "scryer.plugin.child_catalog.v2";
 const CATALOG_V3_SCHEMA: &str = "scryer.plugin.catalog.v3";
@@ -44,10 +45,10 @@ const ZSTD_LEVEL: &str = "-19";
 const BOUNDED_TASK_CONCURRENCY: usize = 8;
 const SHORT_CATALOG_HASH_LEN: usize = 12;
 const OFFICIAL_GITHUB_REPO: &str = "scryer-media/scryer-plugins";
-const DEFAULT_OFFICIAL_RELEASE_WORKFLOW: &str = ".github/workflows/release-plugin.yml";
+const DEFAULT_OFFICIAL_RELEASE_WORKFLOW: &str = ".github/workflows/release-plugin-v3.yml";
 const OFFICIAL_RELEASE_WORKFLOW_ENV: &str = "SCRYER_OFFICIAL_RELEASE_WORKFLOW_PATH";
 const OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX_ENV: &str = "SCRYER_OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX";
-const DEFAULT_OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX: &str = "plugins";
+const DEFAULT_OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX: &str = "plugins-v3";
 const RELEASE_SOURCE_ROOT_ENV: &str = "SCRYER_PLUGIN_RELEASE_SOURCE_ROOT";
 const SDK_LOCAL_OVERRIDE_ENV: &str = "SCRYER_PLUGIN_SDK_LOCAL_PATH";
 const CENTRAL_CATALOG_RELEASE_TAG: &str = "catalog/v2";
@@ -396,13 +397,17 @@ struct CatalogArgs {
 
 #[derive(Subcommand)]
 enum CatalogCommand {
+    #[command(hide = true)]
     RenderV2,
     RenderV3,
+    #[command(hide = true)]
     PrepareV2(CatalogPrepareV2Args),
     PrepareV3(CatalogPrepareV3Args),
+    #[command(hide = true)]
     PublishV2,
     PublishV3,
     UploadV3R2(CatalogUploadV3R2Args),
+    #[command(hide = true)]
     ValidateV2,
 }
 
@@ -671,7 +676,27 @@ impl CatalogVersion {
 }
 
 fn default_catalog_versions() -> BTreeSet<CatalogVersion> {
-    BTreeSet::from([CatalogVersion::V2, CatalogVersion::V3])
+    BTreeSet::from([CatalogVersion::V3])
+}
+
+fn ensure_catalog_v2_not_requested(version: CatalogVersion) -> Result<()> {
+    if version == CatalogVersion::V2 {
+        bail!("catalog-v2 publishing is retired; use catalog-v3 instead");
+    }
+    Ok(())
+}
+
+fn reject_retired_catalog_v2_metadata(
+    manifest_path: &Path,
+    catalog_versions: &BTreeSet<CatalogVersion>,
+) -> Result<()> {
+    if catalog_versions.contains(&CatalogVersion::V2) {
+        bail!(
+            "{} package.metadata.scryer.catalog_versions may not contain v2; catalog-v2 publishing is retired",
+            manifest_path.display()
+        );
+    }
+    Ok(())
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
@@ -861,10 +886,6 @@ fn parse_feature_sets(
     Ok(parsed)
 }
 
-fn feature_sets_include_baseline(feature_sets: &[WasmFeatureSet]) -> bool {
-    feature_sets.iter().any(WasmFeatureSet::is_baseline)
-}
-
 fn primary_feature_set(feature_sets: &[WasmFeatureSet]) -> &WasmFeatureSet {
     feature_sets
         .iter()
@@ -922,6 +943,7 @@ struct RulePackManifestV1 {
 }
 
 #[derive(Clone, Debug)]
+#[allow(dead_code)]
 struct PreparedRulePack {
     entry: RulePackCatalogEntryV2,
     source_path: PathBuf,
@@ -1843,6 +1865,7 @@ fn plugin_manifest_metadata(manifest_path: &Path) -> Result<PluginManifestMetada
                     manifest_path.display()
                 );
             }
+            reject_retired_catalog_v2_metadata(manifest_path, &parsed)?;
             parsed
         }
         None => default_catalog_versions(),
@@ -1891,14 +1914,6 @@ fn plugin_manifest_metadata(manifest_path: &Path) -> Result<PluginManifestMetada
         if plugin_id.is_none() {
             bail!(
                 "{} must define a non-empty package.metadata.scryer.plugin_id for official plugins",
-                manifest_path.display()
-            );
-        }
-        if catalog_versions.contains(&CatalogVersion::V2)
-            && !feature_sets_include_baseline(&feature_sets)
-        {
-            bail!(
-                "{} official plugins publishing catalog-v2 must include a baseline package.metadata.scryer.feature_sets entry with required_features = []",
                 manifest_path.display()
             );
         }
@@ -2082,6 +2097,7 @@ fn package_version(manifest_path: &Path) -> Result<String> {
     Ok(version.trim().to_string())
 }
 
+#[allow(dead_code)]
 fn plugin_crate_version(plugin_dir: &Path) -> Result<String> {
     package_version(&plugin_dir.join("Cargo.toml"))
 }
@@ -3480,7 +3496,93 @@ fn run_ci_audit(ctx: &TaskContext, scope: &CiScopeArgs) -> Result<()> {
     Ok(())
 }
 
+fn retired_catalog_v2_guard_violations(repo_root: &Path) -> Result<Vec<String>> {
+    let workflow_needles = [
+        "prepare-v2",
+        "publish-v2",
+        "catalog/v2",
+        "catalog-v2",
+        "^plugins/",
+        "tag=\"plugins/",
+        "tag='plugins/",
+        "tag#plugins/",
+    ];
+    let architecture_needles = [
+        "catalog validate-v2",
+        "plugins/<plugin-id>/v*",
+        "plugins/release/*",
+        "SDK-v2 ABI",
+    ];
+    let contributor_needles = [
+        "catalog validate-v2",
+        "plugins/<plugin-id>/v*",
+        "plugins/release/*",
+        "Plugin SDK v2",
+    ];
+    let mut violations = Vec::new();
+
+    let mut check_file = |relative_path: &str, needles: &[&str]| -> Result<()> {
+        let path = repo_root.join(relative_path);
+        if !path.is_file() {
+            return Ok(());
+        }
+        let contents = fs::read_to_string(&path)
+            .with_context(|| format!("failed to read {}", path.display()))?;
+        for needle in needles {
+            if contents.contains(needle) {
+                violations.push(format!(
+                    "{relative_path} contains retired catalog-v2 publishing reference `{needle}`"
+                ));
+            }
+        }
+        Ok(())
+    };
+
+    check_file("ARCHITECTURE.md", &architecture_needles)?;
+    check_file("CONTRIBUTORS.md", &contributor_needles)?;
+
+    let workflows_dir = repo_root.join(".github/workflows");
+    if workflows_dir.is_dir() {
+        for entry in fs::read_dir(&workflows_dir)
+            .with_context(|| format!("failed to read {}", workflows_dir.display()))?
+        {
+            let path = entry?.path();
+            if !path.is_file() {
+                continue;
+            }
+            let extension = path.extension().and_then(OsStr::to_str);
+            if extension != Some("yml") && extension != Some("yaml") {
+                continue;
+            }
+            let relative_path = path
+                .strip_prefix(repo_root)
+                .with_context(|| {
+                    format!("{} is not inside {}", path.display(), repo_root.display())
+                })?
+                .to_string_lossy()
+                .replace('\\', "/");
+            check_file(&relative_path, &workflow_needles)?;
+        }
+    }
+
+    Ok(violations)
+}
+
+fn run_ci_retired_catalog_v2_guard(ctx: &TaskContext) -> Result<()> {
+    step("Checking retired catalog-v2 publishing guard");
+    let violations = retired_catalog_v2_guard_violations(&ctx.repo_root)?;
+    if !violations.is_empty() {
+        bail!(
+            "retired catalog-v2 publishing guard failed:\n{}",
+            violations.join("\n")
+        );
+    }
+    ok("retired catalog-v2 publishing guard passed");
+    Ok(())
+}
+
 fn run_ci_strict(ctx: &TaskContext, scope: &CiScopeArgs) -> Result<()> {
+    run_ci_retired_catalog_v2_guard(ctx)?;
     run_ci_fmt_check(ctx, scope)?;
     run_ci_audit(ctx, scope)?;
     run_ci_strict_clippy(ctx, scope)?;
@@ -4156,6 +4258,7 @@ fn read_catalog_v2_from_path(ctx: &TaskContext, path: &Path) -> Result<CatalogV2
         .with_context(|| format!("failed to parse catalog {}", path.display()))
 }
 
+#[allow(dead_code)]
 fn read_child_catalog_v2_from_path(ctx: &TaskContext, path: &Path) -> Result<ChildCatalogV2> {
     let bytes = read_catalog_bytes(ctx, path)?;
     serde_json::from_slice(&bytes)
@@ -4173,6 +4276,7 @@ fn read_catalog_v3_snippet_from_path(path: &Path) -> Result<CatalogV3PluginEntry
         .with_context(|| format!("failed to parse catalog-v3 snippet {}", path.display()))
 }
 
+#[allow(dead_code)]
 fn read_prepared_child_catalog(ctx: &TaskContext, dir: &Path) -> Result<ChildCatalogV2> {
     let paths = catalog_asset_paths(dir);
     if paths.pretty_json.is_file() {
@@ -4293,6 +4397,9 @@ fn prepare_official_release(
     ctx: &TaskContext,
     args: OfficialPrepareArgs,
 ) -> Result<OfficialPreparedRelease> {
+    if let Some(version) = args.catalog_version {
+        ensure_catalog_v2_not_requested(version)?;
+    }
     ensure_current_sdk_dependency_is_published(ctx)?;
     step(format!(
         "Preparing unsigned release assets for {}",
@@ -4307,25 +4414,18 @@ fn prepare_official_release(
             version
         }
         None => {
-            if plugin.catalog_versions.len() != 1 {
-                bail!(
-                    "{} publishes multiple catalog lanes; pass --catalog-version v2 or --catalog-version v3",
-                    plugin.plugin_id
-                );
+            if !plugin.catalog_versions.contains(&CatalogVersion::V3) {
+                bail!("{} does not publish catalog-v3", plugin.plugin_id);
             }
-            *plugin
-                .catalog_versions
-                .iter()
-                .next()
-                .expect("catalog_versions should not be empty")
+            CatalogVersion::V3
         }
     };
     let lane = match catalog_version {
         CatalogVersion::V2 => PluginArtifactLane::V2,
         CatalogVersion::V3 => PluginArtifactLane::V3,
     };
-    if catalog_version == CatalogVersion::V3 && args.existing_child_catalog.is_some() {
-        bail!("--existing-child-catalog is only valid for catalog-v2 preparation");
+    if args.existing_child_catalog.is_some() {
+        bail!("--existing-child-catalog is retired with catalog-v2 publishing");
     }
     let existing_releases = if catalog_version == CatalogVersion::V2 {
         resolve_existing_child_catalog_releases(
@@ -4749,6 +4849,7 @@ fn run_official_verify_prepared(ctx: &TaskContext, dir: &Path) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn catalog_entry_from_local_plugin(plugin: &LocalPluginInfo) -> Result<CatalogV2Entry> {
     let version = plugin_crate_version(&plugin.plugin_dir)?;
     Ok(CatalogV2Entry {
@@ -4769,6 +4870,7 @@ fn catalog_entry_from_local_plugin(plugin: &LocalPluginInfo) -> Result<CatalogV2
     })
 }
 
+#[allow(dead_code)]
 fn catalog_entry_from_child_catalog(catalog: &ChildCatalogV2) -> Result<CatalogV2Entry> {
     let release = latest_child_catalog_release(catalog)?;
     Ok(CatalogV2Entry {
@@ -4789,6 +4891,7 @@ fn catalog_entry_from_child_catalog(catalog: &ChildCatalogV2) -> Result<CatalogV
     })
 }
 
+#[allow(dead_code)]
 fn merge_catalog_plugin_entries(
     existing: Vec<CatalogV2Entry>,
     updates: Vec<CatalogV2Entry>,
@@ -5042,6 +5145,7 @@ fn catalog_v3_entry_from_current_plugin_build(
     Ok(catalog_v3_plugin_entry(plugin, vec![release]))
 }
 
+#[allow(dead_code)]
 fn rule_pack_asset_url(asset_name: &str) -> String {
     github_release_asset_url(
         OFFICIAL_GITHUB_REPO,
@@ -5085,6 +5189,7 @@ fn load_rule_pack_manifest(path: &Path) -> Result<RulePackManifestV1> {
     Ok(manifest)
 }
 
+#[allow(dead_code)]
 fn load_rule_pack_catalog_entries(ctx: &TaskContext) -> Result<Vec<PreparedRulePack>> {
     let manifest_path = ctx.repo_root.join(RULE_PACK_SOURCE_MANIFEST);
     let source: RulePackSourceManifest = serde_json::from_slice(&fs::read(&manifest_path)?)
@@ -5279,6 +5384,7 @@ fn prepare_rule_pack_v3_entries(
     Ok(prepared)
 }
 
+#[allow(dead_code)]
 fn stage_rule_pack_assets(rule_packs: &[PreparedRulePack], output_dir: &Path) -> Result<()> {
     for rule_pack in rule_packs {
         fs::copy(
@@ -5295,16 +5401,14 @@ fn stage_rule_pack_assets(rule_packs: &[PreparedRulePack], output_dir: &Path) ->
     Ok(())
 }
 
-fn run_catalog_render_v2(ctx: &TaskContext) -> Result<()> {
-    run_catalog_prepare_v2(
-        ctx,
-        CatalogPrepareV2Args {
-            out: None,
-            plugin_ids: Vec::new(),
-            existing_catalog: None,
-            prepared_child_catalog_root: None,
-        },
+fn retired_catalog_v2_command(command: &str) -> Result<()> {
+    bail!(
+        "{command} is retired with catalog-v2 publishing; use the catalog-v3 release flow instead"
     )
+}
+
+fn run_catalog_render_v2(_ctx: &TaskContext) -> Result<()> {
+    retired_catalog_v2_command("catalog render-v2")
 }
 
 fn run_catalog_render_v3(ctx: &TaskContext) -> Result<()> {
@@ -5320,91 +5424,8 @@ fn run_catalog_render_v3(ctx: &TaskContext) -> Result<()> {
     )
 }
 
-fn run_catalog_prepare_v2(ctx: &TaskContext, args: CatalogPrepareV2Args) -> Result<()> {
-    let mut preserved_rule_packs = None;
-    let plugins = if args.plugin_ids.is_empty() {
-        step("Preparing catalog-v2 assets from local official plugin descriptors");
-        discover_local_plugins(ctx)?
-            .iter()
-            .filter(|plugin| plugin_publishes_catalog(plugin, CatalogVersion::V2))
-            .map(catalog_entry_from_local_plugin)
-            .collect::<Result<Vec<_>>>()?
-    } else {
-        if args.prepared_child_catalog_root.is_some() {
-            step("Preparing catalog-v2 assets from prepared official child catalogs");
-        } else {
-            step("Preparing catalog-v2 assets for selected official plugin descriptors");
-        }
-        let mut selected = BTreeSet::new();
-        let mut updates = Vec::new();
-        for plugin_id in &args.plugin_ids {
-            if !selected.insert(plugin_id.clone()) {
-                continue;
-            }
-            let plugin = discover_local_official_plugin(ctx, plugin_id)?;
-            if !plugin_publishes_catalog(&plugin, CatalogVersion::V2) {
-                continue;
-            }
-            if let Some(root) = args.prepared_child_catalog_root.as_deref() {
-                let child_catalog = read_prepared_child_catalog(ctx, &root.join(plugin_id))?;
-                if child_catalog.id != *plugin_id {
-                    bail!(
-                        "prepared child catalog at {} has id '{}' but expected '{}'",
-                        root.join(plugin_id).display(),
-                        child_catalog.id,
-                        plugin_id
-                    );
-                }
-                updates.push(catalog_entry_from_child_catalog(&child_catalog)?);
-            } else {
-                updates.push(catalog_entry_from_local_plugin(&plugin)?);
-            }
-        }
-        let base_catalog = match args.existing_catalog.as_deref() {
-            Some(path) => read_catalog_v2_from_path(ctx, path)?,
-            None => match read_published_official_catalog(ctx) {
-                Ok(catalog) => catalog,
-                Err(error) if args.prepared_child_catalog_root.is_some() => {
-                    warn(format!(
-                        "published catalog-v2 was unavailable; rebuilding selected catalog entries from prepared child catalogs: {error:#}"
-                    ));
-                    CatalogV2 {
-                        schema_version: CATALOG_V2_SCHEMA.to_string(),
-                        plugins: Vec::new(),
-                        rule_packs: Vec::new(),
-                    }
-                }
-                Err(error) => return Err(error),
-            },
-        };
-        preserved_rule_packs = Some(base_catalog.rule_packs.clone());
-        merge_catalog_plugin_entries(base_catalog.plugins, updates)
-    };
-    let local_rule_packs = if preserved_rule_packs.is_some() {
-        Vec::new()
-    } else {
-        load_rule_pack_catalog_entries(ctx)?
-    };
-    let rule_packs = preserved_rule_packs.unwrap_or_else(|| {
-        local_rule_packs
-            .iter()
-            .map(|rule_pack| rule_pack.entry.clone())
-            .collect()
-    });
-    let catalog = CatalogV2 {
-        schema_version: CATALOG_V2_SCHEMA.to_string(),
-        plugins,
-        rule_packs,
-    };
-    validate_official_catalog(&catalog)?;
-    let dist = args
-        .out
-        .unwrap_or_else(|| ctx.repo_root.join("dist").join("catalog-v2"));
-    let central_paths = write_catalog_assets(ctx, &catalog, &dist)?;
-    stage_rule_pack_assets(&local_rule_packs, &dist)?;
-    ok(format!("wrote {}", central_paths.pretty_json.display()));
-    ok(format!("wrote {}", central_paths.minified_zst.display()));
-    Ok(())
+fn run_catalog_prepare_v2(_ctx: &TaskContext, _args: CatalogPrepareV2Args) -> Result<()> {
+    retired_catalog_v2_command("catalog prepare-v2")
 }
 
 fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Result<()> {
@@ -5528,19 +5549,8 @@ fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Resu
     Ok(())
 }
 
-fn run_catalog_publish_v2(ctx: &TaskContext) -> Result<()> {
-    warn(
-        "catalog publish-v2 now prepares unsigned assets only; CI owns signing and GitHub release publication",
-    );
-    run_catalog_prepare_v2(
-        ctx,
-        CatalogPrepareV2Args {
-            out: None,
-            plugin_ids: Vec::new(),
-            existing_catalog: None,
-            prepared_child_catalog_root: None,
-        },
-    )
+fn run_catalog_publish_v2(_ctx: &TaskContext) -> Result<()> {
+    retired_catalog_v2_command("catalog publish-v2")
 }
 
 fn run_catalog_publish_v3(ctx: &TaskContext) -> Result<()> {
@@ -6088,6 +6098,7 @@ fn cosign_verify_blob(ctx: &TaskContext, repo: &str, blob: &Path, bundle: &Path)
     cosign_verify_blob_with_identity_pattern(ctx, blob, bundle, &identity_pattern)
 }
 
+#[allow(dead_code)]
 fn cosign_verify_official_blob(ctx: &TaskContext, blob: &Path, bundle: &Path) -> Result<()> {
     let identity_pattern = format!(
         "^https://github\\.com/{}/{}@refs/(tags|heads)/.*$",
@@ -6618,6 +6629,7 @@ fn validate_catalog_v3(catalog: &CatalogV3) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn validate_official_catalog(catalog: &CatalogV2) -> Result<()> {
     if catalog.schema_version != CATALOG_V2_SCHEMA {
         bail!(
@@ -6730,6 +6742,7 @@ fn validate_official_catalog(catalog: &CatalogV2) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 fn validate_official_child_catalog(
     catalog: &ChildCatalogV2,
     central_entry: &CatalogV2Entry,
@@ -6831,6 +6844,7 @@ fn validate_official_child_catalog(
     Ok(())
 }
 
+#[allow(dead_code)]
 fn validate_official_release_descriptor(
     descriptor: &PluginDescriptor,
     child: &ChildCatalogV2,
@@ -7002,176 +7016,8 @@ fn run_community_verify(ctx: &TaskContext, github_repo: &str) -> Result<()> {
     Ok(())
 }
 
-fn run_catalog_validate_v2(ctx: &TaskContext) -> Result<()> {
-    step("Validating published official catalog-v2 assets");
-
-    let temp = tempfile::tempdir()?;
-    let catalog_dir = temp.path().join("catalog");
-    let central_pretty = github_release_download(
-        ctx,
-        OFFICIAL_GITHUB_REPO,
-        CENTRAL_CATALOG_RELEASE_TAG,
-        CATALOG_PRETTY_JSON,
-        &catalog_dir,
-    )?;
-    let central_pretty_bundle = github_release_download(
-        ctx,
-        OFFICIAL_GITHUB_REPO,
-        CENTRAL_CATALOG_RELEASE_TAG,
-        &format!("{CATALOG_PRETTY_JSON}.bundle"),
-        &catalog_dir,
-    )?;
-    let central_runtime = github_release_download(
-        ctx,
-        OFFICIAL_GITHUB_REPO,
-        CENTRAL_CATALOG_RELEASE_TAG,
-        CATALOG_MINIFIED_ZST,
-        &catalog_dir,
-    )?;
-    let central_runtime_bundle = github_release_download(
-        ctx,
-        OFFICIAL_GITHUB_REPO,
-        CENTRAL_CATALOG_RELEASE_TAG,
-        &format!("{CATALOG_MINIFIED_ZST}.bundle"),
-        &catalog_dir,
-    )?;
-    cosign_verify_official_blob(ctx, &central_pretty, &central_pretty_bundle)?;
-    cosign_verify_official_blob(ctx, &central_runtime, &central_runtime_bundle)?;
-
-    let pretty_value: serde_json::Value = serde_json::from_slice(&fs::read(&central_pretty)?)
-        .with_context(|| format!("failed to parse {}", central_pretty.display()))?;
-    let runtime_value: serde_json::Value =
-        serde_json::from_slice(&read_catalog_bytes(ctx, &central_runtime)?)
-            .with_context(|| format!("failed to parse {}", central_runtime.display()))?;
-    if pretty_value != runtime_value {
-        bail!("published catalog-v2 pretty JSON and zstd runtime asset differ");
-    }
-    let catalog: CatalogV2 = serde_json::from_value(runtime_value)?;
-    validate_official_catalog(&catalog)?;
-
-    for rule_pack in &catalog.rule_packs {
-        let (tag, asset) = release_asset_url_parts(&rule_pack.url, OFFICIAL_GITHUB_REPO)?;
-        let pack_dir = temp.path().join("rule-packs");
-        let path = github_release_download(ctx, OFFICIAL_GITHUB_REPO, &tag, &asset, &pack_dir)?;
-        let manifest = load_rule_pack_manifest(&path)?;
-        if manifest.id != rule_pack.id
-            || manifest.name != rule_pack.name
-            || manifest.author != rule_pack.author
-            || manifest.version != rule_pack.version
-        {
-            bail!(
-                "{}: published rule pack asset does not match central catalog metadata",
-                rule_pack.id
-            );
-        }
-    }
-
-    for plugin in &catalog.plugins {
-        let (tag, asset) =
-            release_asset_url_parts(&plugin.child_catalog_url, OFFICIAL_GITHUB_REPO)?;
-        let child_dir = temp.path().join("plugins").join(&plugin.id);
-        let child_pretty = github_release_download(
-            ctx,
-            OFFICIAL_GITHUB_REPO,
-            &tag,
-            CATALOG_PRETTY_JSON,
-            &child_dir,
-        )?;
-        let child_pretty_bundle = github_release_download(
-            ctx,
-            OFFICIAL_GITHUB_REPO,
-            &tag,
-            &format!("{CATALOG_PRETTY_JSON}.bundle"),
-            &child_dir,
-        )?;
-        let child_runtime =
-            github_release_download(ctx, OFFICIAL_GITHUB_REPO, &tag, &asset, &child_dir)?;
-        let child_runtime_bundle = github_release_download(
-            ctx,
-            OFFICIAL_GITHUB_REPO,
-            &tag,
-            &format!("{asset}.bundle"),
-            &child_dir,
-        )?;
-        cosign_verify_official_blob(ctx, &child_pretty, &child_pretty_bundle)?;
-        cosign_verify_official_blob(ctx, &child_runtime, &child_runtime_bundle)?;
-
-        let child_pretty_value: serde_json::Value =
-            serde_json::from_slice(&fs::read(&child_pretty)?)
-                .with_context(|| format!("failed to parse {}", child_pretty.display()))?;
-        let child_runtime_value: serde_json::Value =
-            serde_json::from_slice(&read_catalog_bytes(ctx, &child_runtime)?)
-                .with_context(|| format!("failed to parse {}", child_runtime.display()))?;
-        if child_pretty_value != child_runtime_value {
-            bail!(
-                "{}: child catalog pretty JSON and zstd runtime asset differ",
-                plugin.id
-            );
-        }
-
-        let child: ChildCatalogV2 = serde_json::from_value(child_runtime_value)?;
-        validate_official_child_catalog(&child, plugin)?;
-        let latest_release = latest_child_catalog_release(&child)?;
-        let (release_tag, manifest_asset) =
-            release_asset_url_parts(&latest_release.artifact_manifest_url, OFFICIAL_GITHUB_REPO)?;
-        let release_dir = temp.path().join(&child.id).join(&latest_release.version);
-        let manifest_path = github_release_download(
-            ctx,
-            OFFICIAL_GITHUB_REPO,
-            &release_tag,
-            &manifest_asset,
-            &release_dir,
-        )?;
-        let manifest_bundle = github_release_download(
-            ctx,
-            OFFICIAL_GITHUB_REPO,
-            &release_tag,
-            &format!("{manifest_asset}.bundle"),
-            &release_dir,
-        )?;
-        cosign_verify_official_blob(ctx, &manifest_path, &manifest_bundle)?;
-
-        let manifest: PluginManifestV2 = serde_json::from_slice(&fs::read(&manifest_path)?)
-            .with_context(|| format!("failed to parse {}", manifest_path.display()))?;
-        validate_release_manifest(&manifest, &child, latest_release)?;
-
-        let artifact = github_release_download(
-            ctx,
-            OFFICIAL_GITHUB_REPO,
-            &release_tag,
-            &manifest.artifact,
-            &release_dir,
-        )?;
-        let artifact_bundle = github_release_download(
-            ctx,
-            OFFICIAL_GITHUB_REPO,
-            &release_tag,
-            &manifest.signature,
-            &release_dir,
-        )?;
-        cosign_verify_official_blob(ctx, &artifact, &artifact_bundle)?;
-        require_blake3_file("compressed artifact", &manifest.artifact_digest, &artifact)?;
-
-        let wasm = release_dir.join("plugin.wasm");
-        run_checked(
-            ctx.command("zstd")
-                .arg("-d")
-                .arg("-f")
-                .arg(&artifact)
-                .arg("-o")
-                .arg(&wasm),
-        )?;
-        require_blake3_file("decompressed WASM", &manifest.wasm_digest, &wasm)?;
-
-        let descriptor = load_descriptor_from_wasm(&wasm)?;
-        validate_official_release_descriptor(&descriptor, &child, latest_release)?;
-    }
-
-    ok(format!(
-        "verified published official catalog-v2 for {} plugin(s)",
-        catalog.plugins.len()
-    ));
-    Ok(())
+fn run_catalog_validate_v2(_ctx: &TaskContext) -> Result<()> {
+    retired_catalog_v2_command("catalog validate-v2")
 }
 
 fn run_ffmpeg_revendor(ctx: &TaskContext, args: FfmpegRevendorArgs) -> Result<()> {
@@ -7564,6 +7410,7 @@ fn run_release_many(ctx: &TaskContext, args: ReleaseManyArgs) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use clap::CommandFactory;
     use scryer_plugin_sdk::{
         NotificationCapabilities, NotificationDescriptor, current_sdk_constraint,
     };
@@ -7572,6 +7419,61 @@ mod tests {
         let file = tempfile::NamedTempFile::new().expect("create temp manifest");
         fs::write(file.path(), contents).expect("write temp manifest");
         file
+    }
+
+    #[test]
+    fn default_catalog_versions_are_v3_only() {
+        assert_eq!(
+            default_catalog_versions(),
+            BTreeSet::from([CatalogVersion::V3])
+        );
+    }
+
+    #[test]
+    fn catalog_v2_requests_fail_with_retired_message() {
+        let error =
+            ensure_catalog_v2_not_requested(CatalogVersion::V2).expect_err("v2 should be retired");
+
+        assert!(
+            error
+                .to_string()
+                .contains("catalog-v2 publishing is retired")
+        );
+    }
+
+    #[test]
+    fn catalog_help_hides_retired_v2_commands() {
+        let mut command = Cli::command();
+        let catalog = command
+            .find_subcommand_mut("catalog")
+            .expect("catalog command should exist");
+        let help = catalog.render_long_help().to_string();
+
+        assert!(help.contains("render-v3"));
+        assert!(help.contains("prepare-v3"));
+        assert!(help.contains("publish-v3"));
+        assert!(!help.contains("render-v2"));
+        assert!(!help.contains("prepare-v2"));
+        assert!(!help.contains("publish-v2"));
+        assert!(!help.contains("validate-v2"));
+    }
+
+    #[test]
+    fn retired_catalog_v2_guard_rejects_operator_publish_tokens() {
+        let repo = tempfile::tempdir().expect("create temp repo");
+        let workflow_dir = repo.path().join(".github/workflows");
+        fs::create_dir_all(&workflow_dir).expect("create workflow dir");
+        fs::write(
+            workflow_dir.join("release-plugin.yml"),
+            "cargo xtask catalog prepare-v2\n",
+        )
+        .expect("write workflow");
+
+        let violations =
+            retired_catalog_v2_guard_violations(repo.path()).expect("guard should run");
+
+        assert_eq!(violations.len(), 1);
+        assert!(violations[0].contains("prepare-v2"));
     }
 
     fn local_plugin() -> LocalPluginInfo {
@@ -8023,6 +7925,15 @@ support_tier = "verified_community"
     }
 
     #[test]
+    fn official_release_tag_defaults_to_existing_v3_lane() {
+        assert_eq!(
+            official_plugin_release_tag("email", "1.2.3"),
+            "plugins-v3/email/v1.2.3"
+        );
+        assert_eq!(repo_release_tag_prefix(), "plugins-v3/release/");
+    }
+
+    #[test]
     fn path_is_under_treats_exact_or_child_path_as_plugin_specific() {
         assert!(path_is_under("notifications/email", "notifications/email"));
         assert!(path_is_under(
@@ -8398,7 +8309,7 @@ distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
     }
 
     #[test]
-    fn plugin_manifest_metadata_requires_baseline_feature_set_for_v2() {
+    fn plugin_manifest_metadata_rejects_retired_v2_catalog_versions() {
         let manifest = write_temp_manifest(
             r#"[package]
 name = "email-notification"
@@ -8418,10 +8329,44 @@ distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
 "#,
         );
 
-        let error = plugin_manifest_metadata(manifest.path())
-            .expect_err("v2 publishing without baseline should fail");
+        let error =
+            plugin_manifest_metadata(manifest.path()).expect_err("v2 catalog metadata should fail");
 
-        assert!(error.to_string().contains("required_features = []"));
+        assert!(
+            error
+                .to_string()
+                .contains("catalog-v2 publishing is retired")
+        );
+    }
+
+    #[test]
+    fn plugin_manifest_metadata_rejects_retired_v2_only_catalog_version() {
+        let manifest = write_temp_manifest(
+            r#"[package]
+name = "email-notification"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-only"
+description = "Email notifications"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "email"
+catalog_versions = ["v2"]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
+"#,
+        );
+
+        let error = plugin_manifest_metadata(manifest.path())
+            .expect_err("v2-only catalog metadata should fail");
+
+        assert!(
+            error
+                .to_string()
+                .contains("catalog-v2 publishing is retired")
+        );
     }
 
     #[test]
