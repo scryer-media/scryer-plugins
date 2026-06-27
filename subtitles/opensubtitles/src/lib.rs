@@ -1060,6 +1060,8 @@ fn collapse_title_initialisms(tokens: Vec<&str>) -> Vec<String> {
                 collapsed.push(tokens[start..idx].concat());
                 continue;
             }
+
+            idx = start;
         }
 
         collapsed.push(tokens[idx].to_string());
