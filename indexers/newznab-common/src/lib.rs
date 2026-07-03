@@ -8,8 +8,9 @@
 use std::collections::HashMap;
 
 use extism_pdk::*;
-use quick_xml::Reader;
-use quick_xml::events::Event;
+use quick_xml::escape::unescape;
+use quick_xml::events::{Event, attributes::Attribute};
+use quick_xml::{Reader, XmlVersion};
 pub use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldRole, ConfigFieldType, IndexerCapabilities as Capabilities,
     IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode,
@@ -2068,7 +2069,11 @@ fn parse_newznab_xml(
             }
             Ok(Event::Text(ref e)) if in_item => {
                 if let Some(ref tag) = current_tag {
-                    let text = e.unescape().map(|s| s.to_string()).unwrap_or_default();
+                    let text = e
+                        .decode()
+                        .ok()
+                        .and_then(|decoded| unescape(&decoded).ok().map(|text| text.to_string()))
+                        .unwrap_or_default();
                     match tag.as_str() {
                         "title" => title = Some(text),
                         "guid" => guid = Some(text),
@@ -2183,17 +2188,14 @@ fn parse_enclosure_attrs(
     for attr in e.attributes().flatten() {
         match attr.key.as_ref() {
             b"url" => {
-                candidate_url = attr.unescape_value().ok().map(|value| value.to_string());
+                candidate_url = normalized_attr_value(&attr);
             }
             b"length" => {
-                candidate_size = attr
-                    .unescape_value()
-                    .ok()
-                    .map(|value| value.to_string())
+                candidate_size = normalized_attr_value(&attr)
                     .and_then(|v| v.replace(',', "").parse::<i64>().ok());
             }
             b"type" => {
-                candidate_type = attr.unescape_value().ok().map(|value| value.to_string());
+                candidate_type = normalized_attr_value(&attr);
             }
             _ => {}
         }
@@ -2376,12 +2378,14 @@ fn attr_value(event: &quick_xml::events::BytesStart<'_>, name: &[u8]) -> Option<
         .attributes()
         .flatten()
         .find(|attr| attr.key.as_ref() == name)
-        .and_then(|attr| {
-            attr.unescape_value()
-                .ok()
-                .map(|value| value.trim().to_string())
-        })
+        .and_then(|attr| normalized_attr_value(&attr).map(|value| value.trim().to_string()))
         .filter(|value| !value.is_empty())
+}
+
+fn normalized_attr_value(attr: &Attribute<'_>) -> Option<String> {
+    attr.normalized_value(XmlVersion::Implicit1_0)
+        .ok()
+        .map(|value| value.to_string())
 }
 
 fn category_options(categories: Option<Vec<NewznabCategoryOption>>) -> Vec<serde_json::Value> {
