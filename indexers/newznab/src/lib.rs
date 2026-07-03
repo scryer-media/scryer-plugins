@@ -32,7 +32,6 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
                 season_param: Some("season".into()),
                 episode_param: Some("ep".into()),
                 query_param: Some("q".into()),
-                supported_query_facets: vec![],
                 search: true,
                 imdb_search: true,
                 tvdb_search: true,
