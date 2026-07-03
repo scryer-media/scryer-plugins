@@ -359,7 +359,7 @@ pub fn scryer_download_status(_input: String) -> FnResult<String> {
             },
             removes_completed_downloads: Some(!config.post_import_category.is_empty()),
             sorting_mode: Some("utorrent-webui".to_string()),
-            warnings: vec!["Sonarr displays a provider warning for uTorrent".to_string()],
+            warnings: vec!["Scryer displays a provider warning for uTorrent".to_string()],
         },
     ))?)
 }
@@ -374,7 +374,7 @@ pub fn scryer_download_test_connection(_input: String) -> FnResult<String> {
         return Ok(serde_json::to_string(&plugin_error::<String>(
             PluginErrorCode::Permanent,
             format!(
-                "uTorrent build {} is older than Sonarr's required 25406",
+                "uTorrent build {} is older than Scryer's required 25406",
                 response.build
             ),
         ))?);
@@ -404,7 +404,7 @@ impl UTorrentConfig {
             gui_url: format!("{}/gui/", base.trim_end_matches('/')),
             username: config_value("username").unwrap_or_default(),
             password: config_value("password").unwrap_or_default(),
-            category: config_value("category").unwrap_or_else(|| "tv-sonarr".to_string()),
+            category: config_value("category").unwrap_or_else(|| "scryer-tv".to_string()),
             post_import_category: config_value("post_import_category").unwrap_or_default(),
             recent_priority_first: config_value("recent_priority").as_deref() == Some("first"),
             older_priority_first: config_value("older_priority").as_deref() == Some("first"),
@@ -461,7 +461,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             "Category",
             ConfigFieldType::String,
             true,
-            Some("tv-sonarr"),
+            Some("scryer-tv"),
             None,
         ),
         field(

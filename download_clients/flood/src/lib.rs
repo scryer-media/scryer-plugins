@@ -283,7 +283,7 @@ pub fn scryer_download_control(input: String) -> FnResult<String> {
         | DownloadControlAction::ForceStart => {
             return Ok(serde_json::to_string(&plugin_error::<()>(
                 PluginErrorCode::Unsupported,
-                "Flood control action is not implemented by Sonarr's Flood client",
+                "Flood control action is not implemented by Scryer's Flood client",
             ))?);
         }
     }
@@ -375,7 +375,7 @@ impl FloodConfig {
             username: config_value("username").unwrap_or_default(),
             password: config_value("password").unwrap_or_default(),
             destination: config_value("destination").unwrap_or_default(),
-            tags: config_list("tags", &["sonarr"]),
+            tags: config_list("tags", &["scryer"]),
             post_import_tags: config_list("post_import_tags", &[]),
             additional_tags: config_list("additional_tags", &[]),
             start_on_add: config_bool("start_on_add", true),
@@ -439,7 +439,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             "Tags",
             ConfigFieldType::Tag,
             false,
-            Some("sonarr"),
+            Some("scryer"),
             None,
         ),
         field(

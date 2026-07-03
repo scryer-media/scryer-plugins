@@ -298,7 +298,7 @@ pub fn scryer_download_test_connection(_input: String) -> FnResult<String> {
     if version_lt(&version, "1.34.0") {
         return Ok(serde_json::to_string(&plugin_error::<String>(
             PluginErrorCode::Permanent,
-            format!("Aria2 {version} is older than Sonarr's required 1.34.0"),
+            format!("Aria2 {version} is older than Scryer's required 1.34.0"),
         ))?);
     }
     Ok(serde_json::to_string(&PluginResult::Ok(version))?)

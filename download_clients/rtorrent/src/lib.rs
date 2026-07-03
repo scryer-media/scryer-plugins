@@ -255,7 +255,7 @@ pub fn scryer_download_control(input: String) -> FnResult<String> {
             if request.remove_data {
                 return Ok(serde_json::to_string(&plugin_error::<()>(
                     PluginErrorCode::Unsupported,
-                    "Sonarr deletes rTorrent data through host filesystem access; this ABI only supports d.erase",
+                    "Scryer deletes rTorrent data through host filesystem access; this ABI only supports d.erase",
                 ))?);
             }
             let response = call_document(
@@ -272,7 +272,7 @@ pub fn scryer_download_control(input: String) -> FnResult<String> {
         | DownloadControlAction::ForceStart => {
             return Ok(serde_json::to_string(&plugin_error::<()>(
                 PluginErrorCode::Unsupported,
-                "rTorrent control action is not implemented by Sonarr's rTorrent client",
+                "rTorrent control action is not implemented by Scryer's rTorrent client",
             ))?);
         }
     }
@@ -329,7 +329,7 @@ pub fn scryer_download_status(_input: String) -> FnResult<String> {
             removes_completed_downloads: Some(!config.post_import_category.is_empty()),
             sorting_mode: Some("rtorrent-xmlrpc".to_string()),
             warnings: vec![
-                "Remove with data is unavailable because Sonarr's rTorrent implementation deletes files through the host filesystem".to_string(),
+                "Remove with data is unavailable because Scryer's rTorrent implementation deletes files through the host filesystem".to_string(),
                 format!("Imported torrents are also pushed into the {IMPORTED_VIEW} view"),
             ],
         },
@@ -343,7 +343,7 @@ pub fn scryer_download_test_connection(_input: String) -> FnResult<String> {
     if version_lt(&version, "0.9.0") {
         return Ok(serde_json::to_string(&plugin_error::<String>(
             PluginErrorCode::Permanent,
-            format!("rTorrent {version} is older than Sonarr's required 0.9.0"),
+            format!("rTorrent {version} is older than Scryer's required 0.9.0"),
         ))?);
     }
     let _ = list_torrents(&config)?;
@@ -367,7 +367,7 @@ impl RTorrentConfig {
             ),
             username: config_value("username").unwrap_or_default(),
             password: config_value("password").unwrap_or_default(),
-            category: config_value("category").unwrap_or_else(|| "tv-sonarr".to_string()),
+            category: config_value("category").unwrap_or_else(|| "scryer-tv".to_string()),
             post_import_category: config_value("post_import_category").unwrap_or_default(),
             directory: config_value("directory").unwrap_or_default(),
             recent_priority: config_value("recent_priority")
@@ -429,7 +429,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             "Category",
             ConfigFieldType::String,
             true,
-            Some("tv-sonarr"),
+            Some("scryer-tv"),
             None,
         ),
         field(

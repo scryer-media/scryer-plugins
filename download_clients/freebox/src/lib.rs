@@ -263,7 +263,7 @@ pub fn scryer_download_control(input: String) -> FnResult<String> {
         | DownloadControlAction::ForceStart => {
             return Ok(serde_json::to_string(&plugin_error::<()>(
                 PluginErrorCode::Unsupported,
-                "Freebox control action is not implemented by Sonarr's Freebox client",
+                "Freebox control action is not implemented by Scryer's Freebox client",
             ))?);
         }
     }

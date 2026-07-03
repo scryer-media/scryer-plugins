@@ -5,7 +5,7 @@ use notify_common::*;
 pub fn scryer_describe(_input: String) -> FnResult<String> {
     let descriptor = build_notification_descriptor(
         "mediabrowser",
-        "Emby / Jellyfin",
+        "Emby / MediaBrowser",
         env!("CARGO_PKG_VERSION"),
         "mediabrowser",
         vec![
@@ -125,7 +125,7 @@ fn send_admin_notification(req: &PluginNotificationRequest) -> PluginNotificatio
     let body = serde_json::json!({
         "Name": req.summary_title,
         "Description": req.summary_message,
-        "ImageUrl": "https://raw.github.com/Sonarr/Sonarr/develop/Logo/64.png",
+        "ImageUrl": "https://raw.githubusercontent.com/scryer-media/scryer/main/apps/scryer-web/public/icons/icon-512.png",
     });
     send_json(
         &format!("{}/Notifications/Admin", base_url()),

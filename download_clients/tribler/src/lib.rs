@@ -207,7 +207,7 @@ pub fn scryer_download_add(input: String) -> FnResult<String> {
             PluginDownloadClientAddResponse,
         >(
             PluginErrorCode::Permanent,
-            "Tribler only supports magnet links in Sonarr",
+            "Tribler only supports magnet links in Scryer",
         ))?);
     };
     let destination = get_download_directory(&config, &request)?;
@@ -304,7 +304,7 @@ pub fn scryer_download_control(input: String) -> FnResult<String> {
         | DownloadControlAction::ForceStart => {
             return Ok(serde_json::to_string(&plugin_error::<()>(
                 PluginErrorCode::Unsupported,
-                "Tribler control action is not implemented by Sonarr's Tribler download client",
+                "Tribler control action is not implemented by Scryer's Tribler download client",
             ))?);
         }
     }
@@ -342,7 +342,7 @@ pub fn scryer_download_status(_input: String) -> FnResult<String> {
             removes_completed_downloads: Some(false),
             sorting_mode: Some("tribler-api".to_string()),
             warnings: vec![
-                "Sonarr supports Tribler 8.0.7 and displays a provider warning for this client"
+                "Scryer supports Tribler 8.0.7 and displays a provider warning for this client"
                     .to_string(),
             ],
         },

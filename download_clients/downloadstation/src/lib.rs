@@ -381,7 +381,7 @@ pub fn scryer_download_control(input: String) -> FnResult<String> {
             if request.remove_data {
                 return Ok(serde_json::to_string(&plugin_error::<()>(
                     PluginErrorCode::Unsupported,
-                    "Sonarr deletes Download Station data through host filesystem access before removing the task",
+                    "Scryer deletes Download Station data through host filesystem access before removing the task",
                 ))?);
             }
             let id = parse_download_id(&request.client_item_id);
@@ -407,7 +407,7 @@ pub fn scryer_download_control(input: String) -> FnResult<String> {
         | DownloadControlAction::ForceStart => {
             return Ok(serde_json::to_string(&plugin_error::<()>(
                 PluginErrorCode::Unsupported,
-                "Download Station control action is not implemented by Sonarr's torrent client",
+                "Download Station control action is not implemented by Scryer's torrent client",
             ))?);
         }
     }
@@ -433,8 +433,8 @@ pub fn scryer_download_status(_input: String) -> FnResult<String> {
             removes_completed_downloads: Some(false),
             sorting_mode: Some(if apis.task_v2 { "downloadstation-v2" } else { "downloadstation-v1" }.to_string()),
             warnings: vec![
-                "Sonarr displays a provider warning for Download Station".to_string(),
-                "Remove with data is unavailable because Sonarr deletes files through the host filesystem".to_string(),
+                "Scryer displays a provider warning for Download Station".to_string(),
+                "Remove with data is unavailable because Scryer deletes files through the host filesystem".to_string(),
             ],
         },
     ))?)
@@ -449,7 +449,7 @@ pub fn scryer_download_test_connection(_input: String) -> FnResult<String> {
     if apis.task.min_version > 2 || apis.task.max_version < 2 {
         return Ok(serde_json::to_string(&plugin_error::<String>(
             PluginErrorCode::Permanent,
-            "Download Station Task API v2 is required by Sonarr",
+            "Download Station Task API v2 is required by Scryer",
         ))?);
     }
     let _ = list_tasks(&config, &apis)?;

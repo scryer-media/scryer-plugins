@@ -57,7 +57,7 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
     });
     embed["author"] = serde_json::json!({
         "name": config_value("author").unwrap_or_else(|| req.app.name.clone()),
-        "icon_url": "https://raw.githubusercontent.com/Sonarr/Sonarr/develop/Logo/256.png",
+        "icon_url": "https://raw.githubusercontent.com/scryer-media/scryer/main/apps/scryer-web/public/icons/icon-512.png",
     });
     if let Some(poster_url) = poster_url(&req) {
         embed["thumbnail"] = serde_json::json!({ "url": poster_url });

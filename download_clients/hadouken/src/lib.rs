@@ -248,7 +248,7 @@ pub fn scryer_download_control(input: String) -> FnResult<String> {
         | DownloadControlAction::ForceStart => {
             return Ok(serde_json::to_string(&plugin_error::<()>(
                 PluginErrorCode::Unsupported,
-                "Hadouken control action is not implemented by Sonarr's Hadouken client",
+                "Hadouken control action is not implemented by Scryer's Hadouken client",
             ))?);
         }
     }
@@ -293,7 +293,7 @@ pub fn scryer_download_test_connection(_input: String) -> FnResult<String> {
     if version_lt(&version, "5.1") {
         return Ok(serde_json::to_string(&plugin_error::<String>(
             PluginErrorCode::Permanent,
-            format!("Hadouken {version} is older than Sonarr's required 5.1"),
+            format!("Hadouken {version} is older than Scryer's required 5.1"),
         ))?);
     }
     let _ = list_torrents(&config)?;
@@ -319,7 +319,7 @@ impl HadoukenConfig {
             api_url: format!("{}/api", base.trim_end_matches('/')),
             username: config_value("username").unwrap_or_default(),
             password: config_value("password").unwrap_or_default(),
-            category: config_value("category").unwrap_or_else(|| "sonarr-tv".to_string()),
+            category: config_value("category").unwrap_or_else(|| "scryer-tv".to_string()),
         })
     }
 }
@@ -372,7 +372,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             "Category",
             ConfigFieldType::String,
             false,
-            Some("sonarr-tv"),
+            Some("scryer-tv"),
             None,
         ),
     ]

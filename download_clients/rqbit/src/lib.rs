@@ -284,7 +284,7 @@ pub fn scryer_download_control(input: String) -> FnResult<String> {
         | DownloadControlAction::ForceStart => {
             return Ok(serde_json::to_string(&plugin_error::<()>(
                 PluginErrorCode::Unsupported,
-                "RQBit does not support this control action through Sonarr's client",
+                "RQBit does not support this control action through Scryer's client",
             ))?);
         }
     }
@@ -322,7 +322,7 @@ pub fn scryer_download_test_connection(_input: String) -> FnResult<String> {
         return Ok(serde_json::to_string(&plugin_error::<String>(
             PluginErrorCode::Permanent,
             format!(
-                "RQBit {} is older than Sonarr's required 8.0.0",
+                "RQBit {} is older than Scryer's required 8.0.0",
                 root.version
             ),
         ))?);

@@ -44,7 +44,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             ConfigFieldType::String,
             false,
             None,
-            Some("Deprecated by Sonarr in favor of device names; retained for import parity."),
+            Some("Deprecated in favor of device names; retained for imported configurations."),
         ),
         field(
             "priority",
@@ -84,11 +84,11 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
             ("text", message),
             (
                 "icon",
-                "https://cdn.rawgit.com/Sonarr/Sonarr/main/Logo/256.png".to_string(),
+                "https://raw.githubusercontent.com/scryer-media/scryer/main/apps/scryer-web/public/icons/icon-512.png".to_string(),
             ),
             (
                 "smallicon",
-                "https://cdn.rawgit.com/Sonarr/Sonarr/main/Logo/96-Outline-White.png".to_string(),
+                "https://raw.githubusercontent.com/scryer-media/scryer/main/apps/scryer-web/public/icons/icon-512.png".to_string(),
             ),
             ("priority", config_i64("priority", 0).to_string()),
         ],

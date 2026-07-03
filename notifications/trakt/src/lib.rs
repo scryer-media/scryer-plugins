@@ -49,7 +49,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             ConfigFieldType::String,
             true,
             None,
-            Some("Sonarr-compatible token expiry value retained for import parity."),
+            Some("Token expiry value retained for imported Trakt credentials."),
         ),
         field(
             "auth_user",

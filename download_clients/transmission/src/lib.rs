@@ -471,7 +471,7 @@ impl TransmissionConfig {
         let port = config_value("port").unwrap_or_else(|| "9091".to_string());
         let use_ssl = config_bool("use_ssl", false);
         let url_base = config_value("url_base").unwrap_or_else(|| "/transmission/".to_string());
-        let category = config_value("category").unwrap_or_else(|| "tv-sonarr".to_string());
+        let category = config_value("category").unwrap_or_else(|| "scryer-tv".to_string());
         let scheme = if use_ssl { "https" } else { "http" };
         let rpc_url = format!(
             "{scheme}://{host}:{port}/{}/rpc",
@@ -555,8 +555,8 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             "Category",
             ConfigFieldType::String,
             false,
-            Some("tv-sonarr"),
-            Some("Transmission label/category used by Sonarr"),
+            Some("scryer-tv"),
+            Some("Transmission label/category used by Scryer"),
         ),
         field(
             "post_import_category",

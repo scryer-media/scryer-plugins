@@ -329,7 +329,7 @@ pub fn scryer_download_control(input: String) -> FnResult<String> {
         | DownloadControlAction::ForceStart => {
             return Ok(serde_json::to_string(&plugin_error::<()>(
                 PluginErrorCode::Unsupported,
-                "NZBVortex does not expose this control action through Sonarr",
+                "NZBVortex does not expose this control action through Scryer",
             ))?);
         }
     }
@@ -365,7 +365,7 @@ pub fn scryer_download_test_connection(_input: String) -> FnResult<String> {
     if !version_at_least(&api_version, 2, 3) {
         return Ok(serde_json::to_string(&plugin_error::<String>(
             PluginErrorCode::Permanent,
-            format!("NZBVortex API version {api_version} is below Sonarr's required 2.3"),
+            format!("NZBVortex API version {api_version} is below Scryer's required 2.3"),
         ))?);
     }
     authenticate(&config)?;
@@ -446,7 +446,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             "URL Base",
             false,
             None,
-            Some("Advanced path segment before /api, matching Sonarr's UrlBase."),
+            Some("Advanced path segment before /api."),
         ),
         field(
             "api_key",
@@ -462,7 +462,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             ConfigFieldType::String,
             false,
             Some("TV Shows"),
-            Some("NZBVortex group used by Sonarr."),
+            Some("NZBVortex group used by Scryer."),
         ),
         field(
             "recent_priority",

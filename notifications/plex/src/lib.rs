@@ -93,7 +93,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             false,
             None,
             Some(
-                "Optional comma, semicolon, or newline separated Plex library section IDs. Leave blank to discover TV libraries like Sonarr.",
+                "Optional comma, semicolon, or newline separated Plex library section IDs. Leave blank to discover TV libraries automatically.",
             ),
         ),
         field(

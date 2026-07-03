@@ -93,7 +93,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             ConfigFieldType::Password,
             false,
             None,
-            Some("Sonarr-compatible 64-character hex key for encrypted notifications."),
+            Some("Scryer-compatible 64-character hex key for encrypted notifications."),
         ),
     ]
 }

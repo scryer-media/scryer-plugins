@@ -400,7 +400,7 @@ fn entry_to_item(_config: &BlackholeConfig, entry: WatchFolderEntry) -> PluginDo
         title,
         state,
         message: None,
-        category: Some("sonarr".to_string()),
+        category: Some("scryer".to_string()),
         remote_output_path: Some(id.clone()),
         torrent: None,
         total_size_bytes: Some(size),
@@ -433,7 +433,7 @@ fn entry_to_completed(entry: WatchFolderEntry) -> PluginCompletedDownload {
         info_hash: None,
         name,
         dest_dir: id.clone(),
-        category: Some("sonarr".to_string()),
+        category: Some("scryer".to_string()),
         output_kind: Some(if path.is_file() {
             PluginDownloadOutputKind::File
         } else {

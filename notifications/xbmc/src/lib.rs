@@ -125,7 +125,7 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
             serde_json::json!([
                 notification_header(&req),
                 req.summary_message,
-                "https://raw.github.com/Sonarr/Sonarr/develop/Logo/64.png",
+                "https://raw.githubusercontent.com/scryer-media/scryer/main/apps/scryer-web/public/icons/icon-512.png",
                 config_i64("display_time", 5) * 1000,
             ]),
         ));
@@ -245,20 +245,20 @@ fn base_url() -> String {
 
 fn notification_header(req: &PluginNotificationRequest) -> &'static str {
     match req.event_type {
-        NotificationEventType::Grab => "Sonarr - Grabbed",
-        NotificationEventType::Download => "Sonarr - Downloaded",
+        NotificationEventType::Grab => "Scryer - Grabbed",
+        NotificationEventType::Download => "Scryer - Downloaded",
         NotificationEventType::Upgrade | NotificationEventType::ImportComplete => {
-            "Sonarr - Imported"
+            "Scryer - Imported"
         }
         NotificationEventType::FileDeleted
         | NotificationEventType::FileDeletedForUpgrade
-        | NotificationEventType::TitleDeleted => "Sonarr - Deleted",
-        NotificationEventType::TitleAdded => "Sonarr - Added",
-        NotificationEventType::HealthIssue => "Sonarr - Health Issue",
-        NotificationEventType::HealthRestored => "Sonarr - Health Restored",
-        NotificationEventType::ApplicationUpdate => "Sonarr - Application Updated",
+        | NotificationEventType::TitleDeleted => "Scryer - Deleted",
+        NotificationEventType::TitleAdded => "Scryer - Added",
+        NotificationEventType::HealthIssue => "Scryer - Health Issue",
+        NotificationEventType::HealthRestored => "Scryer - Health Restored",
+        NotificationEventType::ApplicationUpdate => "Scryer - Application Updated",
         NotificationEventType::ManualInteractionRequired => "Manual Interaction Required",
-        _ => "Sonarr",
+        _ => "Scryer",
     }
 }
 

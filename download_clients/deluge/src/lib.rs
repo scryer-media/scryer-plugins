@@ -321,7 +321,7 @@ pub fn scryer_download_control(input: String) -> FnResult<String> {
         | DownloadControlAction::ForceStart => {
             return Ok(serde_json::to_string(&plugin_error::<()>(
                 PluginErrorCode::Unsupported,
-                "Deluge control action is not implemented by Sonarr's Deluge client",
+                "Deluge control action is not implemented by Scryer's Deluge client",
             ))?);
         }
     }
@@ -410,7 +410,7 @@ impl DelugeConfig {
         Ok(Self {
             json_url: format!("{}/json", base.trim_end_matches('/')),
             password: config_value("password").unwrap_or_else(|| "deluge".to_string()),
-            category: config_value("category").unwrap_or_else(|| "tv-sonarr".to_string()),
+            category: config_value("category").unwrap_or_else(|| "scryer-tv".to_string()),
             imported_category: config_value("post_import_category").unwrap_or_default(),
             recent_priority: queue_placement_config("recent_priority"),
             older_priority: queue_placement_config("older_priority"),
@@ -466,7 +466,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             "Category",
             ConfigFieldType::String,
             false,
-            Some("tv-sonarr"),
+            Some("scryer-tv"),
             None,
         ),
         field(
