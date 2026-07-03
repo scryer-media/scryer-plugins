@@ -5038,10 +5038,52 @@ fn merge_catalog_v3_plugin_entries(
     for entry in existing {
         by_id.insert(entry.id.clone(), entry);
     }
-    for entry in updates {
-        by_id.insert(entry.id.clone(), entry);
+    for mut entry in updates {
+        if let Some(existing_entry) = by_id.remove(&entry.id) {
+            let mut releases_by_version = BTreeMap::new();
+            for release in &existing_entry.releases {
+                releases_by_version.insert(release.version.clone(), release.clone());
+            }
+            for release in &entry.releases {
+                releases_by_version.insert(release.version.clone(), release.clone());
+            }
+
+            let update_has_latest_metadata = catalog_v3_entry_latest_version(&entry)
+                >= catalog_v3_entry_latest_version(&existing_entry);
+            let mut merged_entry = if update_has_latest_metadata {
+                entry
+            } else {
+                existing_entry
+            };
+            merged_entry.releases = releases_by_version.into_values().collect();
+            sort_catalog_v3_releases_newest_first(&mut merged_entry.releases);
+            by_id.insert(merged_entry.id.clone(), merged_entry);
+        } else {
+            sort_catalog_v3_releases_newest_first(&mut entry.releases);
+            by_id.insert(entry.id.clone(), entry);
+        }
     }
     by_id.into_values().collect()
+}
+
+fn catalog_v3_entry_latest_version(entry: &CatalogV3PluginEntry) -> Option<Version> {
+    entry
+        .releases
+        .iter()
+        .filter_map(|release| Version::parse(&release.version).ok())
+        .max()
+}
+
+fn sort_catalog_v3_releases_newest_first(releases: &mut [CatalogV3Release]) {
+    releases.sort_by(|left, right| {
+        match (
+            Version::parse(&left.version),
+            Version::parse(&right.version),
+        ) {
+            (Ok(left), Ok(right)) => right.cmp(&left),
+            _ => right.version.cmp(&left.version),
+        }
+    });
 }
 
 fn catalog_v3_release_from_prepared_assets(
@@ -7761,7 +7803,44 @@ support_tier = "verified_community"
     }
 
     #[test]
-    fn merge_catalog_v3_plugin_entries_replaces_selected_entry_and_preserves_others() {
+    fn merge_catalog_v3_plugin_entries_merges_releases_and_preserves_others() {
+        fn test_release(version: &str, sdk_constraint: &str, bytes: u64) -> CatalogV3Release {
+            CatalogV3Release {
+                version: version.to_string(),
+                sdk_constraint: sdk_constraint.to_string(),
+                min_scryer_version: None,
+                artifacts: vec![CatalogV3PluginArtifact {
+                    runtime: WASM_TARGET.to_string(),
+                    required_features: Vec::new(),
+                    wasm_digests: vec![
+                        "blake3:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                            .to_string(),
+                        "shake256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                            .to_string(),
+                    ],
+                    bytes,
+                    url: format!(
+                        "https://cdn.scryer.media/scryer/plugins-v3/email/v{version}/plugin-v3.abc123.wasm.zst"
+                    ),
+                    mirror_urls: vec![format!(
+                        "https://github.com/scryer-media/scryer-plugins/releases/download/plugins-v3%2Femail%2Fv{version}/plugin-v3.abc123.wasm.zst"
+                    )],
+                    signature_url: format!(
+                        "https://cdn.scryer.media/scryer/plugins-v3/email/v{version}/plugin-v3.abc123.wasm.zst.bundle.zst"
+                    ),
+                    signature_mirror_urls: vec![format!(
+                        "https://github.com/scryer-media/scryer-plugins/releases/download/plugins-v3%2Femail%2Fv{version}/plugin-v3.abc123.wasm.zst.bundle.zst"
+                    )],
+                    digests: vec![
+                        "blake3:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+                            .to_string(),
+                        "shake256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+                            .to_string(),
+                    ],
+                }],
+            }
+        }
+
         let email = CatalogV3PluginEntry {
             id: "email".to_string(),
             name: "Email".to_string(),
@@ -7778,36 +7857,7 @@ support_tier = "verified_community"
                 "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
                     .to_string(),
             required_signer: official_required_signer(),
-            releases: vec![CatalogV3Release {
-                version: "0.1.0".to_string(),
-                sdk_constraint: "^1.6.0".to_string(),
-                min_scryer_version: None,
-                artifacts: vec![CatalogV3PluginArtifact {
-                    runtime: WASM_TARGET.to_string(),
-                    required_features: Vec::new(),
-                    wasm_digests: vec![
-                        "blake3:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                            .to_string(),
-                        "shake256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-                            .to_string(),
-                    ],
-                    bytes: 1234,
-                    url: "https://cdn.scryer.media/scryer/plugins-v3/email/v0.1.0/plugin-v3.abc123.wasm.zst".to_string(),
-                    mirror_urls: vec![
-                        "https://github.com/scryer-media/scryer-plugins/releases/download/plugins-v3%2Femail%2Fv0.1.0/plugin-v3.abc123.wasm.zst".to_string(),
-                    ],
-                    signature_url: "https://cdn.scryer.media/scryer/plugins-v3/email/v0.1.0/plugin-v3.abc123.wasm.zst.bundle.zst".to_string(),
-                    signature_mirror_urls: vec![
-                        "https://github.com/scryer-media/scryer-plugins/releases/download/plugins-v3%2Femail%2Fv0.1.0/plugin-v3.abc123.wasm.zst.bundle.zst".to_string(),
-                    ],
-                    digests: vec![
-                        "blake3:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
-                            .to_string(),
-                        "shake256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
-                            .to_string(),
-                    ],
-                }],
-            }],
+            releases: vec![test_release("0.1.0", "^1.6.0", 1234)],
         };
         let mut subdl = email.clone();
         subdl.id = "subdl".to_string();
@@ -7816,6 +7866,10 @@ support_tier = "verified_community"
 
         let mut subdl_updated = subdl.clone();
         subdl_updated.status = PluginCatalogStatus::Beta;
+        subdl_updated.releases = vec![
+            test_release("0.2.0", "^3.2.0", 5678),
+            test_release("0.1.0", "^3.0.0", 4321),
+        ];
 
         let merged = merge_catalog_v3_plugin_entries(
             vec![subdl, email.clone()],
@@ -7826,6 +7880,32 @@ support_tier = "verified_community"
         assert_eq!(merged[0].id, "email");
         assert_eq!(merged[1].id, "subdl");
         assert_eq!(merged[1].status, PluginCatalogStatus::Beta);
+        assert_eq!(
+            merged[1]
+                .releases
+                .iter()
+                .map(|release| release.version.as_str())
+                .collect::<Vec<_>>(),
+            vec!["0.2.0", "0.1.0"]
+        );
+        assert_eq!(merged[1].releases[1].sdk_constraint, "^3.0.0");
+        assert_eq!(merged[1].releases[1].artifacts[0].bytes, 4321);
+
+        let mut subdl_older_update = merged[1].clone();
+        subdl_older_update.status = PluginCatalogStatus::Active;
+        subdl_older_update.releases = vec![test_release("0.1.0", "^3.0.0", 4321)];
+        let merged_older_update =
+            merge_catalog_v3_plugin_entries(vec![merged[1].clone()], vec![subdl_older_update]);
+
+        assert_eq!(merged_older_update[0].status, PluginCatalogStatus::Beta);
+        assert_eq!(
+            merged_older_update[0]
+                .releases
+                .iter()
+                .map(|release| release.version.as_str())
+                .collect::<Vec<_>>(),
+            vec!["0.2.0", "0.1.0"]
+        );
     }
 
     #[test]
