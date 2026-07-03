@@ -1,6 +1,8 @@
 #[cfg(test)]
 use std::collections::BTreeMap;
-use std::collections::HashSet;
+#[cfg(test)]
+use std::collections::VecDeque;
+use std::collections::{HashMap, HashSet};
 use std::time::Duration;
 
 use base64::Engine as _;
@@ -20,7 +22,8 @@ use serde::{Deserialize, Serialize};
 const API_BASE: &str = "https://jimaku.cc/api";
 const USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"));
 const MIN_SUBTITLE_BYTES: usize = 500;
-const MAX_RATE_LIMIT_WAIT_SECONDS: u64 = 5;
+const DEFAULT_RATE_LIMIT_WAIT_SECONDS: u64 = 1;
+const MAX_RATE_LIMIT_TOTAL_WAIT_SECONDS: u64 = 60;
 const MAX_SEARCH_ENTRY_CANDIDATES: usize = 5;
 const MAX_SEARCH_QUERIES: usize = 12;
 
@@ -207,6 +210,22 @@ fn config_field(
 }
 
 fn search_subtitles_impl(
+    config: &JimakuConfig,
+    request: &SubtitlePluginSearchRequest,
+) -> Result<Vec<SubtitlePluginCandidate>, String> {
+    search_subtitles_impl_from_result(search_subtitles_inner(config, request))
+}
+
+fn search_subtitles_impl_from_result(
+    result: Result<Vec<SubtitlePluginCandidate>, String>,
+) -> Result<Vec<SubtitlePluginCandidate>, String> {
+    match result {
+        Err(error) if is_rate_limit_error(&error) => Ok(Vec::new()),
+        result => result,
+    }
+}
+
+fn search_subtitles_inner(
     config: &JimakuConfig,
     request: &SubtitlePluginSearchRequest,
 ) -> Result<Vec<SubtitlePluginCandidate>, String> {
@@ -561,7 +580,59 @@ fn jimaku_get_json<T: for<'de> Deserialize<'de>>(
         .map_err(|error| format!("Jimaku JSON parse error: {error}"))
 }
 
-fn http_get(url: &str, api_key: Option<&str>) -> Result<HttpResponse, String> {
+struct JimakuHttpResponse {
+    status: u16,
+    headers: HashMap<String, String>,
+    body: Vec<u8>,
+}
+
+impl JimakuHttpResponse {
+    fn from_extism(response: HttpResponse) -> Self {
+        Self {
+            status: response.status_code(),
+            headers: response.headers().clone(),
+            body: response.body(),
+        }
+    }
+
+    fn status_code(&self) -> u16 {
+        self.status
+    }
+
+    fn headers(&self) -> &HashMap<String, String> {
+        &self.headers
+    }
+
+    fn body(&self) -> Vec<u8> {
+        self.body.clone()
+    }
+}
+
+fn http_get(url: &str, api_key: Option<&str>) -> Result<JimakuHttpResponse, String> {
+    http_get_with(
+        url,
+        api_key,
+        Duration::from_secs(MAX_RATE_LIMIT_TOTAL_WAIT_SECONDS),
+        |request| {
+            let response = http::request::<Vec<u8>>(request, None)
+                .map_err(|error| format!("Jimaku request failed: {error}"))?;
+            Ok(JimakuHttpResponse::from_extism(response))
+        },
+        std::thread::sleep,
+    )
+}
+
+fn http_get_with<F, S>(
+    url: &str,
+    api_key: Option<&str>,
+    max_rate_limit_wait: Duration,
+    mut send: F,
+    mut sleep: S,
+) -> Result<JimakuHttpResponse, String>
+where
+    F: FnMut(&HttpRequest) -> Result<JimakuHttpResponse, String>,
+    S: FnMut(Duration),
+{
     let mut request = HttpRequest::new(url)
         .with_method("GET")
         .with_header("Accept", "application/json")
@@ -570,24 +641,28 @@ fn http_get(url: &str, api_key: Option<&str>) -> Result<HttpResponse, String> {
         request = request.with_header("Authorization", api_key);
     }
 
-    let mut rate_limit_retry_used = false;
+    let mut remaining_rate_limit_wait = max_rate_limit_wait;
     loop {
-        let response = http::request::<Vec<u8>>(&request, None)
-            .map_err(|error| format!("Jimaku request failed: {error}"))?;
+        let response = send(&request)?;
         if response.status_code() == 429 {
-            let retry_after = retry_after_seconds(&response).unwrap_or(1).max(1);
-            if rate_limit_retry_used || retry_after > MAX_RATE_LIMIT_WAIT_SECONDS {
+            if remaining_rate_limit_wait.is_zero() {
                 return Ok(response);
             }
-            rate_limit_retry_used = true;
-            std::thread::sleep(Duration::from_secs(retry_after));
+            let retry_after = Duration::from_secs(
+                retry_after_seconds(&response)
+                    .unwrap_or(DEFAULT_RATE_LIMIT_WAIT_SECONDS)
+                    .max(1),
+            );
+            let wait_for = std::cmp::min(retry_after, remaining_rate_limit_wait);
+            sleep(wait_for);
+            remaining_rate_limit_wait = remaining_rate_limit_wait.saturating_sub(wait_for);
             continue;
         }
         return Ok(response);
     }
 }
 
-fn http_error(provider: &str, response: &HttpResponse) -> String {
+fn http_error(provider: &str, response: &JimakuHttpResponse) -> String {
     let status = response.status_code();
     let body = String::from_utf8_lossy(&response.body()).trim().to_string();
     match status {
@@ -617,6 +692,10 @@ fn validation_error_response(error: &str) -> SubtitlePluginValidateConfigRespons
         message: Some(error.to_string()),
         retry_after_seconds: None,
     }
+}
+
+fn is_rate_limit_error(error: &str) -> bool {
+    error.contains("rate limited")
 }
 
 fn config_required_string(key: &str) -> Result<String, String> {
@@ -756,7 +835,7 @@ fn file_extension(filename: &str) -> Option<&str> {
     filename.rsplit_once('.').map(|(_, ext)| ext)
 }
 
-fn retry_after_seconds(response: &HttpResponse) -> Option<u64> {
+fn retry_after_seconds(response: &JimakuHttpResponse) -> Option<u64> {
     response
         .headers()
         .get("retry-after")
@@ -837,6 +916,44 @@ mod tests {
             include_ai_translated: false,
             include_machine_translated: false,
         }
+    }
+
+    fn http_response(
+        status: u16,
+        headers: impl IntoIterator<Item = (&'static str, &'static str)>,
+        body: &'static str,
+    ) -> JimakuHttpResponse {
+        JimakuHttpResponse {
+            status,
+            headers: headers
+                .into_iter()
+                .map(|(key, value)| (key.to_string(), value.to_string()))
+                .collect(),
+            body: body.as_bytes().to_vec(),
+        }
+    }
+
+    fn run_http_get_with_responses(
+        responses: Vec<JimakuHttpResponse>,
+        max_rate_limit_wait: Duration,
+    ) -> (JimakuHttpResponse, usize, Vec<Duration>) {
+        let mut responses = VecDeque::from(responses);
+        let mut attempts = 0;
+        let mut sleeps = Vec::new();
+        let response = http_get_with(
+            "https://jimaku.cc/api/entries/search?query=naruto",
+            Some("token"),
+            max_rate_limit_wait,
+            |_request| {
+                attempts += 1;
+                responses
+                    .pop_front()
+                    .ok_or_else(|| "missing test response".to_string())
+            },
+            |duration| sleeps.push(duration),
+        )
+        .expect("http_get_with should return a response");
+        (response, attempts, sleeps)
     }
 
     #[test]
@@ -1036,6 +1153,69 @@ mod tests {
             },
             &movie_request(),
         ));
+    }
+
+    #[test]
+    fn http_get_retries_rate_limit_then_returns_success() {
+        let (response, attempts, sleeps) = run_http_get_with_responses(
+            vec![
+                http_response(429, [("retry-after", "1")], ""),
+                http_response(200, [], "[]"),
+            ],
+            Duration::from_secs(60),
+        );
+
+        assert_eq!(response.status_code(), 200);
+        assert_eq!(attempts, 2);
+        assert_eq!(sleeps, vec![Duration::from_secs(1)]);
+    }
+
+    #[test]
+    fn http_get_retries_repeated_rate_limits_within_budget() {
+        let (response, attempts, sleeps) = run_http_get_with_responses(
+            vec![
+                http_response(429, [("retry-after", "1")], ""),
+                http_response(429, [("retry-after", "1")], ""),
+                http_response(200, [], "[]"),
+            ],
+            Duration::from_secs(60),
+        );
+
+        assert_eq!(response.status_code(), 200);
+        assert_eq!(attempts, 3);
+        assert_eq!(sleeps, vec![Duration::from_secs(1), Duration::from_secs(1)]);
+    }
+
+    #[test]
+    fn http_get_clamps_rate_limit_sleep_to_remaining_budget() {
+        let (response, attempts, sleeps) = run_http_get_with_responses(
+            vec![
+                http_response(429, [("retry-after", "10")], ""),
+                http_response(429, [("retry-after", "10")], ""),
+            ],
+            Duration::from_secs(3),
+        );
+
+        assert_eq!(response.status_code(), 429);
+        assert_eq!(attempts, 2);
+        assert_eq!(sleeps, vec![Duration::from_secs(3)]);
+    }
+
+    #[test]
+    fn search_rate_limit_errors_return_empty_results() {
+        let results =
+            search_subtitles_impl_from_result(Err("Jimaku rate limited — retry after 1s".into()))
+                .expect("rate limits should not fail subtitle search");
+
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn search_non_rate_limit_errors_still_fail() {
+        let error = search_subtitles_impl_from_result(Err("Jimaku returned HTTP 500: nope".into()))
+            .expect_err("non-rate-limit errors should still fail");
+
+        assert_eq!(error, "Jimaku returned HTTP 500: nope");
     }
 
     #[test]
