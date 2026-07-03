@@ -7,7 +7,7 @@ license = "GPL-3.0-only"
 [dependencies]
 base64 = "0.22"
 extism-pdk = "1.4"
-quick-xml = "0.38"
+quick-xml = "0.41"
 regex = "1"
 scryer-plugin-sdk = "3.2.0"
 serde_json = "1"
