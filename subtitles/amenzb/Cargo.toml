@@ -1,0 +1,35 @@
+[package]
+name = "amenzb-subtitles"
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-only"
+description = "ameNZB anime subtitle provider using public release subtitle attachments"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "amenzb-subtitles"
+status = "beta"
+catalog_versions = ["v3"]
+min_scryer_version = "0.17.0"
+feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/amenzb"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/amenzb"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+base64 = "0.22"
+extism-pdk = "1.4"
+newznab-common = { path = "../../indexers/newznab-common" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+scryer-plugin-sdk = "3.2.0"
+url = "2"
+
+[profile.plugin-release]
+inherits = "release"
+opt-level = 3
+lto = "fat"
+strip = true
+panic = "abort"

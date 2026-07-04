@@ -2,13 +2,15 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 use extism_pdk::*;
+#[cfg(not(test))]
+use newznab_common::hit_budget_snapshot;
 use newznab_common::{
     Capabilities, ConfigFieldDef, ConfigFieldType, IndexerCategoryModel, IndexerCategoryValueKind,
     IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol,
     IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind, NewznabConfig,
     NewznabHitBudget, NewznabHttpBehavior, PluginDescriptor, PluginResult, ProviderDescriptor,
-    SDK_VERSION, SearchRequest, current_sdk_constraint, execute_full_search, execute_raw_search,
-    standard_config_fields,
+    SDK_VERSION, SearchRequest, SearchResponse, current_sdk_constraint, execute_full_search,
+    execute_raw_search, is_hit_budget_exhausted_error, standard_config_fields,
 };
 use serde_json::json;
 
@@ -150,7 +152,7 @@ pub fn scryer_indexer_search(input: String) -> FnResult<String> {
             &raw_req,
             vec![("info_hash".to_string(), info_hash)],
         ));
-        execute_raw_search(&config, &raw_req, amenzb_metadata_extractor)?
+        execute_raw_search_gracefully(&config, &raw_req)?
     } else if let Some(anidb_id) =
         request_id(&req, "anidb_id").or_else(|| request_id(&req, "anidb"))
     {
@@ -160,7 +162,7 @@ pub fn scryer_indexer_search(input: String) -> FnResult<String> {
             &raw_req,
             anime_id_pairs(&req, anidb_id),
         ));
-        execute_raw_search(&config, &raw_req, amenzb_metadata_extractor)?
+        execute_raw_search_gracefully(&config, &raw_req)?
     } else {
         let req = normalize_request_ids(req);
         let config = ame_config.newznab_config(provider_params(&ame_config, &req, Vec::new()));
@@ -168,6 +170,48 @@ pub fn scryer_indexer_search(input: String) -> FnResult<String> {
     };
 
     Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+}
+
+fn execute_raw_search_gracefully(
+    config: &NewznabConfig,
+    req: &SearchRequest,
+) -> Result<SearchResponse, Error> {
+    match execute_raw_search(config, req, amenzb_metadata_extractor) {
+        Ok(response) => Ok(response),
+        Err(error) if is_hit_budget_exhausted_error(&error) => empty_hit_budget_response(config),
+        Err(error) => Err(error),
+    }
+}
+
+#[cfg(not(test))]
+fn empty_hit_budget_response(config: &NewznabConfig) -> Result<SearchResponse, Error> {
+    let (api_current, api_max) = hit_budget_snapshot(&config.http_behavior)?
+        .map(|snapshot| snapshot.limiting_current_max())
+        .unwrap_or((None, None));
+    Ok(SearchResponse {
+        results: vec![],
+        api_current,
+        api_max,
+        grab_current: None,
+        grab_max: None,
+    })
+}
+
+#[cfg(test)]
+fn empty_hit_budget_response(config: &NewznabConfig) -> Result<SearchResponse, Error> {
+    let (api_current, api_max) = config
+        .http_behavior
+        .hit_budget
+        .as_ref()
+        .map(|budget| (Some(0), Some(budget.hourly_limit.min(budget.daily_limit))))
+        .unwrap_or((None, None));
+    Ok(SearchResponse {
+        results: vec![],
+        api_current,
+        api_max,
+        grab_current: None,
+        grab_max: None,
+    })
 }
 
 #[derive(Debug, Clone)]
@@ -900,5 +944,28 @@ mod tests {
             .expect("hit budget");
         assert_eq!(budget.daily_limit, DEFAULT_DAILY_HIT_CAP);
         assert!(budget.daily_limit < 10_000);
+    }
+
+    #[test]
+    fn local_hit_budget_empty_response_is_successful_and_empty() {
+        let config = NewznabConfig {
+            base_url: AMENZB_BASE_URL.to_string(),
+            api_key: String::new(),
+            api_path: "/api".to_string(),
+            additional_params: String::new(),
+            page_size: DEFAULT_PAGE_SIZE,
+            http_behavior: NewznabHttpBehavior {
+                hit_budget: None,
+                ..NewznabHttpBehavior::default()
+            },
+        };
+
+        let response = empty_hit_budget_response(&config).expect("empty response");
+
+        assert!(response.results.is_empty());
+        assert_eq!(response.api_current, None);
+        assert_eq!(response.api_max, None);
+        assert_eq!(response.grab_current, None);
+        assert_eq!(response.grab_max, None);
     }
 }
