@@ -3,7 +3,7 @@ name = "tsukihime-indexer"
 version = "0.1.0"
 edition = "2024"
 license = "GPL-3.0-only"
-description = "Tsukihime anime torrent indexer using the public Tsukihime API"
+description = "Tsukihime anime indexer using the public Tsukihime API"
 
 [package.metadata.scryer]
 official = true

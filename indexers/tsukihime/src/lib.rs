@@ -58,7 +58,7 @@ fn build_descriptor() -> PluginDescriptor {
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: PROVIDER_TYPE.to_string(),
             provider_aliases: vec!["tsukihime.org".to_string()],
-            source_kind: IndexerSourceKind::Torrent,
+            source_kind: IndexerSourceKind::Generic,
             capabilities: IndexerCapabilities {
                 supported_ids: HashMap::from([(
                     "anime".to_string(),
@@ -76,7 +76,11 @@ fn build_descriptor() -> PluginDescriptor {
                 search: true,
                 anidb_search: true,
                 rss: true,
-                protocols: vec![IndexerProtocol::Torrent],
+                protocols: vec![
+                    IndexerProtocol::Mixed,
+                    IndexerProtocol::Torrent,
+                    IndexerProtocol::Usenet,
+                ],
                 feed_modes: vec![
                     IndexerFeedMode::Recent,
                     IndexerFeedMode::Rss,
@@ -162,12 +166,7 @@ fn search_impl(request: &SearchRequest) -> Result<SearchResponse, TsukihimeError
     };
 
     Ok(SearchResponse {
-        results: results
-            .into_iter()
-            .filter(|torrent| include_torrent(torrent, config.include_adult))
-            .take(limit)
-            .map(|torrent| torrent_to_search_result(torrent, None))
-            .collect(),
+        results: torrents_to_search_results(results, config.include_adult, limit),
         ..SearchResponse::default()
     })
 }
@@ -280,8 +279,101 @@ fn include_torrent(torrent: &Torrent, include_adult: bool) -> bool {
     completed && (include_adult || !adult)
 }
 
-fn torrent_to_search_result(torrent: Torrent, parent_anime: Option<&Anime>) -> SearchResult {
+fn torrents_to_search_results(
+    torrents: Vec<Torrent>,
+    include_adult: bool,
+    limit: usize,
+) -> Vec<SearchResult> {
+    torrents
+        .into_iter()
+        .filter(|torrent| include_torrent(torrent, include_adult))
+        .take(limit)
+        .flat_map(|torrent| torrent_to_search_results(&torrent, None))
+        .collect()
+}
+
+fn torrent_to_search_results(torrent: &Torrent, parent_anime: Option<&Anime>) -> Vec<SearchResult> {
+    let mut results = vec![torrent_to_search_result(torrent, parent_anime)];
+    if has_nzb(torrent) {
+        results.push(nzb_to_search_result(torrent, parent_anime));
+    }
+    results
+}
+
+fn torrent_to_search_result(torrent: &Torrent, parent_anime: Option<&Anime>) -> SearchResult {
     let anime = torrent.anime.as_ref().or(parent_anime);
+    let mut provider_extra = torrent_provider_extra(torrent, anime);
+    insert_json(&mut provider_extra, "download_kind", "torrent");
+    let external_ids = anime.map(anime_external_ids).unwrap_or_default();
+    let info_url = torrent_info_url(torrent);
+    let download_url = torrent_download_url(torrent);
+    let magnet_url = torrent
+        .btih
+        .as_deref()
+        .filter(|btih| btih.len() == 40)
+        .map(|btih| magnet_uri(btih, &torrent.name));
+    let published_at = torrent
+        .source_date
+        .or(torrent.added_date)
+        .map(format_unix_timestamp);
+
+    SearchResult {
+        title: torrent.name.clone(),
+        link: info_url.clone(),
+        download_url,
+        size_bytes: torrent.totalsize,
+        published_at,
+        languages: torrent.audiolangs.clone(),
+        subtitles: torrent.sublangs.clone(),
+        provider_extra,
+        guid: Some(format!("tsukihime-{}", torrent.id)),
+        info_url,
+        source_kind: Some(IndexerSourceKind::Torrent),
+        protocol: Some(IndexerProtocol::Torrent),
+        external_ids,
+        categories: vec!["anime".to_string()],
+        magnet_url,
+        info_hash_v1: torrent.btih.clone(),
+        ..SearchResult::default()
+    }
+}
+
+fn nzb_to_search_result(torrent: &Torrent, parent_anime: Option<&Anime>) -> SearchResult {
+    let anime = torrent.anime.as_ref().or(parent_anime);
+    let mut provider_extra = torrent_provider_extra(torrent, anime);
+    insert_json(&mut provider_extra, "download_kind", "nzb");
+    insert_json(
+        &mut provider_extra,
+        "mirrored_info_hash_v1",
+        torrent.btih.as_deref(),
+    );
+    let external_ids = anime.map(anime_external_ids).unwrap_or_default();
+    let info_url = torrent_info_url(torrent);
+    let published_at = torrent
+        .source_date
+        .or(torrent.added_date)
+        .map(format_unix_timestamp);
+
+    SearchResult {
+        title: torrent.name.clone(),
+        link: info_url.clone(),
+        download_url: Some(nzb_download_url(torrent)),
+        size_bytes: torrent.totalsize,
+        published_at,
+        languages: torrent.audiolangs.clone(),
+        subtitles: torrent.sublangs.clone(),
+        provider_extra,
+        guid: Some(format!("tsukihime-{}-nzb", torrent.id)),
+        info_url,
+        source_kind: Some(IndexerSourceKind::Usenet),
+        protocol: Some(IndexerProtocol::Usenet),
+        external_ids,
+        categories: vec!["anime".to_string()],
+        ..SearchResult::default()
+    }
+}
+
+fn torrent_provider_extra(torrent: &Torrent, anime: Option<&Anime>) -> HashMap<String, Value> {
     let mut provider_extra = HashMap::new();
     insert_json(&mut provider_extra, "tsukihime_id", torrent.id);
     insert_json(&mut provider_extra, "state", torrent.state.as_deref());
@@ -320,42 +412,15 @@ fn torrent_to_search_result(torrent: Torrent, parent_anime: Option<&Anime>) -> S
         );
     }
 
-    let external_ids = anime.map(anime_external_ids).unwrap_or_default();
-    let info_url = Some(format!(
+    provider_extra
+}
+
+fn torrent_info_url(torrent: &Torrent) -> Option<String> {
+    Some(format!(
         "{}/torrents/{}",
         DEFAULT_BASE_URL.trim_end_matches('/'),
         torrent.id
-    ));
-    let download_url = torrent_download_url(&torrent);
-    let magnet_url = torrent
-        .btih
-        .as_deref()
-        .filter(|btih| btih.len() == 40)
-        .map(|btih| magnet_uri(btih, &torrent.name));
-    let published_at = torrent
-        .source_date
-        .or(torrent.added_date)
-        .map(format_unix_timestamp);
-
-    SearchResult {
-        title: torrent.name,
-        link: info_url.clone(),
-        download_url,
-        size_bytes: torrent.totalsize,
-        published_at,
-        languages: torrent.audiolangs,
-        subtitles: torrent.sublangs,
-        provider_extra,
-        guid: Some(format!("tsukihime-{}", torrent.id)),
-        info_url,
-        source_kind: Some(IndexerSourceKind::Torrent),
-        protocol: Some(IndexerProtocol::Torrent),
-        external_ids,
-        categories: vec!["anime".to_string()],
-        magnet_url,
-        info_hash_v1: torrent.btih,
-        ..SearchResult::default()
-    }
+    ))
 }
 
 fn anime_external_ids(anime: &Anime) -> HashMap<String, String> {
@@ -379,6 +444,18 @@ fn torrent_download_url(torrent: &Torrent) -> Option<String> {
             positive_i64(torrent.sukebei_id)
                 .map(|id| format!("https://sukebei.nyaa.si/download/{id}.torrent"))
         })
+}
+
+fn nzb_download_url(torrent: &Torrent) -> String {
+    format!(
+        "https://storage.tsukihime.org/nzbs/{}/{}.nzb.gz",
+        torrent.id,
+        url_encode(&torrent.name)
+    )
+}
+
+fn has_nzb(torrent: &Torrent) -> bool {
+    positive_i64(torrent.has_nzb).is_some()
 }
 
 fn positive_i64(value: Option<i64>) -> Option<i64> {
@@ -857,7 +934,16 @@ mod tests {
         };
 
         assert_eq!(indexer.provider_type, "tsukihime");
+        assert_eq!(indexer.source_kind, IndexerSourceKind::Generic);
         assert_eq!(indexer.rate_limit_seconds, Some(2));
+        assert_eq!(
+            indexer.capabilities.protocols,
+            vec![
+                IndexerProtocol::Mixed,
+                IndexerProtocol::Torrent,
+                IndexerProtocol::Usenet
+            ]
+        );
         assert_eq!(
             indexer.capabilities.supported_ids.get("anime"),
             Some(&vec![
@@ -900,7 +986,11 @@ mod tests {
         )
         .expect("fixture parses");
 
-        let result = torrent_to_search_result(page.results.into_iter().next().unwrap(), None);
+        let results = torrents_to_search_results(page.results, false, 1);
+        assert_eq!(results.len(), 2);
+
+        let result = &results[0];
+        let nzb = &results[1];
 
         assert_eq!(
             result.download_url.as_deref(),
@@ -924,6 +1014,31 @@ mod tests {
         assert_eq!(
             result.subtitles,
             vec!["zh-Hans".to_string(), "en".to_string()]
+        );
+        assert_eq!(result.source_kind, Some(IndexerSourceKind::Torrent));
+        assert_eq!(result.protocol, Some(IndexerProtocol::Torrent));
+        assert_eq!(
+            result
+                .provider_extra
+                .get("download_kind")
+                .and_then(|value| value.as_str()),
+            Some("torrent")
+        );
+
+        assert_eq!(
+            nzb.download_url.as_deref(),
+            Some(
+                "https://storage.tsukihime.org/nzbs/10062/%5BFeibanyama%5D%20Wistoria%20Wand%20and%20Sword%20S02E12%20%5BBILIBILI%20WebRip%202160p%20NVENC%20AAC%20Multi-Subs%5D.nzb.gz"
+            )
+        );
+        assert_eq!(nzb.source_kind, Some(IndexerSourceKind::Usenet));
+        assert_eq!(nzb.protocol, Some(IndexerProtocol::Usenet));
+        assert_eq!(nzb.guid.as_deref(), Some("tsukihime-10062-nzb"));
+        assert_eq!(
+            nzb.provider_extra
+                .get("download_kind")
+                .and_then(|value| value.as_str()),
+            Some("nzb")
         );
     }
 
