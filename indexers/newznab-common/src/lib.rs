@@ -6,6 +6,8 @@
 //! a provider-specific [`MetadataExtractor`] callback.
 
 use std::collections::HashMap;
+use std::thread;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use extism_pdk::*;
 use quick_xml::escape::unescape;
@@ -20,7 +22,7 @@ pub use scryer_plugin_sdk::{
     PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult,
     PluginSearchSubjectKind, ProviderDescriptor, SDK_VERSION, current_sdk_constraint,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use unicode_normalization::{UnicodeNormalization, char::is_combining_mark};
 use url::Url;
 
@@ -106,6 +108,8 @@ fn protected_from_extra(extra: &HashMap<String, serde_json::Value>) -> Option<bo
 // Configuration
 // ---------------------------------------------------------------------------
 
+const DEFAULT_MAX_SEARCH_PAGES: usize = 30;
+
 pub struct NewznabConfig {
     pub base_url: String,
     pub api_key: String,
@@ -113,6 +117,75 @@ pub struct NewznabConfig {
     pub additional_params: String,
     /// Maximum results the indexer returns per page. Defaults to 100.
     pub page_size: usize,
+    pub http_behavior: NewznabHttpBehavior,
+}
+
+#[derive(Clone, Debug)]
+pub struct NewznabHttpBehavior {
+    pub plugin_id: String,
+    pub user_agent: String,
+    pub pre_request_delay: Duration,
+    pub retry_total_budget: Duration,
+    pub retry_default_delay: Duration,
+    pub retry_max_delay: Duration,
+    pub retry_max_attempts: usize,
+    pub max_search_pages: usize,
+    pub hit_budget: Option<NewznabHitBudget>,
+}
+
+#[derive(Debug, Clone)]
+pub struct NewznabHitBudget {
+    pub var_key: String,
+    pub hourly_limit: u32,
+    pub daily_limit: u32,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct NewznabHitBudgetSnapshot {
+    pub hourly_count: u32,
+    pub hourly_limit: u32,
+    pub daily_count: u32,
+    pub daily_limit: u32,
+}
+
+impl NewznabHitBudgetSnapshot {
+    pub fn exhausted(self) -> bool {
+        self.hourly_count >= self.hourly_limit || self.daily_count >= self.daily_limit
+    }
+
+    pub fn limiting_current_max(self) -> (Option<u32>, Option<u32>) {
+        let hourly_remaining = self.hourly_limit.saturating_sub(self.hourly_count);
+        let daily_remaining = self.daily_limit.saturating_sub(self.daily_count);
+        if hourly_remaining <= daily_remaining {
+            (Some(self.hourly_count), Some(self.hourly_limit))
+        } else {
+            (Some(self.daily_count), Some(self.daily_limit))
+        }
+    }
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+struct StoredHitBudget {
+    hour_bucket: u64,
+    hourly_count: u32,
+    day_bucket: u64,
+    daily_count: u32,
+}
+
+impl Default for NewznabHttpBehavior {
+    fn default() -> Self {
+        Self {
+            plugin_id: "newznab".to_string(),
+            user_agent: DEFAULT_USER_AGENT.to_string(),
+            pre_request_delay: Duration::ZERO,
+            retry_total_budget: Duration::ZERO,
+            retry_default_delay: Duration::from_secs(1),
+            retry_max_delay: Duration::from_secs(300),
+            retry_max_attempts: 1,
+            max_search_pages: DEFAULT_MAX_SEARCH_PAGES,
+            hit_budget: None,
+        }
+    }
 }
 
 impl NewznabConfig {
@@ -159,6 +232,7 @@ impl NewznabConfig {
             api_path,
             additional_params,
             page_size,
+            http_behavior: NewznabHttpBehavior::default(),
         })
     }
 }
@@ -259,30 +333,28 @@ pub fn extract_base_metadata(
             "grabs" => {
                 grabs = value.trim().replace(',', "").parse::<i64>().ok();
             }
-            "password" => {
-                match classify_password_metadata(Some(value)) {
-                    PasswordMetadataClassification::Real(password) => {
-                        extra.insert("password".to_string(), serde_json::Value::from(password));
-                        extra.insert(
-                            "password_protected".to_string(),
-                            serde_json::Value::from(true),
-                        );
-                    }
-                    PasswordMetadataClassification::ProtectedFlag => {
-                        extra.insert(
-                            "password_protected".to_string(),
-                            serde_json::Value::from(true),
-                        );
-                    }
-                    PasswordMetadataClassification::UnprotectedFlag => {
-                        extra.insert(
-                            "password_protected".to_string(),
-                            serde_json::Value::from(false),
-                        );
-                    }
-                    PasswordMetadataClassification::Empty => {}
+            "password" => match classify_password_metadata(Some(value)) {
+                PasswordMetadataClassification::Real(password) => {
+                    extra.insert("password".to_string(), serde_json::Value::from(password));
+                    extra.insert(
+                        "password_protected".to_string(),
+                        serde_json::Value::from(true),
+                    );
                 }
-            }
+                PasswordMetadataClassification::ProtectedFlag => {
+                    extra.insert(
+                        "password_protected".to_string(),
+                        serde_json::Value::from(true),
+                    );
+                }
+                PasswordMetadataClassification::UnprotectedFlag => {
+                    extra.insert(
+                        "password_protected".to_string(),
+                        serde_json::Value::from(false),
+                    );
+                }
+                PasswordMetadataClassification::Empty => {}
+            },
             _ => {}
         }
     }
@@ -391,11 +463,14 @@ pub fn execute_full_search(
 
     let endpoint = build_endpoint(&config.base_url, &config.api_path)?;
 
-    // Paginated search: fetch up to MAX_PAGES pages.
+    // Paginated search: fetch up to DEFAULT_MAX_SEARCH_PAGES pages.
     // Stop early if a page returns fewer results than the page size.
     let page_size = config.page_size;
-    const MAX_PAGES: usize = 30;
-    let max_results = page_size * MAX_PAGES;
+    let max_pages = config
+        .http_behavior
+        .max_search_pages
+        .clamp(1, DEFAULT_MAX_SEARCH_PAGES);
+    let max_results = page_size * max_pages;
     let limit = if req.limit == 0 {
         max_results
     } else {
@@ -405,7 +480,7 @@ pub fn execute_full_search(
     let mut all_results: Vec<SearchResult> = Vec::new();
     let mut last_limits = ApiLimits::default();
 
-    for page in 0..MAX_PAGES {
+    for page in 0..max_pages {
         let offset = page * page_size;
         let page_params = if config.additional_params.is_empty() {
             format!("&offset={offset}")
@@ -413,7 +488,7 @@ pub fn execute_full_search(
             format!("{}&offset={offset}", config.additional_params)
         };
 
-        let (status, body) = if search_shape == NabSearchShape::AnimeExact {
+        let search_result = if search_shape == NabSearchShape::AnimeExact {
             execute_exact_anime_search(
                 &endpoint,
                 &query_variants,
@@ -428,7 +503,8 @@ pub fn execute_full_search(
                 req.episode,
                 req.absolute_episode,
                 &page_params,
-            )?
+                &config.http_behavior,
+            )
         } else {
             execute_tiered_search(
                 &endpoint,
@@ -445,7 +521,26 @@ pub fn execute_full_search(
                 req.season,
                 req.episode,
                 &page_params,
-            )?
+                &config.http_behavior,
+            )
+        };
+        let (status, body) = match search_result {
+            Ok(response) => response,
+            Err(error) if is_hit_budget_exhausted_error(&error) => {
+                if page == 0 {
+                    let budget = hit_budget_snapshot(&config.http_behavior)?.unwrap_or_default();
+                    let (api_current, api_max) = budget.limiting_current_max();
+                    return Ok(SearchResponse {
+                        results: vec![],
+                        api_current,
+                        api_max,
+                        grab_current: None,
+                        grab_max: None,
+                    });
+                }
+                break;
+            }
+            Err(error) => return Err(error),
         };
 
         // Detect response format and check for errors
@@ -493,6 +588,113 @@ pub fn execute_full_search(
     }
 
     // Respect the caller's requested limit
+    if all_results.len() > limit {
+        all_results.truncate(limit);
+    }
+
+    let (budget_current, budget_max) = hit_budget_snapshot(&config.http_behavior)?
+        .map(NewznabHitBudgetSnapshot::limiting_current_max)
+        .unwrap_or((None, None));
+
+    Ok(SearchResponse {
+        results: all_results,
+        api_current: last_limits.api_current.or(budget_current),
+        api_max: last_limits.api_max.or(budget_max),
+        grab_current: last_limits.grab_current,
+        grab_max: last_limits.grab_max,
+    })
+}
+
+pub fn execute_raw_search(
+    config: &NewznabConfig,
+    req: &SearchRequest,
+    extract_fn: MetadataExtractor,
+) -> Result<SearchResponse, Error> {
+    let endpoint = build_endpoint(&config.base_url, &config.api_path)?;
+    let query = req.query.trim();
+    let newznab_cat = build_category_param(&req.categories);
+    let page_size = config.page_size;
+    let max_pages = config
+        .http_behavior
+        .max_search_pages
+        .clamp(1, DEFAULT_MAX_SEARCH_PAGES);
+    let max_results = page_size * max_pages;
+    let limit = if req.limit == 0 {
+        max_results
+    } else {
+        req.limit.min(max_results)
+    };
+
+    let mut all_results = Vec::new();
+    let mut last_limits = ApiLimits::default();
+
+    for page in 0..max_pages {
+        let offset = page * page_size;
+        let page_params = if config.additional_params.is_empty() {
+            format!("&offset={offset}")
+        } else {
+            format!("{}&offset={offset}", config.additional_params)
+        };
+
+        let (status, body) = execute_search(
+            &endpoint,
+            "search",
+            (!query.is_empty()).then_some(query),
+            &config.api_key,
+            None,
+            None,
+            None,
+            None,
+            None,
+            newznab_cat.as_deref(),
+            page_size,
+            None,
+            None,
+            &page_params,
+            &config.http_behavior,
+        )?;
+
+        let trimmed = body.trim_start();
+        let is_xml = trimmed.starts_with("<?xml")
+            || trimmed.starts_with("<rss")
+            || trimmed.starts_with("<error");
+
+        if is_xml {
+            if let Some((code, description)) = parse_error_xml(&body) {
+                if page == 0 {
+                    return Err(classify_and_format_error(&code, &description));
+                }
+                break;
+            }
+        } else if let Some((code, description)) = parse_error_json(&body) {
+            if page == 0 {
+                return Err(classify_and_format_error(&code, &description));
+            }
+            break;
+        }
+
+        if status >= 400 {
+            if page == 0 {
+                return Err(Error::msg(format!("Newznab API returned HTTP {status}")));
+            }
+            break;
+        }
+
+        let (page_results, limits) = if is_xml {
+            parse_newznab_xml(&body, page_size, extract_fn)
+        } else {
+            parse_newznab_json(&body, page_size, extract_fn)
+        };
+
+        last_limits = limits;
+        let page_count = page_results.len();
+        all_results.extend(page_results);
+
+        if page_count < page_size || all_results.len() >= max_results {
+            break;
+        }
+    }
+
     if all_results.len() > limit {
         all_results.truncate(limit);
     }
@@ -572,7 +774,7 @@ fn execute_rss_search(
     let mut last_limits = ApiLimits::default();
 
     for search_type in &search_types {
-        let (status, body) = execute_search(
+        let search_result = execute_search(
             &endpoint,
             search_type,
             None, // no query
@@ -587,7 +789,26 @@ fn execute_rss_search(
             None, // no season
             None, // no episode
             &config.additional_params,
-        )?;
+            &config.http_behavior,
+        );
+        let (status, body) = match search_result {
+            Ok(response) => response,
+            Err(error) if is_hit_budget_exhausted_error(&error) => {
+                if all_results.is_empty() {
+                    let budget = hit_budget_snapshot(&config.http_behavior)?.unwrap_or_default();
+                    let (api_current, api_max) = budget.limiting_current_max();
+                    return Ok(SearchResponse {
+                        results: vec![],
+                        api_current,
+                        api_max,
+                        grab_current: None,
+                        grab_max: None,
+                    });
+                }
+                break;
+            }
+            Err(error) => return Err(error),
+        };
 
         let trimmed = body.trim_start();
         let is_xml = trimmed.starts_with("<?xml")
@@ -649,10 +870,14 @@ fn execute_rss_search(
         search_types.len()
     );
 
+    let (budget_current, budget_max) = hit_budget_snapshot(&config.http_behavior)?
+        .map(NewznabHitBudgetSnapshot::limiting_current_max)
+        .unwrap_or((None, None));
+
     Ok(SearchResponse {
         results: all_results,
-        api_current: last_limits.api_current,
-        api_max: last_limits.api_max,
+        api_current: last_limits.api_current.or(budget_current),
+        api_max: last_limits.api_max.or(budget_max),
         grab_current: last_limits.grab_current,
         grab_max: last_limits.grab_max,
     })
@@ -902,6 +1127,7 @@ fn execute_exact_anime_search(
     episode: Option<u32>,
     absolute_episode: Option<u32>,
     additional_params: &str,
+    behavior: &NewznabHttpBehavior,
 ) -> Result<(u16, String), Error> {
     if tvdb_id.is_some() || tmdb_id.is_some() || tvrage_id.is_some() || tvmaze_id.is_some() {
         return execute_search(
@@ -923,6 +1149,7 @@ fn execute_exact_anime_search(
             },
             absolute_episode.or(episode),
             additional_params,
+            behavior,
         );
     }
 
@@ -947,6 +1174,7 @@ fn execute_exact_anime_search(
             season,
             episode,
             additional_params,
+            behavior,
         )?;
         let looks_empty = is_empty_response(body.trim_start());
         last_response = (status, body.clone());
@@ -978,6 +1206,7 @@ fn execute_tiered_search(
     season: Option<u32>,
     episode: Option<u32>,
     additional_params: &str,
+    behavior: &NewznabHttpBehavior,
 ) -> Result<(u16, String), Error> {
     // Determine effective IDs for the search type.
     let effective_imdb =
@@ -1034,6 +1263,7 @@ fn execute_tiered_search(
             season,
             episode,
             additional_params,
+            behavior,
         )?;
 
         let looks_empty = is_empty_response(body.trim_start());
@@ -1064,6 +1294,7 @@ fn execute_tiered_search(
             season,
             episode,
             additional_params,
+            behavior,
         )?;
 
         let looks_empty = is_empty_response(body.trim_start());
@@ -1142,6 +1373,7 @@ fn execute_search(
     season: Option<u32>,
     episode: Option<u32>,
     additional_params: &str,
+    behavior: &NewznabHttpBehavior,
 ) -> Result<(u16, String), Error> {
     let url = build_search_url(
         endpoint,
@@ -1160,68 +1392,333 @@ fn execute_search(
         additional_params,
     )?;
 
-    let (status, body) = http_get_with_retry(&url)?;
+    let (status, body) = polite_http_get(
+        &url,
+        "application/json, application/xml, */*; q=0.8",
+        behavior,
+    )?;
     Ok((status, body))
 }
 
-const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
+const DEFAULT_USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
     (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-/// HTTP GET with explicit 429 reporting.
-///
-/// On a 429 response, returns a clear rate-limit error and includes
-/// `Retry-After` / `X-Retry-After` seconds when the server supplies them.
-fn http_get_with_retry(url: &str) -> Result<(u16, String), Error> {
+pub fn polite_http_get(
+    url: &str,
+    accept: &str,
+    behavior: &NewznabHttpBehavior,
+) -> Result<(u16, String), Error> {
     let logged_url = redact_url_for_log(url);
+    let mut total_wait = Duration::ZERO;
+    let mut attempt = 1usize;
 
-    let http_req = HttpRequest::new(url)
-        .with_header("Accept", "application/json, application/xml, */*; q=0.8")
-        .with_header("Accept-Encoding", "gzip")
-        .with_header("Accept-Language", "en-US,en;q=0.9")
-        .with_header("User-Agent", USER_AGENT);
+    loop {
+        if !behavior.pre_request_delay.is_zero() {
+            thread::sleep(behavior.pre_request_delay);
+        }
 
-    log!(
-        LogLevel::Debug,
-        "http_trace plugin=newznab method=GET attempt=1 url={}",
-        logged_url
-    );
+        let budget_snapshot = record_hit_budget_use(behavior)?;
+        if let Some(snapshot) = budget_snapshot {
+            log!(
+                LogLevel::Debug,
+                "http_hit_budget plugin={} hourly={}/{} daily={}/{}",
+                behavior.plugin_id,
+                snapshot.hourly_count,
+                snapshot.hourly_limit,
+                snapshot.daily_count,
+                snapshot.daily_limit
+            );
+        }
 
-    let resp = http::request::<Vec<u8>>(&http_req, None).map_err(|e| {
         log!(
             LogLevel::Debug,
-            "http_trace_error plugin=newznab method=GET attempt=1 url={} error={}",
-            logged_url,
-            e
+            "http_trace plugin={} method=GET attempt={} url={}",
+            behavior.plugin_id,
+            attempt,
+            logged_url
         );
-        Error::msg(format!("HTTP request failed: {e}"))
-    })?;
 
-    log!(
-        LogLevel::Debug,
-        "http_trace_response plugin=newznab method=GET attempt=1 status={} url={}",
-        resp.status_code(),
-        logged_url
-    );
+        let http_req = HttpRequest::new(url)
+            .with_header("Accept", accept)
+            .with_header("Accept-Encoding", "gzip")
+            .with_header("Accept-Language", "en-US,en;q=0.9")
+            .with_header("Cache-Control", "no-cache")
+            .with_header("Pragma", "no-cache")
+            .with_header("User-Agent", &behavior.user_agent);
 
-    if resp.status_code() == 429 {
-        let retry_after = resp
-            .headers()
-            .get("retry-after")
-            .or_else(|| resp.headers().get("x-retry-after"))
-            .and_then(|v| v.parse::<u64>().ok());
-
-        return match retry_after {
-            Some(secs) => Err(Error::msg(format!(
-                "HTTP 429: rate limited; retry_after_seconds={secs}"
-            ))),
-            None => Err(Error::msg("HTTP 429: rate limited")),
+        let resp = match http::request::<Vec<u8>>(&http_req, None) {
+            Ok(resp) => resp,
+            Err(e) => {
+                log!(
+                    LogLevel::Debug,
+                    "http_trace_error plugin={} method=GET attempt={} url={} error={}",
+                    behavior.plugin_id,
+                    attempt,
+                    logged_url,
+                    e
+                );
+                return Err(Error::msg(format!("HTTP request failed: {e}")));
+            }
         };
+
+        let status = resp.status_code();
+        let headers = capture_known_headers(&resp);
+        let body = String::from_utf8_lossy(&resp.body()).to_string();
+
+        log!(
+            LogLevel::Debug,
+            "http_trace_response plugin={} method=GET attempt={} status={} url={}",
+            behavior.plugin_id,
+            attempt,
+            status,
+            logged_url,
+        );
+
+        if should_retry_status(status) {
+            let delay = retry_delay_from_headers(&headers)
+                .or_else(|| (status == 429).then_some(behavior.retry_default_delay))
+                .map(|delay| clamp_duration(delay, behavior.retry_max_delay));
+
+            if let Some(delay) = delay {
+                if !delay.is_zero()
+                    && attempt < behavior.retry_max_attempts.max(1)
+                    && total_wait + delay <= behavior.retry_total_budget
+                {
+                    log!(
+                        LogLevel::Warn,
+                        "http_trace_backoff plugin={} method=GET attempt={} status={} wait_seconds={} url={}",
+                        behavior.plugin_id,
+                        attempt,
+                        status,
+                        delay.as_secs(),
+                        logged_url
+                    );
+                    thread::sleep(delay);
+                    total_wait += delay;
+                    attempt += 1;
+                    continue;
+                }
+            }
+        }
+
+        if status == 429 {
+            return Err(Error::msg(format!(
+                "HTTP 429: rate limited; stopped after {} attempt(s) and {}s total wait",
+                attempt,
+                total_wait.as_secs()
+            )));
+        }
+
+        if let Some(delay) = rate_limit_pause_from_headers(&headers, behavior.retry_max_delay) {
+            log!(
+                LogLevel::Warn,
+                "http_trace_rate_limit_pause plugin={} method=GET status={} wait_seconds={} url={}",
+                behavior.plugin_id,
+                status,
+                delay.as_secs(),
+                logged_url
+            );
+            thread::sleep(delay);
+        }
+
+        return Ok((status, body));
+    }
+}
+
+fn should_retry_status(status: u16) -> bool {
+    status == 429 || status == 503
+}
+
+fn retry_delay_from_headers(headers: &HashMap<String, String>) -> Option<Duration> {
+    let now = current_epoch_seconds();
+    header_value(headers, "retry-after")
+        .or_else(|| header_value(headers, "x-retry-after"))
+        .and_then(parse_retry_after)
+        .or_else(|| {
+            header_value(headers, "ratelimit-reset")
+                .or_else(|| header_value(headers, "x-ratelimit-reset"))
+                .or_else(|| header_value(headers, "x-rate-limit-reset"))
+                .and_then(|value| parse_rate_limit_reset(value, now))
+        })
+}
+
+fn rate_limit_pause_from_headers(
+    headers: &HashMap<String, String>,
+    max_delay: Duration,
+) -> Option<Duration> {
+    let remaining = header_value(headers, "ratelimit-remaining")
+        .or_else(|| header_value(headers, "x-ratelimit-remaining"))
+        .or_else(|| header_value(headers, "x-rate-limit-remaining"))?;
+    if remaining.trim() != "0" {
+        return None;
+    }
+    retry_delay_from_headers(headers).map(|delay| clamp_duration(delay, max_delay))
+}
+
+fn header_value<'a>(headers: &'a HashMap<String, String>, name: &str) -> Option<&'a str> {
+    headers
+        .get(name)
+        .or_else(|| headers.get(&name.to_ascii_lowercase()))
+        .map(String::as_str)
+}
+
+fn parse_retry_after(value: &str) -> Option<Duration> {
+    let value = value.trim();
+    value
+        .parse::<u64>()
+        .ok()
+        .map(Duration::from_secs)
+        .or_else(|| {
+            httpdate::parse_http_date(value).ok().map(|retry_at| {
+                retry_at
+                    .duration_since(SystemTime::now())
+                    .unwrap_or(Duration::ZERO)
+            })
+        })
+}
+
+fn parse_rate_limit_reset(value: &str, now_epoch_seconds: u64) -> Option<Duration> {
+    let raw = value.trim().parse::<u64>().ok()?;
+    if raw > 60 * 60 * 24 {
+        Some(Duration::from_secs(raw.saturating_sub(now_epoch_seconds)))
+    } else {
+        Some(Duration::from_secs(raw))
+    }
+}
+
+fn clamp_duration(value: Duration, max: Duration) -> Duration {
+    if max.is_zero() { value } else { value.min(max) }
+}
+
+fn current_epoch_seconds() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or(Duration::ZERO)
+        .as_secs()
+}
+
+const HIT_BUDGET_EXHAUSTED: &str = "indexer hit budget exhausted";
+
+pub fn is_hit_budget_exhausted_error(error: &Error) -> bool {
+    error.to_string().contains(HIT_BUDGET_EXHAUSTED)
+}
+
+pub fn hit_budget_snapshot(
+    behavior: &NewznabHttpBehavior,
+) -> Result<Option<NewznabHitBudgetSnapshot>, Error> {
+    let Some(budget) = &behavior.hit_budget else {
+        return Ok(None);
+    };
+    let state = load_hit_budget_state(budget)?;
+    Ok(Some(
+        snapshot_for_budget(budget, state, current_epoch_seconds()).0,
+    ))
+}
+
+fn record_hit_budget_use(
+    behavior: &NewznabHttpBehavior,
+) -> Result<Option<NewznabHitBudgetSnapshot>, Error> {
+    let Some(budget) = &behavior.hit_budget else {
+        return Ok(None);
+    };
+    let (mut snapshot, mut state) = snapshot_for_budget(
+        budget,
+        load_hit_budget_state(budget)?,
+        current_epoch_seconds(),
+    );
+    if snapshot.exhausted() {
+        return Err(Error::msg(format!(
+            "{HIT_BUDGET_EXHAUSTED}: hourly={}/{} daily={}/{}",
+            snapshot.hourly_count,
+            snapshot.hourly_limit,
+            snapshot.daily_count,
+            snapshot.daily_limit
+        )));
     }
 
-    Ok((
-        resp.status_code(),
-        String::from_utf8_lossy(&resp.body()).to_string(),
-    ))
+    state.hourly_count = state.hourly_count.saturating_add(1);
+    state.daily_count = state.daily_count.saturating_add(1);
+    save_hit_budget_state(budget, &state)?;
+    snapshot.hourly_count = state.hourly_count;
+    snapshot.daily_count = state.daily_count;
+    Ok(Some(snapshot))
+}
+
+fn load_hit_budget_state(budget: &NewznabHitBudget) -> Result<StoredHitBudget, Error> {
+    let Some(raw) = var::get::<String>(&budget.var_key)
+        .map_err(|error| Error::msg(format!("failed to read hit budget state: {error}")))?
+    else {
+        return Ok(StoredHitBudget::default());
+    };
+    serde_json::from_str(&raw)
+        .map_err(|error| Error::msg(format!("failed to parse hit budget state: {error}")))
+}
+
+fn save_hit_budget_state(budget: &NewznabHitBudget, state: &StoredHitBudget) -> Result<(), Error> {
+    let rendered = serde_json::to_string(state)
+        .map_err(|error| Error::msg(format!("failed to encode hit budget state: {error}")))?;
+    var::set(&budget.var_key, rendered)
+        .map_err(|error| Error::msg(format!("failed to store hit budget state: {error}")))
+}
+
+fn snapshot_for_budget(
+    budget: &NewznabHitBudget,
+    mut state: StoredHitBudget,
+    now_seconds: u64,
+) -> (NewznabHitBudgetSnapshot, StoredHitBudget) {
+    let hour_bucket = now_seconds / 3_600;
+    let day_bucket = now_seconds / 86_400;
+    if state.hour_bucket != hour_bucket {
+        state.hour_bucket = hour_bucket;
+        state.hourly_count = 0;
+    }
+    if state.day_bucket != day_bucket {
+        state.day_bucket = day_bucket;
+        state.daily_count = 0;
+    }
+    (
+        NewznabHitBudgetSnapshot {
+            hourly_count: state.hourly_count,
+            hourly_limit: budget.hourly_limit,
+            daily_count: state.daily_count,
+            daily_limit: budget.daily_limit,
+        },
+        state,
+    )
+}
+
+fn capture_known_headers(response: &HttpResponse) -> HashMap<String, String> {
+    let mut headers = HashMap::new();
+    for name in [
+        "date",
+        "server",
+        "cf-ray",
+        "cf-cache-status",
+        "content-type",
+        "content-length",
+        "location",
+        "retry-after",
+        "x-retry-after",
+        "ratelimit-limit",
+        "ratelimit-remaining",
+        "ratelimit-reset",
+        "x-ratelimit-limit",
+        "x-ratelimit-remaining",
+        "x-ratelimit-reset",
+        "x-rate-limit-limit",
+        "x-rate-limit-remaining",
+        "x-rate-limit-reset",
+    ] {
+        if let Some(value) = response
+            .headers()
+            .get(name)
+            .or_else(|| response.headers().get(&name.to_ascii_lowercase()))
+            .or_else(|| response.headers().get(&name.to_ascii_uppercase()))
+        {
+            headers.insert(name.to_string(), value.to_string());
+        }
+    }
+    headers
 }
 
 fn redact_url_for_log(url: &str) -> String {
@@ -1317,6 +1814,34 @@ fn build_search_url(
     append_additional_query_pairs(&mut url, additional_params);
 
     Ok(url.to_string())
+}
+
+#[allow(clippy::too_many_arguments)]
+#[cfg(test)]
+fn build_raw_search_url(
+    endpoint: &str,
+    query: Option<&str>,
+    api_key: &str,
+    cat: Option<&str>,
+    limit: usize,
+    additional_params: &str,
+) -> Result<String, Error> {
+    build_search_url(
+        endpoint,
+        "search",
+        query,
+        api_key,
+        None,
+        None,
+        None,
+        None,
+        None,
+        cat,
+        limit,
+        None,
+        None,
+        additional_params,
+    )
 }
 
 fn append_additional_query_pairs(url: &mut Url, additional_params: &str) {
@@ -2913,6 +3438,53 @@ mod tests {
     }
 
     #[test]
+    fn build_raw_search_url_uses_search_without_typed_ids() {
+        let url = build_raw_search_url(
+            "https://feed.animetosho.xyz/api/newznab",
+            Some("Frieren"),
+            "test-api-key",
+            Some("5070"),
+            200,
+            "&offset=400",
+        )
+        .unwrap();
+
+        assert_eq!(query_value(&url, "t").as_deref(), Some("search"));
+        assert_eq!(query_value(&url, "q").as_deref(), Some("Frieren"));
+        assert_eq!(query_value(&url, "cat").as_deref(), Some("5070"));
+        assert_eq!(query_value(&url, "limit").as_deref(), Some("200"));
+        assert_eq!(query_value(&url, "offset").as_deref(), Some("400"));
+        assert!(query_value(&url, "imdbid").is_none());
+        assert!(query_value(&url, "tvdbid").is_none());
+        assert!(query_value(&url, "season").is_none());
+        assert!(query_value(&url, "ep").is_none());
+        assert_parses_as_http_uri(&url);
+    }
+
+    #[test]
+    fn build_raw_search_url_supports_category_only_recent() {
+        let url = build_raw_search_url(
+            "https://feed.animetosho.xyz/api/torznab",
+            None,
+            "test-api-key",
+            Some("5070"),
+            75,
+            "",
+        )
+        .unwrap();
+
+        assert_eq!(query_value(&url, "t").as_deref(), Some("search"));
+        assert_eq!(query_value(&url, "cat").as_deref(), Some("5070"));
+        assert_eq!(query_value(&url, "limit").as_deref(), Some("75"));
+        assert!(query_value(&url, "q").is_none());
+        assert_eq!(
+            query_value(&redact_url_for_log(&url), "apikey").as_deref(),
+            Some("REDACTED")
+        );
+        assert_parses_as_http_uri(&url);
+    }
+
+    #[test]
     fn build_search_url_movie_id_search_uses_imdbid_and_category_filter_without_query() {
         let url = build_search_url(
             "https://api.nzbgeek.info/api",
@@ -4009,5 +4581,104 @@ mod tests {
         assert!(!fields[1].required);
         assert_eq!(fields[2].key, "api_path");
         assert_eq!(fields[3].key, "additional_params");
+    }
+
+    #[test]
+    fn http_behavior_defaults_keep_generic_caps() {
+        let behavior = NewznabHttpBehavior::default();
+        assert_eq!(behavior.retry_max_attempts, 1);
+        assert_eq!(behavior.max_search_pages, DEFAULT_MAX_SEARCH_PAGES);
+        assert!(behavior.hit_budget.is_none());
+    }
+
+    #[test]
+    fn hit_budget_snapshot_resets_hour_and_day_buckets() {
+        let budget = NewznabHitBudget {
+            var_key: "test".to_string(),
+            hourly_limit: 30,
+            daily_limit: 150,
+        };
+        let state = StoredHitBudget {
+            hour_bucket: 1,
+            hourly_count: 29,
+            day_bucket: 1,
+            daily_count: 149,
+        };
+
+        let (snapshot, state) = snapshot_for_budget(&budget, state, 2 * 86_400);
+
+        assert_eq!(snapshot.hourly_count, 0);
+        assert_eq!(snapshot.daily_count, 0);
+        assert!(!snapshot.exhausted());
+        assert_eq!(state.hour_bucket, 48);
+        assert_eq!(state.day_bucket, 2);
+    }
+
+    #[test]
+    fn hit_budget_snapshot_detects_tighter_exhausted_window() {
+        let budget = NewznabHitBudget {
+            var_key: "test".to_string(),
+            hourly_limit: 30,
+            daily_limit: 150,
+        };
+        let state = StoredHitBudget {
+            hour_bucket: 10,
+            hourly_count: 30,
+            day_bucket: 0,
+            daily_count: 40,
+        };
+
+        let (snapshot, _) = snapshot_for_budget(&budget, state, 10 * 3_600);
+
+        assert!(snapshot.exhausted());
+        assert_eq!(snapshot.limiting_current_max(), (Some(30), Some(30)));
+    }
+
+    #[test]
+    fn retry_after_seconds_parse_as_delay() {
+        assert_eq!(
+            parse_retry_after("12"),
+            Some(std::time::Duration::from_secs(12))
+        );
+        assert_eq!(parse_retry_after("not-a-number"), None);
+    }
+
+    #[test]
+    fn retry_after_http_date_parse_as_delay() {
+        let retry_at = std::time::SystemTime::now() + std::time::Duration::from_secs(120);
+        let header = httpdate::fmt_http_date(retry_at);
+        let delay = parse_retry_after(&header).expect("HTTP-date Retry-After should parse");
+        assert!(delay <= std::time::Duration::from_secs(120));
+        assert!(delay >= std::time::Duration::from_secs(110));
+    }
+
+    #[test]
+    fn rate_limit_reset_accepts_epoch_or_relative_seconds() {
+        assert_eq!(
+            parse_rate_limit_reset("45", 1_000),
+            Some(std::time::Duration::from_secs(45))
+        );
+        assert_eq!(
+            parse_rate_limit_reset("2000000000", 1_999_999_970),
+            Some(std::time::Duration::from_secs(30))
+        );
+    }
+
+    #[test]
+    fn rate_limit_pause_requires_zero_remaining() {
+        let mut headers = HashMap::from([
+            ("x-ratelimit-remaining".to_string(), "1".to_string()),
+            ("x-ratelimit-reset".to_string(), "30".to_string()),
+        ]);
+        assert_eq!(
+            rate_limit_pause_from_headers(&headers, std::time::Duration::from_secs(60)),
+            None
+        );
+
+        headers.insert("x-ratelimit-remaining".to_string(), "0".to_string());
+        assert_eq!(
+            rate_limit_pause_from_headers(&headers, std::time::Duration::from_secs(10)),
+            Some(std::time::Duration::from_secs(10))
+        );
     }
 }

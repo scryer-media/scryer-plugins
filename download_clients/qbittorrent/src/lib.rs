@@ -2444,6 +2444,14 @@ mod tests {
             request.headers.get("Cookie").map(String::as_str),
             Some("SID=abc")
         );
+        assert_eq!(
+            request.headers.get("Origin").map(String::as_str),
+            Some(config.webui_url.as_str())
+        );
+        assert_eq!(
+            request.headers.get("Referer").map(String::as_str),
+            Some(config.webui_url.as_str())
+        );
     }
 
     #[test]

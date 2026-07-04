@@ -1,0 +1,34 @@
+[package]
+name = "amenzb-indexer"
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-only"
+description = "ameNZB-specific Newznab indexer for anime Usenet releases"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "amenzb"
+catalog_versions = ["v3"]
+status = "beta"
+min_scryer_version = "0.17.0"
+feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/amenzb"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/amenzb"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+extism-pdk = "1.4"
+newznab-common = { path = "../newznab-common" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+scryer-plugin-sdk = "3.2.0"
+url = "2"
+
+[profile.plugin-release]
+inherits = "release"
+opt-level = 3
+lto = "fat"
+strip = true
+panic = "abort"

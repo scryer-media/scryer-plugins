@@ -20,3 +20,5 @@ subtitles/enhanced-sync/vendor/libfvad/*
 !subtitles/enhanced-sync/vendor/libfvad/UPSTREAM.md
 !subtitles/enhanced-sync/vendor/libfvad/SCRYER_VENDOR_METADATA
 !subtitles/enhanced-sync/vendor/libfvad/source.tar.zst
+
+scryer-plugins/dist/*
