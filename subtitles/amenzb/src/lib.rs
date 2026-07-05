@@ -469,10 +469,10 @@ fn amenzb_metadata_extractor(
                 }
             }
             "grabs" => grabs = value.trim().replace(',', "").parse::<i64>().ok(),
-            "guid" | "season" | "episode" | "source" | "resolution" | "releasegroup" => {
-                if !value.trim().is_empty() {
-                    extra.insert(normalized, json!(value.trim()));
-                }
+            "guid" | "season" | "episode" | "source" | "resolution" | "releasegroup"
+                if !value.trim().is_empty() =>
+            {
+                extra.insert(normalized, json!(value.trim()));
             }
             _ => {}
         }

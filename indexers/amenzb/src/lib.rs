@@ -453,10 +453,10 @@ fn push_bool_field(
 }
 
 fn normalize_request_ids(mut req: SearchRequest) -> SearchRequest {
-    if request_id(&req, "anidb_id").is_none() {
-        if let Some(anidb) = request_id(&req, "anidb") {
-            req.ids.insert("anidb_id".to_string(), anidb);
-        }
+    if request_id(&req, "anidb_id").is_none()
+        && let Some(anidb) = request_id(&req, "anidb")
+    {
+        req.ids.insert("anidb_id".to_string(), anidb);
     }
     req
 }
@@ -468,10 +468,10 @@ fn req_for_exact_provider_filter(req: &SearchRequest, category: &Option<String>)
     req.season = None;
     req.episode = None;
     req.absolute_episode = None;
-    if req.categories.is_empty() {
-        if let Some(category) = provider_category_param(category, &req) {
-            req.categories.push(category.to_string());
-        }
+    if req.categories.is_empty()
+        && let Some(category) = provider_category_param(category, &req)
+    {
+        req.categories.push(category.to_string());
     }
     req
 }
@@ -494,10 +494,10 @@ fn provider_params(
 ) -> String {
     let mut pairs: Vec<(String, String)> = Vec::new();
 
-    if req.categories.is_empty() {
-        if let Some(category) = provider_category_param(&config.category, req) {
-            pairs.push(("cat".to_string(), category));
-        }
+    if req.categories.is_empty()
+        && let Some(category) = provider_category_param(&config.category, req)
+    {
+        pairs.push(("cat".to_string(), category));
     }
     if config.healthy_only {
         pairs.push(("healthy".to_string(), "1".to_string()));
@@ -618,10 +618,10 @@ fn amenzb_metadata_extractor(
             }
             "grabs" => grabs = value.trim().replace(',', "").parse::<i64>().ok(),
             "category" | "resolution" | "source" | "season" | "episode" | "video" | "guid"
-            | "releasegroup" | "translation" => {
-                if !value.trim().is_empty() {
-                    extra.insert(normalized, json!(value.trim()));
-                }
+            | "releasegroup" | "translation"
+                if !value.trim().is_empty() =>
+            {
+                extra.insert(normalized, json!(value.trim()));
             }
             _ => {}
         }
