@@ -399,7 +399,7 @@ struct CatalogArgs {
 enum CatalogCommand {
     #[command(hide = true)]
     RenderV2,
-    RenderV3,
+    RenderV3(CatalogRenderV3Args),
     #[command(hide = true)]
     PrepareV2(CatalogPrepareV2Args),
     PrepareV3(CatalogPrepareV3Args),
@@ -409,6 +409,22 @@ enum CatalogCommand {
     UploadV3R2(CatalogUploadV3R2Args),
     #[command(hide = true)]
     ValidateV2,
+}
+
+#[derive(Args)]
+struct CatalogRenderV3Args {
+    #[arg(long, help = "Output directory for rendered catalog-v3 assets")]
+    out: Option<PathBuf>,
+    #[arg(
+        long = "plugin-id",
+        help = "Only rebuild and merge this plugin id; repeat for multiple plugins"
+    )]
+    plugin_ids: Vec<String>,
+    #[arg(
+        long,
+        help = "Existing catalog-v3 JSON used as the merge base for targeted renders"
+    )]
+    existing_catalog: Option<PathBuf>,
 }
 
 #[derive(Args)]
@@ -1137,7 +1153,7 @@ fn main() -> Result<()> {
         },
         Commands::Catalog(args) => match args.command {
             CatalogCommand::RenderV2 => run_catalog_render_v2(&ctx),
-            CatalogCommand::RenderV3 => run_catalog_render_v3(&ctx),
+            CatalogCommand::RenderV3(args) => run_catalog_render_v3(&ctx, args),
             CatalogCommand::PrepareV2(args) => run_catalog_prepare_v2(&ctx, args),
             CatalogCommand::PrepareV3(args) => run_catalog_prepare_v3(&ctx, args),
             CatalogCommand::PublishV2 => run_catalog_publish_v2(&ctx),
@@ -5453,13 +5469,13 @@ fn run_catalog_render_v2(_ctx: &TaskContext) -> Result<()> {
     retired_catalog_v2_command("catalog render-v2")
 }
 
-fn run_catalog_render_v3(ctx: &TaskContext) -> Result<()> {
+fn run_catalog_render_v3(ctx: &TaskContext, args: CatalogRenderV3Args) -> Result<()> {
     run_catalog_prepare_v3(
         ctx,
         CatalogPrepareV3Args {
-            out: None,
-            plugin_ids: Vec::new(),
-            existing_catalog: None,
+            out: args.out,
+            plugin_ids: args.plugin_ids,
+            existing_catalog: args.existing_catalog,
             prepared_plugin_root: None,
             allow_selected_rebuild: false,
         },
@@ -5475,14 +5491,13 @@ fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Resu
         .out
         .clone()
         .unwrap_or_else(|| default_central_catalog_v3_dir(ctx));
-    let prepared_rule_packs = prepare_rule_pack_v3_entries(ctx, &dist)?;
     let existing_catalog = match args.existing_catalog.as_deref() {
         Some(path) => Some(read_catalog_v3_from_path(ctx, path)?),
         None => None,
     };
     if !args.plugin_ids.is_empty() && existing_catalog.is_none() && !args.allow_selected_rebuild {
         bail!(
-            "catalog prepare-v3 with --plugin-id requires --existing-catalog; use --allow-selected-rebuild only for an intentional full catalog rebuild from prepared plugin snippets"
+            "catalog prepare-v3/render-v3 with --plugin-id requires --existing-catalog so selected plugins can be merged into a baseline; use --allow-selected-rebuild only for an intentional full catalog rebuild from prepared plugin snippets"
         );
     }
     if args.allow_selected_rebuild && args.prepared_plugin_root.is_none() {
@@ -5494,6 +5509,7 @@ fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Resu
     if args.prepared_plugin_root.is_none() {
         ensure_current_sdk_dependency_is_published(ctx)?;
     }
+    let prepared_rule_packs = prepare_rule_pack_v3_entries(ctx, &dist)?;
     let catalog_version = existing_catalog
         .as_ref()
         .map(|catalog| catalog.catalog_version.max(1) + 1)
