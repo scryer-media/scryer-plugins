@@ -425,6 +425,12 @@ struct CatalogRenderV3Args {
         help = "Existing catalog-v3 JSON used as the merge base for targeted renders"
     )]
     existing_catalog: Option<PathBuf>,
+    #[arg(
+        long = "allow-release-removal",
+        value_name = "PLUGIN_ID@VERSION",
+        help = "Permit an intentional catalog-v3 release removal when comparing against --existing-catalog"
+    )]
+    allow_release_removals: Vec<String>,
 }
 
 #[derive(Args)]
@@ -449,6 +455,12 @@ struct CatalogPrepareV3Args {
     existing_catalog: Option<PathBuf>,
     #[arg(long)]
     prepared_plugin_root: Option<PathBuf>,
+    #[arg(
+        long = "allow-release-removal",
+        value_name = "PLUGIN_ID@VERSION",
+        help = "Permit an intentional catalog-v3 release removal when comparing against --existing-catalog"
+    )]
+    allow_release_removals: Vec<String>,
     #[arg(long, hide = true)]
     allow_selected_rebuild: bool,
 }
@@ -5102,6 +5114,83 @@ fn sort_catalog_v3_releases_newest_first(releases: &mut [CatalogV3Release]) {
     });
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+struct CatalogV3ReleaseKey {
+    plugin_id: String,
+    version: String,
+}
+
+fn parse_catalog_v3_release_key(value: &str) -> Result<CatalogV3ReleaseKey> {
+    let (plugin_id, version) = value
+        .split_once('@')
+        .ok_or_else(|| anyhow!("catalog-v3 release removal must be PLUGIN_ID@VERSION: {value}"))?;
+    let plugin_id = plugin_id.trim();
+    let version = version.trim();
+    if plugin_id.is_empty() || version.is_empty() {
+        bail!("catalog-v3 release removal must be PLUGIN_ID@VERSION: {value}");
+    }
+    Version::parse(version)
+        .with_context(|| format!("invalid catalog-v3 release removal version {version}"))?;
+    Ok(CatalogV3ReleaseKey {
+        plugin_id: plugin_id.to_string(),
+        version: version.to_string(),
+    })
+}
+
+fn parse_catalog_v3_release_keys(values: &[String]) -> Result<BTreeSet<CatalogV3ReleaseKey>> {
+    values
+        .iter()
+        .map(|value| parse_catalog_v3_release_key(value))
+        .collect()
+}
+
+fn validate_catalog_v3_preserves_existing_releases(
+    existing: &CatalogV3,
+    candidate: &CatalogV3,
+    allowed_removals: &BTreeSet<CatalogV3ReleaseKey>,
+) -> Result<()> {
+    let candidate_by_id = candidate
+        .plugins
+        .iter()
+        .map(|plugin| {
+            (
+                plugin.id.as_str(),
+                plugin
+                    .releases
+                    .iter()
+                    .map(|release| release.version.as_str())
+                    .collect::<BTreeSet<_>>(),
+            )
+        })
+        .collect::<BTreeMap<_, _>>();
+    let mut missing = Vec::new();
+    for plugin in &existing.plugins {
+        let candidate_versions = candidate_by_id.get(plugin.id.as_str());
+        for release in &plugin.releases {
+            let key = CatalogV3ReleaseKey {
+                plugin_id: plugin.id.clone(),
+                version: release.version.clone(),
+            };
+            if allowed_removals.contains(&key) {
+                continue;
+            }
+            let preserved = candidate_versions
+                .map(|versions| versions.contains(release.version.as_str()))
+                .unwrap_or(false);
+            if !preserved {
+                missing.push(format!("{}@{}", key.plugin_id, key.version));
+            }
+        }
+    }
+    if !missing.is_empty() {
+        bail!(
+            "candidate catalog-v3 removed existing release(s): {}; pass --allow-release-removal PLUGIN_ID@VERSION for intentional removals",
+            missing.join(", ")
+        );
+    }
+    Ok(())
+}
+
 fn catalog_v3_release_from_prepared_assets(
     plugin: &LocalPluginInfo,
     version: &str,
@@ -5477,6 +5566,7 @@ fn run_catalog_render_v3(ctx: &TaskContext, args: CatalogRenderV3Args) -> Result
             plugin_ids: args.plugin_ids,
             existing_catalog: args.existing_catalog,
             prepared_plugin_root: None,
+            allow_release_removals: args.allow_release_removals,
             allow_selected_rebuild: false,
         },
     )
@@ -5495,6 +5585,7 @@ fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Resu
         Some(path) => Some(read_catalog_v3_from_path(ctx, path)?),
         None => None,
     };
+    let allowed_release_removals = parse_catalog_v3_release_keys(&args.allow_release_removals)?;
     if !args.plugin_ids.is_empty() && existing_catalog.is_none() && !args.allow_selected_rebuild {
         bail!(
             "catalog prepare-v3/render-v3 with --plugin-id requires --existing-catalog so selected plugins can be merged into a baseline; use --allow-selected-rebuild only for an intentional full catalog rebuild from prepared plugin snippets"
@@ -5534,7 +5625,11 @@ fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Resu
                 &dist.join("plugins").join(&plugin.plugin_id),
             )?);
         }
-        entries
+        if let Some(existing) = existing_catalog.as_ref() {
+            merge_catalog_v3_plugin_entries(existing.plugins.clone(), entries)
+        } else {
+            entries
+        }
     } else {
         if args.prepared_plugin_root.is_some() {
             step("Preparing catalog-v3 assets from prepared plugin snippets");
@@ -5583,6 +5678,13 @@ fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Resu
             .collect(),
     };
     validate_catalog_v3(&catalog)?;
+    if let Some(existing) = existing_catalog.as_ref() {
+        validate_catalog_v3_preserves_existing_releases(
+            existing,
+            &catalog,
+            &allowed_release_removals,
+        )?;
+    }
     let central_paths = write_catalog_v3_assets(ctx, &catalog, &dist)?;
     let staged_central_artifacts =
         stage_hashed_central_catalog_v3_artifacts(&central_paths, &dist, catalog_version)?;
@@ -5611,19 +5713,9 @@ fn run_catalog_publish_v2(_ctx: &TaskContext) -> Result<()> {
     retired_catalog_v2_command("catalog publish-v2")
 }
 
-fn run_catalog_publish_v3(ctx: &TaskContext) -> Result<()> {
-    warn(
-        "catalog publish-v3 now prepares unsigned assets only; CI owns signing and GitHub release publication",
-    );
-    run_catalog_prepare_v3(
-        ctx,
-        CatalogPrepareV3Args {
-            out: None,
-            plugin_ids: Vec::new(),
-            existing_catalog: None,
-            prepared_plugin_root: None,
-            allow_selected_rebuild: false,
-        },
+fn run_catalog_publish_v3(_ctx: &TaskContext) -> Result<()> {
+    bail!(
+        "catalog publish-v3 without an existing catalog would drop release history; use the signed release-plugin-v3 workflow or catalog prepare-v3 --existing-catalog"
     )
 }
 
@@ -7479,6 +7571,83 @@ mod tests {
         file
     }
 
+    fn catalog_v3_test_release(
+        plugin_id: &str,
+        version: &str,
+        sdk_constraint: &str,
+        min_scryer_version: Option<&str>,
+    ) -> CatalogV3Release {
+        CatalogV3Release {
+            version: version.to_string(),
+            sdk_constraint: sdk_constraint.to_string(),
+            min_scryer_version: min_scryer_version.map(str::to_string),
+            artifacts: vec![CatalogV3PluginArtifact {
+                runtime: WASM_TARGET.to_string(),
+                required_features: Vec::new(),
+                wasm_digests: vec![
+                    "blake3:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                        .to_string(),
+                    "shake256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                        .to_string(),
+                ],
+                bytes: 1234,
+                url: format!(
+                    "https://cdn.scryer.media/scryer/plugins-v3/{plugin_id}/v{version}/plugin-v3.abc123.wasm.zst"
+                ),
+                mirror_urls: vec![format!(
+                    "https://github.com/scryer-media/scryer-plugins/releases/download/plugins-v3%2F{plugin_id}%2Fv{version}/plugin-v3.abc123.wasm.zst"
+                )],
+                signature_url: format!(
+                    "https://cdn.scryer.media/scryer/plugins-v3/{plugin_id}/v{version}/plugin-v3.abc123.wasm.zst.bundle.zst"
+                ),
+                signature_mirror_urls: vec![format!(
+                    "https://github.com/scryer-media/scryer-plugins/releases/download/plugins-v3%2F{plugin_id}%2Fv{version}/plugin-v3.abc123.wasm.zst.bundle.zst"
+                )],
+                digests: vec![
+                    "blake3:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+                        .to_string(),
+                    "shake256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+                        .to_string(),
+                ],
+            }],
+        }
+    }
+
+    fn catalog_v3_test_entry(
+        plugin_id: &str,
+        status: PluginCatalogStatus,
+        releases: Vec<CatalogV3Release>,
+    ) -> CatalogV3PluginEntry {
+        CatalogV3PluginEntry {
+            id: plugin_id.to_string(),
+            name: plugin_id.to_string(),
+            description: format!("{plugin_id} plugin"),
+            plugin_type: "notification".to_string(),
+            provider_type: plugin_id.to_string(),
+            publisher: "scryer".to_string(),
+            support_tier: "official".to_string(),
+            status,
+            docs_url: format!(
+                "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/{plugin_id}"
+            ),
+            source_repo: format!(
+                "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/{plugin_id}"
+            ),
+            required_signer: official_required_signer(),
+            releases,
+        }
+    }
+
+    fn catalog_v3_test_catalog(plugins: Vec<CatalogV3PluginEntry>) -> CatalogV3 {
+        CatalogV3 {
+            schema_version: CATALOG_V3_SCHEMA.to_string(),
+            catalog_version: 1,
+            plugins,
+            community_sources: Vec::new(),
+            rule_packs: Vec::new(),
+        }
+    }
+
     #[test]
     fn default_catalog_versions_are_v3_only() {
         assert_eq!(
@@ -7921,6 +8090,104 @@ support_tier = "verified_community"
                 .map(|release| release.version.as_str())
                 .collect::<Vec<_>>(),
             vec!["0.2.0", "0.1.0"]
+        );
+    }
+
+    #[test]
+    fn catalog_v3_preservation_rejects_dropped_existing_release() {
+        let existing = catalog_v3_test_catalog(vec![catalog_v3_test_entry(
+            "email",
+            PluginCatalogStatus::Active,
+            vec![
+                catalog_v3_test_release("email", "0.1.12", ">=3.2.0, <4.0.0", Some("0.17.0")),
+                catalog_v3_test_release("email", "0.1.11", ">=3.0.0, <4.0.0", Some("0.16.0")),
+            ],
+        )]);
+        let candidate = catalog_v3_test_catalog(vec![catalog_v3_test_entry(
+            "email",
+            PluginCatalogStatus::Active,
+            vec![catalog_v3_test_release(
+                "email",
+                "0.1.12",
+                ">=3.2.0, <4.0.0",
+                Some("0.17.0"),
+            )],
+        )]);
+
+        let error = validate_catalog_v3_preserves_existing_releases(
+            &existing,
+            &candidate,
+            &BTreeSet::new(),
+        )
+        .expect_err("dropped historical release should fail");
+
+        assert!(error.to_string().contains("email@0.1.11"));
+    }
+
+    #[test]
+    fn catalog_v3_preservation_allows_explicit_release_removal() {
+        let existing = catalog_v3_test_catalog(vec![catalog_v3_test_entry(
+            "email",
+            PluginCatalogStatus::Active,
+            vec![
+                catalog_v3_test_release("email", "0.1.12", ">=3.2.0, <4.0.0", Some("0.17.0")),
+                catalog_v3_test_release("email", "0.1.11", ">=3.0.0, <4.0.0", Some("0.16.0")),
+            ],
+        )]);
+        let candidate = catalog_v3_test_catalog(vec![catalog_v3_test_entry(
+            "email",
+            PluginCatalogStatus::Active,
+            vec![catalog_v3_test_release(
+                "email",
+                "0.1.12",
+                ">=3.2.0, <4.0.0",
+                Some("0.17.0"),
+            )],
+        )]);
+        let allowed = BTreeSet::from([parse_catalog_v3_release_key("email@0.1.11").unwrap()]);
+
+        validate_catalog_v3_preserves_existing_releases(&existing, &candidate, &allowed)
+            .expect("explicit release removal should pass");
+    }
+
+    #[test]
+    fn catalog_v3_merge_preserves_plex_beta_compatible_history() {
+        let plex_compatible = catalog_v3_test_entry(
+            "plex",
+            PluginCatalogStatus::Beta,
+            vec![catalog_v3_test_release(
+                "plex",
+                "0.1.6",
+                ">=3.0.0, <4.0.0",
+                Some("0.16.1"),
+            )],
+        );
+        let plex_current = catalog_v3_test_entry(
+            "plex",
+            PluginCatalogStatus::Beta,
+            vec![catalog_v3_test_release(
+                "plex",
+                "0.1.8",
+                ">=3.2.0, <4.0.0",
+                Some("0.17.0"),
+            )],
+        );
+
+        let merged = merge_catalog_v3_plugin_entries(vec![plex_compatible], vec![plex_current]);
+
+        assert_eq!(merged.len(), 1);
+        assert_eq!(merged[0].status, PluginCatalogStatus::Beta);
+        assert_eq!(
+            merged[0]
+                .releases
+                .iter()
+                .map(|release| release.version.as_str())
+                .collect::<Vec<_>>(),
+            vec!["0.1.8", "0.1.6"]
+        );
+        assert_eq!(
+            merged[0].releases[1].min_scryer_version.as_deref(),
+            Some("0.16.1")
         );
     }
 
