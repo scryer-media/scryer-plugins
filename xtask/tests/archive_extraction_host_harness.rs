@@ -1,0 +1,516 @@
+use std::fs;
+use std::io::Write;
+use std::mem::MaybeUninit;
+use std::path::{Path, PathBuf};
+use std::process::Command;
+use std::sync::OnceLock;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::Duration;
+
+use extism::{CurrentPlugin, Error as ExtismError, Manifest, UserData, Val, ValType};
+use scryer_plugin_sdk::{
+    ArchivePluginFormat, ArchivePluginOperation, ArchivePluginProcessRequest,
+    ArchivePluginProcessResponse, ArchivePluginRepairState, ArchivePluginStatus, PluginResult,
+};
+use wasmtime::{Caller, Engine, Extern, Linker, Module, Store};
+use wasmtime_wasi::p1::WasiP1Ctx;
+use wasmtime_wasi::{DirPerms, FilePerms, WasiCtxBuilder};
+
+const GUEST_SOURCE_ROOT: &str = "/scryer/source";
+const GUEST_OUTPUT_ROOT: &str = "/scryer/output";
+const RAR_HOST_GUEST_SOURCE: &str = r#"
+use std::fs;
+use std::path::Path;
+
+use weaver_unrar::{ExtractOptions, RarArchive};
+
+const PASSWORD: &str = "testpass123";
+
+fn main() {
+    let expected = fs::read("/fixtures/small.txt").expect("read expected small.txt");
+    extract_and_compare("rar4_enc_store.rar", "/out/rar4-small.txt", &expected);
+    extract_and_compare("rar5_enc_store.rar", "/out/rar5-small.txt", &expected);
+}
+
+fn extract_and_compare(archive_name: &str, output_path: &str, expected: &[u8]) {
+    let archive_path = format!("/fixtures/{archive_name}");
+    let file = fs::File::open(&archive_path).expect("open encrypted RAR fixture");
+    let mut archive =
+        RarArchive::open_with_password(file, PASSWORD).expect("open encrypted RAR with password");
+    archive.set_password(PASSWORD.to_string());
+    let member = archive
+        .indexed_member_infos()
+        .into_iter()
+        .find(|member| !member.info.is_directory)
+        .expect("encrypted RAR fixture should contain a file member");
+    let options = ExtractOptions {
+        password: Some(PASSWORD.to_string()),
+        ..ExtractOptions::default()
+    };
+    let output_path = Path::new(output_path);
+    archive
+        .extract_member_to_file(member.index, &options, None, output_path)
+        .expect("extract encrypted RAR member");
+    let actual = fs::read(output_path).expect("read extracted RAR member");
+    assert_eq!(actual, expected, "{archive_name} extracted bytes differ");
+}
+"#;
+
+static AES_CALLS: AtomicUsize = AtomicUsize::new(0);
+static CRC_CALLS: AtomicUsize = AtomicUsize::new(0);
+static PLUGIN_WASM: OnceLock<PathBuf> = OnceLock::new();
+static RAR_GUEST_WASM: OnceLock<PathBuf> = OnceLock::new();
+
+#[test]
+fn archive_extraction_plugin_exercises_scryer_host_paths() {
+    let wasm_path = archive_plugin_wasm();
+    let fixture_root = fixture_root();
+
+    assert_encrypted_rars_use_raw_host_calls(&fixture_root.join("rar"));
+    assert_par2_verifies(&wasm_path, &fixture_root.join("par2"));
+    assert_zip_extracts(&wasm_path);
+}
+
+fn assert_encrypted_rars_use_raw_host_calls(fixture_dir: &Path) {
+    let wasm_path = rar_host_guest_wasm();
+    let output = tempfile::tempdir().expect("create RAR guest output dir");
+    let before = host_call_counts();
+    run_rar_host_guest(&wasm_path, fixture_dir, output.path());
+    let after = host_call_counts();
+
+    assert!(
+        after.aes > before.aes,
+        "encrypted RAR fixtures did not call scryer_aes_cbc_decrypt"
+    );
+    assert!(
+        after.crc > before.crc,
+        "encrypted RAR fixtures did not call scryer_crc32"
+    );
+}
+
+fn assert_par2_verifies(wasm_path: &Path, source_dir: &Path) {
+    let output = tempfile::tempdir().expect("create PAR2 output dir");
+    let response = call_archive_plugin(
+        wasm_path,
+        source_dir,
+        output.path(),
+        ArchivePluginOperation::VerifyRepairSet {
+            source_dir: GUEST_SOURCE_ROOT.to_string(),
+            par2_path: Some(
+                format!("{GUEST_SOURCE_ROOT}/fixture_rar5_lz_plain_repair.par2").to_string(),
+            ),
+        },
+    );
+
+    assert_eq!(
+        response.status,
+        ArchivePluginStatus::Ok,
+        "PAR2 verify failed: {:?}",
+        response.message
+    );
+    let repair = response
+        .repair
+        .expect("PAR2 response should include repair status");
+    assert_eq!(repair.status, ArchivePluginRepairState::Verified);
+}
+
+fn assert_zip_extracts(wasm_path: &Path) {
+    let source = tempfile::tempdir().expect("create ZIP source dir");
+    let output = tempfile::tempdir().expect("create ZIP output dir");
+    create_zip_fixture(
+        &source.path().join("sample.zip"),
+        "nested/hello.txt",
+        b"hello from zip\n",
+    );
+
+    let response = call_archive_plugin(
+        wasm_path,
+        source.path(),
+        output.path(),
+        ArchivePluginOperation::ExtractArchive {
+            archive_path: format!("{GUEST_SOURCE_ROOT}/sample.zip"),
+            output_dir: GUEST_OUTPUT_ROOT.to_string(),
+            format: ArchivePluginFormat::Zip,
+            password: None,
+        },
+    );
+
+    assert_eq!(
+        response.status,
+        ArchivePluginStatus::Ok,
+        "ZIP extract failed: {:?}",
+        response.message
+    );
+    assert_response_contains_file_bytes(&response, output.path(), b"hello from zip\n", "ZIP");
+}
+
+fn call_archive_plugin(
+    wasm_path: &Path,
+    source_dir: &Path,
+    output_dir: &Path,
+    operation: ArchivePluginOperation,
+) -> ArchivePluginProcessResponse {
+    let manifest = Manifest::new([extism::Wasm::file(wasm_path)])
+        .with_timeout(Duration::from_secs(60))
+        .with_memory_max(1024)
+        .with_allowed_path(format!("ro:{}", source_dir.display()), GUEST_SOURCE_ROOT)
+        .with_allowed_path(output_dir.display().to_string(), GUEST_OUTPUT_ROOT);
+    let mut plugin = extism::PluginBuilder::new(manifest)
+        .with_wasi(true)
+        .with_function_in_namespace(
+            "extism:host/user",
+            "scryer_aes_cbc_decrypt",
+            [
+                ValType::I64,
+                ValType::I64,
+                ValType::I64,
+                ValType::I64,
+                ValType::I64,
+            ],
+            [ValType::I64],
+            UserData::new(()),
+            host_aes_cbc_decrypt,
+        )
+        .with_function_in_namespace(
+            "extism:host/user",
+            "scryer_crc32",
+            [ValType::I64, ValType::I64, ValType::I64],
+            [ValType::I64],
+            UserData::new(()),
+            host_crc32,
+        )
+        .build()
+        .expect("instantiate archive plugin");
+
+    let request = ArchivePluginProcessRequest { operation };
+    let input = serde_json::to_string(&request).expect("serialize archive request");
+    let output: String = plugin
+        .call("scryer_archive_process", input)
+        .expect("call scryer_archive_process");
+    match serde_json::from_str::<PluginResult<ArchivePluginProcessResponse>>(&output)
+        .expect("decode archive plugin response")
+    {
+        PluginResult::Ok(response) => response,
+        PluginResult::Err(error) => panic!("archive plugin returned error: {error:?}"),
+    }
+}
+
+fn archive_plugin_wasm() -> PathBuf {
+    PLUGIN_WASM
+        .get_or_init(|| {
+            let repo_root = repo_root();
+            let plugin_root = repo_root.join("archive_extractors/archive-extraction");
+            let cargo = std::env::var_os("CARGO").unwrap_or_else(|| "cargo".into());
+            let status = Command::new(cargo)
+                .current_dir(&repo_root)
+                .arg("build")
+                .arg("--manifest-path")
+                .arg(plugin_root.join("Cargo.toml"))
+                .arg("--profile")
+                .arg("plugin-release")
+                .arg("--target")
+                .arg("wasm32-wasip1")
+                .status()
+                .expect("run cargo build for archive plugin");
+            assert!(status.success(), "archive plugin build failed: {status}");
+
+            plugin_root.join(
+                "target/wasm32-wasip1/plugin-release/archive_extraction_archive_extractor.wasm",
+            )
+        })
+        .clone()
+}
+
+fn rar_host_guest_wasm() -> PathBuf {
+    RAR_GUEST_WASM
+        .get_or_init(|| {
+            let repo_root = repo_root();
+            let rarpar_root = repo_root
+                .parent()
+                .expect("scryer-plugins should have workspace parent")
+                .join("rarpar");
+            let weaver_unrar = rarpar_root.join("crates/weaver-unrar");
+            assert!(
+                weaver_unrar.join("Cargo.toml").is_file(),
+                "expected sibling weaver-unrar crate at {}",
+                weaver_unrar.display()
+            );
+
+            let guest_root = repo_root.join("target/archive-host-rar-guest");
+            fs::create_dir_all(guest_root.join("src")).expect("create RAR guest source dir");
+            fs::write(
+                guest_root.join("Cargo.toml"),
+                format!(
+                    r#"[package]
+name = "scryer-archive-host-rar-guest"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+weaver-unrar = {{ path = "{}", default-features = false, features = ["crypto-host", "crc-host"] }}
+"#,
+                    weaver_unrar.display()
+                ),
+            )
+            .expect("write RAR guest Cargo.toml");
+            fs::write(guest_root.join("src/main.rs"), RAR_HOST_GUEST_SOURCE)
+                .expect("write RAR guest source");
+
+            let target_dir = guest_root.join("target");
+            let cargo = std::env::var_os("CARGO").unwrap_or_else(|| "cargo".into());
+            let status = Command::new(cargo)
+                .current_dir(&guest_root)
+                .env("CARGO_TARGET_DIR", &target_dir)
+                .arg("build")
+                .arg("--release")
+                .arg("--target")
+                .arg("wasm32-wasip1")
+                .status()
+                .expect("run cargo build for RAR host guest");
+            assert!(status.success(), "RAR host guest build failed: {status}");
+
+            target_dir.join("wasm32-wasip1/release/scryer-archive-host-rar-guest.wasm")
+        })
+        .clone()
+}
+
+fn run_rar_host_guest(wasm_path: &Path, fixture_dir: &Path, output_dir: &Path) {
+    let engine = Engine::default();
+    let module = Module::from_file(&engine, wasm_path).expect("load RAR host guest wasm");
+    let mut linker: Linker<WasiP1Ctx> = Linker::new(&engine);
+    wasmtime_wasi::p1::add_to_linker_sync(&mut linker, |ctx: &mut WasiP1Ctx| ctx)
+        .expect("add WASI preview1 linker functions");
+    linker
+        .func_wrap(
+            "extism:host/user",
+            "scryer_aes_cbc_decrypt",
+            host_scryer_aes_cbc_decrypt,
+        )
+        .expect("define scryer_aes_cbc_decrypt");
+    linker
+        .func_wrap("extism:host/user", "scryer_crc32", host_scryer_crc32)
+        .expect("define scryer_crc32");
+
+    let wasi = WasiCtxBuilder::new()
+        .args(&["scryer-archive-host-rar-guest"])
+        .preopened_dir(fixture_dir, "/fixtures", DirPerms::READ, FilePerms::READ)
+        .expect("preopen RAR fixtures")
+        .preopened_dir(
+            output_dir,
+            "/out",
+            DirPerms::READ | DirPerms::MUTATE,
+            FilePerms::READ | FilePerms::WRITE,
+        )
+        .expect("preopen RAR output")
+        .build_p1();
+    let mut store = Store::new(&engine, wasi);
+    let instance = linker
+        .instantiate(&mut store, &module)
+        .expect("instantiate RAR host guest");
+    let start = instance
+        .get_typed_func::<(), ()>(&mut store, "_start")
+        .expect("RAR host guest should export _start");
+
+    match start.call(&mut store, ()) {
+        Ok(()) => {}
+        Err(error) => {
+            if let Some(exit) = error.downcast_ref::<wasmtime_wasi::I32Exit>() {
+                assert_eq!(exit.0, 0, "RAR host guest exited with {}", exit.0);
+            } else {
+                panic!("RAR host guest trapped: {error:?}");
+            }
+        }
+    }
+}
+
+fn repo_root() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .expect("xtask manifest has repo root parent")
+        .to_path_buf()
+}
+
+fn fixture_root() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/archive_host")
+}
+
+fn create_zip_fixture(path: &Path, entry_name: &str, payload: &[u8]) {
+    let file = fs::File::create(path).expect("create zip fixture");
+    let mut zip = zip::ZipWriter::new(file);
+    let options = zip::write::SimpleFileOptions::default()
+        .compression_method(zip::CompressionMethod::Deflated);
+    zip.start_file(entry_name, options)
+        .expect("start zip file entry");
+    zip.write_all(payload).expect("write zip payload");
+    zip.finish().expect("finish zip fixture");
+}
+
+fn assert_response_contains_file_bytes(
+    response: &ArchivePluginProcessResponse,
+    output_dir: &Path,
+    expected: &[u8],
+    label: &str,
+) {
+    for file in &response.files {
+        let path = output_dir.join(&file.relative_path);
+        if fs::read(&path).is_ok_and(|actual| actual == expected) {
+            return;
+        }
+    }
+    panic!(
+        "{label} response did not contain expected output bytes; files={:?}",
+        response.files
+    );
+}
+
+#[derive(Clone, Copy)]
+struct HostCallCounts {
+    aes: usize,
+    crc: usize,
+}
+
+fn host_call_counts() -> HostCallCounts {
+    HostCallCounts {
+        aes: AES_CALLS.load(Ordering::SeqCst),
+        crc: CRC_CALLS.load(Ordering::SeqCst),
+    }
+}
+
+fn host_aes_cbc_decrypt(
+    _current: &mut CurrentPlugin,
+    _input: &[Val],
+    output: &mut [Val],
+    _state: UserData<()>,
+) -> Result<(), ExtismError> {
+    output[0] = Val::I64(-3);
+    Ok(())
+}
+
+fn host_crc32(
+    _current: &mut CurrentPlugin,
+    _input: &[Val],
+    output: &mut [Val],
+    _state: UserData<()>,
+) -> Result<(), ExtismError> {
+    output[0] = Val::I64(-1);
+    Ok(())
+}
+
+fn host_scryer_aes_cbc_decrypt(
+    mut caller: Caller<'_, WasiP1Ctx>,
+    key_ptr: i64,
+    key_len: i64,
+    iv_ptr: i64,
+    buf_ptr: i64,
+    buf_len: i64,
+) -> i64 {
+    AES_CALLS.fetch_add(1, Ordering::SeqCst);
+
+    if key_len != 16 && key_len != 32 {
+        return -1;
+    }
+    if buf_len < 0 || buf_len % 16 != 0 {
+        return -2;
+    }
+
+    let Some(memory) = caller.get_export("memory").and_then(|export| match export {
+        Extern::Memory(memory) => Some(memory),
+        _ => None,
+    }) else {
+        return -3;
+    };
+
+    let Some((key_ptr, key_len)) = wasm_range(key_ptr, key_len) else {
+        return -3;
+    };
+    let Some((iv_ptr, iv_len)) = wasm_range(iv_ptr, 16) else {
+        return -3;
+    };
+    let Some((buf_ptr, buf_len)) = wasm_range(buf_ptr, buf_len) else {
+        return -3;
+    };
+
+    let mut key = vec![0_u8; key_len];
+    if memory.read(&caller, key_ptr, &mut key).is_err() {
+        return -3;
+    }
+    let mut iv = vec![0_u8; iv_len];
+    if memory.read(&caller, iv_ptr, &mut iv).is_err() {
+        return -3;
+    }
+    if buf_len == 0 {
+        return 0;
+    }
+    let mut buf = vec![0_u8; buf_len];
+    if memory.read(&caller, buf_ptr, &mut buf).is_err() {
+        return -3;
+    }
+
+    reference_cbc_decrypt(&key, &iv, &mut buf);
+    if memory.write(&mut caller, buf_ptr, &buf).is_err() {
+        return -3;
+    }
+
+    0
+}
+
+fn host_scryer_crc32(
+    mut caller: Caller<'_, WasiP1Ctx>,
+    seed: i64,
+    buf_ptr: i64,
+    buf_len: i64,
+) -> i64 {
+    CRC_CALLS.fetch_add(1, Ordering::SeqCst);
+
+    if buf_len < 0 {
+        return -1;
+    }
+    let Some(memory) = caller.get_export("memory").and_then(|export| match export {
+        Extern::Memory(memory) => Some(memory),
+        _ => None,
+    }) else {
+        return -1;
+    };
+    let Some((buf_ptr, buf_len)) = wasm_range(buf_ptr, buf_len) else {
+        return -1;
+    };
+
+    let mut buf = vec![0_u8; buf_len];
+    if memory.read(&caller, buf_ptr, &mut buf).is_err() {
+        return -1;
+    }
+    let mut hasher = crc32fast::Hasher::new_with_initial(seed as u64 as u32);
+    hasher.update(&buf);
+    hasher.finalize() as u64 as i64
+}
+
+fn wasm_range(ptr: i64, len: i64) -> Option<(usize, usize)> {
+    if ptr < 0 || len < 0 {
+        return None;
+    }
+    let ptr = usize::try_from(ptr as u64).ok()?;
+    let len = usize::try_from(len as u64).ok()?;
+    ptr.checked_add(len)?;
+    Some((ptr, len))
+}
+
+fn reference_cbc_decrypt(key: &[u8], iv: &[u8], data: &mut [u8]) {
+    let mut aes_key = MaybeUninit::<aws_lc_sys::AES_KEY>::uninit();
+    let bits = (key.len() * 8) as u32;
+    let set_key_result =
+        unsafe { aws_lc_sys::AES_set_decrypt_key(key.as_ptr(), bits, aes_key.as_mut_ptr()) };
+    assert_eq!(set_key_result, 0, "AWS-LC rejected AES key length");
+    let aes_key = unsafe { aes_key.assume_init() };
+    let mut iv = iv.to_vec();
+    unsafe {
+        aws_lc_sys::AES_cbc_encrypt(
+            data.as_ptr(),
+            data.as_mut_ptr(),
+            data.len(),
+            &aes_key,
+            iv.as_mut_ptr(),
+            aws_lc_sys::AES_DECRYPT,
+        );
+    }
+}

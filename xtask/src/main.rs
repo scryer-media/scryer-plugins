@@ -1,18 +1,19 @@
 use anyhow::{Context, Result, anyhow, bail};
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use extism::{Manifest, UserData, ValType, host_fn};
+use extism::{CurrentPlugin, Error as ExtismError, Manifest, UserData, Val, ValType, host_fn};
 mod plugin_new;
 use scryer_plugin_sdk::{
-    EXPORT_DESCRIBE, EXPORT_DOWNLOAD_ADD, EXPORT_DOWNLOAD_CONTROL, EXPORT_DOWNLOAD_LIST_COMPLETED,
-    EXPORT_DOWNLOAD_LIST_HISTORY, EXPORT_DOWNLOAD_LIST_QUEUE, EXPORT_DOWNLOAD_MARK_IMPORTED,
-    EXPORT_DOWNLOAD_STATUS, EXPORT_DOWNLOAD_TEST_CONNECTION, EXPORT_INDEXER_SEARCH,
-    EXPORT_NOTIFICATION_SEND, EXPORT_SUBSYNC_ALIGN, EXPORT_SUBTITLE_DOWNLOAD,
-    EXPORT_SUBTITLE_GENERATE, EXPORT_SUBTITLE_SEARCH, EXPORT_VALIDATE_CONFIG, PluginDescriptor,
-    PluginResult, ProviderDescriptor, SDK_VERSION, SubtitleProviderMode, SubtitleSyncAlignRequest,
-    SubtitleSyncAlignResponse, SubtitleSyncInputSubtitle, SubtitleSyncReferenceSubtitle,
-    host_version_matches_constraint, plugin_descriptor_sdk_constraint,
-    validate_plugin_descriptor_host_permissions, validate_sdk_contract,
+    EXPORT_ARCHIVE_PROCESS, EXPORT_DESCRIBE, EXPORT_DOWNLOAD_ADD, EXPORT_DOWNLOAD_CONTROL,
+    EXPORT_DOWNLOAD_LIST_COMPLETED, EXPORT_DOWNLOAD_LIST_HISTORY, EXPORT_DOWNLOAD_LIST_QUEUE,
+    EXPORT_DOWNLOAD_MARK_IMPORTED, EXPORT_DOWNLOAD_STATUS, EXPORT_DOWNLOAD_TEST_CONNECTION,
+    EXPORT_INDEXER_SEARCH, EXPORT_NOTIFICATION_SEND, EXPORT_SUBSYNC_ALIGN,
+    EXPORT_SUBTITLE_DOWNLOAD, EXPORT_SUBTITLE_GENERATE, EXPORT_SUBTITLE_SEARCH,
+    EXPORT_VALIDATE_CONFIG, PluginDescriptor, PluginResult, ProviderDescriptor, SDK_VERSION,
+    SubtitleProviderMode, SubtitleSyncAlignRequest, SubtitleSyncAlignResponse,
+    SubtitleSyncInputSubtitle, SubtitleSyncReferenceSubtitle, host_version_matches_constraint,
+    plugin_descriptor_sdk_constraint, validate_plugin_descriptor_host_permissions,
+    validate_sdk_contract,
 };
 use semver::Version;
 use serde::{Deserialize, Serialize};
@@ -143,6 +144,26 @@ host_fn!(process_unsupported(_state: (); _input: String) -> String {
             .to_string(),
     )
 });
+
+fn archive_aes_cbc_decrypt_unsupported(
+    _current: &mut CurrentPlugin,
+    _input: &[Val],
+    output: &mut [Val],
+    _state: UserData<()>,
+) -> Result<(), ExtismError> {
+    output[0] = Val::I64(-3);
+    Ok(())
+}
+
+fn archive_crc32_unsupported(
+    _current: &mut CurrentPlugin,
+    _input: &[Val],
+    output: &mut [Val],
+    _state: UserData<()>,
+) -> Result<(), ExtismError> {
+    output[0] = Val::I64(-1);
+    Ok(())
+}
 
 #[derive(Clone)]
 struct RustupToolchain {
@@ -496,6 +517,7 @@ enum PluginKindArg {
     DownloadClient,
     Notification,
     Subtitle,
+    ArchiveExtractor,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, ValueEnum)]
@@ -1825,8 +1847,14 @@ fn git_path_is_tracked(ctx: &TaskContext, path: &Path) -> Result<bool> {
     Ok(run_status(&mut command)?.success())
 }
 
-fn plugin_inventory_roots() -> [&'static str; 4] {
-    ["indexers", "download_clients", "notifications", "subtitles"]
+fn plugin_inventory_roots() -> [&'static str; 5] {
+    [
+        "indexers",
+        "download_clients",
+        "notifications",
+        "subtitles",
+        "archive_extractors",
+    ]
 }
 
 fn read_manifest_document(path: &Path) -> Result<DocumentMut> {
@@ -2939,6 +2967,7 @@ fn required_exports_for_descriptor(descriptor: &PluginDescriptor) -> Vec<&'stati
             EXPORT_DOWNLOAD_TEST_CONNECTION,
         ]),
         ProviderDescriptor::Notification(_) => exports.push(EXPORT_NOTIFICATION_SEND),
+        ProviderDescriptor::ArchiveExtractor(_) => exports.push(EXPORT_ARCHIVE_PROCESS),
         ProviderDescriptor::Subtitle(subtitle) => {
             exports.push(EXPORT_VALIDATE_CONFIG);
             match subtitle.capabilities.mode {
@@ -3007,8 +3036,30 @@ fn instantiate_plugin_from_wasm(
             "scryer_process_exec",
             [ValType::I64],
             [ValType::I64],
-            socket_stubs,
+            socket_stubs.clone(),
             process_unsupported,
+        )
+        .with_function_in_namespace(
+            "extism:host/user",
+            "scryer_aes_cbc_decrypt",
+            [
+                ValType::I64,
+                ValType::I64,
+                ValType::I64,
+                ValType::I64,
+                ValType::I64,
+            ],
+            [ValType::I64],
+            socket_stubs.clone(),
+            archive_aes_cbc_decrypt_unsupported,
+        )
+        .with_function_in_namespace(
+            "extism:host/user",
+            "scryer_crc32",
+            [ValType::I64, ValType::I64, ValType::I64],
+            [ValType::I64],
+            socket_stubs,
+            archive_crc32_unsupported,
         )
         .build()
         .with_context(|| format!("failed to instantiate {}", wasm_path.display()))

@@ -15,6 +15,8 @@ const NOTIFICATION_IMPORTS_TEMPLATE: &str =
     include_str!("../templates/plugin_new/imports/notification.txt");
 const SUBTITLE_IMPORTS_TEMPLATE: &str =
     include_str!("../templates/plugin_new/imports/subtitle.txt");
+const ARCHIVE_EXTRACTOR_IMPORTS_TEMPLATE: &str =
+    include_str!("../templates/plugin_new/imports/archive_extractor.txt");
 const INDEXER_PROVIDER_TEMPLATE: &str =
     include_str!("../templates/plugin_new/provider/indexer.rs.tpl");
 const DOWNLOAD_CLIENT_PROVIDER_TEMPLATE: &str =
@@ -23,6 +25,8 @@ const NOTIFICATION_PROVIDER_TEMPLATE: &str =
     include_str!("../templates/plugin_new/provider/notification.rs.tpl");
 const SUBTITLE_PROVIDER_TEMPLATE: &str =
     include_str!("../templates/plugin_new/provider/subtitle.rs.tpl");
+const ARCHIVE_EXTRACTOR_PROVIDER_TEMPLATE: &str =
+    include_str!("../templates/plugin_new/provider/archive_extractor.rs.tpl");
 const INDEXER_EXPORTS_TEMPLATE: &str =
     include_str!("../templates/plugin_new/exports/indexer.rs.tpl");
 const DOWNLOAD_CLIENT_EXPORTS_TEMPLATE: &str =
@@ -31,6 +35,8 @@ const NOTIFICATION_EXPORTS_TEMPLATE: &str =
     include_str!("../templates/plugin_new/exports/notification.rs.tpl");
 const SUBTITLE_EXPORTS_TEMPLATE: &str =
     include_str!("../templates/plugin_new/exports/subtitle.rs.tpl");
+const ARCHIVE_EXTRACTOR_EXPORTS_TEMPLATE: &str =
+    include_str!("../templates/plugin_new/exports/archive_extractor.rs.tpl");
 
 pub(crate) fn run_plugin_new(ctx: &TaskContext, args: PluginNewArgs) -> Result<()> {
     let plugin_dir = scaffold_plugin(ctx, &ctx.repo_root, args.kind, &args.name)?;
@@ -188,6 +194,7 @@ impl PluginKindArg {
             Self::DownloadClient => "download_clients",
             Self::Notification => "notifications",
             Self::Subtitle => "subtitles",
+            Self::ArchiveExtractor => "archive_extractors",
         }
     }
 
@@ -197,6 +204,7 @@ impl PluginKindArg {
             Self::DownloadClient => "download_client",
             Self::Notification => "notification",
             Self::Subtitle => "subtitle_provider",
+            Self::ArchiveExtractor => "archive_extractor",
         }
     }
 
@@ -206,6 +214,7 @@ impl PluginKindArg {
             Self::DownloadClient => DOWNLOAD_CLIENT_IMPORTS_TEMPLATE,
             Self::Notification => NOTIFICATION_IMPORTS_TEMPLATE,
             Self::Subtitle => SUBTITLE_IMPORTS_TEMPLATE,
+            Self::ArchiveExtractor => ARCHIVE_EXTRACTOR_IMPORTS_TEMPLATE,
         }
     }
 
@@ -215,6 +224,7 @@ impl PluginKindArg {
             Self::DownloadClient => DOWNLOAD_CLIENT_PROVIDER_TEMPLATE,
             Self::Notification => NOTIFICATION_PROVIDER_TEMPLATE,
             Self::Subtitle => SUBTITLE_PROVIDER_TEMPLATE,
+            Self::ArchiveExtractor => ARCHIVE_EXTRACTOR_PROVIDER_TEMPLATE,
         }
     }
 
@@ -224,6 +234,7 @@ impl PluginKindArg {
             Self::DownloadClient => DOWNLOAD_CLIENT_EXPORTS_TEMPLATE,
             Self::Notification => NOTIFICATION_EXPORTS_TEMPLATE,
             Self::Subtitle => SUBTITLE_EXPORTS_TEMPLATE,
+            Self::ArchiveExtractor => ARCHIVE_EXTRACTOR_EXPORTS_TEMPLATE,
         }
     }
 }
@@ -268,6 +279,11 @@ mod tests {
                 PluginKindArg::Subtitle,
                 "ProviderDescriptor::Subtitle(SubtitleDescriptor {",
                 "pub fn scryer_subtitle_search",
+            ),
+            (
+                PluginKindArg::ArchiveExtractor,
+                "ProviderDescriptor::ArchiveExtractor(ArchiveExtractorDescriptor {",
+                "pub fn scryer_archive_process",
             ),
         ];
 

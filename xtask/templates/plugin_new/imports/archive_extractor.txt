@@ -1,0 +1,3 @@
+    ArchiveExtractorCapabilities, ArchiveExtractorDescriptor, ArchivePluginFormat,
+    ArchivePluginProcessResponse, PluginDescriptor, PluginError, PluginErrorCode, PluginResult,
+    ProviderDescriptor, SDK_VERSION,
