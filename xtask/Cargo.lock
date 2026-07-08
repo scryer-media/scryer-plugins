@@ -3752,12 +3752,12 @@ version = "0.1.0"
 
 [[patch.unused]]
 name = "weaver-par2"
-version = "0.1.1"
+version = "0.2.0"
 
 [[patch.unused]]
 name = "weaver-reed-solomon"
-version = "0.1.1"
+version = "0.2.0"
 
 [[patch.unused]]
 name = "weaver-unrar"
-version = "0.1.1"
+version = "0.2.0"

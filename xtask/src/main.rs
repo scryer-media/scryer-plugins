@@ -25,8 +25,13 @@ use std::io::BufWriter;
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Stdio};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::sync::LazyLock;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use toml_edit::{DocumentMut, value};
+use wasmtime::{Caller, Config, Engine, ExternType, Linker, Module, Store};
+use wasmtime_wasi::p1::WasiP1Ctx;
+use wasmtime_wasi::p2::pipe::{MemoryInputPipe, MemoryOutputPipe};
+use wasmtime_wasi::{I32Exit, WasiCtxBuilder};
 
 const BLUE: &str = "\x1b[0;34m";
 const GREEN: &str = "\x1b[0;32m";
@@ -2966,6 +2971,297 @@ fn build_plugin_wasm(
     Ok(built_wasm)
 }
 
+const COMMAND_MODEL_DESCRIBE_TIMEOUT: Duration = Duration::from_secs(10);
+const COMMAND_MODEL_EPOCH_TICK: Duration = Duration::from_millis(100);
+const COMMAND_MODEL_DESCRIBE_MEMORY_CAP_BYTES: usize = 64 * 1024 * 1024;
+const COMMAND_MODEL_DESCRIBE_TABLE_ELEMENTS: usize = 100_000;
+const COMMAND_MODEL_STDOUT_LIMIT_BYTES: usize = 1024 * 1024;
+const COMMAND_MODEL_STDERR_LIMIT_BYTES: usize = 64 * 1024;
+
+static COMMAND_MODEL_ENGINE: LazyLock<Engine> = LazyLock::new(|| {
+    let engine = Engine::new(&command_model_engine_config())
+        .expect("command-model validation wasmtime config must be valid");
+    spawn_command_model_epoch_ticker(engine.clone());
+    engine
+});
+
+struct CommandModelDescribeCtx {
+    wasi: WasiP1Ctx,
+    limits: CommandModelDescribeLimits,
+}
+
+struct CommandModelDescribeLimits {
+    memory_denied: bool,
+}
+
+impl CommandModelDescribeLimits {
+    fn new() -> Self {
+        Self {
+            memory_denied: false,
+        }
+    }
+}
+
+impl wasmtime::ResourceLimiter for CommandModelDescribeLimits {
+    fn memory_growing(
+        &mut self,
+        _current: usize,
+        desired: usize,
+        _maximum: Option<usize>,
+    ) -> wasmtime::Result<bool> {
+        if desired > COMMAND_MODEL_DESCRIBE_MEMORY_CAP_BYTES {
+            self.memory_denied = true;
+            return Ok(false);
+        }
+        Ok(true)
+    }
+
+    fn table_growing(
+        &mut self,
+        _current: usize,
+        desired: usize,
+        _maximum: Option<usize>,
+    ) -> wasmtime::Result<bool> {
+        Ok(desired <= COMMAND_MODEL_DESCRIBE_TABLE_ELEMENTS)
+    }
+}
+
+fn command_model_engine_config() -> Config {
+    let mut config = Config::new();
+    config.epoch_interruption(true);
+    config.wasm_simd(true);
+    config.wasm_relaxed_simd(true);
+    config.wasm_threads(true);
+    config.wasm_exceptions(true);
+    config
+}
+
+fn command_model_engine() -> &'static Engine {
+    &COMMAND_MODEL_ENGINE
+}
+
+fn command_model_deadline_ticks(timeout: Duration) -> u64 {
+    let tick = COMMAND_MODEL_EPOCH_TICK.as_millis().max(1);
+    timeout.as_millis().div_ceil(tick).max(1) as u64
+}
+
+fn spawn_command_model_epoch_ticker(engine: Engine) {
+    std::thread::Builder::new()
+        .name("scryer-plugin-xtask-command-epoch".to_string())
+        .spawn(move || {
+            loop {
+                std::thread::sleep(COMMAND_MODEL_EPOCH_TICK);
+                engine.increment_epoch();
+            }
+        })
+        .expect("spawn command-model validation epoch ticker");
+}
+
+fn command_model_descriptor_from_wasm(
+    wasm_path: &Path,
+    wasm: &[u8],
+) -> Result<Option<PluginDescriptor>> {
+    let engine = command_model_engine();
+    let module = match Module::from_binary(engine, wasm) {
+        Ok(module) => module,
+        Err(_) => return Ok(None),
+    };
+
+    let mut has_start = false;
+    let mut has_describe = false;
+    let mut has_memory = false;
+    for export in module.exports() {
+        match export.name() {
+            "_start" => has_start = true,
+            name if name == EXPORT_DESCRIBE => has_describe = true,
+            "memory" => has_memory = matches!(export.ty(), ExternType::Memory(_)),
+            _ => {}
+        }
+    }
+
+    if !has_start || has_describe {
+        return Ok(None);
+    }
+    if !has_memory {
+        bail!(
+            "{} looks like a command-model plugin but does not export a linear memory named 'memory'",
+            wasm_path.display()
+        );
+    }
+
+    let descriptor = run_command_model_describe(wasm_path, engine, &module)?;
+    if !matches!(
+        &descriptor.provider,
+        ProviderDescriptor::ArchiveExtractor(_)
+    ) {
+        bail!(
+            "{} described {} ({}), but command-model validation is only supported for archive_extractor plugins",
+            wasm_path.display(),
+            descriptor.id,
+            descriptor.plugin_type()
+        );
+    }
+
+    Ok(Some(descriptor))
+}
+
+fn run_command_model_describe(
+    wasm_path: &Path,
+    engine: &Engine,
+    module: &Module,
+) -> Result<PluginDescriptor> {
+    let mut linker: Linker<CommandModelDescribeCtx> = Linker::new(engine);
+    wasmtime_wasi::p1::add_to_linker_sync(&mut linker, |ctx: &mut CommandModelDescribeCtx| {
+        &mut ctx.wasi
+    })
+    .map_err(|error| {
+        anyhow!("failed to wire WASI preview1 for command-model describe: {error:#}")
+    })?;
+    linker
+        .func_wrap(
+            "extism:host/user",
+            "scryer_aes_cbc_decrypt",
+            command_model_aes_cbc_decrypt_unsupported,
+        )
+        .map_err(|error| {
+            anyhow!("failed to define scryer_aes_cbc_decrypt for command-model describe: {error:#}")
+        })?;
+    linker
+        .func_wrap(
+            "extism:host/user",
+            "scryer_crc32",
+            command_model_crc32_unsupported,
+        )
+        .map_err(|error| {
+            anyhow!("failed to define scryer_crc32 for command-model describe: {error:#}")
+        })?;
+    linker
+        .func_wrap(
+            "extism:host/user",
+            "scryer_par2_reconstruct",
+            command_model_par2_reconstruct_unsupported,
+        )
+        .map_err(|error| {
+            anyhow!(
+                "failed to define scryer_par2_reconstruct for command-model describe: {error:#}"
+            )
+        })?;
+
+    let stdout = MemoryOutputPipe::new(COMMAND_MODEL_STDOUT_LIMIT_BYTES);
+    let stderr = MemoryOutputPipe::new(COMMAND_MODEL_STDERR_LIMIT_BYTES);
+    let wasi = WasiCtxBuilder::new()
+        .stdin(MemoryInputPipe::new(Vec::<u8>::new()))
+        .stdout(stdout.clone())
+        .stderr(stderr.clone())
+        .args(&["archive-extraction", "describe"])
+        .build_p1();
+    let mut store = Store::new(
+        engine,
+        CommandModelDescribeCtx {
+            wasi,
+            limits: CommandModelDescribeLimits::new(),
+        },
+    );
+    store.limiter(|ctx| &mut ctx.limits);
+    store.set_epoch_deadline(command_model_deadline_ticks(COMMAND_MODEL_DESCRIBE_TIMEOUT));
+
+    let instance = linker.instantiate(&mut store, module).map_err(|error| {
+        if store.data().limits.memory_denied {
+            return anyhow!(
+                "{} describe exceeded the {} MiB memory limit",
+                wasm_path.display(),
+                COMMAND_MODEL_DESCRIBE_MEMORY_CAP_BYTES / 1024 / 1024
+            );
+        }
+        anyhow!(
+            "failed to instantiate {} for describe: {error:#}",
+            wasm_path.display()
+        )
+    })?;
+    let start = instance
+        .get_typed_func::<(), ()>(&mut store, "_start")
+        .map_err(|error| {
+            anyhow!(
+                "{} is not a wasip1 command plugin: {error:#}",
+                wasm_path.display()
+            )
+        })?;
+
+    let result = start.call(&mut store, ());
+
+    match result {
+        Ok(()) => {}
+        Err(error) => {
+            if store.data().limits.memory_denied {
+                bail!(
+                    "{} describe exceeded the {} MiB memory limit",
+                    wasm_path.display(),
+                    COMMAND_MODEL_DESCRIBE_MEMORY_CAP_BYTES / 1024 / 1024
+                );
+            }
+            if let Some(exit) = error.downcast_ref::<I32Exit>() {
+                if exit.0 != 0 {
+                    bail!(
+                        "{} describe exited with status {}: {}",
+                        wasm_path.display(),
+                        exit.0,
+                        stderr_tail(&stderr)
+                    );
+                }
+            } else {
+                bail!(
+                    "{} describe trapped or timed out: {error:#}; stderr: {}",
+                    wasm_path.display(),
+                    stderr_tail(&stderr)
+                );
+            }
+        }
+    }
+
+    let stdout_bytes = stdout.contents();
+    serde_json::from_slice::<PluginDescriptor>(&stdout_bytes).with_context(|| {
+        format!(
+            "{} describe returned invalid PluginDescriptor JSON: {}",
+            wasm_path.display(),
+            String::from_utf8_lossy(&stdout_bytes)
+        )
+    })
+}
+
+fn stderr_tail(stderr: &MemoryOutputPipe) -> String {
+    let bytes = stderr.contents();
+    let start = bytes.len().saturating_sub(4096);
+    String::from_utf8_lossy(&bytes[start..]).into_owned()
+}
+
+fn command_model_aes_cbc_decrypt_unsupported(
+    _caller: Caller<'_, CommandModelDescribeCtx>,
+    _key_ptr: i64,
+    _key_len: i64,
+    _iv_ptr: i64,
+    _buf_ptr: i64,
+    _buf_len: i64,
+) -> i64 {
+    -3
+}
+
+fn command_model_crc32_unsupported(
+    _caller: Caller<'_, CommandModelDescribeCtx>,
+    _seed: i64,
+    _buf_ptr: i64,
+    _buf_len: i64,
+) -> i64 {
+    -1
+}
+
+fn command_model_par2_reconstruct_unsupported(
+    _caller: Caller<'_, CommandModelDescribeCtx>,
+    _request_ptr: i64,
+    _request_len: i64,
+) -> i64 {
+    -2
+}
+
 fn required_exports_for_descriptor(descriptor: &PluginDescriptor) -> Vec<&'static str> {
     let mut exports = vec![EXPORT_DESCRIBE];
     match &descriptor.provider {
@@ -2995,10 +3291,7 @@ fn required_exports_for_descriptor(descriptor: &PluginDescriptor) -> Vec<&'stati
     exports
 }
 
-fn instantiate_plugin_from_wasm(
-    wasm_path: &Path,
-    timeout: std::time::Duration,
-) -> Result<extism::Plugin> {
+fn instantiate_plugin_from_wasm(wasm_path: &Path, timeout: Duration) -> Result<extism::Plugin> {
     let bytes =
         fs::read(wasm_path).with_context(|| format!("failed to read {}", wasm_path.display()))?;
     let manifest = Manifest::new([extism::Wasm::data(bytes)]).with_timeout(timeout);
@@ -3088,7 +3381,13 @@ fn instantiate_plugin_from_wasm(
 }
 
 fn load_descriptor_from_wasm(wasm_path: &Path) -> Result<PluginDescriptor> {
-    let mut plugin = instantiate_plugin_from_wasm(wasm_path, std::time::Duration::from_secs(10))?;
+    let bytes =
+        fs::read(wasm_path).with_context(|| format!("failed to read {}", wasm_path.display()))?;
+    if let Some(descriptor) = command_model_descriptor_from_wasm(wasm_path, &bytes)? {
+        return Ok(descriptor);
+    }
+
+    let mut plugin = instantiate_plugin_from_wasm(wasm_path, COMMAND_MODEL_DESCRIBE_TIMEOUT)?;
 
     if !plugin.function_exists(EXPORT_DESCRIBE) {
         bail!("plugin is missing required export {EXPORT_DESCRIBE}");
