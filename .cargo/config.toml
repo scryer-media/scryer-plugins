@@ -5,6 +5,7 @@ xtask = "run --manifest-path xtask/Cargo.toml --"
 # Do not commit this block; remove it after the crates are published.
 [patch.crates-io]
 scryer-plugin-sdk = { path = "/Users/jeremy/dev/scryer-media/scryer/crates/scryer-plugin-sdk" }
+scryer-plugin-pdk = { path = "/Users/jeremy/dev/scryer-media/scryer-plugins/pdk/scryer-plugin-pdk" }
 weaver-par2 = { path = "/Users/jeremy/dev/scryer-media/rarpar/crates/weaver-par2" }
 weaver-reed-solomon = { path = "/Users/jeremy/dev/scryer-media/rarpar/crates/weaver-reed-solomon" }
 weaver-unrar = { path = "/Users/jeremy/dev/scryer-media/rarpar/crates/weaver-unrar" }

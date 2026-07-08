@@ -1,24 +1,54 @@
-use extism_pdk::*;
+mod par2_host_solver;
+
+use par2_host_solver::HostDispatchSolver;
+use scryer_plugin_pdk::run_archive_plugin;
+use scryer_plugin_pdk::{
+    ArchivePluginExtractedFile, ArchivePluginFormat, ArchivePluginOperation,
+    ArchivePluginProcessRequest, ArchivePluginProcessResponse, ArchivePluginRepairFormat,
+    ArchivePluginRepairState, ArchivePluginRepairStatus, ArchivePluginStatus,
+};
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
-    ArchiveExtractorCapabilities, ArchiveExtractorDescriptor, ArchivePluginExtractedFile,
-    ArchivePluginFormat, ArchivePluginOperation, ArchivePluginProcessRequest,
-    ArchivePluginProcessResponse, ArchivePluginRepairFormat, ArchivePluginRepairState,
-    ArchivePluginRepairStatus, ArchivePluginStatus, PluginDescriptor, PluginError, PluginErrorCode,
-    PluginResult, ProviderDescriptor, SDK_VERSION,
+    ArchiveExtractorCapabilities, ArchiveExtractorDescriptor, PluginDescriptor, ProviderDescriptor,
+    SDK_VERSION,
 };
 use std::fs;
 use std::io::{self, Read, Write};
 use std::path::{Component, Path, PathBuf};
-use weaver_par2::{Par2RepairOutcome, Par2RepairStatus, Par2Repairer, Par2RepairerOptions};
+use weaver_par2::{
+    DiskFileAccess, Par2FileSet, Par2RepairOutcome, Par2RepairStatus, Par2Repairer,
+    Par2RepairerOptions, RepairOptions, Repairability, execute_repair_with_solver, plan_repair,
+    verify_all,
+};
 use weaver_unrar::{ExtractOptions, RarArchive, RarError};
 
 const MAX_ARCHIVE_ENTRIES: usize = 20_000;
 const MAX_ARCHIVE_EXPANDED_BYTES: u64 = 2 * 1024 * 1024 * 1024 * 1024;
 
-#[plugin_fn]
-pub fn scryer_describe(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&build_descriptor())?)
+/// Command entry.
+///
+/// With no arguments — the shipped invocation path (RFC 123 §7.2.5) — this runs
+/// the archive command protocol via the PDK: one `ArchivePluginProcessRequest`
+/// JSON document on stdin, exactly one `ArchivePluginProcessResponse` JSON
+/// document on stdout.
+///
+/// With a single `describe` argument it writes this plugin's `PluginDescriptor`
+/// as JSON to stdout and exits. This is the catalog/packaging descriptor path
+/// for a command binary: the Extism `scryer_describe` export no longer exists,
+/// so a host runs the wasm as `<plugin> describe` and captures stdout.
+fn main() {
+    if std::env::args().nth(1).as_deref() == Some("describe") {
+        let json = serde_json::to_string(&build_descriptor())
+            .expect("descriptor serialization must not fail");
+        let mut stdout = io::stdout();
+        stdout
+            .write_all(json.as_bytes())
+            .expect("failed to write descriptor to stdout");
+        stdout.flush().expect("failed to flush descriptor");
+        return;
+    }
+
+    run_archive_plugin(handle_request);
 }
 
 fn build_descriptor() -> PluginDescriptor {
@@ -43,16 +73,13 @@ fn build_descriptor() -> PluginDescriptor {
     }
 }
 
-#[plugin_fn]
-pub fn scryer_archive_process(input: String) -> FnResult<String> {
-    let request = match serde_json::from_str::<ArchivePluginProcessRequest>(&input) {
-        Ok(request) => request,
-        Err(error) => {
-            return plugin_error(PluginErrorCode::Permanent, "invalid archive request", error);
-        }
-    };
-
-    let response = match request.operation {
+/// Archive command-protocol handler.
+///
+/// Maps the single request into the per-operation logic and returns exactly one
+/// response. Operational outcomes are reported in-band via
+/// [`ArchivePluginStatus`]; the PDK owns request parsing and response framing.
+fn handle_request(request: ArchivePluginProcessRequest) -> ArchivePluginProcessResponse {
+    match request.operation {
         ArchivePluginOperation::Inspect { .. } => {
             unsupported_response("archive inspection is not implemented yet")
         }
@@ -81,9 +108,7 @@ pub fn scryer_archive_process(input: String) -> FnResult<String> {
             archive_path.as_deref(),
             password.as_deref(),
         ),
-    };
-
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+    }
 }
 
 fn extract_archive(
@@ -424,41 +449,193 @@ fn extract_zip(
 }
 
 fn verify_par2_set(source_dir: &str, par2_path: Option<&str>) -> ArchivePluginProcessResponse {
-    run_par2_set(source_dir, par2_path, false)
-}
-
-fn repair_par2_set(source_dir: &str, par2_path: Option<&str>) -> ArchivePluginProcessResponse {
-    run_par2_set(source_dir, par2_path, true)
-}
-
-fn run_par2_set(
-    source_dir: &str,
-    par2_path: Option<&str>,
-    repair: bool,
-) -> ArchivePluginProcessResponse {
     let source_dir = PathBuf::from(source_dir);
     let par2_paths = match par2_paths_for_request(&source_dir, par2_path) {
         Ok(paths) => paths,
         Err(response) => return *response,
     };
+    verify_par2_via_repairer(source_dir, par2_paths)
+}
 
+fn repair_par2_set(source_dir: &str, par2_path: Option<&str>) -> ArchivePluginProcessResponse {
+    let source_dir = PathBuf::from(source_dir);
+    let par2_paths = match par2_paths_for_request(&source_dir, par2_path) {
+        Ok(paths) => paths,
+        Err(response) => return *response,
+    };
+    repair_par2_via_host(source_dir, par2_paths)
+}
+
+/// Verification is scan-only (no Reed-Solomon reconstruct), so weaver-par2's
+/// full [`Par2Repairer`] pipeline runs unchanged on `wasm32-wasip1`.
+fn verify_par2_via_repairer(
+    source_dir: PathBuf,
+    par2_paths: Vec<PathBuf>,
+) -> ArchivePluginProcessResponse {
     let mut options = Par2RepairerOptions::new(source_dir, par2_paths);
-    options.repair = repair;
+    options.repair = false;
 
     let outcome = match Par2Repairer::new(options).verify_or_repair() {
         Ok(outcome) => outcome,
-        Err(error) => {
-            let operation = if repair {
-                "PAR2 repair"
-            } else {
-                "PAR2 verification"
-            };
-            let error_code = if repair { "par2_repair" } else { "par2_verify" };
-            return failed_response(error_code, &format!("{operation} failed"), error);
-        }
+        Err(error) => return failed_response("par2_verify", "PAR2 verification failed", error),
     };
 
     par2_response(outcome)
+}
+
+/// Repair a damaged PAR2 set by dispatching the Reed-Solomon reconstruct to the
+/// native host (RFC 123 WP2.5).
+///
+/// The reconstruct seam ([`execute_repair_with_solver`]) sits below
+/// [`Par2Repairer`], whose native rayon reconstruct cannot run on
+/// `wasm32-wasip1`, so this drives the repair from weaver-par2's public
+/// primitives instead: load the set, verify it against the source directory,
+/// plan the repair, then reconstruct through [`HostDispatchSolver`], which
+/// marshals the problem to the host function. Reconstructed slices are written
+/// in place into the source files by [`DiskFileAccess`].
+fn repair_par2_via_host(
+    source_dir: PathBuf,
+    par2_paths: Vec<PathBuf>,
+) -> ArchivePluginProcessResponse {
+    // Parse packets from the .par2 files (recovery-slice payloads stay
+    // file-backed and lazily read; no mmap, so this is wasip1-safe).
+    let set = match Par2FileSet::from_paths(&par2_paths) {
+        Ok(set) => set,
+        Err(error) => return failed_response("par2_load", "failed to load PAR2 set", error),
+    };
+
+    let mut access = DiskFileAccess::new(source_dir, &set);
+    let verification = verify_all(&set, &access);
+
+    match &verification.repairable {
+        Repairability::NotNeeded => {
+            par2_ok_response(ArchivePluginRepairState::Verified, 0, "PAR2 set verified cleanly")
+        }
+        Repairability::Insufficient { .. } => par2_repair_status_response(
+            ArchivePluginStatus::RepairRequired,
+            ArchivePluginRepairState::InsufficientRecoveryData,
+            "par2_insufficient_recovery_data",
+            "PAR2 set does not have enough recovery data",
+        ),
+        Repairability::ResourceLimited { .. } => par2_repair_status_response(
+            ArchivePluginStatus::RepairFailed,
+            ArchivePluginRepairState::Failed,
+            "par2_resource_limited",
+            "PAR2 verification exceeded resource limits",
+        ),
+        Repairability::Repairable { .. } => {
+            let plan = match plan_repair(&set, &verification) {
+                Ok(plan) => plan,
+                Err(error) => {
+                    return par2_repair_failed_response(
+                        "par2_repair_plan",
+                        format!("failed to plan PAR2 repair: {error}"),
+                    );
+                }
+            };
+            let reconstructed_bytes =
+                (verification.total_missing_blocks as u64).saturating_mul(plan.slice_size);
+
+            match execute_repair_with_solver(
+                &plan,
+                &set,
+                &mut access,
+                &RepairOptions::default(),
+                &HostDispatchSolver,
+            ) {
+                Ok(()) => {
+                    // Fail closed: re-verify the reconstructed on-disk set before
+                    // reporting success, mirroring native Par2Repairer's post-repair
+                    // verification. A reconstruct that silently produced wrong bytes
+                    // must never gate extraction, so extraction only proceeds when
+                    // the whole set now reads back clean (no missing blocks, every
+                    // file Complete).
+                    let post = verify_all(&set, &access);
+                    if post.needs_repair() {
+                        par2_repair_failed_response(
+                            "par2_repair_postverify",
+                            format!(
+                                "PAR2 reconstruction did not verify clean: {} block(s) still damaged or missing",
+                                post.total_missing_blocks
+                            ),
+                        )
+                    } else {
+                        par2_ok_response(
+                            ArchivePluginRepairState::Repaired,
+                            reconstructed_bytes,
+                            "PAR2 set was repaired via host-thread reconstruction and re-verified",
+                        )
+                    }
+                }
+                Err(error) => par2_repair_failed_response(
+                    "par2_repair_reconstruct",
+                    format!("PAR2 reconstruction failed: {error}"),
+                ),
+            }
+        }
+    }
+}
+
+/// Successful verify/repair: overall `Ok` with a populated repair status so the
+/// gating caller (`repair_then_extract`) proceeds to extraction.
+fn par2_ok_response(
+    state: ArchivePluginRepairState,
+    written_bytes: u64,
+    message: &str,
+) -> ArchivePluginProcessResponse {
+    ArchivePluginProcessResponse {
+        status: ArchivePluginStatus::Ok,
+        repair: Some(ArchivePluginRepairStatus {
+            status: state,
+            read_bytes: None,
+            written_bytes: Some(written_bytes),
+            message: Some(message.to_string()),
+        }),
+        ..empty_response()
+    }
+}
+
+/// A non-`Ok` repair outcome (insufficient data, resource-limited) that carries
+/// a repair status and an error code but is not a hard host failure.
+fn par2_repair_status_response(
+    status: ArchivePluginStatus,
+    repair_state: ArchivePluginRepairState,
+    error_code: &str,
+    message: &str,
+) -> ArchivePluginProcessResponse {
+    ArchivePluginProcessResponse {
+        status,
+        repair: Some(ArchivePluginRepairStatus {
+            status: repair_state,
+            read_bytes: None,
+            written_bytes: None,
+            message: Some(message.to_string()),
+        }),
+        error_code: Some(error_code.to_string()),
+        message: Some(message.to_string()),
+        ..empty_response()
+    }
+}
+
+/// A hard reconstruct/plan failure. Every negative host return code lands here
+/// (including `-7` deadline, which the host also surfaces as a timeout), mapped
+/// to the in-band `RepairFailed` status.
+fn par2_repair_failed_response(
+    error_code: &str,
+    message: String,
+) -> ArchivePluginProcessResponse {
+    ArchivePluginProcessResponse {
+        status: ArchivePluginStatus::RepairFailed,
+        repair: Some(ArchivePluginRepairStatus {
+            status: ArchivePluginRepairState::Failed,
+            read_bytes: None,
+            written_bytes: None,
+            message: Some(message.clone()),
+        }),
+        error_code: Some(error_code.to_string()),
+        message: Some(message),
+        ..empty_response()
+    }
 }
 
 fn par2_response(outcome: Par2RepairOutcome) -> ArchivePluginProcessResponse {
@@ -748,19 +925,4 @@ fn empty_response() -> ArchivePluginProcessResponse {
         error_code: None,
         message: None,
     }
-}
-
-fn plugin_error(
-    code: PluginErrorCode,
-    public_message: &str,
-    error: impl std::fmt::Display,
-) -> FnResult<String> {
-    Ok(serde_json::to_string(&PluginResult::<
-        ArchivePluginProcessResponse,
-    >::Err(PluginError {
-        code,
-        public_message: public_message.to_string(),
-        debug_message: Some(error.to_string()),
-        retry_after_seconds: None,
-    }))?)
 }

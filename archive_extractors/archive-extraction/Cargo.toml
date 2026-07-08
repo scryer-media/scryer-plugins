@@ -14,12 +14,13 @@ feature_sets = [{ required_features = [] }, { required_features = ["simd128", "r
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/archive_extractors/archive-extraction"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/archive_extractors/archive-extraction"
 
-[lib]
-crate-type = ["cdylib"]
+[[bin]]
+name = "archive_extraction_archive_extractor"
+path = "src/main.rs"
 
 [dependencies]
-extism-pdk = "1.4"
-scryer-plugin-sdk = "3.3.0"
+scryer-plugin-pdk = "0.1.0"
+scryer-plugin-sdk = "3.4"
 serde_json = "1"
 weaver-par2 = { version = "0.1.0", default-features = false }
 weaver-reed-solomon = { version = "0.1.0", default-features = false }

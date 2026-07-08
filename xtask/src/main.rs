@@ -165,6 +165,20 @@ fn archive_crc32_unsupported(
     Ok(())
 }
 
+// Instantiation-only stub for the descriptor/validation host. A repair-capable
+// guest imports `scryer_par2_reconstruct` (RFC 123 WP2.5), so validate must
+// define it for the module to instantiate; `describe` never calls it. Returns a
+// negative "not available here" code (never invoked on this path).
+fn archive_par2_reconstruct_unsupported(
+    _current: &mut CurrentPlugin,
+    _input: &[Val],
+    output: &mut [Val],
+    _state: UserData<()>,
+) -> Result<(), ExtismError> {
+    output[0] = Val::I64(-2);
+    Ok(())
+}
+
 #[derive(Clone)]
 struct RustupToolchain {
     rustup: PathBuf,
@@ -3058,8 +3072,16 @@ fn instantiate_plugin_from_wasm(
             "scryer_crc32",
             [ValType::I64, ValType::I64, ValType::I64],
             [ValType::I64],
-            socket_stubs,
+            socket_stubs.clone(),
             archive_crc32_unsupported,
+        )
+        .with_function_in_namespace(
+            "extism:host/user",
+            "scryer_par2_reconstruct",
+            [ValType::I64, ValType::I64],
+            [ValType::I64],
+            socket_stubs,
+            archive_par2_reconstruct_unsupported,
         )
         .build()
         .with_context(|| format!("failed to instantiate {}", wasm_path.display()))

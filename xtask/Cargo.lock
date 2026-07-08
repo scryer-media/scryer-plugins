@@ -2023,7 +2023,7 @@ dependencies = [
 
 [[package]]
 name = "scryer-plugin-sdk"
-version = "3.3.0"
+version = "3.4.0"
 dependencies = [
  "base64",
  "extism-manifest",
@@ -3745,3 +3745,19 @@ dependencies = [
  "cc",
  "pkg-config",
 ]
+
+[[patch.unused]]
+name = "scryer-plugin-pdk"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "weaver-par2"
+version = "0.1.1"
+
+[[patch.unused]]
+name = "weaver-reed-solomon"
+version = "0.1.1"
+
+[[patch.unused]]
+name = "weaver-unrar"
+version = "0.1.1"

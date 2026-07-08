@@ -1,0 +1,14 @@
+[package]
+name = "scryer-plugin-pdk"
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-only"
+description = "Guest runtime bindings for Scryer WebAssembly plugins: the command-protocol entry glue for the archive extractor plugin (RFC 123 WP1)."
+repository = "https://github.com/scryer-media/scryer-plugins"
+readme = "README.md"
+keywords = ["scryer", "plugin", "wasm", "wasip1"]
+categories = ["wasm"]
+
+[dependencies]
+scryer-plugin-sdk = "3.3.0"
+serde_json = "1"

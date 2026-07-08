@@ -5,16 +5,15 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::OnceLock;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::time::Duration;
 
-use extism::{CurrentPlugin, Error as ExtismError, Manifest, UserData, Val, ValType};
 use scryer_plugin_sdk::{
     ArchivePluginFormat, ArchivePluginOperation, ArchivePluginProcessRequest,
-    ArchivePluginProcessResponse, ArchivePluginRepairState, ArchivePluginStatus, PluginResult,
+    ArchivePluginProcessResponse, ArchivePluginRepairState, ArchivePluginStatus,
 };
 use wasmtime::{Caller, Engine, Extern, Linker, Module, Store};
 use wasmtime_wasi::p1::WasiP1Ctx;
-use wasmtime_wasi::{DirPerms, FilePerms, WasiCtxBuilder};
+use wasmtime_wasi::p2::pipe::{MemoryInputPipe, MemoryOutputPipe};
+use wasmtime_wasi::{DirPerms, FilePerms, I32Exit, WasiCtxBuilder};
 
 const GUEST_SOURCE_ROOT: &str = "/scryer/source";
 const GUEST_OUTPUT_ROOT: &str = "/scryer/output";
@@ -66,9 +65,74 @@ fn archive_extraction_plugin_exercises_scryer_host_paths() {
     let wasm_path = archive_plugin_wasm();
     let fixture_root = fixture_root();
 
+    assert_describe_emits_descriptor(&wasm_path);
     assert_encrypted_rars_use_raw_host_calls(&fixture_root.join("rar"));
     assert_par2_verifies(&wasm_path, &fixture_root.join("par2"));
     assert_zip_extracts(&wasm_path);
+}
+
+/// The command binary has no Extism `scryer_describe` export; instead it emits
+/// its `PluginDescriptor` as JSON to stdout when run with the `describe`
+/// argument. This is the descriptor path a catalog/packaging step drives via
+/// wasmtime for a wasip1 command artifact.
+fn assert_describe_emits_descriptor(wasm_path: &Path) {
+    let engine = Engine::default();
+    let module = Module::from_file(&engine, wasm_path).expect("load archive plugin wasm");
+    let mut linker: Linker<WasiP1Ctx> = Linker::new(&engine);
+    wasmtime_wasi::p1::add_to_linker_sync(&mut linker, |ctx: &mut WasiP1Ctx| ctx)
+        .expect("add WASI preview1 linker functions");
+    linker
+        .func_wrap(
+            "extism:host/user",
+            "scryer_aes_cbc_decrypt",
+            host_scryer_aes_cbc_decrypt,
+        )
+        .expect("define scryer_aes_cbc_decrypt");
+    linker
+        .func_wrap("extism:host/user", "scryer_crc32", host_scryer_crc32)
+        .expect("define scryer_crc32");
+    linker
+        .func_wrap(
+            "extism:host/user",
+            "scryer_par2_reconstruct",
+            host_scryer_par2_reconstruct,
+        )
+        .expect("define scryer_par2_reconstruct");
+
+    let stdout = MemoryOutputPipe::new(1024 * 1024);
+    let wasi = WasiCtxBuilder::new()
+        .args(&["archive-extraction", "describe"])
+        .stdout(stdout.clone())
+        .inherit_stderr()
+        .build_p1();
+    let mut store = Store::new(&engine, wasi);
+    let instance = linker
+        .instantiate(&mut store, &module)
+        .expect("instantiate archive plugin");
+    let start = instance
+        .get_typed_func::<(), ()>(&mut store, "_start")
+        .expect("archive plugin should export _start");
+    if let Err(error) = start.call(&mut store, ()) {
+        if let Some(exit) = error.downcast_ref::<I32Exit>() {
+            assert_eq!(exit.0, 0, "describe exited with {}", exit.0);
+        } else {
+            panic!("describe trapped: {error:?}");
+        }
+    }
+    drop(store);
+
+    let bytes = stdout.contents();
+    let descriptor: serde_json::Value = serde_json::from_slice(&bytes).unwrap_or_else(|error| {
+        panic!(
+            "describe did not emit valid JSON ({error}): {}",
+            String::from_utf8_lossy(&bytes)
+        )
+    });
+    assert_eq!(
+        descriptor.get("id").and_then(|id| id.as_str()),
+        Some("archive-extraction"),
+        "unexpected descriptor id: {descriptor}"
+    );
 }
 
 fn assert_encrypted_rars_use_raw_host_calls(fixture_dir: &Path) {
@@ -144,55 +208,90 @@ fn assert_zip_extracts(wasm_path: &Path) {
     assert_response_contains_file_bytes(&response, output.path(), b"hello from zip\n", "ZIP");
 }
 
+/// Drive the archive plugin as a `wasm32-wasip1` command (RFC 123 §7.2.5): the
+/// request JSON is fed on stdin, the response JSON is captured from stdout, the
+/// two frozen §5 crypto functions are registered under `extism:host/user`, and
+/// the fixed guest roots are preopened. This mirrors how the Scryer host invokes
+/// the command binary — no Extism.
 fn call_archive_plugin(
     wasm_path: &Path,
     source_dir: &Path,
     output_dir: &Path,
     operation: ArchivePluginOperation,
 ) -> ArchivePluginProcessResponse {
-    let manifest = Manifest::new([extism::Wasm::file(wasm_path)])
-        .with_timeout(Duration::from_secs(60))
-        .with_memory_max(1024)
-        .with_allowed_path(format!("ro:{}", source_dir.display()), GUEST_SOURCE_ROOT)
-        .with_allowed_path(output_dir.display().to_string(), GUEST_OUTPUT_ROOT);
-    let mut plugin = extism::PluginBuilder::new(manifest)
-        .with_wasi(true)
-        .with_function_in_namespace(
+    let engine = Engine::default();
+    let module = Module::from_file(&engine, wasm_path).expect("load archive plugin wasm");
+    let mut linker: Linker<WasiP1Ctx> = Linker::new(&engine);
+    wasmtime_wasi::p1::add_to_linker_sync(&mut linker, |ctx: &mut WasiP1Ctx| ctx)
+        .expect("add WASI preview1 linker functions");
+    linker
+        .func_wrap(
             "extism:host/user",
             "scryer_aes_cbc_decrypt",
-            [
-                ValType::I64,
-                ValType::I64,
-                ValType::I64,
-                ValType::I64,
-                ValType::I64,
-            ],
-            [ValType::I64],
-            UserData::new(()),
-            host_aes_cbc_decrypt,
+            host_scryer_aes_cbc_decrypt,
         )
-        .with_function_in_namespace(
+        .expect("define scryer_aes_cbc_decrypt");
+    linker
+        .func_wrap("extism:host/user", "scryer_crc32", host_scryer_crc32)
+        .expect("define scryer_crc32");
+    linker
+        .func_wrap(
             "extism:host/user",
-            "scryer_crc32",
-            [ValType::I64, ValType::I64, ValType::I64],
-            [ValType::I64],
-            UserData::new(()),
-            host_crc32,
+            "scryer_par2_reconstruct",
+            host_scryer_par2_reconstruct,
         )
-        .build()
-        .expect("instantiate archive plugin");
+        .expect("define scryer_par2_reconstruct");
 
     let request = ArchivePluginProcessRequest { operation };
-    let input = serde_json::to_string(&request).expect("serialize archive request");
-    let output: String = plugin
-        .call("scryer_archive_process", input)
-        .expect("call scryer_archive_process");
-    match serde_json::from_str::<PluginResult<ArchivePluginProcessResponse>>(&output)
-        .expect("decode archive plugin response")
-    {
-        PluginResult::Ok(response) => response,
-        PluginResult::Err(error) => panic!("archive plugin returned error: {error:?}"),
+    let input = serde_json::to_vec(&request).expect("serialize archive request");
+    let stdout = MemoryOutputPipe::new(8 * 1024 * 1024);
+    let wasi = WasiCtxBuilder::new()
+        .args(&["archive-extraction"])
+        .stdin(MemoryInputPipe::new(input))
+        .stdout(stdout.clone())
+        .inherit_stderr()
+        .env("TMPDIR", GUEST_OUTPUT_ROOT)
+        .preopened_dir(
+            source_dir,
+            GUEST_SOURCE_ROOT,
+            DirPerms::READ,
+            FilePerms::READ,
+        )
+        .expect("preopen archive source")
+        .preopened_dir(
+            output_dir,
+            GUEST_OUTPUT_ROOT,
+            DirPerms::READ | DirPerms::MUTATE,
+            FilePerms::READ | FilePerms::WRITE,
+        )
+        .expect("preopen archive output")
+        .build_p1();
+    let mut store = Store::new(&engine, wasi);
+    let instance = linker
+        .instantiate(&mut store, &module)
+        .expect("instantiate archive plugin");
+    let start = instance
+        .get_typed_func::<(), ()>(&mut store, "_start")
+        .expect("archive plugin should export _start");
+    match start.call(&mut store, ()) {
+        Ok(()) => {}
+        Err(error) => {
+            if let Some(exit) = error.downcast_ref::<I32Exit>() {
+                assert_eq!(exit.0, 0, "archive plugin exited with {}", exit.0);
+            } else {
+                panic!("archive plugin trapped: {error:?}");
+            }
+        }
     }
+    drop(store);
+
+    let bytes = stdout.contents();
+    serde_json::from_slice::<ArchivePluginProcessResponse>(&bytes).unwrap_or_else(|error| {
+        panic!(
+            "decode archive plugin response ({error}): {}",
+            String::from_utf8_lossy(&bytes)
+        )
+    })
 }
 
 fn archive_plugin_wasm() -> PathBuf {
@@ -291,6 +390,13 @@ fn run_rar_host_guest(wasm_path: &Path, fixture_dir: &Path, output_dir: &Path) {
     linker
         .func_wrap("extism:host/user", "scryer_crc32", host_scryer_crc32)
         .expect("define scryer_crc32");
+    linker
+        .func_wrap(
+            "extism:host/user",
+            "scryer_par2_reconstruct",
+            host_scryer_par2_reconstruct,
+        )
+        .expect("define scryer_par2_reconstruct");
 
     let wasi = WasiCtxBuilder::new()
         .args(&["scryer-archive-host-rar-guest"])
@@ -377,26 +483,6 @@ fn host_call_counts() -> HostCallCounts {
     }
 }
 
-fn host_aes_cbc_decrypt(
-    _current: &mut CurrentPlugin,
-    _input: &[Val],
-    output: &mut [Val],
-    _state: UserData<()>,
-) -> Result<(), ExtismError> {
-    output[0] = Val::I64(-3);
-    Ok(())
-}
-
-fn host_crc32(
-    _current: &mut CurrentPlugin,
-    _input: &[Val],
-    output: &mut [Val],
-    _state: UserData<()>,
-) -> Result<(), ExtismError> {
-    output[0] = Val::I64(-1);
-    Ok(())
-}
-
 fn host_scryer_aes_cbc_decrypt(
     mut caller: Caller<'_, WasiP1Ctx>,
     key_ptr: i64,
@@ -453,6 +539,21 @@ fn host_scryer_aes_cbc_decrypt(
     }
 
     0
+}
+
+/// Instantiation-only stub. A repair-capable guest imports
+/// `scryer_par2_reconstruct` (RFC 123 WP2.5), so every linker that instantiates
+/// this plugin must define it. The paths this harness drives (describe,
+/// encrypted-RAR extract, PAR2 verify, ZIP extract) never reconstruct, so this
+/// is not called; a repair end-to-end test replaces it with a real host
+/// implementation (mirroring scryer's `wasmtime_host::par2_host`). Returns a
+/// negative code so any unexpected call surfaces as an in-band RepairFailed.
+fn host_scryer_par2_reconstruct(
+    _caller: Caller<'_, WasiP1Ctx>,
+    _desc_ptr: i64,
+    _desc_len: i64,
+) -> i64 {
+    -2
 }
 
 fn host_scryer_crc32(
