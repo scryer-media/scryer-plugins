@@ -508,9 +508,11 @@ fn repair_par2_via_host(
     let verification = verify_all(&set, &access);
 
     match &verification.repairable {
-        Repairability::NotNeeded => {
-            par2_ok_response(ArchivePluginRepairState::Verified, 0, "PAR2 set verified cleanly")
-        }
+        Repairability::NotNeeded => par2_ok_response(
+            ArchivePluginRepairState::Verified,
+            0,
+            "PAR2 set verified cleanly",
+        ),
         Repairability::Insufficient { .. } => par2_repair_status_response(
             ArchivePluginStatus::RepairRequired,
             ArchivePluginRepairState::InsufficientRecoveryData,
@@ -620,10 +622,7 @@ fn par2_repair_status_response(
 /// A hard reconstruct/plan failure. Every negative host return code lands here
 /// (including `-7` deadline, which the host also surfaces as a timeout), mapped
 /// to the in-band `RepairFailed` status.
-fn par2_repair_failed_response(
-    error_code: &str,
-    message: String,
-) -> ArchivePluginProcessResponse {
+fn par2_repair_failed_response(error_code: &str, message: String) -> ArchivePluginProcessResponse {
     ArchivePluginProcessResponse {
         status: ArchivePluginStatus::RepairFailed,
         repair: Some(ArchivePluginRepairStatus {

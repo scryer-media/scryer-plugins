@@ -697,6 +697,7 @@ dependencies = [
 [[package]]
 name = "scryer-plugin-pdk"
 version = "0.1.0"
+source = "git+https://github.com/scryer-media/scryer-plugins?tag=scryer-plugin-pdk%2Fv0.1.0#994aa9ee51e3e51ac95c652980cfcee6fd3ac5ac"
 dependencies = [
  "scryer-plugin-sdk",
  "serde_json",
@@ -705,6 +706,8 @@ dependencies = [
 [[package]]
 name = "scryer-plugin-sdk"
 version = "3.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38b3c6ed96b135c9498843bca0e97b4feb94c070ab4f425ee731388a83a151f5"
 dependencies = [
  "base64",
  "extism-manifest",
@@ -936,7 +939,9 @@ dependencies = [
 
 [[package]]
 name = "weaver-par2"
-version = "0.1.1"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f7332ee1d2de02271bbf702d4f1cb4e5f0cb91b18cbfe11350b52cd3f834151"
 dependencies = [
  "bytes",
  "crc32fast",
@@ -951,14 +956,18 @@ dependencies = [
 
 [[package]]
 name = "weaver-reed-solomon"
-version = "0.1.1"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "891272735a8faa061b0042edc67b79a1fa560ba5e9228cb59bda8c1eb7272050"
 dependencies = [
  "rayon",
 ]
 
 [[package]]
 name = "weaver-unrar"
-version = "0.1.1"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "98638ec1bbd43d40c8705a3871977575f63ac357bdb5ebc04bc41465b9f77612"
 dependencies = [
  "aes",
  "blake2s_simd",

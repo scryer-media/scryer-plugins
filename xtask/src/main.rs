@@ -3757,6 +3757,17 @@ fn is_plugin_crate(manifest_path: &Path) -> Result<bool> {
     let document = fs::read_to_string(manifest_path)?
         .parse::<DocumentMut>()
         .with_context(|| format!("failed to parse {}", manifest_path.display()))?;
+    if document
+        .get("package")
+        .and_then(|package| package.get("metadata"))
+        .and_then(|metadata| metadata.get("scryer"))
+        .and_then(|scryer| scryer.get("plugin_id"))
+        .and_then(|plugin_id| plugin_id.as_str())
+        .is_some()
+    {
+        return Ok(true);
+    }
+
     let Some(crate_types) = document
         .get("lib")
         .and_then(|lib| lib.get("crate-type"))

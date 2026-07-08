@@ -157,7 +157,10 @@ impl DescLayout {
 /// buffer's own linear-memory address is used as the pointer base, so the
 /// header's `*_ptr` fields are absolute offsets the host resolves directly.
 fn build_descriptor(input: &DescriptorInput<'_>) -> Result<Vec<u8>, SolverError> {
-    let layout = DescLayout::new(input.available_indices.len(), input.recovery_exponents.len());
+    let layout = DescLayout::new(
+        input.available_indices.len(),
+        input.recovery_exponents.len(),
+    );
     let mut desc = vec![0u8; layout.total_len];
     let base = desc.as_ptr() as u64;
     write_descriptor(&mut desc, base, input)?;

@@ -2024,6 +2024,8 @@ dependencies = [
 [[package]]
 name = "scryer-plugin-sdk"
 version = "3.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38b3c6ed96b135c9498843bca0e97b4feb94c070ab4f425ee731388a83a151f5"
 dependencies = [
  "base64",
  "extism-manifest",
@@ -3745,19 +3747,3 @@ dependencies = [
  "cc",
  "pkg-config",
 ]
-
-[[patch.unused]]
-name = "scryer-plugin-pdk"
-version = "0.1.0"
-
-[[patch.unused]]
-name = "weaver-par2"
-version = "0.2.0"
-
-[[patch.unused]]
-name = "weaver-reed-solomon"
-version = "0.2.0"
-
-[[patch.unused]]
-name = "weaver-unrar"
-version = "0.2.0"
