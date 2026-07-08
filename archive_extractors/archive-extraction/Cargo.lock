@@ -696,8 +696,8 @@ dependencies = [
 
 [[package]]
 name = "scryer-plugin-pdk"
-version = "0.1.0"
-source = "git+https://github.com/scryer-media/scryer-plugins?tag=scryer-plugin-pdk%2Fv0.1.0#994aa9ee51e3e51ac95c652980cfcee6fd3ac5ac"
+version = "0.1.1"
+source = "git+https://github.com/scryer-media/scryer-plugins?tag=scryer-plugin-pdk%2Fv0.1.1#d202b2c08926df2749c405b871015951661d5aa2"
 dependencies = [
  "scryer-plugin-sdk",
  "serde_json",
