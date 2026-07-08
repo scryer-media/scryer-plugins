@@ -1,15 +1,21 @@
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
-use extism_pdk::*;
 use scryer_plugin_sdk::{
-    AudioStreamSelector as SdkAudioStreamSelector, EXPORT_SUBSYNC_ALIGN, PluginDescriptor,
-    PluginError, PluginErrorCode, PluginResult, ProviderDescriptor, SDK_VERSION,
-    SubtitleCapabilities, SubtitleDescriptor, SubtitlePluginGenerateRequest,
-    SubtitlePluginGenerateResponse, SubtitlePluginValidateConfigRequest,
-    SubtitlePluginValidateConfigResponse, SubtitleProviderMode, SubtitleQueryMediaKind,
-    SubtitleSyncAlignRequest, SubtitleSyncAlignResponse, SubtitleSyncAlignSkipReason,
-    SubtitleSyncAudioCodec as SdkSubtitleSyncAudioCodec, SubtitleSyncRewrittenSubtitle,
-    SubtitleValidateConfigStatus, current_sdk_constraint,
+    AudioStreamSelector as SdkAudioStreamSelector, PluginDescriptor, ProviderDescriptor,
+    SDK_VERSION, SubtitleCapabilities, SubtitleDescriptor, SubtitleProviderMode,
+    SubtitleQueryMediaKind, SubtitleSyncAlignInputRef, SubtitleSyncAlignRequest,
+    SubtitleSyncAlignResponse, SubtitleSyncAlignSkipReason,
+    SubtitleSyncAudioCodec as SdkSubtitleSyncAudioCodec, SubtitleSyncCapabilities,
+    SubtitleSyncCommandAlignRequest, SubtitleSyncCommandAlignResponse,
+    SubtitleSyncCommandOutputSubtitle, SubtitleSyncDecodeStatus,
+    SubtitleSyncDecodeWindowRequest as SdkSubtitleSyncDecodeWindowRequest,
+    SubtitleSyncDecodeWindowResponse as SdkSubtitleSyncDecodeWindowResponse,
+    SubtitleSyncDecodeWindowStatus as SdkSubtitleSyncDecodeWindowStatus, SubtitleSyncInputSubtitle,
+    SubtitleSyncOperation, SubtitleSyncPluginOperation, SubtitleSyncPluginProcessRequest,
+    SubtitleSyncPluginProcessResponse, SubtitleSyncPluginResponse,
+    SubtitleSyncProbeRequest as SdkSubtitleSyncProbeRequest,
+    SubtitleSyncProbeResponse as SdkSubtitleSyncProbeResponse, SubtitleSyncReferenceSubtitle,
+    SubtitleSyncRewrittenSubtitle, current_sdk_constraint,
 };
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -27,69 +33,32 @@ const SUBTITLE_SYNC_BACKEND: &str = "subtitle-sync-rust";
 const MAX_DECODE_INPUT_BYTES: usize = 64 * 1024 * 1024;
 const MIN_EFFECTIVE_OFFSET_MS: i64 = 50;
 
-#[plugin_fn]
-pub fn scryer_describe(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&descriptor())?)
+fn main() {
+    if std::env::args().nth(1).as_deref() == Some("describe") {
+        println!(
+            "{}",
+            serde_json::to_string(&descriptor()).expect("descriptor serializes")
+        );
+        return;
+    }
+    scryer_plugin_pdk::run_subtitle_sync_plugin(handle_command);
 }
 
-#[plugin_fn]
-pub fn scryer_subsync_describe(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&sync_descriptor())?)
-}
-
-#[plugin_fn]
-pub fn scryer_validate_config(input: String) -> FnResult<String> {
-    let _: SubtitlePluginValidateConfigRequest = serde_json::from_str(&input)?;
-    Ok(serde_json::to_string(&PluginResult::Ok(
-        SubtitlePluginValidateConfigResponse {
-            status: SubtitleValidateConfigStatus::Valid,
-            message: None,
-            retry_after_seconds: None,
+fn handle_command(request: SubtitleSyncPluginProcessRequest) -> SubtitleSyncPluginProcessResponse {
+    let response = match request.operation {
+        SubtitleSyncPluginOperation::Align { request } => SubtitleSyncPluginResponse::Align {
+            response: Box::new(align_command_impl(&request)),
         },
-    ))?)
-}
-
-#[plugin_fn]
-pub fn scryer_subtitle_generate(input: String) -> FnResult<String> {
-    let _: SubtitlePluginGenerateRequest = serde_json::from_str(&input)?;
-    Ok(serde_json::to_string(&PluginResult::<
-        SubtitlePluginGenerateResponse,
-    >::Err(PluginError {
-        code: PluginErrorCode::Unsupported,
-        public_message: "Enhanced subtitle sync exposes decoder exports, not subtitle generation"
-            .to_string(),
-        debug_message: None,
-        retry_after_seconds: None,
-    }))?)
-}
-
-#[plugin_fn]
-pub fn scryer_subsync_probe(input: String) -> FnResult<String> {
-    let request: SubtitleSyncProbeRequest = serde_json::from_str(&input)?;
-    let response = probe_impl(&request).map_err(Error::msg)?;
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
-}
-
-#[plugin_fn]
-pub fn scryer_subsync_decode_window(input: String) -> FnResult<String> {
-    scryer_subsync_decode_window_json(input)
-}
-
-#[plugin_fn]
-pub fn scryer_subsync_align(input: String) -> FnResult<String> {
-    scryer_subsync_align_json(input)
-}
-
-fn scryer_subsync_align_json(input: String) -> FnResult<String> {
-    let request: SubtitleSyncAlignRequest = serde_json::from_str(&input)?;
-    let response = align_impl(&request);
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
-}
-
-fn scryer_subsync_decode_window_json(input: String) -> FnResult<String> {
-    let request: SubtitleSyncDecodeWindowRequest = serde_json::from_str(&input)?;
-    let response = decode_window_impl(&request).map_err(Error::msg)?;
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+        SubtitleSyncPluginOperation::Probe { request } => SubtitleSyncPluginResponse::Probe {
+            response: probe_command_impl(&request),
+        },
+        SubtitleSyncPluginOperation::DecodeWindow { request } => {
+            SubtitleSyncPluginResponse::DecodeWindow {
+                response: decode_window_command_impl(&request),
+            }
+        }
+    };
+    SubtitleSyncPluginProcessResponse { response }
 }
 
 fn descriptor() -> PluginDescriptor {
@@ -107,7 +76,7 @@ fn descriptor() -> PluginDescriptor {
             default_base_url: None,
             allowed_hosts: vec![],
             capabilities: SubtitleCapabilities {
-                mode: SubtitleProviderMode::Generator,
+                mode: SubtitleProviderMode::Sync,
                 supported_media_kinds: vec![
                     SubtitleQueryMediaKind::Movie,
                     SubtitleQueryMediaKind::Episode,
@@ -123,37 +92,237 @@ fn descriptor() -> PluginDescriptor {
                 supports_ai_translated: false,
                 supports_machine_translated: false,
                 supported_languages: vec![],
+                sync: Some(SubtitleSyncCapabilities {
+                    backend: Some(format!(
+                        "{DECODER_BACKEND}+{SUBTITLE_SYNC_BACKEND}+{}",
+                        subtitle_sync::WEBRTC_BACKEND_LABEL
+                    )),
+                    decode_status: SubtitleSyncDecodeStatus::Complete,
+                    supported_codecs: supported_sdk_codecs(),
+                    decoded_codecs: supported_sdk_codecs(),
+                    pending_codecs: vec![],
+                    output_sample_format: Some("f32le".to_string()),
+                    supports_mono_mixdown: true,
+                    command_model: true,
+                    operations: vec![
+                        SubtitleSyncOperation::Align,
+                        SubtitleSyncOperation::Probe,
+                        SubtitleSyncOperation::DecodeWindow,
+                    ],
+                }),
             },
         }),
     }
 }
 
-fn sync_descriptor() -> EnhancedSubtitleSyncDescriptor {
-    EnhancedSubtitleSyncDescriptor {
-        id: PLUGIN_ID.to_string(),
-        name: PLUGIN_NAME.to_string(),
-        version: env!("CARGO_PKG_VERSION").to_string(),
-        sdk_version: SDK_VERSION.to_string(),
-        sdk_constraint: current_sdk_constraint(),
-        plugin_type: "subtitle_sync".to_string(),
-        exports: vec![
-            "scryer_subsync_describe".to_string(),
-            "scryer_subsync_probe".to_string(),
-            "scryer_subsync_decode_window".to_string(),
-            EXPORT_SUBSYNC_ALIGN.to_string(),
-        ],
-        capabilities: SubtitleSyncCapabilities {
-            backend: format!(
-                "{DECODER_BACKEND}+{SUBTITLE_SYNC_BACKEND}+{}",
-                subtitle_sync::WEBRTC_BACKEND_LABEL
-            ),
-            decode_status: DecodeBackendStatus::Complete,
-            supported_codecs: AudioCodec::all().to_vec(),
-            decoded_codecs: AudioCodec::all().to_vec(),
-            pending_codecs: vec![],
-            output_sample_format: "f32le".to_string(),
-            supports_mono_mixdown: true,
+fn supported_sdk_codecs() -> Vec<SdkSubtitleSyncAudioCodec> {
+    vec![
+        SdkSubtitleSyncAudioCodec::Ac3,
+        SdkSubtitleSyncAudioCodec::Eac3,
+        SdkSubtitleSyncAudioCodec::Dts,
+        SdkSubtitleSyncAudioCodec::DtsHdMaCore,
+        SdkSubtitleSyncAudioCodec::TrueHd,
+    ]
+}
+
+fn align_command_impl(
+    request: &SubtitleSyncCommandAlignRequest,
+) -> SubtitleSyncCommandAlignResponse {
+    let subtitle_content = match std::fs::read(&request.subtitle.path) {
+        Ok(content) => content,
+        Err(error) => {
+            return command_skipped_response(
+                SubtitleSyncAlignSkipReason::WeakAlignment,
+                format!("failed to read subtitle input: {error}"),
+            );
+        }
+    };
+
+    let reference_subtitle = match &request.reference_subtitle {
+        Some(reference) => match std::fs::read(&reference.path) {
+            Ok(content) => Some(SubtitleSyncReferenceSubtitle {
+                content_base64: BASE64.encode(content),
+                format: reference.format.clone(),
+                file_name: reference.file_name.clone(),
+                encoding_hint: reference.encoding_hint.clone(),
+            }),
+            Err(error) => {
+                return command_skipped_response(
+                    SubtitleSyncAlignSkipReason::WeakAlignment,
+                    format!("failed to read reference subtitle input: {error}"),
+                );
+            }
         },
+        None => None,
+    };
+
+    let legacy_request = SubtitleSyncAlignRequest {
+        input: SubtitleSyncAlignInputRef {
+            path: request.input.path.clone(),
+        },
+        subtitle: SubtitleSyncInputSubtitle {
+            content_base64: BASE64.encode(subtitle_content),
+            format: request.subtitle.format.clone(),
+            file_name: request.subtitle.file_name.clone(),
+            encoding_hint: request.subtitle.encoding_hint.clone(),
+        },
+        reference_subtitle,
+        subtitle_spans: request.subtitle_spans.clone(),
+        max_offset_seconds: request.max_offset_seconds,
+        sync_options: request.sync_options.clone(),
+        selector: request.selector.clone(),
+        expected_codec: request.expected_codec,
+    };
+
+    let response = align_impl(&legacy_request);
+    let rewritten_subtitle = if response.applied {
+        match response.rewritten_subtitle.as_ref() {
+            Some(rewritten) => match BASE64.decode(&rewritten.content_base64) {
+                Ok(bytes) => {
+                    if let Err(error) = std::fs::write(&request.output.path, bytes) {
+                        return command_skipped_response(
+                            SubtitleSyncAlignSkipReason::WeakAlignment,
+                            format!("failed to write subtitle sync output: {error}"),
+                        );
+                    }
+                    Some(SubtitleSyncCommandOutputSubtitle {
+                        path: request.output.path.clone(),
+                        format: rewritten.format.clone(),
+                    })
+                }
+                Err(error) => {
+                    return command_skipped_response(
+                        SubtitleSyncAlignSkipReason::WeakAlignment,
+                        format!("internal rewritten subtitle base64 was invalid: {error}"),
+                    );
+                }
+            },
+            None => None,
+        }
+    } else {
+        None
+    };
+
+    SubtitleSyncCommandAlignResponse {
+        applied: response.applied,
+        offset_ms: response.offset_ms,
+        rewritten_subtitle,
+        score: response.score,
+        selected_framerate_ratio: response.selected_framerate_ratio,
+        consistency_ratio: response.consistency_ratio,
+        nosplit_score: response.nosplit_score,
+        split_score: response.split_score,
+        skipped_reason: response.skipped_reason,
+        backend: response.backend,
+        warnings: response.warnings,
+        message: response.message,
+    }
+}
+
+fn command_skipped_response(
+    reason: SubtitleSyncAlignSkipReason,
+    message: impl Into<String>,
+) -> SubtitleSyncCommandAlignResponse {
+    SubtitleSyncCommandAlignResponse {
+        applied: false,
+        offset_ms: 0,
+        rewritten_subtitle: None,
+        score: None,
+        selected_framerate_ratio: None,
+        consistency_ratio: None,
+        nosplit_score: None,
+        split_score: None,
+        skipped_reason: Some(reason),
+        backend: FFMPEG_SYNC_BACKEND.to_string(),
+        warnings: Vec::new(),
+        message: Some(message.into()),
+    }
+}
+
+fn probe_command_impl(request: &SdkSubtitleSyncProbeRequest) -> SdkSubtitleSyncProbeResponse {
+    let internal = SubtitleSyncProbeRequest {
+        codec: request.codec.and_then(sdk_codec_to_audio_codec),
+        codec_label: request.codec_label.clone(),
+        packet_base64: request.packet_base64.clone(),
+    };
+    match probe_impl(&internal) {
+        Ok(response) => SdkSubtitleSyncProbeResponse {
+            codec: response.codec.map(audio_codec_to_sdk_codec),
+            supported: response.supported,
+            backend: response.backend,
+            confidence: response.confidence,
+            sample_rate_hz: response.sample_rate_hz,
+            notes: response.notes,
+        },
+        Err(error) => SdkSubtitleSyncProbeResponse {
+            codec: None,
+            supported: false,
+            backend: DECODER_BACKEND.to_string(),
+            confidence: 0.0,
+            sample_rate_hz: None,
+            notes: vec![error],
+        },
+    }
+}
+
+fn decode_window_command_impl(
+    request: &SdkSubtitleSyncDecodeWindowRequest,
+) -> SdkSubtitleSyncDecodeWindowResponse {
+    let internal = SubtitleSyncDecodeWindowRequest {
+        codec: request.codec.and_then(sdk_codec_to_audio_codec),
+        packets: request
+            .packets
+            .iter()
+            .map(|packet| AudioPacket {
+                pts_ms: packet.pts_ms,
+                data_base64: packet.data_base64.clone(),
+            })
+            .collect(),
+        target_sample_rate_hz: request.target_sample_rate_hz,
+        mixdown_mono: request.mixdown_mono,
+    };
+    match decode_window_impl(&internal) {
+        Ok(response) => SdkSubtitleSyncDecodeWindowResponse {
+            status: match response.status {
+                DecodeWindowStatus::Decoded => SdkSubtitleSyncDecodeWindowStatus::Decoded,
+                DecodeWindowStatus::Unsupported => SdkSubtitleSyncDecodeWindowStatus::Unsupported,
+            },
+            codec: response.codec.map(audio_codec_to_sdk_codec),
+            sample_rate_hz: response.sample_rate_hz,
+            channels: response.channels,
+            samples_decoded: response.samples_decoded,
+            pcm_f32le_base64: response.pcm_f32le_base64,
+            message: response.message,
+        },
+        Err(error) => SdkSubtitleSyncDecodeWindowResponse {
+            status: SdkSubtitleSyncDecodeWindowStatus::Unsupported,
+            codec: None,
+            sample_rate_hz: None,
+            channels: None,
+            samples_decoded: 0,
+            pcm_f32le_base64: None,
+            message: Some(error),
+        },
+    }
+}
+
+fn sdk_codec_to_audio_codec(codec: SdkSubtitleSyncAudioCodec) -> Option<AudioCodec> {
+    match codec {
+        SdkSubtitleSyncAudioCodec::Ac3 => Some(AudioCodec::Ac3),
+        SdkSubtitleSyncAudioCodec::Eac3 => Some(AudioCodec::Eac3),
+        SdkSubtitleSyncAudioCodec::Dts | SdkSubtitleSyncAudioCodec::DtsHdMaCore => {
+            Some(AudioCodec::Dts)
+        }
+        SdkSubtitleSyncAudioCodec::TrueHd => Some(AudioCodec::TrueHd),
+    }
+}
+
+fn audio_codec_to_sdk_codec(codec: AudioCodec) -> SdkSubtitleSyncAudioCodec {
+    match codec {
+        AudioCodec::Ac3 => SdkSubtitleSyncAudioCodec::Ac3,
+        AudioCodec::Eac3 => SdkSubtitleSyncAudioCodec::Eac3,
+        AudioCodec::Dts => SdkSubtitleSyncAudioCodec::Dts,
+        AudioCodec::TrueHd => SdkSubtitleSyncAudioCodec::TrueHd,
     }
 }
 
@@ -925,35 +1094,6 @@ fn contains_truehd_major_sync(packet: &[u8]) -> bool {
         .any(|window| window == [0xf8, 0x72, 0x6f, 0xba] || window == [0xf8, 0x72, 0x6f, 0xbb])
 }
 
-#[derive(Debug, Clone, Serialize)]
-struct EnhancedSubtitleSyncDescriptor {
-    id: String,
-    name: String,
-    version: String,
-    sdk_version: String,
-    sdk_constraint: String,
-    plugin_type: String,
-    exports: Vec<String>,
-    capabilities: SubtitleSyncCapabilities,
-}
-
-#[derive(Debug, Clone, Serialize)]
-struct SubtitleSyncCapabilities {
-    backend: String,
-    decode_status: DecodeBackendStatus,
-    supported_codecs: Vec<AudioCodec>,
-    decoded_codecs: Vec<AudioCodec>,
-    pending_codecs: Vec<AudioCodec>,
-    output_sample_format: String,
-    supports_mono_mixdown: bool,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "snake_case")]
-enum DecodeBackendStatus {
-    Complete,
-}
-
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -998,10 +1138,6 @@ enum AudioCodec {
 }
 
 impl AudioCodec {
-    fn all() -> &'static [Self] {
-        &[Self::Ac3, Self::Eac3, Self::Dts, Self::TrueHd]
-    }
-
     fn from_label(label: &str) -> Option<Self> {
         let normalized = label
             .chars()
@@ -1240,16 +1376,7 @@ mod tests {
     }
 
     fn align_request(request: SubtitleSyncAlignRequest) -> SubtitleSyncAlignResponse {
-        let raw_response =
-            scryer_subsync_align_json(serde_json::to_string(&request).expect("encode request"))
-                .expect("align export response");
-        let PluginResult::Ok(response) =
-            serde_json::from_str::<PluginResult<SubtitleSyncAlignResponse>>(&raw_response)
-                .expect("decode plugin result")
-        else {
-            panic!("align export returned plugin error");
-        };
-        response
+        align_impl(&request)
     }
 
     fn rewritten_subtitle_bytes(response: &SubtitleSyncAlignResponse) -> Vec<u8> {
@@ -1410,43 +1537,33 @@ mod tests {
 
     #[test]
     fn descriptor_advertises_vendored_ffmpeg_sync_contract() {
-        let descriptor = sync_descriptor();
+        let descriptor = descriptor();
         assert_eq!(descriptor.id, PLUGIN_ID);
-        assert_eq!(descriptor.plugin_type, "subtitle_sync");
-        assert_eq!(
-            descriptor.capabilities.backend,
-            format!(
-                "{DECODER_BACKEND}+{SUBTITLE_SYNC_BACKEND}+{}",
-                subtitle_sync::WEBRTC_BACKEND_LABEL
-            )
+        let subtitle = descriptor.subtitle().expect("subtitle descriptor");
+        assert_eq!(subtitle.capabilities.mode, SubtitleProviderMode::Sync);
+        let sync = subtitle.capabilities.sync.as_ref().expect("sync caps");
+        let expected_backend = format!(
+            "{DECODER_BACKEND}+{SUBTITLE_SYNC_BACKEND}+{}",
+            subtitle_sync::WEBRTC_BACKEND_LABEL
         );
-        assert_eq!(
-            descriptor.capabilities.decode_status,
-            DecodeBackendStatus::Complete
-        );
-        assert_eq!(
-            descriptor.capabilities.supported_codecs.as_slice(),
-            AudioCodec::all()
-        );
-        assert_eq!(
-            descriptor.capabilities.decoded_codecs.as_slice(),
-            AudioCodec::all()
-        );
-        assert!(descriptor.capabilities.pending_codecs.is_empty());
+        assert_eq!(sync.backend.as_deref(), Some(expected_backend.as_str()));
+        assert_eq!(sync.decode_status, SubtitleSyncDecodeStatus::Complete);
+        assert_eq!(sync.supported_codecs, supported_sdk_codecs());
+        assert_eq!(sync.decoded_codecs, supported_sdk_codecs());
+        assert!(sync.pending_codecs.is_empty());
+        assert_eq!(sync.output_sample_format.as_deref(), Some("f32le"));
+        assert!(sync.supports_mono_mixdown);
+        assert!(sync.command_model);
+        assert!(sync.operations.contains(&SubtitleSyncOperation::Align));
+        assert!(sync.operations.contains(&SubtitleSyncOperation::Probe));
         assert!(
-            descriptor
-                .exports
-                .contains(&"scryer_subsync_probe".to_string())
-        );
-        assert!(
-            descriptor
-                .exports
-                .contains(&EXPORT_SUBSYNC_ALIGN.to_string())
+            sync.operations
+                .contains(&SubtitleSyncOperation::DecodeWindow)
         );
     }
 
     #[test]
-    fn sdk_descriptor_stays_loadable_until_sync_provider_abi_exists() {
+    fn sdk_descriptor_uses_sync_provider_mode() {
         let descriptor = descriptor();
         assert_eq!(descriptor.id, PLUGIN_ID);
         assert_eq!(descriptor.plugin_type(), "subtitle_provider");
@@ -1454,7 +1571,7 @@ mod tests {
             descriptor.provider,
             ProviderDescriptor::Subtitle(SubtitleDescriptor {
                 capabilities: SubtitleCapabilities {
-                    mode: SubtitleProviderMode::Generator,
+                    mode: SubtitleProviderMode::Sync,
                     ..
                 },
                 ..
@@ -1511,16 +1628,7 @@ mod tests {
             mixdown_mono: true,
         };
 
-        let raw_response = scryer_subsync_decode_window_json(
-            serde_json::to_string(&request).expect("encode request"),
-        )
-        .expect("decode window export response");
-        let PluginResult::Ok(response) =
-            serde_json::from_str::<PluginResult<SubtitleSyncDecodeWindowResponse>>(&raw_response)
-                .expect("decode plugin result")
-        else {
-            panic!("decode window export returned plugin error");
-        };
+        let response = decode_window_impl(&request).expect("decode window response");
         assert_eq!(response.status, DecodeWindowStatus::Decoded);
         assert_eq!(response.codec, Some(AudioCodec::Ac3));
         assert_eq!(response.sample_rate_hz, Some(48_000));

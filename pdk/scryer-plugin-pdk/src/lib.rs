@@ -1,8 +1,8 @@
 //! # scryer-plugin-pdk
 //!
 //! Guest runtime bindings for **Scryer** WebAssembly plugins. This crate is the
-//! guest half of the archive plugin invocation protocol defined in Scryer
-//! RFC 123 (WP1): the host runs the plugin as a `wasm32-wasip1` **command**
+//! guest half of Scryer's command-model plugin invocation protocol: the host
+//! runs the plugin as a `wasm32-wasip1` **command**
 //! (a `_start` entry), hands it one request document on stdin, and reads
 //! exactly one response document from stdout.
 //!
@@ -18,13 +18,11 @@
 //!
 //! ## Usage
 //!
-//! A plugin provides a handler `Fn(ArchivePluginProcessRequest) ->
-//! ArchivePluginProcessResponse` and hands it to [`run_archive_plugin`] (or the
-//! [`scryer_archive_plugin_main`] macro). Operational failures — unsupported
-//! format, wrong password, insufficient recovery data — are reported *in-band*
-//! through [`ArchivePluginStatus`], never by exiting non-zero. A non-zero exit
-//! is reserved for protocol-level faults (malformed request, unwritable stdout)
-//! and guest panics.
+//! A plugin provides a typed request handler and hands it to the matching runner
+//! such as [`run_archive_plugin`] or [`run_subtitle_sync_plugin`]. Operational
+//! failures are reported *in-band* through the response type, never by exiting
+//! non-zero. A non-zero exit is reserved for protocol-level faults (malformed
+//! request, unwritable stdout) and guest panics.
 //!
 //! ```no_run
 //! use scryer_plugin_pdk::{
@@ -80,7 +78,7 @@
 
 mod framing;
 
-pub use framing::{FramingError, process};
+pub use framing::{FramingError, process, process_json};
 
 // One wire-protocol source of truth (RFC 123 §2.6): the protocol types live in
 // `scryer-plugin-sdk` and are re-exported here so a plugin can depend on the PDK
@@ -88,7 +86,17 @@ pub use framing::{FramingError, process};
 pub use scryer_plugin_sdk::{
     ArchivePluginExtractedFile, ArchivePluginFormat, ArchivePluginOperation,
     ArchivePluginProcessRequest, ArchivePluginProcessResponse, ArchivePluginRepairFormat,
-    ArchivePluginRepairState, ArchivePluginRepairStatus, ArchivePluginStatus,
+    ArchivePluginRepairState, ArchivePluginRepairStatus, ArchivePluginStatus, AudioStreamSelector,
+    SubtitleSyncAlignSkipReason, SubtitleSyncAudioCodec, SubtitleSyncAudioPacket,
+    SubtitleSyncAudioStreamMetadata, SubtitleSyncCapabilities, SubtitleSyncCommandAlignRequest,
+    SubtitleSyncCommandAlignResponse, SubtitleSyncCommandInputFile,
+    SubtitleSyncCommandOutputSubtitle, SubtitleSyncCommandOutputTarget,
+    SubtitleSyncCommandSubtitleFile, SubtitleSyncDecodeStatus, SubtitleSyncDecodeWindowRequest,
+    SubtitleSyncDecodeWindowResponse, SubtitleSyncDecodeWindowStatus,
+    SubtitleSyncMediaMetadataSnapshot, SubtitleSyncOperation, SubtitleSyncOptions,
+    SubtitleSyncPluginOperation, SubtitleSyncPluginProcessRequest,
+    SubtitleSyncPluginProcessResponse, SubtitleSyncPluginResponse, SubtitleSyncProbeRequest,
+    SubtitleSyncProbeResponse, SubtitleSyncSubtitleStreamMetadata, SubtitleTimingSpan,
 };
 
 /// Full access to the SDK for descriptor and other types the PDK does not wrap
@@ -133,8 +141,32 @@ where
     let stdout = io::stdout();
     let result = framing::process(stdin.lock(), stdout.lock(), handler);
 
-    // Flush again on the way out; `proc_exit` does not run destructors and WASI
-    // aborts do not flush libc/std buffers.
+    let _ = io::stdout().flush();
+
+    match result {
+        Ok(()) => process::exit(0),
+        Err(error) => {
+            let mut stderr = io::stderr();
+            let _ = writeln!(stderr, "scryer-plugin-pdk: {error}");
+            let _ = stderr.flush();
+            process::exit(error.exit_code())
+        }
+    }
+}
+
+/// Command entry glue for SDK 3.5 subtitle-sync plugins.
+///
+/// Never returns.
+pub fn run_subtitle_sync_plugin<H>(handler: H) -> !
+where
+    H: Fn(SubtitleSyncPluginProcessRequest) -> SubtitleSyncPluginProcessResponse,
+{
+    install_panic_hook();
+
+    let stdin = io::stdin();
+    let stdout = io::stdout();
+    let result = framing::process_json(stdin.lock(), stdout.lock(), handler);
+
     let _ = io::stdout().flush();
 
     match result {
@@ -160,6 +192,16 @@ macro_rules! scryer_archive_plugin_main {
     ($handler:expr) => {
         fn main() {
             $crate::run_archive_plugin($handler);
+        }
+    };
+}
+
+/// Define the command `main` for a subtitle-sync plugin from a request handler.
+#[macro_export]
+macro_rules! scryer_subtitle_sync_plugin_main {
+    ($handler:expr) => {
+        fn main() {
+            $crate::run_subtitle_sync_plugin($handler);
         }
     };
 }

@@ -1,28 +1,28 @@
-//! Wire framing for the archive command protocol (RFC 123 §7.2.5).
+//! Wire framing for Scryer's command-model plugin protocol.
 //!
 //! The transport is deliberately isolated in this one module. The shipped
-//! transport is WASI-command style — one [`ArchivePluginProcessRequest`] JSON
-//! document on stdin, exactly one [`ArchivePluginProcessResponse`] JSON
-//! document on stdout. If the host spike shows stdin/stdout capture misbehaves
-//! under `wasmtime-wasi`, the documented fallback (request/response files in a
-//! dedicated rw control preopen, same JSON shapes) is a contained change here:
-//! only the `Read`/`Write` handed to [`process`] changes, never its callers or
-//! the plugin handler.
+//! transport is WASI-command style — one typed request JSON document on stdin,
+//! exactly one typed response JSON document on stdout. If the host ever moves
+//! to request/response files in a dedicated control preopen, that stays a
+//! contained change here: only the `Read`/`Write` handed to [`process_json`]
+//! changes, never its callers or the plugin handler.
 
+use std::any::type_name;
 use std::fmt;
 use std::io::{self, Read, Write};
 
 use scryer_plugin_sdk::{ArchivePluginProcessRequest, ArchivePluginProcessResponse};
+use serde::{Serialize, de::DeserializeOwned};
 
 /// A protocol-level failure. These are distinct from operational failures,
-/// which the handler reports in-band via [`ArchivePluginProcessResponse::status`].
+/// which the handler reports in-band via its response payload.
 /// Every variant maps to a non-zero process exit; the host attaches the stderr
 /// tail and surfaces a plugin-protocol error (RFC 123 §7.2.8).
 #[derive(Debug)]
 pub enum FramingError {
     /// Reading the request document from the input transport failed.
     ReadRequest(io::Error),
-    /// The request document was not a valid `ArchivePluginProcessRequest`.
+    /// The request document was not a valid request type.
     ParseRequest(serde_json::Error),
     /// The response could not be serialized to JSON.
     SerializeResponse(serde_json::Error),
@@ -46,13 +46,10 @@ impl fmt::Display for FramingError {
                 write!(f, "failed to read request from stdin: {error}")
             }
             FramingError::ParseRequest(error) => {
-                write!(f, "failed to parse ArchivePluginProcessRequest: {error}")
+                write!(f, "failed to parse command request: {error}")
             }
             FramingError::SerializeResponse(error) => {
-                write!(
-                    f,
-                    "failed to serialize ArchivePluginProcessResponse: {error}"
-                )
+                write!(f, "failed to serialize command response: {error}")
             }
             FramingError::WriteResponse(error) => {
                 write!(f, "failed to write response to stdout: {error}")
@@ -77,19 +74,40 @@ impl std::error::Error for FramingError {
 /// Reads the request document from `input` to EOF, dispatches it to `handler`,
 /// serializes the returned response, writes it to `output`, and flushes.
 /// Callers own process exit and stderr reporting.
-pub fn process<R, W, H>(mut input: R, mut output: W, handler: H) -> Result<(), FramingError>
+pub fn process<R, W, H>(input: R, output: W, handler: H) -> Result<(), FramingError>
 where
     R: Read,
     W: Write,
     H: FnOnce(ArchivePluginProcessRequest) -> ArchivePluginProcessResponse,
+{
+    process_json(input, output, handler)
+}
+
+/// Generic command-protocol core for all Scryer command-model plugin families.
+pub fn process_json<R, W, H, Request, Response>(
+    mut input: R,
+    mut output: W,
+    handler: H,
+) -> Result<(), FramingError>
+where
+    R: Read,
+    W: Write,
+    H: FnOnce(Request) -> Response,
+    Request: DeserializeOwned,
+    Response: Serialize,
 {
     let mut buffer = Vec::new();
     input
         .read_to_end(&mut buffer)
         .map_err(FramingError::ReadRequest)?;
 
-    let request: ArchivePluginProcessRequest =
-        serde_json::from_slice(&buffer).map_err(FramingError::ParseRequest)?;
+    let request: Request = serde_json::from_slice(&buffer).map_err(|error| {
+        eprintln!(
+            "scryer-plugin-pdk: failed to parse {}: {error}",
+            type_name::<Request>()
+        );
+        FramingError::ParseRequest(error)
+    })?;
 
     let response = handler(request);
 
@@ -147,6 +165,32 @@ mod tests {
         let decoded: ArchivePluginProcessResponse = serde_json::from_slice(&output).unwrap();
         assert_eq!(decoded.status, ArchivePluginStatus::Ok);
         assert_eq!(decoded.expanded_bytes, Some(42));
+    }
+
+    #[test]
+    fn generic_process_json_round_trips_non_archive_shapes() {
+        #[derive(serde::Serialize, serde::Deserialize)]
+        struct Request {
+            value: String,
+        }
+        #[derive(serde::Serialize, serde::Deserialize)]
+        struct Response {
+            echoed: String,
+        }
+
+        let input = serde_json::to_vec(&Request {
+            value: "subtitle-sync".to_string(),
+        })
+        .unwrap();
+        let mut output = Vec::new();
+
+        process_json(input.as_slice(), &mut output, |request: Request| Response {
+            echoed: request.value,
+        })
+        .expect("generic command framing should succeed");
+
+        let decoded: Response = serde_json::from_slice(&output).unwrap();
+        assert_eq!(decoded.echoed, "subtitle-sync");
     }
 
     #[test]
