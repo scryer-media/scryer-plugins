@@ -1,6 +1,6 @@
 [package]
 name = "enhanced-subtitle-sync-plugin"
-version = "0.2.6"
+version = "0.2.7"
 edition = "2024"
 autolib = false
 license = "GPL-3.0-only"
