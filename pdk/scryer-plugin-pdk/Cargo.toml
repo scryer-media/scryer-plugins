@@ -10,6 +10,6 @@ keywords = ["scryer", "plugin", "wasm", "wasip1"]
 categories = ["wasm"]
 
 [dependencies]
-scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer", rev = "f4786a1d7f7bfe5fc5b0bada190e1ae609a7f839", version = "3.6.0" }
+scryer-plugin-sdk = "3.6.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

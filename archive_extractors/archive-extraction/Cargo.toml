@@ -19,8 +19,8 @@ name = "archive_extraction_archive_extractor"
 path = "src/main.rs"
 
 [dependencies]
-scryer-plugin-pdk = { git = "https://github.com/scryer-media/scryer-plugins", tag = "scryer-plugin-pdk/v0.3.0", package = "scryer-plugin-pdk" }
-scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer", rev = "f4786a1d7f7bfe5fc5b0bada190e1ae609a7f839", version = "3.6.0" }
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk" }
+scryer-plugin-sdk = "3.6.0"
 serde_json = "1"
 sevenz-rust2 = { version = "0.21", default-features = false, features = ["aes256", "bzip2", "deflate", "ppmd"] }
 weaver-unrar = { version = "0.2.0", default-features = false, features = ["crypto-host", "crc-host"] }

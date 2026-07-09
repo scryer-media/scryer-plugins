@@ -22,7 +22,7 @@ path = "src/lib.rs"
 [dependencies]
 base64 = "0.22"
 scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk" }
-scryer-plugin-sdk = { path = "../../../scryer/crates/scryer-plugin-sdk", version = "3.5" }
+scryer-plugin-sdk = "3.6.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 rustfft = "6"

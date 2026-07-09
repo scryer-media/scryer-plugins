@@ -2029,7 +2029,8 @@ dependencies = [
 [[package]]
 name = "scryer-plugin-sdk"
 version = "3.6.0"
-source = "git+https://github.com/scryer-media/scryer?rev=f4786a1d7f7bfe5fc5b0bada190e1ae609a7f839#f4786a1d7f7bfe5fc5b0bada190e1ae609a7f839"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "33b069cc903ab6b23a38ea2142ccc21664b8d102b1891f0afe952d1b85a6fa79"
 dependencies = [
  "base64",
  "extism-pdk",

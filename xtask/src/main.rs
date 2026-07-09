@@ -3483,8 +3483,14 @@ fn validate_descriptor_contract(descriptor: &PluginDescriptor) -> Result<()> {
 
 fn validate_subtitle_sync_variant_parity(
     plugin_dir: &Path,
+    descriptor: &PluginDescriptor,
     variants: &[BuiltPluginVariant],
 ) -> Result<()> {
+    if subtitle_sync_uses_command_model(descriptor) {
+        ok("subtitle-sync command-model descriptor validated; legacy export parity check skipped");
+        return Ok(());
+    }
+
     let Some(baseline) = variants
         .iter()
         .find(|variant| variant.feature_set.is_baseline())
@@ -3527,6 +3533,20 @@ fn validate_subtitle_sync_variant_parity(
         SUBTITLE_SYNC_PARITY_FORMATS.len()
     ));
     Ok(())
+}
+
+fn subtitle_sync_uses_command_model(descriptor: &PluginDescriptor) -> bool {
+    match &descriptor.provider {
+        ProviderDescriptor::Subtitle(subtitle) => {
+            matches!(subtitle.capabilities.mode, SubtitleProviderMode::Sync)
+                && subtitle
+                    .capabilities
+                    .sync
+                    .as_ref()
+                    .is_some_and(|sync| sync.command_model)
+        }
+        _ => false,
+    }
 }
 
 fn subtitle_sync_parity_request(plugin_dir: &Path, subtitle_format: &str) -> Result<String> {
@@ -3747,7 +3767,7 @@ fn run_plugin_validate(ctx: &TaskContext, args: PluginValidateArgs) -> Result<()
     }
     let descriptor = descriptor.expect("feature_sets should never be empty");
     if descriptor.id == ENHANCED_SUBTITLE_SYNC_PLUGIN_ID {
-        validate_subtitle_sync_variant_parity(&plugin_dir, &built_variants)?;
+        validate_subtitle_sync_variant_parity(&plugin_dir, &descriptor, &built_variants)?;
     }
     ok(format!(
         "Validated {} {} ({}) across {} feature set(s)",
