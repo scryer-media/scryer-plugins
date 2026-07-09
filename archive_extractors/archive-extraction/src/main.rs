@@ -677,9 +677,32 @@ fn par2_paths_for_request(
     par2_path: Option<&str>,
 ) -> Result<Vec<PathBuf>, Box<ArchivePluginProcessResponse>> {
     if let Some(par2_path) = par2_path {
-        return Ok(vec![PathBuf::from(par2_path)]);
+        return par2_paths_for_primary_path(source_dir, &PathBuf::from(par2_path));
     }
 
+    par2_paths_from_dir(source_dir)
+}
+
+fn par2_paths_for_primary_path(
+    source_dir: &Path,
+    primary_path: &Path,
+) -> Result<Vec<PathBuf>, Box<ArchivePluginProcessResponse>> {
+    let parent = primary_path.parent().unwrap_or(source_dir);
+    let Some(set_prefix) = par2_set_prefix(primary_path) else {
+        return Ok(vec![primary_path.to_path_buf()]);
+    };
+    let mut par2_paths = par2_paths_from_dir(parent)?;
+    par2_paths.retain(|path| par2_path_matches_set_prefix(path, &set_prefix));
+    if par2_paths.iter().all(|path| path != primary_path) {
+        par2_paths.push(primary_path.to_path_buf());
+        par2_paths.sort();
+    }
+    Ok(par2_paths)
+}
+
+fn par2_paths_from_dir(
+    source_dir: &Path,
+) -> Result<Vec<PathBuf>, Box<ArchivePluginProcessResponse>> {
     let entries = fs::read_dir(source_dir).map_err(|error| {
         Box::new(failed_response(
             "read_source_dir",
@@ -715,6 +738,20 @@ fn par2_paths_for_request(
     }
 
     Ok(par2_paths)
+}
+
+fn par2_set_prefix(path: &Path) -> Option<String> {
+    let stem = path.file_stem()?.to_str()?;
+    stem.split_once(".vol")
+        .map(|(prefix, _)| prefix.to_string())
+        .or_else(|| Some(stem.to_string()))
+}
+
+fn par2_path_matches_set_prefix(path: &Path, set_prefix: &str) -> bool {
+    let Some(stem) = path.file_stem().and_then(|stem| stem.to_str()) else {
+        return false;
+    };
+    stem == set_prefix || stem.starts_with(&format!("{set_prefix}.vol"))
 }
 
 fn par2_repair_status(outcome: &Par2RepairOutcome) -> ArchivePluginRepairStatus {
@@ -923,5 +960,80 @@ fn empty_response() -> ArchivePluginProcessResponse {
         staged_bytes: None,
         error_code: None,
         message: None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn explicit_par2_path_loads_matching_recovery_volumes_only() {
+        let dir = temp_test_dir("explicit-par2");
+        touch(&dir.join("movie.par2"));
+        touch(&dir.join("movie.vol00+2.par2"));
+        touch(&dir.join("movie.vol02+2.par2"));
+        touch(&dir.join("other.par2"));
+        touch(&dir.join("other.vol00+1.par2"));
+
+        let primary = dir.join("movie.par2").to_string_lossy().to_string();
+        let paths = par2_paths_for_request(&dir, Some(&primary)).unwrap();
+
+        assert_eq!(
+            file_names(paths),
+            vec![
+                "movie.par2".to_string(),
+                "movie.vol00+2.par2".to_string(),
+                "movie.vol02+2.par2".to_string(),
+            ]
+        );
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn omitted_par2_path_loads_all_par2_files_in_source_dir() {
+        let dir = temp_test_dir("all-par2");
+        touch(&dir.join("movie.par2"));
+        touch(&dir.join("movie.vol00+2.par2"));
+        touch(&dir.join("other.par2"));
+        touch(&dir.join("readme.txt"));
+
+        let paths = par2_paths_for_request(&dir, None).unwrap();
+
+        assert_eq!(
+            file_names(paths),
+            vec![
+                "movie.par2".to_string(),
+                "movie.vol00+2.par2".to_string(),
+                "other.par2".to_string(),
+            ]
+        );
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    fn temp_test_dir(name: &str) -> PathBuf {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let dir = std::env::temp_dir().join(format!(
+            "scryer-archive-plugin-{name}-{}-{nonce}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir(&dir).unwrap();
+        dir
+    }
+
+    fn touch(path: &Path) {
+        std::fs::write(path, b"par2").unwrap();
+    }
+
+    fn file_names(paths: Vec<PathBuf>) -> Vec<String> {
+        paths
+            .into_iter()
+            .map(|path| path.file_name().unwrap().to_string_lossy().to_string())
+            .collect()
     }
 }

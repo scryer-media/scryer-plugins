@@ -1,11 +1,12 @@
 use std::fs;
-use std::io::Write;
+use std::io::{Read, Seek, SeekFrom, Write};
 use std::mem::MaybeUninit;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::OnceLock;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+use scryer_plugin_sdk::par2_reconstruct::{self as par2_abi, Par2ReconstructStatus};
 use scryer_plugin_sdk::{
     ArchivePluginFormat, ArchivePluginOperation, ArchivePluginProcessRequest,
     ArchivePluginProcessResponse, ArchivePluginRepairState, ArchivePluginStatus,
@@ -14,6 +15,7 @@ use wasmtime::{Caller, Engine, Extern, Linker, Module, Store};
 use wasmtime_wasi::p1::WasiP1Ctx;
 use wasmtime_wasi::p2::pipe::{MemoryInputPipe, MemoryOutputPipe};
 use wasmtime_wasi::{DirPerms, FilePerms, I32Exit, WasiCtxBuilder};
+use weaver_reed_solomon::{gf, gf_simd, matrix};
 
 const GUEST_SOURCE_ROOT: &str = "/scryer/source";
 const GUEST_OUTPUT_ROOT: &str = "/scryer/output";
@@ -57,6 +59,7 @@ fn extract_and_compare(archive_name: &str, output_path: &str, expected: &[u8]) {
 
 static AES_CALLS: AtomicUsize = AtomicUsize::new(0);
 static CRC_CALLS: AtomicUsize = AtomicUsize::new(0);
+static PAR2_CALLS: AtomicUsize = AtomicUsize::new(0);
 static PLUGIN_WASM: OnceLock<PathBuf> = OnceLock::new();
 static RAR_GUEST_WASM: OnceLock<PathBuf> = OnceLock::new();
 
@@ -68,6 +71,10 @@ fn archive_extraction_plugin_exercises_scryer_host_paths() {
     assert_describe_emits_descriptor(&wasm_path);
     assert_encrypted_rars_use_raw_host_calls(&fixture_root.join("rar"));
     assert_par2_verifies(&wasm_path, &fixture_root.join("par2"));
+    assert_par2_repair_then_extract_uses_writable_staging_source(
+        &wasm_path,
+        &fixture_root.join("par2"),
+    );
     assert_zip_extracts(&wasm_path);
 }
 
@@ -178,6 +185,75 @@ fn assert_par2_verifies(wasm_path: &Path, source_dir: &Path) {
     assert_eq!(repair.status, ArchivePluginRepairState::Verified);
 }
 
+fn assert_par2_repair_then_extract_uses_writable_staging_source(
+    wasm_path: &Path,
+    fixture_dir: &Path,
+) {
+    let completed_source = tempfile::tempdir().expect("create completed source dir");
+    let repair_source = tempfile::tempdir().expect("create repair staging source dir");
+    let output = tempfile::tempdir().expect("create repair output dir");
+    copy_fixture_files(fixture_dir, completed_source.path());
+    copy_fixture_files(fixture_dir, repair_source.path());
+
+    let damaged_name = "fixture_rar5_lz_plain.part3.rar";
+    let original_volume = completed_source.path().join(damaged_name);
+    let staged_volume = repair_source.path().join(damaged_name);
+    let original_bytes = fs::read(&original_volume).expect("read original RAR volume");
+    corrupt_file_byte(&staged_volume, 8192);
+    assert_ne!(
+        fs::read(&staged_volume).expect("read damaged staged RAR volume"),
+        original_bytes,
+        "repair staging volume should start damaged"
+    );
+
+    let before = host_call_counts();
+    let response = call_archive_plugin_with_mutable_source(
+        wasm_path,
+        repair_source.path(),
+        output.path(),
+        ArchivePluginOperation::RepairThenExtract {
+            source_dir: GUEST_SOURCE_ROOT.to_string(),
+            output_dir: GUEST_OUTPUT_ROOT.to_string(),
+            format: ArchivePluginFormat::Rar,
+            par2_path: Some(
+                format!("{GUEST_SOURCE_ROOT}/fixture_rar5_lz_plain_repair.par2").to_string(),
+            ),
+            archive_path: Some(format!(
+                "{GUEST_SOURCE_ROOT}/fixture_rar5_lz_plain.part1.rar"
+            )),
+            password: None,
+        },
+    );
+    let after = host_call_counts();
+
+    assert_eq!(
+        response.status,
+        ArchivePluginStatus::Ok,
+        "RepairThenExtract failed: {:?}",
+        response.message
+    );
+    let repair = response
+        .repair
+        .as_ref()
+        .expect("RepairThenExtract response should include repair status");
+    assert_eq!(repair.status, ArchivePluginRepairState::Repaired);
+    assert!(
+        after.par2 > before.par2,
+        "RepairThenExtract did not call scryer_par2_reconstruct"
+    );
+    assert_response_files_exist(&response, output.path(), "RepairThenExtract");
+    assert_eq!(
+        fs::read(&staged_volume).expect("read repaired staged RAR volume"),
+        original_bytes,
+        "PAR2 repair should rewrite the staged repair input"
+    );
+    assert_eq!(
+        fs::read(&original_volume).expect("read original RAR volume after repair"),
+        original_bytes,
+        "completed-download source fixture should remain untouched"
+    );
+}
+
 fn assert_zip_extracts(wasm_path: &Path) {
     let source = tempfile::tempdir().expect("create ZIP source dir");
     let output = tempfile::tempdir().expect("create ZIP output dir");
@@ -219,6 +295,40 @@ fn call_archive_plugin(
     output_dir: &Path,
     operation: ArchivePluginOperation,
 ) -> ArchivePluginProcessResponse {
+    call_archive_plugin_with_source_perms(
+        wasm_path,
+        source_dir,
+        output_dir,
+        operation,
+        DirPerms::READ,
+        FilePerms::READ,
+    )
+}
+
+fn call_archive_plugin_with_mutable_source(
+    wasm_path: &Path,
+    source_dir: &Path,
+    output_dir: &Path,
+    operation: ArchivePluginOperation,
+) -> ArchivePluginProcessResponse {
+    call_archive_plugin_with_source_perms(
+        wasm_path,
+        source_dir,
+        output_dir,
+        operation,
+        DirPerms::READ | DirPerms::MUTATE,
+        FilePerms::READ | FilePerms::WRITE,
+    )
+}
+
+fn call_archive_plugin_with_source_perms(
+    wasm_path: &Path,
+    source_dir: &Path,
+    output_dir: &Path,
+    operation: ArchivePluginOperation,
+    source_dir_perms: DirPerms,
+    source_file_perms: FilePerms,
+) -> ArchivePluginProcessResponse {
     let engine = Engine::default();
     let module = Module::from_file(&engine, wasm_path).expect("load archive plugin wasm");
     let mut linker: Linker<WasiP1Ctx> = Linker::new(&engine);
@@ -254,8 +364,8 @@ fn call_archive_plugin(
         .preopened_dir(
             source_dir,
             GUEST_SOURCE_ROOT,
-            DirPerms::READ,
-            FilePerms::READ,
+            source_dir_perms,
+            source_file_perms,
         )
         .expect("preopen archive source")
         .preopened_dir(
@@ -452,6 +562,33 @@ fn create_zip_fixture(path: &Path, entry_name: &str, payload: &[u8]) {
     zip.finish().expect("finish zip fixture");
 }
 
+fn copy_fixture_files(source_dir: &Path, destination_dir: &Path) {
+    for entry in fs::read_dir(source_dir).expect("read fixture dir") {
+        let entry = entry.expect("read fixture dir entry");
+        let source = entry.path();
+        if source.is_file() {
+            fs::copy(&source, destination_dir.join(entry.file_name())).expect("copy fixture file");
+        }
+    }
+}
+
+fn corrupt_file_byte(path: &Path, offset: u64) {
+    let mut file = fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(path)
+        .expect("open fixture for corruption");
+    file.seek(SeekFrom::Start(offset))
+        .expect("seek to corruption offset");
+    let mut byte = [0_u8; 1];
+    file.read_exact(&mut byte).expect("read byte to corrupt");
+    byte[0] ^= 0x5a;
+    file.seek(SeekFrom::Start(offset))
+        .expect("seek back to corruption offset");
+    file.write_all(&byte).expect("write corrupted byte");
+    file.flush().expect("flush corrupted fixture byte");
+}
+
 fn assert_response_contains_file_bytes(
     response: &ArchivePluginProcessResponse,
     output_dir: &Path,
@@ -470,16 +607,40 @@ fn assert_response_contains_file_bytes(
     );
 }
 
+fn assert_response_files_exist(
+    response: &ArchivePluginProcessResponse,
+    output_dir: &Path,
+    label: &str,
+) {
+    assert!(
+        !response.files.is_empty(),
+        "{label} response should include extracted files"
+    );
+    for file in &response.files {
+        let path = output_dir.join(&file.relative_path);
+        let metadata = fs::metadata(&path).unwrap_or_else(|error| {
+            panic!("{label} output file {} missing: {error}", path.display())
+        });
+        assert!(
+            metadata.len() > 0,
+            "{label} output file {} should not be empty",
+            path.display()
+        );
+    }
+}
+
 #[derive(Clone, Copy)]
 struct HostCallCounts {
     aes: usize,
     crc: usize,
+    par2: usize,
 }
 
 fn host_call_counts() -> HostCallCounts {
     HostCallCounts {
         aes: AES_CALLS.load(Ordering::SeqCst),
         crc: CRC_CALLS.load(Ordering::SeqCst),
+        par2: PAR2_CALLS.load(Ordering::SeqCst),
     }
 }
 
@@ -541,19 +702,95 @@ fn host_scryer_aes_cbc_decrypt(
     0
 }
 
-/// Instantiation-only stub. A repair-capable guest imports
-/// `scryer_par2_reconstruct` (RFC 123 WP2.5), so every linker that instantiates
-/// this plugin must define it. The paths this harness drives (describe,
-/// encrypted-RAR extract, PAR2 verify, ZIP extract) never reconstruct, so this
-/// is not called; a repair end-to-end test replaces it with a real host
-/// implementation (mirroring scryer's `wasmtime_host::par2_host`). Returns a
-/// negative code so any unexpected call surfaces as an in-band RepairFailed.
 fn host_scryer_par2_reconstruct(
-    _caller: Caller<'_, WasiP1Ctx>,
-    _desc_ptr: i64,
+    mut caller: Caller<'_, WasiP1Ctx>,
+    desc_ptr: i64,
     _desc_len: i64,
 ) -> i64 {
-    -2
+    PAR2_CALLS.fetch_add(1, Ordering::SeqCst);
+
+    let Some(memory) = caller.get_export("memory").and_then(|export| match export {
+        Extern::Memory(memory) => Some(memory),
+        _ => None,
+    }) else {
+        return Par2ReconstructStatus::NoMemory.code();
+    };
+    let data = memory.data_mut(&mut caller);
+    let Ok(desc_ptr) = usize::try_from(desc_ptr) else {
+        return Par2ReconstructStatus::BadDescriptor.code();
+    };
+    let Some(header) = par2_abi::parse_header(data, desc_ptr) else {
+        return Par2ReconstructStatus::BadDescriptor.code();
+    };
+    if header.n_out == 0
+        || header.word_count == 0
+        || header.word_count.checked_mul(2) != Some(header.slice_bytes)
+    {
+        return Par2ReconstructStatus::BadDimensions.code();
+    }
+
+    let (Some(missing), Some(avail), Some(exponents)) = (
+        par2_abi::read_u32_array(data, header.missing_idx_ptr, header.n_out),
+        par2_abi::read_u32_array(data, header.avail_idx_ptr, header.n_avail),
+        par2_abi::read_u32_array(data, header.exponent_ptr, header.n_out),
+    ) else {
+        return Par2ReconstructStatus::BadDimensions.code();
+    };
+    if missing
+        .iter()
+        .any(|&index| index as usize >= header.total_inputs)
+        || avail
+            .iter()
+            .any(|&index| index as usize >= header.total_inputs)
+    {
+        return Par2ReconstructStatus::BadDimensions.code();
+    }
+
+    let mut sources = Vec::with_capacity(header.n_src());
+    for index in 0..header.n_src() {
+        let Some((ptr, len)) = par2_abi::read_table_entry(data, header.src_table_ptr, index) else {
+            return Par2ReconstructStatus::BadRegion.code();
+        };
+        let Some(end) = ptr.checked_add(len) else {
+            return Par2ReconstructStatus::BadRegion.code();
+        };
+        if len != header.slice_bytes || end > data.len() {
+            return Par2ReconstructStatus::BadRegion.code();
+        }
+        sources.push(data[ptr..end].to_vec());
+    }
+
+    let mut outputs = Vec::with_capacity(header.n_out);
+    for index in 0..header.n_out {
+        let Some((ptr, len)) = par2_abi::read_table_entry(data, header.out_table_ptr, index) else {
+            return Par2ReconstructStatus::BadRegion.code();
+        };
+        let Some(end) = ptr.checked_add(len) else {
+            return Par2ReconstructStatus::BadRegion.code();
+        };
+        if len != header.slice_bytes || end > data.len() {
+            return Par2ReconstructStatus::BadRegion.code();
+        }
+        outputs.push((ptr, end));
+    }
+
+    let constants = gf::input_slice_constants(header.total_inputs);
+    let avail: Vec<usize> = avail.iter().map(|&index| index as usize).collect();
+    let missing: Vec<usize> = missing.iter().map(|&index| index as usize).collect();
+    let coeffs = match matrix::build_repair_matrix(&avail, &missing, &exponents, &constants) {
+        Ok(coeffs) => coeffs,
+        Err(_) => return Par2ReconstructStatus::Singular.code(),
+    };
+
+    for (row, &(ptr, end)) in outputs.iter().enumerate() {
+        let mut output = vec![0_u8; header.slice_bytes];
+        for (column, source) in sources.iter().enumerate() {
+            gf_simd::mul_acc_region(coeffs.get(row, column), source, &mut output);
+        }
+        data[ptr..end].copy_from_slice(&output);
+    }
+
+    Par2ReconstructStatus::Ok.code()
 }
 
 fn host_scryer_crc32(

@@ -10,5 +10,7 @@ Current support:
 - RAR extraction through `weaver-unrar` using Scryer's host AES/CRC imports
 - PAR2 verification and repair through `weaver-par2`
 
-PAR2 repair runs against Scryer's writable copy-on-write staging directory. The
-plugin does not mutate the completed-download source mount in place.
+PAR2 repair mutates the `RepairThenExtract.source_dir` that Scryer passes to the
+plugin. Scryer uses the completed-download source only after a successful write
+probe; otherwise it passes a writable destination-side repair staging directory.
+Extraction output is always written to the caller-provided `output_dir`.
