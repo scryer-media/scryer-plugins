@@ -756,6 +756,7 @@ dependencies = [
 [[package]]
 name = "scryer-plugin-pdk"
 version = "0.3.0"
+source = "git+https://github.com/scryer-media/scryer-plugins?tag=scryer-plugin-pdk%2Fv0.3.0#7f0f6b812e86bfd6bc9323e2e723f358304843a6"
 dependencies = [
  "scryer-plugin-sdk",
  "serde",
@@ -765,6 +766,7 @@ dependencies = [
 [[package]]
 name = "scryer-plugin-sdk"
 version = "3.6.0"
+source = "git+https://github.com/scryer-media/scryer?rev=f4786a1d7f7bfe5fc5b0bada190e1ae609a7f839#f4786a1d7f7bfe5fc5b0bada190e1ae609a7f839"
 dependencies = [
  "base64",
  "extism-pdk",
