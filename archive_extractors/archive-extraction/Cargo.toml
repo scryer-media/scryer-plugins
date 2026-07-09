@@ -2,7 +2,7 @@
 name = "archive-extraction-archive-extractor"
 version = "0.1.2"
 edition = "2024"
-license = "GPL-3.0-only"
+license-file = "LICENSE"
 description = "Optional archive extraction plugin for RAR, ZIP, and PAR2 verify/repair"
 
 [package.metadata.scryer]

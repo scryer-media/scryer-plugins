@@ -71,6 +71,14 @@ fn archive_extraction_plugin_exercises_scryer_host_paths() {
     assert_describe_emits_descriptor(&wasm_path);
     assert_encrypted_rars_use_raw_host_calls(&fixture_root.join("rar"));
     assert_par2_verifies(&wasm_path, &fixture_root.join("par2"));
+    assert_clean_par2_repair_then_extract_uses_first_volume_when_hint_is_late(
+        &wasm_path,
+        &fixture_root.join("par2"),
+    );
+    assert_clean_par2_repair_then_extract_handles_swapped_volume_names(
+        &wasm_path,
+        &fixture_root.join("par2"),
+    );
     assert_par2_repair_then_extract_uses_writable_staging_source(
         &wasm_path,
         &fixture_root.join("par2"),
@@ -183,6 +191,103 @@ fn assert_par2_verifies(wasm_path: &Path, source_dir: &Path) {
         .repair
         .expect("PAR2 response should include repair status");
     assert_eq!(repair.status, ArchivePluginRepairState::Verified);
+}
+
+fn assert_clean_par2_repair_then_extract_uses_first_volume_when_hint_is_late(
+    wasm_path: &Path,
+    fixture_dir: &Path,
+) {
+    let output = tempfile::tempdir().expect("create clean PAR2 output dir");
+
+    let before = host_call_counts();
+    let response = call_archive_plugin(
+        wasm_path,
+        fixture_dir,
+        output.path(),
+        ArchivePluginOperation::RepairThenExtract {
+            source_dir: GUEST_SOURCE_ROOT.to_string(),
+            output_dir: GUEST_OUTPUT_ROOT.to_string(),
+            format: ArchivePluginFormat::Rar,
+            par2_path: Some(
+                format!("{GUEST_SOURCE_ROOT}/fixture_rar5_lz_plain_repair.par2").to_string(),
+            ),
+            archive_path: Some(format!(
+                "{GUEST_SOURCE_ROOT}/fixture_rar5_lz_plain.part5.rar"
+            )),
+            password: None,
+        },
+    );
+    let after = host_call_counts();
+
+    assert_eq!(
+        response.status,
+        ArchivePluginStatus::Ok,
+        "clean RepairThenExtract with late hint failed: {:?}",
+        response.message
+    );
+    let repair = response
+        .repair
+        .as_ref()
+        .expect("RepairThenExtract response should include repair status");
+    assert_eq!(repair.status, ArchivePluginRepairState::Verified);
+    assert_eq!(
+        after.par2, before.par2,
+        "clean PAR2 normalization should not call scryer_par2_reconstruct"
+    );
+    assert_response_files_exist(&response, output.path(), "clean RepairThenExtract");
+}
+
+fn assert_clean_par2_repair_then_extract_handles_swapped_volume_names(
+    wasm_path: &Path,
+    fixture_dir: &Path,
+) {
+    let source = tempfile::tempdir().expect("create swapped PAR2 source dir");
+    let output = tempfile::tempdir().expect("create swapped PAR2 output dir");
+    copy_fixture_files(fixture_dir, source.path());
+
+    let part1 = source.path().join("fixture_rar5_lz_plain.part1.rar");
+    let part5 = source.path().join("fixture_rar5_lz_plain.part5.rar");
+    let temp = source.path().join("fixture_rar5_lz_plain.part-swap.tmp");
+    fs::rename(&part1, &temp).expect("move part1 aside");
+    fs::rename(&part5, &part1).expect("move part5 to part1");
+    fs::rename(&temp, &part5).expect("move part1 to part5");
+
+    let before = host_call_counts();
+    let response = call_archive_plugin(
+        wasm_path,
+        source.path(),
+        output.path(),
+        ArchivePluginOperation::RepairThenExtract {
+            source_dir: GUEST_SOURCE_ROOT.to_string(),
+            output_dir: GUEST_OUTPUT_ROOT.to_string(),
+            format: ArchivePluginFormat::Rar,
+            par2_path: Some(
+                format!("{GUEST_SOURCE_ROOT}/fixture_rar5_lz_plain_repair.par2").to_string(),
+            ),
+            archive_path: Some(format!(
+                "{GUEST_SOURCE_ROOT}/fixture_rar5_lz_plain.part5.rar"
+            )),
+            password: None,
+        },
+    );
+    let after = host_call_counts();
+
+    assert_eq!(
+        response.status,
+        ArchivePluginStatus::Ok,
+        "clean RepairThenExtract with swapped volume names failed: {:?}",
+        response.message
+    );
+    let repair = response
+        .repair
+        .as_ref()
+        .expect("RepairThenExtract response should include repair status");
+    assert_eq!(repair.status, ArchivePluginRepairState::Verified);
+    assert_eq!(
+        after.par2, before.par2,
+        "clean PAR2 placement should not call scryer_par2_reconstruct"
+    );
+    assert_response_files_exist(&response, output.path(), "swapped RepairThenExtract");
 }
 
 fn assert_par2_repair_then_extract_uses_writable_staging_source(

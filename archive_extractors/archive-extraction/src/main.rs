@@ -12,18 +12,20 @@ use scryer_plugin_sdk::{
     ArchiveExtractorCapabilities, ArchiveExtractorDescriptor, PluginDescriptor, ProviderDescriptor,
     SDK_VERSION,
 };
+use std::collections::HashMap;
 use std::fs;
 use std::io::{self, Read, Write};
 use std::path::{Component, Path, PathBuf};
 use weaver_par2::{
-    DiskFileAccess, Par2FileSet, Par2RepairOutcome, Par2RepairStatus, Par2Repairer,
-    Par2RepairerOptions, RepairOptions, Repairability, execute_repair_with_solver, plan_repair,
-    verify_all,
+    DiskFileAccess, Par2FileSet, RepairOptions, Repairability, disk::PlacementFileAccess,
+    execute_repair_with_solver, placement::PlacementPlan, placement::scan_placement,
+    plan_repair, verify::VerificationResult, verify_all,
 };
 use weaver_unrar::{ExtractOptions, RarArchive, RarError};
 
 const MAX_ARCHIVE_ENTRIES: usize = 20_000;
 const MAX_ARCHIVE_EXPANDED_BYTES: u64 = 2 * 1024 * 1024 * 1024 * 1024;
+const REPAIR_WRITE_PROBE_PREFIX: &str = ".scryer-archive-plugin-write-probe-";
 
 /// Command entry.
 ///
@@ -131,11 +133,6 @@ fn repair_then_extract(
     archive_path: Option<&str>,
     password: Option<&str>,
 ) -> ArchivePluginProcessResponse {
-    let repair_response = repair_par2_set(source_dir, par2_path);
-    if !matches!(repair_response.status, ArchivePluginStatus::Ok) {
-        return repair_response;
-    }
-
     let Some(archive_path) = archive_path else {
         return failed_message(
             "missing_archive",
@@ -143,9 +140,147 @@ fn repair_then_extract(
         );
     };
 
-    let mut response = extract_archive(archive_path, output_dir, format, password);
-    response.repair = repair_response.repair;
-    response
+    let source_dir_path = PathBuf::from(source_dir);
+    let par2_paths = match par2_paths_for_request(&source_dir_path, par2_path) {
+        Ok(paths) => paths,
+        Err(response) => return *response,
+    };
+
+    match verify_par2_with_placement(source_dir_path.clone(), par2_paths.clone()) {
+        Ok(verification) => {
+            let mut response = extract_archive_with_par2_placement(
+                &verification,
+                output_dir,
+                format,
+                archive_path,
+                password,
+            );
+            response.repair = verification.response.repair;
+            response
+        }
+        Err(response) if response.error_code.as_deref() == Some("par2_repair_required") => {
+            if !source_dir_is_writable(&source_dir_path) {
+                return response;
+            }
+
+            let repair_response = repair_par2_via_host(source_dir_path, par2_paths);
+            if !matches!(repair_response.status, ArchivePluginStatus::Ok) {
+                return repair_response;
+            }
+
+            let mut response = extract_archive(archive_path, output_dir, format, password);
+            response.repair = repair_response.repair;
+            response
+        }
+        Err(response) => response,
+    }
+}
+
+fn source_dir_is_writable(source_dir: &Path) -> bool {
+    for attempt in 0..16 {
+        let probe_path = source_dir.join(format!("{REPAIR_WRITE_PROBE_PREFIX}{attempt}"));
+        match fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&probe_path)
+        {
+            Ok(_) => {
+                let _ = fs::remove_file(&probe_path);
+                return true;
+            }
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,
+            Err(_) => return false,
+        }
+    }
+    false
+}
+
+fn extract_archive_with_par2_placement(
+    verification: &Par2PlacementVerification,
+    output_dir: &str,
+    format: ArchivePluginFormat,
+    archive_path: &str,
+    password: Option<&str>,
+) -> ArchivePluginProcessResponse {
+    match format {
+        ArchivePluginFormat::Rar => {
+            let volume_paths = match verification.rar_volume_paths(archive_path) {
+                Ok(paths) => paths,
+                Err(response) => return *response,
+            };
+            extract_rar_from_ordered_paths(&volume_paths, output_dir, password)
+        }
+        ArchivePluginFormat::Zip => {
+            let archive_path = match verification.zip_archive_path(archive_path) {
+                Ok(path) => path,
+                Err(response) => return *response,
+            };
+            extract_zip(&archive_path.to_string_lossy(), output_dir, password)
+        }
+    }
+}
+
+fn open_rar_archive(
+    archive_path: &Path,
+    password: Option<&str>,
+) -> Result<RarArchive, Box<ArchivePluginProcessResponse>> {
+    let archive_file = fs::File::open(archive_path).map_err(|error| {
+        Box::new(failed_response(
+            "open_rar",
+            "failed to open RAR archive",
+            error,
+        ))
+    })?;
+
+    match password.filter(|password| !password.is_empty()) {
+        Some(password) => RarArchive::open_with_password(archive_file, password).map_err(|error| {
+            Box::new(rar_error_response(
+                "open_rar",
+                "failed to read RAR archive",
+                error,
+            ))
+        }),
+        None => RarArchive::open(archive_file).map_err(|error| {
+            Box::new(rar_error_response(
+                "open_rar",
+                "failed to read RAR archive",
+                error,
+            ))
+        }),
+    }
+}
+
+fn extract_rar_from_ordered_paths(
+    volume_paths: &[PathBuf],
+    output_dir: &str,
+    password: Option<&str>,
+) -> ArchivePluginProcessResponse {
+    let Some(first_volume) = volume_paths.first() else {
+        return failed_message("missing_first_volume", "RAR extraction requires a first volume");
+    };
+
+    let mut archive = match open_rar_archive(first_volume, password) {
+        Ok(archive) => archive,
+        Err(response) => return *response,
+    };
+
+    if let Some(password) = password.filter(|password| !password.is_empty()) {
+        archive.set_password(password.to_string());
+    }
+
+    for (offset, volume_path) in volume_paths.iter().skip(1).enumerate() {
+        let volume_file = match fs::File::open(volume_path) {
+            Ok(file) => file,
+            Err(error) => {
+                return failed_response("read_rar_volume", "failed to open RAR volume", error);
+            }
+        };
+        if let Err(error) = archive.add_volume(offset + 1, Box::new(volume_file)) {
+            return rar_error_response("read_rar_volume", "failed to read RAR volume", error);
+        }
+    }
+
+    extract_open_rar_archive(archive, output_dir, password)
 }
 
 fn extract_rar(
@@ -154,24 +289,9 @@ fn extract_rar(
     password: Option<&str>,
 ) -> ArchivePluginProcessResponse {
     let archive_path = Path::new(archive_path);
-    let archive_file = match fs::File::open(archive_path) {
-        Ok(file) => file,
-        Err(error) => return failed_response("open_rar", "failed to open RAR archive", error),
-    };
-
-    let mut archive = match password.filter(|password| !password.is_empty()) {
-        Some(password) => match RarArchive::open_with_password(archive_file, password) {
-            Ok(archive) => archive,
-            Err(error) => {
-                return rar_error_response("open_rar", "failed to read RAR archive", error);
-            }
-        },
-        None => match RarArchive::open(archive_file) {
-            Ok(archive) => archive,
-            Err(error) => {
-                return rar_error_response("open_rar", "failed to read RAR archive", error);
-            }
-        },
+    let mut archive = match open_rar_archive(archive_path, password) {
+        Ok(archive) => archive,
+        Err(response) => return *response,
     };
 
     if let Some(password) = password.filter(|password| !password.is_empty()) {
@@ -183,6 +303,14 @@ fn extract_rar(
         return rar_error_response("read_rar_volume", "failed to read RAR volume", error);
     }
 
+    extract_open_rar_archive(archive, output_dir, password)
+}
+
+fn extract_open_rar_archive(
+    mut archive: RarArchive,
+    output_dir: &str,
+    password: Option<&str>,
+) -> ArchivePluginProcessResponse {
     let output_root = Path::new(output_dir);
     if let Err(error) = fs::create_dir_all(output_root) {
         return failed_response(
@@ -454,7 +582,10 @@ fn verify_par2_set(source_dir: &str, par2_path: Option<&str>) -> ArchivePluginPr
         Ok(paths) => paths,
         Err(response) => return *response,
     };
-    verify_par2_via_repairer(source_dir, par2_paths)
+    match verify_par2_with_placement(source_dir, par2_paths) {
+        Ok(verification) => verification.response,
+        Err(response) => response,
+    }
 }
 
 fn repair_par2_set(source_dir: &str, par2_path: Option<&str>) -> ArchivePluginProcessResponse {
@@ -466,21 +597,310 @@ fn repair_par2_set(source_dir: &str, par2_path: Option<&str>) -> ArchivePluginPr
     repair_par2_via_host(source_dir, par2_paths)
 }
 
-/// Verification is scan-only (no Reed-Solomon reconstruct), so weaver-par2's
-/// full [`Par2Repairer`] pipeline runs unchanged on `wasm32-wasip1`.
-fn verify_par2_via_repairer(
+struct Par2PlacementVerification {
+    actual_by_canonical: HashMap<String, PathBuf>,
+    response: ArchivePluginProcessResponse,
+}
+
+struct RarVolumeCandidate {
+    group: String,
+    index: usize,
+    canonical_name: String,
+    actual_path: PathBuf,
+}
+
+fn verify_par2_with_placement(
     source_dir: PathBuf,
     par2_paths: Vec<PathBuf>,
+) -> Result<Par2PlacementVerification, ArchivePluginProcessResponse> {
+    let set = Par2FileSet::from_paths(&par2_paths)
+        .map_err(|error| failed_response("par2_load", "failed to load PAR2 set", error))?;
+    let plan = scan_placement(&source_dir, &set).map_err(|error| {
+        failed_response(
+            "par2_placement_scan",
+            "failed to scan PAR2 file placement",
+            error,
+        )
+    })?;
+
+    if !plan.conflicts.is_empty() {
+        return Err(par2_repair_failed_response(
+            "par2_placement_conflict",
+            format!(
+                "PAR2 placement is ambiguous for {} file(s); refusing to guess archive order",
+                plan.conflicts.len()
+            ),
+        ));
+    }
+
+    let access = PlacementFileAccess::from_plan(source_dir.clone(), &set, &plan);
+    let verification = verify_all(&set, &access);
+    let response = par2_placement_response(&verification, placement_move_count(&plan));
+    if !matches!(response.status, ArchivePluginStatus::Ok) {
+        return Err(response);
+    }
+
+    Ok(Par2PlacementVerification {
+        actual_by_canonical: par2_actual_paths_by_canonical(&source_dir, &set, &plan),
+        response,
+    })
+}
+
+fn placement_move_count(plan: &PlacementPlan) -> usize {
+    plan.renames.len() + plan.swaps.len().saturating_mul(2)
+}
+
+fn par2_placement_response(
+    verification: &VerificationResult,
+    placement_move_count: usize,
 ) -> ArchivePluginProcessResponse {
-    let mut options = Par2RepairerOptions::new(source_dir, par2_paths);
-    options.repair = false;
+    match &verification.repairable {
+        Repairability::NotNeeded => {
+            let message = if placement_move_count == 0 {
+                "PAR2 set verified cleanly".to_string()
+            } else {
+                format!(
+                    "PAR2 set verified cleanly after placement normalization of {placement_move_count} file(s)"
+                )
+            };
+            par2_ok_response(ArchivePluginRepairState::Verified, 0, &message)
+        }
+        Repairability::Repairable { .. } => par2_repair_status_response(
+            ArchivePluginStatus::RepairRequired,
+            ArchivePluginRepairState::Failed,
+            "par2_repair_required",
+            "PAR2 verification found repairable damage; writable repair staging is required",
+        ),
+        Repairability::Insufficient { .. } => par2_repair_status_response(
+            ArchivePluginStatus::RepairRequired,
+            ArchivePluginRepairState::InsufficientRecoveryData,
+            "par2_insufficient_recovery_data",
+            "PAR2 set does not have enough recovery data",
+        ),
+        Repairability::ResourceLimited { .. } => par2_repair_status_response(
+            ArchivePluginStatus::RepairFailed,
+            ArchivePluginRepairState::Failed,
+            "par2_resource_limited",
+            "PAR2 verification exceeded resource limits",
+        ),
+    }
+}
 
-    let outcome = match Par2Repairer::new(options).verify_or_repair() {
-        Ok(outcome) => outcome,
-        Err(error) => return failed_response("par2_verify", "PAR2 verification failed", error),
-    };
+fn par2_actual_paths_by_canonical(
+    source_dir: &Path,
+    set: &Par2FileSet,
+    plan: &PlacementPlan,
+) -> HashMap<String, PathBuf> {
+    let mut actual = HashMap::new();
+    for description in set.files.values() {
+        actual.insert(
+            description.filename.clone(),
+            source_child_path(source_dir, &description.filename),
+        );
+    }
+    for (left, right) in &plan.swaps {
+        actual.insert(
+            left.correct_name.clone(),
+            source_child_path(source_dir, &left.current_name),
+        );
+        actual.insert(
+            right.correct_name.clone(),
+            source_child_path(source_dir, &right.current_name),
+        );
+    }
+    for entry in &plan.renames {
+        actual.insert(
+            entry.correct_name.clone(),
+            source_child_path(source_dir, &entry.current_name),
+        );
+    }
+    actual
+}
 
-    par2_response(outcome)
+fn source_child_path(source_dir: &Path, name: &str) -> PathBuf {
+    source_dir.join(normalize_relative_path(Path::new(name)))
+}
+
+impl Par2PlacementVerification {
+    fn rar_volume_paths(
+        &self,
+        archive_path: &str,
+    ) -> Result<Vec<PathBuf>, Box<ArchivePluginProcessResponse>> {
+        let mut candidates = Vec::new();
+        for (canonical, actual_path) in &self.actual_by_canonical {
+            let Some(canonical_name) = file_name_string(canonical) else {
+                continue;
+            };
+            let Some((group, index)) = rar_volume_info(&canonical_name) else {
+                continue;
+            };
+            candidates.push(RarVolumeCandidate {
+                group,
+                index,
+                canonical_name,
+                actual_path: actual_path.clone(),
+            });
+        }
+
+        if candidates.is_empty() {
+            return Err(Box::new(failed_message(
+                "missing_archive",
+                "PAR2 metadata does not describe any RAR archive volumes",
+            )));
+        }
+
+        let group = match archive_hint_group(archive_path, &candidates) {
+            Some(group) => group,
+            None => single_rar_group(&candidates)?,
+        };
+        let mut selected = candidates
+            .into_iter()
+            .filter(|candidate| candidate.group == group)
+            .collect::<Vec<_>>();
+        selected.sort_by(|left, right| {
+            left.index
+                .cmp(&right.index)
+                .then_with(|| left.canonical_name.cmp(&right.canonical_name))
+        });
+
+        let Some(first) = selected.first() else {
+            return Err(Box::new(failed_message(
+                "missing_archive",
+                "PAR2 metadata did not identify a RAR archive set",
+            )));
+        };
+        if first.index != 0 {
+            return Err(Box::new(failed_message(
+                "missing_first_volume",
+                "PAR2 metadata did not identify the first RAR volume",
+            )));
+        }
+
+        let mut previous_index = None;
+        for candidate in &selected {
+            if previous_index == Some(candidate.index) {
+                return Err(Box::new(failed_message(
+                    "duplicate_rar_volume",
+                    "PAR2 metadata maps multiple files to the same RAR volume index",
+                )));
+            }
+            previous_index = Some(candidate.index);
+        }
+
+        Ok(selected
+            .into_iter()
+            .map(|candidate| candidate.actual_path)
+            .collect())
+    }
+
+    fn zip_archive_path(&self, archive_path: &str) -> Result<PathBuf, Box<ArchivePluginProcessResponse>> {
+        let hint_name = Path::new(archive_path)
+            .file_name()
+            .and_then(|name| name.to_str())
+            .map(|name| name.to_ascii_lowercase());
+        let mut candidates = self
+            .actual_by_canonical
+            .iter()
+            .filter_map(|(canonical, actual_path)| {
+                let canonical_name = file_name_string(canonical)?;
+                canonical_name
+                    .to_ascii_lowercase()
+                    .ends_with(".zip")
+                    .then_some((canonical_name, actual_path.clone()))
+            })
+            .collect::<Vec<_>>();
+
+        if let Some(hint_name) = hint_name
+            && let Some((_, actual_path)) = candidates.iter().find(|(canonical_name, actual_path)| {
+                canonical_name.eq_ignore_ascii_case(&hint_name)
+                    || actual_path
+                        .file_name()
+                        .and_then(|name| name.to_str())
+                        .is_some_and(|name| name.eq_ignore_ascii_case(&hint_name))
+            })
+        {
+            return Ok(actual_path.clone());
+        }
+
+        candidates.sort_by(|left, right| left.0.cmp(&right.0));
+        match candidates.as_slice() {
+            [(_, path)] => Ok(path.clone()),
+            [] => Err(Box::new(failed_message(
+                "missing_archive",
+                "PAR2 metadata does not describe a ZIP archive",
+            ))),
+            _ => Err(Box::new(failed_message(
+                "ambiguous_archive",
+                "PAR2 metadata describes multiple ZIP archives and the requested path did not identify one",
+            ))),
+        }
+    }
+}
+
+fn archive_hint_group(archive_path: &str, candidates: &[RarVolumeCandidate]) -> Option<String> {
+    let hint_name = Path::new(archive_path)
+        .file_name()
+        .and_then(|name| name.to_str())?;
+    candidates
+        .iter()
+        .find(|candidate| {
+            candidate.canonical_name.eq_ignore_ascii_case(hint_name)
+                || candidate
+                    .actual_path
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .is_some_and(|name| name.eq_ignore_ascii_case(hint_name))
+        })
+        .map(|candidate| candidate.group.clone())
+}
+
+fn single_rar_group(
+    candidates: &[RarVolumeCandidate],
+) -> Result<String, Box<ArchivePluginProcessResponse>> {
+    let mut groups = candidates
+        .iter()
+        .map(|candidate| candidate.group.clone())
+        .collect::<Vec<_>>();
+    groups.sort();
+    groups.dedup();
+    match groups.as_slice() {
+        [group] => Ok(group.clone()),
+        _ => Err(Box::new(failed_message(
+            "ambiguous_archive",
+            "PAR2 metadata describes multiple RAR archive sets and the requested path did not identify one",
+        ))),
+    }
+}
+
+fn file_name_string(path: &str) -> Option<String> {
+    Path::new(path)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .map(ToOwned::to_owned)
+}
+
+fn rar_volume_info(file_name: &str) -> Option<(String, usize)> {
+    let lower = file_name.to_ascii_lowercase();
+    if let Some(stem) = lower.strip_suffix(".rar") {
+        if let Some((group, part)) = stem.rsplit_once(".part")
+            && let Ok(part_index) = part.parse::<usize>()
+            && part_index > 0
+        {
+            return Some((group.to_string(), part_index - 1));
+        }
+        return Some((stem.to_string(), 0));
+    }
+
+    let (group, extension) = lower.rsplit_once('.')?;
+    if !is_old_rar_volume_extension(extension) {
+        return None;
+    }
+    let mut chars = extension.chars();
+    let family = chars.next()?;
+    let digits = chars.as_str();
+    let number = digits.parse::<usize>().ok()?;
+    let family_offset = (family as u8).checked_sub(b'r')? as usize;
+    Some((group.to_string(), family_offset * 100 + number + 1))
 }
 
 /// Repair a damaged PAR2 set by dispatching the Reed-Solomon reconstruct to the
@@ -637,41 +1057,6 @@ fn par2_repair_failed_response(error_code: &str, message: String) -> ArchivePlug
     }
 }
 
-fn par2_response(outcome: Par2RepairOutcome) -> ArchivePluginProcessResponse {
-    let repair = Some(par2_repair_status(&outcome));
-    match outcome.status {
-        Par2RepairStatus::Verified | Par2RepairStatus::Repaired => ArchivePluginProcessResponse {
-            status: ArchivePluginStatus::Ok,
-            repair,
-            ..empty_response()
-        },
-        Par2RepairStatus::RepairPossible => ArchivePluginProcessResponse {
-            status: ArchivePluginStatus::RepairRequired,
-            repair,
-            error_code: Some("par2_repair_required".to_string()),
-            message: Some(
-                "PAR2 verification found repairable damage; writable repair staging is required"
-                    .to_string(),
-            ),
-            ..empty_response()
-        },
-        Par2RepairStatus::Insufficient => ArchivePluginProcessResponse {
-            status: ArchivePluginStatus::RepairRequired,
-            repair,
-            error_code: Some("par2_insufficient_recovery_data".to_string()),
-            message: Some("PAR2 set does not have enough recovery data".to_string()),
-            ..empty_response()
-        },
-        Par2RepairStatus::ResourceLimited => ArchivePluginProcessResponse {
-            status: ArchivePluginStatus::RepairFailed,
-            repair,
-            error_code: Some("par2_resource_limited".to_string()),
-            message: Some("PAR2 verification exceeded resource limits".to_string()),
-            ..empty_response()
-        },
-    }
-}
-
 fn par2_paths_for_request(
     source_dir: &Path,
     par2_path: Option<&str>,
@@ -752,36 +1137,6 @@ fn par2_path_matches_set_prefix(path: &Path, set_prefix: &str) -> bool {
         return false;
     };
     stem == set_prefix || stem.starts_with(&format!("{set_prefix}.vol"))
-}
-
-fn par2_repair_status(outcome: &Par2RepairOutcome) -> ArchivePluginRepairStatus {
-    let status = match outcome.status {
-        Par2RepairStatus::Verified => ArchivePluginRepairState::Verified,
-        Par2RepairStatus::Repaired => ArchivePluginRepairState::Repaired,
-        Par2RepairStatus::RepairPossible => ArchivePluginRepairState::Failed,
-        Par2RepairStatus::Insufficient => ArchivePluginRepairState::InsufficientRecoveryData,
-        Par2RepairStatus::ResourceLimited => ArchivePluginRepairState::Failed,
-    };
-    let message = match outcome.status {
-        Par2RepairStatus::Verified => Some("PAR2 set verified cleanly".to_string()),
-        Par2RepairStatus::Repaired => Some("PAR2 set was repaired".to_string()),
-        Par2RepairStatus::RepairPossible => {
-            Some("PAR2 repair is possible but requires writable staging".to_string())
-        }
-        Par2RepairStatus::Insufficient => {
-            Some("PAR2 set has insufficient recovery data".to_string())
-        }
-        Par2RepairStatus::ResourceLimited => {
-            Some("PAR2 verify/repair exceeded resource limits".to_string())
-        }
-    };
-
-    ArchivePluginRepairStatus {
-        status,
-        read_bytes: Some(outcome.bytes_copied),
-        written_bytes: Some(outcome.bytes_reconstructed),
-        message,
-    }
 }
 
 fn attach_rar_volumes(
