@@ -37,7 +37,7 @@ dependencies = [
 
 [[package]]
 name = "archive-extraction-archive-extractor"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "scryer-plugin-pdk",
  "scryer-plugin-sdk",
@@ -116,9 +116,9 @@ checksum = "c8efb64bd706a16a1bdde310ae86b351e4d21550d98d056f22f8a7f7a2183fec"
 
 [[package]]
 name = "bytes"
-version = "1.12.0"
+version = "1.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ae3f5d315924270530207e2a68396c3cc547f6dca3fbdca317cfb1a51edb593"
+checksum = "fc652a48c352aef3ea3aed32080501cf3ef6ed5da78602a020c991775b0aff04"
 
 [[package]]
 name = "cbc"
@@ -939,9 +939,9 @@ dependencies = [
 
 [[package]]
 name = "weaver-par2"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f7332ee1d2de02271bbf702d4f1cb4e5f0cb91b18cbfe11350b52cd3f834151"
+checksum = "597f66a308380480edece973f9d2bf51498229302799cec17ff1d58ae2a7e9f7"
 dependencies = [
  "bytes",
  "crc32fast",
