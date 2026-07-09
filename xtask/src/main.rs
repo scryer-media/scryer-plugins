@@ -3788,9 +3788,9 @@ fn run_doctor(ctx: &TaskContext) -> Result<()> {
                 Err(error) => warn(error.to_string()),
             }
         }
-        Ok(SdkDependency::GitTag { tag, version }) => {
+        Ok(SdkDependency::Git { reference, version }) => {
             ok(format!(
-                "temporary git-sourced scryer-plugin-sdk dependency active ({tag} -> {version})"
+                "temporary git-sourced scryer-plugin-sdk dependency active ({reference} -> {version})"
             ));
         }
         Err(error) => warn(error.to_string()),
@@ -4096,7 +4096,7 @@ fn run_sdk_bump(ctx: &TaskContext, version: &str) -> Result<()> {
 
 enum SdkDependency {
     Published(String),
-    GitTag { tag: String, version: String },
+    Git { reference: String, version: String },
 }
 
 fn current_sdk_dependency(ctx: &TaskContext) -> Result<SdkDependency> {
@@ -4108,30 +4108,46 @@ fn current_sdk_dependency(ctx: &TaskContext) -> Result<SdkDependency> {
     if let Some(version) = dependency.as_str() {
         return Ok(SdkDependency::Published(version.trim().to_string()));
     }
-    let git = dependency["git"].as_str();
-    let tag = dependency["tag"].as_str();
-    match (git, tag) {
-        (Some(_), Some(tag)) => {
-            let version = tag
-                .trim()
-                .strip_prefix("plugin-sdk-v")
-                .ok_or_else(|| {
-                    anyhow!(
-                        "xtask/Cargo.toml temporary scryer-plugin-sdk git dependency must use a plugin-sdk-v<semver> tag"
-                    )
-                })?
-                .to_string();
-            Version::parse(&version)
-                .with_context(|| format!("invalid SDK version derived from git tag {tag}"))?;
-            Ok(SdkDependency::GitTag {
-                tag: tag.trim().to_string(),
-                version,
-            })
-        }
-        _ => Err(anyhow!(
-            "xtask/Cargo.toml must depend on scryer-plugin-sdk by version or plugin-sdk-v<semver> git tag"
-        )),
-    }
+    let Some(_) = dependency.get("git").and_then(|item| item.as_str()) else {
+        return Err(anyhow!(
+            "xtask/Cargo.toml must depend on scryer-plugin-sdk by version or temporary git source"
+        ));
+    };
+    let reference = dependency
+        .get("tag")
+        .and_then(|item| item.as_str())
+        .map(|value| format!("tag {}", value.trim()))
+        .or_else(|| {
+            dependency
+                .get("rev")
+                .and_then(|item| item.as_str())
+                .map(|value| format!("rev {}", value.trim()))
+        })
+        .or_else(|| {
+            dependency
+                .get("branch")
+                .and_then(|item| item.as_str())
+                .map(|value| format!("branch {}", value.trim()))
+        })
+        .ok_or_else(|| {
+            anyhow!(
+                "xtask/Cargo.toml temporary scryer-plugin-sdk git dependency must specify tag, rev, or branch"
+            )
+        })?;
+    let version = dependency
+        .get("version")
+        .and_then(|item| item.as_str())
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| {
+            anyhow!(
+                "xtask/Cargo.toml temporary scryer-plugin-sdk git dependency must include version = \"<semver>\""
+            )
+        })?
+        .to_string();
+    Version::parse(&version)
+        .with_context(|| format!("invalid SDK version declared for git dependency {reference}"))?;
+    Ok(SdkDependency::Git { reference, version })
 }
 
 fn ensure_current_sdk_dependency_is_published(ctx: &TaskContext) -> Result<()> {
@@ -4141,7 +4157,7 @@ fn ensure_current_sdk_dependency_is_published(ctx: &TaskContext) -> Result<()> {
 
     match current_sdk_dependency(ctx)? {
         SdkDependency::Published(version) => ensure_published_sdk_version(ctx, &version),
-        SdkDependency::GitTag { .. } => Ok(()),
+        SdkDependency::Git { .. } => Ok(()),
     }
 }
 
