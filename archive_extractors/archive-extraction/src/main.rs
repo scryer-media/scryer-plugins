@@ -8,6 +8,8 @@ use scryer_plugin_sdk::{
     ArchiveExtractorCapabilities, ArchiveExtractorDescriptor, PluginDescriptor, ProviderDescriptor,
     SDK_VERSION,
 };
+use std::borrow::Cow;
+use std::collections::HashSet;
 use std::fs;
 use std::io::{self, Read, Write};
 use std::path::{Component, Path, PathBuf};
@@ -57,7 +59,11 @@ fn build_descriptor() -> PluginDescriptor {
             default_base_url: None,
             allowed_hosts: vec![],
             capabilities: ArchiveExtractorCapabilities {
-                formats: vec![ArchivePluginFormat::Rar, ArchivePluginFormat::Zip],
+                formats: vec![
+                    ArchivePluginFormat::Rar,
+                    ArchivePluginFormat::Zip,
+                    ArchivePluginFormat::SevenZip,
+                ],
             },
         }),
     }
@@ -90,6 +96,7 @@ fn extract_archive(
 ) -> ArchivePluginProcessResponse {
     match format {
         ArchivePluginFormat::Rar => extract_rar(archive_path, output_dir, password),
+        ArchivePluginFormat::SevenZip => extract_sevenz(archive_path, output_dir, password),
         ArchivePluginFormat::Zip => extract_zip(archive_path, output_dir, password),
     }
 }
@@ -163,6 +170,7 @@ fn extract_open_rar_archive(
 
     let mut files = Vec::new();
     let mut expanded_bytes = 0_u64;
+    let mut output_paths = HashSet::new();
     let options = ExtractOptions {
         password: password
             .filter(|password| !password.is_empty())
@@ -188,6 +196,11 @@ fn extract_open_rar_archive(
             Ok(path) => path,
             Err(response) => return *response,
         };
+        if !info.is_directory
+            && let Err(response) = record_output_file_path(&mut output_paths, &relative_path)
+        {
+            return *response;
+        }
 
         let destination = output_root.join(&relative_path);
         if info.is_directory {
@@ -308,6 +321,7 @@ fn extract_zip(
 
     let mut files = Vec::new();
     let mut expanded_bytes = 0_u64;
+    let mut output_paths = HashSet::new();
 
     if archive.len() > MAX_ARCHIVE_ENTRIES {
         return failed_message("too_many_entries", "ZIP archive contains too many entries");
@@ -328,6 +342,9 @@ fn extract_zip(
         }
 
         if !entry.is_dir() {
+            if let Err(response) = record_output_file_path(&mut output_paths, &relative_path) {
+                return *response;
+            }
             expanded_bytes = match expanded_bytes.checked_add(entry.size()) {
                 Some(total) if total <= MAX_ARCHIVE_EXPANDED_BYTES => total,
                 _ => {
@@ -411,6 +428,116 @@ fn extract_zip(
     }
 }
 
+fn extract_sevenz(
+    archive_path: &str,
+    output_dir: &str,
+    password: Option<&str>,
+) -> ArchivePluginProcessResponse {
+    let archive_file = match fs::File::open(archive_path) {
+        Ok(file) => file,
+        Err(error) => return failed_response("open_7z", "failed to open 7z archive", error),
+    };
+    let password_value = match password.filter(|password| !password.is_empty()) {
+        Some(password) => sevenz_rust2::Password::from(password),
+        None => sevenz_rust2::Password::empty(),
+    };
+    let mut archive = match sevenz_rust2::ArchiveReader::new(archive_file, password_value) {
+        Ok(archive) => archive,
+        Err(error) => return sevenz_error_response("read_7z", error, password),
+    };
+
+    let output_root = Path::new(output_dir);
+    if let Err(error) = fs::create_dir_all(output_root) {
+        return failed_response(
+            "create_output",
+            "failed to create archive output directory",
+            error,
+        );
+    }
+
+    if archive.archive().files.len() > MAX_ARCHIVE_ENTRIES {
+        return failed_message("too_many_entries", "7z archive contains too many entries");
+    }
+
+    let mut declared_expanded_bytes = 0_u64;
+    let mut declared_output_paths = HashSet::new();
+    for entry in &archive.archive().files {
+        let relative_path = match safe_archive_relative_path(entry.name()) {
+            Ok(path) => path,
+            Err(response) => return *response,
+        };
+        if entry.is_directory() {
+            continue;
+        }
+        if let Err(response) = record_output_file_path(&mut declared_output_paths, &relative_path) {
+            return *response;
+        }
+        declared_expanded_bytes = match declared_expanded_bytes.checked_add(entry.size()) {
+            Some(total) if total <= MAX_ARCHIVE_EXPANDED_BYTES => total,
+            _ => {
+                return failed_message(
+                    "expanded_too_large",
+                    &format!("7z archive expands beyond {MAX_ARCHIVE_EXPANDED_BYTES} bytes"),
+                );
+            }
+        };
+    }
+
+    let mut files = Vec::new();
+    let mut actual_expanded_bytes = 0_u64;
+    let mut output_paths = HashSet::new();
+    let extraction = archive.for_each_entries(|entry, entry_reader| {
+        let relative_path = safe_archive_relative_path(entry.name())
+            .map_err(|response| sevenz_error_from_message(response.message.as_deref()))?;
+        let destination = output_root.join(&relative_path);
+        if entry.is_directory() {
+            fs::create_dir_all(&destination)?;
+            return Ok(true);
+        }
+        record_output_file_path(&mut output_paths, &relative_path)
+            .map_err(|response| sevenz_error_from_message(response.message.as_deref()))?;
+
+        if let Some(parent) = destination.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        let mut output = fs::File::create(&destination)?;
+        let copy_limit = MAX_ARCHIVE_EXPANDED_BYTES.saturating_sub(actual_expanded_bytes);
+        let written = match copy_limited(entry_reader, &mut output, copy_limit) {
+            Ok(written) => written,
+            Err(error) => {
+                let _ = fs::remove_file(&destination);
+                return Err(error.into());
+            }
+        };
+        actual_expanded_bytes = actual_expanded_bytes
+            .checked_add(written)
+            .ok_or_else(|| sevenz_error_from_message(Some("archive entry is too large")))?;
+        if actual_expanded_bytes > MAX_ARCHIVE_EXPANDED_BYTES {
+            let _ = fs::remove_file(&destination);
+            return Err(sevenz_error_from_message(Some(
+                "archive expands beyond the configured limit",
+            )));
+        }
+        files.push(ArchivePluginExtractedFile {
+            relative_path: relative_path.to_string_lossy().replace('\\', "/"),
+            size: Some(written),
+            checksum: None,
+        });
+        Ok(true)
+    });
+
+    if let Err(error) = extraction {
+        return sevenz_error_response("extract_7z", error, password);
+    }
+
+    ArchivePluginProcessResponse {
+        status: ArchivePluginStatus::Ok,
+        files,
+        expanded_bytes: Some(actual_expanded_bytes),
+        ..empty_response()
+    }
+}
+
 fn attach_rar_volumes(
     archive: &mut RarArchive,
     source_dir: &Path,
@@ -484,6 +611,18 @@ fn normalize_relative_path(path: &Path) -> PathBuf {
 }
 
 fn safe_archive_relative_path(path: &str) -> Result<PathBuf, Box<ArchivePluginProcessResponse>> {
+    if path.trim().is_empty() {
+        return Err(Box::new(failed_message(
+            "unsafe_path",
+            "archive contains an empty path",
+        )));
+    }
+    if path.contains('\\') {
+        return Err(Box::new(failed_message(
+            "unsafe_path",
+            "archive contains a backslash path separator",
+        )));
+    }
     let path = Path::new(path);
     if path.is_absolute() {
         return Err(Box::new(failed_message(
@@ -491,7 +630,19 @@ fn safe_archive_relative_path(path: &str) -> Result<PathBuf, Box<ArchivePluginPr
             "archive contains an absolute path",
         )));
     }
-    let relative = normalize_relative_path(path);
+    let mut relative = PathBuf::new();
+    for component in path.components() {
+        match component {
+            Component::Normal(part) => relative.push(part),
+            Component::CurDir => {}
+            Component::ParentDir | Component::RootDir | Component::Prefix(_) => {
+                return Err(Box::new(failed_message(
+                    "unsafe_path",
+                    "archive contains an unsafe path component",
+                )));
+            }
+        }
+    }
     if relative.as_os_str().is_empty() {
         return Err(Box::new(failed_message(
             "unsafe_path",
@@ -501,7 +652,24 @@ fn safe_archive_relative_path(path: &str) -> Result<PathBuf, Box<ArchivePluginPr
     Ok(relative)
 }
 
-fn copy_limited<R: Read, W: Write>(reader: &mut R, writer: &mut W, limit: u64) -> io::Result<u64> {
+fn record_output_file_path(
+    output_paths: &mut HashSet<PathBuf>,
+    relative_path: &Path,
+) -> Result<(), Box<ArchivePluginProcessResponse>> {
+    if !output_paths.insert(relative_path.to_path_buf()) {
+        return Err(Box::new(failed_message(
+            "duplicate_output_path",
+            "archive contains multiple file entries for the same output path",
+        )));
+    }
+    Ok(())
+}
+
+fn copy_limited<R: Read + ?Sized, W: Write>(
+    reader: &mut R,
+    writer: &mut W,
+    limit: u64,
+) -> io::Result<u64> {
     let mut written = 0_u64;
     let mut buffer = [0_u8; 64 * 1024];
     loop {
@@ -577,6 +745,58 @@ fn rar_error_response(
     }
 }
 
+fn sevenz_error_response(
+    error_code: &str,
+    error: sevenz_rust2::Error,
+    password: Option<&str>,
+) -> ArchivePluginProcessResponse {
+    let message = error.to_string();
+    let lower = message.to_ascii_lowercase();
+    let (status, code, public_message) = if lower.contains("unsupported")
+        || lower.contains("zstd")
+        || lower.contains("method")
+    {
+        (
+                ArchivePluginStatus::Failed,
+                "unsupported_7z_method",
+                "This 7z archive uses a compression method the Archive Extraction plugin does not support yet.".to_string(),
+            )
+    } else if lower.contains("password") || lower.contains("encrypted") {
+        let status = if password.is_some_and(|password| !password.is_empty()) {
+            ArchivePluginStatus::PasswordInvalid
+        } else {
+            ArchivePluginStatus::PasswordRequired
+        };
+        (
+            status,
+            error_code,
+            format!("7z archive password error: {message}"),
+        )
+    } else {
+        (
+            ArchivePluginStatus::Failed,
+            error_code,
+            format!("failed to extract 7z archive: {message}"),
+        )
+    };
+
+    ArchivePluginProcessResponse {
+        status,
+        error_code: Some(code.to_string()),
+        message: Some(public_message),
+        ..empty_response()
+    }
+}
+
+fn sevenz_error_from_message(message: Option<&str>) -> sevenz_rust2::Error {
+    sevenz_rust2::Error::Other(Cow::Owned(
+        message
+            .filter(|message| !message.is_empty())
+            .unwrap_or("7z extraction failed")
+            .to_string(),
+    ))
+}
+
 fn empty_response() -> ArchivePluginProcessResponse {
     ArchivePluginProcessResponse {
         status: ArchivePluginStatus::Failed,
@@ -586,5 +806,31 @@ fn empty_response() -> ArchivePluginProcessResponse {
         staged_bytes: None,
         error_code: None,
         message: None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sevenz_unsupported_method_maps_to_structured_error() {
+        let response = sevenz_error_response(
+            "extract_7z",
+            sevenz_rust2::Error::Other(Cow::Borrowed("unsupported compression method zstd")),
+            None,
+        );
+
+        assert_eq!(response.status, ArchivePluginStatus::Failed);
+        assert_eq!(
+            response.error_code.as_deref(),
+            Some("unsupported_7z_method")
+        );
+        assert!(
+            response
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("does not support yet"))
+        );
     }
 }

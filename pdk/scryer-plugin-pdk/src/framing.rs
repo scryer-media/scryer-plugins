@@ -144,9 +144,9 @@ mod tests {
     fn round_trips_an_extract_request_through_the_handler() {
         let request = ArchivePluginProcessRequest {
             operation: ArchivePluginOperation::ExtractArchive {
-                archive_path: "/scryer/source/archive.rar".to_string(),
+                archive_path: "/scryer/source/archive.7z".to_string(),
                 output_dir: "/scryer/output".to_string(),
-                format: ArchivePluginFormat::Rar,
+                format: ArchivePluginFormat::SevenZip,
                 password: None,
             },
         };
@@ -162,7 +162,7 @@ mod tests {
         })
         .expect("process should succeed");
 
-        assert_eq!(seen_archive, "/scryer/source/archive.rar");
+        assert_eq!(seen_archive, "/scryer/source/archive.7z");
         let decoded: ArchivePluginProcessResponse = serde_json::from_slice(&output).unwrap();
         assert_eq!(decoded.status, ArchivePluginStatus::Ok);
         assert_eq!(decoded.expanded_bytes, Some(42));

@@ -67,6 +67,9 @@ fn archive_extraction_plugin_exercises_scryer_host_paths() {
 
     assert_describe_emits_descriptor(&wasm_path);
     assert_encrypted_rars_use_raw_host_calls(&fixture_root.join("rar"));
+    assert_sevenz_extracts(&wasm_path);
+    assert_sevenz_rejects_unsafe_paths(&wasm_path);
+    assert_sevenz_rejects_duplicate_paths(&wasm_path);
     assert_zip_extracts(&wasm_path);
 }
 
@@ -124,6 +127,16 @@ fn assert_describe_emits_descriptor(wasm_path: &Path) {
         Some("archive-extraction"),
         "unexpected descriptor id: {descriptor}"
     );
+    let formats = descriptor
+        .pointer("/provider/capabilities/formats")
+        .and_then(|formats| formats.as_array())
+        .unwrap_or_else(|| panic!("descriptor did not include archive formats: {descriptor}"));
+    for format in ["rar", "zip", "7z"] {
+        assert!(
+            formats.iter().any(|value| value.as_str() == Some(format)),
+            "descriptor did not advertise {format}: {descriptor}"
+        );
+    }
 }
 
 fn assert_encrypted_rars_use_raw_host_calls(fixture_dir: &Path) {
@@ -171,6 +184,106 @@ fn assert_zip_extracts(wasm_path: &Path) {
         response.message
     );
     assert_response_contains_file_bytes(&response, output.path(), b"hello from zip\n", "ZIP");
+}
+
+fn assert_sevenz_extracts(wasm_path: &Path) {
+    let source = tempfile::tempdir().expect("create 7z source dir");
+    let output = tempfile::tempdir().expect("create 7z output dir");
+    create_sevenz_fixture(
+        &source.path().join("sample.7z"),
+        "nested/hello.txt",
+        b"hello from 7z\n",
+    );
+
+    let response = call_archive_plugin(
+        wasm_path,
+        source.path(),
+        output.path(),
+        ArchivePluginOperation::ExtractArchive {
+            archive_path: format!("{GUEST_SOURCE_ROOT}/sample.7z"),
+            output_dir: GUEST_OUTPUT_ROOT.to_string(),
+            format: ArchivePluginFormat::SevenZip,
+            password: None,
+        },
+    );
+
+    assert_eq!(
+        response.status,
+        ArchivePluginStatus::Ok,
+        "7z extract failed: {:?}",
+        response.message
+    );
+    assert_response_contains_file_bytes(&response, output.path(), b"hello from 7z\n", "7z");
+}
+
+fn assert_sevenz_rejects_unsafe_paths(wasm_path: &Path) {
+    for (archive_name, entry_name) in [
+        ("traversal.7z", "../escape.txt"),
+        ("backslash.7z", r"nested\escape.txt"),
+    ] {
+        let source = tempfile::tempdir().expect("create unsafe 7z source dir");
+        let output = tempfile::tempdir().expect("create unsafe 7z output dir");
+        create_sevenz_fixture(
+            &source.path().join(archive_name),
+            entry_name,
+            b"unsafe 7z\n",
+        );
+
+        let response = call_archive_plugin(
+            wasm_path,
+            source.path(),
+            output.path(),
+            ArchivePluginOperation::ExtractArchive {
+                archive_path: format!("{GUEST_SOURCE_ROOT}/{archive_name}"),
+                output_dir: GUEST_OUTPUT_ROOT.to_string(),
+                format: ArchivePluginFormat::SevenZip,
+                password: None,
+            },
+        );
+
+        assert_eq!(
+            response.status,
+            ArchivePluginStatus::Failed,
+            "unsafe 7z path was not rejected: {:?}",
+            response.message
+        );
+        assert_eq!(response.error_code.as_deref(), Some("unsafe_path"));
+    }
+}
+
+fn assert_sevenz_rejects_duplicate_paths(wasm_path: &Path) {
+    let source = tempfile::tempdir().expect("create duplicate 7z source dir");
+    let output = tempfile::tempdir().expect("create duplicate 7z output dir");
+    create_sevenz_fixture_with_entries(
+        &source.path().join("duplicate.7z"),
+        &[
+            ("nested/duplicate.txt", b"first".as_slice()),
+            ("nested/duplicate.txt", b"second".as_slice()),
+        ],
+    );
+
+    let response = call_archive_plugin(
+        wasm_path,
+        source.path(),
+        output.path(),
+        ArchivePluginOperation::ExtractArchive {
+            archive_path: format!("{GUEST_SOURCE_ROOT}/duplicate.7z"),
+            output_dir: GUEST_OUTPUT_ROOT.to_string(),
+            format: ArchivePluginFormat::SevenZip,
+            password: None,
+        },
+    );
+
+    assert_eq!(
+        response.status,
+        ArchivePluginStatus::Failed,
+        "duplicate 7z output path was not rejected: {:?}",
+        response.message
+    );
+    assert_eq!(
+        response.error_code.as_deref(),
+        Some("duplicate_output_path")
+    );
 }
 
 /// Drive the archive plugin as a `wasm32-wasip1` command (RFC 123 §7.2.5): the
@@ -419,6 +532,26 @@ fn create_zip_fixture(path: &Path, entry_name: &str, payload: &[u8]) {
         .expect("start zip file entry");
     zip.write_all(payload).expect("write zip payload");
     zip.finish().expect("finish zip fixture");
+}
+
+fn create_sevenz_fixture(path: &Path, entry_name: &str, payload: &[u8]) {
+    create_sevenz_fixture_with_entries(path, &[(entry_name, payload)]);
+}
+
+fn create_sevenz_fixture_with_entries(path: &Path, entries: &[(&str, &[u8])]) {
+    let temp = tempfile::tempdir().expect("create 7z fixture input dir");
+    let mut archive = sevenz_rust2::ArchiveWriter::create(path).expect("create 7z fixture");
+    for (index, (entry_name, payload)) in entries.iter().enumerate() {
+        let source_path = temp.path().join(format!("payload-{index}.txt"));
+        fs::write(&source_path, payload).expect("write 7z fixture payload");
+        archive
+            .push_archive_entry(
+                sevenz_rust2::ArchiveEntry::from_path(&source_path, (*entry_name).to_string()),
+                Some(fs::File::open(&source_path).expect("open 7z fixture payload")),
+            )
+            .expect("write 7z fixture entry");
+    }
+    archive.finish().expect("finish 7z fixture");
 }
 
 fn assert_response_contains_file_bytes(
