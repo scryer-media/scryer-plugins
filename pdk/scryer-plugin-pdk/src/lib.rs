@@ -33,7 +33,6 @@
 //!     ArchivePluginProcessResponse {
 //!         status: ArchivePluginStatus::Ok,
 //!         files: vec![],
-//!         repair: None,
 //!         expanded_bytes: None,
 //!         copied_bytes: None,
 //!         staged_bytes: None,
@@ -85,16 +84,15 @@ pub use framing::{FramingError, process, process_json};
 // alone for the archive command surface.
 pub use scryer_plugin_sdk::{
     ArchivePluginExtractedFile, ArchivePluginFormat, ArchivePluginOperation,
-    ArchivePluginProcessRequest, ArchivePluginProcessResponse, ArchivePluginRepairFormat,
-    ArchivePluginRepairState, ArchivePluginRepairStatus, ArchivePluginStatus, AudioStreamSelector,
-    SubtitleSyncAlignSkipReason, SubtitleSyncAudioCodec, SubtitleSyncAudioPacket,
-    SubtitleSyncAudioStreamMetadata, SubtitleSyncCapabilities, SubtitleSyncCommandAlignRequest,
-    SubtitleSyncCommandAlignResponse, SubtitleSyncCommandInputFile,
-    SubtitleSyncCommandOutputSubtitle, SubtitleSyncCommandOutputTarget,
-    SubtitleSyncCommandSubtitleFile, SubtitleSyncDecodeStatus, SubtitleSyncDecodeWindowRequest,
-    SubtitleSyncDecodeWindowResponse, SubtitleSyncDecodeWindowStatus,
-    SubtitleSyncMediaMetadataSnapshot, SubtitleSyncOperation, SubtitleSyncOptions,
-    SubtitleSyncPluginOperation, SubtitleSyncPluginProcessRequest,
+    ArchivePluginProcessRequest, ArchivePluginProcessResponse, ArchivePluginStatus,
+    AudioStreamSelector, SubtitleSyncAlignSkipReason, SubtitleSyncAudioCodec,
+    SubtitleSyncAudioPacket, SubtitleSyncAudioStreamMetadata, SubtitleSyncCapabilities,
+    SubtitleSyncCommandAlignRequest, SubtitleSyncCommandAlignResponse,
+    SubtitleSyncCommandInputFile, SubtitleSyncCommandOutputSubtitle,
+    SubtitleSyncCommandOutputTarget, SubtitleSyncCommandSubtitleFile, SubtitleSyncDecodeStatus,
+    SubtitleSyncDecodeWindowRequest, SubtitleSyncDecodeWindowResponse,
+    SubtitleSyncDecodeWindowStatus, SubtitleSyncMediaMetadataSnapshot, SubtitleSyncOperation,
+    SubtitleSyncOptions, SubtitleSyncPluginOperation, SubtitleSyncPluginProcessRequest,
     SubtitleSyncPluginProcessResponse, SubtitleSyncPluginResponse, SubtitleSyncProbeRequest,
     SubtitleSyncProbeResponse, SubtitleSyncSubtitleStreamMetadata, SubtitleTimingSpan,
 };

@@ -132,7 +132,6 @@ mod tests {
         ArchivePluginProcessResponse {
             status: ArchivePluginStatus::Ok,
             files: vec![],
-            repair: None,
             expanded_bytes: Some(42),
             copied_bytes: None,
             staged_bytes: None,
@@ -142,26 +141,28 @@ mod tests {
     }
 
     #[test]
-    fn round_trips_a_verify_request_through_the_handler() {
+    fn round_trips_an_extract_request_through_the_handler() {
         let request = ArchivePluginProcessRequest {
-            operation: ArchivePluginOperation::VerifyRepairSet {
-                source_dir: "/scryer/source".to_string(),
-                par2_path: Some("/scryer/source/set.par2".to_string()),
+            operation: ArchivePluginOperation::ExtractArchive {
+                archive_path: "/scryer/source/archive.rar".to_string(),
+                output_dir: "/scryer/output".to_string(),
+                format: ArchivePluginFormat::Rar,
+                password: None,
             },
         };
         let input = serde_json::to_vec(&request).unwrap();
         let mut output = Vec::new();
 
-        let mut seen_source = String::new();
+        let mut seen_archive = String::new();
         process(input.as_slice(), &mut output, |request| {
-            if let ArchivePluginOperation::VerifyRepairSet { source_dir, .. } = request.operation {
-                seen_source = source_dir;
+            if let ArchivePluginOperation::ExtractArchive { archive_path, .. } = request.operation {
+                seen_archive = archive_path;
             }
             ok_response()
         })
         .expect("process should succeed");
 
-        assert_eq!(seen_source, "/scryer/source");
+        assert_eq!(seen_archive, "/scryer/source/archive.rar");
         let decoded: ArchivePluginProcessResponse = serde_json::from_slice(&output).unwrap();
         assert_eq!(decoded.status, ArchivePluginStatus::Ok);
         assert_eq!(decoded.expanded_bytes, Some(42));
@@ -253,9 +254,11 @@ mod tests {
             }
         }
         let request = ArchivePluginProcessRequest {
-            operation: ArchivePluginOperation::VerifyRepairSet {
-                source_dir: "/scryer/source".to_string(),
-                par2_path: None,
+            operation: ArchivePluginOperation::ExtractArchive {
+                archive_path: "/scryer/source/archive.zip".to_string(),
+                output_dir: "/scryer/output".to_string(),
+                format: ArchivePluginFormat::Zip,
+                password: None,
             },
         };
         let input = serde_json::to_vec(&request).unwrap();

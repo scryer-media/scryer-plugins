@@ -1,6 +1,6 @@
 [package]
 name = "scryer-plugin-pdk"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Guest runtime bindings for Scryer command-model WebAssembly plugins."
@@ -10,6 +10,6 @@ keywords = ["scryer", "plugin", "wasm", "wasip1"]
 categories = ["wasm"]
 
 [dependencies]
-scryer-plugin-sdk = { path = "../../../scryer/crates/scryer-plugin-sdk", version = "3.5" }
+scryer-plugin-sdk = { path = "../../../scryer/crates/scryer-plugin-sdk", version = "3.6" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

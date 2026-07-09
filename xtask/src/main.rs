@@ -170,20 +170,6 @@ fn archive_crc32_unsupported(
     Ok(())
 }
 
-// Instantiation-only stub for the descriptor/validation host. A repair-capable
-// guest imports `scryer_par2_reconstruct` (RFC 123 WP2.5), so validate must
-// define it for the module to instantiate; `describe` never calls it. Returns a
-// negative "not available here" code (never invoked on this path).
-fn archive_par2_reconstruct_unsupported(
-    _current: &mut CurrentPlugin,
-    _input: &[Val],
-    output: &mut [Val],
-    _state: UserData<()>,
-) -> Result<(), ExtismError> {
-    output[0] = Val::I64(-2);
-    Ok(())
-}
-
 #[derive(Clone)]
 struct RustupToolchain {
     rustup: PathBuf,
@@ -3170,12 +3156,21 @@ fn command_model_descriptor_from_wasm(
     }
 
     let descriptor = run_command_model_describe(wasm_path, engine, &module)?;
-    if !matches!(
-        &descriptor.provider,
-        ProviderDescriptor::ArchiveExtractor(_)
-    ) {
+    let command_model_supported = match &descriptor.provider {
+        ProviderDescriptor::ArchiveExtractor(_) => true,
+        ProviderDescriptor::Subtitle(subtitle) => {
+            matches!(subtitle.capabilities.mode, SubtitleProviderMode::Sync)
+                && subtitle
+                    .capabilities
+                    .sync
+                    .as_ref()
+                    .is_some_and(|sync| sync.command_model)
+        }
+        _ => false,
+    };
+    if !command_model_supported {
         bail!(
-            "{} described {} ({}), but command-model validation is only supported for archive_extractor plugins",
+            "{} described {} ({}), but command-model validation is only supported for archive_extractor and command-model subtitle sync plugins",
             wasm_path.display(),
             descriptor.id,
             descriptor.plugin_type()
@@ -3215,18 +3210,6 @@ fn run_command_model_describe(
         .map_err(|error| {
             anyhow!("failed to define scryer_crc32 for command-model describe: {error:#}")
         })?;
-    linker
-        .func_wrap(
-            "extism:host/user",
-            "scryer_par2_reconstruct",
-            command_model_par2_reconstruct_unsupported,
-        )
-        .map_err(|error| {
-            anyhow!(
-                "failed to define scryer_par2_reconstruct for command-model describe: {error:#}"
-            )
-        })?;
-
     let stdout = MemoryOutputPipe::new(COMMAND_MODEL_STDOUT_LIMIT_BYTES);
     let stderr = MemoryOutputPipe::new(COMMAND_MODEL_STDERR_LIMIT_BYTES);
     let wasi = WasiCtxBuilder::new()
@@ -3334,14 +3317,6 @@ fn command_model_crc32_unsupported(
     -1
 }
 
-fn command_model_par2_reconstruct_unsupported(
-    _caller: Caller<'_, CommandModelDescribeCtx>,
-    _request_ptr: i64,
-    _request_len: i64,
-) -> i64 {
-    -2
-}
-
 fn required_exports_for_descriptor(descriptor: &PluginDescriptor) -> Vec<&'static str> {
     let mut exports = vec![EXPORT_DESCRIBE];
     match &descriptor.provider {
@@ -3365,6 +3340,7 @@ fn required_exports_for_descriptor(descriptor: &PluginDescriptor) -> Vec<&'stati
                     exports.extend([EXPORT_SUBTITLE_SEARCH, EXPORT_SUBTITLE_DOWNLOAD]);
                 }
                 SubtitleProviderMode::Generator => exports.push(EXPORT_SUBTITLE_GENERATE),
+                SubtitleProviderMode::Sync => exports.push(EXPORT_SUBSYNC_ALIGN),
             }
         }
     }
@@ -3447,14 +3423,6 @@ fn instantiate_plugin_from_wasm(wasm_path: &Path, timeout: Duration) -> Result<e
             [ValType::I64],
             socket_stubs.clone(),
             archive_crc32_unsupported,
-        )
-        .with_function_in_namespace(
-            "extism:host/user",
-            "scryer_par2_reconstruct",
-            [ValType::I64, ValType::I64],
-            [ValType::I64],
-            socket_stubs,
-            archive_par2_reconstruct_unsupported,
         )
         .build()
         .with_context(|| format!("failed to instantiate {}", wasm_path.display()))
@@ -8117,6 +8085,38 @@ mod tests {
             default_catalog_versions(),
             BTreeSet::from([CatalogVersion::V3])
         );
+    }
+
+    #[test]
+    fn legacy_subtitle_sync_requires_align_export() {
+        let descriptor = PluginDescriptor {
+            id: "enhanced-subtitle-sync".to_string(),
+            name: "Enhanced Subtitle Sync".to_string(),
+            version: "1.0.0".to_string(),
+            sdk_version: SDK_VERSION.to_string(),
+            sdk_constraint: current_sdk_constraint(),
+            socket_permissions: Vec::new(),
+            provider: ProviderDescriptor::Subtitle(scryer_plugin_sdk::SubtitleDescriptor {
+                provider_type: "enhanced-subtitle-sync".to_string(),
+                provider_aliases: Vec::new(),
+                config_fields: Vec::new(),
+                default_base_url: None,
+                allowed_hosts: Vec::new(),
+                capabilities: scryer_plugin_sdk::SubtitleCapabilities {
+                    mode: SubtitleProviderMode::Sync,
+                    sync: Some(scryer_plugin_sdk::SubtitleSyncCapabilities {
+                        command_model: false,
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                },
+            }),
+        };
+
+        let exports = required_exports_for_descriptor(&descriptor);
+
+        assert!(exports.contains(&EXPORT_VALIDATE_CONFIG));
+        assert!(exports.contains(&EXPORT_SUBSYNC_ALIGN));
     }
 
     #[test]

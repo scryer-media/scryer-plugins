@@ -6,6 +6,5 @@ ProviderDescriptor::ArchiveExtractor(ArchiveExtractorDescriptor {
     allowed_hosts: vec![],
     capabilities: ArchiveExtractorCapabilities {
         formats: vec![],
-        repair_formats: vec![],
     },
 })

@@ -42,8 +42,6 @@ dependencies = [
  "scryer-plugin-pdk",
  "scryer-plugin-sdk",
  "serde_json",
- "weaver-par2",
- "weaver-reed-solomon",
  "weaver-unrar",
  "zip",
 ]
@@ -306,17 +304,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "extism-manifest"
-version = "1.30.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2f59c8dadb5e0bde9a48c6ed45312e6ef625cbcd5f67c28459dbc8fe8bc0383"
-dependencies = [
- "base64",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "extism-pdk"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -325,7 +312,6 @@ dependencies = [
  "anyhow",
  "base64",
  "extism-convert",
- "extism-manifest",
  "extism-pdk-derive",
  "serde",
  "serde_json",
@@ -472,16 +458,6 @@ dependencies = [
  "proc-macro-utils",
  "proc-macro2",
  "quote",
-]
-
-[[package]]
-name = "md-5"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69b6441f590336821bb897fb28fc622898ccceb1d6cea3fde5ea86b090c4de98"
-dependencies = [
- "cfg-if",
- "digest",
 ]
 
 [[package]]
@@ -696,21 +672,18 @@ dependencies = [
 
 [[package]]
 name = "scryer-plugin-pdk"
-version = "0.1.1"
-source = "git+https://github.com/scryer-media/scryer-plugins?tag=scryer-plugin-pdk%2Fv0.1.1#d202b2c08926df2749c405b871015951661d5aa2"
+version = "0.3.0"
 dependencies = [
  "scryer-plugin-sdk",
+ "serde",
  "serde_json",
 ]
 
 [[package]]
 name = "scryer-plugin-sdk"
-version = "3.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38b3c6ed96b135c9498843bca0e97b4feb94c070ab4f425ee731388a83a151f5"
+version = "3.6.0"
 dependencies = [
  "base64",
- "extism-manifest",
  "extism-pdk",
  "schemars",
  "semver",
@@ -935,23 +908,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5fd4f6878c9cb28d874b009da9e8d183b5abc80117c40bbd187a1fde336be6e8"
 dependencies = [
  "tinyvec",
-]
-
-[[package]]
-name = "weaver-par2"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "597f66a308380480edece973f9d2bf51498229302799cec17ff1d58ae2a7e9f7"
-dependencies = [
- "bytes",
- "crc32fast",
- "libc",
- "md-5",
- "memmap2",
- "rayon",
- "thiserror",
- "tracing",
- "weaver-reed-solomon",
 ]
 
 [[package]]

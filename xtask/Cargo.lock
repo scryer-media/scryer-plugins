@@ -851,7 +851,6 @@ dependencies = [
  "anyhow",
  "base64",
  "extism-convert",
- "extism-manifest",
  "extism-pdk-derive",
  "serde",
  "serde_json",
@@ -1521,15 +1520,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "memmap2"
-version = "0.9.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1219ed1b7f229ee7104d281dd01d6802fe28bb6e95d292942c4daacdeb798c0"
-dependencies = [
- "libc",
-]
-
-[[package]]
 name = "miniz_oxide"
 version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2032,12 +2022,9 @@ dependencies = [
 
 [[package]]
 name = "scryer-plugin-sdk"
-version = "3.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38b3c6ed96b135c9498843bca0e97b4feb94c070ab4f425ee731388a83a151f5"
+version = "3.6.0"
 dependencies = [
  "base64",
- "extism-manifest",
  "extism-pdk",
  "schemars",
  "semver",
@@ -3167,16 +3154,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "weaver-reed-solomon"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "257fca188ba59d9f2c2129685f5a1cba80cc16322488f2b54db0e4c12e9153f9"
-dependencies = [
- "memmap2",
- "rayon",
-]
-
-[[package]]
 name = "webpki-roots"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3607,7 +3584,6 @@ dependencies = [
  "toml_edit 0.22.27",
  "wasmtime",
  "wasmtime-wasi",
- "weaver-reed-solomon",
  "zip",
  "zstd",
 ]
