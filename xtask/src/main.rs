@@ -809,21 +809,65 @@ impl WasmRequiredFeature {
     }
 }
 
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "lowercase")]
+enum WasmOptLevel {
+    Size,
+    Speed,
+}
+
+impl WasmOptLevel {
+    fn parse(value: &str) -> Result<Self> {
+        match value.trim() {
+            "size" => Ok(Self::Size),
+            "speed" => Ok(Self::Speed),
+            other => bail!(
+                "unsupported package.metadata.scryer.feature_sets wasm_opt value '{other}'; wasm_opt must be \"size\" or \"speed\""
+            ),
+        }
+    }
+
+    fn wasm_opt_flag(self) -> &'static str {
+        match self {
+            Self::Size => WASM_OPT_LEVEL_SIZE,
+            Self::Speed => WASM_OPT_LEVEL_SPEED,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 struct WasmFeatureSet {
     required_features: Vec<WasmRequiredFeature>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    wasm_opt: Option<WasmOptLevel>,
 }
 
 impl WasmFeatureSet {
     fn new(mut required_features: Vec<WasmRequiredFeature>) -> Self {
         required_features.sort();
         required_features.dedup();
-        Self { required_features }
+        Self {
+            required_features,
+            wasm_opt: None,
+        }
+    }
+
+    fn with_wasm_opt(
+        mut required_features: Vec<WasmRequiredFeature>,
+        wasm_opt: Option<WasmOptLevel>,
+    ) -> Self {
+        required_features.sort();
+        required_features.dedup();
+        Self {
+            required_features,
+            wasm_opt,
+        }
     }
 
     fn baseline() -> Self {
         Self {
             required_features: Vec::new(),
+            wasm_opt: None,
         }
     }
 
@@ -891,12 +935,18 @@ impl WasmFeatureSet {
         ))
     }
 
-    fn wasm_opt_level(&self) -> &'static str {
-        if self.is_baseline() {
-            WASM_OPT_LEVEL_SIZE
+    fn effective_wasm_opt_level(&self) -> WasmOptLevel {
+        if let Some(wasm_opt) = self.wasm_opt {
+            wasm_opt
+        } else if self.is_baseline() {
+            WasmOptLevel::Size
         } else {
-            WASM_OPT_LEVEL_SPEED
+            WasmOptLevel::Speed
         }
+    }
+
+    fn wasm_opt_level(&self) -> &'static str {
+        self.effective_wasm_opt_level().wasm_opt_flag()
     }
 }
 
@@ -915,11 +965,17 @@ fn parse_feature_sets(
         return Ok(default_feature_sets());
     };
 
-    let mut parsed = Vec::with_capacity(values.len());
+    let mut parsed_by_features: BTreeMap<Vec<WasmRequiredFeature>, WasmFeatureSet> =
+        BTreeMap::new();
     for value in values.iter() {
-        let required_features = value
-            .as_inline_table()
-            .and_then(|table| table.get("required_features"))
+        let table = value.as_inline_table().ok_or_else(|| {
+            anyhow!(
+                "{} package.metadata.scryer.feature_sets entries must be inline tables with required_features arrays",
+                manifest_path.display()
+            )
+        })?;
+        let required_features = table
+            .get("required_features")
             .and_then(|required_features| required_features.as_array())
             .ok_or_else(|| {
                 anyhow!(
@@ -938,21 +994,45 @@ fn parse_feature_sets(
                 WasmRequiredFeature::parse(feature)
             })
             .collect::<Result<Vec<_>>>()?;
-        let feature_set = WasmFeatureSet::new(required_features);
+        let wasm_opt = match table.get("wasm_opt") {
+            Some(value) => {
+                let value = value.as_str().ok_or_else(|| {
+                    anyhow!(
+                        "{} package.metadata.scryer.feature_sets wasm_opt must be a string",
+                        manifest_path.display()
+                    )
+                })?;
+                Some(WasmOptLevel::parse(value)?)
+            }
+            None => None,
+        };
+        let feature_set = WasmFeatureSet::with_wasm_opt(required_features, wasm_opt);
         feature_set.validate()?;
-        parsed.push(feature_set);
+        match parsed_by_features.get(&feature_set.required_features) {
+            Some(existing)
+                if existing.effective_wasm_opt_level()
+                    != feature_set.effective_wasm_opt_level() =>
+            {
+                bail!(
+                    "{} package.metadata.scryer.feature_sets contains duplicate required_features entries with conflicting wasm_opt values",
+                    manifest_path.display()
+                );
+            }
+            Some(_) => {}
+            None => {
+                parsed_by_features.insert(feature_set.required_features.clone(), feature_set);
+            }
+        }
     }
 
-    if parsed.is_empty() {
+    if parsed_by_features.is_empty() {
         bail!(
             "{} must define at least one package.metadata.scryer.feature_sets entry",
             manifest_path.display()
         );
     }
 
-    parsed.sort();
-    parsed.dedup();
-    Ok(parsed)
+    Ok(parsed_by_features.into_values().collect())
 }
 
 fn primary_feature_set(feature_sets: &[WasmFeatureSet]) -> &WasmFeatureSet {
@@ -8818,6 +8898,183 @@ min_scryer_version = "1.4.0"
             "https://cdn.scryer.media/scryer/plugins-v3/email"
         );
         assert_eq!(metadata.min_scryer_version.as_deref(), Some("1.4.0"));
+    }
+
+    #[test]
+    fn feature_set_wasm_opt_defaults_match_current_release_policy() {
+        let baseline = WasmFeatureSet::baseline();
+        let simd = WasmFeatureSet::new(vec![
+            WasmRequiredFeature::Simd128,
+            WasmRequiredFeature::RelaxedSimd,
+        ]);
+
+        assert_eq!(baseline.wasm_opt_level(), WASM_OPT_LEVEL_SIZE);
+        assert_eq!(simd.wasm_opt_level(), WASM_OPT_LEVEL_SPEED);
+    }
+
+    #[test]
+    fn plugin_manifest_metadata_accepts_explicit_baseline_speed_wasm_opt() {
+        let manifest = write_temp_manifest(
+            r#"[package]
+name = "email-notification"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-only"
+description = "Email notifications"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "email"
+catalog_versions = ["v3"]
+feature_sets = [{ required_features = [], wasm_opt = "speed" }]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
+"#,
+        );
+
+        let metadata = plugin_manifest_metadata(manifest.path()).expect("read manifest metadata");
+
+        assert_eq!(metadata.feature_sets.len(), 1);
+        assert!(metadata.feature_sets[0].is_baseline());
+        assert_eq!(
+            metadata.feature_sets[0].effective_wasm_opt_level(),
+            WasmOptLevel::Speed
+        );
+        assert_eq!(
+            metadata.feature_sets[0].wasm_opt_level(),
+            WASM_OPT_LEVEL_SPEED
+        );
+        assert_eq!(metadata.feature_sets[0].artifact_stem(), "plugin");
+    }
+
+    #[test]
+    fn plugin_manifest_metadata_accepts_explicit_simd_size_wasm_opt() {
+        let manifest = write_temp_manifest(
+            r#"[package]
+name = "email-notification"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-only"
+description = "Email notifications"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "email"
+catalog_versions = ["v3"]
+feature_sets = [{ required_features = ["simd128", "relaxed-simd"], wasm_opt = "size" }]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
+"#,
+        );
+
+        let metadata = plugin_manifest_metadata(manifest.path()).expect("read manifest metadata");
+
+        assert_eq!(metadata.feature_sets.len(), 1);
+        assert_eq!(
+            metadata.feature_sets[0].required_features,
+            vec![
+                WasmRequiredFeature::Simd128,
+                WasmRequiredFeature::RelaxedSimd,
+            ]
+        );
+        assert_eq!(
+            metadata.feature_sets[0].effective_wasm_opt_level(),
+            WasmOptLevel::Size
+        );
+        assert_eq!(
+            metadata.feature_sets[0].wasm_opt_level(),
+            WASM_OPT_LEVEL_SIZE
+        );
+        assert_eq!(
+            metadata.feature_sets[0].artifact_stem(),
+            "plugin-simd128-relaxed-simd"
+        );
+    }
+
+    #[test]
+    fn plugin_manifest_metadata_rejects_invalid_wasm_opt() {
+        let manifest = write_temp_manifest(
+            r#"[package]
+name = "email-notification"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-only"
+description = "Email notifications"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "email"
+catalog_versions = ["v3"]
+feature_sets = [{ required_features = [], wasm_opt = "fast-ish" }]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
+"#,
+        );
+
+        let error = plugin_manifest_metadata(manifest.path()).expect_err("wasm_opt should fail");
+
+        assert!(error.to_string().contains("wasm_opt must be"));
+    }
+
+    #[test]
+    fn plugin_manifest_metadata_rejects_conflicting_duplicate_wasm_opt() {
+        let manifest = write_temp_manifest(
+            r#"[package]
+name = "email-notification"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-only"
+description = "Email notifications"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "email"
+catalog_versions = ["v3"]
+feature_sets = [
+    { required_features = [], wasm_opt = "size" },
+    { required_features = [], wasm_opt = "speed" },
+]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
+"#,
+        );
+
+        let error = plugin_manifest_metadata(manifest.path()).expect_err("conflict should fail");
+
+        assert!(error.to_string().contains("conflicting wasm_opt"));
+    }
+
+    #[test]
+    fn plugin_manifest_metadata_dedupes_equivalent_duplicate_wasm_opt() {
+        let manifest = write_temp_manifest(
+            r#"[package]
+name = "email-notification"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-only"
+description = "Email notifications"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "email"
+catalog_versions = ["v3"]
+feature_sets = [
+    { required_features = [] },
+    { required_features = [], wasm_opt = "size" },
+]
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
+distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
+"#,
+        );
+
+        let metadata = plugin_manifest_metadata(manifest.path()).expect("read manifest metadata");
+
+        assert_eq!(metadata.feature_sets, vec![WasmFeatureSet::baseline()]);
     }
 
     #[test]
