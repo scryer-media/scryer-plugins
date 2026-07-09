@@ -16,7 +16,7 @@ base64 = "0.22"
 sha2 = "0.10"
 sha3 = "0.10"
 blake3 = "1"
-scryer-plugin-sdk = { path = "../../scryer/crates/scryer-plugin-sdk", version = "3.6" }
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer", rev = "f4786a1d7f7bfe5fc5b0bada190e1ae609a7f839", version = "3.6.0" }
 tempfile = "3"
 toml_edit = "0.22"
 extism = "1.30"

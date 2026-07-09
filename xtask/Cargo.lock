@@ -2029,6 +2029,7 @@ dependencies = [
 [[package]]
 name = "scryer-plugin-sdk"
 version = "3.6.0"
+source = "git+https://github.com/scryer-media/scryer?rev=f4786a1d7f7bfe5fc5b0bada190e1ae609a7f839#f4786a1d7f7bfe5fc5b0bada190e1ae609a7f839"
 dependencies = [
  "base64",
  "extism-pdk",
