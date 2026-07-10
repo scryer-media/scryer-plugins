@@ -37,7 +37,7 @@ dependencies = [
 
 [[package]]
 name = "archive-extraction-archive-extractor"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "scryer-plugin-pdk",
  "scryer-plugin-sdk",

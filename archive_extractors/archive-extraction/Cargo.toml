@@ -1,6 +1,6 @@
 [package]
 name = "archive-extraction-archive-extractor"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2024"
 license-file = "LICENSE"
 description = "Optional archive extraction plugin for RAR, ZIP, and 7z"
