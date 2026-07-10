@@ -1067,9 +1067,9 @@ dependencies = [
 
 [[package]]
 name = "weaver-reed-solomon"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "257fca188ba59d9f2c2129685f5a1cba80cc16322488f2b54db0e4c12e9153f9"
+checksum = "cf67be3bb5ba2f3ac9094ca65df2b6abf300367df7f572d248ed4e56d1988926"
 dependencies = [
  "memmap2",
  "rayon",
@@ -1077,9 +1077,9 @@ dependencies = [
 
 [[package]]
 name = "weaver-unrar"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98638ec1bbd43d40c8705a3871977575f63ac357bdb5ebc04bc41465b9f77612"
+checksum = "aa33fb3e0f1187d243363e124bacd3b0c72f80bd118a261c283eeccbe9a536f5"
 dependencies = [
  "aes",
  "blake2s_simd",

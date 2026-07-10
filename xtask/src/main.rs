@@ -3195,6 +3195,24 @@ fn run_command_model_describe(
     linker
         .func_wrap(
             "extism:host/user",
+            "host_aes_cbc_decrypt",
+            command_model_aes_cbc_decrypt_unsupported,
+        )
+        .map_err(|error| {
+            anyhow!("failed to define host_aes_cbc_decrypt for command-model describe: {error:#}")
+        })?;
+    linker
+        .func_wrap(
+            "extism:host/user",
+            "host_crc32",
+            command_model_crc32_unsupported,
+        )
+        .map_err(|error| {
+            anyhow!("failed to define host_crc32 for command-model describe: {error:#}")
+        })?;
+    linker
+        .func_wrap(
+            "extism:host/user",
             "scryer_aes_cbc_decrypt",
             command_model_aes_cbc_decrypt_unsupported,
         )
@@ -3401,6 +3419,28 @@ fn instantiate_plugin_from_wasm(wasm_path: &Path, timeout: Duration) -> Result<e
             [ValType::I64],
             socket_stubs.clone(),
             process_unsupported,
+        )
+        .with_function_in_namespace(
+            "extism:host/user",
+            "host_aes_cbc_decrypt",
+            [
+                ValType::I64,
+                ValType::I64,
+                ValType::I64,
+                ValType::I64,
+                ValType::I64,
+            ],
+            [ValType::I64],
+            socket_stubs.clone(),
+            archive_aes_cbc_decrypt_unsupported,
+        )
+        .with_function_in_namespace(
+            "extism:host/user",
+            "host_crc32",
+            [ValType::I64, ValType::I64, ValType::I64],
+            [ValType::I64],
+            socket_stubs.clone(),
+            archive_crc32_unsupported,
         )
         .with_function_in_namespace(
             "extism:host/user",

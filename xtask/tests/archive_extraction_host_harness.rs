@@ -83,16 +83,7 @@ fn assert_describe_emits_descriptor(wasm_path: &Path) {
     let mut linker: Linker<WasiP1Ctx> = Linker::new(&engine);
     wasmtime_wasi::p1::add_to_linker_sync(&mut linker, |ctx: &mut WasiP1Ctx| ctx)
         .expect("add WASI preview1 linker functions");
-    linker
-        .func_wrap(
-            "extism:host/user",
-            "scryer_aes_cbc_decrypt",
-            host_scryer_aes_cbc_decrypt,
-        )
-        .expect("define scryer_aes_cbc_decrypt");
-    linker
-        .func_wrap("extism:host/user", "scryer_crc32", host_scryer_crc32)
-        .expect("define scryer_crc32");
+    register_crypto_host(&mut linker);
     let stdout = MemoryOutputPipe::new(1024 * 1024);
     let wasi = WasiCtxBuilder::new()
         .args(&["archive-extraction", "describe"])
@@ -148,11 +139,11 @@ fn assert_encrypted_rars_use_raw_host_calls(fixture_dir: &Path) {
 
     assert!(
         after.aes > before.aes,
-        "encrypted RAR fixtures did not call scryer_aes_cbc_decrypt"
+        "encrypted RAR fixtures did not call host_aes_cbc_decrypt"
     );
     assert!(
         after.crc > before.crc,
-        "encrypted RAR fixtures did not call scryer_crc32"
+        "encrypted RAR fixtures did not call host_crc32"
     );
 }
 
@@ -320,16 +311,7 @@ fn call_archive_plugin_with_source_perms(
     let mut linker: Linker<WasiP1Ctx> = Linker::new(&engine);
     wasmtime_wasi::p1::add_to_linker_sync(&mut linker, |ctx: &mut WasiP1Ctx| ctx)
         .expect("add WASI preview1 linker functions");
-    linker
-        .func_wrap(
-            "extism:host/user",
-            "scryer_aes_cbc_decrypt",
-            host_scryer_aes_cbc_decrypt,
-        )
-        .expect("define scryer_aes_cbc_decrypt");
-    linker
-        .func_wrap("extism:host/user", "scryer_crc32", host_scryer_crc32)
-        .expect("define scryer_crc32");
+    register_crypto_host(&mut linker);
 
     let request = ArchivePluginProcessRequest { operation };
     let input = serde_json::to_vec(&request).expect("serialize archive request");
@@ -436,7 +418,7 @@ edition = "2024"
 publish = false
 
 [dependencies]
-weaver-unrar = {{ path = "{}", default-features = false, features = ["crypto-host", "crc-host"] }}
+weaver-unrar = {{ path = "{}", default-features = false, features = ["crypto-host", "crc-host", "host-abi-extism"] }}
 "#,
                     weaver_unrar.display()
                 ),
@@ -469,16 +451,7 @@ fn run_rar_host_guest(wasm_path: &Path, fixture_dir: &Path, output_dir: &Path) {
     let mut linker: Linker<WasiP1Ctx> = Linker::new(&engine);
     wasmtime_wasi::p1::add_to_linker_sync(&mut linker, |ctx: &mut WasiP1Ctx| ctx)
         .expect("add WASI preview1 linker functions");
-    linker
-        .func_wrap(
-            "extism:host/user",
-            "scryer_aes_cbc_decrypt",
-            host_scryer_aes_cbc_decrypt,
-        )
-        .expect("define scryer_aes_cbc_decrypt");
-    linker
-        .func_wrap("extism:host/user", "scryer_crc32", host_scryer_crc32)
-        .expect("define scryer_crc32");
+    register_crypto_host(&mut linker);
 
     let wasi = WasiCtxBuilder::new()
         .args(&["scryer-archive-host-rar-guest"])
@@ -585,7 +558,35 @@ fn host_call_counts() -> HostCallCounts {
     }
 }
 
-fn host_scryer_aes_cbc_decrypt(
+/// Register the §5 crypto host functions on `linker`.
+///
+/// Serves both the current `host_*` ABI and the pre-rename `scryer_*` aliases.
+/// The latter remain a compatibility path for already-published archive plugin
+/// artifacts while current builds use weaver-unrar's `host-abi-extism` feature.
+fn register_crypto_host(linker: &mut Linker<WasiP1Ctx>) {
+    linker
+        .func_wrap(
+            "extism:host/user",
+            "host_aes_cbc_decrypt",
+            host_aes_cbc_decrypt,
+        )
+        .expect("define host_aes_cbc_decrypt");
+    linker
+        .func_wrap("extism:host/user", "host_crc32", host_crc32)
+        .expect("define host_crc32");
+    linker
+        .func_wrap(
+            "extism:host/user",
+            "scryer_aes_cbc_decrypt",
+            host_aes_cbc_decrypt,
+        )
+        .expect("define scryer_aes_cbc_decrypt");
+    linker
+        .func_wrap("extism:host/user", "scryer_crc32", host_crc32)
+        .expect("define scryer_crc32");
+}
+
+fn host_aes_cbc_decrypt(
     mut caller: Caller<'_, WasiP1Ctx>,
     key_ptr: i64,
     key_len: i64,
@@ -643,12 +644,7 @@ fn host_scryer_aes_cbc_decrypt(
     0
 }
 
-fn host_scryer_crc32(
-    mut caller: Caller<'_, WasiP1Ctx>,
-    seed: i64,
-    buf_ptr: i64,
-    buf_len: i64,
-) -> i64 {
+fn host_crc32(mut caller: Caller<'_, WasiP1Ctx>, seed: i64, buf_ptr: i64, buf_len: i64) -> i64 {
     CRC_CALLS.fetch_add(1, Ordering::SeqCst);
 
     if buf_len < 0 {
