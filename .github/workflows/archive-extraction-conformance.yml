@@ -1,0 +1,42 @@
+name: archive-extraction-conformance
+
+on:
+  pull_request:
+    paths:
+      - .gitattributes
+      - archive_extractors/archive-extraction/**
+      - pdk/scryer-plugin-pdk/**
+      - .github/workflows/archive-extraction-conformance.yml
+  push:
+    branches:
+      - main
+    paths:
+      - .gitattributes
+      - archive_extractors/archive-extraction/**
+      - pdk/scryer-plugin-pdk/**
+      - .github/workflows/archive-extraction-conformance.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  archive-extraction-conformance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v6.0.3
+        with:
+          lfs: true
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+
+      - uses: Swatinem/rust-cache@v2.9.1
+
+      - name: Run archive-extraction host conformance
+        run: >-
+          cargo test --locked
+          --manifest-path archive_extractors/archive-extraction/Cargo.toml
+          --test host_conformance

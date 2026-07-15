@@ -26,6 +26,14 @@ sevenz-rust2 = { version = "0.21", default-features = false, features = ["aes256
 weaver-unrar = { version = "0.3.0", default-features = false, features = ["crypto-host", "crc-host", "host-abi-extism"] }
 zip = { version = "4.6.1", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 
+[dev-dependencies]
+aws-lc-sys = "0.42"
+crc32fast = "1"
+sevenz-rust2 = { version = "0.21", default-features = false, features = ["compress"] }
+tempfile = "3"
+wasmtime = "43"
+wasmtime-wasi = "43"
+
 [profile.plugin-release]
 inherits = "release"
 opt-level = 3

@@ -1,0 +1,2 @@
+archive_extractors/archive-extraction/tests/fixtures/**/*.rar filter=lfs diff=lfs merge=lfs -text
+archive_extractors/archive-extraction/tests/fixtures/**/*.par2 filter=lfs diff=lfs merge=lfs -text
