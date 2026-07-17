@@ -57,6 +57,7 @@ enum PostImportAction {
 struct QbittorrentConfig {
     webui_url: String,
     api_root: String,
+    api_key: String,
     username: String,
     password: String,
     routing_mode: RoutingMode,
@@ -654,8 +655,26 @@ pub fn scryer_download_test_connection(_input: String) -> FnResult<String> {
     Ok(serde_json::to_string(&PluginResult::Ok(version))?)
 }
 
+fn validate_auth_configuration(api_key: &str, username: &str, password: &str) -> Result<(), Error> {
+    if !api_key.trim().is_empty() {
+        return Ok(());
+    }
+    let has_username = !username.trim().is_empty();
+    let has_password = !password.is_empty();
+    if has_username != has_password {
+        return Err(Error::msg(
+            "qBittorrent requires both username and password, or leave both blank for unauthenticated access",
+        ));
+    }
+    Ok(())
+}
+
 impl QbittorrentConfig {
-    fn uses_auth(&self) -> bool {
+    fn uses_api_key(&self) -> bool {
+        !self.api_key.trim().is_empty()
+    }
+
+    fn uses_credentials(&self) -> bool {
         !self.username.trim().is_empty() && !self.password.is_empty()
     }
 
@@ -667,19 +686,16 @@ impl QbittorrentConfig {
             return Err(Error::msg("qBittorrent requires base_url"));
         }
 
+        let api_key = config::get("api_key")
+            .map_err(|e| Error::msg(format!("missing config api_key: {e}")))?
+            .unwrap_or_default();
         let username = config::get("username")
             .map_err(|e| Error::msg(format!("missing config username: {e}")))?
             .unwrap_or_default();
         let password = config::get("password")
             .map_err(|e| Error::msg(format!("missing config password: {e}")))?
             .unwrap_or_default();
-        let has_username = !username.trim().is_empty();
-        let has_password = !password.is_empty();
-        if has_username != has_password {
-            return Err(Error::msg(
-                "qBittorrent requires both username and password, or leave both blank for unauthenticated access",
-            ));
-        }
+        validate_auth_configuration(&api_key, &username, &password)?;
 
         let webui_url = normalize_webui_url(&base_url);
         let api_root = format!("{}/api/v2", webui_url.trim_end_matches('/'));
@@ -726,6 +742,7 @@ impl QbittorrentConfig {
         Ok(Self {
             webui_url,
             api_root,
+            api_key,
             username,
             password,
             routing_mode,
@@ -772,6 +789,21 @@ struct AddOptions {
 fn config_fields() -> Vec<ConfigFieldDef> {
     vec![
         ConfigFieldDef {
+            key: "api_key".to_string(),
+            label: "API Key".to_string(),
+            field_type: ConfigFieldType::Password,
+            required: false,
+            default_value: None,
+            value_source: Default::default(),
+            host_binding: None,
+            role: None,
+            options: vec![],
+            help_text: Some(
+                "Optional qBittorrent 5.2+ API key. When set, Scryer uses Bearer authentication instead of username and password; clear it to return to credential authentication."
+                    .to_string(),
+            ),
+        },
+        ConfigFieldDef {
             key: "username".to_string(),
             label: "Username".to_string(),
             field_type: ConfigFieldType::String,
@@ -782,7 +814,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             role: None,
             options: vec![],
             help_text: Some(
-                "Optional qBittorrent WebUI username; leave blank only when auth bypass is enabled"
+                "Optional qBittorrent WebUI username used when no API key is configured; leave blank only when auth bypass is enabled"
                     .to_string(),
             ),
         },
@@ -797,7 +829,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             role: None,
             options: vec![],
             help_text: Some(
-                "Optional qBittorrent WebUI password; leave blank only when auth bypass is enabled"
+                "Optional qBittorrent WebUI password used when no API key is configured; leave blank only when auth bypass is enabled"
                     .to_string(),
             ),
         },
@@ -1023,7 +1055,7 @@ fn request_with_auth(
     body: Option<Vec<u8>>,
     content_type: Option<&str>,
 ) -> Result<HttpResponse, Error> {
-    let cookie = if config.uses_auth() {
+    let cookie = if !config.uses_api_key() && config.uses_credentials() {
         Some(match var::get::<String>(COOKIE_VAR_KEY)? {
             Some(cookie) if !cookie.trim().is_empty() => cookie,
             _ => login(config)?,
@@ -1036,7 +1068,7 @@ fn request_with_auth(
     let response = http::request::<Vec<u8>>(&request, body.clone())
         .map_err(|e| Error::msg(format!("qBittorrent request failed: {e}")))?;
 
-    if response.status_code() == 403 && config.uses_auth() {
+    if should_retry_cookie_auth(config, response.status_code()) {
         var::remove(COOKIE_VAR_KEY)?;
         let cookie = login(config)?;
         let retry = build_request(config, method, path, Some(&cookie), content_type);
@@ -1045,6 +1077,10 @@ fn request_with_auth(
     }
 
     Ok(response)
+}
+
+fn should_retry_cookie_auth(config: &QbittorrentConfig, status_code: u16) -> bool {
+    status_code == 403 && !config.uses_api_key() && config.uses_credentials()
 }
 
 fn build_request(
@@ -1060,7 +1096,12 @@ fn build_request(
         .with_header("Origin", webui_header_url(config))
         .with_header("User-Agent", "scryer-qbittorrent-plugin/0.1")
         .with_header("Accept", "application/json, text/plain;q=0.9, */*;q=0.8");
-    if let Some(cookie) = cookie {
+    if config.uses_api_key() {
+        request = request.with_header("Authorization", format!("Bearer {}", config.api_key.trim()));
+    }
+    if !config.uses_api_key()
+        && let Some(cookie) = cookie
+    {
         request = request.with_header("Cookie", cookie);
     }
     if let Some(content_type) = content_type {
@@ -2407,22 +2448,31 @@ mod tests {
     }
 
     #[test]
+    fn incomplete_credentials_require_an_api_key() {
+        assert!(validate_auth_configuration("", "user", "").is_err());
+        assert!(validate_auth_configuration("", "", "pass").is_err());
+        assert!(validate_auth_configuration("key", "user", "").is_ok());
+    }
+
+    #[test]
     fn blank_credentials_disable_auth() {
         let mut config = test_config();
-        assert!(config.uses_auth());
+        assert!(config.uses_credentials());
 
         config.username.clear();
         config.password.clear();
 
-        assert!(!config.uses_auth());
+        assert!(!config.uses_credentials());
     }
 
     #[test]
     fn credential_fields_are_optional() {
         let fields = config_fields();
+        let api_key = fields.iter().find(|field| field.key == "api_key").unwrap();
         let username = fields.iter().find(|field| field.key == "username").unwrap();
         let password = fields.iter().find(|field| field.key == "password").unwrap();
 
+        assert!(!api_key.required);
         assert!(!username.required);
         assert!(!password.required);
     }
@@ -2433,6 +2483,66 @@ mod tests {
         let request = build_request(&config, "GET", "/app/version", None, None);
 
         assert!(!request.headers.contains_key("Cookie"));
+        assert!(!request.headers.contains_key("Authorization"));
+    }
+
+    #[test]
+    fn api_key_request_uses_bearer_auth_without_cookie() {
+        let mut config = test_config();
+        config.api_key = "test-api-key".to_string();
+        let request = build_request(&config, "GET", "/app/version", Some("SID=stale"), None);
+
+        assert_eq!(
+            request.headers.get("Authorization").map(String::as_str),
+            Some("Bearer test-api-key")
+        );
+        assert!(!request.headers.contains_key("Cookie"));
+        assert!(config.uses_api_key());
+    }
+
+    #[test]
+    fn api_key_rotation_uses_the_current_key() {
+        let mut config = test_config();
+        config.api_key = "rotated-key".to_string();
+
+        let request = build_request(&config, "GET", "/app/version", None, None);
+
+        assert_eq!(
+            request.headers.get("Authorization").map(String::as_str),
+            Some("Bearer rotated-key")
+        );
+    }
+
+    #[test]
+    fn api_key_failures_never_use_cookie_retry() {
+        let mut config = test_config();
+        config.api_key = "test-api-key".to_string();
+
+        assert!(!should_retry_cookie_auth(&config, 403));
+    }
+
+    #[test]
+    fn clearing_api_key_returns_to_credential_authentication() {
+        let mut config = test_config();
+        config.api_key.clear();
+        let request = build_request(&config, "GET", "/app/version", Some("SID=abc"), None);
+
+        assert!(!request.headers.contains_key("Authorization"));
+        assert_eq!(
+            request.headers.get("Cookie").map(String::as_str),
+            Some("SID=abc")
+        );
+        assert!(should_retry_cookie_auth(&config, 403));
+    }
+
+    #[test]
+    fn authentication_bypass_never_uses_cookie_retry() {
+        let mut config = test_config();
+        config.api_key.clear();
+        config.username.clear();
+        config.password.clear();
+
+        assert!(!should_retry_cookie_auth(&config, 403));
     }
 
     #[test]
@@ -2582,6 +2692,7 @@ mod tests {
         QbittorrentConfig {
             webui_url: "http://localhost:8080".to_string(),
             api_root: "http://localhost:8080/api/v2".to_string(),
+            api_key: String::new(),
             username: "user".to_string(),
             password: "pass".to_string(),
             routing_mode: RoutingMode::Category,
