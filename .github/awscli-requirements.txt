@@ -1,7 +1,8 @@
 # Generated for Ubuntu 24.04 (CPython 3.12) release runners.
 # Regenerate with hashes whenever AWS CLI is intentionally upgraded.
-awscli==1.45.63 \
-    --hash=sha256:05c9722616587f1df81c657b3d8b0fcec31a4a0da8679d93e03006b67005329b
+awscli==1.46.0 \
+    --hash=sha256:0aa98754c23c7eff4c7d970cb619670dc9b0214ee451bb3fe88e74e4a9a03a90 \
+    --hash=sha256:5c1bd660bd3f967f5754a2267fb54e81edf379374faa27973671561888d39bf6
 botocore==1.43.63 \
     --hash=sha256:8deed86feacc8f8d2491f1d170562af191f8b33924052d834f4217d5d797e5a9
 colorama==0.4.6 \
