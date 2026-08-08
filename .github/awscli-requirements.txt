@@ -2,8 +2,9 @@
 # Regenerate with hashes whenever AWS CLI is intentionally upgraded.
 awscli==1.45.63 \
     --hash=sha256:05c9722616587f1df81c657b3d8b0fcec31a4a0da8679d93e03006b67005329b
-botocore==1.43.63 \
-    --hash=sha256:8deed86feacc8f8d2491f1d170562af191f8b33924052d834f4217d5d797e5a9
+botocore==1.43.67 \
+    --hash=sha256:48ab8e9fac26fbc2a700d57010251003e6a5f731cf74d8540fb796bc8f3fc0ef \
+    --hash=sha256:6fe5cfa0c8676ba809efe505b618ec00f30d1af2d014bf316a7aa4ee86accb20
 colorama==0.4.6 \
     --hash=sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6
 docutils==0.19 \
