@@ -27,7 +27,7 @@ weaver-unrar = { version = "0.3.0", default-features = false, features = ["crypt
 zip = { version = "8.0.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 
 [dev-dependencies]
-aws-lc-sys = "0.43"
+aws-lc-sys = "0.44"
 crc32fast = "1"
 sevenz-rust2 = { version = "0.21", default-features = false, features = ["compress"] }
 tempfile = "3"
