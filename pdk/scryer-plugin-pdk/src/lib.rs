@@ -480,6 +480,7 @@ macro_rules! scryer_download_client_bridge_main {
         list_recent_completed = $list_recent_completed:expr,
         control = $control:path,
         mark_imported = $mark_imported:path,
+        mark_imported_non_destructive = $mark_imported_non_destructive:expr,
         status = $status:path,
         test_connection = $test_connection:path $(,)?
     ) => {
@@ -495,11 +496,38 @@ macro_rules! scryer_download_client_bridge_main {
                     list_recent_completed: $list_recent_completed,
                     control: $control,
                     mark_imported: $mark_imported,
+                    mark_imported_non_destructive: $mark_imported_non_destructive,
                     status: $status,
                     test_connection: $test_connection,
                 },
             );
         }
+    };
+    (
+        describe = $describe:path,
+        add = $add:path,
+        list_queue = $list_queue:path,
+        list_history = $list_history:path,
+        list_completed = $list_completed:path,
+        list_recent_completed = $list_recent_completed:expr,
+        control = $control:path,
+        mark_imported = $mark_imported:path,
+        status = $status:path,
+        test_connection = $test_connection:path $(,)?
+    ) => {
+        $crate::scryer_download_client_bridge_main!(
+            describe = $describe,
+            add = $add,
+            list_queue = $list_queue,
+            list_history = $list_history,
+            list_completed = $list_completed,
+            list_recent_completed = $list_recent_completed,
+            control = $control,
+            mark_imported = $mark_imported,
+            mark_imported_non_destructive = None,
+            status = $status,
+            test_connection = $test_connection,
+        );
     };
 }
 

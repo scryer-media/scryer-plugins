@@ -1,6 +1,6 @@
 [package]
 name = "scryer-plugin-pdk"
-version = "0.5.7"
+version = "0.5.8"
 edition = "2024"
 rust-version = "1.97.1"
 license = "GPL-3.0-only"
@@ -11,7 +11,7 @@ keywords = ["scryer", "plugin", "wasm", "wasip1"]
 categories = ["wasm"]
 
 [dependencies]
-scryer-plugin-sdk = "3.7.0"
+scryer-plugin-sdk = "3.8.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 postcard = { version = "1", features = ["use-std"] }
