@@ -1,6 +1,6 @@
 [package]
 name = "scryer-plugin-pdk"
-version = "0.5.8"
+version = "0.5.9"
 edition = "2024"
 rust-version = "1.97.1"
 license = "GPL-3.0-only"
