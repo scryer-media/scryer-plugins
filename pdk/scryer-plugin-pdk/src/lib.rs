@@ -120,7 +120,8 @@ pub use scryer_plugin_sdk::command::{
 };
 pub use scryer_plugin_sdk::host::{
     PluginConfigGetRequest, PluginConfigGetResponse, PluginHostRequest, PluginHostResponse,
-    PluginHttpRequest, PluginHttpResponse, PluginProcessExecRequest, PluginProcessExecResponse,
+    PluginHttpBatchRequest, PluginHttpBatchResponse, PluginHttpRequest, PluginHttpResponse,
+    PluginHttpStartRate, PluginProcessExecRequest, PluginProcessExecResponse,
     PluginStateDeleteRequest, PluginStateGetRequest, PluginStateGetResponse,
     PluginStateMutationResponse, PluginStateSetRequest,
 };
