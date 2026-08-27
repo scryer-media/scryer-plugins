@@ -16,14 +16,13 @@ feature_sets = [{ required_features = [] }, { required_features = ["simd128", "r
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/broadcasthe-net"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/broadcasthe-net"
 
-[[bin]]
-name = "broadcasthe-net-indexer"
+[lib]
+crate-type = ["cdylib"]
 path = "src/lib.rs"
 
 [dependencies]
 chrono = { version = "0.4", default-features = false, features = ["alloc", "std"] }
-indexer-command-compat = { path = "../command-compat" }
-scryer-plugin-pdk = "0.5.10"
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.5.10" }
 scryer-plugin-sdk = "3.9.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

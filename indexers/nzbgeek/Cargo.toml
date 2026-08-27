@@ -15,13 +15,13 @@ feature_sets = [{ required_features = [] }, { required_features = ["simd128", "r
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/nzbgeek"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/nzbgeek"
 
-[[bin]]
-name = "nzbgeek-indexer"
+[lib]
+name = "nzbgeek_indexer"
 path = "src/lib.rs"
+crate-type = ["cdylib"]
 
 [dependencies]
-indexer-command-compat = { path = "../command-compat" }
-scryer-plugin-pdk = "0.5.10"
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.5.10" }
 newznab-common = { path = "../newznab-common" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

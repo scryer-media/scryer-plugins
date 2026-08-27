@@ -1,10 +1,10 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use base64::{Engine as _, engine::general_purpose::STANDARD};
-use indexer_command_compat::{LogLevel, log};
 use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
 use scryer_plugin_pdk::*;
+use scryer_plugin_pdk::component::{self, LogLevel, StartRateGate};
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldOption, ConfigFieldRole, ConfigFieldType,
@@ -14,6 +14,12 @@ use scryer_plugin_sdk::{
     PluginDescriptor, PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
     PluginSearchResult as SearchResult, ProviderDescriptor, SDK_VERSION,
 };
+
+macro_rules! log {
+    ($level:expr, $($argument:tt)*) => {
+        component::log($level, format!($($argument)*))
+    };
+}
 
 #[derive(Default)]
 struct ParsedItem {
@@ -111,7 +117,7 @@ fn build_descriptor() -> PluginDescriptor {
     }
 }
 
-fn search(req: SearchRequest) -> FnResult<SearchResponse> {
+async fn search(req: SearchRequest) -> Result<SearchResponse, Error> {
     let feed_url = read_config("feed_url")?;
     if feed_url.trim().is_empty() {
         return Err(Error::msg(
@@ -135,7 +141,8 @@ fn search(req: SearchRequest) -> FnResult<SearchResponse> {
         username.as_deref(),
         password.as_deref(),
         &additional_headers,
-    )?;
+    )
+    .await?;
 
     let limit = req.limit.clamp(1, 200);
     let mut results = parse_rss_feed(&body, preference);
@@ -268,15 +275,12 @@ fn config_fields() -> Vec<ConfigFieldDef> {
 }
 
 fn read_config(key: &str) -> Result<String, Error> {
-    config::get(key)
-        .map_err(|e| Error::msg(format!("missing config {key}: {e}")))?
+    component::config_get(key)
         .ok_or_else(|| Error::msg(format!("missing config {key}")))
 }
 
 fn optional_config(key: &str) -> Option<String> {
-    config::get(key)
-        .ok()
-        .flatten()
+    component::config_get(key)
         .filter(|value| !value.is_empty())
 }
 
@@ -295,7 +299,7 @@ fn download_preference(value: Option<String>) -> DownloadPreference {
     }
 }
 
-fn fetch_feed(
+async fn fetch_feed(
     feed_url: &str,
     user_agent: &str,
     cookie: Option<&str>,
@@ -305,22 +309,23 @@ fn fetch_feed(
 ) -> Result<String, Error> {
     let logged_url = redact_url_for_log(feed_url);
 
-    let mut request = HttpRequest::new(feed_url)
-        .with_header(
-            "Accept",
-            "application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8",
-        )
-        .with_header("User-Agent", user_agent)
-        .with_header("Accept-Language", "en-US,en;q=0.9");
+    let mut headers = BTreeMap::from([
+        (
+            "Accept".to_string(),
+            "application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8".to_string(),
+        ),
+        ("User-Agent".to_string(), user_agent.to_string()),
+        ("Accept-Language".to_string(), "en-US,en;q=0.9".to_string()),
+    ]);
 
     if let Some(cookie) = cookie {
-        request = request.with_header("Cookie", cookie);
+        headers.insert("Cookie".to_string(), cookie.to_string());
     }
 
     if let Some(username) = username {
         let password = password.unwrap_or_default();
         let encoded = STANDARD.encode(format!("{username}:{password}"));
-        request = request.with_header("Authorization", format!("Basic {encoded}"));
+        headers.insert("Authorization".to_string(), format!("Basic {encoded}"));
     }
 
     for line in additional_headers.lines() {
@@ -332,7 +337,7 @@ fn fetch_feed(
             let header_name = name.trim();
             let header_value = value.trim();
             if !header_name.is_empty() && !header_value.is_empty() {
-                request = request.with_header(header_name, header_value);
+                headers.insert(header_name.to_string(), header_value.to_string());
             }
         }
     }
@@ -343,7 +348,18 @@ fn fetch_feed(
         logged_url
     );
 
-    let response = http::request::<Vec<u8>>(&request, None).map_err(|e| {
+    StartRateGate::new("torrent-rss.http.start", 1, 2_000)
+        .acquire()
+        .await
+        .map_err(component::deadline_deferred_error)?;
+    let response = component::http(PluginHttpRequest {
+        url: feed_url.to_string(),
+        method: Some("GET".to_string()),
+        headers,
+        body: Vec::new(),
+    })
+    .await
+    .map_err(|e| {
         log!(
             LogLevel::Debug,
             "http_trace_error plugin=torrent_rss method=GET attempt=1 url={} error={}",
@@ -352,7 +368,7 @@ fn fetch_feed(
         );
         Error::msg(format!("HTTP request failed: {e}"))
     })?;
-    let status = response.status_code();
+    let status = response.status;
     log!(
         LogLevel::Debug,
         "http_trace_response plugin=torrent_rss method=GET attempt=1 status={} url={}",
@@ -365,7 +381,7 @@ fn fetch_feed(
         )));
     }
 
-    Ok(String::from_utf8_lossy(&response.body()).to_string())
+    Ok(String::from_utf8_lossy(&response.body).to_string())
 }
 
 fn redact_url_for_log(url: &str) -> String {
@@ -998,7 +1014,7 @@ fn dedupe(values: Vec<String>) -> Vec<String> {
     out
 }
 
-indexer_command_compat::scryer_indexer_main!(descriptor = build_descriptor, search = search,);
+scryer_plugin_pdk::scryer_indexer_component_main!(descriptor = build_descriptor, search = search,);
 
 #[cfg(test)]
 mod tests {

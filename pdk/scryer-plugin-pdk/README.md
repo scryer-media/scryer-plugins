@@ -2,10 +2,11 @@
 
 Guest runtime bindings for **Scryer** WebAssembly plugins.
 
-This crate is the guest half of Scryer's command-model plugin invocation
-protocols. The host runs the plugin as a `wasm32-wasip1` **command** (a `_start`
-entry), writes one request document to the plugin's stdin, and reads exactly one
-response document from its stdout.
+This crate is the guest half of Scryer's plugin invocation protocols. Legacy
+plugin kinds run as `wasm32-wasip1` **commands**: the host writes one request
+document to stdin and reads one response document from stdout. Indexers run as
+long-lived `wasm32-wasip2` **components** and use typed host capabilities for
+single-attempt HTTP, time, configuration, state, and logging.
 
 It serves **Scryer's plugin contract** — it is deliberately *not* a
 general-purpose plugin framework. The API promise is "what Scryer's host
@@ -20,6 +21,8 @@ depends on and re-exports.
   no argument they dispatch the normal request/response protocol.
 - Compatibility runners and macro forms for command plugins that still own
   descriptor dispatch themselves.
+- Async component bindings and an indexer component macro. Indexers own their
+  upstream pacing, quotas, retries, pagination, and fanout.
 - A panic hook that reports to stderr (guests build `panic = "abort"`, so the
   process then aborts / the host observes a trap).
 - Re-exports of command wire-protocol types from `scryer-plugin-sdk`, plus the
@@ -62,7 +65,9 @@ scryer_plugin_pdk::scryer_archive_plugin_main!(
 );
 ```
 
-## Building the guest artifact
+## Building guest artifacts
+
+### Legacy command plugins
 
 The plugin is a **command** binary: it needs a `main` (the macro provides one)
 and is built for a `wasm32-wasip1` target with `panic = "abort"`. The resulting
@@ -87,12 +92,18 @@ the slugs mirror `required_features`:
 Threads and exception handling are not supported by Scryer's plugin host. Do
 not publish plugin flavors that require either feature.
 
-Release artifacts follow the repo convention: `wasm-opt -Oz` (with the matching
-`--enable-*` flags per flavor), `zstd -19`, BLAKE3 digest, cosign bundle.
-The release tool invokes the PDK-owned `describe` command after optimization,
-validates descriptor parity across feature variants, and embeds the descriptor
-as `scryer.plugin-descriptor.v1` before compression and digest generation. The
-PDK does not mutate or post-process its own Wasm binary.
+Legacy core-module artifacts use `wasm-opt` before compression and descriptor
+embedding.
+
+### Indexer components
+
+An indexer is a `cdylib` using `scryer_indexer_component_main!` and is built
+with `cargo build --profile plugin-release --target wasm32-wasip2`. Its
+descriptor is exported directly by the component. Package components with
+`wasm-tools strip` followed by `wasm-tools validate`; Binaryen `wasm-opt` does
+not support component binaries and must not be run on them. The packaging tool
+then embeds the descriptor and performs its normal compression and signing
+steps.
 
 ## Versioning
 

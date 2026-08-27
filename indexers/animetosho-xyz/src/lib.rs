@@ -153,18 +153,18 @@ fn build_descriptor() -> PluginDescriptor {
     }
 }
 
-fn search(mut req: SearchRequest) -> FnResult<SearchResponse> {
+async fn search(mut req: SearchRequest) -> FnResult<SearchResponse> {
     normalize_request(&mut req);
 
     let mode = DownloadMode::from_config()?;
     let config = animetosho_config(mode)?;
-    let mut response = execute_full_search(&config, &req, mode.extractor())?;
+    let mut response = execute_full_search(&config, &req, mode.extractor()).await?;
     annotate_response(&mut response, mode);
     Ok(response)
 }
 
-fn action(request: PluginActionRequest) -> FnResult<PluginActionResponse> {
-    newznab_common::execute_provider_action(request)
+async fn action(request: PluginActionRequest) -> FnResult<PluginActionResponse> {
+    newznab_common::execute_provider_action(request).await
 }
 
 fn config_fields() -> Vec<ConfigFieldDef> {
@@ -409,7 +409,7 @@ fn dedupe(values: Vec<String>) -> Vec<String> {
     out
 }
 
-indexer_command_compat::scryer_indexer_main!(
+scryer_indexer_component_main!(
     descriptor = build_descriptor,
     search = search,
     action = action,

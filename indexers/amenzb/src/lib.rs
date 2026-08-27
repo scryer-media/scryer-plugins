@@ -133,7 +133,7 @@ fn build_descriptor() -> PluginDescriptor {
     }
 }
 
-fn search(req: SearchRequest) -> FnResult<SearchResponse> {
+async fn search(req: SearchRequest) -> FnResult<SearchResponse> {
     let ame_config = AmeConfig::from_host()?;
 
     let response = if let Some(info_hash) = request_id(&req, "info_hash")
@@ -146,7 +146,7 @@ fn search(req: SearchRequest) -> FnResult<SearchResponse> {
             &raw_req,
             vec![("info_hash".to_string(), info_hash)],
         ));
-        execute_raw_search_gracefully(&config, &raw_req)?
+        execute_raw_search_gracefully(&config, &raw_req).await?
     } else if let Some(anidb_id) =
         request_id(&req, "anidb_id").or_else(|| request_id(&req, "anidb"))
     {
@@ -156,21 +156,21 @@ fn search(req: SearchRequest) -> FnResult<SearchResponse> {
             &raw_req,
             anime_id_pairs(&req, anidb_id),
         ));
-        execute_raw_search_gracefully(&config, &raw_req)?
+        execute_raw_search_gracefully(&config, &raw_req).await?
     } else {
         let req = normalize_request_ids(req);
         let config = ame_config.newznab_config(provider_params(&ame_config, &req, Vec::new()));
-        execute_full_search(&config, &req, amenzb_metadata_extractor)?
+        execute_full_search(&config, &req, amenzb_metadata_extractor).await?
     };
 
     Ok(response)
 }
 
-fn execute_raw_search_gracefully(
+async fn execute_raw_search_gracefully(
     config: &NewznabConfig,
     req: &SearchRequest,
 ) -> Result<SearchResponse, Error> {
-    match execute_raw_search(config, req, amenzb_metadata_extractor) {
+    match execute_raw_search(config, req, amenzb_metadata_extractor).await {
         Ok(response) => Ok(response),
         Err(error) if is_hit_budget_exhausted_error(&error) => empty_hit_budget_response(config),
         Err(error) => Err(error),
@@ -191,7 +191,7 @@ fn empty_hit_budget_response(config: &NewznabConfig) -> Result<SearchResponse, E
     })
 }
 
-indexer_command_compat::scryer_indexer_main!(descriptor = build_descriptor, search = search,);
+scryer_indexer_component_main!(descriptor = build_descriptor, search = search,);
 
 #[cfg(test)]
 fn empty_hit_budget_response(config: &NewznabConfig) -> Result<SearchResponse, Error> {

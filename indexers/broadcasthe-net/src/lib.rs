@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use chrono::DateTime;
 use scryer_plugin_pdk::*;
@@ -99,7 +99,7 @@ fn build_descriptor() -> PluginDescriptor {
     }
 }
 
-fn search(req: SearchRequest) -> FnResult<SearchResponse> {
+async fn search(req: SearchRequest) -> FnResult<SearchResponse> {
     let base_url = config_value("base_url").unwrap_or_else(|| DEFAULT_BASE_URL.to_string());
     let api_key = required_config("api_key")?;
     let limit = request_limit(&req);
@@ -109,7 +109,7 @@ fn search(req: SearchRequest) -> FnResult<SearchResponse> {
     for query in queries {
         for page in 0..MAX_PAGES {
             let offset = page * PAGE_SIZE;
-            let response = execute_query(&base_url, &api_key, &query, offset)?;
+            let response = execute_query(&base_url, &api_key, &query, offset).await?;
             // BTN reports the total match count; stop once this page reaches it
             // instead of spending another round trip to discover an empty page.
             // BTN cannot filter some series server-side (it returns the whole
@@ -251,7 +251,7 @@ fn build_queries(req: &SearchRequest) -> Vec<BtnQuery> {
     queries
 }
 
-fn execute_query(
+async fn execute_query(
     base_url: &str,
     api_key: &str,
     query: &BtnQuery,
@@ -263,16 +263,30 @@ fn execute_query(
         "params": [api_key, query, PAGE_SIZE, offset],
         "id": "scryer"
     });
-    let request = HttpRequest::new(base_url)
-        .with_method("POST")
-        .with_header("Accept", "application/json-rpc, application/json")
-        .with_header("Content-Type", "application/json")
-        .with_header("User-Agent", "Scryer BroadcasTheNet Indexer/0.1");
-
-    let response = http::request::<Vec<u8>>(&request, Some(serde_json::to_vec(&body)?))
-        .map_err(|error| Error::msg(format!("BTN request failed: {error}")))?;
-    let status = response.status_code();
-    let body_text = String::from_utf8_lossy(&response.body()).to_string();
+    component::StartRateGate::new("broadcasthe-net.request-start", 1, 5_000)
+        .acquire()
+        .await
+        .map_err(component::deadline_deferred_error)?;
+    let response = component::http(PluginHttpRequest {
+        url: base_url.to_string(),
+        method: Some("POST".to_string()),
+        headers: BTreeMap::from([
+            (
+                "Accept".to_string(),
+                "application/json-rpc, application/json".to_string(),
+            ),
+            ("Content-Type".to_string(), "application/json".to_string()),
+            (
+                "User-Agent".to_string(),
+                "Scryer BroadcasTheNet Indexer/0.1".to_string(),
+            ),
+        ]),
+        body: serde_json::to_vec(&body)?,
+    })
+    .await
+    .map_err(|error| Error::msg(format!("BTN request failed: {error:?}")))?;
+    let status = response.status;
+    let body_text = String::from_utf8_lossy(&response.body).to_string();
     match status {
         200 => {}
         401 => return Err(Error::msg("API Key invalid or not authorized")),
@@ -653,7 +667,7 @@ where
     }
 }
 
-indexer_command_compat::scryer_indexer_main!(descriptor = build_descriptor, search = search,);
+scryer_indexer_component_main!(descriptor = build_descriptor, search = search,);
 
 #[cfg(test)]
 mod tests {

@@ -5,14 +5,16 @@
 //! Each plugin is a thin wrapper that calls [`execute_full_search`] with
 //! a provider-specific [`MetadataExtractor`] callback.
 
-use std::collections::HashMap;
-use std::thread;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::collections::{BTreeMap, HashMap};
+use std::time::{Duration, UNIX_EPOCH};
 
-use indexer_command_compat::{LogLevel, log, structured_plugin_error};
+#[cfg(not(all(target_arch = "wasm32", target_os = "wasi", target_env = "p2")))]
+use std::time::SystemTime;
+
 use quick_xml::escape::unescape;
 use quick_xml::events::{Event, attributes::Attribute};
 use quick_xml::{Reader, XmlVersion};
+use scryer_plugin_pdk::component::{self, LogLevel, structured_plugin_error};
 use scryer_plugin_pdk::*;
 pub use scryer_plugin_sdk::command::{PluginActionRequest, PluginActionResponse};
 pub use scryer_plugin_sdk::{
@@ -29,6 +31,12 @@ pub use scryer_plugin_sdk::{
 use serde::{Deserialize, Serialize};
 use unicode_normalization::{UnicodeNormalization, char::is_combining_mark};
 use url::Url;
+
+macro_rules! log {
+    ($level:expr, $($argument:tt)*) => {
+        component::log($level, format!($($argument)*))
+    };
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PasswordMetadataClassification {
@@ -113,6 +121,7 @@ fn protected_from_extra(extra: &HashMap<String, serde_json::Value>) -> Option<bo
 // ---------------------------------------------------------------------------
 
 const DEFAULT_MAX_SEARCH_PAGES: usize = 30;
+const DEFAULT_REQUEST_INTERVAL_MS: u64 = 2_000;
 
 pub struct NewznabConfig {
     pub base_url: String,
@@ -181,7 +190,7 @@ impl Default for NewznabHttpBehavior {
         Self {
             plugin_id: "newznab".to_string(),
             user_agent: DEFAULT_USER_AGENT.to_string(),
-            pre_request_delay: Duration::ZERO,
+            pre_request_delay: Duration::from_millis(DEFAULT_REQUEST_INTERVAL_MS),
             retry_total_budget: Duration::ZERO,
             retry_default_delay: Duration::from_secs(1),
             retry_max_delay: Duration::from_secs(300),
@@ -195,25 +204,19 @@ impl Default for NewznabHttpBehavior {
 impl NewznabConfig {
     /// Read configuration from the descriptor-bound host config keys.
     pub fn from_host() -> Result<Self, Error> {
-        let base_url = config::get("base_url")
-            .map_err(|e| Error::msg(format!("missing config base_url: {e}")))?
+        let base_url = component::config_get("base_url")
             .unwrap_or_default()
             .trim()
             .to_string();
-        let api_key = config::get("api_key")
-            .map_err(|e| Error::msg(format!("missing config api_key: {e}")))?
+        let api_key = component::config_get("api_key")
             .unwrap_or_default()
             .trim()
             .to_string();
-        let api_path = config::get("api_path")
-            .ok()
-            .flatten()
+        let api_path = component::config_get("api_path")
             .unwrap_or_else(|| "/api".to_string())
             .trim()
             .to_string();
-        let additional_params = config::get("additional_params")
-            .ok()
-            .flatten()
+        let additional_params = component::config_get("additional_params")
             .unwrap_or_default()
             .trim()
             .to_string();
@@ -224,21 +227,31 @@ impl NewznabConfig {
             ));
         }
 
-        let page_size = config::get("page_size")
-            .ok()
-            .flatten()
+        let page_size = component::config_get("page_size")
             .and_then(|v| v.parse::<usize>().ok())
             .unwrap_or(100)
             .clamp(1, 100);
+        let mut http_behavior = NewznabHttpBehavior::default();
+        http_behavior.pre_request_delay = request_interval_from_config(
+            component::config_get("request_interval_ms").as_deref(),
+        );
         Ok(Self {
             base_url,
             api_key,
             api_path,
             additional_params,
             page_size,
-            http_behavior: NewznabHttpBehavior::default(),
+            http_behavior,
         })
     }
+}
+
+fn request_interval_from_config(value: Option<&str>) -> Duration {
+    value
+        .and_then(|value| value.trim().parse::<u64>().ok())
+        .filter(|interval_ms| *interval_ms > 0)
+        .map(Duration::from_millis)
+        .unwrap_or_else(|| Duration::from_millis(DEFAULT_REQUEST_INTERVAL_MS))
 }
 
 /// Returns the standard config field declarations for Newznab-family plugins.
@@ -292,6 +305,21 @@ pub fn standard_config_fields(default_base_url: Option<&str>) -> Vec<ConfigField
             options: vec![],
             help_text: Some(
                 "Extra query parameters appended to every request (e.g. &dl=1&attrs=poster)"
+                    .to_string(),
+            ),
+        },
+        ConfigFieldDef {
+            key: "request_interval_ms".to_string(),
+            label: "Request Interval (ms)".to_string(),
+            field_type: ConfigFieldType::Number,
+            required: false,
+            default_value: Some(DEFAULT_REQUEST_INTERVAL_MS.to_string()),
+            value_source: Default::default(),
+            role: None,
+            host_binding: None,
+            options: vec![],
+            help_text: Some(
+                "Minimum delay between upstream request starts; defaults to 2000 ms."
                     .to_string(),
             ),
         },
@@ -485,7 +513,7 @@ fn incomplete_newznab_search_error(
 /// 3. Executes a tiered search (query+ID → ID-only → generic fallback)
 /// 4. Auto-detects response format (JSON or XML) and parses
 /// 5. Classifies errors with Newznab-specific handling
-pub fn execute_full_search(
+pub async fn execute_full_search(
     config: &NewznabConfig,
     req: &SearchRequest,
     extract_fn: MetadataExtractor,
@@ -538,7 +566,7 @@ pub fn execute_full_search(
         && anidb_id.is_none()
         && mal_id.is_none()
     {
-        return execute_rss_search(config, req, extract_fn);
+        return execute_rss_search(config, req, extract_fn).await;
     }
 
     // Determine search shape from typed context first, then legacy hints.
@@ -598,6 +626,7 @@ pub fn execute_full_search(
                 &page_params,
                 &config.http_behavior,
             )
+            .await
         } else {
             execute_tiered_search(
                 &endpoint,
@@ -616,6 +645,7 @@ pub fn execute_full_search(
                 &page_params,
                 &config.http_behavior,
             )
+            .await
         };
         let (status, body) = match search_result {
             Ok(response) => response,
@@ -743,7 +773,7 @@ pub fn execute_full_search(
     })
 }
 
-pub fn execute_raw_search(
+pub async fn execute_raw_search(
     config: &NewznabConfig,
     req: &SearchRequest,
     extract_fn: MetadataExtractor,
@@ -785,7 +815,8 @@ pub fn execute_raw_search(
             None,
             &page_params,
             &config.http_behavior,
-        );
+        )
+        .await;
         let (status, body) = match search_result {
             Ok(response) => response,
             Err(error) if is_hit_budget_exhausted_error(&error) => {
@@ -915,7 +946,7 @@ pub fn execute_raw_search(
 /// - Movie categories (2xxx) → `t=movie`
 /// - TV/anime categories (5xxx) → `t=tvsearch`
 /// - Unknown → both
-fn execute_rss_search(
+async fn execute_rss_search(
     config: &NewznabConfig,
     req: &SearchRequest,
     extract_fn: MetadataExtractor,
@@ -972,7 +1003,8 @@ fn execute_rss_search(
             None, // no episode
             &config.additional_params,
             &config.http_behavior,
-        );
+        )
+        .await;
         let (status, body) = match search_result {
             Ok(response) => response,
             Err(error) if is_hit_budget_exhausted_error(&error) => {
@@ -1354,7 +1386,7 @@ fn strip_query_context(query: &str) -> &str {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn execute_exact_anime_search(
+async fn execute_exact_anime_search(
     endpoint: &str,
     query_variants: &[String],
     api_key: &str,
@@ -1391,7 +1423,8 @@ fn execute_exact_anime_search(
             absolute_episode.or(episode),
             additional_params,
             behavior,
-        );
+        )
+        .await;
     }
 
     let mut last_response = (200, r#"{"channel":{}}"#.to_string());
@@ -1416,7 +1449,8 @@ fn execute_exact_anime_search(
             episode,
             additional_params,
             behavior,
-        )?;
+        )
+        .await?;
         let looks_empty = is_empty_response(body.trim_start());
         last_response = (status, body.clone());
         if is_success_status(status) && !looks_empty {
@@ -1432,7 +1466,7 @@ fn execute_exact_anime_search(
 // ---------------------------------------------------------------------------
 
 #[allow(clippy::too_many_arguments)]
-fn execute_tiered_search(
+async fn execute_tiered_search(
     endpoint: &str,
     search_type: &str,
     query_variants: &[String],
@@ -1505,7 +1539,8 @@ fn execute_tiered_search(
             episode,
             additional_params,
             behavior,
-        )?;
+        )
+        .await?;
 
         let looks_empty = is_empty_response(body.trim_start());
         last_response = Some((status, body.clone()));
@@ -1536,7 +1571,8 @@ fn execute_tiered_search(
             episode,
             additional_params,
             behavior,
-        )?;
+        )
+        .await?;
 
         let looks_empty = is_empty_response(body.trim_start());
         last_response = Some((status, body.clone()));
@@ -1599,7 +1635,7 @@ fn build_endpoint(base_url: &str, api_path: &str) -> Result<String, Error> {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn execute_search(
+async fn execute_search(
     endpoint: &str,
     search_type: &str,
     query: Option<&str>,
@@ -1637,14 +1673,15 @@ fn execute_search(
         &url,
         "application/json, application/xml, */*; q=0.8",
         behavior,
-    )?;
+    )
+    .await?;
     Ok((status, body))
 }
 
 const DEFAULT_USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
     (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-pub fn polite_http_get(
+pub async fn polite_http_get(
     url: &str,
     accept: &str,
     behavior: &NewznabHttpBehavior,
@@ -1652,11 +1689,28 @@ pub fn polite_http_get(
     let logged_url = redact_url_for_log(url);
     let mut total_wait = Duration::ZERO;
     let mut attempt = 1usize;
+    let start_interval_ms = behavior
+        .pre_request_delay
+        .as_millis()
+        .try_into()
+        .unwrap_or(u64::MAX)
+        .max(1);
+    let start_gate = component::StartRateGate::new(
+        format!("{}.http.start", behavior.plugin_id),
+        1,
+        start_interval_ms,
+    );
+    let cooldown = component::CooldownGate::new(format!("{}.http.cooldown", behavior.plugin_id));
 
     loop {
-        if !behavior.pre_request_delay.is_zero() {
-            thread::sleep(behavior.pre_request_delay);
-        }
+        cooldown
+            .wait()
+            .await
+            .map_err(component::deadline_deferred_error)?;
+        start_gate
+            .acquire()
+            .await
+            .map_err(component::deadline_deferred_error)?;
 
         let budget_snapshot = record_hit_budget_use(behavior)?;
         if let Some(snapshot) = budget_snapshot {
@@ -1679,15 +1733,22 @@ pub fn polite_http_get(
             logged_url
         );
 
-        let http_req = HttpRequest::new(url)
-            .with_header("Accept", accept)
-            .with_header("Accept-Encoding", "gzip")
-            .with_header("Accept-Language", "en-US,en;q=0.9")
-            .with_header("Cache-Control", "no-cache")
-            .with_header("Pragma", "no-cache")
-            .with_header("User-Agent", &behavior.user_agent);
-
-        let resp = match http::request::<Vec<u8>>(&http_req, None) {
+        let headers = BTreeMap::from([
+            ("Accept".to_string(), accept.to_string()),
+            ("Accept-Encoding".to_string(), "gzip".to_string()),
+            ("Accept-Language".to_string(), "en-US,en;q=0.9".to_string()),
+            ("Cache-Control".to_string(), "no-cache".to_string()),
+            ("Pragma".to_string(), "no-cache".to_string()),
+            ("User-Agent".to_string(), behavior.user_agent.clone()),
+        ]);
+        let resp = match component::http(PluginHttpRequest {
+            method: Some("GET".to_string()),
+            url: url.to_string(),
+            headers,
+            body: Vec::new(),
+        })
+        .await
+        {
             Ok(resp) => resp,
             Err(e) => {
                 log!(
@@ -1702,9 +1763,9 @@ pub fn polite_http_get(
             }
         };
 
-        let status = resp.status_code();
+        let status = resp.status;
         let headers = capture_known_headers(&resp);
-        let body = String::from_utf8_lossy(&resp.body()).to_string();
+        let body = String::from_utf8_lossy(&resp.body).to_string();
 
         log!(
             LogLevel::Debug,
@@ -1734,7 +1795,14 @@ pub fn polite_http_get(
                         delay.as_secs(),
                         logged_url
                     );
-                    thread::sleep(delay);
+                    cooldown.defer_for(
+                        delay.as_millis().try_into().unwrap_or(u64::MAX),
+                    );
+                    component::sleep_until_deadline(
+                        delay.as_millis().try_into().unwrap_or(u64::MAX),
+                    )
+                    .await
+                    .map_err(component::deadline_deferred_error)?;
                     total_wait += delay;
                     attempt += 1;
                     continue;
@@ -1759,7 +1827,7 @@ pub fn polite_http_get(
                 delay.as_secs(),
                 logged_url
             );
-            thread::sleep(delay);
+            cooldown.defer_for(delay.as_millis().try_into().unwrap_or(u64::MAX));
         }
 
         return Ok((status, body));
@@ -1811,11 +1879,25 @@ fn parse_retry_after(value: &str) -> Option<Duration> {
         .map(Duration::from_secs)
         .or_else(|| {
             httpdate::parse_http_date(value).ok().map(|retry_at| {
-                retry_at
-                    .duration_since(SystemTime::now())
-                    .unwrap_or(Duration::ZERO)
+                let now = UNIX_EPOCH + Duration::from_millis(current_epoch_millis());
+                retry_at.duration_since(now).unwrap_or(Duration::ZERO)
             })
         })
+}
+
+fn current_epoch_millis() -> u64 {
+    #[cfg(all(target_arch = "wasm32", target_os = "wasi", target_env = "p2"))]
+    {
+        return component::wall_now_ms();
+    }
+
+    #[cfg(not(all(target_arch = "wasm32", target_os = "wasi", target_env = "p2")))]
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or(Duration::ZERO)
+        .as_millis()
+        .try_into()
+        .unwrap_or(u64::MAX)
 }
 
 fn parse_rate_limit_reset(value: &str, now_epoch_seconds: u64) -> Option<Duration> {
@@ -1832,10 +1914,7 @@ fn clamp_duration(value: Duration, max: Duration) -> Duration {
 }
 
 fn current_epoch_seconds() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or(Duration::ZERO)
-        .as_secs()
+    current_epoch_millis() / 1_000
 }
 
 const HIT_BUDGET_EXHAUSTED: &str = "indexer hit budget exhausted";
@@ -1869,29 +1948,40 @@ pub fn reserve_hit_budget_uses(
     let Some(budget) = &behavior.hit_budget else {
         return Ok(None);
     };
-    let (mut snapshot, mut state) = snapshot_for_budget(
-        budget,
-        load_hit_budget_state(budget)?,
-        current_epoch_seconds(),
-    );
-    let hourly_remaining = snapshot.hourly_limit.saturating_sub(snapshot.hourly_count);
-    let daily_remaining = snapshot.daily_limit.saturating_sub(snapshot.daily_count);
-    if snapshot.exhausted() || uses > hourly_remaining || uses > daily_remaining {
-        return Err(Error::msg(format!(
-            "{HIT_BUDGET_EXHAUSTED}: hourly={}/{} daily={}/{}",
-            snapshot.hourly_count,
-            snapshot.hourly_limit,
-            snapshot.daily_count,
-            snapshot.daily_limit
-        )));
-    }
+    loop {
+        let expected = component::state_get(&budget.var_key);
+        let stored = expected
+            .as_deref()
+            .map(|raw| {
+                serde_json::from_slice(raw)
+                    .map_err(|error| Error::msg(format!("failed to parse hit budget state: {error}")))
+            })
+            .transpose()?
+            .unwrap_or_default();
+        let (mut snapshot, mut state) =
+            snapshot_for_budget(budget, stored, current_epoch_seconds());
+        let hourly_remaining = snapshot.hourly_limit.saturating_sub(snapshot.hourly_count);
+        let daily_remaining = snapshot.daily_limit.saturating_sub(snapshot.daily_count);
+        if snapshot.exhausted() || uses > hourly_remaining || uses > daily_remaining {
+            return Err(Error::msg(format!(
+                "{HIT_BUDGET_EXHAUSTED}: hourly={}/{} daily={}/{}",
+                snapshot.hourly_count,
+                snapshot.hourly_limit,
+                snapshot.daily_count,
+                snapshot.daily_limit
+            )));
+        }
 
-    state.hourly_count = state.hourly_count.saturating_add(uses);
-    state.daily_count = state.daily_count.saturating_add(uses);
-    save_hit_budget_state(budget, &state)?;
-    snapshot.hourly_count = state.hourly_count;
-    snapshot.daily_count = state.daily_count;
-    Ok(Some(snapshot))
+        state.hourly_count = state.hourly_count.saturating_add(uses);
+        state.daily_count = state.daily_count.saturating_add(uses);
+        let replacement = serde_json::to_vec(&state)
+            .map_err(|error| Error::msg(format!("failed to encode hit budget state: {error}")))?;
+        if component::state_cas(&budget.var_key, expected, Some(replacement)) {
+            snapshot.hourly_count = state.hourly_count;
+            snapshot.daily_count = state.daily_count;
+            return Ok(Some(snapshot));
+        }
+    }
 }
 
 pub fn hit_budget_retry_after_seconds(
@@ -1914,20 +2004,11 @@ pub fn hit_budget_retry_after_seconds(
 }
 
 fn load_hit_budget_state(budget: &NewznabHitBudget) -> Result<StoredHitBudget, Error> {
-    let Some(raw) = var::get::<String>(&budget.var_key)
-        .map_err(|error| Error::msg(format!("failed to read hit budget state: {error}")))?
-    else {
+    let Some(raw) = component::state_get(&budget.var_key) else {
         return Ok(StoredHitBudget::default());
     };
-    serde_json::from_str(&raw)
+    serde_json::from_slice(&raw)
         .map_err(|error| Error::msg(format!("failed to parse hit budget state: {error}")))
-}
-
-fn save_hit_budget_state(budget: &NewznabHitBudget, state: &StoredHitBudget) -> Result<(), Error> {
-    let rendered = serde_json::to_string(state)
-        .map_err(|error| Error::msg(format!("failed to encode hit budget state: {error}")))?;
-    var::set(&budget.var_key, rendered)
-        .map_err(|error| Error::msg(format!("failed to store hit budget state: {error}")))
 }
 
 fn snapshot_for_budget(
@@ -1956,7 +2037,7 @@ fn snapshot_for_budget(
     )
 }
 
-fn capture_known_headers(response: &HttpResponse) -> HashMap<String, String> {
+fn capture_known_headers(response: &PluginHttpResponse) -> HashMap<String, String> {
     let mut headers = HashMap::new();
     for name in [
         "date",
@@ -1979,10 +2060,10 @@ fn capture_known_headers(response: &HttpResponse) -> HashMap<String, String> {
         "x-rate-limit-reset",
     ] {
         if let Some(value) = response
-            .headers()
+            .headers
             .get(name)
-            .or_else(|| response.headers().get(&name.to_ascii_lowercase()))
-            .or_else(|| response.headers().get(&name.to_ascii_uppercase()))
+            .or_else(|| response.headers.get(&name.to_ascii_lowercase()))
+            .or_else(|| response.headers.get(&name.to_ascii_uppercase()))
         {
             headers.insert(name.to_string(), value.to_string());
         }
@@ -3096,21 +3177,24 @@ struct CapsConfig {
 /// rather than an error: the settings UI probes for optional actions, and a
 /// hard failure there would read as a broken indexer rather than an absent
 /// option list.
-pub fn execute_provider_action(
+pub async fn execute_provider_action(
     request: PluginActionRequest,
 ) -> Result<PluginActionResponse, Error> {
     let payload = match request.action.trim() {
-        "newznabCategories" => newznab_categories(),
+        "newznabCategories" => newznab_categories().await,
         _ => serde_json::json!({}),
     };
 
     Ok(PluginActionResponse { payload })
 }
 
-fn newznab_categories() -> serde_json::Value {
-    let categories = caps_config()
+async fn newznab_categories() -> serde_json::Value {
+    let categories = match caps_config()
         .filter(|config| !config.base_url.is_empty() && !config.api_path.is_empty())
-        .and_then(|config| fetch_categories(&config).ok());
+    {
+        Some(config) => fetch_categories(&config).await.ok(),
+        None => None,
+    };
 
     serde_json::json!({
         "options": category_options(categories),
@@ -3119,43 +3203,48 @@ fn newznab_categories() -> serde_json::Value {
 
 fn caps_config() -> Option<CapsConfig> {
     Some(CapsConfig {
-        base_url: config::get("base_url").ok().flatten()?.trim().to_string(),
-        api_key: config::get("api_key")
-            .ok()
-            .flatten()
+        base_url: component::config_get("base_url")?.trim().to_string(),
+        api_key: component::config_get("api_key")
             .unwrap_or_default()
             .trim()
             .to_string(),
-        api_path: config::get("api_path")
-            .ok()
-            .flatten()
+        api_path: component::config_get("api_path")
             .unwrap_or_else(|| "/api".to_string())
             .trim()
             .to_string(),
     })
 }
 
-fn fetch_categories(config: &CapsConfig) -> Result<Vec<NewznabCategoryOption>, Error> {
+async fn fetch_categories(config: &CapsConfig) -> Result<Vec<NewznabCategoryOption>, Error> {
     let endpoint = build_endpoint(&config.base_url, &config.api_path)?;
     let mut params = vec![("t".to_string(), "caps".to_string())];
     if !config.api_key.is_empty() {
         params.push(("apikey".to_string(), config.api_key.clone()));
     }
     let url = append_query_pairs(endpoint.as_str(), &params);
-    let request = HttpRequest::new(url)
-        .with_method("GET")
-        .with_header("User-Agent", "scryer-newznab-plugin/0.1")
-        .with_header("Accept", "application/rss+xml, application/xml, text/xml");
-    let response = http::request::<Vec<u8>>(&request, None)?;
-    let status = response.status_code();
+    let response = component::http(PluginHttpRequest {
+        method: Some("GET".to_string()),
+        url,
+        headers: BTreeMap::from([
+            ("User-Agent".to_string(), "scryer-newznab-plugin/0.1".to_string()),
+            (
+                "Accept".to_string(),
+                "application/rss+xml, application/xml, text/xml".to_string(),
+            ),
+        ]),
+        body: Vec::new(),
+    })
+    .await
+    .map_err(|error| Error::msg(format!("Newznab capabilities request failed: {error}")))?;
+    let status = response.status;
     if !(200..300).contains(&status) {
-        let body = String::from_utf8_lossy(&response.body()).to_string();
+        let body = String::from_utf8_lossy(&response.body).to_string();
         return Err(Error::msg(format!(
             "Newznab capabilities request failed: HTTP {status}: {body}"
         )));
     }
 
-    Ok(parse_categories(&response.body()))
+    Ok(parse_categories(&response.body))
 }
 
 fn append_query_pairs(base_url: &str, params: &[(String, String)]) -> String {
@@ -4583,7 +4672,7 @@ mod tests {
             "later page was malformed".to_string(),
         );
         let structured = error
-            .downcast_ref::<indexer_command_compat::StructuredPluginError>()
+            .downcast_ref::<scryer_plugin_pdk::component::StructuredPluginError>()
             .expect("structured plugin error");
         let Some(PluginErrorDetails::IndexerSearch(
             IndexerSearchPluginError::PartialResults {
@@ -5064,21 +5153,43 @@ mod tests {
     #[test]
     fn config_fields_has_api_path_and_additional_params() {
         let fields = standard_config_fields(None);
-        assert_eq!(fields.len(), 4);
+        assert_eq!(fields.len(), 5);
         assert_eq!(fields[0].key, "base_url");
         assert!(fields[0].required);
         assert_eq!(fields[1].key, "api_key");
         assert!(!fields[1].required);
         assert_eq!(fields[2].key, "api_path");
         assert_eq!(fields[3].key, "additional_params");
+        assert_eq!(fields[4].key, "request_interval_ms");
+        assert_eq!(fields[4].default_value.as_deref(), Some("2000"));
     }
 
     #[test]
     fn http_behavior_defaults_keep_generic_caps() {
         let behavior = NewznabHttpBehavior::default();
+        assert_eq!(
+            behavior.pre_request_delay,
+            Duration::from_millis(DEFAULT_REQUEST_INTERVAL_MS)
+        );
         assert_eq!(behavior.retry_max_attempts, 1);
         assert_eq!(behavior.max_search_pages, DEFAULT_MAX_SEARCH_PAGES);
         assert!(behavior.hit_budget.is_none());
+    }
+
+    #[test]
+    fn request_interval_uses_positive_override_or_conservative_default() {
+        assert_eq!(
+            request_interval_from_config(Some("375")),
+            Duration::from_millis(375)
+        );
+        assert_eq!(
+            request_interval_from_config(Some("0")),
+            Duration::from_millis(DEFAULT_REQUEST_INTERVAL_MS)
+        );
+        assert_eq!(
+            request_interval_from_config(Some("invalid")),
+            Duration::from_millis(DEFAULT_REQUEST_INTERVAL_MS)
+        );
     }
 
     #[test]

@@ -15,14 +15,14 @@ feature_sets = [{ required_features = [] }, { required_features = ["simd128", "r
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torrent-rss"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torrent-rss"
 
-[[bin]]
-name = "torrent-rss-indexer"
+[lib]
+name = "torrent_rss_indexer"
 path = "src/lib.rs"
+crate-type = ["cdylib"]
 
 [dependencies]
 base64 = "0.23"
-indexer-command-compat = { path = "../command-compat" }
-scryer-plugin-pdk = "0.5.10"
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.5.10" }
 quick-xml = "0.41"
 scryer-plugin-sdk = "3.9.0"
 serde = { version = "1", features = ["derive"] }

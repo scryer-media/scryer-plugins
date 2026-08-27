@@ -46,7 +46,7 @@ fn build_descriptor() -> PluginDescriptor {
     })
 }
 
-fn search(req: SearchRequest) -> FnResult<SearchResponse> {
+async fn search(req: SearchRequest) -> FnResult<SearchResponse> {
     let base_url = required_config("base_url")?;
     let additional_params =
         config_value("additional_params").unwrap_or_else(|| DEFAULT_ADDITIONAL_PARAMS.to_string());
@@ -57,7 +57,7 @@ fn search(req: SearchRequest) -> FnResult<SearchResponse> {
         &req,
         anime_standard_format_search,
     );
-    let http_config = RssHttpConfig::from_host(DEFAULT_USER_AGENT);
+    let http_config = RssHttpConfig::from_host(PROVIDER_ID, DEFAULT_USER_AGENT, 1, 2_000);
     let mut options = RssParseOptions::torrent(PROVIDER_ID);
     options.use_guid_info_url = true;
     options.size_element_name = Some("size");
@@ -67,7 +67,7 @@ fn search(req: SearchRequest) -> FnResult<SearchResponse> {
     options.seeds_element_name = Some("seeders");
     options.calculate_peers_as_sum = true;
 
-    let response = execute_rss_urls(PROVIDER_ID, &urls, &http_config, &req, options)?;
+    let response = execute_rss_urls(PROVIDER_ID, &urls, &http_config, &req, options).await?;
     Ok(response)
 }
 
@@ -183,7 +183,7 @@ fn prepare_query(query: &str) -> String {
     query.trim().replace(' ', "+")
 }
 
-indexer_command_compat::scryer_indexer_main!(descriptor = build_descriptor, search = search,);
+scryer_indexer_component_main!(descriptor = build_descriptor, search = search,);
 
 #[cfg(test)]
 mod tests {

@@ -96,17 +96,17 @@ fn build_descriptor() -> PluginDescriptor {
     }
 }
 
-fn search(req: SearchRequest) -> FnResult<SearchResponse> {
+async fn search(req: SearchRequest) -> Result<SearchResponse, Error> {
     let config = NewznabConfig::from_host()?;
-    let response = execute_full_search(&config, &req, extract_base_metadata)?;
+    let response = execute_full_search(&config, &req, extract_base_metadata).await?;
     Ok(response)
 }
 
-fn action(request: PluginActionRequest) -> FnResult<PluginActionResponse> {
-    newznab_common::execute_provider_action(request)
+async fn action(request: PluginActionRequest) -> Result<PluginActionResponse, Error> {
+    newznab_common::execute_provider_action(request).await
 }
 
-indexer_command_compat::scryer_indexer_main!(
+scryer_plugin_pdk::scryer_indexer_component_main!(
     descriptor = build_descriptor,
     search = search,
     action = action,

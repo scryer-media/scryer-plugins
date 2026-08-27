@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use scryer_plugin_pdk::*;
@@ -94,13 +94,13 @@ fn build_descriptor() -> PluginDescriptor {
     }
 }
 
-fn search(req: SearchRequest) -> FnResult<SearchResponse> {
+async fn search(req: SearchRequest) -> FnResult<SearchResponse> {
     let config = FileListConfig::from_host()?;
     let urls = build_urls(&config, &req);
     let mut results = Vec::new();
 
     for url in urls {
-        let body = get_json(&url, &config.username, &config.passkey)?;
+        let body = get_json(&url, &config.username, &config.passkey).await?;
         let mut parsed = parse_torrents(&config, &body)?;
         results.append(&mut parsed);
     }
@@ -256,18 +256,31 @@ fn request_url(base_url: &str, action: &str, categories: &[i64], params: &str) -
     )
 }
 
-fn get_json(url: &str, username: &str, passkey: &str) -> Result<String, Error> {
-    let request = HttpRequest::new(url)
-        .with_header("Accept", "application/json")
-        .with_header("User-Agent", "Scryer FileList Indexer/0.1")
-        .with_header(
-            "Authorization",
-            format!("Basic {}", STANDARD.encode(format!("{username}:{passkey}"))),
-        );
-    let response = http::request::<Vec<u8>>(&request, None)
-        .map_err(|error| Error::msg(format!("FileList request failed: {error}")))?;
-    let status = response.status_code();
-    let body = String::from_utf8_lossy(&response.body()).to_string();
+async fn get_json(url: &str, username: &str, passkey: &str) -> Result<String, Error> {
+    component::StartRateGate::new("filelist.request-start", 1, 2_000)
+        .acquire()
+        .await
+        .map_err(component::deadline_deferred_error)?;
+    let response = component::http(PluginHttpRequest {
+        url: url.to_string(),
+        method: Some("GET".to_string()),
+        headers: BTreeMap::from([
+            ("Accept".to_string(), "application/json".to_string()),
+            (
+                "User-Agent".to_string(),
+                "Scryer FileList Indexer/0.1".to_string(),
+            ),
+            (
+                "Authorization".to_string(),
+                format!("Basic {}", STANDARD.encode(format!("{username}:{passkey}"))),
+            ),
+        ]),
+        body: Vec::new(),
+    })
+    .await
+    .map_err(|error| Error::msg(format!("FileList request failed: {error:?}")))?;
+    let status = response.status;
+    let body = String::from_utf8_lossy(&response.body).to_string();
     if status != 200 {
         return Err(Error::msg(format!(
             "FileList API returned HTTP {status}: {body}"
@@ -497,4 +510,4 @@ struct FileListTorrent {
     upload_date: String,
 }
 
-indexer_command_compat::scryer_indexer_main!(descriptor = build_descriptor, search = search,);
+scryer_indexer_component_main!(descriptor = build_descriptor, search = search,);

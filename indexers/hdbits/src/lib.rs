@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use scryer_plugin_pdk::*;
 use scryer_plugin_sdk::current_sdk_constraint;
@@ -92,7 +92,7 @@ fn build_descriptor() -> PluginDescriptor {
     }
 }
 
-fn search(req: SearchRequest) -> FnResult<SearchResponse> {
+async fn search(req: SearchRequest) -> FnResult<SearchResponse> {
     let config = HdbitsConfig::from_host()?;
     let Some(query) = build_query(&config, &req) else {
         return Ok(SearchResponse {
@@ -100,7 +100,7 @@ fn search(req: SearchRequest) -> FnResult<SearchResponse> {
             ..Default::default()
         });
     };
-    let body = post_query(&config, &query)?;
+    let body = post_query(&config, &query).await?;
     let mut results = parse_response(&config, &body)?;
     let limit = if req.limit == 0 {
         PAGE_SIZE
@@ -213,18 +213,29 @@ fn build_query(config: &HdbitsConfig, req: &SearchRequest) -> Option<TorrentQuer
     }
 }
 
-fn post_query(config: &HdbitsConfig, query: &TorrentQuery) -> Result<String, Error> {
+async fn post_query(config: &HdbitsConfig, query: &TorrentQuery) -> Result<String, Error> {
     let url = format!("{}/api/torrents", config.base_url.trim_end_matches('/'));
-    let request = HttpRequest::new(&url)
-        .with_method("POST")
-        .with_header("Accept", "application/json")
-        .with_header("Content-Type", "application/json")
-        .with_header("User-Agent", "Scryer HDBits Indexer/0.1");
-    let body = serde_json::to_vec(query)?;
-    let response = http::request::<Vec<u8>>(&request, Some(body))
-        .map_err(|error| Error::msg(format!("HDBits request failed: {error}")))?;
-    let status = response.status_code();
-    let body = String::from_utf8_lossy(&response.body()).to_string();
+    component::StartRateGate::new("hdbits.request-start", 1, 2_000)
+        .acquire()
+        .await
+        .map_err(component::deadline_deferred_error)?;
+    let response = component::http(PluginHttpRequest {
+        url,
+        method: Some("POST".to_string()),
+        headers: BTreeMap::from([
+            ("Accept".to_string(), "application/json".to_string()),
+            ("Content-Type".to_string(), "application/json".to_string()),
+            (
+                "User-Agent".to_string(),
+                "Scryer HDBits Indexer/0.1".to_string(),
+            ),
+        ]),
+        body: serde_json::to_vec(query)?,
+    })
+    .await
+    .map_err(|error| Error::msg(format!("HDBits request failed: {error:?}")))?;
+    let status = response.status;
+    let body = String::from_utf8_lossy(&response.body).to_string();
     if status != 200 {
         return Err(Error::msg(format!(
             "HDBits API returned HTTP {status}: {body}"
@@ -511,4 +522,4 @@ struct ImdbInfo {
     id: Option<i64>,
 }
 
-indexer_command_compat::scryer_indexer_main!(descriptor = build_descriptor, search = search,);
+scryer_indexer_component_main!(descriptor = build_descriptor, search = search,);

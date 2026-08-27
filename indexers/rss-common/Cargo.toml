@@ -6,8 +6,7 @@ license = "GPL-3.0-only"
 
 [dependencies]
 base64 = "0.23"
-indexer-command-compat = { path = "../command-compat" }
-scryer-plugin-pdk = "0.5.10"
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.5.10" }
 quick-xml = "0.41"
 regex = "1"
 scryer-plugin-sdk = "3.9.0"
