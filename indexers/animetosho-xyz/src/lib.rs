@@ -80,7 +80,12 @@ fn build_descriptor() -> PluginDescriptor {
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: PROVIDER_ID.to_string(),
             provider_aliases: vec![],
-            search_semantics_version: Some(1),
+            provider_profiles: vec![],
+            search_semantics_version: Some(2),
+            strategy_plan: Some(scryer_plugin_sdk::IndexerStrategyPlanCapability {
+                version: 1,
+                max_parallel_strategies: 4,
+            }),
             source_kind: IndexerSourceKind::Generic,
             capabilities: Capabilities {
                 supported_ids: HashMap::new(),
@@ -153,18 +158,18 @@ fn build_descriptor() -> PluginDescriptor {
     }
 }
 
-fn search(mut req: SearchRequest) -> FnResult<SearchResponse> {
+async fn search(mut req: SearchRequest) -> FnResult<SearchResponse> {
     normalize_request(&mut req);
 
     let mode = DownloadMode::from_config()?;
     let config = animetosho_config(mode)?;
-    let mut response = execute_full_search(&config, &req, mode.extractor())?;
+    let mut response = execute_full_search(&config, &req, mode.extractor()).await?;
     annotate_response(&mut response, mode);
     Ok(response)
 }
 
-fn action(request: PluginActionRequest) -> FnResult<PluginActionResponse> {
-    newznab_common::execute_provider_action(request)
+async fn action(request: PluginActionRequest) -> FnResult<PluginActionResponse> {
+    newznab_common::execute_provider_action(request).await
 }
 
 fn config_fields() -> Vec<ConfigFieldDef> {
@@ -206,10 +211,12 @@ fn config_fields() -> Vec<ConfigFieldDef> {
                 ConfigFieldOption {
                     value: "nzb".to_string(),
                     label: "NZB".to_string(),
+                    config_overrides: Default::default(),
                 },
                 ConfigFieldOption {
                     value: "torrent".to_string(),
                     label: "Torrent".to_string(),
+                    config_overrides: Default::default(),
                 },
             ],
             help_text: Some("Use NZB/Newznab results or torrent/Torznab results".to_string()),
@@ -409,7 +416,7 @@ fn dedupe(values: Vec<String>) -> Vec<String> {
     out
 }
 
-indexer_command_compat::scryer_indexer_main!(
+scryer_indexer_component_main!(
     descriptor = build_descriptor,
     search = search,
     action = action,

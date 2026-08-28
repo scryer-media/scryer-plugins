@@ -21,7 +21,12 @@ fn build_descriptor() -> PluginDescriptor {
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: "torznab".to_string(),
             provider_aliases: vec!["jackett".to_string()],
-            search_semantics_version: Some(1),
+            provider_profiles: vec![],
+            search_semantics_version: Some(2),
+            strategy_plan: Some(scryer_plugin_sdk::IndexerStrategyPlanCapability {
+                version: 1,
+                max_parallel_strategies: 4,
+            }),
             source_kind: IndexerSourceKind::Torrent,
             capabilities: Capabilities {
                 supported_ids: HashMap::from([
@@ -109,9 +114,9 @@ fn build_descriptor() -> PluginDescriptor {
     }
 }
 
-fn search(req: SearchRequest) -> FnResult<SearchResponse> {
+async fn search(req: SearchRequest) -> Result<SearchResponse, Error> {
     let config = NewznabConfig::from_host()?;
-    let mut response = execute_full_search(&config, &req, torznab_metadata_extractor)?;
+    let mut response = execute_full_search(&config, &req, torznab_metadata_extractor).await?;
     apply_magnet_fallback(&mut response);
     Ok(response)
 }
@@ -147,8 +152,8 @@ fn apply_magnet_fallback(response: &mut SearchResponse) {
     }
 }
 
-fn action(request: PluginActionRequest) -> FnResult<PluginActionResponse> {
-    newznab_common::execute_provider_action(request)
+async fn action(request: PluginActionRequest) -> Result<PluginActionResponse, Error> {
+    newznab_common::execute_provider_action(request).await
 }
 
 fn torznab_metadata_extractor(
@@ -364,7 +369,7 @@ fn dedupe(values: Vec<String>) -> Vec<String> {
     out
 }
 
-indexer_command_compat::scryer_indexer_main!(
+scryer_plugin_pdk::scryer_indexer_component_main!(
     descriptor = build_descriptor,
     search = search,
     action = action,

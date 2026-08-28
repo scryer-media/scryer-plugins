@@ -1,10 +1,9 @@
 //! # scryer-plugin-pdk
 //!
-//! Guest runtime bindings for **Scryer** WebAssembly plugins. This crate is the
-//! guest half of Scryer's command-model plugin invocation protocol: the host
-//! runs the plugin as a `wasm32-wasip1` **command**
-//! (a `_start` entry), hands it one request document on stdin, and reads
-//! exactly one response document from stdout.
+//! Guest runtime bindings for Scryer WebAssembly plugins. Legacy plugin kinds
+//! use the command-model protocol: the host runs a `wasm32-wasip1` command,
+//! hands it one request document on stdin, and reads one response document from
+//! stdout. Indexers use the `wasm32-wasip2` async component contract instead.
 //!
 //! ## What this crate is (and is not)
 //!
@@ -18,8 +17,8 @@
 //!
 //! ## Usage
 //!
-//! A plugin provides a descriptor factory and a typed request handler to the
-//! matching descriptor-aware runner, such as
+//! A legacy plugin provides a descriptor factory and a typed request handler to
+//! the matching descriptor-aware runner, such as
 //! [`run_archive_plugin_with_descriptor`] or
 //! [`run_subtitle_sync_plugin_with_descriptor`]. The PDK owns the standardized
 //! `describe` command; release tooling invokes it and embeds the returned
@@ -54,11 +53,14 @@
 //!
 //! ## Building the guest artifact
 //!
-//! The plugin is a **command** binary, so it must have a `main` (via the macro
-//! or an explicit `fn main`) and be built for a `wasm32-wasip1` target. The
-//! resulting module exports `_start` and `memory` and — for the archive plugin
-//! — imports exactly the two frozen host crypto functions under
+//! Legacy plugins are **command** binaries, so they must have a `main` (via the
+//! macro or an explicit `fn main`) and be built for a `wasm32-wasip1` target.
+//! The resulting module exports `_start` and `memory` and — for the archive
+//! plugin — imports exactly the two frozen host crypto functions under
 //! `extism:host/user` (see RFC 123 §5). Build guests with `panic = "abort"`.
+//! Indexers use [`scryer_indexer_component_main!`], a `cdylib`, and the
+//! `wasm32-wasip2` target. The component imports single-attempt HTTP and time
+//! capabilities; it owns upstream pacing, quotas, retries, and fanout.
 //!
 //! The host enables the full wasm feature surface Scryer supports, and the
 //! catalog `feature_sets` metadata selects a matching flavor per host. Build
@@ -67,16 +69,16 @@
 //!
 //! | Flavor | `required_features` | How to build |
 //! |---|---|---|
-//! | baseline | `[]` | `cargo build --profile plugin-release --target wasm32-wasip1` |
+//! | baseline | `[]` | legacy: `cargo build --profile plugin-release --target wasm32-wasip1`; indexer: `--target wasm32-wasip2` |
 //! | simd | `["simd128"]` | as baseline with `RUSTFLAGS="-C target-feature=+simd128"` |
 //! | relaxed-simd | `["simd128","relaxed-simd"]` | `RUSTFLAGS="-C target-feature=+simd128,+relaxed-simd"` |
-//! | threads | `["threads"]` | build for `--target wasm32-wasip1-threads` with `RUSTFLAGS="-C target-feature=+atomics,+bulk-memory,+mutable-globals"` |
 //!
 //! Exceptions (`wasm_exceptions`) are host-enabled as a forward capability; no
-//! current guest emits exception-handling opcodes, so there is no exceptions
+//! current legacy guest emits exception-handling opcodes, so there is no exceptions
 //! flavor to build until a toolchain emits them. See `README.md` for the full
 //! build matrix and rationale.
 
+pub mod component;
 mod download_client_bridge;
 mod extism_compat;
 mod framing;
@@ -451,6 +453,104 @@ macro_rules! scryer_indexer_plugin_main {
         fn main() {
             $crate::run_indexer_plugin_with_descriptor($descriptor, $handler);
         }
+    };
+}
+
+/// Define a WASIp2 component indexer from async search and optional action
+/// handlers. The handlers receive the existing SDK request models and return
+/// the existing SDK response models, so only their host capability calls need
+/// to become `await`-based.
+///
+/// The component ABI serializes the SDK operation payloads as UTF-8 JSON; WIT
+/// remains a small, stable capability boundary rather than duplicating the
+/// full SDK model graph.
+#[macro_export]
+macro_rules! scryer_indexer_component_main {
+    (descriptor = $descriptor:path, search = $search:path $(,)?) => {
+        struct ScryerIndexerComponent;
+
+        impl $crate::component::Guest for ScryerIndexerComponent {
+            fn describe() -> ::std::vec::Vec<u8> {
+                $crate::component::descriptor_bytes($descriptor())
+            }
+
+            async fn search(
+                request: ::std::vec::Vec<u8>,
+            ) -> ::std::result::Result<
+                ::std::vec::Vec<u8>,
+                $crate::component::InvocationError,
+            > {
+                $crate::component::dispatch_search(request, $search).await
+            }
+
+            async fn search_plan(
+                request: ::std::vec::Vec<u8>,
+            ) -> ::std::result::Result<
+                ::std::vec::Vec<u8>,
+                $crate::component::InvocationError,
+            > {
+                let descriptor = $descriptor();
+                let parallelism = $crate::component::strategy_plan_parallelism(&descriptor)
+                    .ok_or($crate::component::InvocationError::InvalidResponse)?;
+                $crate::component::dispatch_search_plan(request, parallelism, $search).await
+            }
+
+            async fn action(
+                request: ::std::vec::Vec<u8>,
+            ) -> ::std::result::Result<
+                ::std::vec::Vec<u8>,
+                $crate::component::InvocationError,
+            > {
+                $crate::component::unsupported_action_response(request)
+            }
+        }
+
+        $crate::component::export!(
+            ScryerIndexerComponent with_types_in $crate::component
+        );
+    };
+    (descriptor = $descriptor:path, search = $search:path, action = $action:path $(,)?) => {
+        struct ScryerIndexerComponent;
+
+        impl $crate::component::Guest for ScryerIndexerComponent {
+            fn describe() -> ::std::vec::Vec<u8> {
+                $crate::component::descriptor_bytes($descriptor())
+            }
+
+            async fn search(
+                request: ::std::vec::Vec<u8>,
+            ) -> ::std::result::Result<
+                ::std::vec::Vec<u8>,
+                $crate::component::InvocationError,
+            > {
+                $crate::component::dispatch_search(request, $search).await
+            }
+
+            async fn search_plan(
+                request: ::std::vec::Vec<u8>,
+            ) -> ::std::result::Result<
+                ::std::vec::Vec<u8>,
+                $crate::component::InvocationError,
+            > {
+                let descriptor = $descriptor();
+                let parallelism = $crate::component::strategy_plan_parallelism(&descriptor)
+                    .ok_or($crate::component::InvocationError::InvalidResponse)?;
+                $crate::component::dispatch_search_plan(request, parallelism, $search).await
+            }
+
+            async fn action(
+                request: ::std::vec::Vec<u8>,
+            ) -> ::std::result::Result<
+                ::std::vec::Vec<u8>,
+                $crate::component::InvocationError,
+            > {
+                $crate::component::dispatch_action(request, $action).await
+            }
+        }
+
+        $crate::component::export!(
+            ScryerIndexerComponent with_types_in $crate::component
+        );
     };
 }
 

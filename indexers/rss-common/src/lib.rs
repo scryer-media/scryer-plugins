@@ -1,11 +1,11 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::sync::OnceLock;
 
 use base64::{Engine as _, engine::general_purpose::STANDARD};
-use indexer_command_compat::{LogLevel, log};
 use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
 use regex::Regex;
+use scryer_plugin_pdk::component::{self, LogLevel, StartRateGate};
 use scryer_plugin_pdk::*;
 pub use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldOption, ConfigFieldRole, ConfigFieldType,
@@ -115,10 +115,16 @@ pub struct RssHttpConfig {
     pub username: Option<String>,
     pub password: Option<String>,
     pub additional_headers: String,
+    start_rate: StartRateGate,
 }
 
 impl RssHttpConfig {
-    pub fn from_host(default_user_agent: &str) -> Self {
+    pub fn from_host(
+        provider_id: &str,
+        default_user_agent: &str,
+        starts: u32,
+        interval_ms: u64,
+    ) -> Self {
         Self {
             user_agent: config_value("user_agent")
                 .unwrap_or_else(|| default_user_agent.to_string()),
@@ -126,6 +132,11 @@ impl RssHttpConfig {
             username: config_value("username"),
             password: config_value("password"),
             additional_headers: config_value("additional_headers").unwrap_or_default(),
+            start_rate: StartRateGate::new(
+                format!("{provider_id}.rss.start_rate"),
+                starts,
+                interval_ms,
+            ),
         }
     }
 }
@@ -163,7 +174,12 @@ pub fn build_indexer_descriptor(spec: DescriptorSpec) -> PluginDescriptor {
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: spec.provider_type.to_string(),
             provider_aliases: spec.provider_aliases,
-            search_semantics_version: None,
+            provider_profiles: vec![],
+            search_semantics_version: Some(2),
+            strategy_plan: Some(scryer_plugin_sdk::IndexerStrategyPlanCapability {
+                version: 1,
+                max_parallel_strategies: 4,
+            }),
             source_kind: spec.source_kind,
             capabilities: Capabilities {
                 supported_ids: spec.supported_ids,
@@ -279,6 +295,7 @@ pub fn select_field(
             .map(|(value, label)| ConfigFieldOption {
                 value: (*value).to_string(),
                 label: (*label).to_string(),
+                config_overrides: Default::default(),
             })
             .collect(),
         ..field(
@@ -338,9 +355,7 @@ pub fn http_config_fields(default_user_agent: &str) -> Vec<ConfigFieldDef> {
 }
 
 pub fn config_value(key: &str) -> Option<String> {
-    config::get(key)
-        .ok()
-        .flatten()
+    component::config_get(key)
         .map(|value| value.trim().to_string())
         .filter(|value| !value.is_empty())
 }
@@ -360,7 +375,7 @@ pub fn config_bool(key: &str) -> bool {
         .unwrap_or(false)
 }
 
-pub fn execute_rss_urls(
+pub async fn execute_rss_urls(
     provider_id: &str,
     urls: &[String],
     http_config: &RssHttpConfig,
@@ -375,7 +390,7 @@ pub fn execute_rss_urls(
     let mut results = Vec::new();
 
     for url in urls {
-        let body = fetch_feed(provider_id, url, http_config)?;
+        let body = fetch_feed(provider_id, url, http_config).await?;
         results.extend(parse_rss_feed(&body, url, options));
         if results.len() >= limit {
             break;
@@ -393,28 +408,29 @@ pub fn execute_rss_urls(
     })
 }
 
-pub fn fetch_feed(
+pub async fn fetch_feed(
     provider_id: &str,
     feed_url: &str,
     config: &RssHttpConfig,
 ) -> Result<String, Error> {
     let logged_url = redact_url_for_log(feed_url);
-    let mut request = HttpRequest::new(feed_url)
-        .with_header(
-            "Accept",
-            "application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8",
-        )
-        .with_header("User-Agent", config.user_agent.as_str())
-        .with_header("Accept-Language", "en-US,en;q=0.9");
+    let mut headers = BTreeMap::from([
+        (
+            "Accept".to_string(),
+            "application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8".to_string(),
+        ),
+        ("User-Agent".to_string(), config.user_agent.clone()),
+        ("Accept-Language".to_string(), "en-US,en;q=0.9".to_string()),
+    ]);
 
     if let Some(cookie) = config.cookie.as_deref() {
-        request = request.with_header("Cookie", cookie);
+        headers.insert("Cookie".to_string(), cookie.to_string());
     }
 
     if let Some(username) = config.username.as_deref() {
         let password = config.password.as_deref().unwrap_or_default();
         let encoded = STANDARD.encode(format!("{username}:{password}"));
-        request = request.with_header("Authorization", format!("Basic {encoded}"));
+        headers.insert("Authorization".to_string(), format!("Basic {encoded}"));
     }
 
     for line in config.additional_headers.lines() {
@@ -426,41 +442,48 @@ pub fn fetch_feed(
             let header_name = name.trim();
             let header_value = value.trim();
             if !header_name.is_empty() && !header_value.is_empty() {
-                request = request.with_header(header_name, header_value);
+                headers.insert(header_name.to_string(), header_value.to_string());
             }
         }
     }
 
-    log!(
+    component::log(
         LogLevel::Debug,
-        "http_trace plugin={} method=GET attempt=1 url={}",
-        provider_id,
-        logged_url
+        format!("http_trace plugin={provider_id} method=GET attempt=1 url={logged_url}"),
     );
-
-    let response = http::request::<Vec<u8>>(&request, None).map_err(|e| {
-        log!(
+    config
+        .start_rate
+        .acquire()
+        .await
+        .map_err(component::deadline_deferred_error)?;
+    let response = component::http(PluginHttpRequest {
+        url: feed_url.to_string(),
+        method: Some("GET".to_string()),
+        headers,
+        body: Vec::new(),
+    })
+    .await
+    .map_err(|error| {
+        component::log(
             LogLevel::Debug,
-            "http_trace_error plugin={} method=GET attempt=1 url={} error={}",
-            provider_id,
-            logged_url,
-            e
+            format!(
+                "http_trace_error plugin={provider_id} method=GET attempt=1 url={logged_url} error={error}"
+            ),
         );
-        Error::msg(format!("HTTP request failed: {e}"))
+        Error::msg(format!("HTTP request failed: {error}"))
     })?;
-    let status = response.status_code();
-    log!(
+    let status = response.status;
+    component::log(
         LogLevel::Debug,
-        "http_trace_response plugin={} method=GET attempt=1 status={} url={}",
-        provider_id,
-        status,
-        logged_url
+        format!(
+            "http_trace_response plugin={provider_id} method=GET attempt=1 status={status} url={logged_url}"
+        ),
     );
     if status >= 400 {
         return Err(Error::msg(format!("RSS feed returned HTTP {status}")));
     }
 
-    Ok(String::from_utf8_lossy(&response.body()).to_string())
+    Ok(String::from_utf8_lossy(&response.body).to_string())
 }
 
 pub fn redact_url_for_log(url: &str) -> String {
@@ -568,11 +591,12 @@ pub fn parse_rss_feed(body: &str, feed_url: &str, options: RssParseOptions) -> V
             }
             Ok(Event::Eof) => break,
             Err(error) => {
-                log!(
+                component::log(
                     LogLevel::Debug,
-                    "rss_parse_error plugin={} error={}",
-                    options.provider_tag,
-                    error
+                    format!(
+                        "rss_parse_error plugin={} error={error}",
+                        options.provider_tag,
+                    ),
                 );
                 break;
             }
@@ -1202,11 +1226,7 @@ fn parse_size(value: &str) -> Option<i64> {
         "gb" | "gib" => 3,
         _ => 0,
     };
-    let prefix = if unit.contains('i') {
-        1024_f64
-    } else {
-        1024_f64
-    };
+    let prefix = 1024_f64;
     Some((value * prefix.powi(power)).round() as i64)
 }
 

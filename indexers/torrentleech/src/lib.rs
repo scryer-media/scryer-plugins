@@ -36,16 +36,16 @@ fn build_descriptor() -> PluginDescriptor {
     })
 }
 
-fn search(req: SearchRequest) -> FnResult<SearchResponse> {
+async fn search(req: SearchRequest) -> FnResult<SearchResponse> {
     let base_url = config_value("base_url").unwrap_or_else(|| DEFAULT_BASE_URL.to_string());
     let api_key = required_config("api_key")?;
     let feed_url = format!("{}/{}", base_url.trim().trim_end_matches('/'), api_key);
-    let http_config = RssHttpConfig::from_host(DEFAULT_USER_AGENT);
+    let http_config = RssHttpConfig::from_host(PROVIDER_ID, DEFAULT_USER_AGENT, 1, 2_000);
     let mut options = RssParseOptions::torrent(PROVIDER_ID);
     options.use_guid_info_url = true;
     options.parse_seeders_in_description = true;
 
-    let response = execute_rss_urls(PROVIDER_ID, &[feed_url], &http_config, &req, options)?;
+    let response = execute_rss_urls(PROVIDER_ID, &[feed_url], &http_config, &req, options).await?;
     Ok(response)
 }
 
@@ -79,4 +79,4 @@ fn config_fields() -> Vec<ConfigFieldDef> {
     fields
 }
 
-indexer_command_compat::scryer_indexer_main!(descriptor = build_descriptor, search = search,);
+scryer_indexer_component_main!(descriptor = build_descriptor, search = search,);

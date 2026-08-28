@@ -20,8 +20,9 @@ scryer-plugin-sdk = "3.9.0"
 tempfile = "3"
 toml_edit = "0.25"
 extism = "1.30"
-wasmtime = "47.0.0"
-wasmtime-wasi = "47.0.0"
+futures = { version = "0.3", default-features = false, features = ["executor"] }
+wasmtime = "48.0.0"
+wasmtime-wasi = "48.0.0"
 zstd = "0.13"
 
 [dev-dependencies]

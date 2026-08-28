@@ -2,6 +2,7 @@ use anyhow::{Context, Result, anyhow, bail};
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use extism::{CurrentPlugin, Error as ExtismError, Manifest, UserData, Val, ValType, host_fn};
+mod component_descriptor;
 mod plugin_new;
 use scryer_plugin_sdk::{
     EXPORT_ARCHIVE_PROCESS, EXPORT_DESCRIBE, EXPORT_DOWNLOAD_ADD, EXPORT_DOWNLOAD_CONTROL,
@@ -41,7 +42,9 @@ const GREEN: &str = "\x1b[0;32m";
 const YELLOW: &str = "\x1b[1;33m";
 const BOLD: &str = "\x1b[1m";
 const RESET: &str = "\x1b[0m";
-const WASM_TARGET: &str = "wasm32-wasip1";
+const LEGACY_WASM_TARGET: &str = "wasm32-wasip1";
+const INDEXER_COMPONENT_WASM_TARGET: &str = "wasm32-wasip2";
+const WASM_TARGETS: [&str; 2] = [LEGACY_WASM_TARGET, INDEXER_COMPONENT_WASM_TARGET];
 #[allow(dead_code)]
 const CATALOG_V2_SCHEMA: &str = "scryer.plugin.catalog.v2";
 const CHILD_CATALOG_V2_SCHEMA: &str = "scryer.plugin.child_catalog.v2";
@@ -1667,15 +1670,16 @@ fn configured_rustup_toolchain(ctx: &TaskContext) -> Result<Option<RustupToolcha
         }))
 }
 
-fn host_rust_has_wasm_target(ctx: &TaskContext) -> Result<bool> {
+fn host_rust_has_wasm_target(ctx: &TaskContext, target: &str) -> Result<bool> {
     let mut rustc = ctx.command("rustc");
-    rustc.args(["--print", "target-libdir", "--target", WASM_TARGET]);
+    rustc.args(["--print", "target-libdir", "--target", target]);
     Ok(rustc.output()?.status.success())
 }
 
 fn rustup_toolchain_has_target(
     _ctx: &TaskContext,
     rustup_toolchain: &RustupToolchain,
+    target: &str,
 ) -> Result<bool> {
     let mut targets = Command::new(&rustup_toolchain.rustup);
     targets.args([
@@ -1686,9 +1690,7 @@ fn rustup_toolchain_has_target(
         rustup_toolchain.toolchain.as_str(),
     ]);
     let installed_targets = run_capture(&mut targets)?;
-    Ok(installed_targets
-        .lines()
-        .any(|line| line.trim() == WASM_TARGET))
+    Ok(installed_targets.lines().any(|line| line.trim() == target))
 }
 
 fn rustup_toolchain_has_component(
@@ -1734,13 +1736,17 @@ fn ensure_rustup_component(rustup_toolchain: &RustupToolchain, component: &str) 
     })
 }
 
-fn ensure_rustup_wasm_target(ctx: &TaskContext, rustup_toolchain: &RustupToolchain) -> Result<()> {
-    if rustup_toolchain_has_target(ctx, rustup_toolchain)? {
+fn ensure_rustup_wasm_target(
+    ctx: &TaskContext,
+    rustup_toolchain: &RustupToolchain,
+    target: &str,
+) -> Result<()> {
+    if rustup_toolchain_has_target(ctx, rustup_toolchain, target)? {
         return Ok(());
     }
 
     step(format!(
-        "Installing {WASM_TARGET} for rustup toolchain {}",
+        "Installing {target} for rustup toolchain {}",
         rustup_toolchain.toolchain
     ));
     let mut command = Command::new(&rustup_toolchain.rustup);
@@ -1749,11 +1755,11 @@ fn ensure_rustup_wasm_target(ctx: &TaskContext, rustup_toolchain: &RustupToolcha
         "add",
         "--toolchain",
         rustup_toolchain.toolchain.as_str(),
-        WASM_TARGET,
+        target,
     ]);
     run_checked(&mut command).with_context(|| {
         format!(
-            "failed to install {WASM_TARGET} for rustup toolchain {}",
+            "failed to install {target} for rustup toolchain {}",
             rustup_toolchain.toolchain
         )
     })
@@ -1872,34 +1878,41 @@ fn cargo_target_dir(cwd: &Path) -> PathBuf {
         .unwrap_or_else(|| cwd.join("target"))
 }
 
-fn wasm_build_command_in(ctx: &TaskContext, cwd: &Path) -> Result<Command> {
+fn wasm_build_command_in(ctx: &TaskContext, cwd: &Path, target: &str) -> Result<Command> {
     if let Some(rustup_toolchain) = configured_rustup_toolchain(ctx)? {
-        ensure_rustup_wasm_target(ctx, &rustup_toolchain)?;
+        ensure_rustup_wasm_target(ctx, &rustup_toolchain, target)?;
         return rustup_cargo_command_in(&rustup_toolchain, cwd);
     }
 
-    if host_rust_has_wasm_target(ctx)? {
+    if host_rust_has_wasm_target(ctx, target)? {
         return Ok(ctx.command_in("cargo", cwd));
     }
 
     bail!(
-        "{WASM_TARGET} target is unavailable. Install rustup so xtask can bootstrap the repo toolchain, or add {WASM_TARGET} to the active host Rust toolchain."
+        "{target} target is unavailable. Install rustup so xtask can bootstrap the repo toolchain, or add {target} to the active host Rust toolchain."
     )
 }
 
-fn require_wasm_target(ctx: &TaskContext) -> Result<()> {
+fn require_wasm_target(ctx: &TaskContext, target: &str) -> Result<()> {
     if let Some(rustup_toolchain) = configured_rustup_toolchain(ctx)? {
-        ensure_rustup_wasm_target(ctx, &rustup_toolchain)?;
+        ensure_rustup_wasm_target(ctx, &rustup_toolchain, target)?;
         return Ok(());
     }
 
-    if host_rust_has_wasm_target(ctx)? {
+    if host_rust_has_wasm_target(ctx, target)? {
         return Ok(());
     }
 
     bail!(
-        "{WASM_TARGET} target is unavailable. Install rustup so xtask can bootstrap the repo toolchain, or add {WASM_TARGET} to the active host Rust toolchain."
+        "{target} target is unavailable. Install rustup so xtask can bootstrap the repo toolchain, or add {target} to the active host Rust toolchain."
     )
+}
+
+fn require_wasm_targets(ctx: &TaskContext) -> Result<()> {
+    for target in WASM_TARGETS {
+        require_wasm_target(ctx, target)?;
+    }
+    Ok(())
 }
 
 fn git_capture(ctx: &TaskContext, args: &[&str]) -> Result<String> {
@@ -3209,14 +3222,30 @@ fn prefetch_plugin_dependencies(ctx: &TaskContext, plugin_dir: &Path) -> Result<
         )
     })?;
 
+    let target = wasm_target_for_plugin(plugin_dir);
     let mut target_command = repo_cargo_command_in(ctx, plugin_dir)?;
-    target_command.args(["fetch", "--locked", "--target", WASM_TARGET]);
+    target_command.args(["fetch", "--locked", "--target", target]);
     run_checked(&mut target_command).with_context(|| {
         format!(
-            "failed to prefetch {WASM_TARGET} dependencies for {}",
+            "failed to prefetch {target} dependencies for {}",
             plugin_dir.display()
         )
     })
+}
+
+/// Indexer artifacts are WASI Preview 2 components. All other plugin classes
+/// retain the established Preview 1 command/reactor targets.
+fn wasm_target_for_plugin(plugin_dir: &Path) -> &'static str {
+    let is_indexer = plugin_dir
+        .parent()
+        .and_then(Path::file_name)
+        .and_then(OsStr::to_str)
+        == Some("indexers");
+    if is_indexer {
+        INDEXER_COMPONENT_WASM_TARGET
+    } else {
+        LEGACY_WASM_TARGET
+    }
 }
 
 fn wasm_variant_target_dir(plugin_dir: &Path, feature_set: &WasmFeatureSet) -> PathBuf {
@@ -3244,10 +3273,11 @@ fn build_plugin_wasm(
     validate_plugin_release_profile(&cargo_toml)?;
     let wasm_filename = wasm_filename_for_manifest(&cargo_toml)?;
     let command_wasm_filename = crate_name_from_manifest(&cargo_toml)? + ".wasm";
+    let target = wasm_target_for_plugin(plugin_dir);
 
     step(format!("Building {}", plugin_dir.display()));
     ensure_lockfile(ctx, plugin_dir)?;
-    let mut build = wasm_build_command_in(ctx, plugin_dir)?;
+    let mut build = wasm_build_command_in(ctx, plugin_dir, target)?;
     build.env(
         "CARGO_TARGET_DIR",
         wasm_variant_target_dir(plugin_dir, feature_set),
@@ -3264,14 +3294,14 @@ fn build_plugin_wasm(
         "--profile",
         "plugin-release",
         "--target",
-        WASM_TARGET,
+        target,
         "--locked",
         "--offline",
     ]);
     run_checked(&mut build)?;
 
     let artifact_dir = wasm_variant_target_dir(plugin_dir, feature_set)
-        .join(WASM_TARGET)
+        .join(target)
         .join("plugin-release");
     select_built_wasm(&artifact_dir, &wasm_filename, &command_wasm_filename)
 }
@@ -3892,6 +3922,9 @@ fn instantiate_plugin_from_wasm(wasm_path: &Path, timeout: Duration) -> Result<e
 fn load_descriptor_from_wasm(wasm_path: &Path) -> Result<PluginDescriptor> {
     let bytes =
         fs::read(wasm_path).with_context(|| format!("failed to read {}", wasm_path.display()))?;
+    if let Some(descriptor) = component_descriptor::descriptor_from_component(&bytes)? {
+        return Ok(descriptor);
+    }
     if let Some(descriptor) = command_model_descriptor_from_wasm(wasm_path, &bytes)? {
         return Ok(descriptor);
     }
@@ -4261,7 +4294,7 @@ fn run_doctor(ctx: &TaskContext) -> Result<()> {
             path.display()
         ));
     }
-    require_wasm_target(ctx)?;
+    require_wasm_targets(ctx)?;
     match current_sdk_dependency(ctx) {
         Ok(SdkDependency::Published(version)) => {
             match ensure_published_sdk_version(ctx, &version) {
@@ -4532,7 +4565,7 @@ fn run_ci_strict(ctx: &TaskContext, scope: &CiScopeArgs) -> Result<()> {
 fn run_plugin_build_all(ctx: &TaskContext) -> Result<()> {
     step("Building all plugin crates");
     ensure_current_sdk_dependency_is_published(ctx)?;
-    require_wasm_target(ctx)?;
+    require_wasm_targets(ctx)?;
     let plugin_dirs = plugin_crate_dirs(ctx)?;
     run_bounded(plugin_dirs, |dir| {
         let manifest_metadata = plugin_manifest_metadata(&dir.join("Cargo.toml"))?;
@@ -5128,20 +5161,38 @@ fn optimize_and_compress_wasm(
     let optimized = dist.join(plugin_variant_uncompressed_file_name(feature_set, lane));
     let compressed = dist.join(plugin_variant_logical_file_name(feature_set, lane, "zst"));
     let compressed_br = dist.join(plugin_variant_logical_file_name(feature_set, lane, "br"));
-    let mut wasm_opt = ctx.command("wasm-opt");
-    wasm_opt
-        .arg(feature_set.wasm_opt_level())
-        .arg("--enable-bulk-memory")
-        .arg("--enable-sign-ext")
-        .arg("--enable-nontrapping-float-to-int");
-    for required_feature in &feature_set.required_features {
-        wasm_opt.arg(required_feature.wasm_opt_flag());
+    let input = fs::read(wasm).with_context(|| format!("failed to read {}", wasm.display()))?;
+    if is_component_wasm(&input) {
+        // Binaryen does not support component binaries. Keep Rust's release
+        // optimization intact, remove only nonessential sections, then have
+        // wasm-tools validate the exact component representation we package.
+        run_checked(
+            ctx.command("wasm-tools")
+                .arg("strip")
+                .arg(wasm)
+                .arg("-o")
+                .arg(&optimized),
+        )?;
+        run_checked(ctx.command("wasm-tools").arg("validate").arg(&optimized))?;
+    } else {
+        let mut wasm_opt = ctx.command("wasm-opt");
+        wasm_opt
+            .arg(feature_set.wasm_opt_level())
+            .arg("--enable-bulk-memory")
+            .arg("--enable-sign-ext")
+            .arg("--enable-nontrapping-float-to-int");
+        for required_feature in &feature_set.required_features {
+            wasm_opt.arg(required_feature.wasm_opt_flag());
+        }
+        wasm_opt.arg(wasm).arg("-o").arg(&optimized);
+        run_checked(&mut wasm_opt)?;
     }
-    wasm_opt.arg(wasm).arg("-o").arg(&optimized);
-    run_checked(&mut wasm_opt)?;
     let descriptor = load_descriptor_from_wasm(&optimized)?;
     validate_descriptor_contract(&descriptor)?;
     embed_plugin_descriptor(&optimized, &descriptor)?;
+    if is_component_wasm(&fs::read(&optimized)?) {
+        run_checked(ctx.command("wasm-tools").arg("validate").arg(&optimized))?;
+    }
     run_checked(
         ctx.command("zstd")
             .arg(ZSTD_LEVEL)
@@ -5187,7 +5238,10 @@ fn write_wasm_u32_leb(mut value: u32, output: &mut Vec<u8>) {
 }
 
 fn command_abi_version(wasm: &[u8]) -> Result<Option<u16>> {
-    if !wasm.starts_with(b"\0asm\x01\0\0\0") {
+    if is_component_wasm(wasm) {
+        return Ok(None);
+    }
+    if !is_core_wasm(wasm) {
         bail!("plugin artifact is not a core WebAssembly module");
     }
     let mut offset = 8usize;
@@ -5228,8 +5282,8 @@ fn command_abi_version(wasm: &[u8]) -> Result<Option<u16>> {
 }
 
 fn descriptor_custom_section(wasm: &[u8]) -> Result<Option<(&str, &[u8])>> {
-    if !wasm.starts_with(b"\0asm\x01\0\0\0") {
-        bail!("plugin artifact is not a core WebAssembly module");
+    if !is_core_wasm(wasm) && !is_component_wasm(wasm) {
+        bail!("plugin artifact is not a WebAssembly module or component");
     }
     let mut offset = 8usize;
     let mut found = None;
@@ -5290,6 +5344,14 @@ fn append_plugin_descriptor_custom_section(wasm: &[u8], payload: &[u8]) -> Resul
     );
     embedded.extend_from_slice(&body);
     Ok(embedded)
+}
+
+fn is_core_wasm(wasm: &[u8]) -> bool {
+    wasm.starts_with(b"\0asm\x01\0\0\0")
+}
+
+fn is_component_wasm(wasm: &[u8]) -> bool {
+    wasm.starts_with(b"\0asm\r\0\x01\0")
 }
 
 fn embed_plugin_descriptor(wasm_path: &Path, descriptor: &PluginDescriptor) -> Result<()> {
@@ -6356,6 +6418,7 @@ fn catalog_v3_artifact_from_staged_file(
 }
 
 fn catalog_v3_plugin_artifact_from_staged_file(
+    runtime: &str,
     feature_set: &WasmFeatureSet,
     wasm_digests: Vec<String>,
     bytes: u64,
@@ -6365,7 +6428,7 @@ fn catalog_v3_plugin_artifact_from_staged_file(
 ) -> Result<CatalogV3PluginArtifact> {
     let location = catalog_v3_artifact_from_staged_file(digests, primary_url, mirror_urls)?;
     Ok(CatalogV3PluginArtifact {
-        runtime: WASM_TARGET.to_string(),
+        runtime: runtime.to_string(),
         required_features: feature_set.required_features.clone(),
         wasm_digests,
         bytes,
@@ -6613,6 +6676,7 @@ fn catalog_v3_release_from_prepared_assets(
             let primary_url =
                 versioned_distribution_url(&distribution_base_url, version, &file_name);
             artifacts.push(catalog_v3_plugin_artifact_from_staged_file(
+                wasm_target_for_plugin(&plugin.plugin_dir),
                 &variant.feature_set,
                 variant.wasm_digests.clone(),
                 variant.bytes,
@@ -7418,7 +7482,7 @@ fn run_community_scaffold(_ctx: &TaskContext, plugin_id: &str, output_dir: &Path
                 min_scryer_version: None,
                 max_scryer_version: None,
                 artifacts: vec![CatalogV3PluginArtifact {
-                    runtime: WASM_TARGET.to_string(),
+                    runtime: INDEXER_COMPONENT_WASM_TARGET.to_string(),
                     required_features: Vec::new(),
                     wasm_digests: vec![
                         "blake3:REPLACE_ME".to_string(),
@@ -7442,7 +7506,7 @@ fn run_community_scaffold(_ctx: &TaskContext, plugin_id: &str, output_dir: &Path
     )?;
     fs::write(
         output_dir.join(".github/workflows/release-plugin.yml"),
-        "name: release-plugin\non:\n  push:\n    tags: ['v*']\npermissions:\n  contents: write\n  id-token: write\njobs:\n  build-sign-release:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: sigstore/cosign-installer@v4.1.1\n        with:\n          cosign-release: v3.0.2\n      - run: echo 'Adapt this workflow to build wasm32-wasip1, run wasm-opt -Oz, compress with zstd -19 and brotli, compress v3 bundles to .bundle.zst, then publish catalog/v2 and catalog/v3 assets.'\n",
+        "name: release-plugin\non:\n  push:\n    tags: ['v*']\npermissions:\n  contents: write\n  id-token: write\njobs:\n  build-sign-release:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: sigstore/cosign-installer@v4.1.1\n        with:\n          cosign-release: v3.0.2\n      - run: echo 'For this indexer, install wasm32-wasip2 and wasm-tools, build the component, then run wasm-tools strip and wasm-tools validate before packaging. Do not run wasm-opt on the component. Legacy non-indexer command plugins instead use wasm32-wasip1 and wasm-opt.'\n",
     )?;
     ok(format!("scaffolded {}", output_dir.display()));
     Ok(())
@@ -7876,12 +7940,12 @@ fn validate_catalog_v3_plugin_entry(plugin: &CatalogV3PluginEntry) -> Result<()>
         }
         let mut artifact_variants = BTreeSet::new();
         for artifact in &release.artifacts {
-            if artifact.runtime.trim() != WASM_TARGET {
+            if !WASM_TARGETS.contains(&artifact.runtime.trim()) {
                 bail!(
-                    "{} {}: artifact runtime must be {}",
+                    "{} {}: artifact runtime must be one of {}",
                     plugin.id,
                     release.version,
-                    WASM_TARGET
+                    WASM_TARGETS.join(", ")
                 );
             }
             let normalized_required_features_set =
@@ -9052,6 +9116,39 @@ mod tests {
     }
 
     #[test]
+    fn component_descriptor_reembedding_preserves_search_semantics_version() {
+        let descriptor: PluginDescriptor = serde_json::from_value(serde_json::json!({
+            "id": "test-indexer",
+            "name": "Test Indexer",
+            "version": "1.0.0",
+            "sdk_version": "3.9.0",
+            "provider": {
+                "kind": "indexer",
+                "provider_type": "test-indexer",
+                "search_semantics_version": 7
+            }
+        }))
+        .expect("parse indexer descriptor");
+        let artifact = tempfile::NamedTempFile::new().expect("create component artifact");
+        fs::write(artifact.path(), b"\0asm\r\0\x01\0").expect("write component artifact");
+
+        embed_plugin_descriptor(artifact.path(), &descriptor).expect("embed component descriptor");
+        let embedded = fs::read(artifact.path()).expect("read embedded component artifact");
+        let (_, payload) = descriptor_custom_section(&embedded)
+            .expect("read descriptor custom section")
+            .expect("embedded descriptor custom section");
+        let restored: PluginDescriptor =
+            serde_json::from_slice(payload).expect("parse embedded component descriptor");
+
+        assert_eq!(
+            restored
+                .indexer()
+                .and_then(|indexer| indexer.search_semantics_version),
+            Some(7)
+        );
+    }
+
+    #[test]
     fn command_abi_marker_round_trips() {
         let name = COMMAND_ABI_CUSTOM_SECTION.as_bytes();
         let payload = COMMAND_ABI_VERSION.to_le_bytes();
@@ -9130,7 +9227,7 @@ mod tests {
             min_scryer_version: min_scryer_version.map(str::to_string),
             max_scryer_version: None,
             artifacts: vec![CatalogV3PluginArtifact {
-                runtime: WASM_TARGET.to_string(),
+                runtime: LEGACY_WASM_TARGET.to_string(),
                 required_features: Vec::new(),
                 wasm_digests: vec![
                     "blake3:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -9588,7 +9685,7 @@ support_tier = "verified_community"
                 min_scryer_version: None,
                 max_scryer_version: None,
                 artifacts: vec![CatalogV3PluginArtifact {
-                    runtime: WASM_TARGET.to_string(),
+                    runtime: LEGACY_WASM_TARGET.to_string(),
                     required_features: Vec::new(),
                     wasm_digests: vec![
                         "blake3:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -9892,7 +9989,7 @@ support_tier = "verified_community"
                 min_scryer_version: None,
                 max_scryer_version: None,
                 artifacts: vec![CatalogV3PluginArtifact {
-                    runtime: WASM_TARGET.to_string(),
+                    runtime: LEGACY_WASM_TARGET.to_string(),
                     required_features: Vec::new(),
                     wasm_digests: vec![
                         "blake3:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"

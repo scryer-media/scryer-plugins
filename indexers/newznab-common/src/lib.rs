@@ -5,23 +5,28 @@
 //! Each plugin is a thin wrapper that calls [`execute_full_search`] with
 //! a provider-specific [`MetadataExtractor`] callback.
 
-use std::collections::HashMap;
-use std::thread;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::collections::{BTreeMap, HashMap};
+use std::sync::OnceLock;
+use std::time::{Duration, UNIX_EPOCH};
 
-use indexer_command_compat::{LogLevel, log, structured_plugin_error};
+#[cfg(not(all(target_arch = "wasm32", target_os = "wasi", target_env = "p2")))]
+use std::time::SystemTime;
+
 use quick_xml::escape::unescape;
 use quick_xml::events::{Event, attributes::Attribute};
 use quick_xml::{Reader, XmlVersion};
+use scryer_plugin_pdk::component::{
+    self, LogLevel, StructuredPluginError, structured_plugin_error,
+};
 use scryer_plugin_pdk::*;
 pub use scryer_plugin_sdk::command::{PluginActionRequest, PluginActionResponse};
 pub use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldRole, ConfigFieldType, IndexerCapabilities as Capabilities,
     IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode,
-    IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput,
-    IndexerSearchIncompleteReason, IndexerSearchInvalidResponseKind, IndexerSearchPluginError,
-    IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor, PluginError,
-    PluginErrorCode, PluginErrorDetails, PluginResult,
+    IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures,
+    IndexerSearchIncompleteReason, IndexerSearchInput, IndexerSearchInvalidResponseKind,
+    IndexerSearchPluginError, IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor,
+    PluginError, PluginErrorCode, PluginErrorDetails, PluginResult,
     PluginScoringPolicy as ScoringPolicy, PluginSearchRequest as SearchRequest,
     PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult,
     PluginSearchSubjectKind, ProviderDescriptor, SDK_VERSION, current_sdk_constraint,
@@ -29,6 +34,12 @@ pub use scryer_plugin_sdk::{
 use serde::{Deserialize, Serialize};
 use unicode_normalization::{UnicodeNormalization, char::is_combining_mark};
 use url::Url;
+
+macro_rules! log {
+    ($level:expr, $($argument:tt)*) => {
+        component::log($level, format!($($argument)*))
+    };
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PasswordMetadataClassification {
@@ -113,6 +124,7 @@ fn protected_from_extra(extra: &HashMap<String, serde_json::Value>) -> Option<bo
 // ---------------------------------------------------------------------------
 
 const DEFAULT_MAX_SEARCH_PAGES: usize = 30;
+const DEFAULT_REQUEST_INTERVAL_MS: u64 = 500;
 
 pub struct NewznabConfig {
     pub base_url: String,
@@ -181,7 +193,7 @@ impl Default for NewznabHttpBehavior {
         Self {
             plugin_id: "newznab".to_string(),
             user_agent: DEFAULT_USER_AGENT.to_string(),
-            pre_request_delay: Duration::ZERO,
+            pre_request_delay: Duration::from_millis(DEFAULT_REQUEST_INTERVAL_MS),
             retry_total_budget: Duration::ZERO,
             retry_default_delay: Duration::from_secs(1),
             retry_max_delay: Duration::from_secs(300),
@@ -195,28 +207,40 @@ impl Default for NewznabHttpBehavior {
 impl NewznabConfig {
     /// Read configuration from the descriptor-bound host config keys.
     pub fn from_host() -> Result<Self, Error> {
-        let base_url = config::get("base_url")
-            .map_err(|e| Error::msg(format!("missing config base_url: {e}")))?
+        let profile = resolved_provider_profile()?;
+        let configured = |key: &str| {
+            component::config_get(key)
+                .map(|value| value.trim().to_string())
+                .filter(|value| !value.is_empty())
+        };
+        let base_url = configured("base_url")
+            .or_else(|| profile.map(|profile| profile.canonical_base_url.clone()))
+            .unwrap_or_default();
+        let api_key = component::config_get("api_key")
             .unwrap_or_default()
             .trim()
             .to_string();
-        let api_key = config::get("api_key")
-            .map_err(|e| Error::msg(format!("missing config api_key: {e}")))?
-            .unwrap_or_default()
-            .trim()
-            .to_string();
-        let api_path = config::get("api_path")
-            .ok()
-            .flatten()
-            .unwrap_or_else(|| "/api".to_string())
-            .trim()
-            .to_string();
-        let additional_params = config::get("additional_params")
-            .ok()
-            .flatten()
-            .unwrap_or_default()
-            .trim()
-            .to_string();
+        let api_path = configured("api_path")
+            .or_else(|| profile.map(|profile| profile.api_path.clone()))
+            .unwrap_or_else(|| "/api".to_string());
+        let mut additional_params = profile
+            .map(|profile| profile.default_request_parameters.clone())
+            .unwrap_or_default();
+        if let Some(explicit) = configured("additional_params") {
+            for (key, value) in url::form_urlencoded::parse(
+                explicit
+                    .trim_start_matches('?')
+                    .trim_start_matches('&')
+                    .as_bytes(),
+            ) {
+                if !key.trim().is_empty() {
+                    additional_params.insert(key.trim().to_string(), value.trim().to_string());
+                }
+            }
+        }
+        let additional_params = url::form_urlencoded::Serializer::new(String::new())
+            .extend_pairs(additional_params)
+            .finish();
 
         if base_url.is_empty() {
             return Err(Error::msg(
@@ -224,21 +248,75 @@ impl NewznabConfig {
             ));
         }
 
-        let page_size = config::get("page_size")
-            .ok()
-            .flatten()
+        let page_size = configured("page_size")
             .and_then(|v| v.parse::<usize>().ok())
+            .or_else(|| profile.map(|profile| profile.page_size as usize))
             .unwrap_or(100)
             .clamp(1, 100);
+        let mut http_behavior = NewznabHttpBehavior::default();
+        if let Some(profile) = profile {
+            http_behavior.plugin_id = profile.profile_id.clone();
+            http_behavior.pre_request_delay = Duration::from_millis(profile.request_interval_ms);
+            http_behavior.retry_total_budget = Duration::from_millis(profile.retry_total_budget_ms);
+            http_behavior.retry_default_delay = Duration::from_millis(profile.retry_default_ms);
+            http_behavior.retry_max_delay = Duration::from_millis(profile.retry_max_ms);
+            http_behavior.retry_max_attempts = profile.retry_max_attempts as usize;
+            http_behavior.max_search_pages = profile
+                .page_ceiling
+                .and_then(|pages| usize::try_from(pages).ok())
+                .unwrap_or(DEFAULT_MAX_SEARCH_PAGES);
+            if profile.hourly_limit.is_some() || profile.daily_limit.is_some() {
+                http_behavior.hit_budget = Some(NewznabHitBudget {
+                    var_key: format!("newznab:{}:hit-budget", profile.profile_id),
+                    hourly_limit: profile.hourly_limit.unwrap_or(u32::MAX),
+                    daily_limit: profile.daily_limit.unwrap_or(u32::MAX),
+                });
+            }
+        }
+        if let Some(interval) = configured("request_interval_ms") {
+            http_behavior.pre_request_delay = request_interval_from_config(Some(&interval));
+        }
         Ok(Self {
             base_url,
             api_key,
             api_path,
             additional_params,
             page_size,
-            http_behavior: NewznabHttpBehavior::default(),
+            http_behavior,
         })
     }
+}
+
+fn resolved_provider_profile()
+-> Result<Option<&'static scryer_plugin_sdk::PluginNewznabProfile>, Error> {
+    static PROFILE: OnceLock<Result<Option<scryer_plugin_sdk::PluginNewznabProfile>, String>> =
+        OnceLock::new();
+    PROFILE
+        .get_or_init(|| {
+            component::provider_profile()
+                .map(|profile| {
+                    profile
+                        .map(|scryer_plugin_sdk::PluginProviderProfile::Newznab(profile)| profile)
+                })
+                .map_err(|error| error.to_string())
+        })
+        .as_ref()
+        .map(Option::as_ref)
+        .map_err(|error| Error::msg(format!("invalid Newznab provider profile: {error}")))
+}
+
+fn request_interval_from_config(value: Option<&str>) -> Duration {
+    value
+        .and_then(|value| value.trim().parse::<u64>().ok())
+        .filter(|interval_ms| *interval_ms > 0)
+        .map(Duration::from_millis)
+        .unwrap_or_else(|| Duration::from_millis(DEFAULT_REQUEST_INTERVAL_MS))
+}
+
+pub fn encode_request_parameters(parameters: &BTreeMap<String, String>) -> String {
+    url::form_urlencoded::Serializer::new(String::new())
+        .extend_pairs(parameters)
+        .finish()
 }
 
 /// Returns the standard config field declarations for Newznab-family plugins.
@@ -293,6 +371,20 @@ pub fn standard_config_fields(default_base_url: Option<&str>) -> Vec<ConfigField
             help_text: Some(
                 "Extra query parameters appended to every request (e.g. &dl=1&attrs=poster)"
                     .to_string(),
+            ),
+        },
+        ConfigFieldDef {
+            key: "request_interval_ms".to_string(),
+            label: "Request Interval (ms)".to_string(),
+            field_type: ConfigFieldType::Number,
+            required: false,
+            default_value: Some(DEFAULT_REQUEST_INTERVAL_MS.to_string()),
+            value_source: Default::default(),
+            role: None,
+            host_binding: None,
+            options: vec![],
+            help_text: Some(
+                "Minimum delay between upstream request starts; defaults to 2000 ms.".to_string(),
             ),
         },
     ]
@@ -364,6 +456,156 @@ pub fn extract_base_metadata(
     }
 
     (languages, grabs, extra)
+}
+
+/// Extract metadata using the host-resolved provider profile. Unknown or
+/// absent profiles retain the conservative generic Newznab extraction.
+pub fn extract_profile_metadata(
+    pairs: &[(String, String)],
+) -> (Vec<String>, Option<i64>, HashMap<String, serde_json::Value>) {
+    let Ok(Some(profile)) = resolved_provider_profile() else {
+        return extract_base_metadata(pairs);
+    };
+
+    extract_profile_or_base_metadata(
+        pairs,
+        &profile.response_attribute_mappings,
+        Some(&profile.profile_id),
+    )
+}
+
+fn extract_profile_or_base_metadata(
+    pairs: &[(String, String)],
+    mappings: &[scryer_plugin_sdk::PluginNewznabResponseAttributeMapping],
+    profile_id: Option<&str>,
+) -> (Vec<String>, Option<i64>, HashMap<String, serde_json::Value>) {
+    if mappings.is_empty() {
+        return extract_base_metadata(pairs);
+    }
+    extract_mapped_metadata(pairs, mappings, profile_id)
+}
+
+enum ProfileAttributeValue {
+    Integer(i32),
+    List(Vec<String>),
+    Password(PasswordMetadataClassification),
+}
+
+fn extract_mapped_metadata(
+    pairs: &[(String, String)],
+    mappings: &[scryer_plugin_sdk::PluginNewznabResponseAttributeMapping],
+    profile_id: Option<&str>,
+) -> (Vec<String>, Option<i64>, HashMap<String, serde_json::Value>) {
+    let mut languages = Vec::new();
+    let mut grabs = None;
+    let mut extra = HashMap::new();
+    if let Some(profile_id) = profile_id {
+        extra.insert(
+            "newznab_profile_id".to_string(),
+            serde_json::Value::String(profile_id.to_string()),
+        );
+    }
+
+    for mapping in mappings {
+        let Some(value) = pairs.iter().find_map(|(name, value)| {
+            let normalized = normalize_attribute_name(name);
+            mapping
+                .provider_names
+                .iter()
+                .any(|candidate| normalize_attribute_name(candidate) == normalized)
+                .then_some(value)
+        }) else {
+            continue;
+        };
+
+        use ProfileAttributeValue::{Integer, List, Password};
+        use scryer_plugin_sdk::PluginNewznabCanonicalAttribute as Field;
+        match (
+            mapping.canonical_field,
+            parse_profile_attribute_value(mapping.value_kind, value),
+        ) {
+            (Field::Languages, Some(List(values))) => languages.extend(values),
+            (Field::Subtitles, Some(List(values))) => {
+                if !values.is_empty() {
+                    extra.insert("subtitles".to_string(), serde_json::json!(values));
+                }
+            }
+            (Field::Genres, Some(List(values))) => {
+                if !values.is_empty() {
+                    extra.insert("genres".to_string(), serde_json::json!(values));
+                }
+            }
+            (Field::Grabs, Some(Integer(value))) => grabs = Some(i64::from(value)),
+            (Field::ThumbsUp, Some(Integer(value))) => {
+                extra.insert("thumbs_up".to_string(), value.into());
+            }
+            (Field::ThumbsDown, Some(Integer(value))) => {
+                extra.insert("thumbs_down".to_string(), value.into());
+            }
+            (Field::Rating, Some(Integer(value))) => {
+                extra.insert("rating".to_string(), value.into());
+            }
+            (Field::Comments, Some(Integer(value))) => {
+                extra.insert("comments".to_string(), value.into());
+            }
+            (Field::Password, Some(Password(classification))) => match classification {
+                PasswordMetadataClassification::Real(password) => {
+                    extra.insert("password".to_string(), password.into());
+                    extra.insert("password_protected".to_string(), true.into());
+                }
+                PasswordMetadataClassification::ProtectedFlag => {
+                    extra.insert("password_protected".to_string(), true.into());
+                }
+                PasswordMetadataClassification::UnprotectedFlag => {
+                    extra.insert("password_protected".to_string(), false.into());
+                }
+                PasswordMetadataClassification::Empty => {}
+            },
+            _ => {}
+        }
+    }
+
+    (languages, grabs, extra)
+}
+
+fn normalize_attribute_name(value: &str) -> String {
+    value
+        .chars()
+        .filter(|character| character.is_ascii_alphanumeric())
+        .collect::<String>()
+        .to_ascii_lowercase()
+}
+
+fn split_profile_list(value: &str, separator: &str) -> Vec<String> {
+    value
+        .split(separator)
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(ToString::to_string)
+        .collect()
+}
+
+fn parse_profile_integer(value: &str) -> Option<i32> {
+    value.trim().replace(',', "").parse().ok()
+}
+
+fn parse_profile_attribute_value(
+    kind: scryer_plugin_sdk::PluginNewznabAttributeValueKind,
+    value: &str,
+) -> Option<ProfileAttributeValue> {
+    use scryer_plugin_sdk::PluginNewznabAttributeValueKind as Kind;
+    match kind {
+        Kind::Integer => parse_profile_integer(value).map(ProfileAttributeValue::Integer),
+        Kind::DashSeparatedList => Some(ProfileAttributeValue::List(split_profile_list(
+            value, " - ",
+        ))),
+        Kind::CommaSeparatedList => {
+            Some(ProfileAttributeValue::List(split_profile_list(value, ",")))
+        }
+        Kind::PasswordMetadata => Some(ProfileAttributeValue::Password(
+            classify_password_metadata(Some(value)),
+        )),
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -485,7 +727,7 @@ fn incomplete_newznab_search_error(
 /// 3. Executes a tiered search (query+ID → ID-only → generic fallback)
 /// 4. Auto-detects response format (JSON or XML) and parses
 /// 5. Classifies errors with Newznab-specific handling
-pub fn execute_full_search(
+pub async fn execute_full_search(
     config: &NewznabConfig,
     req: &SearchRequest,
     extract_fn: MetadataExtractor,
@@ -538,7 +780,7 @@ pub fn execute_full_search(
         && anidb_id.is_none()
         && mal_id.is_none()
     {
-        return execute_rss_search(config, req, extract_fn);
+        return execute_rss_search(config, req, extract_fn).await;
     }
 
     // Determine search shape from typed context first, then legacy hints.
@@ -598,6 +840,7 @@ pub fn execute_full_search(
                 &page_params,
                 &config.http_behavior,
             )
+            .await
         } else {
             execute_tiered_search(
                 &endpoint,
@@ -616,9 +859,13 @@ pub fn execute_full_search(
                 &page_params,
                 &config.http_behavior,
             )
+            .await
         };
         let (status, body) = match search_result {
             Ok(response) => response,
+            Err(error) if error.downcast_ref::<StructuredPluginError>().is_some() => {
+                return Err(error);
+            }
             Err(error) if is_hit_budget_exhausted_error(&error) => {
                 let retry_after_seconds = hit_budget_retry_after_seconds(&config.http_behavior, 1)?;
                 return Err(incomplete_newznab_search_error(
@@ -743,7 +990,7 @@ pub fn execute_full_search(
     })
 }
 
-pub fn execute_raw_search(
+pub async fn execute_raw_search(
     config: &NewznabConfig,
     req: &SearchRequest,
     extract_fn: MetadataExtractor,
@@ -785,9 +1032,13 @@ pub fn execute_raw_search(
             None,
             &page_params,
             &config.http_behavior,
-        );
+        )
+        .await;
         let (status, body) = match search_result {
             Ok(response) => response,
+            Err(error) if error.downcast_ref::<StructuredPluginError>().is_some() => {
+                return Err(error);
+            }
             Err(error) if is_hit_budget_exhausted_error(&error) => {
                 let retry_after_seconds = hit_budget_retry_after_seconds(&config.http_behavior, 1)?;
                 return Err(incomplete_newznab_search_error(
@@ -915,7 +1166,7 @@ pub fn execute_raw_search(
 /// - Movie categories (2xxx) → `t=movie`
 /// - TV/anime categories (5xxx) → `t=tvsearch`
 /// - Unknown → both
-fn execute_rss_search(
+async fn execute_rss_search(
     config: &NewznabConfig,
     req: &SearchRequest,
     extract_fn: MetadataExtractor,
@@ -972,9 +1223,13 @@ fn execute_rss_search(
             None, // no episode
             &config.additional_params,
             &config.http_behavior,
-        );
+        )
+        .await;
         let (status, body) = match search_result {
             Ok(response) => response,
+            Err(error) if error.downcast_ref::<StructuredPluginError>().is_some() => {
+                return Err(error);
+            }
             Err(error) if is_hit_budget_exhausted_error(&error) => {
                 let retry_after_seconds = hit_budget_retry_after_seconds(&config.http_behavior, 1)?;
                 return Err(incomplete_newznab_search_error(
@@ -1354,7 +1609,7 @@ fn strip_query_context(query: &str) -> &str {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn execute_exact_anime_search(
+async fn execute_exact_anime_search(
     endpoint: &str,
     query_variants: &[String],
     api_key: &str,
@@ -1391,7 +1646,8 @@ fn execute_exact_anime_search(
             absolute_episode.or(episode),
             additional_params,
             behavior,
-        );
+        )
+        .await;
     }
 
     let mut last_response = (200, r#"{"channel":{}}"#.to_string());
@@ -1416,7 +1672,8 @@ fn execute_exact_anime_search(
             episode,
             additional_params,
             behavior,
-        )?;
+        )
+        .await?;
         let looks_empty = is_empty_response(body.trim_start());
         last_response = (status, body.clone());
         if is_success_status(status) && !looks_empty {
@@ -1432,7 +1689,7 @@ fn execute_exact_anime_search(
 // ---------------------------------------------------------------------------
 
 #[allow(clippy::too_many_arguments)]
-fn execute_tiered_search(
+async fn execute_tiered_search(
     endpoint: &str,
     search_type: &str,
     query_variants: &[String],
@@ -1505,7 +1762,8 @@ fn execute_tiered_search(
             episode,
             additional_params,
             behavior,
-        )?;
+        )
+        .await?;
 
         let looks_empty = is_empty_response(body.trim_start());
         last_response = Some((status, body.clone()));
@@ -1536,7 +1794,8 @@ fn execute_tiered_search(
             episode,
             additional_params,
             behavior,
-        )?;
+        )
+        .await?;
 
         let looks_empty = is_empty_response(body.trim_start());
         last_response = Some((status, body.clone()));
@@ -1599,7 +1858,7 @@ fn build_endpoint(base_url: &str, api_path: &str) -> Result<String, Error> {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn execute_search(
+async fn execute_search(
     endpoint: &str,
     search_type: &str,
     query: Option<&str>,
@@ -1637,14 +1896,15 @@ fn execute_search(
         &url,
         "application/json, application/xml, */*; q=0.8",
         behavior,
-    )?;
+    )
+    .await?;
     Ok((status, body))
 }
 
 const DEFAULT_USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
     (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-pub fn polite_http_get(
+pub async fn polite_http_get(
     url: &str,
     accept: &str,
     behavior: &NewznabHttpBehavior,
@@ -1652,11 +1912,28 @@ pub fn polite_http_get(
     let logged_url = redact_url_for_log(url);
     let mut total_wait = Duration::ZERO;
     let mut attempt = 1usize;
+    let start_interval_ms = behavior
+        .pre_request_delay
+        .as_millis()
+        .try_into()
+        .unwrap_or(u64::MAX)
+        .max(1);
+    let start_gate = component::StartRateGate::new(
+        format!("{}.http.start", behavior.plugin_id),
+        1,
+        start_interval_ms,
+    );
+    let cooldown = component::CooldownGate::new(format!("{}.http.cooldown", behavior.plugin_id));
 
     loop {
-        if !behavior.pre_request_delay.is_zero() {
-            thread::sleep(behavior.pre_request_delay);
-        }
+        cooldown
+            .wait()
+            .await
+            .map_err(component::deadline_deferred_error)?;
+        start_gate
+            .acquire()
+            .await
+            .map_err(component::deadline_deferred_error)?;
 
         let budget_snapshot = record_hit_budget_use(behavior)?;
         if let Some(snapshot) = budget_snapshot {
@@ -1679,15 +1956,22 @@ pub fn polite_http_get(
             logged_url
         );
 
-        let http_req = HttpRequest::new(url)
-            .with_header("Accept", accept)
-            .with_header("Accept-Encoding", "gzip")
-            .with_header("Accept-Language", "en-US,en;q=0.9")
-            .with_header("Cache-Control", "no-cache")
-            .with_header("Pragma", "no-cache")
-            .with_header("User-Agent", &behavior.user_agent);
-
-        let resp = match http::request::<Vec<u8>>(&http_req, None) {
+        let headers = BTreeMap::from([
+            ("Accept".to_string(), accept.to_string()),
+            ("Accept-Encoding".to_string(), "gzip".to_string()),
+            ("Accept-Language".to_string(), "en-US,en;q=0.9".to_string()),
+            ("Cache-Control".to_string(), "no-cache".to_string()),
+            ("Pragma".to_string(), "no-cache".to_string()),
+            ("User-Agent".to_string(), behavior.user_agent.clone()),
+        ]);
+        let resp = match component::http(PluginHttpRequest {
+            method: Some("GET".to_string()),
+            url: url.to_string(),
+            headers,
+            body: Vec::new(),
+        })
+        .await
+        {
             Ok(resp) => resp,
             Err(e) => {
                 log!(
@@ -1702,9 +1986,9 @@ pub fn polite_http_get(
             }
         };
 
-        let status = resp.status_code();
+        let status = resp.status;
         let headers = capture_known_headers(&resp);
-        let body = String::from_utf8_lossy(&resp.body()).to_string();
+        let body = String::from_utf8_lossy(&resp.body).to_string();
 
         log!(
             LogLevel::Debug,
@@ -1734,7 +2018,12 @@ pub fn polite_http_get(
                         delay.as_secs(),
                         logged_url
                     );
-                    thread::sleep(delay);
+                    cooldown.defer_for(delay.as_millis().try_into().unwrap_or(u64::MAX));
+                    component::sleep_until_deadline(
+                        delay.as_millis().try_into().unwrap_or(u64::MAX),
+                    )
+                    .await
+                    .map_err(component::deadline_deferred_error)?;
                     total_wait += delay;
                     attempt += 1;
                     continue;
@@ -1743,11 +2032,33 @@ pub fn polite_http_get(
         }
 
         if status == 429 {
-            return Err(Error::msg(format!(
-                "HTTP 429: rate limited; stopped after {} attempt(s) and {}s total wait",
-                attempt,
-                total_wait.as_secs()
-            )));
+            let retry_after_seconds = retry_delay_from_headers(&headers)
+                .map(|delay| i64::try_from(delay.as_secs()).unwrap_or(i64::MAX));
+            let parsed_error = if body.trim_start().starts_with('<') {
+                parse_error_xml(&body)
+            } else {
+                parse_error_json(&body)
+            };
+            let public_message = parsed_error
+                .map(|(code, description)| {
+                    classify_and_format_error(&code, &description).to_string()
+                })
+                .unwrap_or_else(|| "Newznab upstream rate limit reached".to_string());
+            return Err(structured_plugin_error(PluginError {
+                code: PluginErrorCode::RateLimited,
+                public_message,
+                debug_message: Some(format!(
+                    "HTTP 429 after {attempt} attempt(s) and {}s total wait",
+                    total_wait.as_secs()
+                )),
+                retry_after_seconds,
+                details: Some(PluginErrorDetails::IndexerSearch(
+                    IndexerSearchPluginError::Deferred {
+                        reason: IndexerSearchIncompleteReason::RateLimited,
+                        retry_after_seconds,
+                    },
+                )),
+            }));
         }
 
         if let Some(delay) = rate_limit_pause_from_headers(&headers, behavior.retry_max_delay) {
@@ -1759,7 +2070,7 @@ pub fn polite_http_get(
                 delay.as_secs(),
                 logged_url
             );
-            thread::sleep(delay);
+            cooldown.defer_for(delay.as_millis().try_into().unwrap_or(u64::MAX));
         }
 
         return Ok((status, body));
@@ -1811,11 +2122,25 @@ fn parse_retry_after(value: &str) -> Option<Duration> {
         .map(Duration::from_secs)
         .or_else(|| {
             httpdate::parse_http_date(value).ok().map(|retry_at| {
-                retry_at
-                    .duration_since(SystemTime::now())
-                    .unwrap_or(Duration::ZERO)
+                let now = UNIX_EPOCH + Duration::from_millis(current_epoch_millis());
+                retry_at.duration_since(now).unwrap_or(Duration::ZERO)
             })
         })
+}
+
+fn current_epoch_millis() -> u64 {
+    #[cfg(all(target_arch = "wasm32", target_os = "wasi", target_env = "p2"))]
+    {
+        return component::wall_now_ms();
+    }
+
+    #[cfg(not(all(target_arch = "wasm32", target_os = "wasi", target_env = "p2")))]
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or(Duration::ZERO)
+        .as_millis()
+        .try_into()
+        .unwrap_or(u64::MAX)
 }
 
 fn parse_rate_limit_reset(value: &str, now_epoch_seconds: u64) -> Option<Duration> {
@@ -1832,10 +2157,7 @@ fn clamp_duration(value: Duration, max: Duration) -> Duration {
 }
 
 fn current_epoch_seconds() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or(Duration::ZERO)
-        .as_secs()
+    current_epoch_millis() / 1_000
 }
 
 const HIT_BUDGET_EXHAUSTED: &str = "indexer hit budget exhausted";
@@ -1869,29 +2191,41 @@ pub fn reserve_hit_budget_uses(
     let Some(budget) = &behavior.hit_budget else {
         return Ok(None);
     };
-    let (mut snapshot, mut state) = snapshot_for_budget(
-        budget,
-        load_hit_budget_state(budget)?,
-        current_epoch_seconds(),
-    );
-    let hourly_remaining = snapshot.hourly_limit.saturating_sub(snapshot.hourly_count);
-    let daily_remaining = snapshot.daily_limit.saturating_sub(snapshot.daily_count);
-    if snapshot.exhausted() || uses > hourly_remaining || uses > daily_remaining {
-        return Err(Error::msg(format!(
-            "{HIT_BUDGET_EXHAUSTED}: hourly={}/{} daily={}/{}",
-            snapshot.hourly_count,
-            snapshot.hourly_limit,
-            snapshot.daily_count,
-            snapshot.daily_limit
-        )));
-    }
+    loop {
+        let expected = component::state_get(&budget.var_key);
+        let stored = expected
+            .as_deref()
+            .map(|raw| {
+                serde_json::from_slice(raw).map_err(|error| {
+                    Error::msg(format!("failed to parse hit budget state: {error}"))
+                })
+            })
+            .transpose()?
+            .unwrap_or_default();
+        let (mut snapshot, mut state) =
+            snapshot_for_budget(budget, stored, current_epoch_seconds());
+        let hourly_remaining = snapshot.hourly_limit.saturating_sub(snapshot.hourly_count);
+        let daily_remaining = snapshot.daily_limit.saturating_sub(snapshot.daily_count);
+        if snapshot.exhausted() || uses > hourly_remaining || uses > daily_remaining {
+            return Err(Error::msg(format!(
+                "{HIT_BUDGET_EXHAUSTED}: hourly={}/{} daily={}/{}",
+                snapshot.hourly_count,
+                snapshot.hourly_limit,
+                snapshot.daily_count,
+                snapshot.daily_limit
+            )));
+        }
 
-    state.hourly_count = state.hourly_count.saturating_add(uses);
-    state.daily_count = state.daily_count.saturating_add(uses);
-    save_hit_budget_state(budget, &state)?;
-    snapshot.hourly_count = state.hourly_count;
-    snapshot.daily_count = state.daily_count;
-    Ok(Some(snapshot))
+        state.hourly_count = state.hourly_count.saturating_add(uses);
+        state.daily_count = state.daily_count.saturating_add(uses);
+        let replacement = serde_json::to_vec(&state)
+            .map_err(|error| Error::msg(format!("failed to encode hit budget state: {error}")))?;
+        if component::state_cas(&budget.var_key, expected, Some(replacement)) {
+            snapshot.hourly_count = state.hourly_count;
+            snapshot.daily_count = state.daily_count;
+            return Ok(Some(snapshot));
+        }
+    }
 }
 
 pub fn hit_budget_retry_after_seconds(
@@ -1914,20 +2248,11 @@ pub fn hit_budget_retry_after_seconds(
 }
 
 fn load_hit_budget_state(budget: &NewznabHitBudget) -> Result<StoredHitBudget, Error> {
-    let Some(raw) = var::get::<String>(&budget.var_key)
-        .map_err(|error| Error::msg(format!("failed to read hit budget state: {error}")))?
-    else {
+    let Some(raw) = component::state_get(&budget.var_key) else {
         return Ok(StoredHitBudget::default());
     };
-    serde_json::from_str(&raw)
+    serde_json::from_slice(&raw)
         .map_err(|error| Error::msg(format!("failed to parse hit budget state: {error}")))
-}
-
-fn save_hit_budget_state(budget: &NewznabHitBudget, state: &StoredHitBudget) -> Result<(), Error> {
-    let rendered = serde_json::to_string(state)
-        .map_err(|error| Error::msg(format!("failed to encode hit budget state: {error}")))?;
-    var::set(&budget.var_key, rendered)
-        .map_err(|error| Error::msg(format!("failed to store hit budget state: {error}")))
 }
 
 fn snapshot_for_budget(
@@ -1956,7 +2281,7 @@ fn snapshot_for_budget(
     )
 }
 
-fn capture_known_headers(response: &HttpResponse) -> HashMap<String, String> {
+fn capture_known_headers(response: &PluginHttpResponse) -> HashMap<String, String> {
     let mut headers = HashMap::new();
     for name in [
         "date",
@@ -1979,10 +2304,10 @@ fn capture_known_headers(response: &HttpResponse) -> HashMap<String, String> {
         "x-rate-limit-reset",
     ] {
         if let Some(value) = response
-            .headers()
+            .headers
             .get(name)
-            .or_else(|| response.headers().get(&name.to_ascii_lowercase()))
-            .or_else(|| response.headers().get(&name.to_ascii_uppercase()))
+            .or_else(|| response.headers.get(&name.to_ascii_lowercase()))
+            .or_else(|| response.headers.get(&name.to_ascii_uppercase()))
         {
             headers.insert(name.to_string(), value.to_string());
         }
@@ -2122,15 +2447,20 @@ fn append_additional_query_pairs(url: &mut Url, additional_params: &str) {
         return;
     }
 
-    let mut pairs = url.query_pairs_mut();
+    let mut merged: BTreeMap<String, String> = url.query_pairs().into_owned().collect();
     for (raw_key, raw_value) in url::form_urlencoded::parse(normalized.as_bytes()) {
         let key = raw_key.trim();
         if key.is_empty() {
             continue;
         }
 
-        pairs.append_pair(key, raw_value.trim());
+        merged.insert(key.to_string(), raw_value.trim().to_string());
     }
+
+    let query = url::form_urlencoded::Serializer::new(String::new())
+        .extend_pairs(merged)
+        .finish();
+    url.set_query(Some(&query));
 }
 
 fn normalize_imdbid_param(raw: &str) -> String {
@@ -3081,13 +3411,6 @@ struct NewznabCategoryOption {
     subcategories: Vec<NewznabCategoryOption>,
 }
 
-#[derive(Debug, Default)]
-struct CapsConfig {
-    base_url: String,
-    api_key: String,
-    api_path: String,
-}
-
 /// Serve one provider action.
 ///
 /// The command ABI carries the action name as its own typed field, so the
@@ -3096,66 +3419,48 @@ struct CapsConfig {
 /// rather than an error: the settings UI probes for optional actions, and a
 /// hard failure there would read as a broken indexer rather than an absent
 /// option list.
-pub fn execute_provider_action(
+pub async fn execute_provider_action(
     request: PluginActionRequest,
 ) -> Result<PluginActionResponse, Error> {
     let payload = match request.action.trim() {
-        "newznabCategories" => newznab_categories(),
+        "newznabCategories" => newznab_categories().await,
         _ => serde_json::json!({}),
     };
 
     Ok(PluginActionResponse { payload })
 }
 
-fn newznab_categories() -> serde_json::Value {
-    let categories = caps_config()
-        .filter(|config| !config.base_url.is_empty() && !config.api_path.is_empty())
-        .and_then(|config| fetch_categories(&config).ok());
+async fn newznab_categories() -> serde_json::Value {
+    let categories = match NewznabConfig::from_host() {
+        Ok(config) => fetch_categories(&config).await.ok(),
+        Err(_) => None,
+    };
 
     serde_json::json!({
         "options": category_options(categories),
     })
 }
 
-fn caps_config() -> Option<CapsConfig> {
-    Some(CapsConfig {
-        base_url: config::get("base_url").ok().flatten()?.trim().to_string(),
-        api_key: config::get("api_key")
-            .ok()
-            .flatten()
-            .unwrap_or_default()
-            .trim()
-            .to_string(),
-        api_path: config::get("api_path")
-            .ok()
-            .flatten()
-            .unwrap_or_else(|| "/api".to_string())
-            .trim()
-            .to_string(),
-    })
-}
-
-fn fetch_categories(config: &CapsConfig) -> Result<Vec<NewznabCategoryOption>, Error> {
+async fn fetch_categories(config: &NewznabConfig) -> Result<Vec<NewznabCategoryOption>, Error> {
     let endpoint = build_endpoint(&config.base_url, &config.api_path)?;
     let mut params = vec![("t".to_string(), "caps".to_string())];
     if !config.api_key.is_empty() {
         params.push(("apikey".to_string(), config.api_key.clone()));
     }
     let url = append_query_pairs(endpoint.as_str(), &params);
-    let request = HttpRequest::new(url)
-        .with_method("GET")
-        .with_header("User-Agent", "scryer-newznab-plugin/0.1")
-        .with_header("Accept", "application/rss+xml, application/xml, text/xml");
-    let response = http::request::<Vec<u8>>(&request, None)?;
-    let status = response.status_code();
+    let (status, body) = polite_http_get(
+        &url,
+        "application/rss+xml, application/xml, text/xml",
+        &config.http_behavior,
+    )
+    .await?;
     if !(200..300).contains(&status) {
-        let body = String::from_utf8_lossy(&response.body()).to_string();
         return Err(Error::msg(format!(
             "Newznab capabilities request failed: HTTP {status}: {body}"
         )));
     }
 
-    Ok(parse_categories(&response.body()))
+    Ok(parse_categories(body.as_bytes()))
 }
 
 fn append_query_pairs(base_url: &str, params: &[(String, String)]) -> String {
@@ -3314,6 +3619,126 @@ fn default_newznab_categories() -> Vec<NewznabCategoryOption> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn large_xml_feed_keeps_item_state_local_and_bounds_retained_results() {
+        use std::fmt::Write as _;
+
+        const ITEM_COUNT: usize = 2_048;
+        const RESULT_LIMIT: usize = 17;
+        let mut feed = String::from("<rss><channel>");
+        for index in 0..ITEM_COUNT {
+            write!(feed, "<item><title>Synthetic Item {index}</title>").unwrap();
+            if index.is_multiple_of(2) {
+                write!(
+                    feed,
+                    "<guid>guid-{index}</guid><enclosure url=\"https://example.invalid/{index}.nzb\" length=\"{}\" type=\"application/x-nzb\"/><attr name=\"language\" value=\"First - Second\"/><attr name=\"grabs\" value=\"10\"/>",
+                    1_000 + index
+                )
+                .unwrap();
+            }
+            feed.push_str("</item>");
+        }
+        feed.push_str("</channel></rss>");
+
+        let (results, _, item_count) =
+            parse_newznab_feed(&feed, true, RESULT_LIMIT, extract_base_metadata).unwrap();
+
+        assert_eq!(item_count, ITEM_COUNT);
+        assert_eq!(results.len(), RESULT_LIMIT);
+        assert_eq!(
+            results.last().map(|result| result.title.as_str()),
+            Some("Synthetic Item 16")
+        );
+
+        assert_eq!(results[0].guid.as_deref(), Some("guid-0"));
+        assert_eq!(results[0].size_bytes, Some(1_000));
+        assert_eq!(results[0].grabs, Some(10));
+        assert_eq!(results[0].languages, vec!["First", "Second"]);
+
+        assert!(results[1].guid.is_none());
+        assert!(results[1].download_url.is_none());
+        assert!(results[1].size_bytes.is_none());
+        assert!(results[1].grabs.is_none());
+        assert!(results[1].languages.is_empty());
+    }
+
+    #[test]
+    fn known_profile_identity_is_exposed_without_credentials() {
+        let (_, _, known_extra) = extract_mapped_metadata(&[], &[], Some("profile-fixture"));
+        assert_eq!(
+            known_extra
+                .get("newznab_profile_id")
+                .and_then(|value| value.as_str()),
+            Some("profile-fixture")
+        );
+
+        let (_, _, custom_extra) = extract_mapped_metadata(&[], &[], None);
+        assert!(!custom_extra.contains_key("newznab_profile_id"));
+    }
+
+    #[test]
+    fn empty_profile_mappings_preserve_conservative_metadata() {
+        let pairs = vec![
+            ("language".to_string(), "First - Second".to_string()),
+            ("grabs".to_string(), "1,234".to_string()),
+            ("password".to_string(), "protected".to_string()),
+        ];
+        let (languages, grabs, extra) =
+            extract_profile_or_base_metadata(&pairs, &[], Some("custom"));
+
+        assert_eq!(languages, vec!["First", "Second"]);
+        assert_eq!(grabs, Some(1_234));
+        assert_eq!(
+            extra
+                .get("password_protected")
+                .and_then(serde_json::Value::as_bool),
+            Some(true)
+        );
+        assert!(!extra.contains_key("newznab_profile_id"));
+    }
+
+    #[test]
+    fn typed_profile_mappings_control_names_and_value_parsing() {
+        use scryer_plugin_sdk::{
+            PluginNewznabAttributeValueKind as Kind, PluginNewznabCanonicalAttribute as Field,
+            PluginNewznabResponseAttributeMapping,
+        };
+
+        let pairs = vec![
+            ("counter-value".to_string(), "1,234".to_string()),
+            ("spoken-metadata".to_string(), "First - Second".to_string()),
+        ];
+        let mappings = vec![
+            PluginNewznabResponseAttributeMapping {
+                provider_names: vec!["counter_value".to_string()],
+                canonical_field: Field::Comments,
+                value_kind: Kind::Integer,
+            },
+            PluginNewznabResponseAttributeMapping {
+                provider_names: vec!["spoken_metadata".to_string()],
+                canonical_field: Field::Languages,
+                value_kind: Kind::DashSeparatedList,
+            },
+        ];
+
+        let (languages, _, extra) = extract_mapped_metadata(&pairs, &mappings, None);
+        assert_eq!(languages, vec!["First", "Second"]);
+        assert_eq!(
+            extra.get("comments").and_then(|value| value.as_i64()),
+            Some(1234)
+        );
+
+        let mut changed_name = mappings.clone();
+        changed_name[0].provider_names = vec!["different_counter".to_string()];
+        let (_, _, extra) = extract_mapped_metadata(&pairs, &changed_name, None);
+        assert!(!extra.contains_key("comments"));
+
+        let mut changed_kind = mappings;
+        changed_kind[0].value_kind = Kind::CommaSeparatedList;
+        let (_, _, extra) = extract_mapped_metadata(&pairs, &changed_kind, None);
+        assert!(!extra.contains_key("comments"));
+    }
 
     #[test]
     fn rss_anime_categories_select_tvsearch_not_generic_search() {
@@ -4545,20 +4970,14 @@ mod tests {
             IndexerSearchInvalidResponseKind::UnexpectedContentType
         ));
 
-        let invalid_root =
-            parse_newznab_feed("{}", false, 100, extract_base_metadata).unwrap_err();
+        let invalid_root = parse_newznab_feed("{}", false, 100, extract_base_metadata).unwrap_err();
         assert!(matches!(
             invalid_root.kind,
             IndexerSearchInvalidResponseKind::InvalidRoot
         ));
 
-        let truncated = parse_newznab_feed(
-            "<rss><channel>",
-            true,
-            100,
-            extract_base_metadata,
-        )
-        .unwrap_err();
+        let truncated =
+            parse_newznab_feed("<rss><channel>", true, 100, extract_base_metadata).unwrap_err();
         assert!(matches!(
             truncated.kind,
             IndexerSearchInvalidResponseKind::TruncatedBody
@@ -4583,13 +5002,13 @@ mod tests {
             "later page was malformed".to_string(),
         );
         let structured = error
-            .downcast_ref::<indexer_command_compat::StructuredPluginError>()
+            .downcast_ref::<scryer_plugin_pdk::component::StructuredPluginError>()
             .expect("structured plugin error");
-        let Some(PluginErrorDetails::IndexerSearch(
-            IndexerSearchPluginError::PartialResults {
-                response, reason, ..
-            },
-        )) = structured.plugin_error().details.as_ref()
+        let Some(PluginErrorDetails::IndexerSearch(IndexerSearchPluginError::PartialResults {
+            response,
+            reason,
+            ..
+        })) = structured.plugin_error().details.as_ref()
         else {
             panic!("expected typed partial results");
         };
@@ -4692,12 +5111,16 @@ mod tests {
 
     #[test]
     fn xml_requires_rss_channel_root_and_well_formed_body() {
-        let html = parse_newznab_xml("<html><body>login</body></html>", 100, extract_base_metadata)
-            .unwrap_err();
+        let html = parse_newznab_xml(
+            "<html><body>login</body></html>",
+            100,
+            extract_base_metadata,
+        )
+        .unwrap_err();
         assert!(html.to_string().contains("expected rss"));
 
-        let malformed = parse_newznab_xml("<rss><channel>", 100, extract_base_metadata)
-            .unwrap_err();
+        let malformed =
+            parse_newznab_xml("<rss><channel>", 100, extract_base_metadata).unwrap_err();
         assert!(malformed.to_string().contains("invalid Newznab XML feed"));
     }
 
@@ -5064,21 +5487,43 @@ mod tests {
     #[test]
     fn config_fields_has_api_path_and_additional_params() {
         let fields = standard_config_fields(None);
-        assert_eq!(fields.len(), 4);
+        assert_eq!(fields.len(), 5);
         assert_eq!(fields[0].key, "base_url");
         assert!(fields[0].required);
         assert_eq!(fields[1].key, "api_key");
         assert!(!fields[1].required);
         assert_eq!(fields[2].key, "api_path");
         assert_eq!(fields[3].key, "additional_params");
+        assert_eq!(fields[4].key, "request_interval_ms");
+        assert_eq!(fields[4].default_value.as_deref(), Some("500"));
     }
 
     #[test]
     fn http_behavior_defaults_keep_generic_caps() {
         let behavior = NewznabHttpBehavior::default();
+        assert_eq!(
+            behavior.pre_request_delay,
+            Duration::from_millis(DEFAULT_REQUEST_INTERVAL_MS)
+        );
         assert_eq!(behavior.retry_max_attempts, 1);
         assert_eq!(behavior.max_search_pages, DEFAULT_MAX_SEARCH_PAGES);
         assert!(behavior.hit_budget.is_none());
+    }
+
+    #[test]
+    fn request_interval_uses_positive_override_or_shared_default() {
+        assert_eq!(
+            request_interval_from_config(Some("375")),
+            Duration::from_millis(375)
+        );
+        assert_eq!(
+            request_interval_from_config(Some("0")),
+            Duration::from_millis(DEFAULT_REQUEST_INTERVAL_MS)
+        );
+        assert_eq!(
+            request_interval_from_config(Some("invalid")),
+            Duration::from_millis(DEFAULT_REQUEST_INTERVAL_MS)
+        );
     }
 
     #[test]

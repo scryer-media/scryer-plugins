@@ -4,6 +4,16 @@
       "plugin_id": "mediabrowser",
       "version": "0.1.2",
       "max_scryer_version": "0.18.11"
+    },
+    {
+      "plugin_id": "dognzb",
+      "version": "2.0.3",
+      "max_scryer_version": "0.18.21"
+    },
+    {
+      "plugin_id": "nzbgeek",
+      "version": "2.0.3",
+      "max_scryer_version": "0.18.21"
     }
   ]
 }

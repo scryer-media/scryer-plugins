@@ -1,7 +1,6 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::time::Duration;
 
-use indexer_command_compat::{LogLevel, log, structured_plugin_error};
 use newznab_common::{
     Capabilities, IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor,
     IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures,
@@ -9,14 +8,23 @@ use newznab_common::{
     PluginSearchSubjectKind, ProviderDescriptor, SDK_VERSION, SearchRequest, SearchResponse,
     SearchResult, current_sdk_constraint, hit_budget_retry_after_seconds, reserve_hit_budget_uses,
 };
+use scryer_plugin_pdk::component::{
+    self, LogLevel, StartRateGate, StreamExt, structured_plugin_error,
+};
 use scryer_plugin_pdk::*;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldRole, ConfigFieldType, ConfigFieldValueSource,
     IndexerSearchIncompleteReason, IndexerSearchInvalidResponseKind, IndexerSearchPluginError,
-    PluginError, PluginErrorCode, PluginErrorDetails, PluginResult,
+    PluginError, PluginErrorCode, PluginErrorDetails,
 };
 use serde::Deserialize;
 use url::Url;
+
+macro_rules! log {
+    ($level:expr, $($argument:tt)*) => {
+        component::log($level, format!($($argument)*))
+    };
+}
 
 const ANINZB_API_BASE_URL: &str = "https://api.aninzb.moe/";
 const ANINZB_API_HOST: &str = "api.aninzb.moe";
@@ -45,9 +53,7 @@ impl LegacyAniNzbConfig {
     fn from_host() -> Self {
         Self {
             base_url: config_optional("base_url"),
-            api_key_present: config::get("api_key")
-                .ok()
-                .flatten()
+            api_key_present: component::config_get("api_key")
                 .is_some_and(|value| !value.trim().is_empty()),
             api_path: config_optional("api_path"),
             additional_params: config_optional("additional_params"),
@@ -161,7 +167,12 @@ fn build_descriptor() -> PluginDescriptor {
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: "aninzb".to_string(),
             provider_aliases: vec![],
-            search_semantics_version: Some(1),
+            provider_profiles: vec![],
+            search_semantics_version: Some(2),
+            strategy_plan: Some(scryer_plugin_sdk::IndexerStrategyPlanCapability {
+                version: 1,
+                max_parallel_strategies: 4,
+            }),
             source_kind: IndexerSourceKind::Usenet,
             capabilities: Capabilities {
                 supported_ids: HashMap::from([
@@ -239,16 +250,16 @@ fn legacy_config_fields() -> Vec<ConfigFieldDef> {
     }]
 }
 
-fn search(request: SearchRequest) -> FnResult<SearchResponse> {
+async fn search(request: SearchRequest) -> Result<SearchResponse, Error> {
     if request_is_movie_shaped(&request) {
         return Ok(SearchResponse::default());
     }
 
     let config = AniNzbConfig::from_host();
-    execute_api_search(&config, &request)
+    execute_api_search(&config, &request).await
 }
 
-fn execute_api_search(
+async fn execute_api_search(
     config: &AniNzbConfig,
     request: &SearchRequest,
 ) -> Result<SearchResponse, Error> {
@@ -262,6 +273,7 @@ fn execute_api_search(
     let mut retry_after_seconds = None;
     let mut completed_request = false;
     let mut request_count = 0;
+    let start_gate = StartRateGate::new("aninzb.api.start_rate", API_REQUESTS_PER_SECOND, 1_000);
 
     let mut probe_batch = Vec::with_capacity(initial_queries.len() * 2);
     for query in initial_queries {
@@ -297,7 +309,7 @@ fn execute_api_search(
         return Err(error);
     }
     request_count += probe_batch.len();
-    let probe_pages = execute_api_search_batch(&probe_batch)?;
+    let probe_pages = execute_api_search_batch(&probe_batch, &start_gate).await?;
     let mut probes = probe_batch.into_iter().zip(probe_pages);
     while let Some(((mut query, _), ascending)) = probes.next() {
         let Some(((_, _), descending)) = probes.next() else {
@@ -382,7 +394,7 @@ fn execute_api_search(
         }
         request_count += batch.len();
 
-        let pages = execute_api_search_batch(&batch)?;
+        let pages = execute_api_search_batch(&batch, &start_gate).await?;
         for ((query, _), page) in batch.into_iter().zip(pages) {
             match page {
                 Ok(page) => {
@@ -636,86 +648,41 @@ fn record_api_failure(
     }
 }
 
-fn execute_api_search_batch(
+async fn execute_api_search_batch(
     batch: &[(ApiSearchQuery, String)],
+    start_gate: &StartRateGate,
 ) -> Result<Vec<Result<ApiSearchPage, ApiRequestFailure>>, Error> {
-    let requests = batch
-        .iter()
-        .map(|(_, url)| PluginHttpRequest {
-            url: url.clone(),
-            method: Some("GET".to_string()),
-            headers: BTreeMap::from([
-                ("Accept".to_string(), "application/json".to_string()),
-                ("User-Agent".to_string(), USER_AGENT.to_string()),
-            ]),
-            body: Vec::new(),
-        })
-        .collect();
-    let request = PluginHttpBatchRequest {
-        requests,
-        desired_start_rate: PluginHttpStartRate {
-            starts: API_REQUESTS_PER_SECOND,
-            interval_ms: 1_000,
-        },
-    };
-
-    let response = match scryer_plugin_pdk::host::call(PluginHostRequest::HttpBatch(request)) {
-        Ok(PluginHostResponse::HttpBatch(PluginResult::Ok(response))) => response,
-        Ok(PluginHostResponse::HttpBatch(PluginResult::Err(error))) => {
-            return Ok(
-                std::iter::repeat_with(|| Err(api_failure_from_plugin_error(&error)))
-                    .take(batch.len())
-                    .collect(),
-            );
+    let mut ordered = component::stream::iter(batch.iter().enumerate().map(|(index, (_, url))| {
+        let start_gate = start_gate.clone();
+        let url = url.clone();
+        async move {
+            let response = match start_gate.acquire().await {
+                Ok(()) => component::http(PluginHttpRequest {
+                    url,
+                    method: Some("GET".to_string()),
+                    headers: BTreeMap::from([
+                        ("Accept".to_string(), "application/json".to_string()),
+                        ("User-Agent".to_string(), USER_AGENT.to_string()),
+                    ]),
+                    body: Vec::new(),
+                })
+                .await
+                .map_err(|error| {
+                    ApiRequestFailure::Upstream(format!("AniNZB API request failed: {error}"))
+                })
+                .and_then(parse_api_http_response),
+                Err(wait) => Err(ApiRequestFailure::RateLimited(Some(
+                    i64::try_from(wait.retry_after_ms.div_ceil(1_000)).unwrap_or(i64::MAX),
+                ))),
+            };
+            (index, response)
         }
-        Ok(_) => {
-            return Ok(std::iter::repeat_with(|| {
-                Err(ApiRequestFailure::Upstream(
-                    "host returned the wrong response operation for AniNZB HTTP batch".to_string(),
-                ))
-            })
-            .take(batch.len())
-            .collect());
-        }
-        Err(error) => {
-            return Ok(std::iter::repeat_with(|| {
-                Err(ApiRequestFailure::Upstream(format!(
-                    "AniNZB HTTP batch failed: {error}"
-                )))
-            })
-            .take(batch.len())
-            .collect());
-        }
-    };
-
-    if response.results.len() != batch.len() {
-        return Ok(std::iter::repeat_with(|| {
-            Err(ApiRequestFailure::Upstream(format!(
-                "AniNZB HTTP batch returned {} results for {} requests",
-                response.results.len(),
-                batch.len()
-            )))
-        })
-        .take(batch.len())
-        .collect());
-    }
-
-    Ok(response
-        .results
-        .into_iter()
-        .map(|result| match result {
-            PluginResult::Ok(response) => parse_api_http_response(response),
-            PluginResult::Err(error) => Err(api_failure_from_plugin_error(&error)),
-        })
-        .collect())
-}
-
-fn api_failure_from_plugin_error(error: &PluginError) -> ApiRequestFailure {
-    if error.code == PluginErrorCode::RateLimited {
-        ApiRequestFailure::RateLimited(error.retry_after_seconds)
-    } else {
-        ApiRequestFailure::Upstream(error.public_message.clone())
-    }
+    }))
+    .buffer_unordered(16)
+    .collect::<Vec<_>>()
+    .await;
+    ordered.sort_by_key(|(index, _)| *index);
+    Ok(ordered.into_iter().map(|(_, response)| response).collect())
 }
 
 fn parse_api_http_response(
@@ -1098,9 +1065,7 @@ fn insert_string_list(
 }
 
 fn config_optional(key: &str) -> Option<String> {
-    config::get(key)
-        .ok()
-        .flatten()
+    component::config_get(key)
         .map(|value| value.trim().to_string())
         .filter(|value| !value.is_empty())
 }
@@ -1130,7 +1095,7 @@ fn civil_from_days(days: i64) -> (i64, i64, i64) {
     (year, month, day)
 }
 
-indexer_command_compat::scryer_indexer_main!(descriptor = build_descriptor, search = search,);
+scryer_plugin_pdk::scryer_indexer_component_main!(descriptor = build_descriptor, search = search,);
 
 #[cfg(test)]
 mod tests {
@@ -1214,17 +1179,6 @@ mod tests {
         let budget = config.http_behavior.hit_budget.expect("hit budget");
         assert_eq!(budget.hourly_limit, DEFAULT_HOURLY_HIT_CAP);
         assert_eq!(budget.daily_limit, DEFAULT_DAILY_HIT_CAP);
-    }
-
-    #[test]
-    fn batch_rate_is_host_declared_at_three_starts_per_second() {
-        assert_eq!(API_REQUESTS_PER_SECOND, 3);
-        let rate = PluginHttpStartRate {
-            starts: API_REQUESTS_PER_SECOND,
-            interval_ms: 1_000,
-        };
-        assert_eq!(rate.starts, 3);
-        assert_eq!(rate.interval_ms, 1_000);
     }
 
     #[test]

@@ -190,13 +190,14 @@ mod tests {
 
     #[test]
     fn structured_errors_survive_command_result_conversion() {
-        let result: PluginResult<u8> = to_plugin_result(Err(structured_plugin_error(PluginError {
-            code: PluginErrorCode::RateLimited,
-            public_message: "search deferred".to_string(),
-            debug_message: Some("quota exhausted".to_string()),
-            retry_after_seconds: Some(60),
-            details: None,
-        })));
+        let result: PluginResult<u8> =
+            to_plugin_result(Err(structured_plugin_error(PluginError {
+                code: PluginErrorCode::RateLimited,
+                public_message: "search deferred".to_string(),
+                debug_message: Some("quota exhausted".to_string()),
+                retry_after_seconds: Some(60),
+                details: None,
+            })));
         let PluginResult::Err(error) = result else {
             panic!("expected structured error");
         };

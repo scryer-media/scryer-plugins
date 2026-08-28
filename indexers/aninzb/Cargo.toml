@@ -1,6 +1,6 @@
 [package]
 name = "aninzb-indexer"
-version = "2.0.5"
+version = "2.0.6"
 edition = "2024"
 autolib = false
 license = "GPL-3.0-only"
@@ -11,22 +11,22 @@ official = true
 plugin_id = "aninzb"
 catalog_versions = ["v3"]
 status = "active"
-min_scryer_version = "0.18.17"
+min_scryer_version = "0.18.22"
 feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/aninzb"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/aninzb"
 
-[[bin]]
-name = "aninzb-indexer"
+[lib]
+name = "aninzb_indexer"
 path = "src/lib.rs"
+crate-type = ["cdylib"]
 
 [dependencies]
-indexer-command-compat = { path = "../command-compat" }
-scryer-plugin-pdk = "0.5.10"
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.5.11" }
 newznab-common = { path = "../newznab-common" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-scryer-plugin-sdk = "3.9.0"
+scryer-plugin-sdk = "3.10.0"
 url = "2"
 
 [profile.plugin-release]

@@ -2,15 +2,30 @@ use std::collections::HashMap;
 
 use newznab_common::{
     Capabilities, IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor,
-    IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures,
-    IndexerSearchInput, IndexerSourceKind, NewznabConfig, PluginActionRequest,
-    PluginActionResponse, PluginDescriptor, ProviderDescriptor, SDK_VERSION, SearchRequest,
-    SearchResponse, current_sdk_constraint, execute_full_search, extract_base_metadata,
-    standard_config_fields,
+    IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol, IndexerSearchInput,
+    IndexerSourceKind, NewznabConfig, PluginActionRequest, PluginActionResponse, PluginDescriptor,
+    ProviderDescriptor, SDK_VERSION, SearchRequest, SearchResponse, current_sdk_constraint,
+    execute_full_search, extract_profile_metadata, standard_config_fields,
 };
 use scryer_plugin_pdk::*;
 
+mod provider_profiles;
+
 fn build_descriptor() -> PluginDescriptor {
+    let (provider_profiles, response_features) = provider_profiles::load();
+    let scoring_policies = provider_profiles::scoring_policies(&provider_profiles);
+    let mut config_fields = standard_config_fields(None);
+    if let Some(base_url) = config_fields
+        .iter_mut()
+        .find(|field| field.key == "base_url")
+    {
+        base_url.required = false;
+        base_url.help_text = Some(
+            "Required for Custom; known providers use their bundled API endpoint unless overridden."
+                .to_string(),
+        );
+    }
+    config_fields.insert(0, provider_profiles::selector(&provider_profiles));
     PluginDescriptor {
         id: "newznab".to_string(),
         name: "Newznab Indexer".to_string(),
@@ -20,8 +35,13 @@ fn build_descriptor() -> PluginDescriptor {
         socket_permissions: vec![],
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: "newznab".to_string(),
-            provider_aliases: vec![],
-            search_semantics_version: Some(1),
+            provider_aliases: vec!["nzbgeek".to_string(), "dognzb".to_string()],
+            provider_profiles,
+            search_semantics_version: Some(2),
+            strategy_plan: Some(scryer_plugin_sdk::IndexerStrategyPlanCapability {
+                version: 1,
+                max_parallel_strategies: 4,
+            }),
             source_kind: IndexerSourceKind::Usenet,
             capabilities: Capabilities {
                 supported_ids: HashMap::from([
@@ -76,38 +96,61 @@ fn build_descriptor() -> PluginDescriptor {
                     ..IndexerLimitCapabilities::default()
                 }),
                 torrent: None,
-                response_features: Some(IndexerResponseFeatures {
-                    languages: true,
-                    grabs: true,
-                    comments: true,
-                    info_url: true,
-                    guid: true,
-                    raw_provider_metadata: true,
-                    password_hint: true,
-                    protection_hint: true,
-                    ..IndexerResponseFeatures::default()
-                }),
+                response_features: Some(response_features),
             },
-            scoring_policies: vec![],
-            config_fields: standard_config_fields(None),
+            scoring_policies,
+            config_fields,
             allowed_hosts: vec![],
             rate_limit_seconds: None,
         }),
     }
 }
 
-fn search(req: SearchRequest) -> FnResult<SearchResponse> {
+async fn search(req: SearchRequest) -> Result<SearchResponse, Error> {
     let config = NewznabConfig::from_host()?;
-    let response = execute_full_search(&config, &req, extract_base_metadata)?;
+    let response = execute_full_search(&config, &req, extract_profile_metadata).await?;
     Ok(response)
 }
 
-fn action(request: PluginActionRequest) -> FnResult<PluginActionResponse> {
-    newznab_common::execute_provider_action(request)
+async fn action(request: PluginActionRequest) -> Result<PluginActionResponse, Error> {
+    newznab_common::execute_provider_action(request).await
 }
 
-indexer_command_compat::scryer_indexer_main!(
+scryer_plugin_pdk::scryer_indexer_component_main!(
     descriptor = build_descriptor,
     search = search,
     action = action,
 );
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn descriptor_owns_profiles_selector_and_guarded_policies() {
+        let descriptor = build_descriptor();
+        let ProviderDescriptor::Indexer(indexer) = descriptor.provider else {
+            panic!("expected indexer descriptor");
+        };
+        assert_eq!(indexer.provider_profiles.len(), 2);
+        assert_eq!(indexer.scoring_policies.len(), 3);
+        assert!(
+            indexer
+                .scoring_policies
+                .iter()
+                .all(|policy| policy.rego_source.contains("newznab_profile_id"))
+        );
+        let selector = indexer
+            .config_fields
+            .iter()
+            .find(|field| field.key == "profile_id")
+            .expect("provider selector");
+        assert_eq!(selector.options.len(), 3);
+        let base_url = indexer
+            .config_fields
+            .iter()
+            .find(|field| field.key == "base_url")
+            .expect("base URL field");
+        assert!(!base_url.required);
+    }
+}

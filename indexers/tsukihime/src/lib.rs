@@ -1,17 +1,19 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fmt;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+use scryer_plugin_pdk::component::{self, structured_plugin_error};
 use scryer_plugin_pdk::*;
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldRole, ConfigFieldType, ConfigFieldValueSource, IndexerCapabilities,
     IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol,
-    IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind, IndexerTorrentCapabilities,
-    PluginDescriptor, PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
-    PluginSearchResult as SearchResult, ProviderDescriptor, SDK_VERSION,
+    IndexerResponseFeatures, IndexerSearchIncompleteReason, IndexerSearchInput,
+    IndexerSearchPluginError, IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor,
+    PluginError, PluginErrorCode, PluginErrorDetails, PluginSearchRequest as SearchRequest,
+    PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult, ProviderDescriptor,
+    SDK_VERSION,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::Value;
 
 const PROVIDER_ID: &str = "tsukihime-indexer";
@@ -23,20 +25,39 @@ const API_MAX_RESULTS: usize = 100;
 const RATE_LIMIT_HINT_SECONDS: u32 = 2;
 const API_RATE_LIMIT_PER_MINUTE: u32 = 60;
 const SEARCH_RATE_LIMIT_PER_MINUTE: u32 = 25;
-const RATE_LIMIT_WINDOW_SECONDS: u64 = 60;
-const API_RATE_LIMIT_VAR_KEY: &str = "tsukihime-indexer-api-rate-limit-v1";
-const SEARCH_RATE_LIMIT_VAR_KEY: &str = "tsukihime-indexer-search-rate-limit-v1";
+const RATE_LIMIT_WINDOW_MS: u64 = 60_000;
+const API_RATE_LIMIT_STATE_KEY: &str = "tsukihime-indexer-api-rate-limit-v2";
+const SEARCH_RATE_LIMIT_STATE_KEY: &str = "tsukihime-indexer-search-rate-limit-v2";
+const API_COOLDOWN_STATE_KEY: &str = "tsukihime-indexer-api-cooldown-v2";
+const SEARCH_COOLDOWN_STATE_KEY: &str = "tsukihime-indexer-search-cooldown-v2";
+const REQUEST_START_STATE_KEY: &str = "tsukihime-indexer-request-start-v2";
 
-fn search(request: SearchRequest) -> FnResult<SearchResponse> {
-    let response = match search_impl(&request) {
+async fn search(request: SearchRequest) -> FnResult<SearchResponse> {
+    let response = match search_impl(&request).await {
         Ok(response) => response,
-        Err(TsukihimeError::RateLimited(_)) => SearchResponse {
-            results: Vec::new(),
-            ..SearchResponse::default()
-        },
+        Err(TsukihimeError::RateLimited(retry_after_seconds)) => {
+            return Err(structured_plugin_error(rate_limited_error(
+                retry_after_seconds,
+            )));
+        }
         Err(error) => return Err(Error::msg(error.to_string())),
     };
     Ok(response)
+}
+
+fn rate_limited_error(retry_after_seconds: Option<i64>) -> PluginError {
+    PluginError {
+        code: PluginErrorCode::UpstreamUnavailable,
+        public_message: "indexer search deferred by upstream rate limiting".to_string(),
+        debug_message: Some("Tsukihime quota or cooldown deferred the search".to_string()),
+        retry_after_seconds,
+        details: Some(PluginErrorDetails::IndexerSearch(
+            IndexerSearchPluginError::Deferred {
+                reason: IndexerSearchIncompleteReason::RateLimited,
+                retry_after_seconds,
+            },
+        )),
+    }
 }
 
 fn build_descriptor() -> PluginDescriptor {
@@ -50,7 +71,12 @@ fn build_descriptor() -> PluginDescriptor {
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: PROVIDER_TYPE.to_string(),
             provider_aliases: vec!["tsukihime.org".to_string()],
-            search_semantics_version: None,
+            provider_profiles: vec![],
+            search_semantics_version: Some(2),
+            strategy_plan: Some(scryer_plugin_sdk::IndexerStrategyPlanCapability {
+                version: 1,
+                max_parallel_strategies: 4,
+            }),
             source_kind: IndexerSourceKind::Generic,
             capabilities: IndexerCapabilities {
                 supported_ids: HashMap::from([(
@@ -149,13 +175,13 @@ fn config_fields() -> Vec<ConfigFieldDef> {
     ]
 }
 
-fn search_impl(request: &SearchRequest) -> Result<SearchResponse, TsukihimeError> {
+async fn search_impl(request: &SearchRequest) -> Result<SearchResponse, TsukihimeError> {
     let config = TsukihimeConfig::from_host();
     let limit = config.limit_for_request(request.limit);
-    let results = if let Some(anime_id) = resolve_anime_id(&config, request)? {
-        anime_results(&config, anime_id, request, limit)?
+    let results = if let Some(anime_id) = resolve_anime_id(&config, request).await? {
+        anime_results(&config, anime_id, request, limit).await?
     } else {
-        text_or_recent_results(&config, request, limit)?
+        text_or_recent_results(&config, request, limit).await?
     };
 
     Ok(SearchResponse {
@@ -164,7 +190,7 @@ fn search_impl(request: &SearchRequest) -> Result<SearchResponse, TsukihimeError
     })
 }
 
-fn resolve_anime_id(
+async fn resolve_anime_id(
     config: &TsukihimeConfig,
     request: &SearchRequest,
 ) -> Result<Option<i64>, TsukihimeError> {
@@ -177,7 +203,7 @@ fn resolve_anime_id(
             continue;
         };
         let path = format!("animes/{endpoint}/{}", url_encode(&id));
-        match get_json::<Anime>(config, &path) {
+        match get_json::<Anime>(config, &path).await {
             Ok(anime) => return Ok(Some(anime.id)),
             Err(TsukihimeError::NotFound) => continue,
             Err(error) => return Err(error),
@@ -197,7 +223,7 @@ fn first_request_id(request: &SearchRequest, keys: &[&str]) -> Option<String> {
     })
 }
 
-fn anime_results(
+async fn anime_results(
     config: &TsukihimeConfig,
     anime_id: i64,
     request: &SearchRequest,
@@ -205,9 +231,10 @@ fn anime_results(
 ) -> Result<Vec<Torrent>, TsukihimeError> {
     let episode = request.episode.or(request.absolute_episode);
     let page = if let Some(episode) = episode.filter(|episode| *episode > 0) {
-        get_json::<TorrentPage>(config, &format!("animes/{anime_id}/episodes/{episode}"))?
+        get_json::<TorrentPage>(config, &format!("animes/{anime_id}/episodes/{episode}")).await?
     } else {
-        get_json::<TorrentPage>(config, &format!("animes/{anime_id}?limit={limit}&offset=0"))?
+        get_json::<TorrentPage>(config, &format!("animes/{anime_id}?limit={limit}&offset=0"))
+            .await?
     };
 
     let parent_anime = page.anime;
@@ -223,7 +250,7 @@ fn anime_results(
         .collect())
 }
 
-fn text_or_recent_results(
+async fn text_or_recent_results(
     config: &TsukihimeConfig,
     request: &SearchRequest,
     limit: usize,
@@ -240,7 +267,7 @@ fn text_or_recent_results(
         )
     };
 
-    Ok(get_json::<TorrentPage>(config, &path)?.results)
+    Ok(get_json::<TorrentPage>(config, &path).await?.results)
 }
 
 fn search_query(request: &SearchRequest) -> String {
@@ -467,27 +494,29 @@ fn insert_json<T: serde::Serialize>(target: &mut HashMap<String, Value>, key: &s
     }
 }
 
-fn get_json<T: for<'de> Deserialize<'de>>(
+async fn get_json<T: for<'de> Deserialize<'de>>(
     config: &TsukihimeConfig,
     path: &str,
 ) -> Result<T, TsukihimeError> {
-    reserve_api_request(path)?;
+    reserve_api_request(path).await?;
     let url = format!(
         "{}/{}",
         config.base_url.trim_end_matches('/'),
         path.trim_start_matches('/')
     );
-    let response = http_get(&url)?;
-    let _ = sync_rate_limit_from_headers(path, &response.headers);
+    let response = http_get(&url).await?;
+    defer_rate_limit_from_headers(path, &response.headers);
     match response.status {
         200..=299 => serde_json::from_slice(&response.body).map_err(|error| {
             TsukihimeError::Message(format!("Tsukihime JSON parse error: {error}"))
         }),
         404 => Err(TsukihimeError::NotFound),
         429 => {
-            let retry_after = retry_after_seconds(&response.headers);
-            let _ = remember_api_rate_limit(path, retry_after);
-            Err(TsukihimeError::RateLimited(retry_after))
+            let retry_after = retry_after_delay_ms(&response.headers);
+            defer_api_rate_limit(path, retry_after);
+            Err(TsukihimeError::RateLimited(
+                retry_after.map(retry_after_seconds_from_ms),
+            ))
         }
         status => Err(TsukihimeError::Message(format!(
             "Tsukihime API returned HTTP {status}: {}",
@@ -496,124 +525,82 @@ fn get_json<T: for<'de> Deserialize<'de>>(
     }
 }
 
-fn http_get(url: &str) -> Result<TsukihimeHttpResponse, TsukihimeError> {
-    let request = HttpRequest::new(url)
-        .with_method("GET")
-        .with_header("Accept", "application/json")
-        .with_header("User-Agent", DEFAULT_USER_AGENT);
-    let response = http::request::<Vec<u8>>(&request, None)
-        .map_err(|error| TsukihimeError::Message(format!("Tsukihime request failed: {error}")))?;
+async fn http_get(url: &str) -> Result<TsukihimeHttpResponse, TsukihimeError> {
+    let response = component::http(PluginHttpRequest {
+        url: url.to_string(),
+        method: Some("GET".to_string()),
+        headers: BTreeMap::from([
+            ("Accept".to_string(), "application/json".to_string()),
+            ("User-Agent".to_string(), DEFAULT_USER_AGENT.to_string()),
+        ]),
+        body: Vec::new(),
+    })
+    .await
+    .map_err(|error| TsukihimeError::Message(format!("Tsukihime request failed: {error:?}")))?;
     Ok(TsukihimeHttpResponse {
-        status: response.status_code(),
-        // The PDK's host response keeps headers ordered; this plugin's own
-        // response type is a HashMap, so collect rather than clone.
-        headers: response.headers().clone().into_iter().collect(),
-        body: response.body(),
+        status: response.status,
+        headers: response.headers,
+        body: response.body,
     })
 }
 
-fn reserve_api_request(path: &str) -> Result<(), TsukihimeError> {
-    let now = current_epoch_seconds();
-    let mut api_state = load_rate_limit_state(API_RATE_LIMIT_VAR_KEY)?;
-    normalize_rate_limit_state(&mut api_state, now);
-    if let Some(seconds) = rate_limit_retry_after(&api_state, API_RATE_LIMIT_PER_MINUTE, now) {
-        return Err(TsukihimeError::RateLimited(Some(seconds)));
+async fn reserve_api_request(path: &str) -> Result<(), TsukihimeError> {
+    component::CooldownGate::new(API_COOLDOWN_STATE_KEY)
+        .wait()
+        .await
+        .map_err(|wait| {
+            TsukihimeError::RateLimited(Some(retry_after_seconds_from_ms(wait.retry_after_ms)))
+        })?;
+    let is_search = is_search_torrents_path(path);
+    if is_search {
+        component::CooldownGate::new(SEARCH_COOLDOWN_STATE_KEY)
+            .wait()
+            .await
+            .map_err(|wait| {
+                TsukihimeError::RateLimited(Some(retry_after_seconds_from_ms(wait.retry_after_ms)))
+            })?;
     }
 
-    let search_path = is_search_torrents_path(path);
-    let mut search_state = if search_path {
-        let mut state = load_rate_limit_state(SEARCH_RATE_LIMIT_VAR_KEY)?;
-        normalize_rate_limit_state(&mut state, now);
-        if let Some(seconds) = rate_limit_retry_after(&state, SEARCH_RATE_LIMIT_PER_MINUTE, now) {
-            return Err(TsukihimeError::RateLimited(Some(seconds)));
-        }
-        Some(state)
+    let quota = if is_search {
+        component::WindowQuota::new(
+            SEARCH_RATE_LIMIT_STATE_KEY,
+            SEARCH_RATE_LIMIT_PER_MINUTE,
+            RATE_LIMIT_WINDOW_MS,
+        )
     } else {
-        None
+        component::WindowQuota::new(
+            API_RATE_LIMIT_STATE_KEY,
+            API_RATE_LIMIT_PER_MINUTE,
+            RATE_LIMIT_WINDOW_MS,
+        )
     };
-
-    api_state.count = api_state.count.saturating_add(1);
-    save_rate_limit_state(API_RATE_LIMIT_VAR_KEY, &api_state)?;
-    if let Some(state) = search_state.as_mut() {
-        state.count = state.count.saturating_add(1);
-        save_rate_limit_state(SEARCH_RATE_LIMIT_VAR_KEY, state)?;
-    }
+    quota.reserve(1).map_err(|error| {
+        TsukihimeError::RateLimited(Some(retry_after_seconds_from_ms(error.retry_after_ms)))
+    })?;
+    component::StartRateGate::new(REQUEST_START_STATE_KEY, 1, 1_000)
+        .acquire()
+        .await
+        .map_err(|wait| {
+            TsukihimeError::RateLimited(Some(retry_after_seconds_from_ms(wait.retry_after_ms)))
+        })?;
     Ok(())
 }
 
-fn sync_rate_limit_from_headers(
-    path: &str,
-    headers: &HashMap<String, String>,
-) -> Result<(), TsukihimeError> {
-    let Some(retry_after) = retry_after_from_remaining_headers(headers, current_epoch_seconds())
-    else {
-        return Ok(());
-    };
-    remember_api_rate_limit(path, Some(retry_after))
+fn defer_rate_limit_from_headers(path: &str, headers: &BTreeMap<String, String>) {
+    defer_api_rate_limit(
+        path,
+        retry_after_from_remaining_headers(headers, component::wall_now_ms()),
+    );
 }
 
-fn remember_api_rate_limit(path: &str, retry_after: Option<i64>) -> Result<(), TsukihimeError> {
-    let Some(seconds) = retry_after.filter(|seconds| *seconds > 0) else {
-        return Ok(());
+fn defer_api_rate_limit(path: &str, retry_after_ms: Option<u64>) {
+    let Some(retry_after_ms) = retry_after_ms.filter(|duration| *duration > 0) else {
+        return;
     };
-    let now = current_epoch_seconds();
-    let blocked_until = now.saturating_add(seconds as u64);
-    block_rate_limit_key(API_RATE_LIMIT_VAR_KEY, blocked_until, now)?;
+    component::CooldownGate::new(API_COOLDOWN_STATE_KEY).defer_for(retry_after_ms);
     if is_search_torrents_path(path) {
-        block_rate_limit_key(SEARCH_RATE_LIMIT_VAR_KEY, blocked_until, now)?;
+        component::CooldownGate::new(SEARCH_COOLDOWN_STATE_KEY).defer_for(retry_after_ms);
     }
-    Ok(())
-}
-
-fn block_rate_limit_key(key: &str, blocked_until: u64, now: u64) -> Result<(), TsukihimeError> {
-    let mut state = load_rate_limit_state(key)?;
-    normalize_rate_limit_state(&mut state, now);
-    state.blocked_until = state.blocked_until.max(blocked_until);
-    save_rate_limit_state(key, &state)
-}
-
-fn load_rate_limit_state(key: &str) -> Result<RateLimitState, TsukihimeError> {
-    let raw = var::get::<String>(key).map_err(|error| {
-        TsukihimeError::Message(format!("failed to read rate limit state: {error}"))
-    })?;
-    Ok(raw
-        .as_deref()
-        .and_then(|value| serde_json::from_str(value).ok())
-        .unwrap_or_default())
-}
-
-fn save_rate_limit_state(key: &str, state: &RateLimitState) -> Result<(), TsukihimeError> {
-    let rendered = serde_json::to_string(state).map_err(|error| {
-        TsukihimeError::Message(format!("failed to encode rate limit state: {error}"))
-    })?;
-    var::set(key, rendered).map_err(|error| {
-        TsukihimeError::Message(format!("failed to store rate limit state: {error}"))
-    })
-}
-
-fn normalize_rate_limit_state(state: &mut RateLimitState, now: u64) {
-    let window_id = now / RATE_LIMIT_WINDOW_SECONDS;
-    if state.window_id != window_id {
-        state.window_id = window_id;
-        state.count = 0;
-    }
-    if state.blocked_until <= now {
-        state.blocked_until = 0;
-    }
-}
-
-fn rate_limit_retry_after(state: &RateLimitState, limit: u32, now: u64) -> Option<i64> {
-    if state.blocked_until > now {
-        return Some((state.blocked_until - now).min(i64::MAX as u64) as i64);
-    }
-    if state.count < limit {
-        return None;
-    }
-    let next_window = state
-        .window_id
-        .saturating_add(1)
-        .saturating_mul(RATE_LIMIT_WINDOW_SECONDS);
-    Some(next_window.saturating_sub(now).max(1) as i64)
 }
 
 fn is_search_torrents_path(path: &str) -> bool {
@@ -623,11 +610,17 @@ fn is_search_torrents_path(path: &str) -> bool {
         .is_some_and(|endpoint| endpoint == "search/torrents")
 }
 
-fn retry_after_seconds(headers: &HashMap<String, String>) -> Option<i64> {
-    header_value(headers, "Retry-After").and_then(|value| value.trim().parse::<i64>().ok())
+fn retry_after_delay_ms(headers: &BTreeMap<String, String>) -> Option<u64> {
+    header_value(headers, "Retry-After")
+        .and_then(|value| value.trim().parse::<u64>().ok())
+        .map(|seconds| seconds.saturating_mul(1_000))
+        .or_else(|| retry_after_from_remaining_headers(headers, component::wall_now_ms()))
 }
 
-fn retry_after_from_remaining_headers(headers: &HashMap<String, String>, now: u64) -> Option<i64> {
+fn retry_after_from_remaining_headers(
+    headers: &BTreeMap<String, String>,
+    wall_now_ms: u64,
+) -> Option<u64> {
     let remaining = header_value(headers, "X-RateLimit-Remaining")?
         .trim()
         .parse::<i64>()
@@ -639,26 +632,25 @@ fn retry_after_from_remaining_headers(headers: &HashMap<String, String>, now: u6
         .trim()
         .parse::<u64>()
         .ok()?;
-    let seconds = if reset > now {
-        reset.saturating_sub(now)
+    let delay_ms = if reset >= 1_000_000_000_000 {
+        reset.saturating_sub(wall_now_ms)
+    } else if reset >= 1_000_000_000 {
+        reset.saturating_mul(1_000).saturating_sub(wall_now_ms)
     } else {
-        reset
+        reset.saturating_mul(1_000)
     };
-    (seconds > 0).then_some(seconds.min(RATE_LIMIT_WINDOW_SECONDS) as i64)
+    (delay_ms > 0).then_some(delay_ms)
 }
 
-fn header_value<'a>(headers: &'a HashMap<String, String>, name: &str) -> Option<&'a str> {
+fn retry_after_seconds_from_ms(duration_ms: u64) -> i64 {
+    duration_ms.div_ceil(1_000).min(i64::MAX as u64) as i64
+}
+
+fn header_value<'a>(headers: &'a BTreeMap<String, String>, name: &str) -> Option<&'a str> {
     headers
         .iter()
         .find(|(key, _)| key.eq_ignore_ascii_case(name))
         .map(|(_, value)| value.as_str())
-}
-
-fn current_epoch_seconds() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or(Duration::ZERO)
-        .as_secs()
 }
 
 fn compact_error_body(body: &[u8]) -> String {
@@ -703,15 +695,8 @@ impl fmt::Display for TsukihimeError {
 
 struct TsukihimeHttpResponse {
     status: u16,
-    headers: HashMap<String, String>,
+    headers: BTreeMap<String, String>,
     body: Vec<u8>,
-}
-
-#[derive(Default, Serialize, Deserialize)]
-struct RateLimitState {
-    window_id: u64,
-    count: u32,
-    blocked_until: u64,
 }
 
 #[derive(Clone)]
@@ -916,7 +901,7 @@ fn civil_from_days(days: i64) -> (i64, i64, i64) {
     (year, month, day)
 }
 
-indexer_command_compat::scryer_indexer_main!(descriptor = build_descriptor, search = search,);
+scryer_indexer_component_main!(descriptor = build_descriptor, search = search,);
 
 #[cfg(test)]
 mod tests {
@@ -1060,31 +1045,27 @@ mod tests {
     }
 
     #[test]
-    fn local_rate_limit_state_uses_fixed_minute_windows() {
-        let now = 1783119040;
-        let mut state = RateLimitState {
-            window_id: now / RATE_LIMIT_WINDOW_SECONDS,
-            count: API_RATE_LIMIT_PER_MINUTE,
-            blocked_until: 0,
-        };
+    fn component_rate_policy_keeps_the_provider_minute_budgets() {
+        assert_eq!(RATE_LIMIT_WINDOW_MS, 60_000);
+        assert_eq!(API_RATE_LIMIT_PER_MINUTE, 60);
+        assert_eq!(SEARCH_RATE_LIMIT_PER_MINUTE, 25);
+    }
 
-        assert_eq!(
-            rate_limit_retry_after(&state, API_RATE_LIMIT_PER_MINUTE, now),
-            Some(
-                state
-                    .window_id
-                    .saturating_add(1)
-                    .saturating_mul(RATE_LIMIT_WINDOW_SECONDS)
-                    .saturating_sub(now) as i64
-            )
-        );
+    #[test]
+    fn rate_limited_searches_return_typed_deferred_error() {
+        let error = rate_limited_error(Some(17));
 
-        normalize_rate_limit_state(&mut state, now + RATE_LIMIT_WINDOW_SECONDS);
-        assert_eq!(state.count, 0);
-        assert_eq!(
-            rate_limit_retry_after(&state, API_RATE_LIMIT_PER_MINUTE, now + 60),
-            None
-        );
+        assert_eq!(error.code, PluginErrorCode::UpstreamUnavailable);
+        assert_eq!(error.retry_after_seconds, Some(17));
+        assert!(matches!(
+            error.details,
+            Some(PluginErrorDetails::IndexerSearch(
+                IndexerSearchPluginError::Deferred {
+                    reason: IndexerSearchIncompleteReason::RateLimited,
+                    retry_after_seconds: Some(17),
+                }
+            ))
+        ));
     }
 
     #[test]
@@ -1097,13 +1078,16 @@ mod tests {
 
     #[test]
     fn rate_limit_headers_are_case_insensitive() {
-        let mut headers = HashMap::new();
+        let mut headers = BTreeMap::new();
         headers.insert("x-ratelimit-remaining".to_string(), "0".to_string());
         headers.insert("X-RateLimit-Reset".to_string(), "12".to_string());
         headers.insert("retry-after".to_string(), "9".to_string());
 
-        assert_eq!(retry_after_seconds(&headers), Some(9));
-        assert_eq!(retry_after_from_remaining_headers(&headers, 100), Some(12));
+        assert_eq!(retry_after_delay_ms(&headers), Some(9_000));
+        assert_eq!(
+            retry_after_from_remaining_headers(&headers, 100_000),
+            Some(12_000)
+        );
     }
 
     #[test]

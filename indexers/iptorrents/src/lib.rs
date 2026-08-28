@@ -35,18 +35,18 @@ fn build_descriptor() -> PluginDescriptor {
     })
 }
 
-fn search(req: SearchRequest) -> FnResult<SearchResponse> {
+async fn search(req: SearchRequest) -> FnResult<SearchResponse> {
     let feed_url = required_config("feed_url")?;
     if !is_direct_download_feed_url(&feed_url) {
         return Err(Error::msg(
             "IPTorrents feed_url must be the direct-download RSS URL containing ;download",
         ));
     }
-    let http_config = RssHttpConfig::from_host(DEFAULT_USER_AGENT);
+    let http_config = RssHttpConfig::from_host(PROVIDER_ID, DEFAULT_USER_AGENT, 1, 2_000);
     let mut options = RssParseOptions::torrent(PROVIDER_ID);
     options.parse_size_in_description = true;
 
-    let response = execute_rss_urls(PROVIDER_ID, &[feed_url], &http_config, &req, options)?;
+    let response = execute_rss_urls(PROVIDER_ID, &[feed_url], &http_config, &req, options).await?;
     Ok(response)
 }
 
@@ -80,4 +80,4 @@ fn is_direct_download_feed_url(url: &str) -> bool {
     query.split(';').any(|part| part == "download")
 }
 
-indexer_command_compat::scryer_indexer_main!(descriptor = build_descriptor, search = search,);
+scryer_indexer_component_main!(descriptor = build_descriptor, search = search,);

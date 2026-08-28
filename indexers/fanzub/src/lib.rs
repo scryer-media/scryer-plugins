@@ -39,17 +39,17 @@ fn build_descriptor() -> PluginDescriptor {
     })
 }
 
-fn search(req: SearchRequest) -> FnResult<SearchResponse> {
+async fn search(req: SearchRequest) -> FnResult<SearchResponse> {
     let base_url = config_value("base_url").unwrap_or_else(|| DEFAULT_BASE_URL.to_string());
     let anime_standard_format_search = config_bool("anime_standard_format_search");
     let url = fanzub_url(&base_url, &req, anime_standard_format_search);
-    let http_config = RssHttpConfig::from_host(DEFAULT_USER_AGENT);
+    let http_config = RssHttpConfig::from_host(PROVIDER_ID, DEFAULT_USER_AGENT, 1, 2_000);
     let mut options = RssParseOptions::usenet(PROVIDER_ID);
     options.use_enclosure_url = true;
     options.use_enclosure_length = true;
     options.page_size = 100;
 
-    let response = execute_rss_urls(PROVIDER_ID, &[url], &http_config, &req, options)?;
+    let response = execute_rss_urls(PROVIDER_ID, &[url], &http_config, &req, options).await?;
     Ok(response)
 }
 
@@ -140,7 +140,7 @@ fn clean_title(title: &str) -> String {
         .collect::<String>()
 }
 
-indexer_command_compat::scryer_indexer_main!(descriptor = build_descriptor, search = search,);
+scryer_indexer_component_main!(descriptor = build_descriptor, search = search,);
 
 #[cfg(test)]
 mod tests {
