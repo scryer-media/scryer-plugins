@@ -124,7 +124,7 @@ fn protected_from_extra(extra: &HashMap<String, serde_json::Value>) -> Option<bo
 // ---------------------------------------------------------------------------
 
 const DEFAULT_MAX_SEARCH_PAGES: usize = 30;
-const DEFAULT_REQUEST_INTERVAL_MS: u64 = 2_000;
+const DEFAULT_REQUEST_INTERVAL_MS: u64 = 500;
 
 pub struct NewznabConfig {
     pub base_url: String,
@@ -5495,7 +5495,7 @@ mod tests {
         assert_eq!(fields[2].key, "api_path");
         assert_eq!(fields[3].key, "additional_params");
         assert_eq!(fields[4].key, "request_interval_ms");
-        assert_eq!(fields[4].default_value.as_deref(), Some("2000"));
+        assert_eq!(fields[4].default_value.as_deref(), Some("500"));
     }
 
     #[test]
@@ -5511,7 +5511,7 @@ mod tests {
     }
 
     #[test]
-    fn request_interval_uses_positive_override_or_conservative_default() {
+    fn request_interval_uses_positive_override_or_shared_default() {
         assert_eq!(
             request_interval_from_config(Some("375")),
             Duration::from_millis(375)
