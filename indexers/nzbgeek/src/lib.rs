@@ -108,9 +108,9 @@ fn build_descriptor() -> PluginDescriptor {
     }
 }
 
-async fn search(req: SearchRequest) -> Result<SearchResponse, Error> {
+fn search(req: SearchRequest) -> FnResult<SearchResponse> {
     let config = NewznabConfig::from_host()?;
-    let response = execute_full_search(&config, &req, nzbgeek_metadata_extractor).await?;
+    let response = execute_full_search(&config, &req, nzbgeek_metadata_extractor)?;
     Ok(response)
 }
 
@@ -233,7 +233,7 @@ score_entry["nzbgeek_english_confirmed"] := 200 if {
 }
 "#;
 
-scryer_plugin_pdk::scryer_indexer_component_main!(descriptor = build_descriptor, search = search,);
+indexer_command_compat::scryer_indexer_main!(descriptor = build_descriptor, search = search,);
 
 #[cfg(test)]
 mod tests {

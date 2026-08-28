@@ -4,8 +4,6 @@
 //! full host interface with deliberately inert implementations so descriptor
 //! extraction cannot perform network I/O, read configuration, or mutate state.
 
-use std::future::Future;
-
 use anyhow::{Result, anyhow, bail};
 use futures::executor::block_on;
 use wasmtime::component::{Component, HasSelf, Linker, ResourceTable};
@@ -80,18 +78,17 @@ impl Host for DescriptorCtx {
 }
 
 impl HostWithStore<DescriptorCtx> for HasSelf<DescriptorCtx> {
-    fn http(
+    async fn http(
         _accessor: &wasmtime::component::Accessor<DescriptorCtx, Self>,
         _request: HttpRequest,
-    ) -> impl Future<Output = Result<HttpResponse, TransportError>> + Send {
-        async { Err(TransportError::ForbiddenOrigin) }
+    ) -> Result<HttpResponse, TransportError> {
+        Err(TransportError::ForbiddenOrigin)
     }
 
-    fn sleep(
+    async fn sleep(
         _accessor: &wasmtime::component::Accessor<DescriptorCtx, Self>,
         _duration_ms: u64,
-    ) -> impl Future<Output = ()> + Send {
-        async {}
+    ) {
     }
 }
 
@@ -133,31 +130,27 @@ impl contract_v1_1::scryer::indexer::host::Host for DescriptorCtx {
 }
 
 impl contract_v1_1::scryer::indexer::host::HostWithStore<DescriptorCtx> for HasSelf<DescriptorCtx> {
-    fn http(
+    async fn http(
         _accessor: &wasmtime::component::Accessor<DescriptorCtx, Self>,
         _request: contract_v1_1::scryer::indexer::host::HttpRequest,
-    ) -> impl Future<
-        Output = Result<
-            contract_v1_1::scryer::indexer::host::HttpResponse,
-            contract_v1_1::scryer::indexer::host::TransportError,
-        >,
-    > + Send {
-        async { Err(contract_v1_1::scryer::indexer::host::TransportError::ForbiddenOrigin) }
+    ) -> Result<
+        contract_v1_1::scryer::indexer::host::HttpResponse,
+        contract_v1_1::scryer::indexer::host::TransportError,
+    > {
+        Err(contract_v1_1::scryer::indexer::host::TransportError::ForbiddenOrigin)
     }
 
-    fn sleep(
+    async fn sleep(
         _accessor: &wasmtime::component::Accessor<DescriptorCtx, Self>,
         _duration_ms: u64,
-    ) -> impl Future<Output = ()> + Send {
-        async {}
+    ) {
     }
 
-    fn emit_strategy_event(
+    async fn emit_strategy_event(
         _accessor: &wasmtime::component::Accessor<DescriptorCtx, Self>,
         _event: Vec<u8>,
-    ) -> impl Future<Output = Result<(), contract_v1_1::scryer::indexer::host::StrategyEventError>> + Send
-    {
-        async { Err(contract_v1_1::scryer::indexer::host::StrategyEventError::NoActivePlan) }
+    ) -> Result<(), contract_v1_1::scryer::indexer::host::StrategyEventError> {
+        Err(contract_v1_1::scryer::indexer::host::StrategyEventError::NoActivePlan)
     }
 }
 

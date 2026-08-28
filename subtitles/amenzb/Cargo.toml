@@ -21,7 +21,7 @@ crate-type = ["cdylib"]
 [dependencies]
 base64 = "0.23"
 extism-pdk = "1.4"
-newznab-common = { path = "../../indexers/newznab-common" }
+newznab-common = { package = "newznab-common-legacy", path = "../../indexers/newznab-common-legacy" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 scryer-plugin-sdk = "3.7.0"

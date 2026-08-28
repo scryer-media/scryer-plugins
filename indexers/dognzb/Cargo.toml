@@ -16,14 +16,14 @@ feature_sets = [{ required_features = [] }, { required_features = ["simd128", "r
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/dognzb"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/dognzb"
 
-[lib]
-name = "dognzb_indexer"
+[[bin]]
+name = "dognzb-indexer"
 path = "src/lib.rs"
-crate-type = ["cdylib"]
 
 [dependencies]
+indexer-command-compat = { path = "../command-compat" }
 scryer-plugin-pdk = "=0.5.10"
-newznab-common = { path = "../newznab-common" }
+newznab-common = { package = "newznab-common-legacy", path = "../newznab-common-legacy" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 scryer-plugin-sdk = "=3.9.0"

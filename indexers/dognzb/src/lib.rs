@@ -96,10 +96,10 @@ fn build_descriptor() -> PluginDescriptor {
     }
 }
 
-async fn search(req: SearchRequest) -> Result<SearchResponse, Error> {
+fn search(req: SearchRequest) -> FnResult<SearchResponse> {
     let mut config = NewznabConfig::from_host()?;
     config.page_size = 100;
-    let response = execute_full_search(&config, &req, dognzb_metadata_extractor).await?;
+    let response = execute_full_search(&config, &req, dognzb_metadata_extractor)?;
     Ok(response)
 }
 
@@ -179,7 +179,7 @@ score_entry["dognzb_mid_rating"] := 50 if {
 }
 "#;
 
-scryer_plugin_pdk::scryer_indexer_component_main!(descriptor = build_descriptor, search = search,);
+indexer_command_compat::scryer_indexer_main!(descriptor = build_descriptor, search = search,);
 
 #[cfg(test)]
 mod tests {
