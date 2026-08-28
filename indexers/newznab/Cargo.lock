@@ -472,7 +472,7 @@ dependencies = [
 
 [[package]]
 name = "newznab-indexer"
-version = "2.0.3"
+version = "2.0.4"
 dependencies = [
  "newznab-common",
  "scryer-plugin-pdk",
