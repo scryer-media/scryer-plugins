@@ -5,8 +5,8 @@ use base64::{Engine as _, engine::general_purpose::STANDARD};
 use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
 use regex::Regex;
-use scryer_plugin_pdk::*;
 use scryer_plugin_pdk::component::{self, LogLevel, StartRateGate};
+use scryer_plugin_pdk::*;
 pub use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldOption, ConfigFieldRole, ConfigFieldType,
     IndexerCapabilities as Capabilities, IndexerCategoryModel, IndexerCategoryValueKind,
@@ -174,7 +174,12 @@ pub fn build_indexer_descriptor(spec: DescriptorSpec) -> PluginDescriptor {
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: spec.provider_type.to_string(),
             provider_aliases: spec.provider_aliases,
-            search_semantics_version: None,
+            provider_profiles: vec![],
+            search_semantics_version: Some(2),
+            strategy_plan: Some(scryer_plugin_sdk::IndexerStrategyPlanCapability {
+                version: 1,
+                max_parallel_strategies: 4,
+            }),
             source_kind: spec.source_kind,
             capabilities: Capabilities {
                 supported_ids: spec.supported_ids,
@@ -290,6 +295,7 @@ pub fn select_field(
             .map(|(value, label)| ConfigFieldOption {
                 value: (*value).to_string(),
                 label: (*label).to_string(),
+                config_overrides: Default::default(),
             })
             .collect(),
         ..field(
@@ -1220,11 +1226,7 @@ fn parse_size(value: &str) -> Option<i64> {
         "gb" | "gib" => 3,
         _ => 0,
     };
-    let prefix = if unit.contains('i') {
-        1024_f64
-    } else {
-        1024_f64
-    };
+    let prefix = 1024_f64;
     Some((value * prefix.powi(power)).round() as i64)
 }
 

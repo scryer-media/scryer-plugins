@@ -3,8 +3,8 @@ use std::collections::{BTreeMap, HashMap};
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
-use scryer_plugin_pdk::*;
 use scryer_plugin_pdk::component::{self, LogLevel, StartRateGate};
+use scryer_plugin_pdk::*;
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldOption, ConfigFieldRole, ConfigFieldType,
@@ -55,7 +55,12 @@ fn build_descriptor() -> PluginDescriptor {
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: "torrent_rss".to_string(),
             provider_aliases: vec!["rss".to_string()],
-            search_semantics_version: None,
+            provider_profiles: vec![],
+            search_semantics_version: Some(2),
+            strategy_plan: Some(scryer_plugin_sdk::IndexerStrategyPlanCapability {
+                version: 1,
+                max_parallel_strategies: 4,
+            }),
             source_kind: IndexerSourceKind::Torrent,
             capabilities: Capabilities {
                 supported_ids: HashMap::new(),
@@ -183,22 +188,27 @@ fn config_fields() -> Vec<ConfigFieldDef> {
                 ConfigFieldOption {
                     value: "auto".to_string(),
                     label: "Auto".to_string(),
+                    config_overrides: Default::default(),
                 },
                 ConfigFieldOption {
                     value: "magnet".to_string(),
                     label: "Magnet".to_string(),
+                    config_overrides: Default::default(),
                 },
                 ConfigFieldOption {
                     value: "enclosure".to_string(),
                     label: "Enclosure".to_string(),
+                    config_overrides: Default::default(),
                 },
                 ConfigFieldOption {
                     value: "link".to_string(),
                     label: "Link".to_string(),
+                    config_overrides: Default::default(),
                 },
                 ConfigFieldOption {
                     value: "guid".to_string(),
                     label: "GUID".to_string(),
+                    config_overrides: Default::default(),
                 },
             ],
             help_text: Some(
@@ -275,13 +285,11 @@ fn config_fields() -> Vec<ConfigFieldDef> {
 }
 
 fn read_config(key: &str) -> Result<String, Error> {
-    component::config_get(key)
-        .ok_or_else(|| Error::msg(format!("missing config {key}")))
+    component::config_get(key).ok_or_else(|| Error::msg(format!("missing config {key}")))
 }
 
 fn optional_config(key: &str) -> Option<String> {
-    component::config_get(key)
-        .filter(|value| !value.is_empty())
+    component::config_get(key).filter(|value| !value.is_empty())
 }
 
 fn download_preference(value: Option<String>) -> DownloadPreference {

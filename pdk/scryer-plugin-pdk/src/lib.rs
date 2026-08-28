@@ -78,10 +78,10 @@
 //! flavor to build until a toolchain emits them. See `README.md` for the full
 //! build matrix and rationale.
 
+pub mod component;
 mod download_client_bridge;
 mod extism_compat;
 mod framing;
-pub mod component;
 pub mod host;
 
 pub use download_client_bridge::{
@@ -461,9 +461,9 @@ macro_rules! scryer_indexer_plugin_main {
 /// the existing SDK response models, so only their host capability calls need
 /// to become `await`-based.
 ///
-/// The component ABI intentionally serializes the SDK command payloads with
-/// postcard; WIT remains a small, stable capability boundary rather than
-/// duplicating the full SDK model graph.
+/// The component ABI serializes the SDK operation payloads as UTF-8 JSON; WIT
+/// remains a small, stable capability boundary rather than duplicating the
+/// full SDK model graph.
 #[macro_export]
 macro_rules! scryer_indexer_component_main {
     (descriptor = $descriptor:path, search = $search:path $(,)?) => {
@@ -481,6 +481,18 @@ macro_rules! scryer_indexer_component_main {
                 $crate::component::InvocationError,
             > {
                 $crate::component::dispatch_search(request, $search).await
+            }
+
+            async fn search_plan(
+                request: ::std::vec::Vec<u8>,
+            ) -> ::std::result::Result<
+                ::std::vec::Vec<u8>,
+                $crate::component::InvocationError,
+            > {
+                let descriptor = $descriptor();
+                let parallelism = $crate::component::strategy_plan_parallelism(&descriptor)
+                    .ok_or($crate::component::InvocationError::InvalidResponse)?;
+                $crate::component::dispatch_search_plan(request, parallelism, $search).await
             }
 
             async fn action(
@@ -512,6 +524,18 @@ macro_rules! scryer_indexer_component_main {
                 $crate::component::InvocationError,
             > {
                 $crate::component::dispatch_search(request, $search).await
+            }
+
+            async fn search_plan(
+                request: ::std::vec::Vec<u8>,
+            ) -> ::std::result::Result<
+                ::std::vec::Vec<u8>,
+                $crate::component::InvocationError,
+            > {
+                let descriptor = $descriptor();
+                let parallelism = $crate::component::strategy_plan_parallelism(&descriptor)
+                    .ok_or($crate::component::InvocationError::InvalidResponse)?;
+                $crate::component::dispatch_search_plan(request, parallelism, $search).await
             }
 
             async fn action(

@@ -2,8 +2,8 @@ use anyhow::{Context, Result, anyhow, bail};
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use extism::{CurrentPlugin, Error as ExtismError, Manifest, UserData, Val, ValType, host_fn};
-mod plugin_new;
 mod component_descriptor;
+mod plugin_new;
 use scryer_plugin_sdk::{
     EXPORT_ARCHIVE_PROCESS, EXPORT_DESCRIBE, EXPORT_DOWNLOAD_ADD, EXPORT_DOWNLOAD_CONTROL,
     EXPORT_DOWNLOAD_LIST_COMPLETED, EXPORT_DOWNLOAD_LIST_HISTORY, EXPORT_DOWNLOAD_LIST_QUEUE,
@@ -1690,9 +1690,7 @@ fn rustup_toolchain_has_target(
         rustup_toolchain.toolchain.as_str(),
     ]);
     let installed_targets = run_capture(&mut targets)?;
-    Ok(installed_targets
-        .lines()
-        .any(|line| line.trim() == target))
+    Ok(installed_targets.lines().any(|line| line.trim() == target))
 }
 
 fn rustup_toolchain_has_component(
@@ -9132,11 +9130,9 @@ mod tests {
         }))
         .expect("parse indexer descriptor");
         let artifact = tempfile::NamedTempFile::new().expect("create component artifact");
-        fs::write(artifact.path(), b"\0asm\r\0\x01\0")
-            .expect("write component artifact");
+        fs::write(artifact.path(), b"\0asm\r\0\x01\0").expect("write component artifact");
 
-        embed_plugin_descriptor(artifact.path(), &descriptor)
-            .expect("embed component descriptor");
+        embed_plugin_descriptor(artifact.path(), &descriptor).expect("embed component descriptor");
         let embedded = fs::read(artifact.path()).expect("read embedded component artifact");
         let (_, payload) = descriptor_custom_section(&embedded)
             .expect("read descriptor custom section")
@@ -9231,7 +9227,7 @@ mod tests {
             min_scryer_version: min_scryer_version.map(str::to_string),
             max_scryer_version: None,
             artifacts: vec![CatalogV3PluginArtifact {
-                    runtime: LEGACY_WASM_TARGET.to_string(),
+                runtime: LEGACY_WASM_TARGET.to_string(),
                 required_features: Vec::new(),
                 wasm_digests: vec![
                     "blake3:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"

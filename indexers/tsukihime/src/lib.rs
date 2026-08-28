@@ -1,17 +1,17 @@
 use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 
-use scryer_plugin_pdk::*;
 use scryer_plugin_pdk::component::{self, structured_plugin_error};
+use scryer_plugin_pdk::*;
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldRole, ConfigFieldType, ConfigFieldValueSource, IndexerCapabilities,
     IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol,
-    IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind, IndexerTorrentCapabilities,
-    IndexerSearchIncompleteReason, IndexerSearchPluginError, PluginDescriptor, PluginError,
-    PluginErrorCode, PluginErrorDetails, PluginSearchRequest as SearchRequest,
-    PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult,
-    ProviderDescriptor, SDK_VERSION,
+    IndexerResponseFeatures, IndexerSearchIncompleteReason, IndexerSearchInput,
+    IndexerSearchPluginError, IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor,
+    PluginError, PluginErrorCode, PluginErrorDetails, PluginSearchRequest as SearchRequest,
+    PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult, ProviderDescriptor,
+    SDK_VERSION,
 };
 use serde::Deserialize;
 use serde_json::Value;
@@ -36,7 +36,9 @@ async fn search(request: SearchRequest) -> FnResult<SearchResponse> {
     let response = match search_impl(&request).await {
         Ok(response) => response,
         Err(TsukihimeError::RateLimited(retry_after_seconds)) => {
-            return Err(structured_plugin_error(rate_limited_error(retry_after_seconds)));
+            return Err(structured_plugin_error(rate_limited_error(
+                retry_after_seconds,
+            )));
         }
         Err(error) => return Err(Error::msg(error.to_string())),
     };
@@ -69,7 +71,12 @@ fn build_descriptor() -> PluginDescriptor {
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: PROVIDER_TYPE.to_string(),
             provider_aliases: vec!["tsukihime.org".to_string()],
-            search_semantics_version: None,
+            provider_profiles: vec![],
+            search_semantics_version: Some(2),
+            strategy_plan: Some(scryer_plugin_sdk::IndexerStrategyPlanCapability {
+                version: 1,
+                max_parallel_strategies: 4,
+            }),
             source_kind: IndexerSourceKind::Generic,
             capabilities: IndexerCapabilities {
                 supported_ids: HashMap::from([(
@@ -224,8 +231,7 @@ async fn anime_results(
 ) -> Result<Vec<Torrent>, TsukihimeError> {
     let episode = request.episode.or(request.absolute_episode);
     let page = if let Some(episode) = episode.filter(|episode| *episode > 0) {
-        get_json::<TorrentPage>(config, &format!("animes/{anime_id}/episodes/{episode}"))
-            .await?
+        get_json::<TorrentPage>(config, &format!("animes/{anime_id}/episodes/{episode}")).await?
     } else {
         get_json::<TorrentPage>(config, &format!("animes/{anime_id}?limit={limit}&offset=0"))
             .await?
@@ -580,10 +586,7 @@ async fn reserve_api_request(path: &str) -> Result<(), TsukihimeError> {
     Ok(())
 }
 
-fn defer_rate_limit_from_headers(
-    path: &str,
-    headers: &BTreeMap<String, String>,
-) {
+fn defer_rate_limit_from_headers(path: &str, headers: &BTreeMap<String, String>) {
     defer_api_rate_limit(
         path,
         retry_after_from_remaining_headers(headers, component::wall_now_ms()),
@@ -649,7 +652,6 @@ fn header_value<'a>(headers: &'a BTreeMap<String, String>, name: &str) -> Option
         .find(|(key, _)| key.eq_ignore_ascii_case(name))
         .map(|(_, value)| value.as_str())
 }
-
 
 fn compact_error_body(body: &[u8]) -> String {
     let body = String::from_utf8_lossy(body);

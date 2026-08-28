@@ -8,8 +8,10 @@ use newznab_common::{
     PluginSearchSubjectKind, ProviderDescriptor, SDK_VERSION, SearchRequest, SearchResponse,
     SearchResult, current_sdk_constraint, hit_budget_retry_after_seconds, reserve_hit_budget_uses,
 };
+use scryer_plugin_pdk::component::{
+    self, LogLevel, StartRateGate, StreamExt, structured_plugin_error,
+};
 use scryer_plugin_pdk::*;
-use scryer_plugin_pdk::component::{self, LogLevel, StartRateGate, StreamExt, structured_plugin_error};
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldRole, ConfigFieldType, ConfigFieldValueSource,
     IndexerSearchIncompleteReason, IndexerSearchInvalidResponseKind, IndexerSearchPluginError,
@@ -165,7 +167,12 @@ fn build_descriptor() -> PluginDescriptor {
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: "aninzb".to_string(),
             provider_aliases: vec![],
-            search_semantics_version: Some(1),
+            provider_profiles: vec![],
+            search_semantics_version: Some(2),
+            strategy_plan: Some(scryer_plugin_sdk::IndexerStrategyPlanCapability {
+                version: 1,
+                max_parallel_strategies: 4,
+            }),
             source_kind: IndexerSourceKind::Usenet,
             capabilities: Capabilities {
                 supported_ids: HashMap::from([
@@ -266,11 +273,7 @@ async fn execute_api_search(
     let mut retry_after_seconds = None;
     let mut completed_request = false;
     let mut request_count = 0;
-    let start_gate = StartRateGate::new(
-        "aninzb.api.start_rate",
-        API_REQUESTS_PER_SECOND,
-        1_000,
-    );
+    let start_gate = StartRateGate::new("aninzb.api.start_rate", API_REQUESTS_PER_SECOND, 1_000);
 
     let mut probe_batch = Vec::with_capacity(initial_queries.len() * 2);
     for query in initial_queries {
@@ -1092,10 +1095,7 @@ fn civil_from_days(days: i64) -> (i64, i64, i64) {
     (year, month, day)
 }
 
-scryer_plugin_pdk::scryer_indexer_component_main!(
-    descriptor = build_descriptor,
-    search = search,
-);
+scryer_plugin_pdk::scryer_indexer_component_main!(descriptor = build_descriptor, search = search,);
 
 #[cfg(test)]
 mod tests {

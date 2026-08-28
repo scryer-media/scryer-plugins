@@ -6,16 +6,15 @@
 //! ABI's `invocation-error` is reserved for malformed ABI payloads and other
 //! faults that prevent a typed result from being produced.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::future::Future;
 
-use scryer_plugin_sdk::command::{
-    PluginActionRequest, PluginActionResponse, PluginIndexerCommand,
-};
+use scryer_plugin_sdk::command::{PluginActionRequest, PluginActionResponse};
 use scryer_plugin_sdk::{
     IndexerSearchIncompleteReason, IndexerSearchPluginError, PluginError, PluginErrorCode,
-    PluginErrorDetails, PluginResult, PluginSearchRequest, PluginSearchResponse,
+    PluginErrorDetails, PluginProviderProfile, PluginResult, PluginSearchPlanRequest,
+    PluginSearchPlanSummary, PluginSearchRequest, PluginSearchResponse, PluginSearchStrategyEvent,
 };
 
 wit_bindgen::generate!({
@@ -162,11 +161,14 @@ pub async fn sleep_until_deadline(duration_ms: u64) -> Result<(), DeadlineExceed
 /// outcome. It is intentionally an ordinary plugin result rather than an ABI
 /// invocation failure, allowing the host to retain any earlier candidates.
 pub fn deadline_deferred_error(wait: DeadlineExceeded) -> crate::Error {
-    let retry_after_seconds = i64::try_from(wait.retry_after_ms.div_ceil(1_000)).unwrap_or(i64::MAX);
+    let retry_after_seconds =
+        i64::try_from(wait.retry_after_ms.div_ceil(1_000)).unwrap_or(i64::MAX);
     structured_plugin_error(PluginError {
         code: PluginErrorCode::UpstreamUnavailable,
         public_message: "indexer search deferred by upstream pacing".to_string(),
-        debug_message: Some("the operation deadline expires before the next upstream request may start".to_string()),
+        debug_message: Some(
+            "the operation deadline expires before the next upstream request may start".to_string(),
+        ),
         retry_after_seconds: Some(retry_after_seconds),
         details: Some(PluginErrorDetails::IndexerSearch(
             IndexerSearchPluginError::Deferred {
@@ -213,11 +215,7 @@ impl StartRateGate {
                 sleep_until_deadline(eligible_at.saturating_sub(now)).await?;
                 continue;
             }
-            if state_cas(
-                &self.state_key,
-                expected,
-                Some(now.to_le_bytes().to_vec()),
-            ) {
+            if state_cas(&self.state_key, expected, Some(now.to_le_bytes().to_vec())) {
                 return Ok(());
             }
         }
@@ -312,10 +310,7 @@ impl WindowQuota {
                 .unwrap_or((bucket, 0));
             let used = if stored_bucket == bucket { used } else { 0 };
             if uses > self.limit.saturating_sub(used) {
-                let retry_after_ms = self
-                    .window_ms
-                    .saturating_sub(now % self.window_ms)
-                    .max(1);
+                let retry_after_ms = self.window_ms.saturating_sub(now % self.window_ms).max(1);
                 return Err(QuotaExhausted { retry_after_ms });
             }
             let replacement = encode_quota_state(bucket, used.saturating_add(uses));
@@ -344,6 +339,21 @@ pub fn config_get(key: impl Into<String>) -> Option<String> {
     component_host::config_get(&key.into())
 }
 
+/// Return the host-resolved provider profile bytes for this configured
+/// component instance.
+pub fn provider_profile_bytes() -> Option<Vec<u8>> {
+    component_host::provider_profile()
+}
+
+/// Decode the host-resolved provider profile through the SDK's stable runtime
+/// model. Catalog-only provenance and setup metadata do not cross the
+/// component boundary.
+pub fn provider_profile() -> Result<Option<PluginProviderProfile>, serde_json::Error> {
+    provider_profile_bytes()
+        .map(|encoded| serde_json::from_slice(&encoded))
+        .transpose()
+}
+
 pub fn state_get(key: impl Into<String>) -> Option<Vec<u8>> {
     component_host::state_get(&key.into())
 }
@@ -358,6 +368,30 @@ pub fn state_cas(
 
 pub fn log(level: component_host::LogLevel, message: impl AsRef<str>) {
     component_host::log(level, message.as_ref());
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum StrategyEventEmitError {
+    NoActivePlan,
+    Closed,
+}
+
+impl From<component_host::StrategyEventError> for StrategyEventEmitError {
+    fn from(value: component_host::StrategyEventError) -> Self {
+        match value {
+            component_host::StrategyEventError::NoActivePlan => Self::NoActivePlan,
+            component_host::StrategyEventError::Closed => Self::Closed,
+        }
+    }
+}
+
+pub async fn emit_strategy_event(
+    event: &PluginSearchStrategyEvent,
+) -> Result<(), StrategyEventEmitError> {
+    let encoded = serde_json::to_vec(event).map_err(|_| StrategyEventEmitError::Closed)?;
+    component_host::emit_strategy_event(encoded)
+        .await
+        .map_err(StrategyEventEmitError::from)
 }
 
 /// Convert an ordinary plugin handler error into the SDK's stable typed result
@@ -413,56 +447,234 @@ pub fn action_unsupported(action: &str) -> PluginError {
 }
 
 pub fn descriptor_bytes(descriptor: scryer_plugin_sdk::PluginDescriptor) -> Vec<u8> {
-    // Components use the same UTF-8 JSON descriptor representation as legacy
-    // command artifacts. Postcard remains exclusively for search/action
-    // requests and results.
+    // Components use UTF-8 JSON for descriptors and typed operation payloads.
+    // The SDK models contain JSON-oriented omission rules and arbitrary JSON
+    // action values, so a positional codec cannot round-trip them safely.
     serde_json::to_vec(&descriptor).unwrap_or_default()
 }
 
-pub async fn dispatch_search<H, F>(
-    encoded: Vec<u8>,
-    handler: H,
-) -> Result<Vec<u8>, InvocationError>
+pub fn strategy_plan_parallelism(descriptor: &scryer_plugin_sdk::PluginDescriptor) -> Option<u32> {
+    let scryer_plugin_sdk::ProviderDescriptor::Indexer(indexer) = &descriptor.provider else {
+        return None;
+    };
+    let capability = indexer.strategy_plan.as_ref()?;
+    (capability.version == 1 && capability.max_parallel_strategies > 0)
+        .then_some(capability.max_parallel_strategies)
+}
+
+pub async fn dispatch_search<H, F>(encoded: Vec<u8>, handler: H) -> Result<Vec<u8>, InvocationError>
 where
     H: FnOnce(PluginSearchRequest) -> F,
     F: Future<Output = Result<PluginSearchResponse, crate::Error>>,
 {
-    let PluginIndexerCommand::Search(request) = postcard::from_bytes(&encoded)
-        .map_err(|_| InvocationError::InvalidResponse)?
-    else {
-        return Err(InvocationError::InvalidResponse);
-    };
-    postcard::to_allocvec(&to_plugin_result(handler(request).await))
+    let request = serde_json::from_slice::<PluginSearchRequest>(&encoded)
+        .map_err(|_| InvocationError::InvalidResponse)?;
+    serde_json::to_vec(&to_plugin_result(handler(request).await))
         .map_err(|_| InvocationError::Failed)
 }
 
-pub async fn dispatch_action<H, F>(
+pub async fn dispatch_search_plan<H, F>(
     encoded: Vec<u8>,
+    max_parallel_strategies: u32,
     handler: H,
 ) -> Result<Vec<u8>, InvocationError>
+where
+    H: Fn(PluginSearchRequest) -> F + Clone,
+    F: Future<Output = Result<PluginSearchResponse, crate::Error>>,
+{
+    let plan = serde_json::from_slice::<PluginSearchPlanRequest>(&encoded)
+        .map_err(|_| InvocationError::InvalidResponse)?;
+    let summary = execute_search_plan(plan, max_parallel_strategies, handler, |event| async move {
+        emit_strategy_event(&event)
+            .await
+            .map_err(|_| InvocationError::Cancelled)
+    })
+    .await?;
+    serde_json::to_vec(&summary).map_err(|_| InvocationError::Failed)
+}
+
+async fn execute_search_plan<H, F, E, EF>(
+    plan: PluginSearchPlanRequest,
+    max_parallel_strategies: u32,
+    handler: H,
+    emit: E,
+) -> Result<PluginSearchPlanSummary, InvocationError>
+where
+    H: Fn(PluginSearchRequest) -> F + Clone,
+    F: Future<Output = Result<PluginSearchResponse, crate::Error>>,
+    E: Fn(PluginSearchStrategyEvent) -> EF,
+    EF: Future<Output = Result<(), InvocationError>>,
+{
+    if plan.plan_id.trim().is_empty()
+        || plan
+            .strategies
+            .iter()
+            .any(|strategy| strategy.strategy_id.trim().is_empty())
+        || plan
+            .strategies
+            .iter()
+            .map(|strategy| strategy.strategy_id.as_str())
+            .collect::<BTreeSet<_>>()
+            .len()
+            != plan.strategies.len()
+    {
+        return Err(InvocationError::InvalidResponse);
+    }
+
+    let plan_id = plan.plan_id;
+    let parallelism = usize::try_from(max_parallel_strategies.max(1)).unwrap_or(1);
+    let futures = plan.strategies.into_iter().map(|strategy| {
+        let handler = handler.clone();
+        async move {
+            PluginSearchStrategyEvent {
+                strategy_id: strategy.strategy_id,
+                result: to_plugin_result(handler(strategy.request).await),
+            }
+        }
+    });
+    let mut events = stream::iter(futures).buffer_unordered(parallelism);
+    let mut emitted_strategy_ids = Vec::new();
+    while let Some(event) = events.next().await {
+        let strategy_id = event.strategy_id.clone();
+        emit(event).await?;
+        emitted_strategy_ids.push(strategy_id);
+    }
+
+    Ok(PluginSearchPlanSummary {
+        plan_id,
+        emitted_strategy_ids,
+    })
+}
+
+pub async fn dispatch_action<H, F>(encoded: Vec<u8>, handler: H) -> Result<Vec<u8>, InvocationError>
 where
     H: FnOnce(PluginActionRequest) -> F,
     F: Future<Output = Result<PluginActionResponse, crate::Error>>,
 {
-    let PluginIndexerCommand::Action(request) = postcard::from_bytes(&encoded)
-        .map_err(|_| InvocationError::InvalidResponse)?
-    else {
-        return Err(InvocationError::InvalidResponse);
-    };
-    postcard::to_allocvec(&to_plugin_result(handler(request).await))
+    let request = serde_json::from_slice::<PluginActionRequest>(&encoded)
+        .map_err(|_| InvocationError::InvalidResponse)?;
+    serde_json::to_vec(&to_plugin_result(handler(request).await))
         .map_err(|_| InvocationError::Failed)
 }
 
-pub fn unsupported_action_response(
-    encoded: Vec<u8>,
-) -> Result<Vec<u8>, InvocationError> {
-    let PluginIndexerCommand::Action(request) = postcard::from_bytes(&encoded)
-        .map_err(|_| InvocationError::InvalidResponse)?
-    else {
-        return Err(InvocationError::InvalidResponse);
-    };
-    postcard::to_allocvec(&PluginResult::<PluginActionResponse>::Err(action_unsupported(
-        &request.action,
-    )))
+pub fn unsupported_action_response(encoded: Vec<u8>) -> Result<Vec<u8>, InvocationError> {
+    let request = serde_json::from_slice::<PluginActionRequest>(&encoded)
+        .map_err(|_| InvocationError::InvalidResponse)?;
+    serde_json::to_vec(&PluginResult::<PluginActionResponse>::Err(
+        action_unsupported(&request.action),
+    ))
     .map_err(|_| InvocationError::Failed)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+    use std::task::{Context, Poll, Waker};
+
+    use futures_util::future::poll_fn;
+    use scryer_plugin_sdk::PluginSearchStrategyRequest;
+
+    use super::*;
+
+    #[derive(Default)]
+    struct PlanState {
+        active: usize,
+        max_active: usize,
+        timeline: Vec<String>,
+    }
+
+    fn block_on<F: Future>(future: F) -> F::Output {
+        let waker = Waker::noop();
+        let mut context = Context::from_waker(waker);
+        let mut future = std::pin::pin!(future);
+        loop {
+            match future.as_mut().poll(&mut context) {
+                Poll::Ready(output) => return output,
+                Poll::Pending => {}
+            }
+        }
+    }
+
+    fn request(query: String) -> PluginSearchRequest {
+        PluginSearchRequest {
+            query,
+            ids: Default::default(),
+            facet: None,
+            category: None,
+            categories: vec![],
+            limit: 100,
+            season: None,
+            episode: None,
+            absolute_episode: None,
+            tagged_aliases: vec![],
+            context: None,
+        }
+    }
+
+    #[test]
+    fn strategy_plan_uses_a_rolling_parallelism_window() {
+        let state = Rc::new(RefCell::new(PlanState::default()));
+        let plan = PluginSearchPlanRequest {
+            plan_id: "plan".into(),
+            strategies: (0..6)
+                .map(|index| PluginSearchStrategyRequest {
+                    strategy_id: format!("strategy-{index}"),
+                    labels: vec![],
+                    request: request(index.to_string()),
+                })
+                .collect(),
+        };
+
+        let handler_state = Rc::clone(&state);
+        let handler = move |request: PluginSearchRequest| {
+            let state = Rc::clone(&handler_state);
+            let mut started = false;
+            poll_fn(move |context| {
+                let mut state = state.borrow_mut();
+                if !started {
+                    started = true;
+                    state.active += 1;
+                    state.max_active = state.max_active.max(state.active);
+                    state.timeline.push(format!("start:{}", request.query));
+                    context.waker().wake_by_ref();
+                    Poll::Pending
+                } else {
+                    state.active -= 1;
+                    state.timeline.push(format!("finish:{}", request.query));
+                    Poll::Ready(Ok(PluginSearchResponse::default()))
+                }
+            })
+        };
+
+        let emit_state = Rc::clone(&state);
+        let summary = block_on(execute_search_plan(plan, 4, handler, move |event| {
+            emit_state
+                .borrow_mut()
+                .timeline
+                .push(format!("emit:{}", event.strategy_id));
+            std::future::ready(Ok(()))
+        }))
+        .unwrap();
+
+        let state = state.borrow();
+        assert_eq!(state.max_active, 4);
+        assert_eq!(summary.emitted_strategy_ids.len(), 6);
+        assert!(
+            state.timeline[..4]
+                .iter()
+                .all(|entry| entry.starts_with("start:"))
+        );
+        let first_finish = state
+            .timeline
+            .iter()
+            .position(|entry| entry.starts_with("finish:"))
+            .unwrap();
+        let fifth_start = state
+            .timeline
+            .iter()
+            .position(|entry| entry == "start:4")
+            .unwrap();
+        assert!(fifth_start > first_finish);
+    }
 }
