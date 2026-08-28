@@ -362,11 +362,16 @@ mod tests {
     #[test]
     fn bundled_profiles_are_typed_unique_and_credential_free() {
         let (profiles, response_features) = load();
-        assert_eq!(profiles.len(), 2);
+        assert_eq!(profiles.len(), 20);
         assert!(response_features.languages);
         assert!(response_features.subtitles);
         assert!(response_features.votes);
         assert!(!PROFILE_ASSET.to_ascii_lowercase().contains("api_key\":"));
+        assert!(!PROFILE_ASSET.contains("animetosho.org"));
+        assert!(profiles.iter().all(|definition| {
+            let PluginProviderProfile::Newznab(profile) = &definition.runtime_profile;
+            profile.request_interval_ms == 500
+        }));
 
         let ids = profiles
             .iter()
@@ -375,7 +380,31 @@ mod tests {
                 profile.profile_id.as_str()
             })
             .collect::<BTreeSet<_>>();
-        assert_eq!(ids, BTreeSet::from(["dognzb", "nzbgeek"]));
+        assert_eq!(
+            ids,
+            BTreeSet::from([
+                "abnzb",
+                "althub",
+                "dognzb",
+                "drunken-slug",
+                "gingadaddy",
+                "miatrix",
+                "newz69",
+                "ninja-central",
+                "nzb-life",
+                "nzb-su",
+                "nzbcat",
+                "nzbfinder",
+                "nzbgeek",
+                "nzbndx",
+                "nzbnoob",
+                "nzbplanet",
+                "nzbstars",
+                "simplynzbs",
+                "tabula-rasa",
+                "usenet-crawler",
+            ])
+        );
     }
 
     #[test]
