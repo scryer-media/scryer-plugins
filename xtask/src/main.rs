@@ -4279,13 +4279,14 @@ fn run_doctor(ctx: &TaskContext) -> Result<()> {
         ("git", ["--version"].as_slice()),
         ("cargo", ["--version"].as_slice()),
         ("wasm-opt", ["--version"].as_slice()),
+        ("wasm-tools", ["--version"].as_slice()),
         ("zstd", ["--version"].as_slice()),
         ("cosign", ["version"].as_slice()),
         ("gh", ["--version"].as_slice()),
     ] {
         match ctx.command(tool).args(args).status() {
             Ok(status) if status.success() => ok(format!("{tool} available")),
-            _ => warn(format!("{tool} unavailable or not healthy")),
+            _ => bail!("{tool} unavailable or not healthy"),
         }
     }
     if let Some(path) = local_sdk_override_path()? {
