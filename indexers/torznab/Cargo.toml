@@ -10,7 +10,7 @@ description = "Generic Torznab-compatible torrent indexer for Jackett and native
 official = true
 plugin_id = "torznab"
 catalog_versions = ["v3"]
-min_scryer_version = "0.18.17"
+min_scryer_version = "0.18.22"
 feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torznab"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/torznab"
@@ -21,11 +21,11 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.5.10" }
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.5.11" }
 newznab-common = { path = "../newznab-common" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-scryer-plugin-sdk = "3.9.0"
+scryer-plugin-sdk = "3.10.0"
 
 [profile.plugin-release]
 inherits = "release"
