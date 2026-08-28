@@ -7,7 +7,7 @@ license = "GPL-3.0-only"
 description = "NZBGeek-specific Newznab indexer with metadata extraction (thumbs, subtitles, password detection)"
 
 [package.metadata.scryer]
-official = true
+official = false
 plugin_id = "nzbgeek"
 catalog_versions = ["v3"]
 min_scryer_version = "0.18.17"
