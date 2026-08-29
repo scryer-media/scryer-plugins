@@ -16,6 +16,7 @@ jobs:
     outputs:
       actions: ${{ steps.scope.outputs.actions }}
       rust: ${{ steps.scope.outputs.rust }}
+      rust_matrix: ${{ steps.scope.outputs.rust_matrix }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -27,6 +28,11 @@ jobs:
           set -euo pipefail
           actions=false
           rust=false
+          rust_all=false
+          rust_downloads=false
+          rust_indexers=false
+          rust_integrations=false
+          rust_tooling=false
           if [[ "${{ github.event_name }}" != "pull_request" ]]; then
             actions=true
             rust=true
@@ -42,14 +48,71 @@ jobs:
                   ;;
               esac
               case "$path" in
-                *.rs|Cargo.toml|Cargo.lock|*/Cargo.toml|*/Cargo.lock|.cargo/*|rust-toolchain|rust-toolchain.toml|xtask/*)
+                .github/workflows/codeql.yml|.github/codeql/*)
                   rust=true
+                  rust_all=true
+                  ;;
+                *.rs|Cargo.toml|Cargo.lock|*/Cargo.toml|*/Cargo.lock|.cargo/*|rust-toolchain|rust-toolchain.toml)
+                  rust=true
+                  case "$path" in
+                    archive_extractors/*|download_clients/*|transcoders/*)
+                      rust_downloads=true
+                      ;;
+                    indexers/*)
+                      rust_indexers=true
+                      ;;
+                    notifications/*|rule_packs/*|subtitles/*)
+                      rust_integrations=true
+                      ;;
+                    xtask/*)
+                      rust_tooling=true
+                      ;;
+                    *)
+                      rust_all=true
+                      ;;
+                  esac
                   ;;
               esac
             done < <(git diff --name-only "${{ github.event.pull_request.base.sha }}" "$GITHUB_SHA")
           fi
-          echo "actions=$actions" >> "$GITHUB_OUTPUT"
-          echo "rust=$rust" >> "$GITHUB_OUTPUT"
+
+          if [[ "$rust_all" == "true" ]]; then
+            rust_downloads=true
+            rust_indexers=true
+            rust_integrations=true
+            rust_tooling=true
+          fi
+
+          rust_matrix='{"include":['
+          rust_separator=""
+          append_rust_shard() {
+            local name="$1"
+            local config="$2"
+            rust_matrix+="${rust_separator}{\"name\":\"${name}\",\"config\":\"${config}\"}"
+            rust_separator=","
+          }
+          if [[ "$rust_downloads" == "true" ]]; then
+            append_rust_shard "downloads" ".github/codeql/rust-downloads.yml"
+          fi
+          if [[ "$rust_indexers" == "true" ]]; then
+            append_rust_shard "indexers" ".github/codeql/rust-indexers.yml"
+          fi
+          if [[ "$rust_integrations" == "true" ]]; then
+            append_rust_shard "integrations" ".github/codeql/rust-integrations.yml"
+          fi
+          if [[ "$rust_tooling" == "true" ]]; then
+            append_rust_shard "tooling" ".github/codeql/rust-tooling.yml"
+          fi
+          if [[ -z "$rust_separator" ]]; then
+            append_rust_shard "not-selected" ".github/codeql/rust-indexers.yml"
+          fi
+          rust_matrix+=']}'
+
+          {
+            echo "actions=$actions"
+            echo "rust=$rust"
+            echo "rust_matrix=$rust_matrix"
+          } >> "$GITHUB_OUTPUT"
 
   analyze-actions:
     needs: plan
@@ -74,10 +137,37 @@ jobs:
         with:
           category: "/language:actions"
 
-  analyze-rust:
+  analyze_rust_shards:
     needs: plan
-    if: ${{ needs.plan.outputs.rust == 'true' }}
-    name: Analyze rust
+    if: ${{ github.event_name == 'pull_request' && needs.plan.outputs.rust == 'true' }}
+    name: Analyze rust (${{ matrix.name }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.rust_matrix) }}
+    permissions:
+      security-events: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
+        with:
+          languages: rust
+          build-mode: none
+          config-file: ./${{ matrix.config }}
+          queries: security-extended
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
+        with:
+          category: "/language:rust/${{ matrix.name }}"
+
+  analyze_rust_full:
+    needs: plan
+    if: ${{ github.event_name != 'pull_request' }}
+    name: Analyze rust (full)
     runs-on: ubuntu-24.04
     permissions:
       security-events: write
@@ -95,4 +185,34 @@ jobs:
       - name: Analyze
         uses: github/codeql-action/analyze@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
         with:
-          category: "/language:rust"
+          category: "/language:rust/full"
+
+  analyze_rust:
+    name: Analyze rust
+    needs: [plan, analyze_rust_shards, analyze_rust_full]
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Verify Rust analysis
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          FULL_RESULT: ${{ needs.analyze_rust_full.result }}
+          PLAN_RESULT: ${{ needs.plan.result }}
+          RUST_SELECTED: ${{ needs.plan.outputs.rust }}
+          SHARD_RESULT: ${{ needs.analyze_rust_shards.result }}
+        run: |
+          set -euo pipefail
+          if [[ "$PLAN_RESULT" != "success" ]]; then
+            echo "::error::CodeQL planning did not succeed"
+            exit 1
+          fi
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            if [[ "$RUST_SELECTED" == "true" && "$SHARD_RESULT" != "success" ]]; then
+              echo "::error::One or more Rust CodeQL shards did not succeed"
+              exit 1
+            fi
+          elif [[ "$FULL_RESULT" != "success" ]]; then
+            echo "::error::The full Rust CodeQL analysis did not succeed"
+            exit 1
+          fi
