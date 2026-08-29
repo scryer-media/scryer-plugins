@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "amenzb-indexer"
-version = "2.0.4"
+version = "2.1.0"
 dependencies = [
  "newznab-common",
  "scryer-plugin-pdk",

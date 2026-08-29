@@ -43,7 +43,7 @@ checksum = "b588b76d00fde79687d7646a9b5bdf3cc0f655e0bbd080335a95d7e96f3587da"
 
 [[package]]
 name = "broadcasthe-net-indexer"
-version = "2.0.5"
+version = "2.1.0"
 dependencies = [
  "chrono",
  "scryer-plugin-pdk",
