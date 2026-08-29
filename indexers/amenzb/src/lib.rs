@@ -4,7 +4,7 @@ use std::time::Duration;
 #[cfg(not(test))]
 use newznab_common::hit_budget_snapshot;
 use newznab_common::{
-    Capabilities, ConfigFieldDef, ConfigFieldType, IndexerCategoryModel, IndexerCategoryValueKind,
+    Capabilities, ConfigFieldDef, IndexerCategoryModel, IndexerCategoryValueKind,
     IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol,
     IndexerResponseFeatures, IndexerSearchInput, IndexerSourceKind, NewznabConfig,
     NewznabHitBudget, NewznabHttpBehavior, PluginDescriptor, ProviderDescriptor, SDK_VERSION,
@@ -19,6 +19,7 @@ const AMENZB_BASE_URL: &str = "https://amenzb.moe";
 const DEFAULT_PAGE_SIZE: usize = 50;
 const MAX_PAGE_SIZE: usize = 100;
 const MAX_SEARCH_PAGES: usize = 2;
+const DEFAULT_HOURLY_HIT_CAP: u32 = 450;
 const DEFAULT_DAILY_HIT_CAP: u32 = 9_000;
 const DEFAULT_CATEGORY: &str = "5070";
 const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
@@ -145,9 +146,8 @@ async fn search(req: SearchRequest) -> FnResult<SearchResponse> {
         .or_else(|| request_id(&req, "info_hash_v1"))
         .or_else(|| request_id(&req, "btih"))
     {
-        let raw_req = req_for_exact_provider_filter(&req, &ame_config.category);
+        let raw_req = req_for_exact_provider_filter(&req);
         let config = ame_config.newznab_config(provider_params(
-            &ame_config,
             &raw_req,
             vec![("info_hash".to_string(), info_hash)],
         ));
@@ -155,16 +155,13 @@ async fn search(req: SearchRequest) -> FnResult<SearchResponse> {
     } else if let Some(anidb_id) =
         request_id(&req, "anidb_id").or_else(|| request_id(&req, "anidb"))
     {
-        let raw_req = req_for_exact_provider_filter(&req, &ame_config.category);
-        let config = ame_config.newznab_config(provider_params(
-            &ame_config,
-            &raw_req,
-            anime_id_pairs(&req, anidb_id),
-        ));
+        let raw_req = req_for_exact_provider_filter(&req);
+        let config =
+            ame_config.newznab_config(provider_params(&raw_req, anime_id_pairs(&req, anidb_id)));
         execute_raw_search_gracefully(&config, &raw_req).await?
     } else {
         let req = normalize_request_ids(req);
-        let config = ame_config.newznab_config(provider_params(&ame_config, &req, Vec::new()));
+        let config = ame_config.newznab_config(provider_params(&req, Vec::new()));
         execute_full_search(&config, &req, amenzb_metadata_extractor).await?
     };
 
@@ -219,17 +216,6 @@ fn empty_hit_budget_response(config: &NewznabConfig) -> Result<SearchResponse, E
 struct AmeConfig {
     base_url: String,
     api_key: String,
-    api_path: String,
-    additional_params: String,
-    page_size: usize,
-    category: Option<String>,
-    healthy_only: bool,
-    audio_lang: Option<String>,
-    sub_lang: Option<String>,
-    translation: Option<String>,
-    source: Option<String>,
-    resolution: Option<String>,
-    release_group: Option<String>,
 }
 
 impl AmeConfig {
@@ -238,25 +224,9 @@ impl AmeConfig {
         if base.base_url.trim().is_empty() {
             base.base_url = AMENZB_BASE_URL.to_string();
         }
-        if base.api_path.trim().is_empty() {
-            base.api_path = "/api".to_string();
-        }
-        base.page_size = effective_page_size(config_usize_optional("page_size"));
-
         Ok(Self {
             base_url: base.base_url,
             api_key: base.api_key,
-            api_path: base.api_path,
-            additional_params: base.additional_params,
-            page_size: base.page_size,
-            category: config_optional("category").or_else(|| Some(DEFAULT_CATEGORY.to_string())),
-            healthy_only: config_bool("healthy_only", false),
-            audio_lang: config_optional("audio_lang"),
-            sub_lang: config_optional("sub_lang"),
-            translation: config_optional("translation"),
-            source: config_optional("source"),
-            resolution: config_optional("resolution"),
-            release_group: config_optional("release_group"),
         })
     }
 
@@ -264,9 +234,9 @@ impl AmeConfig {
         let mut config = NewznabConfig {
             base_url: self.base_url.clone(),
             api_key: self.api_key.clone(),
-            api_path: self.api_path.clone(),
-            additional_params: merge_query_params(&self.additional_params, &provider_params),
-            page_size: self.page_size,
+            api_path: "/api".to_string(),
+            additional_params: provider_params,
+            page_size: DEFAULT_PAGE_SIZE,
             http_behavior: NewznabHttpBehavior::default(),
         };
         apply_amenzb_http_behavior(&mut config);
@@ -286,98 +256,16 @@ fn apply_amenzb_http_behavior(config: &mut NewznabConfig) {
         max_search_pages: MAX_SEARCH_PAGES,
         hit_budget: Some(NewznabHitBudget {
             var_key: "amenzb.http_hits".to_string(),
-            hourly_limit: config_u32("hourly_hit_cap", 450),
-            daily_limit: config_u32("daily_hit_cap", DEFAULT_DAILY_HIT_CAP),
+            hourly_limit: DEFAULT_HOURLY_HIT_CAP,
+            daily_limit: DEFAULT_DAILY_HIT_CAP,
         }),
     };
 }
 
-fn effective_page_size(configured: Option<usize>) -> usize {
-    configured
-        .unwrap_or(DEFAULT_PAGE_SIZE)
-        .clamp(1, MAX_PAGE_SIZE)
-}
-
 fn config_fields() -> Vec<ConfigFieldDef> {
     let mut fields = standard_config_fields(Some(AMENZB_BASE_URL));
+    fields.retain(|field| matches!(field.key.as_str(), "base_url" | "api_key"));
     require_api_key(&mut fields);
-    push_number_field(
-        &mut fields,
-        "page_size",
-        "Page Size",
-        DEFAULT_PAGE_SIZE.to_string(),
-        "Results requested per API page; hard-capped at ameNZB's API max of 100.",
-    );
-    push_string_field(
-        &mut fields,
-        "category",
-        "Category",
-        Some(DEFAULT_CATEGORY.to_string()),
-        "Default Newznab category. 5070 is anime.",
-    );
-    push_bool_field(
-        &mut fields,
-        "healthy_only",
-        "Healthy Only",
-        Some("false".to_string()),
-        "Send healthy=1 to filter for releases ameNZB considers healthy.",
-    );
-    push_string_field(
-        &mut fields,
-        "audio_lang",
-        "Audio Language",
-        None,
-        "Optional ameNZB audio_lang filter.",
-    );
-    push_string_field(
-        &mut fields,
-        "sub_lang",
-        "Subtitle Language",
-        None,
-        "Optional ameNZB sub_lang filter.",
-    );
-    push_string_field(
-        &mut fields,
-        "translation",
-        "Translation",
-        None,
-        "Optional ameNZB translation filter, usually subbed or raw.",
-    );
-    push_string_field(
-        &mut fields,
-        "source",
-        "Source",
-        None,
-        "Optional ameNZB source filter.",
-    );
-    push_string_field(
-        &mut fields,
-        "resolution",
-        "Resolution",
-        None,
-        "Optional ameNZB resolution filter.",
-    );
-    push_string_field(
-        &mut fields,
-        "release_group",
-        "Release Group",
-        None,
-        "Optional ameNZB release_group filter.",
-    );
-    push_number_field(
-        &mut fields,
-        "hourly_hit_cap",
-        "Hourly Hit Cap",
-        "450".to_string(),
-        "Maximum ameNZB API requests per hour before searches return no results.",
-    );
-    push_number_field(
-        &mut fields,
-        "daily_hit_cap",
-        "Daily Hit Cap",
-        DEFAULT_DAILY_HIT_CAP.to_string(),
-        "Maximum ameNZB API requests per day before searches return no results.",
-    );
     fields
 }
 
@@ -390,69 +278,6 @@ fn require_api_key(fields: &mut [ConfigFieldDef]) {
     }
 }
 
-fn push_string_field(
-    fields: &mut Vec<ConfigFieldDef>,
-    key: &str,
-    label: &str,
-    default_value: Option<String>,
-    help_text: &str,
-) {
-    fields.push(ConfigFieldDef {
-        key: key.to_string(),
-        label: label.to_string(),
-        field_type: ConfigFieldType::String,
-        required: false,
-        default_value,
-        value_source: Default::default(),
-        role: None,
-        host_binding: None,
-        options: vec![],
-        help_text: Some(help_text.to_string()),
-    });
-}
-
-fn push_number_field(
-    fields: &mut Vec<ConfigFieldDef>,
-    key: &str,
-    label: &str,
-    default_value: String,
-    help_text: &str,
-) {
-    fields.push(ConfigFieldDef {
-        key: key.to_string(),
-        label: label.to_string(),
-        field_type: ConfigFieldType::Number,
-        required: false,
-        default_value: Some(default_value),
-        value_source: Default::default(),
-        role: None,
-        host_binding: None,
-        options: vec![],
-        help_text: Some(help_text.to_string()),
-    });
-}
-
-fn push_bool_field(
-    fields: &mut Vec<ConfigFieldDef>,
-    key: &str,
-    label: &str,
-    default_value: Option<String>,
-    help_text: &str,
-) {
-    fields.push(ConfigFieldDef {
-        key: key.to_string(),
-        label: label.to_string(),
-        field_type: ConfigFieldType::Bool,
-        required: false,
-        default_value,
-        value_source: Default::default(),
-        role: None,
-        host_binding: None,
-        options: vec![],
-        help_text: Some(help_text.to_string()),
-    });
-}
-
 fn normalize_request_ids(mut req: SearchRequest) -> SearchRequest {
     if request_id(&req, "anidb_id").is_none()
         && let Some(anidb) = request_id(&req, "anidb")
@@ -462,7 +287,7 @@ fn normalize_request_ids(mut req: SearchRequest) -> SearchRequest {
     req
 }
 
-fn req_for_exact_provider_filter(req: &SearchRequest, category: &Option<String>) -> SearchRequest {
+fn req_for_exact_provider_filter(req: &SearchRequest) -> SearchRequest {
     let mut req = req.clone();
     req.query.clear();
     req.ids.clear();
@@ -470,7 +295,7 @@ fn req_for_exact_provider_filter(req: &SearchRequest, category: &Option<String>)
     req.episode = None;
     req.absolute_episode = None;
     if req.categories.is_empty()
-        && let Some(category) = provider_category_param(category, &req)
+        && let Some(category) = provider_category_param(&req)
     {
         req.categories.push(category.to_string());
     }
@@ -489,27 +314,16 @@ fn anime_id_pairs(req: &SearchRequest, anidb_id: String) -> Vec<(String, String)
 }
 
 fn provider_params(
-    config: &AmeConfig,
     req: &SearchRequest,
     extra_pairs: impl IntoIterator<Item = (String, String)>,
 ) -> String {
     let mut pairs: Vec<(String, String)> = Vec::new();
 
     if req.categories.is_empty()
-        && let Some(category) = provider_category_param(&config.category, req)
+        && let Some(category) = provider_category_param(req)
     {
         pairs.push(("cat".to_string(), category));
     }
-    if config.healthy_only {
-        pairs.push(("healthy".to_string(), "1".to_string()));
-    }
-    push_optional_pair(&mut pairs, "audio_lang", config.audio_lang.as_deref());
-    push_optional_pair(&mut pairs, "sub_lang", config.sub_lang.as_deref());
-    push_optional_pair(&mut pairs, "translation", config.translation.as_deref());
-    push_optional_pair(&mut pairs, "source", config.source.as_deref());
-    push_optional_pair(&mut pairs, "resolution", config.resolution.as_deref());
-    push_optional_pair(&mut pairs, "release_group", config.release_group.as_deref());
-
     if let Some(anidb_id) = request_id(req, "anidb_id")
         .or_else(|| request_id(req, "anidb"))
         .filter(|value| !value.trim().is_empty())
@@ -521,10 +335,7 @@ fn provider_params(
     encode_query_pairs(pairs)
 }
 
-fn provider_category_param(
-    default_category: &Option<String>,
-    req: &SearchRequest,
-) -> Option<String> {
+fn provider_category_param(req: &SearchRequest) -> Option<String> {
     if !req.categories.is_empty() {
         return None;
     }
@@ -536,17 +347,9 @@ fn provider_category_param(
         .filter(|value| !value.is_empty())
     {
         Some(value) if is_newznab_category_param(value) => Some(value.to_string()),
-        Some(value) if value.eq_ignore_ascii_case("anime") => default_category
-            .as_deref()
-            .map(str::trim)
-            .filter(|value| !value.is_empty())
-            .map(ToString::to_string),
+        Some(value) if value.eq_ignore_ascii_case("anime") => Some(DEFAULT_CATEGORY.to_string()),
         Some(_) => None,
-        None => default_category
-            .as_deref()
-            .map(str::trim)
-            .filter(|value| !value.is_empty())
-            .map(ToString::to_string),
+        None => Some(DEFAULT_CATEGORY.to_string()),
     }
 }
 
@@ -555,12 +358,6 @@ fn is_newznab_category_param(value: &str) -> bool {
         .split(',')
         .map(str::trim)
         .all(|part| !part.is_empty() && part.chars().all(|ch| ch.is_ascii_digit()))
-}
-
-fn push_optional_pair(pairs: &mut Vec<(String, String)>, key: &str, value: Option<&str>) {
-    if let Some(value) = value.map(str::trim).filter(|value| !value.is_empty()) {
-        pairs.push((key.to_string(), value.to_string()));
-    }
 }
 
 fn encode_query_pairs(pairs: impl IntoIterator<Item = (String, String)>) -> String {
@@ -573,30 +370,6 @@ fn encode_query_pairs(pairs: impl IntoIterator<Item = (String, String)>) -> Stri
         String::new()
     } else {
         format!("&{encoded}")
-    }
-}
-
-fn merge_query_params(left: &str, right: &str) -> String {
-    match (left.trim(), right.trim()) {
-        ("", "") => String::new(),
-        ("", right) => normalize_additional_params(right),
-        (left, "") => normalize_additional_params(left),
-        (left, right) => format!(
-            "{}{}",
-            normalize_additional_params(left),
-            normalize_additional_params(right)
-        ),
-    }
-}
-
-fn normalize_additional_params(value: &str) -> String {
-    let value = value.trim();
-    if value.is_empty() {
-        String::new()
-    } else if value.starts_with('&') {
-        value.to_string()
-    } else {
-        format!("&{value}")
     }
 }
 
@@ -656,66 +429,6 @@ fn request_id(req: &SearchRequest, key: &str) -> Option<String> {
         .filter(|value| !value.is_empty())
 }
 
-#[cfg(not(test))]
-fn config_optional(key: &str) -> Option<String> {
-    config::get(key)
-        .ok()
-        .flatten()
-        .map(|value| value.trim().to_string())
-        .filter(|value| !value.is_empty())
-}
-
-#[cfg(test)]
-fn config_optional(_key: &str) -> Option<String> {
-    None
-}
-
-#[cfg(not(test))]
-fn config_usize_optional(key: &str) -> Option<usize> {
-    config::get(key)
-        .ok()
-        .flatten()
-        .and_then(|value| value.trim().parse::<usize>().ok())
-}
-
-#[cfg(test)]
-fn config_usize_optional(_key: &str) -> Option<usize> {
-    None
-}
-
-#[cfg(not(test))]
-fn config_bool(key: &str, default_value: bool) -> bool {
-    config::get(key)
-        .ok()
-        .flatten()
-        .map(|value| {
-            matches!(
-                value.trim().to_ascii_lowercase().as_str(),
-                "1" | "true" | "yes"
-            )
-        })
-        .unwrap_or(default_value)
-}
-
-#[cfg(test)]
-fn config_bool(_key: &str, default_value: bool) -> bool {
-    default_value
-}
-
-#[cfg(not(test))]
-fn config_u32(key: &str, default_value: u32) -> u32 {
-    config::get(key)
-        .ok()
-        .flatten()
-        .and_then(|value| value.trim().parse::<u32>().ok())
-        .unwrap_or(default_value)
-}
-
-#[cfg(test)]
-fn config_u32(_key: &str, default_value: u32) -> u32 {
-    default_value
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -741,17 +454,6 @@ mod tests {
         AmeConfig {
             base_url: AMENZB_BASE_URL.to_string(),
             api_key: "secret".to_string(),
-            api_path: "/api".to_string(),
-            additional_params: String::new(),
-            page_size: DEFAULT_PAGE_SIZE,
-            category: Some(DEFAULT_CATEGORY.to_string()),
-            healthy_only: false,
-            audio_lang: None,
-            sub_lang: None,
-            translation: None,
-            source: None,
-            resolution: None,
-            release_group: None,
         }
     }
 
@@ -777,66 +479,62 @@ mod tests {
             .find(|field| field.key == "api_key")
             .expect("api key field");
         assert!(api_key.required);
+        assert_eq!(
+            indexer
+                .config_fields
+                .iter()
+                .map(|field| field.key.as_str())
+                .collect::<Vec<_>>(),
+            vec!["base_url", "api_key"]
+        );
     }
 
     #[test]
-    fn provider_params_include_anidb_category_and_filters_without_common_fields() {
-        let mut config = ame_config();
-        config.healthy_only = true;
-        config.audio_lang = Some("jpn".to_string());
-        config.sub_lang = Some("eng".to_string());
-        config.translation = Some("subbed".to_string());
-        config.source = Some("WEB".to_string());
-        config.resolution = Some("1080p".to_string());
-        config.release_group = Some("Group Name".to_string());
-
+    fn provider_params_include_anidb_and_category_without_provider_preferences() {
         let mut req = request();
         req.ids.insert("anidb".to_string(), "12345".to_string());
 
-        let params = provider_params(&config, &req, Vec::new());
+        let params = provider_params(&req, Vec::new());
 
         assert!(params.starts_with('&'));
         assert!(params.contains("cat=5070"));
-        assert!(params.contains("healthy=1"));
-        assert!(params.contains("audio_lang=jpn"));
-        assert!(params.contains("sub_lang=eng"));
-        assert!(params.contains("translation=subbed"));
-        assert!(params.contains("source=WEB"));
-        assert!(params.contains("resolution=1080p"));
-        assert!(params.contains("release_group=Group+Name"));
         assert!(params.contains("anime_id=12345"));
+        assert!(!params.contains("healthy="));
+        assert!(!params.contains("audio_lang="));
+        assert!(!params.contains("sub_lang="));
+        assert!(!params.contains("translation="));
+        assert!(!params.contains("source="));
+        assert!(!params.contains("resolution="));
+        assert!(!params.contains("release_group="));
         assert!(!params.contains("season="));
         assert!(!params.contains("ep="));
     }
 
     #[test]
     fn provider_params_do_not_duplicate_category_when_request_has_categories() {
-        let config = ame_config();
         let mut req = request();
         req.categories.push("2000".to_string());
 
-        let params = provider_params(&config, &req, Vec::new());
+        let params = provider_params(&req, Vec::new());
 
         assert!(!params.contains("cat=5070"));
     }
 
     #[test]
     fn provider_params_respect_singular_category_hint() {
-        let config = ame_config();
-
         let mut movie_req = request();
         movie_req.category = Some("movie".to_string());
-        let movie_params = provider_params(&config, &movie_req, Vec::new());
+        let movie_params = provider_params(&movie_req, Vec::new());
         assert!(!movie_params.contains("cat=5070"));
 
         let mut numeric_req = request();
         numeric_req.category = Some("2000".to_string());
-        let numeric_params = provider_params(&config, &numeric_req, Vec::new());
+        let numeric_params = provider_params(&numeric_req, Vec::new());
         assert!(numeric_params.contains("cat=2000"));
 
         let mut anime_req = request();
         anime_req.category = Some("anime".to_string());
-        let anime_params = provider_params(&config, &anime_req, Vec::new());
+        let anime_params = provider_params(&anime_req, Vec::new());
         assert!(anime_params.contains("cat=5070"));
     }
 
@@ -848,7 +546,7 @@ mod tests {
         req.season = Some(1);
         req.episode = Some(2);
 
-        let raw = req_for_exact_provider_filter(&req, &Some(DEFAULT_CATEGORY.to_string()));
+        let raw = req_for_exact_provider_filter(&req);
 
         assert!(raw.query.is_empty());
         assert!(raw.ids.is_empty());
@@ -859,14 +557,13 @@ mod tests {
 
     #[test]
     fn direct_anidb_params_survive_raw_request_shape() {
-        let config = ame_config();
         let mut req = request();
         req.ids.insert("anidb_id".to_string(), "12345".to_string());
         req.season = Some(2);
         req.absolute_episode = Some(12);
 
-        let raw = req_for_exact_provider_filter(&req, &config.category);
-        let params = provider_params(&config, &raw, anime_id_pairs(&req, "12345".to_string()));
+        let raw = req_for_exact_provider_filter(&req);
+        let params = provider_params(&raw, anime_id_pairs(&req, "12345".to_string()));
 
         assert!(raw.query.is_empty());
         assert!(raw.ids.is_empty());
@@ -877,25 +574,6 @@ mod tests {
         assert!(params.contains("anime_id=12345"));
         assert!(params.contains("season=2"));
         assert!(params.contains("ep=12"));
-    }
-
-    #[test]
-    fn merge_query_params_keeps_user_and_provider_params() {
-        assert_eq!(
-            merge_query_params("dl=1", "&healthy=1&anime_id=12"),
-            "&dl=1&healthy=1&anime_id=12"
-        );
-        assert_eq!(merge_query_params("", "healthy=1"), "&healthy=1");
-        assert_eq!(merge_query_params("&dl=1", ""), "&dl=1");
-    }
-
-    #[test]
-    fn effective_page_size_defaults_to_50_and_caps_at_api_max() {
-        assert_eq!(effective_page_size(None), DEFAULT_PAGE_SIZE);
-        assert_eq!(effective_page_size(Some(0)), 1);
-        assert_eq!(effective_page_size(Some(75)), 75);
-        assert_eq!(effective_page_size(Some(100)), MAX_PAGE_SIZE);
-        assert_eq!(effective_page_size(Some(250)), MAX_PAGE_SIZE);
     }
 
     #[test]
@@ -918,18 +596,13 @@ mod tests {
     }
 
     #[test]
-    fn http_behavior_is_cautious_and_budgeted_below_provider_daily_limit() {
-        let mut config = NewznabConfig {
-            base_url: AMENZB_BASE_URL.to_string(),
-            api_key: String::new(),
-            api_path: "/api".to_string(),
-            additional_params: String::new(),
-            page_size: DEFAULT_PAGE_SIZE,
-            http_behavior: NewznabHttpBehavior::default(),
-        };
+    fn newznab_config_uses_fixed_provider_defaults() {
+        let config = ame_config().newznab_config("&anime_id=12345".to_string());
 
-        apply_amenzb_http_behavior(&mut config);
-
+        assert_eq!(config.base_url, AMENZB_BASE_URL);
+        assert_eq!(config.api_path, "/api");
+        assert_eq!(config.additional_params, "&anime_id=12345");
+        assert_eq!(config.page_size, DEFAULT_PAGE_SIZE);
         assert_eq!(config.http_behavior.plugin_id, PROVIDER_ID);
         assert_eq!(config.http_behavior.user_agent, USER_AGENT);
         assert_eq!(config.http_behavior.max_search_pages, MAX_SEARCH_PAGES);
@@ -943,6 +616,7 @@ mod tests {
             .hit_budget
             .as_ref()
             .expect("hit budget");
+        assert_eq!(budget.hourly_limit, DEFAULT_HOURLY_HIT_CAP);
         assert_eq!(budget.daily_limit, DEFAULT_DAILY_HIT_CAP);
         assert!(budget.daily_limit < 10_000);
     }

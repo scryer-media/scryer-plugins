@@ -4,15 +4,9 @@ An anime-focused Usenet indexer for ameNZB's Newznab API. It supports recent and
 
 ## Configure in Scryer
 
-**api_key** is required and ameNZB pins keys to the caller IP. **base_url** defaults to https://amenzb.moe; **api_path** defaults to /api. The usual Newznab **additional_params** field is available for provider query parameters.
+Enter your **api_key**. ameNZB pins keys to the caller IP. The prefilled **base_url** is the official service URL and normally does not need changing.
 
-The plugin also accepts:
-
-- **page_size** — 1–100 results per API page (default 50).
-- **category** — default Newznab category, 5070 for anime.
-- **healthy_only** — sends ameNZB's healthy=1 filter.
-- **audio_lang**, **sub_lang**, **translation**, **source**, **resolution**, and **release_group** — provider-specific filters.
-- **hourly_hit_cap** and **daily_hit_cap** — local request budgets, defaulting to 450/hour and 9,000/day.
+The plugin keeps its provider details internal: it uses ameNZB's `/api` endpoint, the anime Newznab category, 50 results per page, and conservative local request budgets. It deliberately does not apply permanent upstream language, translation, source, resolution, or release-group filters; Scryer's normal profiles and scoring make those decisions after results are retrieved.
 
 ## Behavior and limits
 
