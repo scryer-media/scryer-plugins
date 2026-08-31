@@ -589,7 +589,7 @@ dependencies = [
 
 [[package]]
 name = "tribler-download-client"
-version = "1.1.1"
+version = "1.1.2"
 dependencies = [
  "scryer-plugin-pdk",
  "scryer-plugin-sdk",

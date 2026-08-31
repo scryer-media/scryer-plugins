@@ -482,7 +482,7 @@ dependencies = [
 
 [[package]]
 name = "tsukihime-subtitles"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "base64 0.23.1",
  "extism-pdk",
