@@ -10,8 +10,10 @@ use scryer_plugin_sdk::{
     DownloadItemState, DownloadTorrentCapabilities, PluginCompletedDownload, PluginDescriptor,
     PluginDownloadClientAddRequest, PluginDownloadClientAddResponse,
     PluginDownloadClientControlRequest, PluginDownloadClientMarkImportedRequest,
-    PluginDownloadClientStatus, PluginDownloadItem, PluginDownloadListRecentCompletedRequest,
-    PluginDownloadOutputKind, PluginError, PluginErrorCode, PluginResult,
+    PluginDownloadClientStatus, PluginDownloadFeedbackScope, PluginDownloadItem,
+    PluginDownloadListRecentCompletedRequest, PluginDownloadOutputKind,
+    PluginDownloadScopedListRequest, PluginDownloadScopedListResponse,
+    PluginDownloadScopedRecentCompletedRequest, PluginError, PluginErrorCode, PluginResult,
     PluginTorrentContentLayout, PluginTorrentInitialState, PluginTorrentItem, ProviderDescriptor,
     SDK_VERSION,
 };
@@ -27,6 +29,7 @@ fn plugin_error<T>(code: PluginErrorCode, public_message: impl Into<String>) -> 
         public_message: public_message.into(),
         debug_message: None,
         retry_after_seconds: None,
+        details: None,
     })
 }
 
@@ -175,6 +178,7 @@ fn build_descriptor_json() -> Result<String, Error> {
                 DownloadIsolationMode::Directory,
             ],
             capabilities: DownloadClientCapabilities {
+                category_scoped_feedback: true,
                 pause: true,
                 resume: true,
                 remove: true,
@@ -408,14 +412,30 @@ fn handle_download_add(
     Ok(PluginResult::Ok(response))
 }
 
-pub fn scryer_download_list_queue(_input: String) -> FnResult<String> {
+pub fn scryer_download_list_queue(input: String) -> FnResult<String> {
     let config = QbittorrentConfig::from_extism()?;
-    let torrents = list_torrents(&config, Some("all"))?;
+    let scope = scoped_feedback_request(&input).map(|(scope, _)| scope);
+    let torrents = list_torrents(&config, Some("all"))?
+        .into_iter()
+        .filter(|torrent| {
+            scope
+                .as_ref()
+                .is_none_or(|scope| torrent_matches_feedback_scope(&config, scope, torrent))
+        })
+        .collect::<Vec<_>>();
     let preferences = seed_preferences(&config, &torrents);
     let items = torrents
         .into_iter()
         .map(|torrent| torrent_to_item_with_preferences(torrent, preferences.as_ref()))
         .collect::<Vec<_>>();
+    if scope.is_some() {
+        return Ok(serde_json::to_string(&PluginResult::Ok(
+            PluginDownloadScopedListResponse {
+                items,
+                failures: Vec::new(),
+            },
+        ))?);
+    }
     Ok(serde_json::to_string(&PluginResult::Ok(items))?)
 }
 
@@ -442,16 +462,26 @@ fn defers_to_global_limits(torrent: &QbTorrent) -> bool {
             .is_none_or(|limit| limit == -2)
 }
 
-pub fn scryer_download_list_completed(_input: String) -> FnResult<String> {
+pub fn scryer_download_list_completed(input: String) -> FnResult<String> {
     let config = QbittorrentConfig::from_extism()?;
+    if let Some((scope, _)) = scoped_feedback_request(&input) {
+        return Ok(serde_json::to_string(&PluginResult::Ok(
+            scoped_completed_downloads(&config, &scope, None)?,
+        ))?);
+    }
     Ok(serde_json::to_string(&PluginResult::Ok(
         completed_downloads(&config, None)?,
     ))?)
 }
 
 pub fn scryer_download_list_recent_completed(input: String) -> FnResult<String> {
-    let request: PluginDownloadListRecentCompletedRequest = serde_json::from_str(&input)?;
     let config = QbittorrentConfig::from_extism()?;
+    if let Some((scope, limit)) = scoped_feedback_request(&input) {
+        return Ok(serde_json::to_string(&PluginResult::Ok(
+            scoped_completed_downloads(&config, &scope, limit)?,
+        ))?);
+    }
+    let request: PluginDownloadListRecentCompletedRequest = serde_json::from_str(&input)?;
     Ok(serde_json::to_string(&PluginResult::Ok(
         completed_downloads(&config, Some(request.limit))?,
     ))?)
@@ -476,6 +506,78 @@ fn completed_downloads(
         limit.is_some_and(|limit| converted_count >= limit)
     );
     Ok(downloads)
+}
+
+fn scoped_feedback_request(input: &str) -> Option<(PluginDownloadFeedbackScope, Option<usize>)> {
+    let value = serde_json::from_str::<serde_json::Value>(input).ok()?;
+    value.get("scope")?;
+    if let Ok(request) =
+        serde_json::from_value::<PluginDownloadScopedRecentCompletedRequest>(value.clone())
+    {
+        return Some((request.scope, Some(request.limit)));
+    }
+    serde_json::from_value::<PluginDownloadScopedListRequest>(value)
+        .ok()
+        .map(|request| (request.scope, None))
+}
+
+fn feedback_scope_allows(scope: &PluginDownloadFeedbackScope, category: Option<&str>) -> bool {
+    let categories = scope
+        .categories
+        .iter()
+        .map(|category| category.trim())
+        .filter(|category| !category.is_empty())
+        .collect::<Vec<_>>();
+    categories.is_empty()
+        || category.is_some_and(|actual| {
+            categories
+                .into_iter()
+                .any(|category| category.eq_ignore_ascii_case(actual.trim()))
+        })
+}
+
+fn feedback_scope_allows_tags(scope: &PluginDownloadFeedbackScope, tags: Option<&str>) -> bool {
+    let categories = scope
+        .categories
+        .iter()
+        .map(|category| sanitize_tag_fragment(category.trim()))
+        .filter(|category| !category.is_empty())
+        .collect::<Vec<_>>();
+    categories.is_empty()
+        || tags.is_some_and(|tags| {
+            tags.split(',').map(sanitize_tag_fragment).any(|tag| {
+                categories
+                    .iter()
+                    .any(|category| category.eq_ignore_ascii_case(&tag))
+            })
+        })
+}
+
+fn torrent_matches_feedback_scope(
+    config: &QbittorrentConfig,
+    scope: &PluginDownloadFeedbackScope,
+    torrent: &QbTorrent,
+) -> bool {
+    match config.routing_mode {
+        RoutingMode::Category => feedback_scope_allows(scope, torrent.category.as_deref()),
+        RoutingMode::Tag => feedback_scope_allows_tags(scope, torrent.tags.as_deref()),
+    }
+}
+
+fn scoped_completed_downloads(
+    config: &QbittorrentConfig,
+    scope: &PluginDownloadFeedbackScope,
+    limit: Option<usize>,
+) -> Result<PluginDownloadScopedListResponse<PluginCompletedDownload>, Error> {
+    let torrents = list_completed_torrents(config)?
+        .into_iter()
+        .filter(|torrent| torrent_matches_feedback_scope(config, scope, torrent))
+        .collect::<Vec<_>>();
+    let (items, _) = convert_completed_torrents(torrents, limit);
+    Ok(PluginDownloadScopedListResponse {
+        items,
+        failures: Vec::new(),
+    })
 }
 
 fn convert_completed_torrents(
@@ -578,6 +680,7 @@ fn handle_download_control(
             public_message: "client_item_id is required".to_string(),
             debug_message: None,
             retry_after_seconds: None,
+            details: None,
         }));
     }
     if matches!(request.action, DownloadControlAction::ForceStart) {
@@ -586,6 +689,7 @@ fn handle_download_control(
             public_message: "unsupported control action: force_start".to_string(),
             debug_message: None,
             retry_after_seconds: None,
+            details: None,
         }));
     }
 
@@ -924,10 +1028,12 @@ fn config_fields() -> Vec<ConfigFieldDef> {
                 ConfigFieldOption {
                     value: "category".to_string(),
                     label: "Category".to_string(),
+                    config_overrides: Default::default(),
                 },
                 ConfigFieldOption {
                     value: "tag".to_string(),
                     label: "Tag".to_string(),
+                    config_overrides: Default::default(),
                 },
             ],
             help_text: Some(
@@ -2430,9 +2536,47 @@ mod tests {
             true
         );
         assert_eq!(
+            value["provider"]["capabilities"]["category_scoped_feedback"],
+            true
+        );
+        assert_eq!(
             value["provider"]["capabilities"]["mark_imported_non_destructive"],
             true
         );
+    }
+
+    #[test]
+    fn scoped_feedback_request_preserves_categories_and_recent_limit() {
+        let input = serde_json::json!({
+            "scope": { "categories": ["Movies", "TV / Anime"] },
+            "limit": 25,
+        })
+        .to_string();
+        let (scope, limit) = scoped_feedback_request(&input).expect("scoped request");
+
+        assert_eq!(scope.categories, vec!["Movies", "TV / Anime"]);
+        assert_eq!(limit, Some(25));
+        assert!(feedback_scope_allows(&scope, Some("movies")));
+        assert!(!feedback_scope_allows(&scope, Some("music")));
+    }
+
+    #[test]
+    fn tag_scoped_feedback_requires_a_matching_tag() {
+        let scope = PluginDownloadFeedbackScope {
+            categories: vec!["Movies".to_owned(), "TV / Anime".to_owned()],
+        };
+
+        assert!(feedback_scope_allows_tags(
+            &scope,
+            Some("scryer-origin,movies,other-tag")
+        ));
+        assert!(feedback_scope_allows_tags(&scope, Some("tv---anime")));
+        assert!(!feedback_scope_allows_tags(&scope, Some("music,other-tag")));
+        assert!(!feedback_scope_allows_tags(&scope, None));
+        assert!(feedback_scope_allows_tags(
+            &PluginDownloadFeedbackScope::default(),
+            Some("music")
+        ));
     }
 
     #[test]
