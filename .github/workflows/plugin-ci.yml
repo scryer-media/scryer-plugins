@@ -72,20 +72,27 @@ jobs:
       - name: Run cargo audit
         working-directory: ${{ matrix.directory }}
         run: |
-          cargo audit --file Cargo.lock \
-            --ignore RUSTSEC-2026-0085 \
-            --ignore RUSTSEC-2026-0086 \
-            --ignore RUSTSEC-2026-0087 \
-            --ignore RUSTSEC-2026-0088 \
-            --ignore RUSTSEC-2026-0089 \
-            --ignore RUSTSEC-2026-0091 \
-            --ignore RUSTSEC-2026-0092 \
-            --ignore RUSTSEC-2026-0093 \
-            --ignore RUSTSEC-2026-0094 \
-            --ignore RUSTSEC-2026-0095 \
-            --ignore RUSTSEC-2026-0096 \
-            --ignore RUSTSEC-2026-0114 \
+          audit_ignores=(
+            --ignore RUSTSEC-2026-0085
+            --ignore RUSTSEC-2026-0086
+            --ignore RUSTSEC-2026-0087
+            --ignore RUSTSEC-2026-0088
+            --ignore RUSTSEC-2026-0089
+            --ignore RUSTSEC-2026-0091
+            --ignore RUSTSEC-2026-0092
+            --ignore RUSTSEC-2026-0093
+            --ignore RUSTSEC-2026-0094
+            --ignore RUSTSEC-2026-0095
+            --ignore RUSTSEC-2026-0096
+            --ignore RUSTSEC-2026-0114
             --ignore RUSTSEC-2026-0222
+          )
+          if [[ "${{ matrix.id }}" == "xtask" ]]; then
+            # Extism 1.30.0 still requires unsupported Wasmtime 43. Remove this
+            # exception when Extism ships its Wasmtime 46 migration (extism/extism#905).
+            audit_ignores+=(--ignore RUSTSEC-2026-0269)
+          fi
+          cargo audit --file Cargo.lock "${audit_ignores[@]}"
 
       - name: Run strict clippy
         working-directory: ${{ matrix.directory }}
