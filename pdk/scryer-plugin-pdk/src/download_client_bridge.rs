@@ -54,28 +54,26 @@ fn bridge_download_client_command(
         PluginDownloadClientCommand::ListQueue => {
             PluginDownloadClientCommandResult::ListQueue(list_queue_with_failed_history(functions))
         }
-        PluginDownloadClientCommand::ListQueueScoped(_) => {
-            PluginDownloadClientCommandResult::ListQueueScoped(scoped_list_response(
-                list_queue_with_failed_history(functions),
-            ))
+        PluginDownloadClientCommand::ListQueueScoped(request) => {
+            PluginDownloadClientCommandResult::ListQueueScoped(call(functions.list_queue, request))
         }
         PluginDownloadClientCommand::ListHistory => {
             PluginDownloadClientCommandResult::ListHistory(call(functions.list_completed, ()))
         }
-        PluginDownloadClientCommand::ListHistoryScoped(_) => {
-            PluginDownloadClientCommandResult::ListHistoryScoped(scoped_list_response(call(
+        PluginDownloadClientCommand::ListHistoryScoped(request) => {
+            PluginDownloadClientCommandResult::ListHistoryScoped(call(
                 functions.list_completed,
-                (),
-            )))
+                request,
+            ))
         }
         PluginDownloadClientCommand::ListCompleted => {
             PluginDownloadClientCommandResult::ListCompleted(call(functions.list_completed, ()))
         }
-        PluginDownloadClientCommand::ListCompletedScoped(_) => {
-            PluginDownloadClientCommandResult::ListCompletedScoped(scoped_list_response(call(
+        PluginDownloadClientCommand::ListCompletedScoped(request) => {
+            PluginDownloadClientCommandResult::ListCompletedScoped(call(
                 functions.list_completed,
-                (),
-            )))
+                request,
+            ))
         }
         PluginDownloadClientCommand::ListRecentCompleted(request) => {
             PluginDownloadClientCommandResult::ListRecentCompleted(list_recent_completed(
@@ -83,12 +81,15 @@ fn bridge_download_client_command(
             ))
         }
         PluginDownloadClientCommand::ListRecentCompletedScoped(request) => {
-            let request = sdk::PluginDownloadListRecentCompletedRequest {
-                limit: request.limit,
+            let result = if let Some(list_recent_completed) = functions.list_recent_completed {
+                call(list_recent_completed, request)
+            } else {
+                let request = sdk::PluginDownloadListRecentCompletedRequest {
+                    limit: request.limit,
+                };
+                scoped_list_response(list_recent_completed(functions, request))
             };
-            PluginDownloadClientCommandResult::ListRecentCompletedScoped(scoped_list_response(
-                list_recent_completed(functions, request),
-            ))
+            PluginDownloadClientCommandResult::ListRecentCompletedScoped(result)
         }
         PluginDownloadClientCommand::GetCompleted(PluginDownloadGetCompletedRequest {
             client_item_id,
@@ -252,6 +253,41 @@ mod tests {
         ]))?)
     }
 
+    fn scoped_queue_items(input: String) -> FnResult<String> {
+        let request: sdk::PluginDownloadScopedListRequest = serde_json::from_str(&input)?;
+        assert_eq!(request.scope.categories, vec!["Movies"]);
+        Ok(serde_json::to_string(&sdk::PluginResult::Ok(
+            sdk::PluginDownloadScopedListResponse::<sdk::PluginDownloadItem> {
+                items: Vec::new(),
+                failures: Vec::new(),
+            },
+        ))?)
+    }
+
+    fn scoped_completed_downloads(input: String) -> FnResult<String> {
+        let request: sdk::PluginDownloadScopedListRequest = serde_json::from_str(&input)?;
+        assert_eq!(request.scope.categories, vec!["Movies"]);
+        Ok(serde_json::to_string(&sdk::PluginResult::Ok(
+            sdk::PluginDownloadScopedListResponse::<sdk::PluginCompletedDownload> {
+                items: Vec::new(),
+                failures: Vec::new(),
+            },
+        ))?)
+    }
+
+    fn scoped_recent_completed_downloads(input: String) -> FnResult<String> {
+        let request: sdk::PluginDownloadScopedRecentCompletedRequest =
+            serde_json::from_str(&input)?;
+        assert_eq!(request.limit, 25);
+        assert_eq!(request.scope.categories, vec!["Movies"]);
+        Ok(serde_json::to_string(&sdk::PluginResult::Ok(
+            sdk::PluginDownloadScopedListResponse::<sdk::PluginCompletedDownload> {
+                items: Vec::new(),
+                failures: Vec::new(),
+            },
+        ))?)
+    }
+
     fn unused(_input: String) -> FnResult<String> {
         unreachable!("unused bridge function")
     }
@@ -304,6 +340,72 @@ mod tests {
             ),
             download_item("completed-item", sdk::DownloadItemState::Completed, None),
         ]))?)
+    }
+
+    #[test]
+    fn scoped_feedback_commands_forward_scope_and_recent_limit() {
+        let functions = LegacyDownloadClientFunctions {
+            describe: unused,
+            add: unused,
+            list_queue: scoped_queue_items,
+            list_history: unexpected_legacy_history_call,
+            list_completed: scoped_completed_downloads,
+            list_recent_completed: Some(scoped_recent_completed_downloads),
+            control: unused,
+            mark_imported: unused,
+            mark_imported_non_destructive: None,
+            status: unused,
+            test_connection: unused,
+        };
+        let scope = sdk::PluginDownloadFeedbackScope {
+            categories: vec!["Movies".to_string()],
+        };
+
+        let queue = bridge_download_client_command(
+            &functions,
+            PluginDownloadClientCommand::ListQueueScoped(sdk::PluginDownloadScopedListRequest {
+                scope: scope.clone(),
+            }),
+        );
+        assert!(matches!(
+            queue,
+            PluginDownloadClientCommandResult::ListQueueScoped(sdk::PluginResult::Ok(_))
+        ));
+
+        let history = bridge_download_client_command(
+            &functions,
+            PluginDownloadClientCommand::ListHistoryScoped(sdk::PluginDownloadScopedListRequest {
+                scope: scope.clone(),
+            }),
+        );
+        assert!(matches!(
+            history,
+            PluginDownloadClientCommandResult::ListHistoryScoped(sdk::PluginResult::Ok(_))
+        ));
+
+        let completed = bridge_download_client_command(
+            &functions,
+            PluginDownloadClientCommand::ListCompletedScoped(
+                sdk::PluginDownloadScopedListRequest {
+                    scope: scope.clone(),
+                },
+            ),
+        );
+        assert!(matches!(
+            completed,
+            PluginDownloadClientCommandResult::ListCompletedScoped(sdk::PluginResult::Ok(_))
+        ));
+
+        let recent = bridge_download_client_command(
+            &functions,
+            PluginDownloadClientCommand::ListRecentCompletedScoped(
+                sdk::PluginDownloadScopedRecentCompletedRequest { limit: 25, scope },
+            ),
+        );
+        assert!(matches!(
+            recent,
+            PluginDownloadClientCommandResult::ListRecentCompletedScoped(sdk::PluginResult::Ok(_))
+        ));
     }
 
     #[test]
