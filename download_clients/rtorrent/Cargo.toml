@@ -12,7 +12,7 @@ official = true
 plugin_id = "rtorrent"
 status = "beta"
 catalog_versions = ["v3"]
-min_scryer_version = "0.18.12"
+min_scryer_version = "0.19.0"
 feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/rtorrent"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/rtorrent"
@@ -25,8 +25,8 @@ path = "src/lib.rs"
 base64 = "0.23"
 roxmltree = "0.21"
 serde = { version = "1", features = ["derive"] }
-scryer-plugin-sdk = "3.7.0"
-scryer-plugin-pdk = "0.5.7"
+scryer-plugin-sdk = "3.10.0"
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.5.11" }
 serde_json = "1"
 urlencoding = "2"
 

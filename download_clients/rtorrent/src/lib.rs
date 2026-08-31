@@ -8,8 +8,11 @@ use scryer_plugin_sdk::{
     DownloadIsolationMode, DownloadItemState, DownloadTorrentCapabilities, PluginCompletedDownload,
     PluginDescriptor, PluginDownloadClientAddRequest, PluginDownloadClientAddResponse,
     PluginDownloadClientControlRequest, PluginDownloadClientMarkImportedRequest,
-    PluginDownloadClientStatus, PluginDownloadItem, PluginDownloadOutputKind, PluginError,
-    PluginErrorCode, PluginResult, PluginTorrentItem, ProviderDescriptor, SDK_VERSION,
+    PluginDownloadClientStatus, PluginDownloadFeedbackScope, PluginDownloadItem,
+    PluginDownloadListRecentCompletedRequest, PluginDownloadOutputKind,
+    PluginDownloadScopedListRequest, PluginDownloadScopedListResponse,
+    PluginDownloadScopedRecentCompletedRequest, PluginError, PluginErrorCode, PluginResult,
+    PluginTorrentItem, ProviderDescriptor, SDK_VERSION,
 };
 use serde::{Deserialize, Serialize};
 
@@ -64,6 +67,7 @@ fn plugin_error<T>(code: PluginErrorCode, public_message: impl Into<String>) -> 
         public_message: public_message.into(),
         debug_message: None,
         retry_after_seconds: None,
+        details: None,
     })
 }
 
@@ -89,11 +93,13 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
             ],
             isolation_modes: vec![DownloadIsolationMode::Tag, DownloadIsolationMode::Directory],
             capabilities: DownloadClientCapabilities {
+                category_scoped_feedback: true,
                 pause: false,
                 resume: false,
                 remove: true,
                 remove_with_data: false,
                 mark_imported: true,
+                mark_imported_non_destructive: true,
                 prepare_for_import: false,
                 client_status: true,
                 queue_priority: true,
@@ -212,11 +218,22 @@ pub fn scryer_download_add(input: String) -> FnResult<String> {
     ))?)
 }
 
-pub fn scryer_download_list_queue(_input: String) -> FnResult<String> {
+pub fn scryer_download_list_queue(input: String) -> FnResult<String> {
     let config = RTorrentConfig::from_extism()?;
-    let items = list_torrents(&config)?
+    if let Some(scope) = scoped_feedback_scope(&input) {
+        let items = feedback_torrents(&config, Some(&scope))?
+            .into_iter()
+            .map(torrent_to_item)
+            .collect::<Vec<_>>();
+        return Ok(serde_json::to_string(&PluginResult::Ok(
+            PluginDownloadScopedListResponse {
+                items,
+                failures: Vec::new(),
+            },
+        ))?);
+    }
+    let items = feedback_torrents(&config, None)?
         .into_iter()
-        .filter(|torrent| torrent_matches_scope(&config, torrent))
         .map(torrent_to_item)
         .collect::<Vec<_>>();
     Ok(serde_json::to_string(&PluginResult::Ok(items))?)
@@ -224,23 +241,60 @@ pub fn scryer_download_list_queue(_input: String) -> FnResult<String> {
 
 pub fn scryer_download_list_history(_input: String) -> FnResult<String> {
     let config = RTorrentConfig::from_extism()?;
-    let items = list_torrents(&config)?
+    let mut torrents = feedback_torrents(&config, None)?;
+    sort_torrents_by_completion(&mut torrents);
+    let items = torrents
         .into_iter()
-        .filter(|torrent| torrent_matches_scope(&config, torrent))
         .map(torrent_to_item)
         .collect::<Vec<_>>();
     Ok(serde_json::to_string(&PluginResult::Ok(items))?)
 }
 
-pub fn scryer_download_list_completed(_input: String) -> FnResult<String> {
+pub fn scryer_download_list_completed(input: String) -> FnResult<String> {
     let config = RTorrentConfig::from_extism()?;
-    let downloads = list_torrents(&config)?
+    if let Some(scope) = scoped_feedback_scope(&input) {
+        let downloads = completed_feedback_torrents(&config, Some(&scope))?
+            .into_iter()
+            .map(torrent_to_completed)
+            .collect::<Vec<_>>();
+        return Ok(serde_json::to_string(&PluginResult::Ok(
+            PluginDownloadScopedListResponse {
+                items: downloads,
+                failures: Vec::new(),
+            },
+        ))?);
+    }
+    let downloads = completed_feedback_torrents(&config, None)?
         .into_iter()
-        .filter(|torrent| torrent_matches_scope(&config, torrent))
-        .filter(|torrent| torrent.is_finished)
         .map(torrent_to_completed)
         .collect::<Vec<_>>();
     Ok(serde_json::to_string(&PluginResult::Ok(downloads))?)
+}
+
+pub fn scryer_download_list_recent_completed(input: String) -> FnResult<String> {
+    let config = RTorrentConfig::from_extism()?;
+    let value: serde_json::Value = serde_json::from_str(&input)?;
+    if value.get("scope").is_some() {
+        let request: PluginDownloadScopedRecentCompletedRequest = serde_json::from_value(value)?;
+        let mut items = completed_feedback_torrents(&config, Some(&request.scope))?
+            .into_iter()
+            .map(torrent_to_completed)
+            .collect::<Vec<_>>();
+        items.truncate(request.limit);
+        return Ok(serde_json::to_string(&PluginResult::Ok(
+            PluginDownloadScopedListResponse {
+                items,
+                failures: Vec::new(),
+            },
+        ))?);
+    }
+    let request: PluginDownloadListRecentCompletedRequest = serde_json::from_value(value)?;
+    let mut items = completed_feedback_torrents(&config, None)?
+        .into_iter()
+        .map(torrent_to_completed)
+        .collect::<Vec<_>>();
+    items.truncate(request.limit);
+    Ok(serde_json::to_string(&PluginResult::Ok(items))?)
 }
 
 pub fn scryer_download_control(input: String) -> FnResult<String> {
@@ -477,18 +531,22 @@ fn priority_field(key: &str, label: &str) -> ConfigFieldDef {
             ConfigFieldOption {
                 value: "0".to_string(),
                 label: "Very Low".to_string(),
+                config_overrides: Default::default(),
             },
             ConfigFieldOption {
                 value: "1".to_string(),
                 label: "Low".to_string(),
+                config_overrides: Default::default(),
             },
             ConfigFieldOption {
                 value: "2".to_string(),
                 label: "Normal".to_string(),
+                config_overrides: Default::default(),
             },
             ConfigFieldOption {
                 value: "3".to_string(),
                 label: "High".to_string(),
+                config_overrides: Default::default(),
             },
         ],
         help_text: None,
@@ -653,6 +711,73 @@ fn torrent_to_item(torrent: RTorrentTorrent) -> PluginDownloadItem {
     }
 }
 
+fn scoped_feedback_scope(input: &str) -> Option<PluginDownloadFeedbackScope> {
+    let value = serde_json::from_str::<serde_json::Value>(input).ok()?;
+    value.get("scope")?;
+    if let Ok(request) =
+        serde_json::from_value::<PluginDownloadScopedRecentCompletedRequest>(value.clone())
+    {
+        return Some(request.scope);
+    }
+    serde_json::from_value::<PluginDownloadScopedListRequest>(value)
+        .ok()
+        .map(|request| request.scope)
+}
+
+fn feedback_scope_allows(scope: &PluginDownloadFeedbackScope, actual: &str) -> bool {
+    let actual = actual.trim();
+    let configured = scope
+        .categories
+        .iter()
+        .map(|category| category.trim())
+        .filter(|category| !category.is_empty())
+        .collect::<Vec<_>>();
+    configured.is_empty()
+        || configured
+            .into_iter()
+            .any(|category| category.eq_ignore_ascii_case(actual))
+}
+
+fn feedback_torrents(
+    config: &RTorrentConfig,
+    scope: Option<&PluginDownloadFeedbackScope>,
+) -> Result<Vec<RTorrentTorrent>, Error> {
+    Ok(list_torrents(config)?
+        .into_iter()
+        .filter(|torrent| torrent_matches_feedback_scope(config, scope, torrent))
+        .collect())
+}
+
+fn torrent_matches_feedback_scope(
+    config: &RTorrentConfig,
+    scope: Option<&PluginDownloadFeedbackScope>,
+    torrent: &RTorrentTorrent,
+) -> bool {
+    torrent_matches_scope(config, torrent)
+        && scope.is_none_or(|scope| feedback_scope_allows(scope, &torrent.category))
+}
+
+fn sort_torrents_by_completion(torrents: &mut [RTorrentTorrent]) {
+    torrents.sort_by(|left, right| {
+        right
+            .finished_time
+            .cmp(&left.finished_time)
+            .then_with(|| left.hash.cmp(&right.hash))
+    });
+}
+
+fn completed_feedback_torrents(
+    config: &RTorrentConfig,
+    scope: Option<&PluginDownloadFeedbackScope>,
+) -> Result<Vec<RTorrentTorrent>, Error> {
+    let mut torrents = feedback_torrents(config, scope)?
+        .into_iter()
+        .filter(|torrent| torrent.is_finished)
+        .collect::<Vec<_>>();
+    sort_torrents_by_completion(&mut torrents);
+    Ok(torrents)
+}
+
 fn torrent_matches_scope(config: &RTorrentConfig, torrent: &RTorrentTorrent) -> bool {
     category_allowed(&config.category, &torrent.category)
         && !torrent.path.trim().is_empty()
@@ -689,6 +814,7 @@ fn torrent_to_completed(torrent: RTorrentTorrent) -> PluginCompletedDownload {
         download_id: None,
         info_hash: Some(torrent.hash),
         name: torrent.name,
+        release_name: None,
         dest_dir: torrent.path.clone(),
         category: non_empty(torrent.category),
         output_kind: Some(if path_looks_like_file(&torrent.path) {
@@ -1052,6 +1178,20 @@ mod tests {
 
     const NOW: i64 = 1_700_000_000;
 
+    #[test]
+    fn descriptor_advertises_non_destructive_import_marking() {
+        let output = scryer_describe(String::new()).expect("descriptor");
+        let descriptor: PluginDescriptor = serde_json::from_str(&output).expect("descriptor JSON");
+        let ProviderDescriptor::DownloadClient(download_client) = descriptor.provider else {
+            panic!("rTorrent descriptor must be a download client");
+        };
+
+        assert!(
+            download_client.capabilities.mark_imported_non_destructive,
+            "post-import category and view updates do not delete the rTorrent payload"
+        );
+    }
+
     fn finished_torrent(ratio_per_mille: i64) -> RTorrentTorrent {
         RTorrentTorrent {
             name: "Movie".to_string(),
@@ -1065,6 +1205,104 @@ mod tests {
             finished_time: NOW - 600,
             ..RTorrentTorrent::default()
         }
+    }
+
+    fn completed_torrent(hash: &str, category: &str, finished_time: i64) -> RTorrentTorrent {
+        RTorrentTorrent {
+            hash: hash.to_string(),
+            category: category.to_string(),
+            finished_time,
+            ..finished_torrent(0)
+        }
+    }
+
+    fn config_with_categories(category: &str) -> RTorrentConfig {
+        RTorrentConfig {
+            rpc_url: "http://rtorrent/RPC2".to_string(),
+            username: String::new(),
+            password: String::new(),
+            category: category.to_string(),
+            post_import_category: String::new(),
+            directory: "/downloads".to_string(),
+            recent_priority: 2,
+            older_priority: 1,
+            add_stopped: false,
+        }
+    }
+
+    #[test]
+    fn feedback_scope_intersects_the_configured_category_allowlist() {
+        let movies_and_anime = PluginDownloadFeedbackScope {
+            categories: vec!["movies".to_string(), "anime".to_string()],
+        };
+        let anime_only = PluginDownloadFeedbackScope {
+            categories: vec!["anime".to_string()],
+        };
+        let all_categories = PluginDownloadFeedbackScope::default();
+        let config = config_with_categories("movies, anime");
+        let movies = completed_torrent("movies", "movies", NOW);
+        let anime = completed_torrent("anime", "anime", NOW);
+        let series = completed_torrent("series", "series", NOW);
+
+        assert!(category_allowed("movies, anime", "movies"));
+        assert!(category_allowed("movies, anime", "anime"));
+        assert!(!category_allowed("movies, anime", "series"));
+        assert!(torrent_matches_feedback_scope(
+            &config,
+            Some(&movies_and_anime),
+            &movies
+        ));
+        assert!(torrent_matches_feedback_scope(
+            &config,
+            Some(&anime_only),
+            &anime
+        ));
+        assert!(!torrent_matches_feedback_scope(
+            &config,
+            Some(&anime_only),
+            &movies
+        ));
+        assert!(!torrent_matches_feedback_scope(
+            &config,
+            Some(&movies_and_anime),
+            &series
+        ));
+        assert!(torrent_matches_feedback_scope(
+            &config,
+            Some(&all_categories),
+            &anime
+        ));
+    }
+
+    #[test]
+    fn completed_feedback_is_newest_first_stable_and_bounded() {
+        let mut torrents = vec![
+            completed_torrent("z-new", "movies", NOW - 10),
+            completed_torrent("a-new", "movies", NOW - 10),
+            completed_torrent("old", "movies", NOW - 20),
+            RTorrentTorrent {
+                hash: "unfinished".to_string(),
+                is_finished: false,
+                finished_time: 0,
+                ..finished_torrent(0)
+            },
+        ];
+        torrents.retain(|torrent| torrent.is_finished);
+        sort_torrents_by_completion(&mut torrents);
+        let mut downloads = torrents
+            .into_iter()
+            .map(torrent_to_completed)
+            .collect::<Vec<_>>();
+        downloads.truncate(2);
+
+        assert_eq!(
+            downloads
+                .iter()
+                .map(|download| download.client_item_id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["a-new", "z-new"]
+        );
+        assert_eq!(downloads[0].completed_at.as_deref(), Some("1699999990"));
     }
 
     #[test]
@@ -1293,9 +1531,10 @@ scryer_plugin_pdk::scryer_download_client_bridge_main!(
     list_queue = scryer_download_list_queue,
     list_history = scryer_download_list_history,
     list_completed = scryer_download_list_completed,
-    list_recent_completed = None,
+    list_recent_completed = Some(scryer_download_list_recent_completed),
     control = scryer_download_control,
     mark_imported = scryer_download_mark_imported,
+    mark_imported_non_destructive = Some(scryer_download_mark_imported),
     status = scryer_download_status,
     test_connection = scryer_download_test_connection,
 );
