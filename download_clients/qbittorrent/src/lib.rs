@@ -22,6 +22,7 @@ use sha1::{Digest, Sha1};
 
 const COOKIE_VAR_KEY: &str = "qbittorrent.sid";
 const IMPORTED_TAG_DEFAULT: &str = "scryer:imported";
+const ROUTING_CATEGORY_TAG_PREFIX: &str = "scryer:routing-category:";
 
 fn plugin_error<T>(code: PluginErrorCode, public_message: impl Into<String>) -> PluginResult<T> {
     PluginResult::Err(PluginError {
@@ -559,7 +560,14 @@ fn torrent_matches_feedback_scope(
     torrent: &QbTorrent,
 ) -> bool {
     match config.routing_mode {
-        RoutingMode::Category => feedback_scope_allows(scope, torrent.category.as_deref()),
+        RoutingMode::Category => {
+            feedback_scope_allows(scope, torrent.category.as_deref())
+                || scope
+                    .categories
+                    .iter()
+                    .filter_map(|category| routing_category_tag(category))
+                    .any(|tag| torrent_has_tag(torrent, &tag))
+        }
         RoutingMode::Tag => feedback_scope_allows_tags(scope, torrent.tags.as_deref()),
     }
 }
@@ -765,10 +773,11 @@ fn mark_imported_non_destructive(input: String) -> FnResult<String> {
 
     let config = QbittorrentConfig::from_extism()?;
 
-    if !torrent_exists(&config, &hash)? {
+    let Some(torrent) = torrent_by_hash(&config, &hash)? else {
         return Ok(serde_json::to_string(&PluginResult::Ok(()))?);
-    }
+    };
 
+    preserve_routing_category_tag(&config, &hash, &torrent)?;
     apply_post_import_isolation(&config, &hash, &request)?;
 
     if config.tag_after_import {
@@ -784,6 +793,31 @@ fn mark_imported_non_destructive(input: String) -> FnResult<String> {
     }
 
     Ok(serde_json::to_string(&PluginResult::Ok(()))?)
+}
+
+fn preserve_routing_category_tag(
+    config: &QbittorrentConfig,
+    hash: &str,
+    torrent: &QbTorrent,
+) -> Result<(), Error> {
+    if !matches!(config.routing_mode, RoutingMode::Category) {
+        return Ok(());
+    }
+    let Some(tag) = torrent.category.as_deref().and_then(routing_category_tag) else {
+        return Ok(());
+    };
+    if torrent_has_tag(torrent, &tag) {
+        return Ok(());
+    }
+    create_tag_if_missing(config, &tag)?;
+    post_form(
+        config,
+        "/torrents/addTags",
+        &[
+            ("hashes".to_string(), hash.to_string()),
+            ("tags".to_string(), tag),
+        ],
+    )
 }
 
 pub fn scryer_download_status(_input: String) -> FnResult<String> {
@@ -1367,10 +1401,10 @@ fn torrents_info_path(filter: Option<&str>, completed: bool) -> String {
     path
 }
 
-fn torrent_exists(config: &QbittorrentConfig, hash: &str) -> Result<bool, Error> {
+fn torrent_by_hash(config: &QbittorrentConfig, hash: &str) -> Result<Option<QbTorrent>, Error> {
     let path = format!("/torrents/info?hashes={}", url_encode(hash));
     let torrents: Vec<QbTorrent> = get_json(config, &path)?;
-    Ok(!torrents.is_empty())
+    Ok(torrents.into_iter().next())
 }
 
 fn resolve_added_hash(
@@ -1487,7 +1521,18 @@ fn build_tags(config: &QbittorrentConfig, request: &PluginDownloadClientAddReque
     {
         tags.push(sanitize_tag_fragment(isolation));
     }
+    if matches!(config.routing_mode, RoutingMode::Category)
+        && let Some(isolation) = request.routing.isolation_value.as_deref()
+        && let Some(tag) = routing_category_tag(isolation)
+    {
+        tags.push(tag);
+    }
     dedupe(tags)
+}
+
+fn routing_category_tag(category: &str) -> Option<String> {
+    let category = sanitize_tag_fragment(category.trim());
+    (!category.is_empty()).then(|| format!("{ROUTING_CATEGORY_TAG_PREFIX}{category}"))
 }
 
 fn request_paused(config: &QbittorrentConfig, request: &PluginDownloadClientAddRequest) -> bool {
@@ -2577,6 +2622,40 @@ mod tests {
             &PluginDownloadFeedbackScope::default(),
             Some("music")
         ));
+    }
+
+    #[test]
+    fn category_scoped_feedback_uses_original_category_after_post_import_move() {
+        let config = test_config();
+        let movies = PluginDownloadFeedbackScope {
+            categories: vec!["Movies".to_owned()],
+        };
+        let television = PluginDownloadFeedbackScope {
+            categories: vec!["Television".to_owned()],
+        };
+        let torrent = QbTorrent {
+            category: Some("scryer-imported".to_owned()),
+            tags: Some("scryer-origin,scryer:routing-category:movies".to_owned()),
+            ..QbTorrent::default()
+        };
+
+        assert!(torrent_matches_feedback_scope(&config, &movies, &torrent));
+        assert!(!torrent_matches_feedback_scope(
+            &config,
+            &television,
+            &torrent
+        ));
+    }
+
+    #[test]
+    fn category_routing_add_records_the_feedback_category_in_a_tag() {
+        let request = test_add_request(DownloadInputKind::MagnetUri);
+
+        assert!(
+            build_tags(&test_config(), &request)
+                .iter()
+                .any(|tag| tag == "scryer:routing-category:movie")
+        );
     }
 
     #[test]
