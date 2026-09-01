@@ -17,6 +17,7 @@ use scryer_plugin_sdk::{
 use serde::{Deserialize, Serialize};
 
 const IMPORTED_VIEW: &str = "scryer_imported";
+const ROUTING_CATEGORY_CUSTOM_KEY: &str = "scryer.routing_category";
 const SEED_CONFIG_VAR_PREFIX: &str = "rtorrent.seed_config.";
 
 #[derive(Debug, Clone)]
@@ -38,6 +39,7 @@ struct RTorrentTorrent {
     hash: String,
     path: String,
     category: String,
+    routing_category: String,
     total_size: i64,
     remaining_size: i64,
     down_rate: i64,
@@ -47,6 +49,17 @@ struct RTorrentTorrent {
     finished_time: i64,
     /// `d.is_private=`; `None` when the rTorrent build did not return the column.
     is_private: Option<bool>,
+}
+
+impl RTorrentTorrent {
+    /// Keep feedback bound to the routing category after `d.custom1` is changed on import.
+    fn feedback_category(&self) -> &str {
+        if self.routing_category.trim().is_empty() {
+            &self.category
+        } else {
+            &self.routing_category
+        }
+    }
 }
 
 #[derive(Default, Deserialize, Serialize)]
@@ -239,8 +252,22 @@ pub fn scryer_download_list_queue(input: String) -> FnResult<String> {
     Ok(serde_json::to_string(&PluginResult::Ok(items))?)
 }
 
-pub fn scryer_download_list_history(_input: String) -> FnResult<String> {
+pub fn scryer_download_list_history(input: String) -> FnResult<String> {
     let config = RTorrentConfig::from_extism()?;
+    if let Some(scope) = scoped_feedback_scope(&input) {
+        let mut torrents = feedback_torrents(&config, Some(&scope))?;
+        sort_torrents_by_completion(&mut torrents);
+        let items = torrents
+            .into_iter()
+            .map(torrent_to_item)
+            .collect::<Vec<_>>();
+        return Ok(serde_json::to_string(&PluginResult::Ok(
+            PluginDownloadScopedListResponse {
+                items,
+                failures: Vec::new(),
+            },
+        ))?);
+    }
     let mut torrents = feedback_torrents(&config, None)?;
     sort_torrents_by_completion(&mut torrents);
     let items = torrents
@@ -339,6 +366,26 @@ pub fn scryer_download_mark_imported(input: String) -> FnResult<String> {
             .unwrap_or_else(|| request.client_item_id.clone()),
     );
     if !config.post_import_category.is_empty() && config.post_import_category != config.category {
+        let response = call_document(&config, "d.custom1", &[XmlValue::String(hash.clone())])?;
+        let routing_category = decode_category(&string_response(&response)?);
+        if !routing_category.trim().is_empty()
+            && !routing_category.eq_ignore_ascii_case(&config.post_import_category)
+        {
+            let response = call_document(
+                &config,
+                "d.custom.set",
+                &[
+                    XmlValue::String(hash.clone()),
+                    XmlValue::String(ROUTING_CATEGORY_CUSTOM_KEY.to_string()),
+                    XmlValue::String(routing_category),
+                ],
+            )?;
+            if int_response(&response)? != 0 {
+                return Err(Error::msg(
+                    "rTorrent did not preserve the routing category before moving the imported torrent",
+                ));
+            }
+        }
         let response = call_document(
             &config,
             "d.custom1.set",
@@ -569,6 +616,7 @@ fn list_torrents(config: &RTorrentConfig) -> Result<Vec<RTorrentTorrent>, Error>
             XmlValue::String("d.hash=".to_string()),
             XmlValue::String("d.base_path=".to_string()),
             XmlValue::String("d.custom1=".to_string()),
+            XmlValue::String(format!("d.custom={ROUTING_CATEGORY_CUSTOM_KEY}")),
             XmlValue::String("d.size_bytes=".to_string()),
             XmlValue::String("d.left_bytes=".to_string()),
             XmlValue::String("d.down.rate=".to_string()),
@@ -626,7 +674,7 @@ fn parse_torrents(xml: &str) -> Result<Vec<RTorrentTorrent>, Error> {
     let mut out = Vec::new();
     for row in array_values(response_value) {
         let values = array_values(row);
-        if values.len() < 12 {
+        if values.len() < 13 {
             continue;
         }
         out.push(RTorrentTorrent {
@@ -634,14 +682,15 @@ fn parse_torrents(xml: &str) -> Result<Vec<RTorrentTorrent>, Error> {
             hash: normalize_hash(&node_text(values[1]).unwrap_or_default()),
             path: node_text(values[2]).unwrap_or_default(),
             category: decode_category(&node_text(values[3]).unwrap_or_default()),
-            total_size: parse_i64(values[4]),
-            remaining_size: parse_i64(values[5]),
-            down_rate: parse_i64(values[6]),
-            ratio: parse_i64(values[7]),
-            is_active: parse_i64(values[9]) != 0,
-            is_finished: parse_i64(values[10]) != 0,
-            finished_time: parse_i64(values[11]),
-            is_private: values.get(12).map(|value| parse_i64(*value) != 0),
+            routing_category: decode_category(&node_text(values[4]).unwrap_or_default()),
+            total_size: parse_i64(values[5]),
+            remaining_size: parse_i64(values[6]),
+            down_rate: parse_i64(values[7]),
+            ratio: parse_i64(values[8]),
+            is_active: parse_i64(values[10]) != 0,
+            is_finished: parse_i64(values[11]) != 0,
+            finished_time: parse_i64(values[12]),
+            is_private: values.get(13).map(|value| parse_i64(*value) != 0),
         });
     }
     Ok(out)
@@ -754,7 +803,7 @@ fn torrent_matches_feedback_scope(
     torrent: &RTorrentTorrent,
 ) -> bool {
     torrent_matches_scope(config, torrent)
-        && scope.is_none_or(|scope| feedback_scope_allows(scope, &torrent.category))
+        && scope.is_none_or(|scope| feedback_scope_allows(scope, torrent.feedback_category()))
 }
 
 fn sort_torrents_by_completion(torrents: &mut [RTorrentTorrent]) {
@@ -779,7 +828,7 @@ fn completed_feedback_torrents(
 }
 
 fn torrent_matches_scope(config: &RTorrentConfig, torrent: &RTorrentTorrent) -> bool {
-    category_allowed(&config.category, &torrent.category)
+    category_allowed(&config.category, torrent.feedback_category())
         && !torrent.path.trim().is_empty()
         && !torrent.path.trim_start().starts_with('.')
 }
@@ -923,6 +972,9 @@ fn command_list(label: &str, priority: i64, directory: &str) -> Vec<String> {
     let mut commands = Vec::new();
     if !label.trim().is_empty() {
         commands.push(format!("d.custom1.set={label}"));
+        commands.push(format!(
+            "d.custom.set={ROUTING_CATEGORY_CUSTOM_KEY},{label}"
+        ));
     }
     if priority != 2 {
         commands.push(format!("d.priority.set={priority}"));
@@ -1275,6 +1327,49 @@ mod tests {
     }
 
     #[test]
+    fn feedback_scope_uses_the_original_category_after_post_import_move() {
+        let config = config_with_categories("movies, anime");
+        let anime_only = PluginDownloadFeedbackScope {
+            categories: vec!["anime".to_string()],
+        };
+        let movies_only = PluginDownloadFeedbackScope {
+            categories: vec!["movies".to_string()],
+        };
+        let imported_anime = RTorrentTorrent {
+            category: "scryer-imported".to_string(),
+            routing_category: "anime".to_string(),
+            ..completed_torrent("anime", "anime", NOW)
+        };
+
+        assert!(torrent_matches_feedback_scope(
+            &config,
+            Some(&anime_only),
+            &imported_anime
+        ));
+        assert!(!torrent_matches_feedback_scope(
+            &config,
+            Some(&movies_only),
+            &imported_anime
+        ));
+        assert!(torrent_matches_feedback_scope(
+            &config,
+            None,
+            &imported_anime
+        ));
+        assert_eq!(
+            torrent_to_item(imported_anime).category.as_deref(),
+            Some("scryer-imported")
+        );
+    }
+
+    #[test]
+    fn add_commands_store_the_routing_category_in_a_named_custom_field() {
+        let commands = command_list("anime", 2, "");
+        assert!(commands.contains(&"d.custom1.set=anime".to_string()));
+        assert!(commands.contains(&format!("d.custom.set={ROUTING_CATEGORY_CUSTOM_KEY},anime")));
+    }
+
+    #[test]
     fn completed_feedback_is_newest_first_stable_and_bounded() {
         let mut torrents = vec![
             completed_torrent("z-new", "movies", NOW - 10),
@@ -1446,6 +1541,7 @@ mod tests {
                 <value><string>Movie</string></value>
                 <value><string>ABCDEF0123456789ABCDEF0123456789ABCDEF01</string></value>
                 <value><string>/downloads/Movie</string></value>
+                <value><string></string></value>
                 <value><string></string></value>
                 <value><i8>1000</i8></value>
                 <value><i8>0</i8></value>
