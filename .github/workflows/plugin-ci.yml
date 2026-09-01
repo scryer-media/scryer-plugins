@@ -11,6 +11,15 @@ permissions:
   contents: read
 
 jobs:
+  release-identity-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Test release identity policy
+        run: bash .github/scripts/release-plugin-v3-identity.test.sh
+
   plan:
     runs-on: ubuntu-latest
     timeout-minutes: 5

@@ -7,19 +7,19 @@ on:
   workflow_dispatch:
     inputs:
       release_ref:
-        description: "Release tag or commit to publish"
+        description: "Release tag or commit to inspect (manual runs never publish)"
         required: true
         type: string
       release_commit:
-        description: "Commit that owns the plugin version tags to publish"
+        description: "Commit that owns the plugin version tags to inspect"
         required: false
         type: string
       plugin_ids:
-        description: "Whitespace or comma separated plugin ids to publish from current manifests"
+        description: "Whitespace or comma separated plugin ids to inspect from current manifests"
         required: false
         type: string
       catalog_repair_specs:
-        description: "Catalog-only repair specs formatted as plugin_id@version; skips plugin builds"
+        description: "Catalog repair diagnostics formatted as plugin_id@version; never publishes"
         required: false
         type: string
 
@@ -53,11 +53,6 @@ jobs:
       CARGO_HOME: /home/runner/.cargo
       CARGO_INCREMENTAL: "0"
       CARGO_TERM_COLOR: always
-      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-      CF_R2_BUCKET_ID: ${{ vars.CF_R2_BUCKET_ID }}
-      CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
-      CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
-      GH_TOKEN: ${{ github.token }}
       RUSTC_WRAPPER: sccache
       SCCACHE_BASEDIRS: /home/runner/work/scryer-plugins/scryer-plugins
       SCCACHE_CACHE_SIZE: 10G
@@ -222,7 +217,7 @@ jobs:
           retention-days: 7
 
   build-sign-release-plugin:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.catalog_repair_specs == '' }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') }}
     needs: [plan-release]
     name: validate-build-sign-release (${{ matrix.plugin_id }} ${{ matrix.version }})
     strategy:
@@ -250,7 +245,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_ref || github.ref }}
+
+      - name: Require release trigger tag
+        run: |
+          source .github/scripts/release-plugin-v3-identity.sh
+          require_release_publish_context "${GITHUB_EVENT_NAME}" "${GITHUB_REF}"
 
       - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
         with:
@@ -428,6 +427,8 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
+          source .github/scripts/release-plugin-v3-identity.sh
+          require_release_publish_context "${GITHUB_EVENT_NAME}" "${GITHUB_REF}"
           while IFS=$'\t' read -r plugin_id version; do
             tag="plugins-v3/${plugin_id}/v${version}"
             prepared_dir="dist/prepared/${plugin_id}"
@@ -451,6 +452,11 @@ jobs:
                 --yes \
                 --bundle "${prepared_dir}/${artifact_name}.bundle" \
                 "${prepared_dir}/${artifact_name}"
+              verify_release_blob \
+                "${prepared_dir}/${artifact_name}" \
+                "${prepared_dir}/${artifact_name}.bundle" \
+                "${GITHUB_REPOSITORY}" \
+                "${GITHUB_REF}"
               cp "${prepared_dir}/${artifact_name}.bundle" \
                 "${prepared_dir}/${artifact_name}.sigstore.json"
               zstd -19 -f "${prepared_dir}/${artifact_name}.bundle" -o "${prepared_dir}/${artifact_name}.bundle.zst"
@@ -464,6 +470,11 @@ jobs:
                   --yes \
                   --bundle "${prepared_dir}/${asset}.bundle" \
                   "${prepared_dir}/${asset}"
+                verify_release_blob \
+                  "${prepared_dir}/${asset}" \
+                  "${prepared_dir}/${asset}.bundle" \
+                  "${GITHUB_REPOSITORY}" \
+                  "${GITHUB_REF}"
                 cp "${prepared_dir}/${asset}.bundle" \
                   "${prepared_dir}/${asset}.sigstore.json"
                 release_assets+=(
@@ -532,7 +543,7 @@ jobs:
           retention-days: 7
 
   collect-release-provenance-subjects:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.catalog_repair_specs == '' }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') }}
     needs: [build-sign-release-plugin]
     runs-on: ubuntu-latest
     permissions:
@@ -566,7 +577,7 @@ jobs:
           path: release-subjects.sha256.base64
 
   generate-release-provenance:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.catalog_repair_specs == '' }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') }}
     needs: [collect-release-provenance-subjects]
     permissions:
       actions: read
@@ -579,7 +590,7 @@ jobs:
       compile-generator: true
 
   publish-release-provenance:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.catalog_repair_specs == '' }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') }}
     needs: [plan-release, generate-release-provenance]
     runs-on: ubuntu-latest
     permissions:
@@ -608,7 +619,7 @@ jobs:
           done < <(printf '%s' "${RELEASE_MATRIX}" | jq -r '.include[] | "plugins-v3/\(.plugin_id)/v\(.version)"')
 
   publish-central-catalog:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.catalog_repair_specs == '' }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') }}
     needs: [plan-release, build-sign-release-plugin, publish-release-provenance]
     runs-on: ubuntu-latest
     permissions:
@@ -627,7 +638,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_ref || github.ref }}
+
+      - name: Require release trigger tag
+        run: |
+          source .github/scripts/release-plugin-v3-identity.sh
+          require_release_publish_context "${GITHUB_EVENT_NAME}" "${GITHUB_REF}"
 
       - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
 
@@ -718,10 +733,40 @@ jobs:
           done
           (( ! failed ))
 
+      - name: Verify selected plugin signing identities
+        run: |
+          set -euo pipefail
+          source .github/scripts/release-plugin-v3-identity.sh
+          require_release_publish_context "${GITHUB_EVENT_NAME}" "${GITHUB_REF}"
+          while IFS= read -r plugin_id; do
+            prepared_dir="prepared-plugins/${plugin_id}"
+            while IFS= read -r artifact_name; do
+              [ -n "${artifact_name}" ] || continue
+              zstd -dc \
+                "${prepared_dir}/${artifact_name}.bundle.zst" \
+                > "${prepared_dir}/${artifact_name}.bundle"
+              verify_release_blob \
+                "${prepared_dir}/${artifact_name}" \
+                "${prepared_dir}/${artifact_name}.bundle" \
+                "${GITHUB_REPOSITORY}" \
+                "${GITHUB_REF}"
+              rm -f "${prepared_dir}/${artifact_name}.bundle"
+            done < "${prepared_dir}/v3-artifacts.txt"
+            if [ -f "${prepared_dir}/catalog-v3.json" ]; then
+              verify_release_blob \
+                "${prepared_dir}/catalog-v3.json" \
+                "${prepared_dir}/catalog-v3.json.bundle" \
+                "${GITHUB_REPOSITORY}" \
+                "${GITHUB_REF}"
+            fi
+          done < <(cut -f1 release-plan.tsv | sort -u)
+
       - name: Prepare sign and publish central catalog v3
         run: |
           set -euo pipefail
           shopt -s nullglob
+          source .github/scripts/release-plugin-v3-identity.sh
+          require_release_publish_context "${GITHUB_EVENT_NAME}" "${GITHUB_REF}"
           mapfile -t plugin_ids < <(cut -f1 release-plan.tsv | sort -u)
           prepare_v3_args=(
             --out dist/catalog-v3
@@ -735,12 +780,10 @@ jobs:
             --pattern catalog-v3.redirect.bundle.json \
             --dir "${existing_dir}" \
             --clobber
-          identity_regexp="^https://github.com/${GITHUB_REPOSITORY}/\\.github/workflows/release-plugin(-v3)?\\.yml@refs/(tags|heads)/.*$"
-          cosign verify-blob \
-            --bundle "${existing_dir}/catalog-v3.redirect.bundle.json" \
-            --certificate-identity-regexp "${identity_regexp}" \
-            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-            "${existing_dir}/catalog-v3.redirect.json"
+          verify_release_blob_tag_bound \
+            "${existing_dir}/catalog-v3.redirect.json" \
+            "${existing_dir}/catalog-v3.redirect.bundle.json" \
+            "${GITHUB_REPOSITORY}"
           catalog_asset="$(python3 -c 'import json, sys; from pathlib import Path; redirect = json.loads(Path("existing-central-catalog-v3/catalog-v3.redirect.json").read_text()); artifacts = redirect.get("artifacts") or []; sys.exit("catalog-v3 redirect does not contain any artifacts") if not artifacts else None; print(artifacts[-1]["url"].rsplit("/", 1)[-1])')"
           gh release download "catalog/v3" \
             --repo "${GITHUB_REPOSITORY}" \
@@ -749,26 +792,38 @@ jobs:
             --dir "${existing_dir}" \
             --clobber
           zstd -dc "${existing_dir}/${catalog_asset}.bundle.zst" > "${existing_dir}/${catalog_asset}.bundle"
-          cosign verify-blob \
-            --bundle "${existing_dir}/${catalog_asset}.bundle" \
-            --certificate-identity-regexp "${identity_regexp}" \
-            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-            "${existing_dir}/${catalog_asset}"
+          verify_release_blob_tag_bound \
+            "${existing_dir}/${catalog_asset}" \
+            "${existing_dir}/${catalog_asset}.bundle" \
+            "${GITHUB_REPOSITORY}"
           prepare_v3_args+=(--existing-catalog "${existing_dir}/${catalog_asset}")
           for plugin_id in "${plugin_ids[@]}"; do
             prepare_v3_args+=(--plugin-id "${plugin_id}")
           done
           ./xtask/target/xtask-release/xtask catalog prepare-v3 "${prepare_v3_args[@]}"
+          bash .github/scripts/verify-catalog-v3-release-identities.sh \
+            dist/catalog-v3/catalog-v3.json \
+            "${GITHUB_REPOSITORY}"
           for asset in catalog-v3.min.json.zst; do
             cosign sign-blob \
               --yes \
               --bundle "dist/catalog-v3/${asset}.bundle" \
               "dist/catalog-v3/${asset}"
+            verify_release_blob \
+              "dist/catalog-v3/${asset}" \
+              "dist/catalog-v3/${asset}.bundle" \
+              "${GITHUB_REPOSITORY}" \
+              "${GITHUB_REF}"
           done
           cosign sign-blob \
             --yes \
             --bundle "dist/catalog-v3/catalog-v3.redirect.bundle.json" \
             "dist/catalog-v3/catalog-v3.redirect.json"
+          verify_release_blob \
+            "dist/catalog-v3/catalog-v3.redirect.json" \
+            "dist/catalog-v3/catalog-v3.redirect.bundle.json" \
+            "${GITHUB_REPOSITORY}" \
+            "${GITHUB_REF}"
           cp "dist/catalog-v3/catalog-v3.redirect.bundle.json" \
             "dist/catalog-v3/catalog-v3.redirect.sigstore.json"
 
@@ -780,6 +835,11 @@ jobs:
               --yes \
               --bundle "dist/catalog-v3/${asset_name}.bundle" \
               "dist/catalog-v3/${asset_name}"
+            verify_release_blob \
+              "dist/catalog-v3/${asset_name}" \
+              "dist/catalog-v3/${asset_name}.bundle" \
+              "${GITHUB_REPOSITORY}" \
+              "${GITHUB_REF}"
             cp "dist/catalog-v3/${asset_name}.bundle" \
               "dist/catalog-v3/${asset_name}.sigstore.json"
             zstd -19 -f "dist/catalog-v3/${asset_name}.bundle" -o "dist/catalog-v3/${asset_name}.bundle.zst"
@@ -812,19 +872,14 @@ jobs:
             --repo "${GITHUB_REPOSITORY}" \
             --clobber
 
-  repair-central-catalog:
+  diagnose-central-catalog-repair:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.catalog_repair_specs != '' }}
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      id-token: write
+      contents: read
     env:
       CARGO_INCREMENTAL: "0"
       CARGO_TERM_COLOR: always
-      CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-      CF_R2_BUCKET_ID: ${{ vars.CF_R2_BUCKET_ID }}
-      CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
-      CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -838,12 +893,10 @@ jobs:
         with:
           cosign-release: v3.1.3
 
-      - name: Install central repair tools
+      - name: Install central repair diagnostic tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-pip zstd
-          python3 -m pip install --user --require-hashes -r .github/awscli-requirements.txt
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          sudo apt-get install -y zstd
 
       - name: Build xtask
         run: cargo build --locked --profile xtask-release --manifest-path xtask/Cargo.toml --bin xtask
@@ -886,6 +939,7 @@ jobs:
       - name: Download and verify current central catalog
         run: |
           set -euo pipefail
+          source .github/scripts/release-plugin-v3-identity.sh
           existing_dir="existing-central-catalog-v3"
           mkdir -p "${existing_dir}"
           gh release download "catalog/v3" \
@@ -894,12 +948,10 @@ jobs:
             --pattern catalog-v3.redirect.bundle.json \
             --dir "${existing_dir}" \
             --clobber
-          identity_regexp="^https://github.com/${GITHUB_REPOSITORY}/\\.github/workflows/release-plugin(-v3)?\\.yml@refs/(tags|heads)/.*$"
-          cosign verify-blob \
-            --bundle "${existing_dir}/catalog-v3.redirect.bundle.json" \
-            --certificate-identity-regexp "${identity_regexp}" \
-            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-            "${existing_dir}/catalog-v3.redirect.json"
+          verify_release_blob_tag_bound \
+            "${existing_dir}/catalog-v3.redirect.json" \
+            "${existing_dir}/catalog-v3.redirect.bundle.json" \
+            "${GITHUB_REPOSITORY}"
           catalog_asset="$(python3 -c 'import json, sys; from pathlib import Path; redirect = json.loads(Path("existing-central-catalog-v3/catalog-v3.redirect.json").read_text()); artifacts = redirect.get("artifacts") or []; sys.exit("catalog-v3 redirect does not contain any artifacts") if not artifacts else None; print(artifacts[-1]["url"].rsplit("/", 1)[-1])')"
           gh release download "catalog/v3" \
             --repo "${GITHUB_REPOSITORY}" \
@@ -908,19 +960,18 @@ jobs:
             --dir "${existing_dir}" \
             --clobber
           zstd -dc "${existing_dir}/${catalog_asset}.bundle.zst" > "${existing_dir}/${catalog_asset}.bundle"
-          cosign verify-blob \
-            --bundle "${existing_dir}/${catalog_asset}.bundle" \
-            --certificate-identity-regexp "${identity_regexp}" \
-            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-            "${existing_dir}/${catalog_asset}"
+          verify_release_blob_tag_bound \
+            "${existing_dir}/${catalog_asset}" \
+            "${existing_dir}/${catalog_asset}.bundle" \
+            "${GITHUB_REPOSITORY}"
           echo "catalog_asset=${catalog_asset}" >> "$GITHUB_ENV"
 
       - name: Download and verify historical plugin snippets
         run: |
           set -euo pipefail
+          source .github/scripts/release-plugin-v3-identity.sh
           snippets_root="repair-snippets"
           mkdir -p "${snippets_root}"
-          identity_regexp="^https://github.com/${GITHUB_REPOSITORY}/\\.github/workflows/release-plugin(-v3)?\\.yml@refs/(tags|heads)/.*$"
           while IFS=$'\t' read -r plugin_id version; do
             tag="plugins-v3/${plugin_id}/v${version}"
             plugin_dir="${snippets_root}/${plugin_id}"
@@ -932,16 +983,15 @@ jobs:
               --pattern catalog-v3.json.bundle \
               --dir "${tmp_dir}" \
               --clobber
-            cosign verify-blob \
-              --bundle "${tmp_dir}/catalog-v3.json.bundle" \
-              --certificate-identity-regexp "${identity_regexp}" \
-              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-              "${tmp_dir}/catalog-v3.json"
+            verify_release_blob_tag_bound \
+              "${tmp_dir}/catalog-v3.json" \
+              "${tmp_dir}/catalog-v3.json.bundle" \
+              "${GITHUB_REPOSITORY}"
             python3 -c 'import json, sys; from pathlib import Path; plugin_id, version, snippet_path = sys.argv[1:]; snippet = json.loads(Path(snippet_path).read_text()); releases = snippet.get("releases") or []; sys.exit("snippet id {} does not match {}".format(snippet.get("id"), plugin_id)) if snippet.get("id") != plugin_id else None; sys.exit("snippet {} does not contain release {}".format(plugin_id, version)) if not any(release.get("version") == version for release in releases) else None' "${plugin_id}" "${version}" "${tmp_dir}/catalog-v3.json"
             install -m 0644 "${tmp_dir}/catalog-v3.json" "${plugin_dir}/catalog-v3.json"
           done < repair-plan.tsv
 
-      - name: Prepare sign and publish repaired central catalog
+      - name: Render repaired central catalog diagnostics
         run: |
           set -euo pipefail
           mapfile -t plugin_ids < <(cut -f1 repair-plan.tsv | sort -u)
@@ -955,41 +1005,10 @@ jobs:
           done
           ./xtask/target/xtask-release/xtask catalog prepare-v3 "${prepare_v3_args[@]}"
 
-          cosign sign-blob \
-            --yes \
-            --bundle "dist/catalog-v3/catalog-v3.min.json.zst.bundle" \
-            "dist/catalog-v3/catalog-v3.min.json.zst"
-          cosign sign-blob \
-            --yes \
-            --bundle "dist/catalog-v3/catalog-v3.redirect.bundle.json" \
-            "dist/catalog-v3/catalog-v3.redirect.json"
-
-          python3 -c 'import json; from pathlib import Path; root = Path("dist/catalog-v3"); redirect = json.loads((root / "catalog-v3.redirect.json").read_text()); catalog_assets = [artifact["url"].rsplit("/", 1)[-1] for artifact in redirect["artifacts"]]; catalog = json.loads((root / "catalog-v3.json").read_text()); rule_pack_assets = sorted({artifact["url"].rsplit("/", 1)[-1] for rule_pack in catalog["rule_packs"] for release in rule_pack["releases"] for artifact in release["artifacts"]}); print("\n".join(catalog_assets + rule_pack_assets))' > dist/catalog-v3/v3-central-assets.txt
-
-          while IFS= read -r asset_name; do
-            [ -n "${asset_name}" ] || continue
-            cosign sign-blob \
-              --yes \
-              --bundle "dist/catalog-v3/${asset_name}.bundle" \
-              "dist/catalog-v3/${asset_name}"
-            zstd -19 -f "dist/catalog-v3/${asset_name}.bundle" -o "dist/catalog-v3/${asset_name}.bundle.zst"
-            rm -f "dist/catalog-v3/${asset_name}.bundle"
-          done < dist/catalog-v3/v3-central-assets.txt
-
-          ./xtask/target/xtask-release/xtask catalog upload-v3r2 dist/catalog-v3
-
-          central_release_assets=(
-            "dist/catalog-v3/catalog-v3.redirect.json"
-            "dist/catalog-v3/catalog-v3.redirect.bundle.json"
-          )
-          while IFS= read -r asset_name; do
-            [ -n "${asset_name}" ] || continue
-            central_release_assets+=(
-              "dist/catalog-v3/${asset_name}"
-              "dist/catalog-v3/${asset_name}.bundle.zst"
-            )
-          done < dist/catalog-v3/v3-central-assets.txt
-          gh release upload "catalog/v3" \
-            "${central_release_assets[@]}" \
-            --repo "${GITHUB_REPOSITORY}" \
-            --clobber
+      - name: Upload repaired catalog diagnostics
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-plugin-v3-catalog-repair-diagnostics-${{ github.run_id }}
+          path: dist/catalog-v3
+          if-no-files-found: error
+          retention-days: 7
