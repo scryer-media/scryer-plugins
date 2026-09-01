@@ -1625,12 +1625,25 @@ fn search_variables(
         ("TVMazeID", id(&["tvmaze", "tvmazeid"])),
         ("TraktID", id(&["trakt", "traktid"])),
         ("DoubanID", id(&["douban", "doubanid"])),
-        ("Genre", String::new()),
-        ("Artist", String::new()),
-        ("Album", String::new()),
-        ("Author", String::new()),
-        ("Title", String::new()),
-        ("Publisher", String::new()),
+        // The host reports a genuinely known release year on the typed search
+        // context, which survives every search strategy it derives from one
+        // request. Everything else Cardigann can name — `.Query.Artist`,
+        // `.Query.Album`, `.Query.Author`, `.Query.Title`, `.Query.Publisher`,
+        // `.Query.Genre` — belongs to music and book search, which Scryer does
+        // not do. Those names are deliberately absent rather than bound to an
+        // empty value: the template engine resolves an unknown `.`-prefixed
+        // name to null exactly as a Go template resolves a missing map key, so
+        // `{{ if .Query.Artist }}` is false and `{{ .Query.Artist }}` renders
+        // empty either way.
+        (
+            "Year",
+            request
+                .context
+                .as_ref()
+                .and_then(|context| context.year)
+                .map(|year| year.to_string())
+                .unwrap_or_default(),
+        ),
     ];
     for (key, value) in query_values {
         variables.insert(
@@ -3366,6 +3379,8 @@ fn parse_size(value: &str) -> Option<i64> {
 
 #[cfg(test)]
 mod tests {
+    use scryer_plugin_sdk::PluginSearchContext;
+
     use super::*;
 
     /// Drive one engine future to completion. Every mock boundary below
@@ -3914,6 +3929,133 @@ search:
                 .is_some_and(|url| url.contains("btih:"))
         );
         assert_eq!(result.guid, result.magnet_url);
+    }
+
+    const YEAR_DEFINITION: &str = r#"
+id: fixture
+name: Fixture
+type: public
+links: [https://tracker.example/]
+caps: {}
+search:
+  paths: [{ path: search }]
+"#;
+
+    #[test]
+    fn year_reaches_definitions_through_the_typed_search_context() {
+        let definition = parse_definition(YEAR_DEFINITION).unwrap();
+        let variables = search_variables(
+            &definition,
+            &BTreeMap::from([(
+                "base_url".to_string(),
+                "https://tracker.example/".to_string(),
+            )]),
+            &PluginSearchRequest {
+                query: "the thing".to_string(),
+                context: Some(PluginSearchContext {
+                    year: Some(1982),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            variables.get(".Query.Year"),
+            Some(&Value::String("1982".to_string()))
+        );
+        assert_eq!(
+            render(
+                "{{ .Keywords }}{{ if .Query.Year }} {{ .Query.Year }}{{ end }}",
+                &variables,
+            )
+            .unwrap(),
+            "the thing 1982"
+        );
+    }
+
+    #[test]
+    fn an_omitted_year_stays_null_and_renders_as_a_go_template_would() {
+        let definition = parse_definition(YEAR_DEFINITION).unwrap();
+        // A host that sends no context at all and a host that sends a context
+        // whose year it could not determine have to behave identically.
+        for context in [
+            None,
+            Some(PluginSearchContext::default()),
+            Some(PluginSearchContext {
+                year: None,
+                ..Default::default()
+            }),
+        ] {
+            let variables = search_variables(
+                &definition,
+                &BTreeMap::from([(
+                    "base_url".to_string(),
+                    "https://tracker.example/".to_string(),
+                )]),
+                &PluginSearchRequest {
+                    query: "the thing".to_string(),
+                    context,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+            assert_eq!(variables.get(".Query.Year"), Some(&Value::Null));
+            assert_eq!(
+                render(
+                    "{{ .Keywords }}{{ if .Query.Year }} {{ .Query.Year }}{{ end }}",
+                    &variables,
+                )
+                .unwrap(),
+                "the thing"
+            );
+            assert_eq!(render("[{{ .Query.Year }}]", &variables).unwrap(), "[]");
+        }
+    }
+
+    /// Music and book search is out of scope for Scryer, so the engine binds no
+    /// `.Query` variable for it. A definition that still names one must behave
+    /// exactly as Go's `text/template` does for a missing map key: falsy in a
+    /// conditional and empty when expanded, never a render error.
+    #[test]
+    fn unbound_music_and_book_query_names_are_falsy_and_expand_to_nothing() {
+        let definition = parse_definition(YEAR_DEFINITION).unwrap();
+        let variables = search_variables(
+            &definition,
+            &BTreeMap::from([(
+                "base_url".to_string(),
+                "https://tracker.example/".to_string(),
+            )]),
+            &PluginSearchRequest {
+                query: "the thing".to_string(),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        for name in [
+            ".Query.Artist",
+            ".Query.Album",
+            ".Query.Author",
+            ".Query.Title",
+            ".Query.Publisher",
+            ".Query.Genre",
+        ] {
+            assert!(!variables.contains_key(name), "{name} must not be bound");
+            assert_eq!(
+                render(
+                    &format!("{{{{ if {name} }}}}yes{{{{ else }}}}no{{{{ end }}}}"),
+                    &variables
+                )
+                .unwrap(),
+                "no",
+                "{name}"
+            );
+            assert_eq!(
+                render(&format!("[{{{{ {name} }}}}]"), &variables).unwrap(),
+                "[]",
+                "{name}"
+            );
+        }
     }
 
     #[test]
