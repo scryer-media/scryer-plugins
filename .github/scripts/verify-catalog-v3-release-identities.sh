@@ -40,8 +40,10 @@ verify_catalog_artifact() {
 
   printf 'Verifying tag-bound identity for %s %s: %s\n' \
     "${plugin_id}" "${version}" "${artifact_url}"
-  curl -fsSL "${artifact_url}" -o "${artifact_path}"
-  curl -fsSL "${signature_url}" -o "${downloaded_bundle}"
+  curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 --retry-max-time 60 \
+    "${artifact_url}" -o "${artifact_path}"
+  curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 --retry-max-time 60 \
+    "${signature_url}" -o "${downloaded_bundle}"
   case "${signature_url}" in
     *.zst) zstd -dc "${downloaded_bundle}" > "${bundle_path}" ;;
     *) cp "${downloaded_bundle}" "${bundle_path}" ;;
@@ -52,7 +54,7 @@ verify_catalog_artifact() {
     "${repository}"
 }
 
-readonly parallelism=8
+readonly parallelism=2
 declare -a active_pids=()
 failed=0
 
