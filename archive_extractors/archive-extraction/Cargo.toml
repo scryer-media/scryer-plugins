@@ -1,34 +1,58 @@
 [package]
 name = "archive-extraction-archive-extractor"
-version = "0.1.11"
+version = "0.2.0"
 edition = "2024"
+autolib = false
 license-file = "LICENSE"
-description = "Optional archive extraction plugin for RAR, ZIP, and 7z"
+description = "Optional archive extraction plugin for RAR, ZIP, 7z, and XZ with PAR2 recovery"
 
 [package.metadata.scryer]
 official = true
 plugin_id = "archive-extraction"
 catalog_versions = ["v3"]
-min_scryer_version = "0.18.0"
-feature_sets = [{ required_features = [], wasm_opt = "speed" }, { required_features = ["simd128", "relaxed-simd"] }]
+min_scryer_version = "0.18.23"
+feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/archive_extractors/archive-extraction"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/archive_extractors/archive-extraction"
 
-[[bin]]
-name = "archive_extraction_archive_extractor"
-path = "src/main.rs"
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
 
 [dependencies]
-scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk" }
-scryer-plugin-sdk = "3.7.0"
+liblzma = { version = "=0.4.8", default-features = false, features = ["static", "wasm"] }
+par2-rs = { version = "0.7.1", default-features = false }
+scryer-plugin-sdk = "3.10.0"
 serde_json = "1"
 sevenz-rust2 = { version = "0.21", default-features = false, features = ["aes256", "bzip2", "deflate", "ppmd"] }
-unrar-rs = { version = "0.5.3", default-features = false, features = ["crypto-host", "crc-host", "host-abi-extism"] }
+unrar-rs = { version = "0.7.0", default-features = false, features = ["crypto-host", "crc-host", "host-abi-component"] }
+wit-bindgen = "0.60"
 zip = { version = "8.6.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+
+# TEMPORARY — both entries come out once their crates are published.
+#
+# unrar-rs: the component build needs the component host ABI (crypto/CRC
+# delegated through embedder-installed function pointers instead of the raw
+# guest-pointer wasm imports, which a component cannot serve — it has no
+# exported linear memory for the host to slice). That feature lives on the
+# rarpar branch `feature/unrar-component-crypto`; published 0.7.0 carries the
+# Extism ABI only.
+#
+# scryer-plugin-sdk: `ArchivePluginFormat::Xz` exists only in the in-repo SDK
+# that ships with the WASI-component archive host. The published 3.10.0 has
+# rar/zip/7z and nothing else, so the XZ format this plugin advertises cannot
+# be named without it.
+#
+# Replace both with plain version bumps on the dependencies above as soon as the
+# releases carrying `host-abi-component` and the XZ format are on crates.io.
+[patch.crates-io]
+unrar-rs = { path = "/private/tmp/rarpar-unrar-component-crypto/crates/unrar-rs" }
+scryer-plugin-sdk = { path = "/private/tmp/scryer-host-extraction-capability/crates/scryer-plugin-sdk" }
 
 [dev-dependencies]
 aws-lc-sys = "0.44"
 crc32fast = "1"
+par2-rs = "0.7.1"
 sevenz-rust2 = { version = "0.21", default-features = false, features = ["compress"] }
 tempfile = "3"
 wasmtime = "47.0.3"

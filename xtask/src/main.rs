@@ -3233,15 +3233,22 @@ fn prefetch_plugin_dependencies(ctx: &TaskContext, plugin_dir: &Path) -> Result<
     })
 }
 
-/// Indexer artifacts are WASI Preview 2 components. All other plugin classes
-/// retain the established Preview 1 command/reactor targets.
+/// Plugin families whose artifacts are WASI Preview 2 components.
+///
+/// Indexers moved first; archive extractors followed, because the host's
+/// archive backing is component-only — a core module built against the removed
+/// guest-pointer crypto ABI cannot instantiate at all. The remaining families
+/// still ship Preview 1 command artifacts until they are migrated in turn.
+const COMPONENT_PLUGIN_FAMILIES: [&str; 2] = ["indexers", "archive_extractors"];
+
+/// Component families build for `wasm32-wasip2`; every other family retains the
+/// established Preview 1 command/reactor target.
 fn wasm_target_for_plugin(plugin_dir: &Path) -> &'static str {
-    let is_indexer = plugin_dir
+    let family = plugin_dir
         .parent()
         .and_then(Path::file_name)
-        .and_then(OsStr::to_str)
-        == Some("indexers");
-    if is_indexer {
+        .and_then(OsStr::to_str);
+    if family.is_some_and(|family| COMPONENT_PLUGIN_FAMILIES.contains(&family)) {
         INDEXER_COMPONENT_WASM_TARGET
     } else {
         LEGACY_WASM_TARGET
