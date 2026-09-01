@@ -13,6 +13,7 @@ on:
     paths:
       - subtitles/amenzb/**
       - subtitles/animetosho-xyz/**
+      - subtitles/enhanced-sync/**
       - subtitles/jimaku/**
       - subtitles/opensubtitles/**
       - subtitles/subdl/**
@@ -50,6 +51,15 @@ jobs:
             manifest: subtitles/amenzb/Cargo.toml
           - plugin: animetosho-xyz-subtitles
             manifest: subtitles/animetosho-xyz/Cargo.toml
+          # The one subtitle component that compiles C — vendored FFmpeg
+          # decoders and libfvad — so it is also the only row that needs the
+          # WASI SDK step below. It is a *sync* provider rather than a catalog
+          # one: its `process` carries `PluginSubtitleCommand::Sync`, and its
+          # conformance suite aligns a real desynced subtitle against a real
+          # media fixture inside the sandbox.
+          - plugin: enhanced-subtitle-sync-plugin
+            manifest: subtitles/enhanced-sync/Cargo.toml
+            wasi_sdk: true
           - plugin: jimaku
             manifest: subtitles/jimaku/Cargo.toml
           - plugin: opensubtitles
@@ -75,8 +85,41 @@ jobs:
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
 
-      # No WASI SDK step: unlike the archive extractor, no subtitle component
-      # compiles C sources. Add one here if a matrix row ever does.
+      # Only `enhanced-subtitle-sync` compiles C (vendored FFmpeg decoders and
+      # libfvad), so this step is gated on the row rather than paid for by the
+      # seven pure-Rust providers. Same WASI SDK 33 pin, same environment, as
+      # archive-extraction-conformance.yml.
+      - name: Install WASI SDK for the vendored C sources
+        if: matrix.wasi_sdk
+        shell: bash
+        run: |
+          set -euo pipefail
+          readonly wasi_sdk_version='33.0'
+          readonly wasi_sdk_archive="wasi-sdk-${wasi_sdk_version}-x86_64-linux.tar.gz"
+          readonly wasi_sdk_sha256='0ba8b5bfaeb2adf3f29bab5841d76cf5318ab8e1642ea195f88baba1abd47bce'
+          readonly wasi_sdk_root="${RUNNER_TEMP}/wasi-sdk-${wasi_sdk_version}"
+          readonly wasi_sdk_url="https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-33/${wasi_sdk_archive}"
+          curl -fsSL "$wasi_sdk_url" -o "${RUNNER_TEMP}/${wasi_sdk_archive}"
+          printf '%s  %s\n' "$wasi_sdk_sha256" "${RUNNER_TEMP}/${wasi_sdk_archive}" | sha256sum --check --strict
+          mkdir "$wasi_sdk_root"
+          tar -xzf "${RUNNER_TEMP}/${wasi_sdk_archive}" -C "$wasi_sdk_root" --strip-components=1
+          test -x "$wasi_sdk_root/bin/clang"
+          test -d "$wasi_sdk_root/share/wasi-sysroot"
+          echo "$wasi_sdk_root/bin" >> "$GITHUB_PATH"
+          {
+            echo "WASI_SYSROOT=$wasi_sdk_root/share/wasi-sysroot"
+            echo "CLANG=$wasi_sdk_root/bin/clang"
+            echo "LLVM_AR=$wasi_sdk_root/bin/llvm-ar"
+            echo "LLVM_NM=$wasi_sdk_root/bin/llvm-nm"
+            echo "LLVM_RANLIB=$wasi_sdk_root/bin/llvm-ranlib"
+            echo "LLVM_STRIP=$wasi_sdk_root/bin/llvm-strip"
+            # The bridge and libfvad go through cc-rs, which resolves its
+            # compiler per target and otherwise falls back to whatever `clang`
+            # is first on PATH. Naming the WASI SDK toolchain for the component
+            # target keeps that resolution independent of PATH order.
+            echo "CC_wasm32_wasip2=$wasi_sdk_root/bin/clang"
+            echo "AR_wasm32_wasip2=$wasi_sdk_root/bin/llvm-ar"
+          } >> "$GITHUB_ENV"
 
       - name: Run subtitle host conformance
         run: >-

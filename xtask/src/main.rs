@@ -2,8 +2,10 @@ use anyhow::{Context, Result, anyhow, bail};
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use extism::{CurrentPlugin, Error as ExtismError, Manifest, UserData, Val, ValType, host_fn};
+mod client_strata;
 mod component_descriptor;
 mod plugin_new;
+use client_strata::{build_publication_strata, parse_stratum_drops};
 use scryer_plugin_sdk::{
     EXPORT_ARCHIVE_PROCESS, EXPORT_DESCRIBE, EXPORT_DOWNLOAD_ADD, EXPORT_DOWNLOAD_CONTROL,
     EXPORT_DOWNLOAD_LIST_COMPLETED, EXPORT_DOWNLOAD_LIST_HISTORY, EXPORT_DOWNLOAD_LIST_QUEUE,
@@ -82,6 +84,15 @@ const CATALOG_V3_MINIFIED_JSON: &str = "catalog-v3.min.json";
 const CATALOG_V3_MINIFIED_ZST: &str = "catalog-v3.min.json.zst";
 const CATALOG_V3_RELEASE_CONSTRAINTS: &str = "catalog-v3-release-constraints.json";
 const CATALOG_V3_REDIRECT_JSON: &str = "catalog-v3.redirect.json";
+/// The redirect capability-aware clients (Scryer 0.19.7+) read.
+///
+/// It is a separate file rather than another rung on `catalog-v3.redirect.json`
+/// because every shipped client from 0.18.12 to 0.19.6 takes that ladder's
+/// *last* rung by position: appending an entry silently re-points all of them
+/// at once, and anything beyond the 0.19.x tolerance (a wasip3 runtime, a new
+/// feature token, a new field) makes the whole document unparseable for that
+/// band. See `client_strata`.
+const CATALOG_V3_MODERN_REDIRECT_JSON: &str = "catalog-v3.modern.redirect.json";
 const R2_ACCOUNT_ID_ENV: &str = "CF_ACCOUNT_ID";
 const R2_ACCOUNT_ID_ENV_LEGACY: &str = "CF_R2_ACCOUNT_ID";
 const R2_BUCKET_ENV: &str = "CF_R2_BUCKET_ID";
@@ -537,6 +548,12 @@ struct CatalogRenderV3Args {
         help = "Permit an intentional catalog-v3 release removal when comparing against --existing-catalog"
     )]
     allow_release_removals: Vec<String>,
+    #[arg(
+        long = "allow-stratum-drop",
+        value_name = "PLUGIN_ID@STRATUM_ID",
+        help = "Permit a plugin to disappear for one shipped client stratum (see xtask/src/client_strata.rs)"
+    )]
+    allow_stratum_drops: Vec<String>,
 }
 
 #[derive(Args)]
@@ -567,6 +584,12 @@ struct CatalogPrepareV3Args {
         help = "Permit an intentional catalog-v3 release removal when comparing against --existing-catalog"
     )]
     allow_release_removals: Vec<String>,
+    #[arg(
+        long = "allow-stratum-drop",
+        value_name = "PLUGIN_ID@STRATUM_ID",
+        help = "Permit a plugin to disappear for one shipped client stratum (see xtask/src/client_strata.rs)"
+    )]
+    allow_stratum_drops: Vec<String>,
     #[arg(long, hide = true)]
     allow_selected_rebuild: bool,
 }
@@ -5607,16 +5630,6 @@ fn write_catalog_v3_assets(
     Ok(paths)
 }
 
-fn legacy_catalog_v3_projection(catalog: &CatalogV3) -> CatalogV3 {
-    let mut legacy = catalog.clone();
-    for plugin in &mut legacy.plugins {
-        for release in &mut plugin.releases {
-            release.max_scryer_version = None;
-        }
-    }
-    legacy
-}
-
 fn apply_catalog_v3_release_constraints(
     ctx: &TaskContext,
     plugins: &mut [CatalogV3PluginEntry],
@@ -7085,6 +7098,7 @@ fn run_catalog_render_v3(ctx: &TaskContext, args: CatalogRenderV3Args) -> Result
             existing_catalog: args.existing_catalog,
             prepared_plugin_root: None,
             allow_release_removals: args.allow_release_removals,
+            allow_stratum_drops: args.allow_stratum_drops,
             allow_selected_rebuild: false,
         },
     )
@@ -7205,47 +7219,69 @@ fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Resu
         )?;
     }
     let central_paths = write_catalog_v3_assets(ctx, &catalog, &dist)?;
-    let has_release_ceiling = catalog.plugins.iter().any(|plugin| {
-        plugin
-            .releases
+
+    // One projection per shipped client stratum, each checked with a pinned
+    // copy of that stratum's shipped validator and against what it can install
+    // today. See `client_strata` for why this is not optional.
+    let projections = build_publication_strata(
+        &catalog,
+        existing_catalog.as_ref(),
+        &parse_stratum_drops(&args.allow_stratum_drops)?,
+    )?;
+
+    let mut legacy_ladder = Vec::new();
+    let mut modern_ladder = Vec::new();
+    for projection in &projections {
+        let paths = if projection.stratum.takes_master_catalog() {
+            central_paths.clone()
+        } else {
+            let projection_dir = dist.join("projections").join(projection.stratum.id);
+            validate_catalog_v3(&projection.catalog)?;
+            write_catalog_v3_assets(ctx, &projection.catalog, &projection_dir)?
+        };
+        let staged = stage_hashed_central_catalog_v3_artifacts(&paths, &dist, catalog_version)?;
+        let rungs = staged
             .iter()
-            .any(|release| release.max_scryer_version.is_some())
-    });
-    let mut staged_central_artifacts = Vec::new();
-    if has_release_ceiling {
-        let legacy_catalog = legacy_catalog_v3_projection(&catalog);
-        validate_catalog_v3(&legacy_catalog)?;
-        let legacy_paths =
-            write_catalog_v3_assets(ctx, &legacy_catalog, &dist.join("legacy-projection"))?;
-        staged_central_artifacts.extend(stage_hashed_central_catalog_v3_artifacts(
-            &legacy_paths,
-            &dist,
-            catalog_version,
-        )?);
+            .map(|(_, artifact)| CatalogV3RedirectArtifact {
+                url: artifact.url.clone(),
+                mirror_urls: artifact.mirror_urls.clone(),
+                signature_url: artifact.signature_url.clone(),
+                signature_mirror_urls: artifact.signature_mirror_urls.clone(),
+            })
+            .collect::<Vec<_>>();
+        if projection.stratum.slot.is_legacy() {
+            legacy_ladder.extend(rungs);
+        } else {
+            modern_ladder.extend(rungs);
+        }
+        ok(format!(
+            "projected catalog for stratum '{}' ({})",
+            projection.stratum.id, projection.stratum.label
+        ));
     }
-    staged_central_artifacts.extend(stage_hashed_central_catalog_v3_artifacts(
-        &central_paths,
-        &dist,
-        catalog_version,
-    )?);
+
+    // The legacy ladder is frozen in shape: shipped clients index it by
+    // position, so nothing may be appended to it. Capability-aware clients read
+    // their own redirect and walk it back, so that one can grow.
     let redirect_path = write_catalog_v3_redirects(
         &CatalogV3Redirect {
             schema_version: CATALOG_V3_REDIRECT_SCHEMA.to_string(),
             catalog_version,
-            artifacts: staged_central_artifacts
-                .iter()
-                .map(|(_, artifact)| CatalogV3RedirectArtifact {
-                    url: artifact.url.clone(),
-                    mirror_urls: artifact.mirror_urls.clone(),
-                    signature_url: artifact.signature_url.clone(),
-                    signature_mirror_urls: artifact.signature_mirror_urls.clone(),
-                })
-                .collect(),
+            artifacts: legacy_ladder,
         },
         &central_paths,
     )?;
+    let modern_redirect_path = write_catalog_v3_redirect(
+        &CatalogV3Redirect {
+            schema_version: CATALOG_V3_REDIRECT_SCHEMA.to_string(),
+            catalog_version,
+            artifacts: modern_ladder,
+        },
+        &dist.join(CATALOG_V3_MODERN_REDIRECT_JSON),
+    )?;
     ok(format!("wrote {}", central_paths.minified_zst.display()));
     ok(format!("wrote {}", redirect_path.display()));
+    ok(format!("wrote {}", modern_redirect_path.display()));
     Ok(())
 }
 
@@ -7448,36 +7484,43 @@ fn run_catalog_upload_v3_r2(ctx: &TaskContext, dir: &Path) -> Result<()> {
     ));
     let config = r2_config_from_env()?;
     let catalog = read_catalog_v3_from_path(ctx, &dir.join(CATALOG_V3_SNIPPET_JSON))?;
-    let redirect_path = dir.join(CATALOG_V3_REDIRECT_JSON);
-    let redirect: CatalogV3Redirect = serde_json::from_slice(&fs::read(&redirect_path)?)
-        .with_context(|| format!("failed to parse {}", redirect_path.display()))?;
 
-    for artifact in &redirect.artifacts {
-        upload_redirected_catalog_from_dir(ctx, &config, dir, artifact)?;
-    }
+    // Both redirects publish together: the legacy ladder for shipped clients
+    // and the modern redirect for capability-aware ones. Their rung sets are
+    // disjoint hashed files (per-stratum projections vs the master catalog),
+    // so each redirect's rungs upload from its own artifact list.
+    for redirect_name in [CATALOG_V3_REDIRECT_JSON, CATALOG_V3_MODERN_REDIRECT_JSON] {
+        let redirect_path = dir.join(redirect_name);
+        let redirect: CatalogV3Redirect = serde_json::from_slice(&fs::read(&redirect_path)?)
+            .with_context(|| format!("failed to parse {}", redirect_path.display()))?;
 
-    let redirect_url = format!(
-        "{}/{}/{}",
-        public_catalog_base_url(),
-        central_catalog_v3_path_prefix(),
-        CATALOG_V3_REDIRECT_JSON
-    );
-    upload_file_to_r2(ctx, &config, &redirect_path, &redirect_url)?;
-    let redirect_bundle_name = redirect_signature_bundle_file_name(CATALOG_V3_REDIRECT_JSON);
-    let redirect_bundle_path = dir.join(&redirect_bundle_name);
-    if !redirect_bundle_path.is_file() {
-        bail!(
-            "missing redirect signature bundle {}",
-            redirect_bundle_path.display()
+        for artifact in &redirect.artifacts {
+            upload_redirected_catalog_from_dir(ctx, &config, dir, artifact)?;
+        }
+
+        let redirect_url = format!(
+            "{}/{}/{}",
+            public_catalog_base_url(),
+            central_catalog_v3_path_prefix(),
+            redirect_name
         );
+        upload_file_to_r2(ctx, &config, &redirect_path, &redirect_url)?;
+        let redirect_bundle_name = redirect_signature_bundle_file_name(redirect_name);
+        let redirect_bundle_path = dir.join(&redirect_bundle_name);
+        if !redirect_bundle_path.is_file() {
+            bail!(
+                "missing redirect signature bundle {}",
+                redirect_bundle_path.display()
+            );
+        }
+        let redirect_bundle_url = format!(
+            "{}/{}/{}",
+            public_catalog_base_url(),
+            central_catalog_v3_path_prefix(),
+            redirect_bundle_name
+        );
+        upload_file_to_r2(ctx, &config, &redirect_bundle_path, &redirect_bundle_url)?;
     }
-    let redirect_bundle_url = format!(
-        "{}/{}/{}",
-        public_catalog_base_url(),
-        central_catalog_v3_path_prefix(),
-        redirect_bundle_name
-    );
-    upload_file_to_r2(ctx, &config, &redirect_bundle_path, &redirect_bundle_url)?;
 
     let mut uploaded_rule_pack_artifacts = 0usize;
     for rule_pack in &catalog.rule_packs {
@@ -10003,8 +10046,10 @@ support_tier = "verified_community"
         );
     }
 
+    /// The field-stripping half of what `legacy_catalog_v3_projection` used to
+    /// do, now one case of the general per-stratum projection.
     #[test]
-    fn legacy_catalog_v3_projection_strips_only_release_ceilings() {
+    fn the_pre_ceiling_stratum_projection_strips_only_release_ceilings() {
         let mut release =
             catalog_v3_test_release("mediabrowser", "0.1.2", ">=3.0.0, <4.0.0", Some("0.17.0"));
         release.max_scryer_version = Some("0.18.11".to_string());
@@ -10013,8 +10058,10 @@ support_tier = "verified_community"
             PluginCatalogStatus::Beta,
             vec![release],
         )]);
+        let stratum =
+            client_strata::stratum_by_id("legacy-no-release-ceiling").expect("pre-ceiling stratum");
 
-        let legacy = legacy_catalog_v3_projection(&catalog);
+        let legacy = client_strata::project_catalog_for_stratum(&catalog, stratum);
 
         assert_eq!(
             legacy.plugins[0].releases[0].min_scryer_version.as_deref(),

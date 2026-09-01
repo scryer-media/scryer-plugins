@@ -126,6 +126,24 @@ fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleComm
                 details: None,
             }))
         }
+        // Alignment moved into this envelope when the subtitle-sync plugin
+        // migrated off the Preview 1 transport, so every subtitle provider now
+        // sees the operation whether or not it can serve one. Tsukihime cannot:
+        // it has no audio decoder and advertises no `sync` capability. Same
+        // in-band refusal as `Generate`, for the same reason.
+        PluginSubtitleCommand::Sync(_) => {
+            PluginSubtitleCommandResult::Sync(PluginResult::Err(PluginError {
+                code: PluginErrorCode::Unsupported,
+                public_message: "Tsukihime is a catalog subtitle provider and cannot align \
+                                 subtitles"
+                    .to_string(),
+                debug_message: Some(
+                    "SubtitleCapabilities::sync is None for this provider".to_string(),
+                ),
+                retry_after_seconds: None,
+                details: None,
+            }))
+        }
     }
 }
 
