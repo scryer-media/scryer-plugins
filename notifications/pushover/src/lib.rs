@@ -1,18 +1,38 @@
 use aes::Aes256;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use cbc::cipher::{BlockModeEncrypt, KeyIvInit, block_padding::Pkcs7};
-use extism_pdk::*;
 use flate2::{Compression, write::GzEncoder};
 use hmac::{Hmac, KeyInit, Mac};
 use notify_common::*;
 use sha2::Sha256;
 use std::io::Write;
 
+wit_bindgen::generate!({
+    // Fully qualified: `path` resolves two packages, so a bare world name is
+    // ambiguous even though only one of them declares a world.
+    world: "scryer:notification/notification@1.0.0",
+    // Two packages, two paths, matching the host's own bindgen: the shared
+    // `scryer:host` package is listed first so the family package's
+    // `import scryer:host/services@1.0.0` resolves against it.
+    path: ["wit/host-v1.0.0", "wit/notification-v1.0.0"],
+    // The shared host package lives in its own WIT package, so wit-bindgen
+    // asks explicitly whether to generate for it. Yes: the PDK holds only a
+    // `fn` pointer and the entry macro binds it to this module's
+    // `scryer::host::services::host-call`.
+    generate_all,
+});
+
+scryer_plugin_pdk::scryer_notification_component_main!(
+    descriptor = build_descriptor,
+    handler = handle_notification_command,
+);
+
+const PROVIDER_TYPE: &str = "pushover";
+
 const PUSHOVER_URL: &str = "https://api.pushover.net/1/messages.json";
 type HmacSha256 = Hmac<Sha256>;
 
-#[plugin_fn]
-pub fn scryer_describe(_input: String) -> FnResult<String> {
+fn build_descriptor() -> PluginDescriptor {
     let mut descriptor = build_notification_descriptor(
         "pushover",
         "Pushover",
@@ -25,7 +45,7 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
         false,
     );
     add_notification_allowed_hosts(&mut descriptor, &["api.pushover.net"]);
-    Ok(serde_json::to_string(&descriptor)?)
+    descriptor
 }
 
 fn config_fields() -> Vec<ConfigFieldDef> {
@@ -98,66 +118,64 @@ fn config_fields() -> Vec<ConfigFieldDef> {
     ]
 }
 
-#[plugin_fn]
-pub fn scryer_notification_send(input: String) -> FnResult<String> {
-    let req: PluginNotificationRequest = serde_json::from_str(&input)?;
+fn send_notification(req: &PluginNotificationRequest) -> FnResult<PluginNotificationResponse> {
     let priority = config_i64("priority", 0);
     let retry = config_i64("retry", 0);
     let expire = config_i64("expire", 0);
     let ttl = config_i64("ttl", 0);
 
     if !(-2..=2).contains(&priority) {
-        return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+        return Ok(error_response(
             "pushover priority must be between -2 and 2",
             Some("invalid_priority".to_string()),
-        )))?);
+        ));
     }
 
     if priority == 2 && !(30..=86400).contains(&retry) {
-        return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+        return Ok(error_response(
             "pushover retry must be between 30 and 86400 seconds for emergency priority",
             Some("invalid_retry".to_string()),
-        )))?);
+        ));
     }
 
     if ttl < 0 {
-        return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+        return Ok(error_response(
             "pushover ttl must be greater than or equal to 0",
             Some("invalid_ttl".to_string()),
-        )))?);
+        ));
     }
 
-    let mut title = req.summary_title;
-    let mut message = req.summary_message;
+    let mut title = req.summary_title.clone();
+    let mut message = req.summary_message.clone();
     let encrypted = config_value("encryption_key").is_some_and(|key| !key.trim().is_empty());
 
     if encrypted {
         let key = match encryption_key() {
             Ok(key) => key,
             Err(message) => {
-                return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+                return Ok(error_response(
                     message,
                     Some("invalid_encryption_key".to_string()),
-                )))?);
+                ));
             }
         };
 
         title = match encrypt_field(&title, &key) {
             Ok(value) => value,
             Err(message) => {
-                return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+                return Ok(error_response(
                     message,
                     Some("encryption_failed".to_string()),
-                )))?);
+                ));
             }
         };
         message = match encrypt_field(&message, &key) {
             Ok(value) => value,
             Err(message) => {
-                return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
+                return Ok(error_response(
                     message,
                     Some("encryption_failed".to_string()),
-                )))?);
+                ));
             }
         };
     }
@@ -184,7 +202,7 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
         params.push(("sound".to_string(), sound));
     }
     let response = send_form(PUSHOVER_URL, "POST", &[], &params);
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+    Ok(response)
 }
 
 fn encryption_key() -> Result<[u8; 32], String> {
@@ -237,4 +255,32 @@ fn gzip_compress(bytes: &[u8]) -> Result<Vec<u8>, String> {
     encoder
         .finish()
         .map_err(|err| format!("failed to finish pushover gzip field: {err}"))
+}
+
+/// The world's single `process` entry, dispatching the SDK's notification
+/// command enum.
+///
+/// One arm per Extism entry point this plugin used to export. `action` is not
+/// one of them: the descriptor advertises no action, so the host does not route
+/// one here and the arm answers **in-band** with `Unsupported` rather than
+/// trapping. A trap under a component costs the whole instance and replaces the
+/// plugin's own diagnosis with a generic ABI failure.
+///
+/// A configuration failure was a `FnResult` hard fault under Extism — the host
+/// saw a string and a generic ABI error, and could not tell a misconfigured
+/// channel from a broken one. It is now a typed `PluginResult::Err`.
+fn handle_notification_command(
+    command: PluginNotificationCommand,
+) -> PluginNotificationCommandResult {
+    match command {
+        PluginNotificationCommand::Send(request) => {
+            PluginNotificationCommandResult::Send(match send_notification(&request) {
+                Ok(response) => PluginResult::Ok(response),
+                Err(error) => PluginResult::Err(config_error(error)),
+            })
+        }
+        PluginNotificationCommand::Action(_) => {
+            PluginNotificationCommandResult::Action(unsupported_action(PROVIDER_TYPE))
+        }
+    }
 }

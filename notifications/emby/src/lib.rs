@@ -1,8 +1,44 @@
+//! Emby media-server notifications, as a WASI Preview 2 component.
+//!
+//! The plugin implements `scryer:notification/notification@1.0.0`: two exports
+//! carrying UTF-8 JSON (`describe` returns a `PluginDescriptor`, `process`
+//! exchanges a `PluginCommandRequest` for a `PluginCommandResponse`), plus the
+//! shared `scryer:host/services@1.0.0` import that carries config and HTTP.
+//!
+//! The refresh planner, the path mapping and the Emby API calls are untouched.
+//! What changed is the transport: the two Extism entry points collapse into one
+//! `process` export dispatching the SDK's `PluginNotificationCommand`, and
+//! `config::get` / `http::request` reach Scryer through `notify-common`'s
+//! re-export of [`scryer_plugin_pdk`] rather than the removed core-module host
+//! ABI. `result_json` is gone: the world's dispatch owns the `PluginResult`
+//! envelope now, so the send path returns the typed response.
+
 use std::cmp::Reverse;
 use std::collections::HashSet;
 
-use extism_pdk::*;
 use notify_common::*;
+
+wit_bindgen::generate!({
+    // Fully qualified: `path` resolves two packages, so a bare world name is
+    // ambiguous even though only one of them declares a world.
+    world: "scryer:notification/notification@1.0.0",
+    // Two packages, two paths, matching the host's own bindgen: the shared
+    // `scryer:host` package is listed first so the family package's
+    // `import scryer:host/services@1.0.0` resolves against it.
+    path: ["wit/host-v1.0.0", "wit/notification-v1.0.0"],
+    // The shared host package lives in its own WIT package, so wit-bindgen
+    // asks explicitly whether to generate for it. Yes: the PDK holds only a
+    // `fn` pointer and the entry macro binds it to this module's
+    // `scryer::host::services::host-call`.
+    generate_all,
+});
+
+scryer_plugin_pdk::scryer_notification_component_main!(
+    descriptor = default_descriptor,
+    handler = handle_notification_command,
+);
+
+const PROVIDER_TYPE: &str = "emby";
 use scryer_plugin_sdk::{
     NotificationMediaUpdateType, PluginNotificationFile, PluginNotificationTitle,
 };
@@ -190,43 +226,52 @@ fn media_refresh_events() -> Vec<NotificationEventType> {
     ]
 }
 
-#[plugin_fn]
-pub fn scryer_describe(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&default_descriptor())?)
+/// The world's single `process` entry, dispatching the SDK's notification
+/// command enum.
+///
+/// One arm per Extism entry point this plugin used to export. `action` is not
+/// one of them: the descriptor advertises no action, so the host does not route
+/// one here and the arm answers **in-band** with `Unsupported` rather than
+/// trapping. A trap under a component costs the whole instance and replaces the
+/// plugin's own diagnosis with a generic ABI failure.
+fn handle_notification_command(
+    command: PluginNotificationCommand,
+) -> PluginNotificationCommandResult {
+    match command {
+        PluginNotificationCommand::Send(request) => {
+            PluginNotificationCommandResult::Send(PluginResult::Ok(send_notification(&request)))
+        }
+        PluginNotificationCommand::Action(_) => {
+            PluginNotificationCommandResult::Action(unsupported_action(PROVIDER_TYPE))
+        }
+    }
 }
 
-#[plugin_fn]
-pub fn scryer_notification_send(input: String) -> FnResult<String> {
-    let request: PluginNotificationRequest = serde_json::from_str(&input)?;
-    let config = match EmbyConfig::from_extism() {
+fn send_notification(request: &PluginNotificationRequest) -> PluginNotificationResponse {
+    let config = match EmbyConfig::from_host() {
         Ok(config) => config,
         Err(error) => {
-            return Ok(result_json(error_response(
-                error,
-                Some("invalid_config".into()),
-            )));
+            return error_response(error, Some("invalid_config".into()));
         }
     };
 
     if matches!(request.event_type, NotificationEventType::Test) {
-        let response = match execute_http(build_system_info_request(&config), "Emby server test") {
+        return match execute_http(build_system_info_request(&config), "Emby server test") {
             Ok(_) => ok_response(),
             Err(error) => error_response(error, None),
         };
-        return Ok(result_json(response));
     }
 
-    let response = match build_media_refresh_plan(&request, &config.path_mappings)
+    match build_media_refresh_plan(request, &config.path_mappings)
         .and_then(|plan| execute_media_refresh(plan, &config))
     {
         Ok(()) => ok_response(),
         Err(error) => error_response(error, None),
-    };
-    Ok(result_json(response))
+    }
 }
 
 impl EmbyConfig {
-    fn from_extism() -> Result<Self, String> {
+    fn from_host() -> Result<Self, String> {
         Self::from_lookup(|key| config::get(key).ok().flatten())
     }
 
@@ -758,12 +803,6 @@ fn external_ids_equal(actual: &str, expected: &str) -> bool {
         (Ok(actual), Ok(expected)) => actual == expected,
         _ => actual.eq_ignore_ascii_case(expected),
     }
-}
-
-fn result_json(response: PluginNotificationResponse) -> String {
-    serde_json::to_string(&PluginResult::Ok(response)).unwrap_or_else(|_| {
-        "{\"success\":false,\"error\":\"Emby notification failed\"}".to_string()
-    })
 }
 
 #[cfg(test)]

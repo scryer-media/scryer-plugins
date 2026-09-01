@@ -1,11 +1,66 @@
+//! Synology media-indexer notifications, as a WASI Preview 2 component.
+//!
+//! The plugin implements `scryer:notification/notification@1.0.0`: two exports
+//! carrying UTF-8 JSON (`describe` returns a `PluginDescriptor`, `process`
+//! exchanges a `PluginCommandRequest` for a `PluginCommandResponse`), plus the
+//! shared `scryer:host/services@1.0.0` import.
+//!
+//! ## The family's only process user
+//!
+//! This channel sends nothing over the network. It runs `synoindex` on the NAS
+//! so the DSM media index learns about a file Scryer just imported, renamed or
+//! deleted — the one notification channel whose delivery is a host process
+//! rather than a request.
+//!
+//! WASI Preview 2 has no process-execution capability at all, so this cannot
+//! be a `wasi:*` import the way a socket theoretically could be. It arrives as
+//! `PluginHostRequest::ProcessExec` on the same single `host-call` import
+//! every other service uses, through [`notify_common::process_exec`]. That is
+//! the notification world's design note in practice: the SDK owns the
+//! capability set, so a family needing authority beyond HTTP imports the same
+//! one function as the families that do not.
+//!
+//! Authority is unchanged and stays host-side. `requires_host_process` on the
+//! descriptor below is a *request*; the loader additionally gates process
+//! execution to first-party plugins, so a community channel declaring the same
+//! capability gets an empty allowlist and `permission_denied` per call. This
+//! plugin's own allowlist entry is `/usr/syno/bin/synoindex` and nothing else.
+//!
+//! ## One behaviour change, in `notify-common`
+//!
+//! The Extism host function reported a timeout as a *successful* response with
+//! a `timed_out` flag. `ProcessExec` has no such field: a host-enforced timeout
+//! is a typed `PluginError`, so it now arrives on the `Err` arm of
+//! [`notify_common::process_exec`] carrying the host's own message, and is
+//! reported by [`run_synoindex`] there rather than in the `timed_out` arm.
+
 use base64::{Engine as _, engine::general_purpose::STANDARD};
-use extism_pdk::*;
 use notify_common::*;
 
+wit_bindgen::generate!({
+    // Fully qualified: `path` resolves two packages, so a bare world name is
+    // ambiguous even though only one of them declares a world.
+    world: "scryer:notification/notification@1.0.0",
+    // Two packages, two paths, matching the host's own bindgen: the shared
+    // `scryer:host` package is listed first so the family package's
+    // `import scryer:host/services@1.0.0` resolves against it.
+    path: ["wit/host-v1.0.0", "wit/notification-v1.0.0"],
+    // The shared host package lives in its own WIT package, so wit-bindgen
+    // asks explicitly whether to generate for it. Yes: the PDK holds only a
+    // `fn` pointer and the entry macro binds it to this module's
+    // `scryer::host::services::host-call`.
+    generate_all,
+});
+
+scryer_plugin_pdk::scryer_notification_component_main!(
+    descriptor = build_descriptor,
+    handler = handle_notification_command,
+);
+
+const PROVIDER_TYPE: &str = "synology";
 const SYNOINDEX: &str = "/usr/syno/bin/synoindex";
 
-#[plugin_fn]
-pub fn scryer_describe(_input: String) -> FnResult<String> {
+fn build_descriptor() -> PluginDescriptor {
     let mut descriptor = build_notification_descriptor(
         "synology",
         "Synology Indexer",
@@ -20,7 +75,7 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
     if let ProviderDescriptor::Notification(notification) = &mut descriptor.provider {
         notification.capabilities.requires_host_process = true;
     }
-    Ok(serde_json::to_string(&descriptor)?)
+    descriptor
 }
 
 fn config_fields() -> Vec<ConfigFieldDef> {
@@ -34,21 +89,38 @@ fn config_fields() -> Vec<ConfigFieldDef> {
     )]
 }
 
-#[plugin_fn]
-pub fn scryer_notification_send(input: String) -> FnResult<String> {
-    let req: PluginNotificationRequest = serde_json::from_str(&input)?;
+/// The world's single `process` entry, dispatching the SDK's notification
+/// command enum.
+///
+/// One arm per Extism entry point this plugin used to export. `action` is not
+/// one of them: the descriptor advertises no action, the host does not route
+/// one here, and the arm answers **in-band** with `Unsupported` rather than
+/// trapping — a trap under a component costs the whole instance and replaces
+/// the plugin's own diagnosis with a generic ABI failure.
+fn handle_notification_command(
+    command: PluginNotificationCommand,
+) -> PluginNotificationCommandResult {
+    match command {
+        PluginNotificationCommand::Send(request) => {
+            PluginNotificationCommandResult::Send(PluginResult::Ok(send_notification(&request)))
+        }
+        PluginNotificationCommand::Action(_) => {
+            PluginNotificationCommandResult::Action(unsupported_action(PROVIDER_TYPE))
+        }
+    }
+}
+
+fn send_notification(req: &PluginNotificationRequest) -> PluginNotificationResponse {
     if !config_bool("update_library") {
-        return Ok(serde_json::to_string(&PluginResult::Ok(ok_response()))?);
+        return ok_response();
     }
 
     let mut responses = Vec::new();
-    for args in synoindex_commands(&req) {
+    for args in synoindex_commands(req) {
         responses.push(run_synoindex(args));
     }
 
-    Ok(serde_json::to_string(&PluginResult::Ok(merge_responses(
-        responses,
-    )))?)
+    merge_responses(responses)
 }
 
 fn synoindex_commands(req: &PluginNotificationRequest) -> Vec<Vec<String>> {

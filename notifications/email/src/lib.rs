@@ -1,5 +1,43 @@
+//! SMTP email notifications, as a WASI Preview 2 component.
+//!
+//! The plugin implements `scryer:notification/notification@1.0.0`: two exports
+//! carrying UTF-8 JSON (`describe` returns a `PluginDescriptor`, `process`
+//! exchanges a `PluginCommandRequest` for a `PluginCommandResponse`), plus the
+//! shared `scryer:host/services@1.0.0` import.
+//!
+//! ## Why this channel is the interesting one
+//!
+//! Email is the only notification channel that drives a raw TCP stream itself:
+//! connect, `EHLO`, read the greeting, `STARTTLS`, keep going on the upgraded
+//! stream. Under Extism that authority arrived through a second door — five
+//! `#[host_fn] extern "ExtismHost"` declarations behind
+//! `scryer_plugin_sdk::net`. A component has no such door, and deliberately no
+//! `wasi:sockets` either: a p2 socket capability is ambient within whatever
+//! network the host grants, whereas Scryer checks every connection against the
+//! resolved `socket_permissions` on *this* descriptor — the `${smtp_host}`
+//! pattern below, the three SMTP ports, and the three TLS modes.
+//!
+//! So the socket family now rides the same one `host-call` import as config and
+//! HTTP, as `PluginHostRequest::SocketOpen`/`Read`/`Write`/`StartTls`/`Close`
+//! through [`scryer_plugin_pdk::host`]. The SMTP conversation itself, the
+//! transport implementation and the message builder are untouched.
+//!
+//! ## The host now classifies socket failures
+//!
+//! `scryer_plugin_sdk::net` handed back a `SocketError` and this plugin mapped
+//! `SocketErrorCode` onto `PluginErrorCode` itself. Over host services the
+//! host's own socket layer does that mapping before the guest ever sees it —
+//! notably a descriptor-permission denial is `Permanent` (a decision about this
+//! plugin, retrying cannot change it) and *not* `Unsupported`, which is
+//! reserved for "this host has no socket service at all". The local table is
+//! gone rather than duplicated; see [`socket_failure`].
+
 use base64::{Engine as _, engine::general_purpose::STANDARD};
-use extism_pdk::*;
+use scryer_plugin_pdk::config;
+use scryer_plugin_pdk::host::{
+    HostCallError, socket_close, socket_open, socket_read, socket_starttls, socket_write,
+};
+use scryer_plugin_pdk::sdk::command::{PluginNotificationCommand, PluginNotificationCommandResult};
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldOption, ConfigFieldType, NotificationCapabilities,
     NotificationDeliveryMode, NotificationDescriptor, NotificationEventType,
@@ -14,16 +52,32 @@ use wasm_smtp::{
     StartTlsCapable, Transport,
 };
 
+wit_bindgen::generate!({
+    // Fully qualified: `path` resolves two packages, so a bare world name is
+    // ambiguous even though only one of them declares a world.
+    world: "scryer:notification/notification@1.0.0",
+    // Two packages, two paths, matching the host's own bindgen: the shared
+    // `scryer:host` package is listed first so the family package's
+    // `import scryer:host/services@1.0.0` resolves against it.
+    path: ["wit/host-v1.0.0", "wit/notification-v1.0.0"],
+    // The shared host package lives in its own WIT package, so wit-bindgen
+    // asks explicitly whether to generate for it. Yes: the PDK holds only a
+    // `fn` pointer and the entry macro binds it to this module's
+    // `scryer::host::services::host-call`.
+    generate_all,
+});
+
+scryer_plugin_pdk::scryer_notification_component_main!(
+    descriptor = descriptor,
+    handler = handle_notification_command,
+);
+
+const PROVIDER_TYPE: &str = "email";
 const DEFAULT_HELLO_NAME: &str = "scryer.local";
 const SOCKET_TIMEOUT_MS: u64 = 30_000;
 const CONNECT_TIMEOUT_MS: u64 = 10_000;
 const SMTP_READ_BYTES: usize = 4096;
 const MAX_MESSAGE_BYTES: usize = 10 * 1024 * 1024;
-
-#[plugin_fn]
-pub fn scryer_describe(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&descriptor())?)
-}
 
 fn descriptor() -> PluginDescriptor {
     PluginDescriptor {
@@ -187,28 +241,59 @@ fn option(value: &str, label: &str) -> ConfigFieldOption {
     ConfigFieldOption {
         value: value.to_string(),
         label: label.to_string(),
+        // Added by SDK 3.10. The security mode does not rewrite any other
+        // field's value, so the default empty map keeps this descriptor
+        // identical to the one 3.7 produced.
+        config_overrides: Default::default(),
     }
 }
 
-#[plugin_fn]
-pub fn scryer_notification_send(input: String) -> FnResult<String> {
-    let request: PluginNotificationRequest = serde_json::from_str(&input)?;
+/// The world's single `process` entry, dispatching the SDK's notification
+/// command enum.
+///
+/// One arm per Extism entry point this plugin used to export. `action` is not
+/// one of them: email has no interactive action, the descriptor says so, and
+/// the host does not route one here — so the arm answers **in-band** with
+/// `Unsupported` rather than trapping. A trap under a component costs the whole
+/// instance and replaces the plugin's own diagnosis with a generic ABI failure.
+fn handle_notification_command(
+    command: PluginNotificationCommand,
+) -> PluginNotificationCommandResult {
+    match command {
+        PluginNotificationCommand::Send(request) => {
+            PluginNotificationCommandResult::Send(send_notification(&request))
+        }
+        PluginNotificationCommand::Action(_) => {
+            PluginNotificationCommandResult::Action(PluginResult::Err(unsupported_action_error()))
+        }
+    }
+}
 
-    let result =
-        match EmailConfig::from_host_config().and_then(|config| send_email(&config, &request)) {
-            Ok(delivery) => PluginResult::Ok(PluginNotificationResponse {
-                success: true,
-                error: None,
-                delivery_id: None,
-                provider_status: Some("smtp_accepted".to_string()),
-                retry_after_seconds: None,
-                warnings: delivery.warnings,
-                target_results: delivery.target_results,
-            }),
-            Err(error) => PluginResult::Err(error.into_plugin_error()),
-        };
+fn unsupported_action_error() -> PluginError {
+    PluginError {
+        code: PluginErrorCode::Unsupported,
+        public_message: format!("{PROVIDER_TYPE} does not implement notification actions"),
+        debug_message: None,
+        retry_after_seconds: None,
+        details: None,
+    }
+}
 
-    Ok(serde_json::to_string(&result)?)
+fn send_notification(
+    request: &PluginNotificationRequest,
+) -> PluginResult<PluginNotificationResponse> {
+    match EmailConfig::from_host_config().and_then(|config| send_email(&config, request)) {
+        Ok(delivery) => PluginResult::Ok(PluginNotificationResponse {
+            success: true,
+            error: None,
+            delivery_id: None,
+            provider_status: Some("smtp_accepted".to_string()),
+            retry_after_seconds: None,
+            warnings: delivery.warnings,
+            target_results: delivery.target_results,
+        }),
+        Err(error) => PluginResult::Err(error.into_plugin_error()),
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -438,7 +523,7 @@ struct ScryerSocketTransport {
 
 impl ScryerSocketTransport {
     fn open(config: &EmailConfig) -> Result<Self, EmailFailure> {
-        let response = scryer_plugin_sdk::net::socket_open(SocketOpenRequest {
+        let response = socket_open(SocketOpenRequest {
             host: config.smtp_host.clone(),
             port: config.smtp_port,
             tls_mode: config.security.socket_tls_mode(),
@@ -461,7 +546,7 @@ impl Transport for ScryerSocketTransport {
             return Ok(0);
         }
 
-        let response = scryer_plugin_sdk::net::socket_read(SocketReadRequest {
+        let response = socket_read(SocketReadRequest {
             handle: self.handle,
             max_bytes: buffer.len().min(SMTP_READ_BYTES),
         })
@@ -479,7 +564,7 @@ impl Transport for ScryerSocketTransport {
 
     async fn write_all(&mut self, data: &[u8]) -> Result<(), IoError> {
         for chunk in data.chunks(32 * 1024) {
-            scryer_plugin_sdk::net::socket_write(SocketWriteRequest {
+            socket_write(SocketWriteRequest {
                 handle: self.handle,
                 data_base64: STANDARD.encode(chunk),
             })
@@ -489,7 +574,7 @@ impl Transport for ScryerSocketTransport {
     }
 
     async fn close(&mut self) -> Result<(), IoError> {
-        scryer_plugin_sdk::net::socket_close(SocketCloseRequest {
+        socket_close(SocketCloseRequest {
             handle: self.handle,
         })
         .map_err(socket_io_error)?;
@@ -499,7 +584,7 @@ impl Transport for ScryerSocketTransport {
 
 impl StartTlsCapable for ScryerSocketTransport {
     async fn upgrade_to_tls(&mut self) -> Result<(), IoError> {
-        scryer_plugin_sdk::net::socket_starttls(SocketStartTlsRequest {
+        socket_starttls(SocketStartTlsRequest {
             handle: self.handle,
             host: self.host.clone(),
         })
@@ -510,30 +595,44 @@ impl StartTlsCapable for ScryerSocketTransport {
 
 impl Drop for ScryerSocketTransport {
     fn drop(&mut self) {
-        let _ = scryer_plugin_sdk::net::socket_close(SocketCloseRequest {
+        let _ = socket_close(SocketCloseRequest {
             handle: self.handle,
         });
     }
 }
 
-fn socket_failure(error: scryer_plugin_sdk::SocketError) -> EmailFailure {
-    let code = match error.code {
-        scryer_plugin_sdk::SocketErrorCode::PermissionDenied => PluginErrorCode::InvalidConfig,
-        scryer_plugin_sdk::SocketErrorCode::DnsFailed
-        | scryer_plugin_sdk::SocketErrorCode::ConnectTimeout
-        | scryer_plugin_sdk::SocketErrorCode::IoFailed
-        | scryer_plugin_sdk::SocketErrorCode::RemoteClosed => PluginErrorCode::UpstreamUnavailable,
-        scryer_plugin_sdk::SocketErrorCode::TlsVerificationFailed => PluginErrorCode::Permanent,
-        scryer_plugin_sdk::SocketErrorCode::StartTlsFailed => PluginErrorCode::Unsupported,
-        scryer_plugin_sdk::SocketErrorCode::AuthFailed => PluginErrorCode::AuthFailed,
-        scryer_plugin_sdk::SocketErrorCode::ProtocolError => PluginErrorCode::Permanent,
-        scryer_plugin_sdk::SocketErrorCode::Unsupported => PluginErrorCode::Unsupported,
-    };
-    EmailFailure::new(code, error.message)
+/// Carry the host's own classification of a socket failure, rather than
+/// re-deriving one.
+///
+/// Scryer's socket layer already turns its `SocketErrorCode` into a
+/// `PluginError` before the answer crosses `host-call`, and it distinguishes
+/// two things this plugin used to conflate: a **denial** by descriptor
+/// permission (`Permanent` — the grant is what it is, retrying changes nothing)
+/// from an **absent** socket service (`Unsupported` — the shape every other
+/// family's host, and a describe-time host, gives for a capability it was not
+/// configured with). Both are in-band, and both keep the host's message, which
+/// names the offending host/port/TLS mode.
+///
+/// `Unavailable` is the remaining local case: no transport at all, which is a
+/// native `cargo test` or a guest with no entry macro, never a real host.
+fn socket_failure(error: HostCallError) -> EmailFailure {
+    match error {
+        HostCallError::Service(error) => EmailFailure {
+            code: error.code,
+            public_message: error.public_message,
+            debug_message: error.debug_message,
+            retry_after_seconds: error.retry_after_seconds,
+        },
+        HostCallError::Unavailable => EmailFailure::new(
+            PluginErrorCode::Unsupported,
+            "this host provides no socket service",
+        ),
+        error => EmailFailure::new(PluginErrorCode::Temporary, error.to_string()),
+    }
 }
 
-fn socket_io_error(error: scryer_plugin_sdk::SocketError) -> IoError {
-    IoError::new(format!("{:?}: {}", error.code, error.message))
+fn socket_io_error(error: HostCallError) -> IoError {
+    IoError::new(error.to_string())
 }
 
 fn smtp_failure(error: SmtpError) -> EmailFailure {
@@ -597,6 +696,7 @@ impl EmailFailure {
             public_message: self.public_message,
             debug_message: self.debug_message,
             retry_after_seconds: self.retry_after_seconds,
+            details: None,
         }
     }
 }

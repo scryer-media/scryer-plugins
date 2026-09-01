@@ -1,15 +1,51 @@
+//! Jellyfin media-server notifications, as a WASI Preview 2 component.
+//!
+//! The plugin implements `scryer:notification/notification@1.0.0`: two exports
+//! carrying UTF-8 JSON (`describe` returns a `PluginDescriptor`, `process`
+//! exchanges a `PluginCommandRequest` for a `PluginCommandResponse`), plus the
+//! shared `scryer:host/services@1.0.0` import that carries config and HTTP.
+//!
+//! The request planner, the path mapping and the Jellyfin API calls are
+//! untouched. What changed is the transport: the two Extism entry points
+//! collapse into one `process` export dispatching the SDK's
+//! `PluginNotificationCommand`, and `config::get` / `http::request` reach
+//! Scryer through [`scryer_plugin_pdk`] rather than the removed core-module
+//! host ABI. The response helpers stop hand-serializing a `PluginResult` — the
+//! world's dispatch owns that envelope now, so they return the typed value.
+
 use std::collections::HashSet;
 
-use extism_pdk::*;
+use scryer_plugin_pdk::sdk::command::{PluginNotificationCommand, PluginNotificationCommandResult};
+use scryer_plugin_pdk::{HttpRequest, config, http};
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldType, NotificationCapabilities, NotificationDeliveryMode,
     NotificationDescriptor, NotificationEventType as SdkNotificationEventType,
-    NotificationPayloadFormat, PluginDescriptor, PluginNotificationFile, PluginNotificationRequest,
-    PluginNotificationResponse, PluginNotificationTitle, PluginResult, ProviderDescriptor,
-    SDK_VERSION,
+    NotificationPayloadFormat, PluginDescriptor, PluginError, PluginErrorCode,
+    PluginNotificationFile, PluginNotificationRequest, PluginNotificationResponse,
+    PluginNotificationTitle, PluginResult, ProviderDescriptor, SDK_VERSION,
 };
 use serde::Serialize;
+
+wit_bindgen::generate!({
+    // Fully qualified: `path` resolves two packages, so a bare world name is
+    // ambiguous even though only one of them declares a world.
+    world: "scryer:notification/notification@1.0.0",
+    // Two packages, two paths, matching the host's own bindgen: the shared
+    // `scryer:host` package is listed first so the family package's
+    // `import scryer:host/services@1.0.0` resolves against it.
+    path: ["wit/host-v1.0.0", "wit/notification-v1.0.0"],
+    // The shared host package lives in its own WIT package, so wit-bindgen
+    // asks explicitly whether to generate for it. Yes: the PDK holds only a
+    // `fn` pointer and the entry macro binds it to this module's
+    // `scryer::host::services::host-call`.
+    generate_all,
+});
+
+scryer_plugin_pdk::scryer_notification_component_main!(
+    descriptor = default_descriptor,
+    handler = handle_notification_command,
+);
 
 #[derive(Debug, Clone)]
 struct JellyfinConfig {
@@ -211,36 +247,55 @@ fn media_refresh_events() -> Vec<SdkNotificationEventType> {
     ]
 }
 
-#[plugin_fn]
-pub fn scryer_describe(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&default_descriptor())?)
+/// The world's single `process` entry, dispatching the SDK's notification
+/// command enum.
+///
+/// One arm per Extism entry point this plugin used to export. `action` is not
+/// one of them: the descriptor advertises no action, so the host does not route
+/// one here and the arm answers **in-band** with `Unsupported` rather than
+/// trapping. A trap under a component costs the whole instance and replaces the
+/// plugin's own diagnosis with a generic ABI failure.
+fn handle_notification_command(
+    command: PluginNotificationCommand,
+) -> PluginNotificationCommandResult {
+    match command {
+        PluginNotificationCommand::Send(request) => {
+            PluginNotificationCommandResult::Send(PluginResult::Ok(send_notification(&request)))
+        }
+        PluginNotificationCommand::Action(_) => {
+            PluginNotificationCommandResult::Action(PluginResult::Err(PluginError {
+                code: PluginErrorCode::Unsupported,
+                public_message: "jellyfin does not implement notification actions".to_string(),
+                debug_message: None,
+                retry_after_seconds: None,
+                details: None,
+            }))
+        }
+    }
 }
 
-#[plugin_fn]
-pub fn scryer_notification_send(input: String) -> FnResult<String> {
-    let request: PluginNotificationRequest = serde_json::from_str(&input)?;
-
-    let config = match JellyfinConfig::from_extism() {
+fn send_notification(request: &PluginNotificationRequest) -> PluginNotificationResponse {
+    let config = match JellyfinConfig::from_host() {
         Ok(config) => config,
-        Err(error) => return Ok(error_response(error)),
+        Err(error) => return error_response(error),
     };
 
-    let plans = match build_request_plans(&request, &config) {
+    let plans = match build_request_plans(request, &config) {
         Ok(plans) => plans,
-        Err(error) => return Ok(error_response(error)),
+        Err(error) => return error_response(error),
     };
 
     for plan in &plans {
         if let Err(error) = execute_plan(plan, &config) {
-            return Ok(error_response(error));
+            return error_response(error);
         }
     }
 
-    Ok(success_response())
+    success_response()
 }
 
 impl JellyfinConfig {
-    fn from_extism() -> Result<Self, String> {
+    fn from_host() -> Result<Self, String> {
         let base_url = config::get("base_url")
             .ok()
             .flatten()
@@ -623,8 +678,8 @@ fn encode_query_value(value: &str) -> String {
     encoded
 }
 
-fn success_response() -> String {
-    serde_json::to_string(&PluginResult::Ok(PluginNotificationResponse {
+fn success_response() -> PluginNotificationResponse {
+    PluginNotificationResponse {
         success: true,
         error: None,
         delivery_id: None,
@@ -632,12 +687,11 @@ fn success_response() -> String {
         retry_after_seconds: None,
         warnings: Vec::new(),
         target_results: Vec::new(),
-    }))
-    .unwrap_or_else(|_| "{\"success\":true}".to_string())
+    }
 }
 
-fn error_response(error: String) -> String {
-    serde_json::to_string(&PluginResult::Ok(PluginNotificationResponse {
+fn error_response(error: String) -> PluginNotificationResponse {
+    PluginNotificationResponse {
         success: false,
         error: Some(error),
         delivery_id: None,
@@ -645,8 +699,7 @@ fn error_response(error: String) -> String {
         retry_after_seconds: None,
         warnings: Vec::new(),
         target_results: Vec::new(),
-    }))
-    .unwrap_or_else(|_| "{\"success\":false,\"error\":\"notification failed\"}".to_string())
+    }
 }
 
 #[cfg(test)]

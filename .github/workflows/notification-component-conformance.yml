@@ -1,0 +1,116 @@
+# Host conformance for `scryer:notification/notification@1.0.0` components.
+#
+# The sibling of subtitle-component-conformance.yml, and by some distance the
+# widest matrix: notifications are the largest plugin family, and unlike the
+# others they are not all the same shape. Most channels make one HTTP call, but
+# `email` drives a raw TCP stream through the host socket service and
+# `synology` executes a host binary — the only two first-party components in
+# any family that hold authority beyond HTTP. Their rows exercise
+# `SocketOpen`/`Read`/`Write`/`StartTls`/`Close` and `ProcessExec` respectively,
+# which nothing else in the fleet covers, so they are the rows to look at first
+# when this workflow goes red.
+#
+# A notification channel migrating to the component ABI adds its directory to
+# `paths` and its manifest to `include`, and gets the same check: the shipping
+# `wasm32-wasip2` artifact instantiated against the real world and driven
+# through `describe`/`process`.
+name: notification-component-conformance
+
+on:
+  pull_request:
+    paths:
+      - notifications/**
+      - pdk/scryer-plugin-pdk/**
+      - .github/workflows/notification-component-conformance.yml
+  workflow_dispatch:
+
+concurrency:
+  group: notification-component-conformance-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  notification-component-conformance:
+    name: conformance (${{ matrix.plugin }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The two channels with authority beyond HTTP. Listed first because
+          # they are the only coverage the socket and process host services
+          # have from a guest.
+          - plugin: email
+            manifest: notifications/email/Cargo.toml
+          - plugin: synology
+            manifest: notifications/synology/Cargo.toml
+          # The HTTP channels.
+          - plugin: apprise
+            manifest: notifications/apprise/Cargo.toml
+          - plugin: discord
+            manifest: notifications/discord/Cargo.toml
+          - plugin: emby
+            manifest: notifications/emby/Cargo.toml
+          - plugin: gotify
+            manifest: notifications/gotify/Cargo.toml
+          - plugin: jellyfin
+            manifest: notifications/jellyfin/Cargo.toml
+          - plugin: join
+            manifest: notifications/join/Cargo.toml
+          - plugin: mailgun
+            manifest: notifications/mailgun/Cargo.toml
+          - plugin: notifiarr
+            manifest: notifications/notifiarr/Cargo.toml
+          - plugin: ntfy
+            manifest: notifications/ntfy/Cargo.toml
+          - plugin: plex
+            manifest: notifications/plex/Cargo.toml
+          - plugin: prowl
+            manifest: notifications/prowl/Cargo.toml
+          - plugin: pushbullet
+            manifest: notifications/pushbullet/Cargo.toml
+          - plugin: pushcut
+            manifest: notifications/pushcut/Cargo.toml
+          - plugin: pushover
+            manifest: notifications/pushover/Cargo.toml
+          - plugin: sendgrid
+            manifest: notifications/sendgrid/Cargo.toml
+          - plugin: signal
+            manifest: notifications/signal/Cargo.toml
+          - plugin: simplepush
+            manifest: notifications/simplepush/Cargo.toml
+          - plugin: slack
+            manifest: notifications/slack/Cargo.toml
+          - plugin: telegram
+            manifest: notifications/telegram/Cargo.toml
+          - plugin: trakt
+            manifest: notifications/trakt/Cargo.toml
+          - plugin: twitter
+            manifest: notifications/twitter/Cargo.toml
+          - plugin: webhook
+            manifest: notifications/webhook/Cargo.toml
+          - plugin: xbmc
+            manifest: notifications/xbmc/Cargo.toml
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        with:
+          # Notification channels are WASI Preview 2 components, and the
+          # conformance suite builds that exact release artifact.
+          targets: wasm32-wasip2
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+
+      # No WASI SDK step: no notification component compiles C sources. The
+      # ones that do cryptography (`pushover`, `twitter`) use pure-Rust crates.
+      # Add one here if a matrix row ever grows a C dependency.
+
+      - name: Run notification host conformance
+        run: >-
+          cargo test --locked
+          --manifest-path ${{ matrix.manifest }}
+          --test host_conformance

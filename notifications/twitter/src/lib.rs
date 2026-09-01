@@ -1,10 +1,29 @@
 use base64::{Engine as _, engine::general_purpose::STANDARD};
-use extism_pdk::*;
 use hmac::{Hmac, KeyInit, Mac};
 use notify_common::*;
 use sha1::Sha1;
 use std::collections::BTreeMap;
 use std::time::{SystemTime, UNIX_EPOCH};
+
+wit_bindgen::generate!({
+    // Fully qualified: `path` resolves two packages, so a bare world name is
+    // ambiguous even though only one of them declares a world.
+    world: "scryer:notification/notification@1.0.0",
+    // Two packages, two paths, matching the host's own bindgen: the shared
+    // `scryer:host` package is listed first so the family package's
+    // `import scryer:host/services@1.0.0` resolves against it.
+    path: ["wit/host-v1.0.0", "wit/notification-v1.0.0"],
+    // The shared host package lives in its own WIT package, so wit-bindgen
+    // asks explicitly whether to generate for it. Yes: the PDK holds only a
+    // `fn` pointer and the entry macro binds it to this module's
+    // `scryer::host::services::host-call`.
+    generate_all,
+});
+
+scryer_plugin_pdk::scryer_notification_component_main!(
+    descriptor = build_descriptor,
+    handler = handle_notification_command,
+);
 
 type HmacSha1 = Hmac<Sha1>;
 
@@ -14,8 +33,7 @@ const REQUEST_TOKEN_URL: &str = "https://api.twitter.com/oauth/request_token";
 const ACCESS_TOKEN_URL: &str = "https://api.twitter.com/oauth/access_token";
 const AUTHORIZE_URL: &str = "https://api.twitter.com/oauth/authorize";
 
-#[plugin_fn]
-pub fn scryer_describe(_input: String) -> FnResult<String> {
+fn build_descriptor() -> PluginDescriptor {
     let mut descriptor = build_notification_descriptor(
         "twitter",
         "Twitter",
@@ -31,7 +49,7 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
         false,
     );
     add_notification_allowed_hosts(&mut descriptor, &["api.twitter.com"]);
-    Ok(serde_json::to_string(&descriptor)?)
+    descriptor
 }
 
 fn config_fields() -> Vec<ConfigFieldDef> {
@@ -87,11 +105,9 @@ fn config_fields() -> Vec<ConfigFieldDef> {
     ]
 }
 
-#[plugin_fn]
-pub fn scryer_notification_send(input: String) -> FnResult<String> {
-    let req: PluginNotificationRequest = serde_json::from_str(&input)?;
+fn send_notification(req: &PluginNotificationRequest) -> FnResult<PluginNotificationResponse> {
     let settings = TwitterSettings::from_config()?;
-    let mut message = twitter_message(&req);
+    let mut message = twitter_message(req);
     let response = if settings.direct_message {
         let mention = required_config("mention")?;
         signed_post(
@@ -115,19 +131,18 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
         )
     };
 
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+    Ok(response)
 }
 
-#[plugin_fn]
-pub fn scryer_notification_action(input: String) -> FnResult<String> {
-    let request: serde_json::Value = serde_json::from_str(&input)?;
+fn handle_action(action: &PluginActionRequest) -> FnResult<serde_json::Value> {
+    let request = action_request_value(action);
     let response = match action_name(&request).as_deref() {
         Some("startOAuth") => start_oauth(&request)?,
         Some("getOAuthToken") => get_oauth_token(&request)?,
         _ => serde_json::json!({}),
     };
 
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+    Ok(response)
 }
 
 struct TwitterSettings {
@@ -528,4 +543,58 @@ fn hex_value(byte: u8) -> Option<u8> {
         b'A'..=b'F' => Some(byte - b'A' + 10),
         _ => None,
     }
+}
+
+/// The world's single `process` entry, dispatching the SDK's notification
+/// command enum.
+///
+/// One arm per Extism entry point this plugin used to export — and this channel
+/// exported three, so `action` is a real operation here rather than the in-band
+/// `Unsupported` most channels answer with. Its OAuth handlers are unchanged;
+/// only the envelope around them moved.
+///
+/// A failure in either operation was a `FnResult` hard fault under Extism: the
+/// host saw a string and a generic ABI error, and could not tell a
+/// misconfigured channel from a broken one. Both are now typed
+/// `PluginResult::Err`, which also means a failed OAuth exchange no longer
+/// takes the component instance down with it.
+///
+/// A configuration failure was a `FnResult` hard fault under Extism — the host
+/// saw a string and a generic ABI error, and could not tell a misconfigured
+/// channel from a broken one. It is now a typed `PluginResult::Err`.
+fn handle_notification_command(
+    command: PluginNotificationCommand,
+) -> PluginNotificationCommandResult {
+    match command {
+        PluginNotificationCommand::Send(request) => {
+            PluginNotificationCommandResult::Send(match send_notification(&request) {
+                Ok(response) => PluginResult::Ok(response),
+                Err(error) => PluginResult::Err(config_error(error)),
+            })
+        }
+        PluginNotificationCommand::Action(request) => {
+            PluginNotificationCommandResult::Action(match handle_action(&request) {
+                Ok(payload) => PluginResult::Ok(PluginActionResponse { payload }),
+                Err(error) => PluginResult::Err(config_error(error)),
+            })
+        }
+    }
+}
+
+/// Rebuild the JSON document the action handlers have always read.
+///
+/// Under Extism, `scryer_notification_action` received one opaque JSON string:
+/// the action name alongside a `query` object of parameters. The command
+/// envelope splits those into `PluginActionRequest::action` and `::payload`,
+/// and the host fills the payload with exactly `{"query": {..}}`. Re-joining
+/// them here keeps `action_name`, `action_param` and every handler below
+/// byte-for-byte unchanged, so the OAuth flows are not re-derived as part of a
+/// transport migration.
+fn action_request_value(request: &PluginActionRequest) -> serde_json::Value {
+    let mut value = match request.payload.clone() {
+        value @ serde_json::Value::Object(_) => value,
+        other => serde_json::json!({ "query": other }),
+    };
+    value["action"] = serde_json::Value::String(request.action.clone());
+    value
 }

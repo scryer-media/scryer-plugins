@@ -1,13 +1,17 @@
 [package]
 name = "notify-common"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "GPL-3.0-only"
 
 [dependencies]
 base64 = "0.23"
-extism-pdk = "1.4"
-scryer-plugin-sdk = "3.2.0"
+# The Extism host ABI is gone: every notification channel is now a
+# `scryer:notification/notification@1.0.0` component, and config, HTTP, plugin
+# state and host process execution all cross the single
+# `scryer:host/services@1.0.0` import that the PDK's injected transport backs.
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
+scryer-plugin-sdk = "3.10.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 urlencoding = "2"
