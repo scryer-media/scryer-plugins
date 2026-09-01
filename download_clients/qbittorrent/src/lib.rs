@@ -27,6 +27,7 @@ fn plugin_error<T>(code: PluginErrorCode, public_message: impl Into<String>) -> 
         public_message: public_message.into(),
         debug_message: None,
         retry_after_seconds: None,
+        details: None,
     })
 }
 
@@ -225,6 +226,11 @@ fn build_descriptor_json() -> Result<String, Error> {
                     reports_content_paths: true,
                     ..DownloadTorrentCapabilities::default()
                 }),
+                // SDK 3.10 addition. `false` is the SDK's own default and therefore exactly
+                // what this client's pre-3.10 descriptor already meant to a 3.10 host;
+                // advertising category-scoped feedback would be a behaviour change, not a
+                // transport one, so it stays off across the component migration.
+                category_scoped_feedback: false,
             },
         }),
     };
@@ -578,6 +584,7 @@ fn handle_download_control(
             public_message: "client_item_id is required".to_string(),
             debug_message: None,
             retry_after_seconds: None,
+            details: None,
         }));
     }
     if matches!(request.action, DownloadControlAction::ForceStart) {
@@ -586,6 +593,7 @@ fn handle_download_control(
             public_message: "unsupported control action: force_start".to_string(),
             debug_message: None,
             retry_after_seconds: None,
+            details: None,
         }));
     }
 
@@ -924,10 +932,12 @@ fn config_fields() -> Vec<ConfigFieldDef> {
                 ConfigFieldOption {
                     value: "category".to_string(),
                     label: "Category".to_string(),
+                    config_overrides: Default::default(),
                 },
                 ConfigFieldOption {
                     value: "tag".to_string(),
                     label: "Tag".to_string(),
+                    config_overrides: Default::default(),
                 },
             ],
             help_text: Some(
@@ -3550,16 +3560,62 @@ mod tests {
     }
 }
 
-scryer_plugin_pdk::scryer_download_client_bridge_main!(
-    describe = scryer_describe,
-    add = scryer_download_add,
-    list_queue = scryer_download_list_queue,
-    list_history = scryer_download_list_history,
-    list_completed = scryer_download_list_completed,
-    list_recent_completed = Some(scryer_download_list_recent_completed),
-    control = scryer_download_control,
-    mark_imported = scryer_download_mark_imported,
-    mark_imported_non_destructive = Some(scryer_download_mark_imported_non_destructive),
-    status = scryer_download_status,
-    test_connection = scryer_download_test_connection,
+// ---------------------------------------------------------------------------
+// `scryer:download-client/download-client@1.0.0`
+// ---------------------------------------------------------------------------
+//
+// Transport only. Every operation above is untouched: the same URLs, the same
+// SID cookie in plugin state, the same 204-bodied login, the same category
+// 409 handling. What changed is how the host reaches them — a `process`
+// export carrying the very command envelope the Preview 1 runner already
+// moved over stdin/stdout, instead of a `main` reading stdin.
+//
+// The function table is the single source of truth for both exports, so
+// `describe` and `process` cannot drift apart, and the operation semantics —
+// merged failed history, scoped listings, non-destructive mark-imported —
+// stay in the PDK bridge where every client shares them.
+
+wit_bindgen::generate!({
+    // Fully qualified: `path` resolves two packages, so a bare world name is
+    // ambiguous even though only one of them declares a world.
+    world: "scryer:download-client/download-client@1.0.0",
+    // The shared `scryer:host` package is listed first so the family package's
+    // `import scryer:host/services@1.0.0` resolves against it.
+    path: ["wit/host-v1.0.0", "wit/download-client-v1.0.0"],
+    // The host package is its own WIT package, so wit-bindgen asks explicitly
+    // whether to generate for it. Yes: the PDK holds only a `fn` pointer and
+    // the entry macro binds it to this module's
+    // `scryer::host::services::host-call`.
+    generate_all,
+});
+
+fn functions() -> LegacyDownloadClientFunctions {
+    LegacyDownloadClientFunctions {
+        describe: scryer_describe,
+        add: scryer_download_add,
+        list_queue: scryer_download_list_queue,
+        list_history: scryer_download_list_history,
+        list_completed: scryer_download_list_completed,
+        list_recent_completed: Some(scryer_download_list_recent_completed),
+        control: scryer_download_control,
+        mark_imported: scryer_download_mark_imported,
+        mark_imported_non_destructive: Some(scryer_download_mark_imported_non_destructive),
+        status: scryer_download_status,
+        test_connection: scryer_download_test_connection,
+    }
+}
+
+fn build_descriptor() -> PluginDescriptor {
+    legacy_download_client_descriptor(&functions())
+}
+
+fn handle_download_client_command(
+    command: PluginDownloadClientCommand,
+) -> PluginDownloadClientCommandResult {
+    bridge_download_client_command(&functions(), command)
+}
+
+scryer_plugin_pdk::scryer_download_client_component_main!(
+    descriptor = build_descriptor,
+    handler = handle_download_client_command,
 );

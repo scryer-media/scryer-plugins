@@ -89,6 +89,7 @@ fn plugin_error<T>(code: PluginErrorCode, public_message: impl Into<String>) -> 
         public_message: public_message.into(),
         debug_message: None,
         retry_after_seconds: None,
+        details: None,
     })
 }
 
@@ -159,6 +160,16 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
                     reports_content_paths: true,
                     ..DownloadTorrentCapabilities::default()
                 }),
+                // SDK 3.10 addition. `false` is the SDK's own default and therefore exactly
+                // what this client's pre-3.10 descriptor already meant to a 3.10 host;
+                // advertising category-scoped feedback would be a behaviour change, not a
+                // transport one, so it stays off across the component migration.
+                category_scoped_feedback: false,
+                // SDK 3.10 addition, and `false` is both the SDK's default and the
+                // truth: this client's function table passes
+                // `mark_imported_non_destructive: None`, so the bridge has nothing to
+                // route a non-destructive handoff to.
+                mark_imported_non_destructive: false,
             },
         }),
     };
@@ -746,6 +757,7 @@ fn torrent_to_completed(
         size_bytes: Some(torrent.size_bytes),
         completed_at: torrent.date_finished.map(|value| value.to_string()),
         parameters: Vec::new(),
+        release_name: None,
     })
 }
 
@@ -987,26 +999,32 @@ fn additional_tags_field() -> ConfigFieldDef {
             ConfigFieldOption {
                 value: "title_slug".to_string(),
                 label: "Title Slug".to_string(),
+                config_overrides: Default::default(),
             },
             ConfigFieldOption {
                 value: "title_tags".to_string(),
                 label: "Title Tags".to_string(),
+                config_overrides: Default::default(),
             },
             ConfigFieldOption {
                 value: "year".to_string(),
                 label: "Year".to_string(),
+                config_overrides: Default::default(),
             },
             ConfigFieldOption {
                 value: "indexer".to_string(),
                 label: "Indexer".to_string(),
+                config_overrides: Default::default(),
             },
             ConfigFieldOption {
                 value: "languages".to_string(),
                 label: "Language".to_string(),
+                config_overrides: Default::default(),
             },
             ConfigFieldOption {
                 value: "network".to_string(),
                 label: "Network".to_string(),
+                config_overrides: Default::default(),
             },
         ],
         help_text: Some("Metadata-derived tags added to new torrents".to_string()),
@@ -1279,15 +1297,61 @@ mod extism_host_stubs {
     pub extern "C" fn var_set(_ptr: u64, _value: u64) {}
 }
 
-scryer_plugin_pdk::scryer_download_client_bridge_main!(
-    describe = scryer_describe,
-    add = scryer_download_add,
-    list_queue = scryer_download_list_queue,
-    list_history = scryer_download_list_history,
-    list_completed = scryer_download_list_completed,
-    list_recent_completed = None,
-    control = scryer_download_control,
-    mark_imported = scryer_download_mark_imported,
-    status = scryer_download_status,
-    test_connection = scryer_download_test_connection,
+// ---------------------------------------------------------------------------
+// `scryer:download-client/download-client@1.0.0`
+// ---------------------------------------------------------------------------
+//
+// Transport only. Every operation above is untouched — the same URLs, headers,
+// status rules and plugin state. What changed is how the host reaches them: a
+// `process` export carrying the very command envelope the Preview 1 runner
+// already moved over stdin/stdout, instead of a `main` reading stdin.
+//
+// The function table is the single source of truth for both exports, so
+// `describe` and `process` cannot drift apart, and the operation semantics —
+// merged failed history, scoped listings, non-destructive mark-imported — stay
+// in the PDK bridge where every client shares them.
+
+wit_bindgen::generate!({
+    // Fully qualified: `path` resolves two packages, so a bare world name is
+    // ambiguous even though only one of them declares a world.
+    world: "scryer:download-client/download-client@1.0.0",
+    // The shared `scryer:host` package is listed first so the family package's
+    // `import scryer:host/services@1.0.0` resolves against it.
+    path: ["wit/host-v1.0.0", "wit/download-client-v1.0.0"],
+    // The host package is its own WIT package, so wit-bindgen asks explicitly
+    // whether to generate for it. Yes: the PDK holds only a `fn` pointer and
+    // the entry macro binds it to this module's
+    // `scryer::host::services::host-call`.
+    generate_all,
+});
+
+fn functions() -> LegacyDownloadClientFunctions {
+    LegacyDownloadClientFunctions {
+        describe: scryer_describe,
+        add: scryer_download_add,
+        list_queue: scryer_download_list_queue,
+        list_history: scryer_download_list_history,
+        list_completed: scryer_download_list_completed,
+        list_recent_completed: None,
+        control: scryer_download_control,
+        mark_imported: scryer_download_mark_imported,
+        mark_imported_non_destructive: None,
+        status: scryer_download_status,
+        test_connection: scryer_download_test_connection,
+    }
+}
+
+fn build_descriptor() -> PluginDescriptor {
+    legacy_download_client_descriptor(&functions())
+}
+
+fn handle_download_client_command(
+    command: PluginDownloadClientCommand,
+) -> PluginDownloadClientCommandResult {
+    bridge_download_client_command(&functions(), command)
+}
+
+scryer_plugin_pdk::scryer_download_client_component_main!(
+    descriptor = build_descriptor,
+    handler = handle_download_client_command,
 );
