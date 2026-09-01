@@ -7421,36 +7421,43 @@ fn run_catalog_upload_v3_r2(ctx: &TaskContext, dir: &Path) -> Result<()> {
     ));
     let config = r2_config_from_env()?;
     let catalog = read_catalog_v3_from_path(ctx, &dir.join(CATALOG_V3_SNIPPET_JSON))?;
-    let redirect_path = dir.join(CATALOG_V3_REDIRECT_JSON);
-    let redirect: CatalogV3Redirect = serde_json::from_slice(&fs::read(&redirect_path)?)
-        .with_context(|| format!("failed to parse {}", redirect_path.display()))?;
 
-    for artifact in &redirect.artifacts {
-        upload_redirected_catalog_from_dir(ctx, &config, dir, artifact)?;
-    }
+    // Both redirects publish together: the legacy ladder for shipped clients
+    // and the modern redirect for capability-aware ones. Their rung sets are
+    // disjoint hashed files (per-stratum projections vs the master catalog),
+    // so each redirect's rungs upload from its own artifact list.
+    for redirect_name in [CATALOG_V3_REDIRECT_JSON, CATALOG_V3_MODERN_REDIRECT_JSON] {
+        let redirect_path = dir.join(redirect_name);
+        let redirect: CatalogV3Redirect = serde_json::from_slice(&fs::read(&redirect_path)?)
+            .with_context(|| format!("failed to parse {}", redirect_path.display()))?;
 
-    let redirect_url = format!(
-        "{}/{}/{}",
-        public_catalog_base_url(),
-        central_catalog_v3_path_prefix(),
-        CATALOG_V3_REDIRECT_JSON
-    );
-    upload_file_to_r2(ctx, &config, &redirect_path, &redirect_url)?;
-    let redirect_bundle_name = redirect_signature_bundle_file_name(CATALOG_V3_REDIRECT_JSON);
-    let redirect_bundle_path = dir.join(&redirect_bundle_name);
-    if !redirect_bundle_path.is_file() {
-        bail!(
-            "missing redirect signature bundle {}",
-            redirect_bundle_path.display()
+        for artifact in &redirect.artifacts {
+            upload_redirected_catalog_from_dir(ctx, &config, dir, artifact)?;
+        }
+
+        let redirect_url = format!(
+            "{}/{}/{}",
+            public_catalog_base_url(),
+            central_catalog_v3_path_prefix(),
+            redirect_name
         );
+        upload_file_to_r2(ctx, &config, &redirect_path, &redirect_url)?;
+        let redirect_bundle_name = redirect_signature_bundle_file_name(redirect_name);
+        let redirect_bundle_path = dir.join(&redirect_bundle_name);
+        if !redirect_bundle_path.is_file() {
+            bail!(
+                "missing redirect signature bundle {}",
+                redirect_bundle_path.display()
+            );
+        }
+        let redirect_bundle_url = format!(
+            "{}/{}/{}",
+            public_catalog_base_url(),
+            central_catalog_v3_path_prefix(),
+            redirect_bundle_name
+        );
+        upload_file_to_r2(ctx, &config, &redirect_bundle_path, &redirect_bundle_url)?;
     }
-    let redirect_bundle_url = format!(
-        "{}/{}/{}",
-        public_catalog_base_url(),
-        central_catalog_v3_path_prefix(),
-        redirect_bundle_name
-    );
-    upload_file_to_r2(ctx, &config, &redirect_bundle_path, &redirect_bundle_url)?;
 
     let mut uploaded_rule_pack_artifacts = 0usize;
     for rule_pack in &catalog.rule_packs {
