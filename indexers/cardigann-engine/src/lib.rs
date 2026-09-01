@@ -13,11 +13,15 @@ use scryer_plugin_sdk::command::{PluginActionRequest, PluginActionResponse};
 use serde_json::Value;
 use url::Url;
 
+mod baked;
 mod definition;
 mod filters;
+#[cfg(test)]
+mod gate;
 mod runtime;
 mod template;
 
+use baked::CUSTOM_DEFINITION_ID;
 use definition::{Definition, Setting};
 use runtime::EngineAction;
 
@@ -91,7 +95,9 @@ fn build_descriptor() -> sdk::PluginDescriptor {
 }
 
 fn config_fields() -> Vec<sdk::ConfigFieldDef> {
+    let baked = baked::index().expect("bundled Cardigann definitions must be valid");
     vec![
+        baked::selector(&baked),
         field(
             "base_url",
             "Base URL",
@@ -100,13 +106,20 @@ fn config_fields() -> Vec<sdk::ConfigFieldDef> {
             Some(sdk::ConfigFieldRole::ConnectionUrl),
             Some("The tracker URL selected from the definition's links."),
         ),
+        // Not required in general: selecting a bundled definition supplies the
+        // YAML. `load_definition_source` is what enforces it for Custom, so the
+        // operator gets one clear message instead of a field-level demand the
+        // bundled path would never satisfy.
         field(
             "definition_yaml",
             "Cardigann Definition",
             sdk::ConfigFieldType::Multiline,
-            true,
+            false,
             None,
-            Some("A Prowlarr Cardigann v11 YAML definition."),
+            Some(
+                "A Prowlarr Cardigann v11 YAML definition. Required only when Tracker Definition \
+                 is Custom; a bundled definition supersedes anything pasted here.",
+            ),
         ),
         field(
             "extra_field_data_json",
@@ -219,8 +232,45 @@ fn action_url(payload: &Value) -> Result<String, String> {
     Ok(url.to_string())
 }
 
+/// The YAML for the configured indexer, from whichever of the two sources the
+/// operator chose.
+///
+/// A bundled selection wins over a pasted definition: switching a configured
+/// indexer from Custom to a bundled tracker would otherwise keep silently using
+/// the stale paste. Custom — the contrib and testing escape hatch — is the only
+/// mode that requires `definition_yaml`, and says so when it is missing.
+fn load_definition_source() -> Result<String, String> {
+    resolve_definition_source(
+        host_config("definition")?.as_deref(),
+        host_config("definition_yaml")?.as_deref(),
+    )
+}
+
+fn resolve_definition_source(
+    selected: Option<&str>,
+    pasted: Option<&str>,
+) -> Result<String, String> {
+    let selected = selected.map(str::trim).filter(|value| !value.is_empty());
+    match selected {
+        None | Some(CUSTOM_DEFINITION_ID) => pasted
+            .filter(|value| !value.trim().is_empty())
+            .map(str::to_string)
+            .ok_or_else(|| {
+                "`definition_yaml` must be configured when `definition` is `Custom`; pick a \
+                 bundled Cardigann definition instead, or paste a Cardigann v11 YAML definition"
+                    .to_string()
+            }),
+        Some(id) => baked::definition_yaml(id)?.ok_or_else(|| {
+            format!(
+                "`{id}` is not a bundled Cardigann definition; pick one from the `definition` \
+                 list, or select `Custom` and paste the definition into `definition_yaml`"
+            )
+        }),
+    }
+}
+
 fn load_definition_and_config() -> Result<(Definition, BTreeMap<String, String>), String> {
-    let definition_yaml = required_host_config("definition_yaml")?;
+    let definition_yaml = load_definition_source()?;
     let definition = parse_definition(&definition_yaml)?;
     let mut config = BTreeMap::new();
     for key in HOST_CONFIG_KEYS {
@@ -273,12 +323,6 @@ fn validate_configured_base_url(
 /// One descriptor-bound configuration value from the component host.
 fn host_config(key: &str) -> Result<Option<String>, String> {
     Ok(component::config_get(key))
-}
-
-fn required_host_config(key: &str) -> Result<String, String> {
-    host_config(key)?
-        .filter(|value| !value.trim().is_empty())
-        .ok_or_else(|| format!("`{key}` must be configured"))
 }
 
 fn merge_extra_field_data(
@@ -389,9 +433,110 @@ search:
         );
     }
 
+    /// One option per bundled definition is what makes this descriptor large,
+    /// and the host carries descriptors in a custom section capped at 1 MiB.
+    /// Options stay to an id, a label, and a base URL for exactly this reason;
+    /// this is the guard that notices if something heavier creeps in.
+    #[test]
+    fn the_bundled_selector_leaves_descriptor_headroom() {
+        let encoded = serde_json::to_vec(&build_descriptor()).expect("descriptor encodes");
+        eprintln!("Cardigann descriptor: {} bytes", encoded.len());
+        assert!(
+            encoded.len() < 512 * 1024,
+            "descriptor grew to {} bytes",
+            encoded.len()
+        );
+    }
+
     #[test]
     fn parser_keeps_cardigann_schema_validation() {
         assert_eq!(parse_definition(DEFINITION).unwrap().id, "example");
+    }
+
+    #[test]
+    fn configuration_leads_with_the_definition_selector_and_demotes_pasted_yaml() {
+        let fields = config_fields();
+        assert_eq!(fields[0].key, "definition");
+        assert_eq!(fields[0].field_type, sdk::ConfigFieldType::Select);
+        let pasted = fields
+            .iter()
+            .find(|field| field.key == "definition_yaml")
+            .expect("the paste-in escape hatch stays available");
+        assert!(
+            !pasted.required,
+            "a bundled definition supplies the YAML, so the field cannot be required"
+        );
+        assert!(
+            fields
+                .iter()
+                .find(|field| field.key == "base_url")
+                .is_some_and(|field| field.required)
+        );
+    }
+
+    #[test]
+    fn a_bundled_selection_loads_its_baked_definition() {
+        let source = resolve_definition_source(Some("0magnet"), None).unwrap();
+        let definition = parse_definition(&source).unwrap();
+        assert_eq!(definition.id, "0magnet");
+        // A bundled selection is authoritative: a stale paste left behind by a
+        // Custom configuration must not keep being used.
+        assert_eq!(
+            resolve_definition_source(Some("0magnet"), Some(DEFINITION)).unwrap(),
+            source
+        );
+    }
+
+    #[test]
+    fn a_bundled_definition_keeps_the_declared_origin_check() {
+        let definition =
+            parse_definition(&resolve_definition_source(Some("0magnet"), None).unwrap()).unwrap();
+        let declared = definition
+            .links
+            .first()
+            .cloned()
+            .expect("a bundled definition declares a link");
+        validate_configured_base_url(
+            &definition,
+            &BTreeMap::from([("base_url".to_string(), declared)]),
+        )
+        .unwrap();
+        let error = validate_configured_base_url(
+            &definition,
+            &BTreeMap::from([(
+                "base_url".to_string(),
+                "https://attacker.example/".to_string(),
+            )]),
+        )
+        .unwrap_err();
+        assert!(error.contains("not declared"));
+    }
+
+    #[test]
+    fn custom_is_the_only_mode_that_demands_pasted_yaml() {
+        for selected in [None, Some(""), Some("  "), Some(CUSTOM_DEFINITION_ID)] {
+            assert_eq!(
+                resolve_definition_source(selected, Some(DEFINITION)).unwrap(),
+                DEFINITION
+            );
+            for pasted in [None, Some(""), Some("   \n ")] {
+                let error = resolve_definition_source(selected, pasted).unwrap_err();
+                assert!(
+                    error.contains("`definition_yaml` must be configured"),
+                    "{error}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn an_unknown_selection_names_both_ways_out() {
+        let error = resolve_definition_source(Some("not-a-bundled-tracker"), None).unwrap_err();
+        assert!(
+            error.contains("not a bundled Cardigann definition"),
+            "{error}"
+        );
+        assert!(error.contains("Custom"), "{error}");
     }
 
     #[test]
@@ -460,17 +605,11 @@ search:
             return;
         };
 
-        let mut definitions = std::fs::read_dir(corpus_dir)
-            .expect("read Cardigann v11 corpus")
-            .map(|entry| entry.expect("read corpus entry").path())
-            .filter(|path| {
-                matches!(
-                    path.extension().and_then(|extension| extension.to_str()),
-                    Some("yml" | "yaml")
-                )
-            })
-            .collect::<Vec<_>>();
-        definitions.sort();
+        // The same gate `xtask cardigann sync-definitions` applies, so a
+        // definition that ships in the baked asset and a definition that passes
+        // here can never diverge.
+        let definitions =
+            gate::candidate_files(std::path::Path::new(&corpus_dir)).expect("read the v11 corpus");
         assert!(!definitions.is_empty(), "Cardigann v11 corpus is empty");
 
         let total = definitions.len();
@@ -484,40 +623,9 @@ search:
                     continue;
                 }
             };
-            let definition = match parse_definition(&source) {
-                Ok(definition) => definition,
-                Err(error) => {
-                    failures.push(format!("{}: {error}", path.display()));
-                    continue;
-                }
-            };
-            let Some(base_url) = definition.links.first().cloned() else {
-                failures.push(format!("{}: definition has no base URL", path.display()));
-                continue;
-            };
-            let compiled_ir = match serde_json::to_string(&definition::CompiledIr {
-                ir_version: definition::COMPILED_IR_VERSION,
-                definition,
-            }) {
-                Ok(compiled_ir) => compiled_ir,
-                Err(error) => {
-                    failures.push(format!("{}: could not encode IR: {error}", path.display()));
-                    continue;
-                }
-            };
-            match runtime::begin(
-                compiled_ir,
-                runtime::Operation::Search(Box::default()),
-                BTreeMap::from([("base_url".to_string(), base_url)]),
-            ) {
-                Ok(runtime::Step::NeedHttp { .. }) => passed += 1,
-                Ok(step) => failures.push(format!(
-                    "{}: flow did not begin with HTTP: {step:?}",
-                    path.display()
-                )),
-                Err(error) => {
-                    failures.push(format!("{}: flow start failed: {error}", path.display()))
-                }
+            match gate::gate_definition(&source) {
+                Ok(_) => passed += 1,
+                Err(error) => failures.push(format!("{}: {error}", path.display())),
             }
         }
 

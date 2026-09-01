@@ -100,6 +100,16 @@ const ENHANCED_SYNC_LIBFVAD_VENDOR_DIR: &str = "subtitles/enhanced-sync/vendor/l
 const ENHANCED_SYNC_LIBFVAD_VENDOR_ARCHIVE: &str = "source.tar.zst";
 const ENHANCED_SYNC_LIBFVAD_VENDOR_METADATA: &str = "SCRYER_VENDOR_METADATA";
 const ENHANCED_SUBTITLE_SYNC_PLUGIN_ID: &str = "enhanced-subtitle-sync";
+const CARDIGANN_PLUGIN_DIR: &str = "indexers/cardigann-engine";
+const CARDIGANN_DEFINITION_INDEX_ASSET: &str =
+    "indexers/cardigann-engine/known_cardigann_definitions.v1.jsonl";
+const CARDIGANN_DEFINITION_BODIES_ASSET: &str =
+    "indexers/cardigann-engine/known_cardigann_definitions.v1.bodies.jsonl";
+const CARDIGANN_GATE_TEST: &str = "gate::tests::writes_definition_gate_report";
+const CARDIGANN_GATE_SOURCE_DIR_ENV: &str = "CARDIGANN_GATE_SOURCE_DIR";
+const CARDIGANN_GATE_INDEX_OUT_ENV: &str = "CARDIGANN_GATE_INDEX_OUT";
+const CARDIGANN_GATE_BODIES_OUT_ENV: &str = "CARDIGANN_GATE_BODIES_OUT";
+const CARDIGANN_GATE_REPORT_OUT_ENV: &str = "CARDIGANN_GATE_REPORT_OUT";
 const SUBTITLE_SYNC_PARITY_FORMATS: &[&str] = &["srt", "vtt", "ass", "ssa"];
 const SUBTITLE_SYNC_FLOAT_TOLERANCE: f64 = 1.0e-9;
 const FFMPEG_VENDOR_PATHS: &[&str] = &[
@@ -252,6 +262,7 @@ enum Commands {
     Official(OfficialArgs),
     Catalog(CatalogArgs),
     Community(CommunityArgs),
+    Cardigann(CardigannArgs),
 }
 
 #[derive(Args, Clone, Default)]
@@ -583,6 +594,30 @@ enum CommunityCommand {
     Verify {
         github_repo: String,
     },
+}
+
+#[derive(Args)]
+struct CardigannArgs {
+    #[command(subcommand)]
+    command: CardigannCommand,
+}
+
+#[derive(Subcommand)]
+enum CardigannCommand {
+    SyncDefinitions(CardigannSyncDefinitionsArgs),
+}
+
+#[derive(Args)]
+struct CardigannSyncDefinitionsArgs {
+    /// A Prowlarr/Indexers checkout's `definitions/v11` directory.
+    #[arg(long)]
+    source: PathBuf,
+    /// Where to write the machine-readable sync report.
+    #[arg(long)]
+    report: Option<PathBuf>,
+    /// Fail instead of writing when the committed asset is out of date.
+    #[arg(long)]
+    check: bool,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, ValueEnum)]
@@ -1398,6 +1433,9 @@ fn main() -> Result<()> {
             } => run_community_scaffold(&ctx, &plugin_id, &output_dir),
             CommunityCommand::Approve { github_repo } => run_community_approve(&ctx, &github_repo),
             CommunityCommand::Verify { github_repo } => run_community_verify(&ctx, &github_repo),
+        },
+        Commands::Cardigann(args) => match args.command {
+            CardigannCommand::SyncDefinitions(args) => run_cardigann_sync_definitions(&ctx, &args),
         },
     }
 }
@@ -8699,6 +8737,127 @@ fn run_community_verify(ctx: &TaskContext, github_repo: &str) -> Result<()> {
 
 fn run_catalog_validate_v2(_ctx: &TaskContext) -> Result<()> {
     retired_catalog_v2_command("catalog validate-v2")
+}
+
+#[derive(Debug, Deserialize)]
+struct CardigannSyncReport {
+    candidates: usize,
+    accepted: usize,
+    excluded: Vec<CardigannExcludedDefinition>,
+}
+
+#[derive(Debug, Deserialize)]
+struct CardigannExcludedDefinition {
+    file: String,
+    reason: String,
+}
+
+/// Rebuild the Cardigann plugin's baked definition corpus from a Prowlarr
+/// Indexers checkout.
+///
+/// The admission gate lives in the plugin crate, not here: a definition is
+/// baked only if it parses, validates, and reaches its first HTTP request under
+/// this engine. This command drives that gate through the crate's own test
+/// binary so the corpus test and the shipped asset can never enforce different
+/// bars, then moves the rendered asset into the crate and reports what it left
+/// out. A definition that fails is excluded, never shipped broken.
+fn run_cardigann_sync_definitions(
+    ctx: &TaskContext,
+    args: &CardigannSyncDefinitionsArgs,
+) -> Result<()> {
+    step("Syncing bundled Cardigann definitions");
+
+    let source = args
+        .source
+        .canonicalize()
+        .with_context(|| format!("resolve {}", args.source.display()))?;
+    if !source.is_dir() {
+        bail!("{} is not a directory", source.display());
+    }
+
+    let scratch = tempfile::tempdir().context("create Cardigann sync scratch directory")?;
+    let index_out = scratch.path().join("index.jsonl");
+    let bodies_out = scratch.path().join("bodies.jsonl");
+    let report_out = scratch.path().join("report.json");
+
+    let plugin_dir = ctx.path(CARDIGANN_PLUGIN_DIR);
+    let mut gate = ctx.command_in("cargo", &plugin_dir);
+    gate.args([
+        "test",
+        "--locked",
+        "--",
+        "--exact",
+        CARDIGANN_GATE_TEST,
+        "--nocapture",
+    ])
+    .env(CARDIGANN_GATE_SOURCE_DIR_ENV, &source)
+    .env(CARDIGANN_GATE_INDEX_OUT_ENV, &index_out)
+    .env(CARDIGANN_GATE_BODIES_OUT_ENV, &bodies_out)
+    .env(CARDIGANN_GATE_REPORT_OUT_ENV, &report_out);
+    run_checked(&mut gate).context("run the Cardigann definition gate")?;
+
+    let report_json = fs::read_to_string(&report_out).context("read the Cardigann sync report")?;
+    let report: CardigannSyncReport =
+        serde_json::from_str(&report_json).context("parse the Cardigann sync report")?;
+    let index = fs::read(&index_out).context("read the rendered definition index")?;
+    let bodies = fs::read(&bodies_out).context("read the rendered definition bodies")?;
+
+    if let Some(path) = &args.report {
+        if let Some(parent) = path
+            .parent()
+            .filter(|parent| !parent.as_os_str().is_empty())
+        {
+            fs::create_dir_all(parent).with_context(|| format!("create {}", parent.display()))?;
+        }
+        fs::write(path, &report_json).with_context(|| format!("write {}", path.display()))?;
+        ok(format!("wrote the sync report to {}", path.display()));
+    }
+
+    let mut changed = false;
+    for (relative, rendered) in [
+        (CARDIGANN_DEFINITION_INDEX_ASSET, index),
+        (CARDIGANN_DEFINITION_BODIES_ASSET, bodies),
+    ] {
+        let path = ctx.path(relative);
+        let committed = fs::read(&path).unwrap_or_default();
+        if committed == rendered {
+            ok(format!(
+                "{relative} is already current ({} bytes)",
+                rendered.len()
+            ));
+            continue;
+        }
+        changed = true;
+        if args.check {
+            warn(format!("{relative} is out of date"));
+            continue;
+        }
+        fs::write(&path, &rendered).with_context(|| format!("write {}", path.display()))?;
+        ok(format!("wrote {relative} ({} bytes)", rendered.len()));
+    }
+
+    println!(
+        "\n   Cardigann definitions: candidates={}, baked={}, excluded={}",
+        report.candidates,
+        report.accepted,
+        report.excluded.len()
+    );
+    for excluded in &report.excluded {
+        warn(format!("excluded {}: {}", excluded.file, excluded.reason));
+    }
+
+    if args.check && changed {
+        bail!(
+            "the bundled Cardigann definition asset is out of date; run `cargo xtask cardigann sync-definitions --source {}`",
+            source.display()
+        );
+    }
+    if changed {
+        ok("bundled Cardigann definitions updated");
+    } else {
+        ok("bundled Cardigann definitions unchanged");
+    }
+    Ok(())
 }
 
 fn run_ffmpeg_revendor(ctx: &TaskContext, args: FfmpegRevendorArgs) -> Result<()> {
