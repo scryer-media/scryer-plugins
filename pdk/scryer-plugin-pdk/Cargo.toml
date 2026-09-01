@@ -1,13 +1,13 @@
 [package]
 name = "scryer-plugin-pdk"
-version = "0.5.11"
+version = "0.6.0"
 edition = "2024"
 rust-version = "1.97.1"
 license = "GPL-3.0-only"
-description = "Guest runtime bindings for Scryer command-model WebAssembly plugins."
+description = "Guest runtime bindings for Scryer WebAssembly plugin components."
 repository = "https://github.com/scryer-media/scryer-plugins"
 readme = "README.md"
-keywords = ["scryer", "plugin", "wasm", "wasip1"]
+keywords = ["scryer", "plugin", "wasm", "wasip2"]
 categories = ["wasm"]
 
 [dependencies]
@@ -18,6 +18,24 @@ postcard = { version = "1", features = ["use-std"] }
 anyhow = "1"
 futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
 wit-bindgen = { version = "0.60", features = ["async"] }
+
+# TEMPORARY — this feature comes out once the SDK release is published.
+#
+# `PluginHostRequest::ArchiveExtract` and its request/response records exist
+# only in the in-repo SDK that ships with the WASI-component family hosts. The
+# published 3.10.0 carries config/state/HTTP/socket/process and nothing else,
+# so `host::archive_extract` cannot be compiled against it.
+#
+# Gating it keeps this crate buildable from crates.io for every plugin that
+# does not need the capability yet — the whole migrated indexer fleet — while a
+# plugin that does need it opts in *and* supplies the newer SDK through its own
+# workspace `[patch.crates-io]`. Deliberately not a default feature: a default
+# would make the published crate unbuildable.
+#
+# When the SDK release lands: bump `scryer-plugin-sdk` above, delete this
+# section, and make `host::archive_extract` unconditional.
+[features]
+archive-extract = []
 
 [[example]]
 name = "component_smoke"

@@ -43,7 +43,16 @@ pub fn run_download_client_bridge_with_descriptor(functions: LegacyDownloadClien
     )
 }
 
-fn bridge_download_client_command(
+/// Dispatch one download-client command against a legacy function table.
+///
+/// Public because the transport above it is no longer the only one. A client
+/// migrating to `scryer:download-client/download-client@1.0.0` keeps this
+/// bridge verbatim and hands it to
+/// [`crate::scryer_download_client_component_main!`] as its handler, so the
+/// operation semantics — merged failed history, scoped listings,
+/// non-destructive mark-imported — stay in exactly one place across both
+/// transports.
+pub fn bridge_download_client_command(
     functions: &LegacyDownloadClientFunctions,
     command: PluginDownloadClientCommand,
 ) -> PluginDownloadClientCommandResult {

@@ -9,6 +9,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::future::Future;
+use std::sync::{PoisonError, RwLock};
 
 use scryer_plugin_sdk::command::{PluginActionRequest, PluginActionResponse};
 use scryer_plugin_sdk::{
@@ -339,6 +340,40 @@ pub fn config_get(key: impl Into<String>) -> Option<String> {
     component_host::config_get(&key.into())
 }
 
+/// One configuration lookup against the indexer world's host.
+type ConfigGetHook = fn(&str) -> Option<String>;
+
+/// The indexer world's `config-get`, once an indexer component has published
+/// it.
+///
+/// This registry exists so that nothing outside
+/// [`crate::scryer_indexer_component_main!`]
+/// mentions [`config_get`] by name. That matters more than it looks: the
+/// shared [`crate::config`] shim has to reach *two* different worlds — the
+/// indexer host here, and `scryer:host/services` in [`crate::host`] — and both
+/// are `wasm32-wasip2`, so the build target cannot tell them apart. If the
+/// shim called [`config_get`] directly, every family component would keep a
+/// live `scryer:indexer/host` import that its host does not serve, and the
+/// artifact would fail to instantiate. Behind a hook, an unused import is
+/// linked out.
+static CONFIG_GET: RwLock<Option<ConfigGetHook>> = RwLock::new(None);
+
+/// Publish this indexer component's `config-get` to [`crate::config`].
+///
+/// [`crate::scryer_indexer_component_main!`] calls this; indexer plugins that call
+/// [`config_get`] directly never need it.
+pub fn install_config_get() {
+    fn hook(key: &str) -> Option<String> {
+        component_host::config_get(key)
+    }
+
+    *CONFIG_GET.write().unwrap_or_else(PoisonError::into_inner) = Some(hook);
+}
+
+pub(crate) fn installed_config_get() -> Option<ConfigGetHook> {
+    *CONFIG_GET.read().unwrap_or_else(PoisonError::into_inner)
+}
+
 /// Return the host-resolved provider profile bytes for this configured
 /// component instance.
 pub fn provider_profile_bytes() -> Option<Vec<u8>> {
@@ -368,6 +403,43 @@ pub fn state_cas(
 
 pub fn log(level: component_host::LogLevel, message: impl AsRef<str>) {
     component_host::log(level, message.as_ref());
+}
+
+/// Publish this indexer component's `log` to [`crate::log`].
+///
+/// [`crate::scryer_indexer_component_main!`] calls this; indexer plugins that
+/// call [`log`] directly never need it.
+///
+/// It exists for exactly the reason [`install_config_get`] does, one dependency
+/// further out. `newznab-common` and the other shared search crates are linked
+/// into indexer components *and* — through providers like amenzb — into family
+/// components, which serve `scryer:host/services` and no indexer world at all.
+/// A direct call to [`log`] from shared code would leave every one of those
+/// artifacts importing `scryer:indexer/host`, and a named import is kept alive
+/// by the linker whether or not the branch runs. Behind this hook, shared code
+/// calls [`crate::log::log`], an indexer routes it here, a family component
+/// routes it to stderr, and neither names the other's world.
+pub fn install_log() {
+    fn hook(level: crate::log::LogLevel, message: &str) {
+        component_host::log(host_log_level(level), message);
+    }
+
+    crate::log::install_log(hook);
+}
+
+/// The PDK's world-agnostic level as the indexer world declares it.
+///
+/// The two enums have the same five cases by construction, so this is total and
+/// lossless; a new case on either side is a compile error here rather than a
+/// silently downgraded diagnostic.
+fn host_log_level(level: crate::log::LogLevel) -> component_host::LogLevel {
+    match level {
+        crate::log::LogLevel::Trace => component_host::LogLevel::Trace,
+        crate::log::LogLevel::Debug => component_host::LogLevel::Debug,
+        crate::log::LogLevel::Info => component_host::LogLevel::Info,
+        crate::log::LogLevel::Warn => component_host::LogLevel::Warn,
+        crate::log::LogLevel::Error => component_host::LogLevel::Error,
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -609,6 +681,23 @@ mod tests {
             absolute_episode: None,
             tagged_aliases: vec![],
             context: None,
+        }
+    }
+
+    #[test]
+    fn every_world_agnostic_level_has_an_indexer_world_level() {
+        for (level, expected) in [
+            (crate::log::LogLevel::Trace, component_host::LogLevel::Trace),
+            (crate::log::LogLevel::Debug, component_host::LogLevel::Debug),
+            (crate::log::LogLevel::Info, component_host::LogLevel::Info),
+            (crate::log::LogLevel::Warn, component_host::LogLevel::Warn),
+            (crate::log::LogLevel::Error, component_host::LogLevel::Error),
+        ] {
+            // The mapping is total by construction; this pins that the two
+            // enums stay the same five cases in the same order, so a level
+            // added to one side cannot silently arrive at the host as
+            // something else.
+            assert_eq!(host_log_level(level), expected);
         }
     }
 

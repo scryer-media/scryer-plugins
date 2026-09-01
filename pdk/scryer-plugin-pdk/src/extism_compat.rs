@@ -2,7 +2,12 @@
 //!
 //! This is not an Extism runtime. It preserves the narrow `Error`, config, and
 //! HTTP call shapes the first-party clients already use while routing each
-//! operation through the native `scryer:host/v1` service.
+//! operation through Scryer's host services in [`crate::host`].
+//!
+//! Keeping these shapes is what makes the component migration mechanical: a
+//! plugin swaps `use extism_pdk::*` for the PDK's re-exports and its body —
+//! `config::get`, `var::get`/`set`, `http::request` — compiles unchanged over
+//! the new transport.
 
 use std::collections::BTreeMap;
 
@@ -78,12 +83,20 @@ pub mod config {
     /// shape so callers can either propagate host failures or treat them as a
     /// missing optional setting.
     pub fn get(key: impl Into<String>) -> FnResult<Option<String>> {
-        #[cfg(all(target_arch = "wasm32", target_os = "wasi", target_env = "p2"))]
-        {
-            return Ok(crate::component::config_get(key));
+        // Two component contracts reach configuration by different imports, so
+        // the discriminator is which one this instance actually has, not what
+        // it was compiled for: both are `wasm32-wasip2`. A family component's
+        // entry macro installs the `scryer:host/services` transport, an
+        // indexer component's publishes its own world's `config-get`, and both
+        // happen before any plugin code runs. Neither branch may *name* the
+        // other world's import, or every component would carry an import its
+        // host does not serve; see `component::install_config_get`.
+        if super::host::host_call_installed() {
+            return Ok(super::host::config_get(key)?);
         }
-
-        #[cfg(not(all(target_arch = "wasm32", target_os = "wasi", target_env = "p2")))]
+        if let Some(config_get) = crate::component::installed_config_get() {
+            return Ok(config_get(&key.into()));
+        }
         Ok(super::host::config_get(key)?)
     }
 }
