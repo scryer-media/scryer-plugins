@@ -6,5 +6,12 @@ license = "GPL-3.0-only"
 description = "Migration support for indexer plugins moving from the Extism SDK to the command-style PDK"
 
 [dependencies]
-scryer-plugin-pdk = "0.5.10"
-scryer-plugin-sdk = "3.9.0"
+# Path PDK, forced by `newznab-common-legacy`. That engine had to move off the
+# published 0.5.10 to become world-agnostic (0.5.10's `host.rs` still declares
+# the deleted `scryer:host/v1` extern), and this crate shares a dependency graph
+# with it through `dognzb` and `nzbgeek`. Two PDK majors cannot coexist there:
+# 0.6.0 requires SDK 3.10, and 0.5.10 does not compile against 3.10 — it imports
+# `PluginHttpBatchRequest` and `PluginHttpStartRate`, both since removed. No
+# source in this crate changed.
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
+scryer-plugin-sdk = "3.10.0"

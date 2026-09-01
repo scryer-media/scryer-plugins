@@ -22,6 +22,12 @@ fn build_descriptor() -> PluginDescriptor {
             provider_type: "nzbgeek".to_string(),
             provider_aliases: vec![],
             search_semantics_version: Some(1),
+            // Added by SDK 3.10, which this plugin reached through the
+            // `newznab-common-legacy` PDK bump. Both values reproduce the
+            // 3.9 behaviour exactly: no host-resolved provider profiles and
+            // no strategy-plan capability, neither of which existed then.
+            provider_profiles: vec![],
+            strategy_plan: None,
             source_kind: IndexerSourceKind::Usenet,
             capabilities: Capabilities {
                 supported_ids: HashMap::from([

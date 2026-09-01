@@ -1,6 +1,6 @@
 [package]
 name = "amenzb-subtitles"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "ameNZB anime subtitle provider using public release subtitle attachments"
@@ -10,7 +10,13 @@ official = true
 plugin_id = "amenzb-subtitles"
 status = "beta"
 catalog_versions = ["v3"]
-min_scryer_version = "0.18.0"
+# TEMPORARY — the placeholder for the first Scryer release whose subtitle
+# backing is the `scryer:subtitle/subtitle-provider@1.0.0` component host. A
+# Preview 1 command runtime cannot instantiate this artifact at all, so the
+# floor has to move with that release; 0.18.23 is the same placeholder every
+# migrated subtitle provider carries. Replace them all with the real version at
+# release.
+min_scryer_version = "0.18.23"
 feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/amenzb"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/amenzb"
@@ -20,12 +26,26 @@ crate-type = ["cdylib"]
 
 [dependencies]
 base64 = "0.23"
-extism-pdk = "1.4"
+# The *synchronous* newznab engine, and deliberately so. Its sibling
+# `indexers/newznab-common` is the same protocol rewritten around the indexer
+# component world — an `async` `execute_raw_search` over `component::http`,
+# `StartRateGate` and the world's monotonic clock — all of which are
+# `scryer:indexer/host@1.1.0` imports that this world does not serve and that a
+# synchronous `process` export could not drive anyway. This crate reaches
+# Scryer only through the PDK's world-agnostic surfaces, so it links cleanly
+# into a subtitle component.
 newznab-common = { package = "newznab-common-legacy", path = "../../indexers/newznab-common-legacy" }
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
+scryer-plugin-sdk = "3.10.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-scryer-plugin-sdk = "3.7.0"
 url = "2"
+wit-bindgen = "0.60"
+
+[dev-dependencies]
+postcard = { version = "1", features = ["use-std"] }
+wasmtime = "47.0.3"
+wasmtime-wasi = "47.0.3"
 
 [profile.plugin-release]
 inherits = "release"

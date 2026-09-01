@@ -22,11 +22,16 @@ path = "src/lib.rs"
 
 [dependencies]
 indexer-command-compat = { path = "../command-compat" }
-scryer-plugin-pdk = "=0.5.10"
+# Path PDK / SDK 3.10, forced by the `newznab-common-legacy` bump (see that
+# crate's manifest). The exact `=0.5.10` / `=3.9.0` pins became unsatisfiable
+# the moment the shared engine moved to PDK 0.6.0, which requires SDK 3.10.
+# This plugin's own source is unchanged; it is still a Preview 1 command guest
+# and still awaits its component migration.
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
 newznab-common = { package = "newznab-common-legacy", path = "../newznab-common-legacy" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-scryer-plugin-sdk = "=3.9.0"
+scryer-plugin-sdk = "3.10.0"
 
 [profile.plugin-release]
 inherits = "release"

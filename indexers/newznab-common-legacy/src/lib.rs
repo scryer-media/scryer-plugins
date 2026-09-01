@@ -4,15 +4,33 @@
 //! both the generic `newznab` and the NZBGeek-specific `nzbgeek` plugins.
 //! Each plugin is a thin wrapper that calls [`execute_full_search`] with
 //! a provider-specific [`MetadataExtractor`] callback.
+//!
+//! # This engine is world-agnostic; its async sibling is not
+//!
+//! `indexers/newznab-common` is the same protocol engine rewritten around the
+//! indexer component world: its `execute_raw_search` is `async` and it reaches
+//! upstream through `component::http`, `StartRateGate` and the world's
+//! monotonic clock. Those imports belong to `scryer:indexer/host@1.1.0`, so
+//! that crate can only ever be linked into an indexer component.
+//!
+//! This one is **synchronous** and reaches Scryer only through the PDK's
+//! world-agnostic surfaces — `config::get`, `http::request`, `var::*` over the
+//! injected host-services transport, and `pdk::log` for diagnostics. It
+//! therefore links cleanly into *either* shape, which is what lets
+//! `subtitles/amenzb` share the newznab search engine from inside a subtitle
+//! component instead of forking it. Nothing in here may name a world import
+//! directly; see `scryer_plugin_pdk::log` for why that is a linking property
+//! rather than a matter of taste.
 
 use std::collections::HashMap;
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use indexer_command_compat::{LogLevel, log, structured_plugin_error};
+use indexer_command_compat::structured_plugin_error;
 use quick_xml::escape::unescape;
 use quick_xml::events::{Event, attributes::Attribute};
 use quick_xml::{Reader, XmlVersion};
+use scryer_plugin_pdk::log::LogLevel;
 use scryer_plugin_pdk::*;
 pub use scryer_plugin_sdk::command::{PluginActionRequest, PluginActionResponse};
 pub use scryer_plugin_sdk::{
@@ -29,6 +47,20 @@ pub use scryer_plugin_sdk::{
 use serde::{Deserialize, Serialize};
 use unicode_normalization::{UnicodeNormalization, char::is_combining_mark};
 use url::Url;
+
+/// Emit one diagnostic through the PDK's world-agnostic sink.
+///
+/// This replaces `indexer_command_compat::log!`, which hard-coded `eprintln!`.
+/// The behaviour is the same wherever this crate is linked today — the family
+/// component hosts and the Preview 1 command host both capture guest stderr,
+/// and the PDK's default sink is stderr — but it is now the *installed* sink
+/// that decides, so a consumer that later becomes an indexer component gets
+/// host-service logging without touching this engine.
+macro_rules! log {
+    ($level:expr, $($argument:tt)*) => {
+        scryer_plugin_pdk::log::log($level, &format!($($argument)*))
+    };
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PasswordMetadataClassification {

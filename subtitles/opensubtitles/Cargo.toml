@@ -1,6 +1,6 @@
 [package]
 name = "opensubtitles-subtitle-provider"
-version = "0.1.18"
+version = "0.2.0"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "OpenSubtitles subtitle provider with provider-managed auth, search, and download"
@@ -9,7 +9,13 @@ description = "OpenSubtitles subtitle provider with provider-managed auth, searc
 official = true
 plugin_id = "opensubtitles"
 catalog_versions = ["v3"]
-min_scryer_version = "0.18.0"
+# TEMPORARY — the placeholder for the first Scryer release whose subtitle
+# backing is the `scryer:subtitle/subtitle-provider@1.0.0` component host. A
+# Preview 1 command runtime cannot instantiate this artifact at all, so the
+# floor has to move with that release; 0.18.23 is the same placeholder the
+# tsukihime pilot and the archive extractor carry. Replace them together with
+# the real version at release.
+min_scryer_version = "0.18.23"
 feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/opensubtitles"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/opensubtitles"
@@ -19,10 +25,18 @@ crate-type = ["cdylib"]
 
 [dependencies]
 base64 = "0.23"
-extism-pdk = "1.4"
-scryer-plugin-sdk = "3.7.0"
+# No `archive-extract` feature and no `[patch.crates-io]`: OpenSubtitles hands
+# back a plain `srt` document, so nothing here opens a container.
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
+scryer-plugin-sdk = "3.10.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+wit-bindgen = "0.60"
+
+[dev-dependencies]
+postcard = { version = "1", features = ["use-std"] }
+wasmtime = "47.0.3"
+wasmtime-wasi = "47.0.3"
 
 [profile.plugin-release]
 inherits = "release"

@@ -1,23 +1,77 @@
-#[cfg(test)]
-use std::collections::BTreeMap;
+//! Jimaku subtitles, as a WASI Preview 2 component.
+//!
+//! The plugin implements `scryer:subtitle/subtitle-provider@1.0.0`: two
+//! exports carrying UTF-8 JSON (`describe` returns a `PluginDescriptor`,
+//! `process` exchanges a `PluginCommandRequest` for a
+//! `PluginCommandResponse`), plus the shared `scryer:host/services@1.0.0`
+//! import every non-archive family world uses for config, plugin state, and
+//! HTTP.
+//!
+//! ## What the migration changed
+//!
+//! The previous artifact was an Extism-style `cdylib` with four exported entry
+//! points (`scryer_describe`, `scryer_validate_config`,
+//! `scryer_subtitle_search`, `scryer_subtitle_download`) whose host services
+//! arrived through the core-module `scryer:host/v1` pointer ABI. A component
+//! has no exported linear memory for a host to slice, so both halves move onto
+//! the canonical ABI: the four entry points collapse into one `process` export
+//! dispatching the SDK's [`PluginSubtitleCommand`], and host services cross as
+//! postcard `list<u8>` values through [`scryer_plugin_pdk::host`].
+//!
+//! Provider behaviour is unchanged — the same AniList-first entry resolution,
+//! the same name-search fallback policy, the same bounded 429 wait budget, the
+//! same language detection and match hints. What used to be an Extism
+//! `FnResult` hard failure is now the SDK's typed [`PluginResult::Err`]; a
+//! rate-limited search still returns an empty result set rather than failing.
+//!
+//! ## No host archive extraction here
+//!
+//! Jimaku files may be archives (`is_archive`), and this provider has never
+//! opened one: it forwards the bytes and lets Scryer's own extraction step deal
+//! with the container. There is therefore nothing to route through
+//! [`scryer_plugin_pdk::host::archive_extract`], and the plugin does not enable
+//! the PDK's `archive-extract` feature.
+
 #[cfg(test)]
 use std::collections::VecDeque;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 use std::time::Duration;
 
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
-use extism_pdk::*;
+use scryer_plugin_pdk::sdk::command::{PluginSubtitleCommand, PluginSubtitleCommandResult};
+use scryer_plugin_pdk::{HttpRequest, HttpResponse, config, http};
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
-    ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginResult,
-    ProviderDescriptor, SDK_VERSION, SubtitleCapabilities, SubtitleDescriptor, SubtitleMatchHint,
-    SubtitleMatchHintKind, SubtitlePluginCandidate, SubtitlePluginDownloadRequest,
-    SubtitlePluginDownloadResponse, SubtitlePluginSearchRequest, SubtitlePluginSearchResponse,
-    SubtitlePluginValidateConfigRequest, SubtitlePluginValidateConfigResponse,
-    SubtitleProviderMode, SubtitleQueryMediaKind, SubtitleValidateConfigStatus,
+    ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginError,
+    PluginErrorCode, PluginResult, ProviderDescriptor, SDK_VERSION, SubtitleCapabilities,
+    SubtitleDescriptor, SubtitleMatchHint, SubtitleMatchHintKind, SubtitlePluginCandidate,
+    SubtitlePluginDownloadRequest, SubtitlePluginDownloadResponse, SubtitlePluginSearchRequest,
+    SubtitlePluginSearchResponse, SubtitlePluginValidateConfigRequest,
+    SubtitlePluginValidateConfigResponse, SubtitleProviderMode, SubtitleQueryMediaKind,
+    SubtitleValidateConfigStatus,
 };
 use serde::{Deserialize, Serialize};
+
+wit_bindgen::generate!({
+    // Fully qualified: `path` resolves two packages, so a bare world name is
+    // ambiguous even though only one of them declares a world.
+    world: "scryer:subtitle/subtitle-provider@1.0.0",
+    // Two packages, two paths, matching the host's own bindgen: the shared
+    // `scryer:host` package is listed first so the family package's
+    // `import scryer:host/services@1.0.0` resolves against it.
+    path: ["wit/host-v1.0.0", "wit/subtitle-v1.0.0"],
+    // The shared host package lives in its own WIT package, so wit-bindgen
+    // asks explicitly whether to generate for it. Yes: the PDK holds only a
+    // `fn` pointer and the entry macro binds it to this module's
+    // `scryer::host::services::host-call`.
+    generate_all,
+});
+
+scryer_plugin_pdk::scryer_subtitle_component_main!(
+    descriptor = descriptor,
+    handler = handle_subtitle_command,
+);
 
 const API_BASE: &str = "https://jimaku.cc/api";
 const USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"));
@@ -85,15 +139,46 @@ struct JimakuDownloadRef {
     episode: Option<i32>,
 }
 
-#[plugin_fn]
-pub fn scryer_describe(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&descriptor())?)
+/// One `process` invocation, dispatched by operation.
+///
+/// This is the whole of the world's request surface: `describe` is owned by
+/// the PDK entry macro, and every operational failure is reported in-band
+/// through [`PluginResult`], never as a world-level `invocation-error`.
+fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleCommandResult {
+    match command {
+        PluginSubtitleCommand::ValidateConfig(request) => {
+            PluginSubtitleCommandResult::ValidateConfig(PluginResult::Ok(validate_config(&request)))
+        }
+        PluginSubtitleCommand::Search(request) => {
+            PluginSubtitleCommandResult::Search(search(&request))
+        }
+        PluginSubtitleCommand::Download(request) => {
+            PluginSubtitleCommandResult::Download(download(&request))
+        }
+        // Jimaku is a catalog provider: it serves subtitles that already exist
+        // upstream and has no generator. The host reads
+        // `SubtitleCapabilities::mode` and never routes a generate here, so
+        // this arm answers in-band rather than trapping.
+        PluginSubtitleCommand::Generate(_) => {
+            PluginSubtitleCommandResult::Generate(PluginResult::Err(PluginError {
+                code: PluginErrorCode::Unsupported,
+                public_message: "Jimaku is a catalog subtitle provider and cannot generate \
+                                 subtitles"
+                    .to_string(),
+                debug_message: Some(
+                    "SubtitleProviderMode::Catalog advertises no generate capability".to_string(),
+                ),
+                retry_after_seconds: None,
+                details: None,
+            }))
+        }
+    }
 }
 
-#[plugin_fn]
-pub fn scryer_validate_config(input: String) -> FnResult<String> {
-    let _: SubtitlePluginValidateConfigRequest = serde_json::from_str(&input)?;
-    let response = match JimakuConfig::from_extism() {
+fn validate_config(
+    _request: &SubtitlePluginValidateConfigRequest,
+) -> SubtitlePluginValidateConfigResponse {
+    match JimakuConfig::from_host() {
         Ok(config) => {
             match jimaku_get_json::<Vec<JimakuEntry>>(&config, "entries/search?query=naruto") {
                 Ok(_) => SubtitlePluginValidateConfigResponse {
@@ -109,31 +194,77 @@ pub fn scryer_validate_config(input: String) -> FnResult<String> {
             message: Some(error),
             retry_after_seconds: None,
         },
+    }
+}
+
+/// A rate-limited search is still an empty result set, not a failure —
+/// `search_subtitles_impl` owns that rule and is unchanged. Every other
+/// failure was an Extism `FnResult` hard failure and is now the SDK's typed
+/// [`PluginResult::Err`]: same meaning, typed channel.
+fn search(request: &SubtitlePluginSearchRequest) -> PluginResult<SubtitlePluginSearchResponse> {
+    let config = match JimakuConfig::from_host() {
+        Ok(config) => config,
+        Err(error) => return PluginResult::Err(plugin_error(error)),
     };
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+    match search_subtitles_impl(&config, request) {
+        Ok(results) => PluginResult::Ok(SubtitlePluginSearchResponse { results }),
+        Err(error) => PluginResult::Err(plugin_error(error)),
+    }
 }
 
-#[plugin_fn]
-pub fn scryer_subtitle_search(input: String) -> FnResult<String> {
-    let request: SubtitlePluginSearchRequest = serde_json::from_str(&input)?;
-    let config = JimakuConfig::from_extism().map_err(Error::msg)?;
-    let results = search_subtitles_impl(&config, &request).map_err(Error::msg)?;
-    Ok(serde_json::to_string(&PluginResult::Ok(
-        SubtitlePluginSearchResponse { results },
-    ))?)
+fn download(
+    request: &SubtitlePluginDownloadRequest,
+) -> PluginResult<SubtitlePluginDownloadResponse> {
+    let reference: JimakuDownloadRef = match serde_json::from_str(&request.provider_file_id) {
+        Ok(reference) => reference,
+        Err(error) => {
+            return PluginResult::Err(plugin_error(format!(
+                "Jimaku subtitle reference is not valid: {error}"
+            )));
+        }
+    };
+    match download_subtitle_impl(&reference) {
+        Ok(response) => PluginResult::Ok(response),
+        Err(error) => PluginResult::Err(plugin_error(error)),
+    }
 }
 
-#[plugin_fn]
-pub fn scryer_subtitle_download(input: String) -> FnResult<String> {
-    let request: SubtitlePluginDownloadRequest = serde_json::from_str(&input)?;
-    let reference: JimakuDownloadRef =
-        serde_json::from_str(&request.provider_file_id).map_err(Error::msg)?;
-    let response = download_subtitle_impl(&reference).map_err(Error::msg)?;
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+/// Map this provider's string failures onto the SDK's typed error.
+///
+/// The classification is the same one `validation_error_response` already
+/// applied to the very same messages, so a search failure and a validation
+/// failure now agree about what kind of problem they saw.
+fn plugin_error(error: String) -> PluginError {
+    let (code, retry_after_seconds) = if error.contains("authentication failed") {
+        (PluginErrorCode::AuthFailed, None)
+    } else if is_rate_limit_error(&error) {
+        (
+            PluginErrorCode::RateLimited,
+            retry_after_from_message(&error),
+        )
+    } else if error.contains("required") || error.contains("missing") {
+        (PluginErrorCode::InvalidConfig, None)
+    } else if error.contains("request failed") {
+        (PluginErrorCode::UpstreamUnavailable, None)
+    } else {
+        (PluginErrorCode::Temporary, None)
+    };
+    PluginError {
+        code,
+        public_message: error,
+        debug_message: None,
+        retry_after_seconds,
+        details: None,
+    }
+}
+
+fn retry_after_from_message(error: &str) -> Option<i64> {
+    let (_, tail) = error.split_once("retry after ")?;
+    tail.trim_end_matches('s').trim().parse::<i64>().ok()
 }
 
 impl JimakuConfig {
-    fn from_extism() -> Result<Self, String> {
+    fn from_host() -> Result<Self, String> {
         Ok(Self {
             api_key: config_required_string("api_key")?,
             enable_name_search_fallback: config_bool("enable_name_search_fallback", true),
@@ -581,14 +712,19 @@ fn jimaku_get_json<T: for<'de> Deserialize<'de>>(
         .map_err(|error| format!("Jimaku JSON parse error: {error}"))
 }
 
+/// The provider's own owned copy of one response.
+///
+/// The header map is a `BTreeMap` now rather than a `HashMap`: that is the
+/// shape [`scryer_plugin_pdk::HttpResponse`] hands back, and it is the only
+/// type change the migration forced anywhere in this file.
 struct JimakuHttpResponse {
     status: u16,
-    headers: HashMap<String, String>,
+    headers: BTreeMap<String, String>,
     body: Vec<u8>,
 }
 
 impl JimakuHttpResponse {
-    fn from_extism(response: HttpResponse) -> Self {
+    fn from_host(response: HttpResponse) -> Self {
         Self {
             status: response.status_code(),
             headers: response.headers().clone(),
@@ -600,7 +736,7 @@ impl JimakuHttpResponse {
         self.status
     }
 
-    fn headers(&self) -> &HashMap<String, String> {
+    fn headers(&self) -> &BTreeMap<String, String> {
         &self.headers
     }
 
@@ -617,7 +753,7 @@ fn http_get(url: &str, api_key: Option<&str>) -> Result<JimakuHttpResponse, Stri
         |request| {
             let response = http::request::<Vec<u8>>(request, None)
                 .map_err(|error| format!("Jimaku request failed: {error}"))?;
-            Ok(JimakuHttpResponse::from_extism(response))
+            Ok(JimakuHttpResponse::from_host(response))
         },
         std::thread::sleep,
     )

@@ -1,16 +1,85 @@
+//! Whisper subtitle generation, as a WASI Preview 2 component.
+//!
+//! The plugin implements `scryer:subtitle/subtitle-provider@1.0.0`: two
+//! exports carrying UTF-8 JSON (`describe` returns a `PluginDescriptor`,
+//! `process` exchanges a `PluginCommandRequest` for a
+//! `PluginCommandResponse`), plus the shared `scryer:host/services@1.0.0`
+//! import every non-archive family world uses for config, plugin state, and
+//! HTTP.
+//!
+//! ## The one generator in the family
+//!
+//! Every other subtitle provider is a
+//! [`SubtitleProviderMode::Catalog`] plugin that answers `Search` and
+//! `Download` and reports `Generate` as unsupported. This one is the mirror
+//! image: it answers `Generate` and reports `Search`/`Download` as
+//! unsupported. The world is the same — a family world is per family, not per
+//! mode — and the host routes by the `mode` this descriptor advertises, so the
+//! unsupported arms exist to answer rather than to trap.
+//!
+//! ## What the migration changed
+//!
+//! The previous artifact was an Extism-style `cdylib` with three exported
+//! entry points (`scryer_describe`, `scryer_validate_config`,
+//! `scryer_subtitle_generate`) whose host services arrived through the
+//! core-module `scryer:host/v1` pointer ABI. A component has no exported
+//! linear memory for a host to slice, so both halves move onto the canonical
+//! ABI: the entry points collapse into one `process` export dispatching the
+//! SDK's [`PluginSubtitleCommand`], and host services cross as postcard
+//! `list<u8>` values through [`scryer_plugin_pdk::host`].
+//!
+//! Provider behaviour is unchanged — the same OpenAI endpoints, the same
+//! multipart body, the same `srt` response format. A generation failure was an
+//! Extism `FnResult` hard failure and is now the SDK's typed
+//! [`PluginResult::Err`], classified the way `validate_config` already
+//! classified the identical message.
+//!
+//! ## The staged input is still read from the filesystem
+//!
+//! [`generate_subtitle_impl`] reads `request.input.path` with [`std::fs`], as
+//! it always has. Under Preview 2 that is `wasi:filesystem`, served from the
+//! directory the host preopens for the generator, so the artifact's import set
+//! gains `wasi:filesystem` — a WASI import like any other, not a second door
+//! to Scryer.
+//!
+//! `official = false`: this plugin is not in the catalog and plugin-ci does
+//! not build it. It is migrated anyway so the tree converges on one subtitle
+//! ABI rather than leaving a Preview 1 straggler in a component family.
+
 use std::fs;
 
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
-use extism_pdk::*;
+use scryer_plugin_pdk::sdk::command::{PluginSubtitleCommand, PluginSubtitleCommandResult};
+use scryer_plugin_pdk::{HttpRequest, HttpResponse, config, http};
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
-    ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginResult,
-    ProviderDescriptor, SDK_VERSION, SubtitleCapabilities, SubtitleDescriptor,
-    SubtitlePluginGenerateRequest, SubtitlePluginGenerateResponse,
+    ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginError,
+    PluginErrorCode, PluginResult, ProviderDescriptor, SDK_VERSION, SubtitleCapabilities,
+    SubtitleDescriptor, SubtitlePluginGenerateRequest, SubtitlePluginGenerateResponse,
     SubtitlePluginValidateConfigRequest, SubtitlePluginValidateConfigResponse,
     SubtitleProviderMode, SubtitleQueryMediaKind, SubtitleValidateConfigStatus,
 };
+
+wit_bindgen::generate!({
+    // Fully qualified: `path` resolves two packages, so a bare world name is
+    // ambiguous even though only one of them declares a world.
+    world: "scryer:subtitle/subtitle-provider@1.0.0",
+    // Two packages, two paths, matching the host's own bindgen: the shared
+    // `scryer:host` package is listed first so the family package's
+    // `import scryer:host/services@1.0.0` resolves against it.
+    path: ["wit/host-v1.0.0", "wit/subtitle-v1.0.0"],
+    // The shared host package lives in its own WIT package, so wit-bindgen
+    // asks explicitly whether to generate for it. Yes: the PDK holds only a
+    // `fn` pointer and the entry macro binds it to this module's
+    // `scryer::host::services::host-call`.
+    generate_all,
+});
+
+scryer_plugin_pdk::scryer_subtitle_component_main!(
+    descriptor = descriptor,
+    handler = handle_subtitle_command,
+);
 
 const OPENAI_API_BASE: &str = "https://api.openai.com/v1";
 const DEFAULT_RETRY_AFTER_SECONDS: i64 = 10;
@@ -27,15 +96,51 @@ struct MultipartBody {
     body: Vec<u8>,
 }
 
-#[plugin_fn]
-pub fn scryer_describe(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&descriptor())?)
+/// One `process` invocation, dispatched by operation.
+///
+/// This is the whole of the world's request surface: `describe` is owned by
+/// the PDK entry macro, and every operational failure is reported in-band
+/// through [`PluginResult`], never as a world-level `invocation-error`.
+fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleCommandResult {
+    match command {
+        PluginSubtitleCommand::ValidateConfig(request) => {
+            PluginSubtitleCommandResult::ValidateConfig(PluginResult::Ok(validate_config(&request)))
+        }
+        PluginSubtitleCommand::Generate(request) => {
+            PluginSubtitleCommandResult::Generate(generate(&request))
+        }
+        // Whisper transcribes; it has no catalog to search and nothing to
+        // download. The host reads `SubtitleCapabilities::mode` and never
+        // routes either here, so these arms answer in-band rather than
+        // trapping.
+        PluginSubtitleCommand::Search(_) => {
+            PluginSubtitleCommandResult::Search(PluginResult::Err(catalog_unsupported("search")))
+        }
+        PluginSubtitleCommand::Download(_) => PluginSubtitleCommandResult::Download(
+            PluginResult::Err(catalog_unsupported("download")),
+        ),
+    }
 }
 
-#[plugin_fn]
-pub fn scryer_validate_config(input: String) -> FnResult<String> {
-    let _: SubtitlePluginValidateConfigRequest = serde_json::from_str(&input)?;
-    let response = match WhisperConfig::from_extism() {
+/// The mirror of the catalog providers' `Generate` arm.
+fn catalog_unsupported(operation: &str) -> PluginError {
+    PluginError {
+        code: PluginErrorCode::Unsupported,
+        public_message: format!(
+            "Whisper is a subtitle generator and cannot {operation} existing subtitles"
+        ),
+        debug_message: Some(
+            "SubtitleProviderMode::Generator advertises no catalog capability".to_string(),
+        ),
+        retry_after_seconds: None,
+        details: None,
+    }
+}
+
+fn validate_config(
+    _request: &SubtitlePluginValidateConfigRequest,
+) -> SubtitlePluginValidateConfigResponse {
+    match WhisperConfig::from_host() {
         Ok(config) => match validate_api_key(&config) {
             Ok(()) => SubtitlePluginValidateConfigResponse {
                 status: SubtitleValidateConfigStatus::Valid,
@@ -49,21 +154,54 @@ pub fn scryer_validate_config(input: String) -> FnResult<String> {
             message: Some(error),
             retry_after_seconds: None,
         },
-    };
-
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+    }
 }
 
-#[plugin_fn]
-pub fn scryer_subtitle_generate(input: String) -> FnResult<String> {
-    let request: SubtitlePluginGenerateRequest = serde_json::from_str(&input)?;
-    let config = WhisperConfig::from_extism().map_err(Error::msg)?;
-    let response = generate_subtitle_impl(&config, &request).map_err(Error::msg)?;
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+fn generate(
+    request: &SubtitlePluginGenerateRequest,
+) -> PluginResult<SubtitlePluginGenerateResponse> {
+    let config = match WhisperConfig::from_host() {
+        Ok(config) => config,
+        Err(error) => return PluginResult::Err(plugin_error(error)),
+    };
+    match generate_subtitle_impl(&config, request) {
+        Ok(response) => PluginResult::Ok(response),
+        Err(error) => PluginResult::Err(plugin_error(error)),
+    }
+}
+
+/// The typed counterpart of [`validation_error_response`].
+///
+/// It reads the same messages [`http_error`] produces and reaches the same
+/// verdicts, so a generation failure and a validation failure now describe the
+/// same problem the same way — which they could not do while the Extism
+/// channel flattened everything but the text.
+fn plugin_error(error: String) -> PluginError {
+    let (code, retry_after_seconds) = if error.contains("authentication failed") {
+        (PluginErrorCode::AuthFailed, None)
+    } else if error.contains("rate limited") {
+        (
+            PluginErrorCode::RateLimited,
+            parse_retry_after_seconds(&error),
+        )
+    } else if error.contains("required") || error.contains("missing") {
+        (PluginErrorCode::InvalidConfig, None)
+    } else if error.contains("request failed") {
+        (PluginErrorCode::UpstreamUnavailable, None)
+    } else {
+        (PluginErrorCode::Temporary, None)
+    };
+    PluginError {
+        code,
+        public_message: error,
+        debug_message: None,
+        retry_after_seconds,
+        details: None,
+    }
 }
 
 impl WhisperConfig {
-    fn from_extism() -> Result<Self, String> {
+    fn from_host() -> Result<Self, String> {
         Ok(Self {
             api_key: config_required_string("api_key")?,
             model: config_string_with_default("model", "whisper-1")?,

@@ -1,19 +1,82 @@
+//! Subdl subtitles, as a WASI Preview 2 component.
+//!
+//! The plugin implements `scryer:subtitle/subtitle-provider@1.0.0`: two
+//! exports carrying UTF-8 JSON (`describe` returns a `PluginDescriptor`,
+//! `process` exchanges a `PluginCommandRequest` for a
+//! `PluginCommandResponse`), plus the shared `scryer:host/services@1.0.0`
+//! import every non-archive family world uses for config, plugin state, and
+//! HTTP.
+//!
+//! ## What the migration changed
+//!
+//! The previous artifact was an Extism-style `cdylib` with four exported entry
+//! points (`scryer_describe`, `scryer_validate_config`,
+//! `scryer_subtitle_search`, `scryer_subtitle_download`) whose host services
+//! arrived through the core-module `scryer:host/v1` pointer ABI. A component
+//! has no exported linear memory for a host to slice, so both halves move onto
+//! the canonical ABI: the four entry points collapse into one `process` export
+//! dispatching the SDK's [`PluginSubtitleCommand`], and host services cross as
+//! postcard `list<u8>` values through [`scryer_plugin_pdk::host`].
+//!
+//! Provider behaviour is unchanged — the same query construction, the same
+//! TMDB fallback, the same season-pack unpack-file expansion, the same retry
+//! policy and match hints.
+//!
+//! ## [`Failure`] finally reaches the host
+//!
+//! This provider already classified every failure ([`FailureKind`]) and used
+//! that classification for `validate_config`. Under Extism the other two
+//! operations threw the classification away and reported a bare message as a
+//! host-visible fault. The typed [`PluginResult::Err`] channel carries it, so
+//! `search` and `download` now report the same kind of problem
+//! `validate_config` always did — including the retry hint on a rate limit.
+//!
+//! ## No host archive extraction here
+//!
+//! Subdl serves zipped subtitles, and this provider has never opened one: it
+//! forwards the container and lets Scryer's own extraction step deal with it.
+//! There is therefore nothing to route through
+//! [`scryer_plugin_pdk::host::archive_extract`], and the plugin does not enable
+//! the PDK's `archive-extract` feature.
+
 use std::collections::BTreeSet;
 use std::time::Duration;
 
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
-use extism_pdk::*;
+use scryer_plugin_pdk::sdk::command::{PluginSubtitleCommand, PluginSubtitleCommandResult};
+use scryer_plugin_pdk::{HttpRequest, HttpResponse, config, http};
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
-    ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginResult,
-    ProviderDescriptor, SDK_VERSION, SubtitleCapabilities, SubtitleDescriptor, SubtitleMatchHint,
-    SubtitleMatchHintKind, SubtitlePluginCandidate, SubtitlePluginDownloadRequest,
-    SubtitlePluginDownloadResponse, SubtitlePluginSearchRequest, SubtitlePluginSearchResponse,
-    SubtitlePluginValidateConfigRequest, SubtitlePluginValidateConfigResponse,
-    SubtitleProviderMode, SubtitleQueryMediaKind, SubtitleValidateConfigStatus,
+    ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginError,
+    PluginErrorCode, PluginResult, ProviderDescriptor, SDK_VERSION, SubtitleCapabilities,
+    SubtitleDescriptor, SubtitleMatchHint, SubtitleMatchHintKind, SubtitlePluginCandidate,
+    SubtitlePluginDownloadRequest, SubtitlePluginDownloadResponse, SubtitlePluginSearchRequest,
+    SubtitlePluginSearchResponse, SubtitlePluginValidateConfigRequest,
+    SubtitlePluginValidateConfigResponse, SubtitleProviderMode, SubtitleQueryMediaKind,
+    SubtitleValidateConfigStatus,
 };
 use serde::{Deserialize, Serialize};
+
+wit_bindgen::generate!({
+    // Fully qualified: `path` resolves two packages, so a bare world name is
+    // ambiguous even though only one of them declares a world.
+    world: "scryer:subtitle/subtitle-provider@1.0.0",
+    // Two packages, two paths, matching the host's own bindgen: the shared
+    // `scryer:host` package is listed first so the family package's
+    // `import scryer:host/services@1.0.0` resolves against it.
+    path: ["wit/host-v1.0.0", "wit/subtitle-v1.0.0"],
+    // The shared host package lives in its own WIT package, so wit-bindgen
+    // asks explicitly whether to generate for it. Yes: the PDK holds only a
+    // `fn` pointer and the entry macro binds it to this module's
+    // `scryer::host::services::host-call`.
+    generate_all,
+});
+
+scryer_plugin_pdk::scryer_subtitle_component_main!(
+    descriptor = descriptor,
+    handler = handle_subtitle_command,
+);
 
 const API_BASE: &str = "https://api.subdl.com/api/v1";
 const DOWNLOAD_BASE: &str = "https://dl.subdl.com";
@@ -151,15 +214,46 @@ struct DownloadArtifact {
     filename: Option<String>,
 }
 
-#[plugin_fn]
-pub fn scryer_describe(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&descriptor())?)
+/// One `process` invocation, dispatched by operation.
+///
+/// This is the whole of the world's request surface: `describe` is owned by
+/// the PDK entry macro, and every operational failure is reported in-band
+/// through [`PluginResult`], never as a world-level `invocation-error`.
+fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleCommandResult {
+    match command {
+        PluginSubtitleCommand::ValidateConfig(request) => {
+            PluginSubtitleCommandResult::ValidateConfig(PluginResult::Ok(validate_config(&request)))
+        }
+        PluginSubtitleCommand::Search(request) => {
+            PluginSubtitleCommandResult::Search(search(&request))
+        }
+        PluginSubtitleCommand::Download(request) => {
+            PluginSubtitleCommandResult::Download(download(&request))
+        }
+        // Subdl is a catalog provider: it serves subtitles that already exist
+        // upstream and has no generator. The host reads
+        // `SubtitleCapabilities::mode` and never routes a generate here, so
+        // this arm answers in-band rather than trapping.
+        PluginSubtitleCommand::Generate(_) => {
+            PluginSubtitleCommandResult::Generate(PluginResult::Err(PluginError {
+                code: PluginErrorCode::Unsupported,
+                public_message: "Subdl is a catalog subtitle provider and cannot generate \
+                                 subtitles"
+                    .to_string(),
+                debug_message: Some(
+                    "SubtitleProviderMode::Catalog advertises no generate capability".to_string(),
+                ),
+                retry_after_seconds: None,
+                details: None,
+            }))
+        }
+    }
 }
 
-#[plugin_fn]
-pub fn scryer_validate_config(input: String) -> FnResult<String> {
-    let _: SubtitlePluginValidateConfigRequest = serde_json::from_str(&input)?;
-    let response = match SubdlConfig::from_extism() {
+fn validate_config(
+    _request: &SubtitlePluginValidateConfigRequest,
+) -> SubtitlePluginValidateConfigResponse {
+    match SubdlConfig::from_host() {
         Ok(config) => match validate_config_impl(&config) {
             Ok(()) => SubtitlePluginValidateConfigResponse {
                 status: SubtitleValidateConfigStatus::Valid,
@@ -169,35 +263,67 @@ pub fn scryer_validate_config(input: String) -> FnResult<String> {
             Err(failure) => validation_error_response(&failure),
         },
         Err(failure) => validation_error_response(&failure),
+    }
+}
+
+fn search(request: &SubtitlePluginSearchRequest) -> PluginResult<SubtitlePluginSearchResponse> {
+    let config = match SubdlConfig::from_host() {
+        Ok(config) => config,
+        Err(failure) => return PluginResult::Err(plugin_error(failure)),
     };
-
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+    match search_subtitles_impl(&config, request) {
+        Ok(results) => PluginResult::Ok(SubtitlePluginSearchResponse { results }),
+        Err(failure) => PluginResult::Err(plugin_error(failure)),
+    }
 }
 
-#[plugin_fn]
-pub fn scryer_subtitle_search(input: String) -> FnResult<String> {
-    let request: SubtitlePluginSearchRequest = serde_json::from_str(&input)?;
-    let config = SubdlConfig::from_extism().map_err(|failure| Error::msg(failure.message))?;
-    let results =
-        search_subtitles_impl(&config, &request).map_err(|failure| Error::msg(failure.message))?;
-    Ok(serde_json::to_string(&PluginResult::Ok(
-        SubtitlePluginSearchResponse { results },
-    ))?)
+fn download(
+    request: &SubtitlePluginDownloadRequest,
+) -> PluginResult<SubtitlePluginDownloadResponse> {
+    let config = match SubdlConfig::from_host() {
+        Ok(config) => config,
+        Err(failure) => return PluginResult::Err(plugin_error(failure)),
+    };
+    let reference: SubdlDownloadRef = match serde_json::from_str(&request.provider_file_id) {
+        Ok(reference) => reference,
+        Err(error) => {
+            return PluginResult::Err(plugin_error(Failure::new(
+                FailureKind::Unsupported,
+                format!("Subdl subtitle reference is not valid: {error}"),
+            )));
+        }
+    };
+    match download_subtitle_impl(&config, &reference) {
+        Ok(response) => PluginResult::Ok(response),
+        Err(failure) => PluginResult::Err(plugin_error(failure)),
+    }
 }
 
-#[plugin_fn]
-pub fn scryer_subtitle_download(input: String) -> FnResult<String> {
-    let request: SubtitlePluginDownloadRequest = serde_json::from_str(&input)?;
-    let config = SubdlConfig::from_extism().map_err(|failure| Error::msg(failure.message))?;
-    let reference: SubdlDownloadRef =
-        serde_json::from_str(&request.provider_file_id).map_err(Error::msg)?;
-    let response = download_subtitle_impl(&config, &reference)
-        .map_err(|failure| Error::msg(failure.message))?;
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+/// The typed counterpart of [`validation_error_response`].
+///
+/// Both read the same [`FailureKind`], so a `search` or `download` failure and
+/// a `validate_config` failure describe the same problem the same way — which
+/// they could not do while the Extism channel flattened everything but the
+/// message.
+fn plugin_error(failure: Failure) -> PluginError {
+    let code = match failure.kind {
+        FailureKind::InvalidConfig => PluginErrorCode::InvalidConfig,
+        FailureKind::AuthFailed => PluginErrorCode::AuthFailed,
+        FailureKind::RateLimited => PluginErrorCode::RateLimited,
+        FailureKind::Unreachable => PluginErrorCode::UpstreamUnavailable,
+        FailureKind::Unsupported | FailureKind::Provider => PluginErrorCode::Temporary,
+    };
+    PluginError {
+        code,
+        public_message: failure.message,
+        debug_message: None,
+        retry_after_seconds: failure.retry_after_seconds,
+        details: None,
+    }
 }
 
 impl SubdlConfig {
-    fn from_extism() -> Result<Self, Failure> {
+    fn from_host() -> Result<Self, Failure> {
         Ok(Self {
             api_key: config_required_string("api_key")?,
         })

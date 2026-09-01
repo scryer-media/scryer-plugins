@@ -15,9 +15,8 @@ use std::time::SystemTime;
 use quick_xml::escape::unescape;
 use quick_xml::events::{Event, attributes::Attribute};
 use quick_xml::{Reader, XmlVersion};
-use scryer_plugin_pdk::component::{
-    self, LogLevel, StructuredPluginError, structured_plugin_error,
-};
+use scryer_plugin_pdk::component::{self, StructuredPluginError, structured_plugin_error};
+use scryer_plugin_pdk::log::LogLevel;
 use scryer_plugin_pdk::*;
 pub use scryer_plugin_sdk::command::{PluginActionRequest, PluginActionResponse};
 pub use scryer_plugin_sdk::{
@@ -35,9 +34,16 @@ use serde::{Deserialize, Serialize};
 use unicode_normalization::{UnicodeNormalization, char::is_combining_mark};
 use url::Url;
 
+/// Emit one diagnostic through the PDK's world-agnostic sink.
+///
+/// Deliberately *not* `component::log`: naming the indexer world's `log` import
+/// keeps it alive in any artifact that can reach this crate, and this engine is
+/// linked into family components too. `scryer_indexer_component_main!` installs
+/// the indexer host as the sink, so an indexer's lines land exactly where they
+/// did before.
 macro_rules! log {
     ($level:expr, $($argument:tt)*) => {
-        component::log($level, format!($($argument)*))
+        scryer_plugin_pdk::log::log($level, &format!($($argument)*))
     };
 }
 
