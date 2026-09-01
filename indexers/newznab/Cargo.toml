@@ -11,7 +11,6 @@ official = true
 plugin_id = "newznab"
 catalog_versions = ["v3"]
 min_scryer_version = "0.18.22"
-feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/newznab"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/newznab"
 

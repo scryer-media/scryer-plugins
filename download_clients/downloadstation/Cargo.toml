@@ -18,7 +18,6 @@ catalog_versions = ["v3"]
 # archive extractor and the migrated subtitle provider carry. Replace it with
 # the real version at release.
 min_scryer_version = "0.18.23"
-feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/downloadstation"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/downloadstation"
 
