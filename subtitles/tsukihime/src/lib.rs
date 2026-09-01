@@ -1,11 +1,49 @@
-use std::collections::HashMap;
+//! Tsukihime subtitles, as a WASI Preview 2 component.
+//!
+//! The plugin implements `scryer:subtitle/subtitle-provider@1.0.0`: two
+//! exports carrying UTF-8 JSON (`describe` returns a `PluginDescriptor`,
+//! `process` exchanges a `PluginCommandRequest` for a
+//! `PluginCommandResponse`), plus the shared `scryer:host/services@1.0.0`
+//! import that every non-archive family world uses for config, plugin state,
+//! HTTP, and host-owned archive extraction.
+//!
+//! ## What the migration changed
+//!
+//! The previous artifact was an Extism-style `cdylib` with four exported
+//! entry points (`scryer_describe`, `scryer_validate_config`,
+//! `scryer_subtitle_search`, `scryer_subtitle_download`) whose host services
+//! arrived through the core-module `scryer:host/v1` pointer ABI. A component
+//! has no exported linear memory for a host to slice, so both halves move onto
+//! the canonical ABI: the four entry points collapse into one `process` export
+//! dispatching the SDK's [`PluginSubtitleCommand`], and host services cross as
+//! postcard `list<u8>` values through [`scryer_plugin_pdk::host`].
+//!
+//! Provider behaviour is unchanged — the same endpoints, the same
+//! plugin-owned rate-limit windows in host state, the same candidate and match
+//! hints.
+//!
+//! ## XZ is the host's job now
+//!
+//! Tsukihime serves its subtitle attachments XZ-compressed. This plugin used
+//! to carry its own `lzma-rs` decoder; it now asks the host to open the
+//! container through [`scryer_plugin_pdk::host::archive_extract`], which
+//! delegates to the installed archive extractor. That removes a second
+//! decompressor from the fleet, and it means a Scryer with no archive
+//! extractor installed answers in-band (`Unsupported`) rather than this plugin
+//! silently shipping its own limits.
+
+use std::collections::{BTreeMap, HashMap};
 use std::fmt;
-use std::io::{self, Cursor, Write};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
-use extism_pdk::*;
+use scryer_plugin_pdk::sdk::command::{PluginSubtitleCommand, PluginSubtitleCommandResult};
+use scryer_plugin_pdk::{
+    HttpRequest, PluginArchiveExtractRequest, config,
+    host::{HostCallError, archive_extract},
+    http, var,
+};
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldRole, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor,
@@ -18,6 +56,27 @@ use scryer_plugin_sdk::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+
+wit_bindgen::generate!({
+    // Fully qualified: `path` resolves two packages, so a bare world name is
+    // ambiguous even though only one of them declares a world.
+    world: "scryer:subtitle/subtitle-provider@1.0.0",
+    // Two packages, two paths, matching the host's own bindgen: the shared
+    // `scryer:host` package is listed first so the family package's
+    // `import scryer:host/services@1.0.0` resolves against it. One canonical
+    // copy of each, no `deps/` duplicates and no symlinks to keep in sync.
+    path: ["wit/host-v1.0.0", "wit/subtitle-v1.0.0"],
+    // The shared host package lives in its own WIT package, so wit-bindgen
+    // asks explicitly whether to generate for it. Yes: the PDK holds only a
+    // `fn` pointer and the entry macro binds it to this module's
+    // `scryer::host::services::host-call`.
+    generate_all,
+});
+
+scryer_plugin_pdk::scryer_subtitle_component_main!(
+    descriptor = build_descriptor,
+    handler = handle_subtitle_command,
+);
 
 const PROVIDER_ID: &str = "tsukihime-subtitles";
 const PROVIDER_TYPE: &str = "tsukihime";
@@ -33,11 +92,89 @@ const RATE_LIMIT_WINDOW_SECONDS: u64 = 60;
 const API_RATE_LIMIT_VAR_KEY: &str = "tsukihime-subtitles-api-rate-limit-v1";
 const SEARCH_RATE_LIMIT_VAR_KEY: &str = "tsukihime-subtitles-search-rate-limit-v1";
 const MAX_COMPRESSED_SUBTITLE_BYTES: usize = 2 * 1024 * 1024;
-const MAX_DECOMPRESSED_SUBTITLE_BYTES: usize = 16 * 1024 * 1024;
 
-#[plugin_fn]
-pub fn scryer_describe(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&build_descriptor())?)
+/// One `process` invocation, dispatched by operation.
+///
+/// This is the whole of the world's request surface: `describe` is owned by
+/// the PDK entry macro, and every operational failure is reported in-band
+/// through [`PluginResult`], never as a world-level `invocation-error`.
+fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleCommandResult {
+    match command {
+        PluginSubtitleCommand::ValidateConfig(request) => {
+            PluginSubtitleCommandResult::ValidateConfig(PluginResult::Ok(validate_config(&request)))
+        }
+        PluginSubtitleCommand::Search(request) => {
+            PluginSubtitleCommandResult::Search(search(&request))
+        }
+        PluginSubtitleCommand::Download(request) => {
+            PluginSubtitleCommandResult::Download(download(&request))
+        }
+        // Tsukihime is a catalog provider: it serves subtitles that already
+        // exist upstream and has no generator. The host reads
+        // `SubtitleCapabilities::mode` and never routes a generate here, so
+        // this arm answers in-band rather than trapping.
+        PluginSubtitleCommand::Generate(_) => {
+            PluginSubtitleCommandResult::Generate(PluginResult::Err(PluginError {
+                code: PluginErrorCode::Unsupported,
+                public_message: "Tsukihime is a catalog subtitle provider and cannot generate \
+                                 subtitles"
+                    .to_string(),
+                debug_message: Some(
+                    "SubtitleProviderMode::Catalog advertises no generate capability".to_string(),
+                ),
+                retry_after_seconds: None,
+                details: None,
+            }))
+        }
+    }
+}
+
+fn validate_config(
+    _request: &SubtitlePluginValidateConfigRequest,
+) -> SubtitlePluginValidateConfigResponse {
+    let config = TsukihimeConfig::from_host();
+    match get_json::<Value>(&config, "stats") {
+        Ok(_) => SubtitlePluginValidateConfigResponse {
+            status: SubtitleValidateConfigStatus::Valid,
+            message: None,
+            retry_after_seconds: None,
+        },
+        Err(error) => validation_error_response(error),
+    }
+}
+
+/// A rate-limited search is an empty result set, not a failure.
+///
+/// The plugin owns its own upstream windows, so hitting one means "nothing
+/// more this minute" and the host keeps whatever other providers returned.
+/// Every other failure is a real one. Both halves are the pre-migration
+/// behaviour; only the channel changed, from an Extism `FnResult` to the SDK's
+/// typed [`PluginResult`].
+fn search(request: &SubtitlePluginSearchRequest) -> PluginResult<SubtitlePluginSearchResponse> {
+    match subtitle_search_impl(request) {
+        Ok(results) => PluginResult::Ok(SubtitlePluginSearchResponse { results }),
+        Err(TsukihimeError::RateLimited(_)) => {
+            PluginResult::Ok(SubtitlePluginSearchResponse::default())
+        }
+        Err(error) => PluginResult::Err(plugin_error(error)),
+    }
+}
+
+fn download(
+    request: &SubtitlePluginDownloadRequest,
+) -> PluginResult<SubtitlePluginDownloadResponse> {
+    let reference: TsukihimeDownloadRef = match serde_json::from_str(&request.provider_file_id) {
+        Ok(reference) => reference,
+        Err(error) => {
+            return PluginResult::Err(plugin_error(TsukihimeError::Message(format!(
+                "Tsukihime subtitle reference is not valid: {error}"
+            ))));
+        }
+    };
+    match subtitle_download_impl(&reference) {
+        Ok(response) => PluginResult::Ok(response),
+        Err(error) => PluginResult::Err(plugin_error(error)),
+    }
 }
 
 fn build_descriptor() -> PluginDescriptor {
@@ -83,44 +220,6 @@ fn build_descriptor() -> PluginDescriptor {
     }
 }
 
-#[plugin_fn]
-pub fn scryer_validate_config(input: String) -> FnResult<String> {
-    let _: SubtitlePluginValidateConfigRequest = serde_json::from_str(&input)?;
-    let config = TsukihimeConfig::from_extism();
-    let response = match get_json::<Value>(&config, "stats") {
-        Ok(_) => SubtitlePluginValidateConfigResponse {
-            status: SubtitleValidateConfigStatus::Valid,
-            message: None,
-            retry_after_seconds: None,
-        },
-        Err(error) => validation_error_response(error),
-    };
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
-}
-
-#[plugin_fn]
-pub fn scryer_subtitle_search(input: String) -> FnResult<String> {
-    let request: SubtitlePluginSearchRequest = serde_json::from_str(&input)?;
-    let response = match subtitle_search_impl(&request) {
-        Ok(results) => SubtitlePluginSearchResponse { results },
-        Err(TsukihimeError::RateLimited(_)) => SubtitlePluginSearchResponse::default(),
-        Err(error) => return Err(Error::msg(error.to_string()).into()),
-    };
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
-}
-
-#[plugin_fn]
-pub fn scryer_subtitle_download(input: String) -> FnResult<String> {
-    let request: SubtitlePluginDownloadRequest = serde_json::from_str(&input)?;
-    let reference: TsukihimeDownloadRef =
-        serde_json::from_str(&request.provider_file_id).map_err(Error::msg)?;
-    let result = match subtitle_download_impl(&reference) {
-        Ok(response) => PluginResult::Ok(response),
-        Err(error) => PluginResult::Err(plugin_error(error)),
-    };
-    Ok(serde_json::to_string(&result)?)
-}
-
 fn config_fields() -> Vec<ConfigFieldDef> {
     vec![
         connection_field(
@@ -160,7 +259,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
 fn subtitle_search_impl(
     request: &SubtitlePluginSearchRequest,
 ) -> Result<Vec<SubtitlePluginCandidate>, TsukihimeError> {
-    let config = TsukihimeConfig::from_extism();
+    let config = TsukihimeConfig::from_host();
     let limit = config.limit_for_request(DEFAULT_MAX_RESULTS);
     let summaries = initial_torrent_summaries(&config, request, limit)?;
     let mut results = Vec::new();
@@ -416,13 +515,49 @@ fn subtitle_download_impl(
             response.body.len()
         )));
     }
-    let content = decompress_xz(&response.body)?;
+    let content = extract_xz_subtitle(reference, response.body)?;
     Ok(SubtitlePluginDownloadResponse {
         content_base64: BASE64.encode(content),
         format: reference.format.clone(),
         filename: Some(reference.filename.clone()),
         content_type: subtitle_content_type(&reference.format).map(str::to_string),
     })
+}
+
+/// Unwrap one XZ-compressed subtitle attachment through the host.
+///
+/// Tsukihime stores exactly one subtitle per `.xz` attachment, so the response
+/// carries exactly one member; anything else means the upstream shape changed
+/// and is reported rather than guessed at. The extractor's own expansion
+/// limits and path safety apply, which is the point of routing this through
+/// the host instead of decompressing here.
+fn extract_xz_subtitle(
+    reference: &TsukihimeDownloadRef,
+    compressed: Vec<u8>,
+) -> Result<Vec<u8>, TsukihimeError> {
+    let extracted = archive_extract(PluginArchiveExtractRequest {
+        content: compressed,
+        format: "xz".to_string(),
+        filename: Some(reference.filename.clone()),
+        password: None,
+    })
+    .map_err(|error| match error {
+        HostCallError::Service(error) => TsukihimeError::Plugin(error),
+        error => TsukihimeError::Message(format!("Scryer host archive extraction failed: {error}")),
+    })?;
+
+    let mut files = extracted.files.into_iter();
+    let Some(file) = files.next() else {
+        return Err(TsukihimeError::Message(
+            "Tsukihime subtitle archive contained no files".to_string(),
+        ));
+    };
+    if files.next().is_some() {
+        return Err(TsukihimeError::Message(
+            "Tsukihime subtitle archive contained more than one file".to_string(),
+        ));
+    }
+    Ok(file.content)
 }
 
 fn storage_url(file: &TsukihimeFile, attachment: &TsukihimeAttachment) -> Option<String> {
@@ -458,49 +593,11 @@ fn file_stem(filename: &str) -> &str {
         .unwrap_or(filename)
 }
 
-fn decompress_xz(bytes: &[u8]) -> Result<Vec<u8>, TsukihimeError> {
-    let mut input = Cursor::new(bytes);
-    let mut output = LimitWriter::new(MAX_DECOMPRESSED_SUBTITLE_BYTES);
-    lzma_rs::xz_decompress(&mut input, &mut output)
-        .map_err(|error| TsukihimeError::Message(format!("Tsukihime XZ decode failed: {error}")))?;
-    Ok(output.into_inner())
-}
-
-struct LimitWriter {
-    bytes: Vec<u8>,
-    limit: usize,
-}
-
-impl LimitWriter {
-    fn new(limit: usize) -> Self {
-        Self {
-            bytes: Vec::new(),
-            limit,
-        }
-    }
-
-    fn into_inner(self) -> Vec<u8> {
-        self.bytes
-    }
-}
-
-impl Write for LimitWriter {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        if self.bytes.len().saturating_add(buf.len()) > self.limit {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                "decompressed subtitle exceeds size limit",
-            ));
-        }
-        self.bytes.extend_from_slice(buf);
-        Ok(buf.len())
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        Ok(())
-    }
-}
-
+/// The MIME type for a subtitle format Tsukihime advertises.
+///
+/// The host's extraction service returns members, not media types, so the
+/// provider keeps naming the content type from the reference it built during
+/// search — exactly as it did before the migration.
 fn subtitle_content_type(format: &str) -> Option<&'static str> {
     match format.trim().to_ascii_lowercase().as_str() {
         "ass" | "ssa" => Some("text/x-ssa"),
@@ -561,6 +658,7 @@ fn validation_error_response(error: TsukihimeError) -> SubtitlePluginValidateCon
             SubtitleValidateConfigStatus::Unreachable
         }
         TsukihimeError::Message(_) => SubtitleValidateConfigStatus::Unsupported,
+        TsukihimeError::Plugin(_) => SubtitleValidateConfigStatus::Unsupported,
     };
     SubtitlePluginValidateConfigResponse {
         status,
@@ -577,12 +675,14 @@ fn plugin_error(error: TsukihimeError) -> PluginError {
         TsukihimeError::RateLimited(seconds) => (PluginErrorCode::RateLimited, seconds),
         TsukihimeError::NotFound => (PluginErrorCode::UpstreamUnavailable, None),
         TsukihimeError::Message(_) => (PluginErrorCode::Temporary, None),
+        TsukihimeError::Plugin(error) => return error,
     };
     PluginError {
         code,
         public_message: error.to_string(),
         debug_message: None,
         retry_after_seconds,
+        details: None,
     }
 }
 
@@ -617,7 +717,7 @@ fn reserve_api_request(path: &str) -> Result<(), TsukihimeError> {
 
 fn sync_rate_limit_from_headers(
     path: &str,
-    headers: &HashMap<String, String>,
+    headers: &BTreeMap<String, String>,
 ) -> Result<(), TsukihimeError> {
     let Some(retry_after) = retry_after_from_remaining_headers(headers, current_epoch_seconds())
     else {
@@ -697,11 +797,11 @@ fn is_search_torrents_path(path: &str) -> bool {
         .is_some_and(|endpoint| endpoint == "search/torrents")
 }
 
-fn retry_after_seconds(headers: &HashMap<String, String>) -> Option<i64> {
+fn retry_after_seconds(headers: &BTreeMap<String, String>) -> Option<i64> {
     header_value(headers, "Retry-After").and_then(|value| value.trim().parse::<i64>().ok())
 }
 
-fn retry_after_from_remaining_headers(headers: &HashMap<String, String>, now: u64) -> Option<i64> {
+fn retry_after_from_remaining_headers(headers: &BTreeMap<String, String>, now: u64) -> Option<i64> {
     let remaining = header_value(headers, "X-RateLimit-Remaining")?
         .trim()
         .parse::<i64>()
@@ -721,7 +821,7 @@ fn retry_after_from_remaining_headers(headers: &HashMap<String, String>, now: u6
     (seconds > 0).then_some(seconds.min(RATE_LIMIT_WINDOW_SECONDS) as i64)
 }
 
-fn header_value<'a>(headers: &'a HashMap<String, String>, name: &str) -> Option<&'a str> {
+fn header_value<'a>(headers: &'a BTreeMap<String, String>, name: &str) -> Option<&'a str> {
     headers
         .iter()
         .find(|(key, _)| key.eq_ignore_ascii_case(name))
@@ -757,6 +857,7 @@ enum TsukihimeError {
     Message(String),
     NotFound,
     RateLimited(Option<i64>),
+    Plugin(PluginError),
 }
 
 impl fmt::Display for TsukihimeError {
@@ -768,13 +869,14 @@ impl fmt::Display for TsukihimeError {
                 write!(formatter, "Tsukihime rate limited; retry after {seconds}s")
             }
             Self::RateLimited(None) => formatter.write_str("Tsukihime rate limited"),
+            Self::Plugin(error) => formatter.write_str(&error.public_message),
         }
     }
 }
 
 struct TsukihimeHttpResponse {
     status: u16,
-    headers: HashMap<String, String>,
+    headers: BTreeMap<String, String>,
     body: Vec<u8>,
 }
 
@@ -794,7 +896,7 @@ struct TsukihimeConfig {
 }
 
 impl TsukihimeConfig {
-    fn from_extism() -> Self {
+    fn from_host() -> Self {
         Self {
             base_url: config_value("base_url").unwrap_or_else(|| DEFAULT_BASE_URL.to_string()),
             max_results: config_usize("max_results", DEFAULT_MAX_RESULTS),
@@ -1210,22 +1312,12 @@ mod tests {
 
     #[test]
     fn rate_limit_headers_are_case_insensitive() {
-        let mut headers = HashMap::new();
+        let mut headers = BTreeMap::new();
         headers.insert("x-ratelimit-remaining".to_string(), "0".to_string());
         headers.insert("X-RateLimit-Reset".to_string(), "12".to_string());
         headers.insert("retry-after".to_string(), "9".to_string());
 
         assert_eq!(retry_after_seconds(&headers), Some(9));
         assert_eq!(retry_after_from_remaining_headers(&headers, 100), Some(12));
-    }
-
-    #[test]
-    fn xz_decoder_returns_subtitle_bytes() {
-        let compressed = BASE64
-            .decode("/Td6WFoAAATm1rRGBMAeGiEBFgAAAAAAAAAAAPycLfcBABlbU2NyaXB0IEluZm9dClRpdGxlOiBUZXN0CgAAABKoqqDNCqTNAAE6GiiSTfgftvN9AQAAAAAEWVo=")
-            .expect("fixture base64");
-        let decoded = decompress_xz(&compressed).expect("xz fixture decodes");
-
-        assert_eq!(decoded, b"[Script Info]\nTitle: Test\n");
     }
 }

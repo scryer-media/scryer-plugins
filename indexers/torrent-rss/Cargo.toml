@@ -22,7 +22,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 base64 = "0.23"
-scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.5.11" }
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
 quick-xml = "0.41"
 scryer-plugin-sdk = "3.10.0"
 serde = { version = "1", features = ["derive"] }

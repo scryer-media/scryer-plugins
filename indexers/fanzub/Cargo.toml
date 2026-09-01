@@ -22,7 +22,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.5.11" }
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
 rss-indexer-common = { path = "../rss-common" }
 serde_json = "1"
 scryer-plugin-sdk = "3.10.0"

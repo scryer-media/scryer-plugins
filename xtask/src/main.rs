@@ -3237,9 +3237,27 @@ fn prefetch_plugin_dependencies(ctx: &TaskContext, plugin_dir: &Path) -> Result<
 ///
 /// Indexers moved first; archive extractors followed, because the host's
 /// archive backing is component-only — a core module built against the removed
-/// guest-pointer crypto ABI cannot instantiate at all. The remaining families
-/// still ship Preview 1 command artifacts until they are migrated in turn.
-const COMPONENT_PLUGIN_FAMILIES: [&str; 2] = ["indexers", "archive_extractors"];
+/// guest-pointer crypto ABI cannot instantiate at all. Subtitles, download
+/// clients and notifications follow together: they share one world shape
+/// (`describe` + `process` over the command envelope, plus the
+/// `scryer:host/services@1.0.0` import), and the host's Preview 1 command
+/// runtime for them is retired in the same release, so there is no staged
+/// middle state to model here.
+///
+/// This is a hard cut, deliberately: while the per-plugin migrations land, a
+/// plugin in one of these families that has not moved yet fails to build for
+/// `wasm32-wasip2`. That failure is the migration's to-do list and is not
+/// papered over.
+///
+/// Transcoders are the one family still on Preview 1. They use neither the PDK
+/// host services nor a family world, so nothing forces them yet.
+const COMPONENT_PLUGIN_FAMILIES: [&str; 5] = [
+    "indexers",
+    "archive_extractors",
+    "subtitles",
+    "download_clients",
+    "notifications",
+];
 
 /// Component families build for `wasm32-wasip2`; every other family retains the
 /// established Preview 1 command/reactor target.

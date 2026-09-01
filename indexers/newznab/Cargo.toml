@@ -21,7 +21,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.5.11" }
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
 newznab-common = { path = "../newznab-common" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

@@ -6,7 +6,7 @@ license = "GPL-3.0-only"
 
 [dependencies]
 base64 = "0.23"
-scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.5.11" }
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
 quick-xml = "0.41"
 regex = "1"
 scryer-plugin-sdk = "3.10.0"

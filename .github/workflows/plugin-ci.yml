@@ -1,3 +1,16 @@
+# Plugin CI across the WASI Preview 2 migration.
+#
+# `xtask` now builds indexers, archive extractors, subtitles, download clients
+# and notifications for `wasm32-wasip2`; only transcoders remain on Preview 1.
+# Both targets are installed below because the toolchain has to cover whichever
+# side of that cut a plugin is on.
+#
+# EXPECTED, MID-MIGRATION: a plugin in a component family that has not been
+# ported yet fails at `wasm validate`. That is the migration's remaining work
+# showing up where it should, and this workflow deliberately does not suppress
+# it — no per-plugin skips, no continue-on-error. The list shrinks to nothing as
+# the family batches land.
+
 name: plugin-ci
 
 on:
@@ -136,6 +149,9 @@ jobs:
           install -d xtask/target/debug
           install -m 0755 xtask-artifact/xtask xtask/target/debug/xtask
 
+      # Only the plugins that compile C sources need this. Every other official
+      # plugin — including the migrated `wasm32-wasip2` components — builds
+      # from pure Rust and needs nothing but the rustup target above.
       - name: Install WASI SDK for native plugin libraries
         if: ${{ matrix.plugin_id == 'enhanced-subtitle-sync' || matrix.plugin_id == 'archive-extraction' }}
         shell: bash
@@ -161,7 +177,8 @@ jobs:
             echo "LLVM_NM=$wasi_sdk_root/bin/llvm-nm"
             echo "LLVM_RANLIB=$wasi_sdk_root/bin/llvm-ranlib"
             echo "LLVM_STRIP=$wasi_sdk_root/bin/llvm-strip"
-            # archive-extraction is a WASI Preview 2 component, and liblzma's C
+            # Both plugins here build for `wasm32-wasip2` now — archive
+            # extractors and subtitles are component families — and their C
             # sources are compiled by cc-rs, which resolves its compiler per
             # target and otherwise falls back to whatever `clang` is first on
             # PATH. Naming the WASI SDK toolchain for the component target keeps
