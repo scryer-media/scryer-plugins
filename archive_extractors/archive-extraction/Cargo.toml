@@ -46,8 +46,8 @@ zip = { version = "8.6.0", default-features = false, features = ["deflate-flate2
 # Replace both with plain version bumps on the dependencies above as soon as the
 # releases carrying `host-abi-component` and the XZ format are on crates.io.
 [patch.crates-io]
-unrar-rs = { path = "/private/tmp/rarpar-unrar-component-crypto/crates/unrar-rs" }
-scryer-plugin-sdk = { path = "/private/tmp/scryer-host-extraction-capability/crates/scryer-plugin-sdk" }
+unrar-rs = { path = "../../../../../rarpar/.worktrees/unrar-component-crypto/crates/unrar-rs" }
+scryer-plugin-sdk = { path = "../../../../../scryer/.worktrees/host-extraction-capability/crates/scryer-plugin-sdk" }
 
 [dev-dependencies]
 aws-lc-sys = "0.44"
