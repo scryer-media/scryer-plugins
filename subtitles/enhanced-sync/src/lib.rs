@@ -1,5 +1,48 @@
+//! Enhanced subtitle sync, as a WASI Preview 2 component.
+//!
+//! The plugin implements `scryer:subtitle/subtitle-provider@1.0.0`: two exports
+//! carrying UTF-8 JSON (`describe` returns a `PluginDescriptor`, `process`
+//! exchanges a `PluginCommandRequest` for a `PluginCommandResponse`), plus the
+//! shared `scryer:host/services@1.0.0` import every non-archive family world
+//! declares.
+//!
+//! ## What the migration changed
+//!
+//! This was the last plugin on WASI Preview 1. Alignment never travelled in the
+//! command envelope at all: it rode its own `SubtitleSyncPluginProcessRequest`
+//! over the stdin/stdout command transport, through the PDK's
+//! `run_subtitle_sync_plugin_with_descriptor`. That transport is gone, so the
+//! SDK grew a `PluginSubtitleCommand::Sync` variant whose payload is that same
+//! request type **verbatim**.
+//!
+//! The consequence is that essentially nothing below this header changed:
+//! [`handle_command`] still takes a [`SubtitleSyncPluginProcessRequest`] and
+//! still dispatches `Align` / `Probe` / `DecodeWindow` through the same `match`,
+//! and the FFmpeg-derived decoders, the libfvad VAD and the rustfft correlation
+//! are untouched. What replaced `fn main` is the entry macro below plus
+//! [`handle_subtitle_command`], the ~20-line shim that unwraps the family
+//! envelope.
+//!
+//! ## Why no sync-flavored entry macro
+//!
+//! The PDK's `scryer_subtitle_component_main!` already dispatches
+//! [`PluginSubtitleCommand`] and already installs the host-call transport at the
+//! top of *both* exports. `Sync` is just another variant of that enum, so it
+//! rides the existing macro with **zero PDK change** — no new dispatch hook, no
+//! sync-flavored macro, no hand-written `Guest` impl. The only new code is the
+//! shim, which is strictly less machinery than any of the alternatives.
+//!
+//! ## Catalog operations are refused in-band
+//!
+//! This provider's `SubtitleCapabilities::mode` is `Sync`: it aligns subtitles,
+//! it does not search for or download them. The four catalog operations
+//! therefore answer with a typed `PluginErrorCode::Unsupported` rather than
+//! trapping, so a host that routes one here gets a diagnosis instead of an
+//! invocation error.
+
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
+use scryer_plugin_sdk::command::{PluginSubtitleCommand, PluginSubtitleCommandResult};
 use scryer_plugin_sdk::{
     AudioStreamSelector as SdkAudioStreamSelector, PluginDescriptor, ProviderDescriptor,
     SDK_VERSION, SubtitleCapabilities, SubtitleDescriptor, SubtitleProviderMode,
@@ -17,6 +60,7 @@ use scryer_plugin_sdk::{
     SubtitleSyncProbeResponse as SdkSubtitleSyncProbeResponse, SubtitleSyncReferenceSubtitle,
     SubtitleSyncRewrittenSubtitle, current_sdk_constraint,
 };
+use scryer_plugin_sdk::{PluginError, PluginErrorCode, PluginResult};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
@@ -33,8 +77,64 @@ const SUBTITLE_SYNC_BACKEND: &str = "subtitle-sync-rust";
 const MAX_DECODE_INPUT_BYTES: usize = 64 * 1024 * 1024;
 const MIN_EFFECTIVE_OFFSET_MS: i64 = 50;
 
-fn main() {
-    scryer_plugin_pdk::run_subtitle_sync_plugin_with_descriptor(descriptor, handle_command);
+wit_bindgen::generate!({
+    // Fully qualified: `path` resolves two packages, so a bare world name is
+    // ambiguous even though only one of them declares a world.
+    world: "scryer:subtitle/subtitle-provider@1.0.0",
+    // Two packages, two paths, matching the host's own bindgen: the shared
+    // `scryer:host` package is listed first so the family package's
+    // `import scryer:host/services@1.0.0` resolves against it. One canonical
+    // copy of each, no `deps/` duplicates and no symlinks to keep in sync.
+    path: ["wit/host-v1.0.0", "wit/subtitle-v1.0.0"],
+    // The shared host package lives in its own WIT package, so wit-bindgen
+    // asks explicitly whether to generate for it. Yes: the PDK holds only a
+    // `fn` pointer and the entry macro binds it to this module's
+    // `scryer::host::services::host-call`.
+    generate_all,
+});
+
+scryer_plugin_pdk::scryer_subtitle_component_main!(
+    descriptor = descriptor,
+    handler = handle_subtitle_command,
+);
+
+/// Unwrap the subtitle family envelope onto this plugin's own handler.
+///
+/// The whole migration, in one function: `Sync` carries the Preview 1 request
+/// type verbatim, so it goes straight to [`handle_command`] unchanged. The four
+/// catalog operations belong to a `mode: Catalog` provider and are refused
+/// in-band — a typed `Unsupported`, never a trap — so the host keeps a
+/// diagnosis it can show an operator.
+fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleCommandResult {
+    match command {
+        PluginSubtitleCommand::Sync(request) => {
+            PluginSubtitleCommandResult::Sync(PluginResult::Ok(handle_command(request)))
+        }
+        PluginSubtitleCommand::ValidateConfig(_) => {
+            PluginSubtitleCommandResult::ValidateConfig(PluginResult::Err(catalog_unsupported()))
+        }
+        PluginSubtitleCommand::Search(_) => {
+            PluginSubtitleCommandResult::Search(PluginResult::Err(catalog_unsupported()))
+        }
+        PluginSubtitleCommand::Download(_) => {
+            PluginSubtitleCommandResult::Download(PluginResult::Err(catalog_unsupported()))
+        }
+        PluginSubtitleCommand::Generate(_) => {
+            PluginSubtitleCommandResult::Generate(PluginResult::Err(catalog_unsupported()))
+        }
+    }
+}
+
+fn catalog_unsupported() -> PluginError {
+    PluginError {
+        code: PluginErrorCode::Unsupported,
+        public_message: format!(
+            "{PLUGIN_NAME} aligns existing subtitles and does not search, download or generate them"
+        ),
+        debug_message: None,
+        retry_after_seconds: None,
+        details: None,
+    }
 }
 
 fn handle_command(request: SubtitleSyncPluginProcessRequest) -> SubtitleSyncPluginProcessResponse {
