@@ -136,8 +136,20 @@ jobs:
             exit 0
           fi
 
-          RELEASE_SHA="${{ github.event_name == 'workflow_dispatch' && inputs.release_commit || '' }}"
-          if [ -z "${RELEASE_SHA}" ]; then
+          readonly catalog_only_prefix="refs/tags/plugins-v3/release/catalog-"
+          if [[ "${GITHUB_REF}" == "${catalog_only_prefix}"* ]]; then
+            source_short_sha="${GITHUB_REF##*-from-}"
+            if [[ ! "${source_short_sha}" =~ ^[0-9a-f]{12}$ ]]; then
+              echo "Catalog-only trigger does not contain a valid source commit: ${GITHUB_REF}" >&2
+              exit 1
+            fi
+            RELEASE_SHA="$(git rev-parse --verify "${source_short_sha}^{commit}")"
+            git merge-base --is-ancestor "${RELEASE_SHA}" HEAD
+            printf 'Catalog-only release uses component tags at %s\n' "${RELEASE_SHA}"
+          else
+            RELEASE_SHA="${{ github.event_name == 'workflow_dispatch' && inputs.release_commit || '' }}"
+          fi
+          if [ -z "${RELEASE_SHA:-}" ]; then
             RELEASE_SHA="$(git rev-parse HEAD)"
           fi
           mapfile -t plugin_tags < <(
@@ -217,7 +229,7 @@ jobs:
           retention-days: 7
 
   build-sign-release-plugin:
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') && !startsWith(github.ref, 'refs/tags/plugins-v3/release/catalog-') }}
     needs: [plan-release]
     name: validate-build-sign-release (${{ matrix.plugin_id }} ${{ matrix.version }})
     strategy:
@@ -543,7 +555,7 @@ jobs:
           retention-days: 7
 
   collect-release-provenance-subjects:
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') && !startsWith(github.ref, 'refs/tags/plugins-v3/release/catalog-') }}
     needs: [build-sign-release-plugin]
     runs-on: ubuntu-latest
     permissions:
@@ -577,7 +589,7 @@ jobs:
           path: release-subjects.sha256.base64
 
   generate-release-provenance:
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') && !startsWith(github.ref, 'refs/tags/plugins-v3/release/catalog-') }}
     needs: [collect-release-provenance-subjects]
     permissions:
       actions: read
@@ -590,7 +602,7 @@ jobs:
       compile-generator: true
 
   publish-release-provenance:
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') && !startsWith(github.ref, 'refs/tags/plugins-v3/release/catalog-') }}
     needs: [plan-release, generate-release-provenance]
     runs-on: ubuntu-latest
     permissions:
@@ -619,7 +631,7 @@ jobs:
           done < <(printf '%s' "${RELEASE_MATRIX}" | jq -r '.include[] | "plugins-v3/\(.plugin_id)/v\(.version)"')
 
   publish-central-catalog:
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') }}
+    if: ${{ always() && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') && needs.plan-release.result == 'success' && (startsWith(github.ref, 'refs/tags/plugins-v3/release/catalog-') || (needs.build-sign-release-plugin.result == 'success' && needs.publish-release-provenance.result == 'success')) }}
     needs: [plan-release, build-sign-release-plugin, publish-release-provenance]
     runs-on: ubuntu-latest
     permissions:
@@ -670,6 +682,7 @@ jobs:
           path: release-plan-artifact
 
       - name: Download prepared plugin artifacts
+        if: ${{ !startsWith(github.ref, 'refs/tags/plugins-v3/release/catalog-') }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: release-plugin-v3-prepared-${{ github.run_id }}-*
@@ -691,7 +704,30 @@ jobs:
             exit 1
           fi
 
+      - name: Restore catalog-only plugin snippets
+        if: ${{ startsWith(github.ref, 'refs/tags/plugins-v3/release/catalog-') }}
+        run: |
+          set -euo pipefail
+          source .github/scripts/release-plugin-v3-identity.sh
+          require_release_publish_context "${GITHUB_EVENT_NAME}" "${GITHUB_REF}"
+          while IFS=$'\t' read -r plugin_id version; do
+            tag="plugins-v3/${plugin_id}/v${version}"
+            prepared_dir="prepared-plugins/${plugin_id}"
+            mkdir -p "${prepared_dir}"
+            gh release download "${tag}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --pattern catalog-v3.json \
+              --pattern catalog-v3.json.bundle \
+              --dir "${prepared_dir}" \
+              --clobber
+            verify_release_blob_tag_bound \
+              "${prepared_dir}/catalog-v3.json" \
+              "${prepared_dir}/catalog-v3.json.bundle" \
+              "${GITHUB_REPOSITORY}"
+          done < release-plan.tsv
+
       - name: Verify prepared plugin artifacts
+        if: ${{ !startsWith(github.ref, 'refs/tags/plugins-v3/release/catalog-') }}
         run: |
           set -euo pipefail
           readonly parallelism=4
@@ -734,6 +770,7 @@ jobs:
           (( ! failed ))
 
       - name: Verify selected plugin signing identities
+        if: ${{ !startsWith(github.ref, 'refs/tags/plugins-v3/release/catalog-') }}
         run: |
           set -euo pipefail
           source .github/scripts/release-plugin-v3-identity.sh

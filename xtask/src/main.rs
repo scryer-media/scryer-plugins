@@ -274,6 +274,12 @@ struct ReleaseOptions {
 struct ReleasePublishTagsArgs {
     #[arg(long)]
     pr: u64,
+    #[arg(
+        long,
+        value_name = "REF",
+        help = "Publish only the central catalog using plugin release tags at REF"
+    )]
+    catalog_only_from: Option<String>,
 }
 
 #[derive(Args)]
@@ -3100,6 +3106,27 @@ fn create_and_verify_signed_tag(ctx: &TaskContext, tag: &str, message: &str) -> 
     run_checked(&mut verify_tag).with_context(|| format!("created tag {tag} is not signed"))
 }
 
+fn is_plugin_v3_release_tag(tag: &str) -> bool {
+    let Some(spec) = tag.strip_prefix("plugins-v3/") else {
+        return false;
+    };
+    let Some((plugin_id, version)) = spec.rsplit_once("/v") else {
+        return false;
+    };
+    !plugin_id.is_empty() && !plugin_id.contains('/') && Version::parse(version).is_ok()
+}
+
+fn catalog_only_release_tag_name(ctx: &TaskContext, source_short_sha: &str) -> Result<String> {
+    let release_tag = repo_release_tag_name(ctx)?;
+    let suffix = release_tag
+        .strip_prefix(&repo_release_tag_prefix())
+        .context("release trigger tag has an unexpected prefix")?;
+    Ok(format!(
+        "{}catalog-{suffix}-from-{source_short_sha}",
+        repo_release_tag_prefix()
+    ))
+}
+
 fn run_release_publish_tags(ctx: &TaskContext, args: ReleasePublishTagsArgs) -> Result<()> {
     step("Checking merged release PR");
     require_clean_worktree(ctx)?;
@@ -3120,6 +3147,57 @@ fn run_release_publish_tags(ctx: &TaskContext, args: ReleasePublishTagsArgs) -> 
         bail!("merged pull request commit {merge_commit} is not reachable from origin/main")
     }
     ok(format!("PR #{} merged at {}", args.pr, merge_commit));
+
+    if let Some(source_ref) = args.catalog_only_from.as_deref() {
+        step(format!(
+            "Selecting catalog-only release source {source_ref}"
+        ));
+        let source_object = format!("{source_ref}^{{commit}}");
+        let source_commit = git_capture(ctx, &["rev-parse", "--verify", &source_object])?
+            .trim()
+            .to_string();
+        let mut source_ancestor = ctx.command_in("git", &ctx.repo_root);
+        source_ancestor.args(["merge-base", "--is-ancestor", &source_commit, "HEAD"]);
+        if !run_status(&mut source_ancestor)?.success() {
+            bail!("catalog-only source {source_commit} is not an ancestor of HEAD")
+        }
+
+        let source_tags = git_capture(ctx, &["tag", "--points-at", &source_commit])?;
+        let component_tags = source_tags
+            .lines()
+            .filter(|tag| is_plugin_v3_release_tag(tag))
+            .collect::<Vec<_>>();
+        if component_tags.is_empty() {
+            bail!("catalog-only source {source_commit} has no plugin-v3 component tags")
+        }
+        for tag in &component_tags {
+            let mut verify_tag = ctx.command_in("git", &ctx.repo_root);
+            verify_tag.args(["verify-tag", tag]);
+            run_checked(&mut verify_tag)
+                .with_context(|| format!("catalog-only source tag {tag} is not signed"))?;
+        }
+
+        let source_short_sha = git_capture(ctx, &["rev-parse", "--short=12", &source_commit])?;
+        let release_tag = catalog_only_release_tag_name(ctx, source_short_sha.trim())?;
+        verify_tag_absent_locally_and_remotely(ctx, &release_tag)?;
+        step(format!(
+            "Creating signed catalog-only trigger {release_tag}"
+        ));
+        create_and_verify_signed_tag(
+            ctx,
+            &release_tag,
+            &format!("Catalog-only release trigger from {source_commit}"),
+        )?;
+        step("Pushing catalog-only release trigger tag");
+        let mut push_trigger = ctx.command_in("git", &ctx.repo_root);
+        push_trigger.args(["push", "origin", &release_tag]);
+        run_checked(&mut push_trigger)?;
+        ok(format!(
+            "Pushed catalog-only trigger tag {release_tag} for {} signed component tag(s)",
+            component_tags.len()
+        ));
+        return Ok(());
+    }
 
     step("Selecting manifest versions to publish");
     let targets = publishable_release_targets(ctx)?;
@@ -9097,11 +9175,40 @@ mod tests {
         let publish = Cli::try_parse_from(["xtask", "release-publish-tags", "--pr", "42"])
             .expect("parse tag publication");
         match publish.command {
-            Commands::ReleasePublishTags(args) => assert_eq!(args.pr, 42),
+            Commands::ReleasePublishTags(args) => {
+                assert_eq!(args.pr, 42);
+                assert!(args.catalog_only_from.is_none());
+            }
+            _ => panic!("expected release-publish-tags command"),
+        }
+
+        let catalog_only = Cli::try_parse_from([
+            "xtask",
+            "release-publish-tags",
+            "--pr",
+            "43",
+            "--catalog-only-from",
+            "b379212825fe",
+        ])
+        .expect("parse catalog-only tag publication");
+        match catalog_only.command {
+            Commands::ReleasePublishTags(args) => {
+                assert_eq!(args.pr, 43);
+                assert_eq!(args.catalog_only_from.as_deref(), Some("b379212825fe"));
+            }
             _ => panic!("expected release-publish-tags command"),
         }
 
         assert!(require_prepare_mode(&ReleaseOptions::default()).is_err());
+    }
+
+    #[test]
+    fn plugin_v3_release_tag_detection_excludes_trigger_tags() {
+        assert!(is_plugin_v3_release_tag("plugins-v3/email/v0.1.15"));
+        assert!(!is_plugin_v3_release_tag(
+            "plugins-v3/release/1788221093-b379212825fe"
+        ));
+        assert!(!is_plugin_v3_release_tag("plugins-v3/email/not-a-version"));
     }
 
     #[test]
