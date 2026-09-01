@@ -52,7 +52,7 @@ wit-bindgen = "0.60"
 # Replace this with a plain version bump on the `scryer-plugin-sdk` dependency
 # above as soon as the release carrying the `Sync` variant is on crates.io.
 [patch.crates-io]
-scryer-plugin-sdk = { path = "../../../../../scryer/.worktrees/host-extraction-capability/crates/scryer-plugin-sdk" }
+scryer-plugin-sdk = { path = "../../../scryer-release-next/crates/scryer-plugin-sdk" }
 
 [build-dependencies]
 cc = "1"
