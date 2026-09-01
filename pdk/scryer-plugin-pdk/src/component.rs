@@ -74,10 +74,34 @@ impl From<component_host::TransportError> for HostError {
     }
 }
 
-/// Perform one host-policy-checked HTTP attempt.
-pub async fn http(
+/// One HTTP response with its header fields kept exactly as the host received
+/// them, in upstream order and with repeats preserved.
+///
+/// [`http`] returns the SDK's map-shaped response, which is the right model for
+/// single-valued fields but keeps only one value per field name. A guest that
+/// owns a cookie jar or otherwise reads a repeated field — `Set-Cookie` above
+/// all — needs the unmerged list instead.
+#[derive(Clone, Debug)]
+pub struct PluginHttpFieldsResponse {
+    pub status: u16,
+    pub headers: Vec<(String, String)>,
+    pub body: Vec<u8>,
+}
+
+impl PluginHttpFieldsResponse {
+    /// Every value of one header field, compared case-insensitively.
+    pub fn field_values<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a str> + 'a {
+        self.headers.iter().filter_map(move |(field, value)| {
+            field.eq_ignore_ascii_case(name).then_some(value.as_str())
+        })
+    }
+}
+
+/// Perform one host-policy-checked HTTP attempt, preserving repeated response
+/// header fields.
+pub async fn http_fields(
     request: scryer_plugin_sdk::host::PluginHttpRequest,
-) -> Result<scryer_plugin_sdk::host::PluginHttpResponse, HostError> {
+) -> Result<PluginHttpFieldsResponse, HostError> {
     let response = component_host::http(component_host::HttpRequest {
         method: request.method.unwrap_or_else(|| "GET".to_string()),
         url: request.url,
@@ -91,13 +115,26 @@ pub async fn http(
     .await
     .map_err(HostError::from)?;
 
-    Ok(scryer_plugin_sdk::host::PluginHttpResponse {
+    Ok(PluginHttpFieldsResponse {
         status: response.status,
         headers: response
             .headers
             .into_iter()
             .map(|header| (header.name, header.value))
-            .collect::<BTreeMap<_, _>>(),
+            .collect(),
+        body: response.body,
+    })
+}
+
+/// Perform one host-policy-checked HTTP attempt.
+pub async fn http(
+    request: scryer_plugin_sdk::host::PluginHttpRequest,
+) -> Result<scryer_plugin_sdk::host::PluginHttpResponse, HostError> {
+    let response = http_fields(request).await?;
+
+    Ok(scryer_plugin_sdk::host::PluginHttpResponse {
+        status: response.status,
+        headers: response.headers.into_iter().collect::<BTreeMap<_, _>>(),
         body: response.body,
     })
 }
@@ -699,6 +736,28 @@ mod tests {
             // something else.
             assert_eq!(host_log_level(level), expected);
         }
+    }
+
+    #[test]
+    fn repeated_response_fields_survive_the_list_shaped_response() {
+        let response = PluginHttpFieldsResponse {
+            status: 200,
+            headers: vec![
+                ("Content-Type".to_string(), "text/html".to_string()),
+                ("Set-Cookie".to_string(), "session=one; Path=/".to_string()),
+                ("set-cookie".to_string(), "csrf=two; Path=/".to_string()),
+            ],
+            body: Vec::new(),
+        };
+
+        assert_eq!(
+            response.field_values("set-cookie").collect::<Vec<_>>(),
+            vec!["session=one; Path=/", "csrf=two; Path=/"]
+        );
+        assert_eq!(
+            response.field_values("content-type").collect::<Vec<_>>(),
+            vec!["text/html"]
+        );
     }
 
     #[test]
