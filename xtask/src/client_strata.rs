@@ -27,8 +27,30 @@
 //! turn. The cut was rolled back the same hour
 //! (`38a8da6 fix(ci): restore plugin release compatibility`).
 //!
-//! Nothing about that is fixable in those binaries. It is only fixable here, by
-//! never handing them a document they cannot read.
+//! The wasip2 indexer cut later shipped anyway: the live catalog (checked at
+//! `catalog_version` 48, 2026-09-01) carries wasip2 rows for the indexer
+//! families on **both** redirect rungs, gated `min_scryer_version: "0.18.22"`.
+//! Scryer 0.19.0+ parses and runs them (`catalog_v3_runtime_is_supported`
+//! accepts `wasip1|wasip2` from `scryer-v0.19.0` on, and the wasmtime component
+//! host loads `scryer:indexer` worlds 1.0/1.1). Every 0.18.x install has been
+//! frozen on its cached catalog since those rows appeared — that trade was
+//! already made in production, and this module does not re-litigate it for the
+//! `.last()` rung, whose live readers are 0.19.0–0.19.6.
+//!
+//! What the strata preserve, per band:
+//! * 0.19.0–0.19.6 keep exactly what they get today — wasip1 plus the wasip2
+//!   rows they can actually execute (indexer components). No regression.
+//! * ≤ 0.18.11 get their `.first()` rung back as a pure-wasip1 projection —
+//!   the live rung is currently a document they reject, so this is a revival,
+//!   not a constraint.
+//! * 0.18.12–0.18.21 stay as production left them: their rung is shared with
+//!   0.19.x and positional indexing offers no way to serve the two bands
+//!   different documents. They remain frozen on cache.
+//! * No future token — a wasip3 runtime, a new feature, a new field — can
+//!   reach any shipped rung; only the modern redirect carries those.
+//!
+//! Nothing about the shipped validators is fixable in those binaries. It is
+//! only fixable here, by never handing a band a document it cannot read.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -48,7 +70,7 @@ use crate::{
 pub enum RedirectSlot {
     /// `redirect.artifacts.first()` — Scryer ≤ 0.18.11.
     LegacyFirst,
-    /// `redirect.artifacts.last()` — Scryer 0.18.12 … 0.19.5.
+    /// `redirect.artifacts.last()` — Scryer 0.18.12 … 0.19.6.
     LegacyLast,
     /// The capability-aware redirect published at its own URL, read only by
     /// clients that walk the ladder back instead of indexing into it.
@@ -71,6 +93,13 @@ pub struct ClientStratum {
     /// Artifact `runtime` values this band's *validator* accepts. Anything else
     /// makes the whole document unparseable for it.
     pub targets: &'static [&'static str],
+    /// `plugin_type` values whose `wasm32-wasip2` artifacts this band can
+    /// actually *execute*. Parse tolerance and runnability are different
+    /// facts: 0.19.x parses a wasip2 row for any family but its component host
+    /// only speaks the `scryer:indexer` worlds, so a wasip2 subtitle artifact
+    /// would be downloaded and then fail to load. The projection keeps wasip2
+    /// rows only for the types listed here.
+    pub component_plugin_types: &'static [&'static str],
     /// `required_features` tokens this band accepts. Same all-or-nothing rule.
     pub features: &'static [WasmRequiredFeature],
     /// Whether the band's `CatalogV3PluginRelease` struct has a
@@ -94,56 +123,73 @@ const ALL_FEATURES: &[WasmRequiredFeature] = &[
 /// desupported, and the no-strand guard will then say exactly what that band
 /// loses.
 ///
-/// Evidence for every row, in `scryer-media/scryer`:
-/// * `origin/release-0.18.11:crates/scryer-application/src/plugins/catalog.rs`
+/// Evidence for every row, read off `scryer-media/scryer` tags on 2026-09-01:
+/// * `scryer-v0.18.11:crates/scryer-application/src/plugins/catalog.rs`
 ///   — `CatalogV3PluginRelease` has no `max_scryer_version`; every struct is
 ///   `deny_unknown_fields`; `runtime != "wasm32-wasip1"` returns `Err`;
 ///   `catalog_fetch.rs` takes `redirect.artifacts.first()`.
-/// * `origin/release-0.18.12` … `origin/release-0.18.21` — same runtime check,
+/// * `scryer-v0.18.12` … `scryer-v0.18.21` — same runtime check,
 ///   `max_scryer_version` present, `redirect.artifacts.last()`.
-/// * `origin/release-0.18.22` … `origin/release-0.19.5` — `wasip1` **or**
-///   `wasip2` accepted (`catalog_v3_runtime_is_supported`), still
-///   `redirect.artifacts.last()`, still `deny_unknown_fields`.
+/// * `scryer-v0.19.0` … `scryer-v0.19.6` — `wasip1` **or** `wasip2` accepted
+///   (`catalog_v3_runtime_is_supported`), still `redirect.artifacts.last()`,
+///   still `deny_unknown_fields`, feature allow-list still
+///   `simd128|relaxed-simd`; the component host executes wasip2 for the
+///   indexer families only (`scryer:indexer/indexer-plugin@1.0.0`/`@1.1.0` in
+///   `wasmtime_host/component_host.rs`). There was no 0.18.22 release — the
+///   tag sequence jumps from 0.18.21 to 0.19.0.
 ///
-/// Note what that last row means and why it has no slot of its own: it reads
-/// the same rung as `shipped-preview1`, whose tolerance is strictly narrower.
-/// Two bands, one rung — so the rung's content is bounded by the weaker of the
-/// two, forever. Serving components to 0.18.22+ through this redirect is not
-/// something the ladder can express, which is why the modern stratum gets its
-/// own URL.
+/// The 0.18.12–0.18.21 band and the 0.19.x band read the **same** rung, and
+/// positional indexing offers no way to hand them different documents. The
+/// rung serves the 0.19.x tolerance because that is what production already
+/// does (the live catalog carries wasip2 indexer rows) and 0.19.x is the band
+/// still being served; 0.18.12–0.18.21 were frozen when those rows first
+/// published. Serving anything *newer* than the 0.19.x tolerance through this
+/// rung would freeze 0.19.x the same way, which is why the modern stratum gets
+/// its own URL.
 pub const CLIENT_STRATA: &[ClientStratum] = &[
     ClientStratum {
         id: "legacy-no-release-ceiling",
         label: "Scryer 0.18.11 and older",
         scryer_range: "<0.18.12",
         targets: &[TARGET_WASIP1],
+        component_plugin_types: &[],
         features: ALL_FEATURES,
         allows_max_scryer_version: false,
         slot: RedirectSlot::LegacyFirst,
     },
     ClientStratum {
-        id: "shipped-preview1",
-        label: "Scryer 0.18.12 through 0.19.5",
-        scryer_range: ">=0.18.12, <0.19.6",
-        targets: &[TARGET_WASIP1],
+        id: "shipped-preview2",
+        // 0.18.12–0.18.21 read this rung too, but cannot parse the wasip2 rows
+        // production already serves on it; the label names the band the rung
+        // still serves.
+        label: "Scryer 0.19.0 through 0.19.6",
+        scryer_range: ">=0.19.0, <0.19.7",
+        targets: &[TARGET_WASIP1, TARGET_WASIP2],
+        component_plugin_types: INDEXER_PLUGIN_TYPES,
         features: ALL_FEATURES,
         allows_max_scryer_version: true,
         slot: RedirectSlot::LegacyLast,
     },
     ClientStratum {
         id: "modern",
-        label: "Scryer 0.19.6 and newer",
+        label: "Scryer 0.19.7 and newer",
         // Capability-aware clients skip artifacts they cannot run instead of
         // rejecting the document, so this stratum takes the master catalog
         // unfiltered and needs no target or feature list of its own. The lists
         // below are the render's own allow-list, not a client limit.
-        scryer_range: ">=0.19.6",
+        scryer_range: ">=0.19.7",
         targets: &[TARGET_WASIP1, TARGET_WASIP2],
+        component_plugin_types: &[],
         features: ALL_FEATURES,
         allows_max_scryer_version: true,
         slot: RedirectSlot::Modern,
     },
 ];
+
+/// The `plugin_type` labels the indexer family publishes under — the only
+/// families whose wasip2 components a 0.19.x host can execute, and exactly the
+/// set carrying wasip2 rows in the live catalog today.
+const INDEXER_PLUGIN_TYPES: &[&str] = &["indexer", "torrent_indexer", "usenet_indexer"];
 
 pub fn stratum_by_id(id: &str) -> Option<&'static ClientStratum> {
     CLIENT_STRATA.iter().find(|stratum| stratum.id == id)
@@ -155,12 +201,25 @@ impl ClientStratum {
         self.slot == RedirectSlot::Modern
     }
 
-    fn accepts_artifact(&self, artifact: &CatalogV3PluginArtifact) -> bool {
-        self.targets.contains(&artifact.runtime.trim())
-            && artifact
-                .required_features
-                .iter()
-                .all(|feature| self.features.contains(feature))
+    /// Whether this band's client can parse *and run* `artifact` when it
+    /// belongs to a plugin of `plugin_type`.
+    ///
+    /// A wasip2 row must clear both bars: the band's validator must accept the
+    /// runtime string, and the band's component host must speak that family's
+    /// world. A row that parses but cannot load would be selected, downloaded,
+    /// and then break that plugin on every install in the band.
+    fn accepts_artifact(&self, plugin_type: &str, artifact: &CatalogV3PluginArtifact) -> bool {
+        let runtime = artifact.runtime.trim();
+        if !self.targets.contains(&runtime) {
+            return false;
+        }
+        if runtime == TARGET_WASIP2 && !self.component_plugin_types.contains(&plugin_type) {
+            return false;
+        }
+        artifact
+            .required_features
+            .iter()
+            .all(|feature| self.features.contains(feature))
     }
 }
 
@@ -189,7 +248,7 @@ pub fn project_catalog_for_stratum(master: &CatalogV3, stratum: &ClientStratum) 
             let artifacts = release
                 .artifacts
                 .iter()
-                .filter(|artifact| stratum.accepts_artifact(artifact))
+                .filter(|artifact| stratum.accepts_artifact(&plugin.plugin_type, artifact))
                 .cloned()
                 .collect::<Vec<_>>();
             if artifacts.is_empty() {
@@ -232,7 +291,7 @@ pub fn installable_plugin_ids(catalog: &CatalogV3, stratum: &ClientStratum) -> B
                 release
                     .artifacts
                     .iter()
-                    .any(|artifact| stratum.accepts_artifact(artifact))
+                    .any(|artifact| stratum.accepts_artifact(&plugin.plugin_type, artifact))
             })
         })
         .map(|plugin| plugin.id.clone())
@@ -396,8 +455,12 @@ mod shipped_parsers {
     /// `origin/release-0.18.21:crates/scryer-application/src/plugins/catalog.rs`
     /// (`validate_plugin_release_set`, `validate_catalog_v3`), which is
     /// byte-identical in the relevant parts back to `origin/release-0.18.0`.
-    /// `origin/release-0.19.5` differs only in also accepting
-    /// `wasm32-wasip2`, which is expressed by the stratum's `targets` list.
+    /// `scryer-v0.19.0` through `scryer-v0.19.6` differ only in also accepting
+    /// `wasm32-wasip2` (`catalog_v3_runtime_is_supported`, re-verified against
+    /// the tags 2026-09-01), which is expressed by the stratum's `targets`
+    /// list. Note this checks parse *tolerance* only: a 0.19.x client parses a
+    /// wasip2 row for any plugin family — whether it can run one is
+    /// `component_plugin_types`, enforced by the projection, not here.
     pub fn validate_as_stratum(stratum: &ClientStratum, catalog: &CatalogV3) -> Result<()> {
         if stratum.takes_master_catalog() {
             return Ok(());
@@ -581,11 +644,19 @@ mod tests {
     }
 
     fn plugin(id: &str, releases: Vec<CatalogV3Release>) -> CatalogV3PluginEntry {
+        plugin_typed(id, "indexer", releases)
+    }
+
+    fn plugin_typed(
+        id: &str,
+        plugin_type: &str,
+        releases: Vec<CatalogV3Release>,
+    ) -> CatalogV3PluginEntry {
         CatalogV3PluginEntry {
             id: id.to_string(),
             name: id.to_string(),
             description: format!("{id} plugin"),
-            plugin_type: "indexer".to_string(),
+            plugin_type: plugin_type.to_string(),
             provider_type: id.to_string(),
             publisher: "scryer".to_string(),
             support_tier: "official".to_string(),
@@ -623,29 +694,79 @@ mod tests {
     }
 
     #[test]
-    fn legacy_projections_drop_component_artifacts_and_keep_the_preview1_release() {
+    fn the_first_rung_drops_component_artifacts_and_keeps_the_preview1_release() {
         let master = component_recut_catalog();
+        let stratum = stratum_by_id("legacy-no-release-ceiling").expect("stratum");
 
-        for stratum in CLIENT_STRATA
-            .iter()
-            .filter(|stratum| stratum.slot.is_legacy())
-        {
-            let projection = project_catalog_for_stratum(&master, stratum);
-            let releases = &projection.plugins[0].releases;
-            assert_eq!(
-                releases.len(),
-                1,
-                "stratum '{}' should see only the Preview 1 release",
-                stratum.id
-            );
-            assert_eq!(releases[0].version, "2.0.3");
-            assert!(
-                releases[0]
-                    .artifacts
-                    .iter()
-                    .all(|artifact| artifact.runtime == TARGET_WASIP1)
-            );
-        }
+        let projection = project_catalog_for_stratum(&master, stratum);
+        let releases = &projection.plugins[0].releases;
+        assert_eq!(releases.len(), 1, "0.18.11 sees only the Preview 1 release");
+        assert_eq!(releases[0].version, "2.0.3");
+        assert!(
+            releases[0]
+                .artifacts
+                .iter()
+                .all(|artifact| artifact.runtime == TARGET_WASIP1)
+        );
+    }
+
+    /// Regression pin against the live catalog: `catalog_version` 48 serves
+    /// wasip2 indexer rows (gated `min_scryer_version: "0.18.22"`) on the
+    /// `.last()` rung and 0.19.x installs run them. The shipped projection
+    /// must not take that away.
+    #[test]
+    fn the_shipped_rung_keeps_the_wasip2_indexer_rows_it_serves_today() {
+        let master = component_recut_catalog();
+        let stratum = stratum_by_id("shipped-preview2").expect("stratum");
+
+        let projection = project_catalog_for_stratum(&master, stratum);
+        let releases = &projection.plugins[0].releases;
+        assert_eq!(
+            releases.len(),
+            2,
+            "0.19.x keeps both the Preview 1 release and the wasip2 indexer release"
+        );
+        assert_eq!(releases[1].artifacts[0].runtime, TARGET_WASIP2);
+    }
+
+    /// 0.19.x parses a wasip2 row for any family but can only *execute*
+    /// indexer components — its component host speaks the `scryer:indexer`
+    /// worlds and nothing else. A wasip2 row for another family would be
+    /// selected, downloaded, and then fail to load, so the projection keeps it
+    /// off the shipped rung entirely.
+    #[test]
+    fn a_non_indexer_component_never_reaches_the_shipped_rung() {
+        let master = catalog(vec![
+            plugin_typed(
+                "enhanced-sync",
+                "subtitle_provider",
+                vec![
+                    release("0.2.11", None, vec![artifact(TARGET_WASIP1, &[])]),
+                    release("0.3.0", None, vec![artifact(TARGET_WASIP2, &[])]),
+                ],
+            ),
+            plugin_typed(
+                "archive-extraction",
+                "archive_extractor",
+                vec![release("1.0.0", None, vec![artifact(TARGET_WASIP2, &[])])],
+            ),
+        ]);
+        let stratum = stratum_by_id("shipped-preview2").expect("stratum");
+
+        let projection = project_catalog_for_stratum(&master, stratum);
+
+        assert_eq!(
+            projection.plugins.len(),
+            1,
+            "the component-only archive extractor has nothing 0.19.x can run"
+        );
+        let releases = &projection.plugins[0].releases;
+        assert_eq!(
+            releases.len(),
+            1,
+            "only the Preview 1 subtitle release survives"
+        );
+        assert_eq!(releases[0].version, "0.2.11");
     }
 
     #[test]
@@ -695,7 +816,9 @@ mod tests {
     }
 
     /// The August 28 cut, replayed: drop the Preview 1 release and publish only
-    /// components. This is the publish that took the catalog offline.
+    /// components. This is the publish that took the catalog offline. The
+    /// shipped rung tolerates it now (0.19.x runs wasip2 indexers), so the
+    /// objection comes from the first rung, whose band cannot parse it.
     #[test]
     fn dropping_the_last_preview1_release_fails_the_render() {
         let existing = catalog(vec![plugin(
@@ -742,7 +865,7 @@ mod tests {
             .expect_err("dropping 'retired' strands both legacy strata");
         let message = error.to_string();
         assert!(message.contains("retired@legacy-no-release-ceiling"));
-        assert!(message.contains("retired@shipped-preview1"));
+        assert!(message.contains("retired@shipped-preview2"));
         assert!(
             !message.contains("retired@modern"),
             "the modern stratum takes the master catalog, so it is never stranded — an outright \
@@ -751,7 +874,7 @@ mod tests {
 
         let allowed = parse_stratum_drops(&[
             "retired@legacy-no-release-ceiling".to_string(),
-            "retired@shipped-preview1".to_string(),
+            "retired@shipped-preview2".to_string(),
         ])
         .expect("drop keys parse");
         build_publication_strata(&candidate, Some(&existing), &allowed)
@@ -782,44 +905,82 @@ mod tests {
             .expect("modern projection");
         assert_eq!(modern.catalog.plugins[0].releases[1].artifacts.len(), 2);
 
-        for projection in projections
+        let first_rung = projections
             .iter()
-            .filter(|projection| projection.stratum.slot.is_legacy())
-        {
-            assert!(
-                projection
-                    .catalog
-                    .plugins
-                    .iter()
-                    .flat_map(|plugin| &plugin.releases)
-                    .flat_map(|release| &release.artifacts)
-                    .all(|artifact| artifact.runtime == TARGET_WASIP1),
-                "stratum '{}' must never see a p2 or p3 row",
-                projection.stratum.id
-            );
-        }
+            .find(|projection| projection.stratum.slot == RedirectSlot::LegacyFirst)
+            .expect("first rung");
+        assert!(
+            first_rung
+                .catalog
+                .plugins
+                .iter()
+                .flat_map(|plugin| &plugin.releases)
+                .flat_map(|release| &release.artifacts)
+                .all(|artifact| artifact.runtime == TARGET_WASIP1),
+            "the first rung must never see a p2 or p3 row"
+        );
+
+        let shipped = projections
+            .iter()
+            .find(|projection| projection.stratum.slot == RedirectSlot::LegacyLast)
+            .expect("shipped rung");
+        let shipped_runtimes = shipped
+            .catalog
+            .plugins
+            .iter()
+            .flat_map(|plugin| &plugin.releases)
+            .flat_map(|release| &release.artifacts)
+            .map(|artifact| artifact.runtime.as_str())
+            .collect::<BTreeSet<_>>();
+        assert!(
+            shipped_runtimes.contains(TARGET_WASIP2),
+            "the shipped rung keeps the wasip2 indexer row"
+        );
+        assert!(
+            !shipped_runtimes.contains("wasm32-wasip3"),
+            "a wasip3 row on the shipped rung would freeze every 0.19.x install \
+             exactly the way wasip2 froze 0.18.x"
+        );
     }
 
     #[test]
     fn a_shipped_parser_rejects_a_projection_that_still_carries_a_future_runtime() {
-        let stratum = stratum_by_id("shipped-preview1").expect("stratum");
-        let leaked = catalog(vec![plugin(
+        // The 0.18.x pinned validator rejects wasip2 — this is the August 28
+        // failure, replayed as a render-time error.
+        let first_rung = stratum_by_id("legacy-no-release-ceiling").expect("stratum");
+        let wasip2_leak = catalog(vec![plugin(
             "newznab",
             vec![release("2.1.0", None, vec![artifact(TARGET_WASIP2, &[])])],
         )]);
+        let error = shipped_parsers::validate_as_stratum(first_rung, &wasip2_leak)
+            .expect_err("the pinned 0.18.x validator must reject a wasip2 row");
+        assert!(error.to_string().contains("rejects the whole catalog"));
 
-        let error = shipped_parsers::validate_as_stratum(stratum, &leaked)
-            .expect_err("the pinned 0.18.21 validator must reject a wasip2 row");
+        // The 0.19.x pinned validator accepts wasip2 but rejects anything
+        // newer — the same failure shape, one runtime later.
+        let shipped = stratum_by_id("shipped-preview2").expect("stratum");
+        let wasip2_fine = catalog(vec![plugin(
+            "newznab",
+            vec![release("2.1.0", None, vec![artifact(TARGET_WASIP2, &[])])],
+        )]);
+        shipped_parsers::validate_as_stratum(shipped, &wasip2_fine)
+            .expect("the pinned 0.19.x validator accepts a wasip2 row");
 
+        let wasip3_leak = catalog(vec![plugin(
+            "newznab",
+            vec![release("3.0.0", None, vec![artifact("wasm32-wasip3", &[])])],
+        )]);
+        let error = shipped_parsers::validate_as_stratum(shipped, &wasip3_leak)
+            .expect_err("the pinned 0.19.x validator must reject a wasip3 row");
         assert!(error.to_string().contains("rejects the whole catalog"));
     }
 
     #[test]
     fn stratum_drop_keys_must_name_a_known_stratum() {
-        assert!(parse_stratum_drop("newznab@shipped-preview1").is_ok());
+        assert!(parse_stratum_drop("newznab@shipped-preview2").is_ok());
         assert!(parse_stratum_drop("newznab@does-not-exist").is_err());
         assert!(parse_stratum_drop("no-stratum").is_err());
-        assert!(parse_stratum_drop("@shipped-preview1").is_err());
+        assert!(parse_stratum_drop("@shipped-preview2").is_err());
     }
 
     #[test]
@@ -858,6 +1019,6 @@ mod tests {
             })
             .collect::<Vec<_>>();
         assert!(ladder[0].url.contains("legacy-no-release-ceiling"));
-        assert!(ladder[ladder.len() - 1].url.contains("shipped-preview1"));
+        assert!(ladder[ladder.len() - 1].url.contains("shipped-preview2"));
     }
 }

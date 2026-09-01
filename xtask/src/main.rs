@@ -84,12 +84,14 @@ const CATALOG_V3_MINIFIED_JSON: &str = "catalog-v3.min.json";
 const CATALOG_V3_MINIFIED_ZST: &str = "catalog-v3.min.json.zst";
 const CATALOG_V3_RELEASE_CONSTRAINTS: &str = "catalog-v3-release-constraints.json";
 const CATALOG_V3_REDIRECT_JSON: &str = "catalog-v3.redirect.json";
-/// The redirect capability-aware clients (Scryer 0.19.6+) read.
+/// The redirect capability-aware clients (Scryer 0.19.7+) read.
 ///
 /// It is a separate file rather than another rung on `catalog-v3.redirect.json`
-/// because every shipped client from 0.18.12 to 0.19.5 takes that ladder's
-/// *last* rung by position: appending to it hands a wasip2 catalog to the
-/// 0.18.12–0.18.21 band, which cannot parse one. See `client_strata`.
+/// because every shipped client from 0.18.12 to 0.19.6 takes that ladder's
+/// *last* rung by position: appending an entry silently re-points all of them
+/// at once, and anything beyond the 0.19.x tolerance (a wasip3 runtime, a new
+/// feature token, a new field) makes the whole document unparseable for that
+/// band. See `client_strata`.
 const CATALOG_V3_MODERN_REDIRECT_JSON: &str = "catalog-v3.modern.redirect.json";
 const R2_ACCOUNT_ID_ENV: &str = "CF_ACCOUNT_ID";
 const R2_ACCOUNT_ID_ENV_LEGACY: &str = "CF_R2_ACCOUNT_ID";
