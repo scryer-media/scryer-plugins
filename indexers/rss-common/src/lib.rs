@@ -576,7 +576,7 @@ pub fn parse_rss_feed(body: &str, feed_url: &str, options: RssParseOptions) -> V
                 );
             }
             Ok(Event::End(ref event)) => {
-                let name = String::from_utf8_lossy(event.name().as_ref()).to_string();
+                let name = event.name().as_ref().to_string();
                 let local = local_name(&name);
                 if local == "item" {
                     in_item = false;
@@ -610,7 +610,7 @@ pub fn parse_rss_feed(body: &str, feed_url: &str, options: RssParseOptions) -> V
 }
 
 fn tag_name(event: &BytesStart<'_>) -> String {
-    String::from_utf8_lossy(event.name().as_ref()).to_string()
+    event.name().as_ref().to_string()
 }
 
 fn local_name(name: &str) -> String {
@@ -631,9 +631,8 @@ fn is_option_element(local: &str, options: RssParseOptions) -> bool {
     .any(|name| name.eq_ignore_ascii_case(local))
 }
 
-fn decode_text(bytes: &[u8]) -> String {
-    String::from_utf8_lossy(bytes)
-        .replace("&amp;", "&")
+fn decode_text(text: &str) -> String {
+    text.replace("&amp;", "&")
         .replace("&lt;", "<")
         .replace("&gt;", ">")
         .replace("&quot;", "\"")
@@ -675,11 +674,11 @@ fn merge_text(slot: &mut Option<String>, value: &str) {
 fn parse_enclosure(event: &BytesStart<'_>, item: &mut ParsedItem) {
     for attr in event.attributes().flatten() {
         let key = attr.key.as_ref();
-        let value = String::from_utf8_lossy(attr.value.as_ref()).to_string();
+        let value = attr.value.to_string();
         match key {
-            b"url" => item.enclosure_url = Some(value),
-            b"length" => item.enclosure_length = value.replace(',', "").parse::<i64>().ok(),
-            b"type" => item.enclosure_type = Some(value),
+            "url" => item.enclosure_url = Some(value),
+            "length" => item.enclosure_length = value.replace(',', "").parse::<i64>().ok(),
+            "type" => item.enclosure_type = Some(value),
             _ => {}
         }
     }
@@ -690,8 +689,8 @@ fn parse_attr_pair(event: &BytesStart<'_>) -> Option<(String, String)> {
     let mut value = None;
     for attr in event.attributes().flatten() {
         match attr.key.as_ref() {
-            b"name" => name = Some(String::from_utf8_lossy(attr.value.as_ref()).to_string()),
-            b"value" => value = Some(String::from_utf8_lossy(attr.value.as_ref()).to_string()),
+            "name" => name = Some(attr.value.to_string()),
+            "value" => value = Some(attr.value.to_string()),
             _ => {}
         }
     }

@@ -10,7 +10,7 @@ Vendored from FFmpeg upstream:
 
 The plugin build configures this vendored tree as a narrow static FFmpeg
 `avformat`/`avcodec`/`swresample`/`avutil` build and links it into the final
-Rust `wasm32-wasip1` plugin artifact. FFmpeg source files are licensed by
+Rust `wasm32-wasip2` component artifact. FFmpeg source files are licensed by
 FFmpeg under LGPL-2.1-or-later unless the individual file states otherwise.
 
 Keep the configured build narrow: no programs, only the targeted audio

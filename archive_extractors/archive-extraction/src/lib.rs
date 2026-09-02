@@ -12,7 +12,7 @@
 //!
 //! The previous artifact was a `wasm32-wasip1` command binary that reached the
 //! host through raw guest pointers (`host_aes_cbc_decrypt` / `host_crc32` in an
-//! Extism namespace) and framed its request/response over stdio. A component
+//! legacy host namespace) and framed its request/response over stdio. A component
 //! has no exported linear memory for a host to slice, and no stdio protocol, so
 //! both halves move onto the canonical ABI: payloads cross as `list<u8>`, and
 //! the crypto delegation inside unrar-rs is re-pointed at

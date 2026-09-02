@@ -45,8 +45,6 @@ jobs:
           # have from a guest.
           - plugin: email
             manifest: notifications/email/Cargo.toml
-          - plugin: synology
-            manifest: notifications/synology/Cargo.toml
           # The HTTP channels.
           - plugin: apprise
             manifest: notifications/apprise/Cargo.toml
@@ -58,8 +56,8 @@ jobs:
             manifest: notifications/gotify/Cargo.toml
           - plugin: jellyfin
             manifest: notifications/jellyfin/Cargo.toml
-          - plugin: join
-            manifest: notifications/join/Cargo.toml
+          - plugin: kodi
+            manifest: notifications/kodi/Cargo.toml
           - plugin: mailgun
             manifest: notifications/mailgun/Cargo.toml
           - plugin: notifiarr
@@ -68,32 +66,18 @@ jobs:
             manifest: notifications/ntfy/Cargo.toml
           - plugin: plex
             manifest: notifications/plex/Cargo.toml
-          - plugin: prowl
-            manifest: notifications/prowl/Cargo.toml
-          - plugin: pushbullet
-            manifest: notifications/pushbullet/Cargo.toml
           - plugin: pushcut
             manifest: notifications/pushcut/Cargo.toml
           - plugin: pushover
             manifest: notifications/pushover/Cargo.toml
-          - plugin: sendgrid
-            manifest: notifications/sendgrid/Cargo.toml
           - plugin: signal
             manifest: notifications/signal/Cargo.toml
-          - plugin: simplepush
-            manifest: notifications/simplepush/Cargo.toml
           - plugin: slack
             manifest: notifications/slack/Cargo.toml
           - plugin: telegram
             manifest: notifications/telegram/Cargo.toml
-          - plugin: trakt
-            manifest: notifications/trakt/Cargo.toml
-          - plugin: twitter
-            manifest: notifications/twitter/Cargo.toml
           - plugin: webhook
             manifest: notifications/webhook/Cargo.toml
-          - plugin: xbmc
-            manifest: notifications/xbmc/Cargo.toml
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 

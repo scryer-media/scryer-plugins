@@ -40,20 +40,26 @@ mod archive_v1_0 {
     });
 }
 
-/// The shared host-services door.
+/// The two doors every family component reaches Scryer through.
 ///
 /// Subtitles, download clients and notifications all import
-/// `scryer:host/services@1.0.0` and differ only in the `describe`/`process`
-/// payloads they exchange, so this is bound **once, per interface** rather
-/// than once per family world. The subtitle world is generated here purely
-/// because a WIT world is what `bindgen!` takes; nothing below names it.
-mod host_v1_0 {
+/// `scryer:host/services@1.0.0`, and since `scryer:subtitle@1.1.0` a family
+/// world may also import the typed `scryer:runtime/host@1.0.0`. Both are bound
+/// **once, per interface** below rather than once per family world. The
+/// subtitle world is generated here purely because a WIT world is what
+/// `bindgen!` takes; nothing outside the two `add_to_linker` calls names it.
+///
+/// Generating it at 1.1.0 is what pulls the runtime interface in. `describe`
+/// itself is unchanged — still `func() -> list<u8>` — so the runner still
+/// calls it as one blocking step.
+mod family_v1_1 {
     wasmtime::component::bindgen!({
-        world: "scryer:subtitle/subtitle-provider@1.0.0",
-        // Two packages, two paths — the shared host package first, so the
-        // family package's `import scryer:host/services@1.0.0` resolves
-        // against it.
-        path: ["wit/host-v1.0.0", "wit/subtitle-v1.0.0"],
+        world: "scryer:subtitle/subtitle-provider@1.1.0",
+        // Three packages, three paths — the two host packages first, so the
+        // family package's imports resolve against them.
+        path: ["wit/host-v1.0.0", "wit/runtime-v1.0.0", "wit/subtitle-v1.1.0"],
+        imports: { default: async },
+        exports: { default: async },
     });
 }
 
@@ -173,13 +179,81 @@ impl contract_v1_1::scryer::indexer::host::Host for DescriptorCtx {
 ///
 /// A well-behaved guest makes no host calls during `describe` at all; this is
 /// the floor under that, not a service.
-impl host_v1_0::scryer::host::services::Host for DescriptorCtx {
-    fn host_call(
+impl family_v1_1::scryer::host::services::Host for DescriptorCtx {
+    async fn host_call(
         &mut self,
         request: Vec<u8>,
-    ) -> Result<Vec<u8>, host_v1_0::scryer::host::services::HostError> {
+    ) -> Result<Vec<u8>, family_v1_1::scryer::host::services::HostError> {
         inert_host_response(&request)
-            .ok_or(host_v1_0::scryer::host::services::HostError::InvalidRequest)
+            .ok_or(family_v1_1::scryer::host::services::HostError::InvalidRequest)
+    }
+}
+
+/// The typed family runtime, inert on exactly the same terms as the indexer
+/// host above.
+///
+/// A capability answered here would make descriptor extraction depend on the
+/// machine it runs on, so the clocks read zero, every lookup is absent, and
+/// the compare-and-swap always fails. `http` is the one that must *refuse*
+/// rather than return an empty response: packaging never reaches the network,
+/// and `forbidden-origin` says so in the vocabulary the guest already handles.
+impl family_v1_1::scryer::runtime::host::Host for DescriptorCtx {
+    async fn monotonic_now_ms(&mut self) -> u64 {
+        0
+    }
+
+    async fn operation_deadline_monotonic_ms(&mut self) -> u64 {
+        0
+    }
+
+    async fn wall_now_ms(&mut self) -> u64 {
+        0
+    }
+
+    async fn config_get(&mut self, _key: String) -> Option<String> {
+        None
+    }
+
+    async fn provider_profile(&mut self) -> Option<Vec<u8>> {
+        None
+    }
+
+    async fn state_get(&mut self, _key: String) -> Option<Vec<u8>> {
+        None
+    }
+
+    async fn state_cas(
+        &mut self,
+        _key: String,
+        _expected: Option<Vec<u8>>,
+        _replacement: Option<Vec<u8>>,
+    ) -> bool {
+        false
+    }
+
+    async fn log(
+        &mut self,
+        _level: family_v1_1::scryer::runtime::host::LogLevel,
+        _message: String,
+    ) {
+    }
+}
+
+impl family_v1_1::scryer::runtime::host::HostWithStore<DescriptorCtx> for HasSelf<DescriptorCtx> {
+    async fn http(
+        _accessor: &wasmtime::component::Accessor<DescriptorCtx, Self>,
+        _request: family_v1_1::scryer::runtime::host::HttpRequest,
+    ) -> Result<
+        family_v1_1::scryer::runtime::host::HttpResponse,
+        family_v1_1::scryer::runtime::host::TransportError,
+    > {
+        Err(family_v1_1::scryer::runtime::host::TransportError::ForbiddenOrigin)
+    }
+
+    async fn sleep(
+        _accessor: &wasmtime::component::Accessor<DescriptorCtx, Self>,
+        _duration_ms: u64,
+    ) {
     }
 }
 
@@ -295,6 +369,11 @@ pub(crate) fn descriptor_from_component(wasm: &[u8]) -> Result<Option<PluginDesc
 
     let mut config = Config::new();
     config.wasm_component_model(true);
+    // Since `scryer:subtitle@1.1.0` a family component's `process` is lifted
+    // as an `async func`. The engine rejects such an artifact outright without
+    // this, which would read as "not a plugin" during packaging rather than as
+    // a missing engine feature.
+    config.wasm_component_model_async(true);
     let engine = Engine::new(&config)
         .map_err(|error| anyhow!("create component descriptor engine: {error:#}"))?;
     let component = Component::from_binary(&engine, wasm)
@@ -325,11 +404,20 @@ pub(crate) fn descriptor_from_component(wasm: &[u8]) -> Result<Option<PluginDesc
     // notifications import the identical `scryer:host/services@1.0.0`, so
     // registering each family world in turn would be a duplicate definition
     // rather than three registrations.
-    host_v1_0::scryer::host::services::add_to_linker::<DescriptorCtx, HasSelf<DescriptorCtx>>(
+    family_v1_1::scryer::host::services::add_to_linker::<DescriptorCtx, HasSelf<DescriptorCtx>>(
         &mut linker,
         |ctx| ctx,
     )
     .map_err(|error| anyhow!("register shared host services for descriptors: {error:#}"))?;
+    // The typed family runtime, for the same reason: one interface, shared by
+    // every family world that adopts it. A family component built against the
+    // 1.0.0 worlds simply does not import it, and an unused registration costs
+    // nothing.
+    family_v1_1::scryer::runtime::host::add_to_linker::<DescriptorCtx, HasSelf<DescriptorCtx>>(
+        &mut linker,
+        |ctx| ctx,
+    )
+    .map_err(|error| anyhow!("register the typed family runtime for descriptors: {error:#}"))?;
     let mut store = Store::new(
         &engine,
         DescriptorCtx {

@@ -1,31 +1,37 @@
 //! Shared building blocks for Scryer's notification channels.
 //!
-//! # What the component migration changed here
+//! # What this crate is
 //!
-//! Every channel used to be an Extism-style `cdylib` whose host access came
-//! from `extism_pdk` (`config::get`, `http::request`) plus a
-//! `#[host_fn] extern "ExtismHost"` declaration for process execution. A
-//! `scryer:notification/notification@1.0.0` component has neither: it reaches
-//! Scryer through the one `scryer:host/services@1.0.0` import, which the
-//! family entry macro binds to [`scryer_plugin_pdk::host`].
+//! Every channel is a `scryer:notification/notification@1.0.0` component, and
+//! each one is a thin body: parse config, build a request, render a payload.
+//! Everything those bodies have in common lives here — the config accessors,
+//! the payload and delivery types, the typed error constructors, the retry and
+//! redaction helpers, and [`process_exec`] for the one channel family that
+//! needs to run a host executable.
 //!
-//! So this crate now re-exports the PDK's source-compatible `config`, `http`
-//! and `var` shapes instead of Extism's, and [`process_exec`] routes through
-//! `PluginHostRequest::ProcessExec` on that same door. Channel bodies compile
-//! unchanged: a migrating plugin deletes its `use extism_pdk::*;` line and
-//! keeps `use notify_common::*;`.
+//! # How it reaches Scryer
 //!
-//! Nothing here names a world. `wit_bindgen::generate!` has to live in the
-//! plugin crate — bindings are generated per world, and a shared crate that
-//! named one would drag that world's import into every component linking it
-//! (the failure mode `subtitles/amenzb` hit through `newznab-common`). This
-//! crate only ever touches the PDK's injected `fn`-pointer transport, so it is
-//! world-agnostic by construction.
+//! A component reaches the host through exactly one import,
+//! `scryer:host/services@1.0.0`, which the family entry macro binds to
+//! [`scryer_plugin_pdk::host`]. This crate re-exports the PDK's `config`,
+//! `http` and `var` shapes over that transport, and [`process_exec`] rides the
+//! same door as `PluginHostRequest::ProcessExec` — the family that needs
+//! authority beyond HTTP imports the same one function as the families that do
+//! not.
+//!
+//! # Nothing here names a world
+//!
+//! `wit_bindgen::generate!` has to live in the plugin crate: bindings are
+//! generated per world, and a shared crate that named one would drag that
+//! world's import into every component linking it (the failure mode
+//! `subtitles/amenzb` hit through `newznab-common`). This crate only ever
+//! touches the PDK's injected `fn`-pointer transport, so it is world-agnostic
+//! by construction and links into any family world unchanged.
 
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use scryer_plugin_sdk::current_sdk_constraint;
 
-/// The Extism source shapes, served by Scryer's host services.
+/// The PDK's host-service shapes, re-exported for channel bodies.
 ///
 /// Re-exported so `use notify_common::*;` keeps supplying `config::get`,
 /// `http::request`, `HttpRequest` and friends to every channel body.
@@ -453,8 +459,9 @@ pub struct ProcessExecResponse {
     pub stderr_base64: String,
     /// Always `false` since the move to host services.
     ///
-    /// The Extism host function reported a timeout as a *successful* response
-    /// with this flag set. `PluginHostRequest::ProcessExec` has no such field:
+    /// The predecessor host function reported a timeout as a *successful*
+    /// response with this flag set. `PluginHostRequest::ProcessExec` has no
+    /// such field:
     /// a host-enforced timeout is a typed `PluginError` and therefore arrives
     /// on the `Err` arm of [`process_exec`], carrying the host's message. The
     /// field is kept because it is part of this crate's published shape and
@@ -480,8 +487,8 @@ pub struct ProcessError {
 
 /// Run one allowlisted host executable.
 ///
-/// This used to be a `#[host_fn] extern "ExtismHost"` declaration exchanging
-/// JSON strings. It is now `PluginHostRequest::ProcessExec` over the same
+/// This used to be a dedicated host-function extern exchanging JSON strings.
+/// It is now `PluginHostRequest::ProcessExec` over the same
 /// `scryer:host/services@1.0.0` import every other service uses — which is the
 /// whole point of the notification world's design note: the family that needs
 /// authority beyond HTTP imports the same one function as the families that do
@@ -525,7 +532,7 @@ pub fn process_exec(request: ProcessExecRequest) -> Result<ProcessExecResponse, 
 /// `PluginError`, so that arrives as [`scryer_plugin_pdk::host::HostCallError::Service`]
 /// and keeps the host's own diagnosis — `permission_denied`, an allowlist miss,
 /// or a timeout — instead of collapsing to a generic ABI fault the way the
-/// Extism host function did.
+/// predecessor host function did.
 fn process_error(error: scryer_plugin_pdk::host::HostCallError) -> ProcessError {
     match error {
         scryer_plugin_pdk::host::HostCallError::Service(error) => ProcessError {
@@ -574,9 +581,8 @@ pub fn unsupported_action(provider: &str) -> PluginResult<PluginActionResponse> 
 
 /// Turn a configuration-resolution failure into a typed plugin error.
 ///
-/// Under Extism these were `FnResult` hard faults: the host saw a string and a
-/// generic ABI failure, and could not tell a misconfigured channel from a
-/// broken one. They are now an ordinary `PluginResult::Err` on the operation's
+/// These used to be hard ABI faults: the host saw a string and a generic
+/// failure, and could not tell a misconfigured channel from a broken one. They are now an ordinary `PluginResult::Err` on the operation's
 /// own result, which is what lets Scryer surface "this channel is not
 /// configured" to the operator instead of "the plugin crashed".
 pub fn config_error(error: impl std::fmt::Display) -> PluginError {

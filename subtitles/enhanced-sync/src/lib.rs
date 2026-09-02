@@ -1,10 +1,12 @@
 //! Enhanced subtitle sync, as a WASI Preview 2 component.
 //!
-//! The plugin implements `scryer:subtitle/subtitle-provider@1.0.0`: two exports
+//! The plugin implements `scryer:subtitle/subtitle-provider@1.1.0`: two exports
 //! carrying UTF-8 JSON (`describe` returns a `PluginDescriptor`, `process`
-//! exchanges a `PluginCommandRequest` for a `PluginCommandResponse`), plus the
-//! shared `scryer:host/services@1.0.0` import every non-archive family world
-//! declares.
+//! exchanges a `PluginCommandRequest` for a `PluginCommandResponse`, and is an
+//! `async func` on this world revision), plus the shared
+//! `scryer:host/services@1.0.0` import every non-archive family world declares.
+//! The world also imports `scryer:runtime/host@1.0.0`, but this provider never
+//! names a runtime capability, so the built artifact carries no such import.
 //!
 //! ## What the migration changed
 //!
@@ -80,12 +82,12 @@ const MIN_EFFECTIVE_OFFSET_MS: i64 = 50;
 wit_bindgen::generate!({
     // Fully qualified: `path` resolves two packages, so a bare world name is
     // ambiguous even though only one of them declares a world.
-    world: "scryer:subtitle/subtitle-provider@1.0.0",
-    // Two packages, two paths, matching the host's own bindgen: the shared
+    world: "scryer:subtitle/subtitle-provider@1.1.0",
+    // Three packages, three paths, matching the host's own bindgen: the shared
     // `scryer:host` package is listed first so the family package's
     // `import scryer:host/services@1.0.0` resolves against it. One canonical
     // copy of each, no `deps/` duplicates and no symlinks to keep in sync.
-    path: ["wit/host-v1.0.0", "wit/subtitle-v1.0.0"],
+    path: ["wit/host-v1.0.0", "wit/runtime-v1.0.0", "wit/subtitle-v1.1.0"],
     // The shared host package lives in its own WIT package, so wit-bindgen
     // asks explicitly whether to generate for it. Yes: the PDK holds only a
     // `fn` pointer and the entry macro binds it to this module's
@@ -105,7 +107,7 @@ scryer_plugin_pdk::scryer_subtitle_component_main!(
 /// catalog operations belong to a `mode: Catalog` provider and are refused
 /// in-band — a typed `Unsupported`, never a trap — so the host keeps a
 /// diagnosis it can show an operator.
-fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleCommandResult {
+async fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleCommandResult {
     match command {
         PluginSubtitleCommand::Sync(request) => {
             PluginSubtitleCommandResult::Sync(PluginResult::Ok(handle_command(request)))

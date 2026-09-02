@@ -57,10 +57,18 @@ const PLUGIN_ID: &str = "notifiarr";
 const PROVIDER_TYPE: &str = "notifiarr";
 const WASM_NAME: &str = "notifiarr_notification.wasm";
 
+/// Notifiarr's own 36-character key shape (`APIKeyLength`,
+/// `Notifiarr/notifiarr:pkg/website/website_routes.go:24`).
+const SCRIPTED_API_KEY: &str = "00000000-1111-2222-3333-444444444444";
+
 /// The configuration Scryer would have resolved for this channel.
+///
+/// `channel_id` is the Discord channel Notifiarr's passthrough integration
+/// requires (`discord.ids.channel`, Required).
 fn scripted_config(key: &str) -> Option<String> {
     match key {
-        "api_key" => Some("notifiarrkey".to_string()),
+        "api_key" => Some(SCRIPTED_API_KEY.to_string()),
+        "channel_id" => Some("910000000000000001".to_string()),
         _ => None,
     }
 }
@@ -70,8 +78,9 @@ fn scripted_config(key: &str) -> Option<String> {
 /// A prefix rather than a whole URL: several channels append query parameters
 /// carrying the notification text, which is the payload's business and not this
 /// assertion's. What is pinned is that the endpoint comes from the resolved
-/// configuration and is used verbatim.
-const EXPECTED_URL_PREFIX: &str = "https://notifiarr.com/api/v1/notification/sonarr";
+/// configuration and is used verbatim — here including the API key, which the
+/// passthrough integration takes as a path segment.
+const EXPECTED_URL_PREFIX: &str = "https://notifiarr.com/api/v1/notification/passthrough/";
 
 static PLUGIN_WASM: OnceLock<PathBuf> = OnceLock::new();
 
@@ -111,10 +120,11 @@ fn assert_artifact_is_a_component(wasm_path: &Path) {
 /// `scryer:notification/notification@1.0.0`.
 ///
 /// This is also the regression guard for the *import set*. The PDK links one
-/// crate against two different component contracts, and `scryer-plugin-sdk`
-/// still carries Extism host functions behind its `net` and process modules —
-/// so a component that accidentally keeps a live `scryer:indexer/host` or
-/// `extism:host/user` import compiles perfectly and then fails to instantiate
+/// crate against two different component contracts, and the published
+/// `scryer-plugin-sdk` still declares host-function externs behind its `net`
+/// and process modules — so a component that accidentally keeps a live
+/// `scryer:indexer/host` import, or one of the legacy host-namespace imports
+/// that SDK can still emit, compiles perfectly and then fails to instantiate
 /// under this host.
 fn assert_world_conformance(wasm_path: &Path) {
     let engine = Engine::default();
@@ -134,7 +144,7 @@ fn assert_world_conformance(wasm_path: &Path) {
 // describe
 // ---------------------------------------------------------------------------
 
-/// `describe` is a world export now, not an Extism entry point: the host calls
+/// `describe` is a world export now, not a bare exported symbol: the host calls
 /// it directly and parses the returned bytes as a `PluginDescriptor`.
 fn assert_describe_returns_a_notification_descriptor(wasm_path: &Path) {
     let (mut store, plugin) = instantiate(wasm_path, Script::default());
@@ -280,7 +290,6 @@ fn assert_a_missing_required_setting_is_a_typed_error(wasm_path: &Path) {
         "the operator has to be told which setting: {error:?}"
     );
 }
-
 
 /// This channel has no interactive action. The host reads that from the
 /// descriptor and never routes one here, so the arm exists to answer rather

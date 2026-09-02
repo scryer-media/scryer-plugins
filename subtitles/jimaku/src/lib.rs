@@ -1,15 +1,17 @@
 //! Jimaku subtitles, as a WASI Preview 2 component.
 //!
-//! The plugin implements `scryer:subtitle/subtitle-provider@1.0.0`: two
+//! The plugin implements `scryer:subtitle/subtitle-provider@1.1.0`: two
 //! exports carrying UTF-8 JSON (`describe` returns a `PluginDescriptor`,
 //! `process` exchanges a `PluginCommandRequest` for a
-//! `PluginCommandResponse`), plus the shared `scryer:host/services@1.0.0`
-//! import every non-archive family world uses for config, plugin state, and
-//! HTTP.
+//! `PluginCommandResponse`, and `process` is an `async func` on this world
+//! revision), plus two imports: the shared `scryer:host/services@1.0.0` door
+//! every non-archive family world uses for config, plugin state, and HTTP,
+//! and the family-neutral typed `scryer:runtime/host@1.0.0` surface reached
+//! through `scryer_plugin_pdk::runtime`.
 //!
 //! ## What the migration changed
 //!
-//! The previous artifact was an Extism-style `cdylib` with four exported entry
+//! The previous artifact was a plain `cdylib` with four exported entry
 //! points (`scryer_describe`, `scryer_validate_config`,
 //! `scryer_subtitle_search`, `scryer_subtitle_download`) whose host services
 //! arrived through the core-module `scryer:host/v1` pointer ABI. A component
@@ -20,7 +22,7 @@
 //!
 //! Provider behaviour is unchanged — the same AniList-first entry resolution,
 //! the same name-search fallback policy, the same bounded 429 wait budget, the
-//! same language detection and match hints. What used to be an Extism
+//! same language detection and match hints. What used to be a hard
 //! `FnResult` hard failure is now the SDK's typed [`PluginResult::Err`]; a
 //! rate-limited search still returns an empty result set rather than failing.
 //!
@@ -56,11 +58,11 @@ use serde::{Deserialize, Serialize};
 wit_bindgen::generate!({
     // Fully qualified: `path` resolves two packages, so a bare world name is
     // ambiguous even though only one of them declares a world.
-    world: "scryer:subtitle/subtitle-provider@1.0.0",
-    // Two packages, two paths, matching the host's own bindgen: the shared
+    world: "scryer:subtitle/subtitle-provider@1.1.0",
+    // Three packages, three paths, matching the host's own bindgen: the shared
     // `scryer:host` package is listed first so the family package's
     // `import scryer:host/services@1.0.0` resolves against it.
-    path: ["wit/host-v1.0.0", "wit/subtitle-v1.0.0"],
+    path: ["wit/host-v1.0.0", "wit/runtime-v1.0.0", "wit/subtitle-v1.1.0"],
     // The shared host package lives in its own WIT package, so wit-bindgen
     // asks explicitly whether to generate for it. Yes: the PDK holds only a
     // `fn` pointer and the entry macro binds it to this module's
@@ -144,7 +146,7 @@ struct JimakuDownloadRef {
 /// This is the whole of the world's request surface: `describe` is owned by
 /// the PDK entry macro, and every operational failure is reported in-band
 /// through [`PluginResult`], never as a world-level `invocation-error`.
-fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleCommandResult {
+async fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleCommandResult {
     match command {
         PluginSubtitleCommand::ValidateConfig(request) => {
             PluginSubtitleCommandResult::ValidateConfig(PluginResult::Ok(validate_config(&request)))
@@ -167,6 +169,22 @@ fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleComm
                     .to_string(),
                 debug_message: Some(
                     "SubtitleProviderMode::Catalog advertises no generate capability".to_string(),
+                ),
+                retry_after_seconds: None,
+                details: None,
+            }))
+        }
+        // Alignment moved into this envelope when the subtitle-sync plugin
+        // migrated off its own transport, so every subtitle provider now sees
+        // the operation whether or not it can serve one. Jimaku cannot: it has
+        // no audio decoder and advertises no `sync` capability. Same in-band
+        // refusal as `Generate`, for the same reason.
+        PluginSubtitleCommand::Sync(_) => {
+            PluginSubtitleCommandResult::Sync(PluginResult::Err(PluginError {
+                code: PluginErrorCode::Unsupported,
+                public_message: "Jimaku cannot align subtitles".to_string(),
+                debug_message: Some(
+                    "SubtitleCapabilities::sync is None for this provider".to_string(),
                 ),
                 retry_after_seconds: None,
                 details: None,
@@ -199,7 +217,7 @@ fn validate_config(
 
 /// A rate-limited search is still an empty result set, not a failure —
 /// `search_subtitles_impl` owns that rule and is unchanged. Every other
-/// failure was an Extism `FnResult` hard failure and is now the SDK's typed
+/// failure was a hard ABI failure and is now the SDK's typed
 /// [`PluginResult::Err`]: same meaning, typed channel.
 fn search(request: &SubtitlePluginSearchRequest) -> PluginResult<SubtitlePluginSearchResponse> {
     let config = match JimakuConfig::from_host() {

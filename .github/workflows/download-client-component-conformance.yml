@@ -30,9 +30,6 @@ on:
       - download_clients/downloadstation/**
       - download_clients/flood/**
       - download_clients/freebox/**
-      - download_clients/hadouken/**
-      - download_clients/nzbvortex/**
-      - download_clients/pneumatic/**
       - download_clients/qbittorrent/**
       - download_clients/rqbit/**
       - download_clients/rtorrent/**
@@ -40,7 +37,6 @@ on:
       - download_clients/transmission/**
       - download_clients/tribler/**
       - download_clients/usenet-blackhole/**
-      - download_clients/utorrent/**
       - pdk/scryer-plugin-pdk/**
       - .github/workflows/download-client-component-conformance.yml
   workflow_dispatch:
@@ -75,12 +71,6 @@ jobs:
             manifest: download_clients/flood/Cargo.toml
           - plugin: freebox
             manifest: download_clients/freebox/Cargo.toml
-          - plugin: hadouken
-            manifest: download_clients/hadouken/Cargo.toml
-          - plugin: nzbvortex
-            manifest: download_clients/nzbvortex/Cargo.toml
-          - plugin: pneumatic
-            manifest: download_clients/pneumatic/Cargo.toml
           - plugin: rqbit
             manifest: download_clients/rqbit/Cargo.toml
           - plugin: rtorrent
@@ -93,8 +83,6 @@ jobs:
             manifest: download_clients/tribler/Cargo.toml
           - plugin: usenet-blackhole
             manifest: download_clients/usenet-blackhole/Cargo.toml
-          - plugin: utorrent
-            manifest: download_clients/utorrent/Cargo.toml
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 

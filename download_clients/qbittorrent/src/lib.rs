@@ -239,7 +239,7 @@ fn build_descriptor_json() -> Result<String, Error> {
 
 pub fn scryer_download_add(input: String) -> FnResult<String> {
     let request: PluginDownloadClientAddRequest = serde_json::from_str(&input)?;
-    let config = match QbittorrentConfig::from_extism() {
+    let config = match QbittorrentConfig::from_config() {
         Ok(config) => config,
         Err(err) => {
             return plugin_error_response::<PluginDownloadClientAddResponse>(
@@ -415,7 +415,7 @@ fn handle_download_add(
 }
 
 pub fn scryer_download_list_queue(_input: String) -> FnResult<String> {
-    let config = QbittorrentConfig::from_extism()?;
+    let config = QbittorrentConfig::from_config()?;
     let torrents = list_torrents(&config, Some("all"))?;
     let preferences = seed_preferences(&config, &torrents);
     let items = torrents
@@ -449,7 +449,7 @@ fn defers_to_global_limits(torrent: &QbTorrent) -> bool {
 }
 
 pub fn scryer_download_list_completed(_input: String) -> FnResult<String> {
-    let config = QbittorrentConfig::from_extism()?;
+    let config = QbittorrentConfig::from_config()?;
     Ok(serde_json::to_string(&PluginResult::Ok(
         completed_downloads(&config, None)?,
     ))?)
@@ -457,7 +457,7 @@ pub fn scryer_download_list_completed(_input: String) -> FnResult<String> {
 
 pub fn scryer_download_list_recent_completed(input: String) -> FnResult<String> {
     let request: PluginDownloadListRecentCompletedRequest = serde_json::from_str(&input)?;
-    let config = QbittorrentConfig::from_extism()?;
+    let config = QbittorrentConfig::from_config()?;
     Ok(serde_json::to_string(&PluginResult::Ok(
         completed_downloads(&config, Some(request.limit))?,
     ))?)
@@ -563,7 +563,7 @@ where
 }
 
 pub fn scryer_download_list_history(_input: String) -> FnResult<String> {
-    let config = QbittorrentConfig::from_extism()?;
+    let config = QbittorrentConfig::from_config()?;
     Ok(serde_json::to_string(&PluginResult::Ok(
         completed_history_items(&config)?,
     ))?)
@@ -597,7 +597,7 @@ fn handle_download_control(
         }));
     }
 
-    let config = QbittorrentConfig::from_extism()?;
+    let config = QbittorrentConfig::from_config()?;
 
     match request.action {
         DownloadControlAction::Pause | DownloadControlAction::Resume => {
@@ -667,7 +667,7 @@ fn mark_imported_non_destructive(input: String) -> FnResult<String> {
         );
     }
 
-    let config = QbittorrentConfig::from_extism()?;
+    let config = QbittorrentConfig::from_config()?;
 
     if !torrent_exists(&config, &hash)? {
         return Ok(serde_json::to_string(&PluginResult::Ok(()))?);
@@ -691,7 +691,7 @@ fn mark_imported_non_destructive(input: String) -> FnResult<String> {
 }
 
 pub fn scryer_download_status(_input: String) -> FnResult<String> {
-    let config = QbittorrentConfig::from_extism()?;
+    let config = QbittorrentConfig::from_config()?;
     let version = get_text(&config, "/app/version")?;
     let preferences: QbPreferences = get_json(&config, "/app/preferences")?;
     let categories: HashMap<String, QbCategory> = get_json(&config, "/torrents/categories")?;
@@ -742,7 +742,7 @@ pub fn scryer_download_status(_input: String) -> FnResult<String> {
 }
 
 pub fn scryer_download_test_connection(_input: String) -> FnResult<String> {
-    let config = QbittorrentConfig::from_extism()?;
+    let config = QbittorrentConfig::from_config()?;
     var::remove(COOKIE_VAR_KEY)?;
     let version = get_text(&config, "/app/version")?;
     Ok(serde_json::to_string(&PluginResult::Ok(version))?)
@@ -771,7 +771,7 @@ impl QbittorrentConfig {
         !self.username.trim().is_empty() && !self.password.is_empty()
     }
 
-    fn from_extism() -> Result<Self, Error> {
+    fn from_config() -> Result<Self, Error> {
         let base_url = config::get("base_url")
             .map_err(|e| Error::msg(format!("missing config base_url: {e}")))?
             .unwrap_or_default();
@@ -2356,68 +2356,6 @@ fn create_tag_if_missing(config: &QbittorrentConfig, tag: &str) -> Result<(), Er
 fn is_localhost_url(url: &str) -> bool {
     let lower = url.trim().to_ascii_lowercase();
     lower.contains("://localhost") || lower.contains("://127.0.0.1") || lower.contains("://[::1]")
-}
-
-#[cfg(test)]
-mod extism_host_stubs {
-    #[unsafe(no_mangle)]
-    pub extern "C" fn alloc(_len: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn config_get(_ptr: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn http_headers() -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn http_request(_request: u64, _body: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn http_status_code() -> u64 {
-        200
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn length(_offset: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn length_unsafe(_offset: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn load_u64(_offset: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn load_u8(_offset: u64) -> u8 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn store_u64(_offset: u64, _value: u64) {}
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn store_u8(_offset: u64, _value: u8) {}
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn var_get(_ptr: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn var_set(_ptr: u64, _value: u64) {}
 }
 
 #[cfg(test)]

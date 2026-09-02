@@ -1,4 +1,4 @@
-# Host conformance for `scryer:subtitle/subtitle-provider@1.0.0` components.
+# Host conformance for `scryer:subtitle/subtitle-provider@1.1.0` components.
 #
 # The sibling of archive-extraction-conformance.yml, one level up: that world
 # has a single implementation, this one will have several, so the plugin is a
@@ -18,9 +18,7 @@ on:
       - subtitles/opensubtitles/**
       - subtitles/subdl/**
       - subtitles/tsukihime/**
-      - subtitles/whisper/**
-      - indexers/newznab-common-legacy/**
-      - indexers/command-compat/**
+      - indexers/newznab-common/**
       - pdk/scryer-plugin-pdk/**
       - .github/workflows/subtitle-component-conformance.yml
   workflow_dispatch:
@@ -42,11 +40,17 @@ jobs:
       matrix:
         include:
           # ameNZB is the only provider here whose search comes from a
-          # shared crate (`indexers/newznab-common-legacy`, also linked
-          # into Preview 1 indexer guests). Its world-conformance
-          # assertion is therefore the fleet's guard that that engine
-          # stays world-agnostic — a stray import there builds cleanly and
-          # only fails at instantiation.
+          # shared crate: the async `indexers/newznab-common` engine that the
+          # five newznab-family indexers also link. It can be shared because
+          # `scryer:subtitle@1.1.0` lifts `process` as an `async func` and
+          # the engine reaches HTTP, clocks, state and config only through
+          # `scryer_plugin_pdk::runtime`, which dispatches to whichever
+          # capability world the running guest installed — the family-neutral
+          # `scryer:runtime/host@1.0.0` here, `scryer:indexer/host@1.1.0` in
+          # an indexer. So this row is the only guard that the engine stays
+          # world-agnostic: a stray `scryer:indexer/host` import builds
+          # cleanly and only fails at instantiation, and the conformance
+          # suite asserts the artifact's non-WASI import set on top.
           - plugin: amenzb-subtitles
             manifest: subtitles/amenzb/Cargo.toml
           - plugin: animetosho-xyz-subtitles
@@ -68,12 +72,6 @@ jobs:
             manifest: subtitles/subdl/Cargo.toml
           - plugin: tsukihime-subtitles
             manifest: subtitles/tsukihime/Cargo.toml
-          # `official = false`, so plugin-ci does not build whisper at all.
-          # This is the only place its artifact is checked, which is exactly
-          # why it belongs here: an unbuilt plugin in a component family is how
-          # a Preview 1 straggler survives unnoticed.
-          - plugin: whisper
-            manifest: subtitles/whisper/Cargo.toml
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -87,7 +85,7 @@ jobs:
 
       # Only `enhanced-subtitle-sync` compiles C (vendored FFmpeg decoders and
       # libfvad), so this step is gated on the row rather than paid for by the
-      # seven pure-Rust providers. Same WASI SDK 33 pin, same environment, as
+      # six pure-Rust providers. Same WASI SDK 33 pin, same environment, as
       # archive-extraction-conformance.yml.
       - name: Install WASI SDK for the vendored C sources
         if: matrix.wasi_sdk

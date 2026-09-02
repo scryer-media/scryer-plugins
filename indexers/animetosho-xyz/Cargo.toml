@@ -10,7 +10,7 @@ description = "AnimeTosho.xyz Newznab/Torznab feed indexer"
 official = true
 plugin_id = "animetosho-xyz"
 catalog_versions = ["v3"]
-min_scryer_version = "0.18.22"
+min_scryer_version = "0.20.0"
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/animetosho-xyz"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/animetosho-xyz"
 
@@ -22,7 +22,7 @@ path = "src/lib.rs"
 scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
 newznab-common = { path = "../newznab-common" }
 serde_json = "1"
-scryer-plugin-sdk = "3.10.0"
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
 
 [profile.plugin-release]
 inherits = "release"

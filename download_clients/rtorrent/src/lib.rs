@@ -153,7 +153,7 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
 
 pub fn scryer_download_add(input: String) -> FnResult<String> {
     let request: PluginDownloadClientAddRequest = serde_json::from_str(&input)?;
-    let config = RTorrentConfig::from_extism()?;
+    let config = RTorrentConfig::from_config()?;
     let category = request
         .routing
         .isolation_value
@@ -224,7 +224,7 @@ pub fn scryer_download_add(input: String) -> FnResult<String> {
 }
 
 pub fn scryer_download_list_queue(_input: String) -> FnResult<String> {
-    let config = RTorrentConfig::from_extism()?;
+    let config = RTorrentConfig::from_config()?;
     let items = list_torrents(&config)?
         .into_iter()
         .filter(|torrent| torrent_matches_scope(&config, torrent))
@@ -234,7 +234,7 @@ pub fn scryer_download_list_queue(_input: String) -> FnResult<String> {
 }
 
 pub fn scryer_download_list_history(_input: String) -> FnResult<String> {
-    let config = RTorrentConfig::from_extism()?;
+    let config = RTorrentConfig::from_config()?;
     let items = list_torrents(&config)?
         .into_iter()
         .filter(|torrent| torrent_matches_scope(&config, torrent))
@@ -244,7 +244,7 @@ pub fn scryer_download_list_history(_input: String) -> FnResult<String> {
 }
 
 pub fn scryer_download_list_completed(_input: String) -> FnResult<String> {
-    let config = RTorrentConfig::from_extism()?;
+    let config = RTorrentConfig::from_config()?;
     let downloads = list_torrents(&config)?
         .into_iter()
         .filter(|torrent| torrent_matches_scope(&config, torrent))
@@ -256,7 +256,7 @@ pub fn scryer_download_list_completed(_input: String) -> FnResult<String> {
 
 pub fn scryer_download_control(input: String) -> FnResult<String> {
     let request: PluginDownloadClientControlRequest = serde_json::from_str(&input)?;
-    let config = RTorrentConfig::from_extism()?;
+    let config = RTorrentConfig::from_config()?;
     match request.action {
         DownloadControlAction::Remove => {
             if request.remove_data {
@@ -288,7 +288,7 @@ pub fn scryer_download_control(input: String) -> FnResult<String> {
 
 pub fn scryer_download_mark_imported(input: String) -> FnResult<String> {
     let request: PluginDownloadClientMarkImportedRequest = serde_json::from_str(&input)?;
-    let config = RTorrentConfig::from_extism()?;
+    let config = RTorrentConfig::from_config()?;
     let hash = normalize_hash(
         &request
             .info_hash
@@ -327,7 +327,7 @@ pub fn scryer_download_mark_imported(input: String) -> FnResult<String> {
 }
 
 pub fn scryer_download_status(_input: String) -> FnResult<String> {
-    let config = RTorrentConfig::from_extism()?;
+    let config = RTorrentConfig::from_config()?;
     let version = get_version(&config)?;
     Ok(serde_json::to_string(&PluginResult::Ok(
         PluginDownloadClientStatus {
@@ -351,7 +351,7 @@ pub fn scryer_download_status(_input: String) -> FnResult<String> {
 }
 
 pub fn scryer_download_test_connection(_input: String) -> FnResult<String> {
-    let config = RTorrentConfig::from_extism()?;
+    let config = RTorrentConfig::from_config()?;
     let version = get_version(&config)?;
     if version_lt(&version, "0.9.0") {
         return Ok(serde_json::to_string(&plugin_error::<String>(
@@ -364,7 +364,7 @@ pub fn scryer_download_test_connection(_input: String) -> FnResult<String> {
 }
 
 impl RTorrentConfig {
-    fn from_extism() -> Result<Self, Error> {
+    fn from_config() -> Result<Self, Error> {
         let host = config_value("host").unwrap_or_else(|| "localhost".to_string());
         let port = config_value("port").unwrap_or_else(|| "8080".to_string());
         let url_base = config_value("url_base").unwrap_or_else(|| "RPC2".to_string());
@@ -1239,68 +1239,6 @@ mod tests {
         assert_eq!(torrents.len(), 1);
         assert_eq!(torrents[0].is_private, None);
     }
-}
-
-#[cfg(test)]
-mod extism_host_stubs {
-    #[unsafe(no_mangle)]
-    pub extern "C" fn alloc(_len: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn config_get(_ptr: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn http_headers() -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn http_request(_request: u64, _body: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn http_status_code() -> u64 {
-        200
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn length(_offset: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn length_unsafe(_offset: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn load_u64(_offset: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn load_u8(_offset: u64) -> u8 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn store_u64(_offset: u64, _value: u64) {}
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn store_u8(_offset: u64, _value: u8) {}
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn var_get(_ptr: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn var_set(_ptr: u64, _value: u64) {}
 }
 
 // ---------------------------------------------------------------------------

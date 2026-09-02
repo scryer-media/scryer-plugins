@@ -68,11 +68,18 @@ fn scripted_config(key: &str) -> Option<String> {
 
 /// The upstream endpoint a `send` must reach, built from that configuration.
 ///
-/// A prefix rather than a whole URL: several channels append query parameters
-/// carrying the notification text, which is the payload's business and not this
-/// assertion's. What is pinned is that the endpoint comes from the resolved
+/// ntfy is published to as JSON at the **server root**
+/// (docs.ntfy.sh/publish/#publish-as-json), so the topic is a body field rather
+/// than a path segment and the notification text is a body field rather than a
+/// query parameter. What is pinned is that the endpoint comes from the resolved
 /// configuration and is used verbatim.
-const EXPECTED_URL_PREFIX: &str = "https://ntfy.test.invalid/scryer?title=";
+const EXPECTED_URL: &str = "https://ntfy.test.invalid/";
+
+/// The configured topic must reach ntfy in the JSON body, and the notification
+/// text must never travel in the URL: that is the whole point of the move off
+/// Sonarr's query-parameter publish, and a regression to it would be invisible
+/// to a URL-prefix assertion alone.
+const EXPECTED_TOPIC: &str = "scryer";
 
 static PLUGIN_WASM: OnceLock<PathBuf> = OnceLock::new();
 
@@ -111,10 +118,11 @@ fn assert_artifact_is_a_component(wasm_path: &Path) {
 /// `scryer:notification/notification@1.0.0`.
 ///
 /// This is also the regression guard for the *import set*. The PDK links one
-/// crate against two different component contracts, and `scryer-plugin-sdk`
-/// still carries Extism host functions behind its `net` and process modules —
-/// so a component that accidentally keeps a live `scryer:indexer/host` or
-/// `extism:host/user` import compiles perfectly and then fails to instantiate
+/// crate against two different component contracts, and the published
+/// `scryer-plugin-sdk` still declares host-function externs behind its `net`
+/// and process modules — so a component that accidentally keeps a live
+/// `scryer:indexer/host` import, or one of the legacy host-namespace imports
+/// that SDK can still emit, compiles perfectly and then fails to instantiate
 /// under this host.
 fn assert_world_conformance(wasm_path: &Path) {
     let engine = Engine::default();
@@ -134,7 +142,7 @@ fn assert_world_conformance(wasm_path: &Path) {
 // describe
 // ---------------------------------------------------------------------------
 
-/// `describe` is a world export now, not an Extism entry point: the host calls
+/// `describe` is a world export now, not a bare exported symbol: the host calls
 /// it directly and parses the returned bytes as a `PluginDescriptor`.
 fn assert_describe_returns_a_notification_descriptor(wasm_path: &Path) {
     let (mut store, plugin) = instantiate(wasm_path, Script::default());
@@ -200,8 +208,32 @@ fn assert_send_reaches_the_configured_endpoint_over_host_http(wasm_path: &Path) 
             .script
             .urls
             .iter()
-            .any(|url| url.starts_with(EXPECTED_URL_PREFIX)),
+            .any(|url| url == EXPECTED_URL),
         "the configured endpoint must be used verbatim; got {:?}",
+        store.data().script.urls
+    );
+
+    // The topic travels in the JSON body, and the notification text with it.
+    let (_, body) = store
+        .data()
+        .script
+        .requests
+        .iter()
+        .find(|(url, _)| url == EXPECTED_URL)
+        .expect("the publish request must have been made");
+    let payload: serde_json::Value =
+        serde_json::from_slice(body).expect("ntfy is published to as JSON");
+    assert_eq!(
+        payload["topic"], EXPECTED_TOPIC,
+        "the configured topic must be a body field: {payload}"
+    );
+    assert!(
+        payload.get("message").is_some(),
+        "the notification text must be a body field: {payload}"
+    );
+    assert!(
+        !store.data().script.urls.iter().any(|url| url.contains('?')),
+        "no notification content may travel in the URL: {:?}",
         store.data().script.urls
     );
 }
@@ -373,6 +405,10 @@ struct Script {
     unset: Vec<String>,
     /// Every URL the channel asked the host to fetch.
     urls: Vec<String>,
+    /// Every request the channel asked the host to make, as `(url, body)`. The
+    /// topic and the notification text are body fields for this channel, so the
+    /// body is part of the contract this suite pins.
+    requests: Vec<(String, Vec<u8>)>,
     calls: Vec<String>,
 }
 
@@ -437,6 +473,9 @@ impl ServicesHost for Ctx {
             PluginHostRequest::Http(request) => {
                 self.script.calls.push(format!("http:{}", request.url));
                 self.script.urls.push(request.url.clone());
+                self.script
+                    .requests
+                    .push((request.url.clone(), request.body.clone()));
                 match self.script.http.clone() {
                     HttpScript::Accepted => {
                         PluginHostResponse::Http(PluginResult::Ok(PluginHttpResponse {

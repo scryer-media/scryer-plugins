@@ -10,12 +10,11 @@ official = true
 plugin_id = "tsukihime-subtitles"
 status = "beta"
 catalog_versions = ["v3"]
-# TEMPORARY — the placeholder for the first Scryer release whose subtitle
-# backing is the `scryer:subtitle/subtitle-provider@1.0.0` component host. A
-# Preview 1 command runtime cannot instantiate this artifact at all, so the
-# floor has to move with that release; 0.18.23 is the same placeholder the
-# archive extractor carries. Replace both with the real version at release.
-min_scryer_version = "0.18.23"
+# Scryer 0.20.0 is the first release whose subtitle host serves
+# `scryer:subtitle/subtitle-provider@1.1.0`. A host that only serves the 1.0.0
+# world (or the Preview 1 command runtime before it) cannot bind this artifact
+# at all, so the floor is load-bearing, not advisory.
+min_scryer_version = "0.20.0"
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/tsukihime"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/tsukihime"
 
@@ -24,34 +23,17 @@ crate-type = ["cdylib"]
 
 [dependencies]
 base64 = "0.23"
-# TEMPORARY — the `archive-extract` feature comes out once the SDK release is
-# published; see the PDK's own manifest for why it is gated at all. This plugin
-# supplies the newer SDK through the `[patch.crates-io]` below, which is what
-# lets the gate open here without dragging the unmigrated fleet along.
-scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0", features = [
-    "archive-extract",
-] }
-scryer-plugin-sdk = "3.10.0"
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-wit-bindgen = "0.60"
-
-# TEMPORARY — this entry comes out once the SDK release is published.
-#
-# `PluginHostRequest::ArchiveExtract` — the generic host-owned extraction
-# capability this provider uses to open its `.xz` subtitle attachments —
-# exists only in the in-repo SDK that ships with the WASI-component family
-# hosts. The published 3.10.0 has no archive capability at all.
-#
-# Replace this with a plain version bump on the `scryer-plugin-sdk` dependency
-# above as soon as the release carrying `ArchiveExtract` is on crates.io.
-[patch.crates-io]
-scryer-plugin-sdk = { path = "../../../scryer-release-next/crates/scryer-plugin-sdk" }
+wit-bindgen = { version = "0.61", features = ["async"] }
 
 [dev-dependencies]
 postcard = { version = "1", features = ["use-std"] }
-wasmtime = "47.0.3"
-wasmtime-wasi = "47.0.3"
+tokio = { version = "1", features = ["rt", "time", "macros"] }
+wasmtime = "48.0.1"
+wasmtime-wasi = "48.0.1"
 
 [profile.plugin-release]
 inherits = "release"

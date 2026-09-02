@@ -872,18 +872,18 @@ fn locality_hint(local: bool) -> &'static str {
 /// The world's single `process` entry, dispatching the SDK's notification
 /// command enum.
 ///
-/// One arm per Extism entry point this plugin used to export — and this channel
+/// One arm per operation this plugin exports — and this channel
 /// exported three, so `action` is a real operation here rather than the in-band
 /// `Unsupported` most channels answer with. Its OAuth handlers are unchanged;
 /// only the envelope around them moved.
 ///
-/// A failure in either operation was a `FnResult` hard fault under Extism: the
+/// A failure in either operation used to be a hard ABI fault: the
 /// host saw a string and a generic ABI error, and could not tell a
 /// misconfigured channel from a broken one. Both are now typed
 /// `PluginResult::Err`, which also means a failed OAuth exchange no longer
 /// takes the component instance down with it.
 ///
-/// A configuration failure was a `FnResult` hard fault under Extism — the host
+/// A configuration failure used to be a hard ABI fault — the host
 /// saw a string and a generic ABI error, and could not tell a misconfigured
 /// channel from a broken one. It is now a typed `PluginResult::Err`.
 fn handle_notification_command(
@@ -907,7 +907,7 @@ fn handle_notification_command(
 
 /// Rebuild the JSON document the action handlers have always read.
 ///
-/// Under Extism, `scryer_notification_action` received one opaque JSON string:
+/// The old `scryer_notification_action` received one opaque JSON string:
 /// the action name alongside a `query` object of parameters. The command
 /// envelope splits those into `PluginActionRequest::action` and `::payload`,
 /// and the host fills the payload with exactly `{"query": {..}}`. Re-joining

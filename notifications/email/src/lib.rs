@@ -9,9 +9,9 @@
 //!
 //! Email is the only notification channel that drives a raw TCP stream itself:
 //! connect, `EHLO`, read the greeting, `STARTTLS`, keep going on the upgraded
-//! stream. Under Extism that authority arrived through a second door — five
-//! `#[host_fn] extern "ExtismHost"` declarations behind
-//! `scryer_plugin_sdk::net`. A component has no such door, and deliberately no
+//! stream. That authority used to arrive through a second door — five
+//! host-function externs behind `scryer_plugin_sdk::net`. A component has no
+//! such door, and deliberately no
 //! `wasi:sockets` either: a p2 socket capability is ambient within whatever
 //! network the host grants, whereas Scryer checks every connection against the
 //! resolved `socket_permissions` on *this* descriptor — the `${smtp_host}`
@@ -251,8 +251,7 @@ fn option(value: &str, label: &str) -> ConfigFieldOption {
 /// The world's single `process` entry, dispatching the SDK's notification
 /// command enum.
 ///
-/// One arm per Extism entry point this plugin used to export. `action` is not
-/// one of them: email has no interactive action, the descriptor says so, and
+/// One arm per operation this plugin exports. `action` is not one of them: email has no interactive action, the descriptor says so, and
 /// the host does not route one here — so the arm answers **in-band** with
 /// `Unsupported` rather than trapping. A trap under a component costs the whole
 /// instance and replaces the plugin's own diagnosis with a generic ABI failure.

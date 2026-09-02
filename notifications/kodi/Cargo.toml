@@ -1,0 +1,41 @@
+[package]
+name = "kodi-notification"
+version = "0.2.0"
+edition = "2024"
+license = "GPL-3.0-only"
+description = "Kodi notification and video-library plugin"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "kodi"
+status = "beta"
+catalog_versions = ["v3"]
+# Scryer 0.20.0 is the first release whose notification backing is the
+# `scryer:notification/notification@1.0.0` component host. Earlier releases
+# run the Preview 1 command runtime and cannot instantiate this artifact at
+# all, so the floor is load-bearing, not advisory.
+min_scryer_version = "0.20.0"
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/kodi"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/kodi"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+notify-common = { path = "../notify-common" }
+serde_json = "1"
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
+wit-bindgen = "0.61"
+
+[dev-dependencies]
+postcard = { version = "1", features = ["use-std"] }
+wasmtime = "48.0.1"
+wasmtime-wasi = "48.0.1"
+
+[profile.plugin-release]
+inherits = "release"
+opt-level = 3
+lto = "fat"
+strip = true
+panic = "abort"

@@ -14,4 +14,4 @@ Downloads come only from the declared Tsukihime storage origin. Compressed subti
 
 ## Artifact
 
-This plugin ships as a WASI Preview 2 component implementing `scryer:subtitle/subtitle-provider@1.0.0`. A Scryer whose subtitle backing is still the Preview 1 command runtime cannot load it; see `min_scryer_version` in `Cargo.toml`.
+This plugin ships as a WASI Preview 2 component implementing `scryer:subtitle/subtitle-provider@1.1.0`, whose `process` export is an `async func`. A Scryer whose subtitle host only serves the 1.0.0 world (or is still the Preview 1 command runtime) cannot load it; see `min_scryer_version` in `Cargo.toml`.

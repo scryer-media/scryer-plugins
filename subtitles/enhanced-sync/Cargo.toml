@@ -10,19 +10,17 @@ description = "Optional enhanced subtitle sync decoder and audio-transcode plugi
 official = true
 plugin_id = "enhanced-subtitle-sync"
 catalog_versions = ["v3"]
-# TEMPORARY — the placeholder for the first Scryer release whose subtitle
-# backing is the `scryer:subtitle/subtitle-provider@1.0.0` component host. A
-# Preview 1 command runtime cannot instantiate this artifact at all, so the
-# floor has to move with that release; 0.18.23 is the same placeholder the
-# archive extractor and tsukihime carry. Replace all three with the real
-# version at release.
-min_scryer_version = "0.18.23"
+# Scryer 0.20.0 is the first release whose subtitle host serves
+# `scryer:subtitle/subtitle-provider@1.1.0`. A host that only serves the 1.0.0
+# world (or the Preview 1 command runtime before it) cannot bind this artifact
+# at all, so the floor is load-bearing, not advisory.
+min_scryer_version = "0.20.0"
 # Both flavors are kept on purpose. Unlike the catalog providers — which are
 # I/O-bound and gained nothing from SIMD, so their variants were dropped — this
 # is the fleet's one DSP plugin: FFmpeg's decoders, libfvad and the FFT
 # correlation are exactly the kernels `simd128`/`relaxed-simd` speed up, and
 # the C halves are compiled with `-msimd128`/`-mrelaxed-simd` to match.
-feature_sets = [{ required_features = [], wasm_opt = "speed" }, { required_features = ["simd128", "relaxed-simd"] }]
+feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/enhanced-sync"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/enhanced-sync"
 
@@ -32,27 +30,14 @@ crate-type = ["cdylib"]
 [dependencies]
 base64 = "0.23"
 scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
-scryer-plugin-sdk = "3.10.0"
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 rustfft = "6"
 encoding_rs = "0.8"
 chardetng = "1.0"
-symphonia = { version = "0.6.0", default-features = false, features = ["aac", "flac", "mp3", "vorbis", "pcm", "mkv", "isomp4", "wav"] }
-wit-bindgen = "0.60"
-
-# TEMPORARY — this entry comes out once the SDK release is published.
-#
-# `PluginSubtitleCommand::Sync` — the command-envelope variant this plugin's
-# alignment, probe and decode-window operations travel in — exists only in the
-# in-repo SDK that ships with the WASI-component family hosts. The published
-# 3.10.0 has no sync operation at all; alignment rode its own request type on
-# the deleted Preview 1 transport.
-#
-# Replace this with a plain version bump on the `scryer-plugin-sdk` dependency
-# above as soon as the release carrying the `Sync` variant is on crates.io.
-[patch.crates-io]
-scryer-plugin-sdk = { path = "../../../scryer-release-next/crates/scryer-plugin-sdk" }
+symphonia = { version = "0.6.1", default-features = false, features = ["aac", "flac", "mp3", "vorbis", "pcm", "mkv", "isomp4", "wav"] }
+wit-bindgen = { version = "0.61", features = ["async"] }
 
 [build-dependencies]
 cc = "1"
@@ -62,8 +47,9 @@ zstd = "0.13"
 [dev-dependencies]
 postcard = { version = "1", features = ["use-std"] }
 tempfile = "3"
-wasmtime = "47.0.3"
-wasmtime-wasi = "47.0.3"
+tokio = { version = "1", features = ["rt", "time", "macros"] }
+wasmtime = "48.0.1"
+wasmtime-wasi = "48.0.1"
 
 [profile.plugin-release]
 inherits = "release"

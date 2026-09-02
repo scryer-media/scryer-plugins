@@ -11,7 +11,7 @@ official = true
 plugin_id = "broadcasthe-net"
 status = "beta"
 catalog_versions = ["v3"]
-min_scryer_version = "0.18.22"
+min_scryer_version = "0.20.0"
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/broadcasthe-net"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/broadcasthe-net"
 
@@ -22,7 +22,7 @@ path = "src/lib.rs"
 [dependencies]
 chrono = { version = "0.4", default-features = false, features = ["alloc", "std"] }
 scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
-scryer-plugin-sdk = "3.10.0"
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 

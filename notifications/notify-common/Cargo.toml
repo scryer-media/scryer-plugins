@@ -6,12 +6,12 @@ license = "GPL-3.0-only"
 
 [dependencies]
 base64 = "0.23"
-# The Extism host ABI is gone: every notification channel is now a
+# There is one host door and no second ABI: every notification channel is a
 # `scryer:notification/notification@1.0.0` component, and config, HTTP, plugin
 # state and host process execution all cross the single
 # `scryer:host/services@1.0.0` import that the PDK's injected transport backs.
 scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
-scryer-plugin-sdk = "3.10.0"
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 urlencoding = "2"

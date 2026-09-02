@@ -70,10 +70,10 @@ fn scripted_config(key: &str) -> Option<String> {
 
 /// The upstream endpoint a `send` must reach, built from that configuration.
 ///
-/// A prefix rather than a whole URL: several channels append query parameters
-/// carrying the notification text, which is the payload's business and not this
-/// assertion's. What is pinned is that the endpoint comes from the resolved
-/// configuration and is used verbatim.
+/// A prefix rather than a whole URL: what is pinned is that the sending domain
+/// and the region both come from the resolved configuration and are used
+/// verbatim in the path. The message itself is a URL-encoded form body, asserted
+/// separately below.
 const EXPECTED_URL_PREFIX: &str = "https://api.mailgun.net/v3/mg.test.invalid/messages";
 
 static PLUGIN_WASM: OnceLock<PathBuf> = OnceLock::new();
@@ -114,10 +114,11 @@ fn assert_artifact_is_a_component(wasm_path: &Path) {
 /// `scryer:notification/notification@1.0.0`.
 ///
 /// This is also the regression guard for the *import set*. The PDK links one
-/// crate against two different component contracts, and `scryer-plugin-sdk`
-/// still carries Extism host functions behind its `net` and process modules —
-/// so a component that accidentally keeps a live `scryer:indexer/host` or
-/// `extism:host/user` import compiles perfectly and then fails to instantiate
+/// crate against two different component contracts, and the published
+/// `scryer-plugin-sdk` still declares host-function externs behind its `net`
+/// and process modules — so a component that accidentally keeps a live
+/// `scryer:indexer/host` import, or one of the legacy host-namespace imports
+/// that SDK can still emit, compiles perfectly and then fails to instantiate
 /// under this host.
 fn assert_world_conformance(wasm_path: &Path) {
     let engine = Engine::default();
@@ -137,7 +138,7 @@ fn assert_world_conformance(wasm_path: &Path) {
 // describe
 // ---------------------------------------------------------------------------
 
-/// `describe` is a world export now, not an Extism entry point: the host calls
+/// `describe` is a world export now, not a bare exported symbol: the host calls
 /// it directly and parses the returned bytes as a `PluginDescriptor`.
 fn assert_describe_returns_a_notification_descriptor(wasm_path: &Path) {
     let (mut store, plugin) = instantiate(wasm_path, Script::default());
@@ -205,6 +206,34 @@ fn assert_send_reaches_the_configured_endpoint_over_host_http(wasm_path: &Path) 
             .iter()
             .any(|url| url.starts_with(EXPECTED_URL_PREFIX)),
         "the configured endpoint must be used verbatim; got {:?}",
+        store.data().script.urls
+    );
+
+    // Mailgun is posted to as a URL-encoded form, and every field that decides
+    // where the mail goes travels in that body — never in the URL.
+    let (_, body) = store
+        .data()
+        .script
+        .requests
+        .iter()
+        .find(|(url, _)| url.starts_with(EXPECTED_URL_PREFIX))
+        .expect("the message request must have been made");
+    let form = String::from_utf8_lossy(body).to_string();
+    for field in [
+        "from=scryer%40test.invalid",
+        "to=ops%40test.invalid",
+        "subject=",
+        "text=",
+        "html=",
+    ] {
+        assert!(
+            form.contains(field),
+            "the form body must carry {field}: {form}"
+        );
+    }
+    assert!(
+        !store.data().script.urls.iter().any(|url| url.contains('?')),
+        "no message content may travel in the URL: {:?}",
         store.data().script.urls
     );
 }
@@ -283,7 +312,6 @@ fn assert_a_missing_required_setting_is_a_typed_error(wasm_path: &Path) {
         "the operator has to be told which setting: {error:?}"
     );
 }
-
 
 /// This channel has no interactive action. The host reads that from the
 /// descriptor and never routes one here, so the arm exists to answer rather
@@ -402,6 +430,10 @@ struct Script {
     unset: Vec<String>,
     /// Every URL the channel asked the host to fetch.
     urls: Vec<String>,
+    /// Every request the channel asked the host to make, as `(url, body)`. The
+    /// sender, the recipients and the message text are form fields in that body,
+    /// so the body is part of the contract this suite pins.
+    requests: Vec<(String, Vec<u8>)>,
     calls: Vec<String>,
 }
 
@@ -466,6 +498,9 @@ impl ServicesHost for Ctx {
             PluginHostRequest::Http(request) => {
                 self.script.calls.push(format!("http:{}", request.url));
                 self.script.urls.push(request.url.clone());
+                self.script
+                    .requests
+                    .push((request.url.clone(), request.body.clone()));
                 match self.script.http.clone() {
                     HttpScript::Accepted => {
                         PluginHostResponse::Http(PluginResult::Ok(PluginHttpResponse {
