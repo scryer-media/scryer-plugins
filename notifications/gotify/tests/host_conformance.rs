@@ -72,7 +72,16 @@ fn scripted_config(key: &str) -> Option<String> {
 /// carrying the notification text, which is the payload's business and not this
 /// assertion's. What is pinned is that the endpoint comes from the resolved
 /// configuration and is used verbatim.
-const EXPECTED_URL_PREFIX: &str = "https://gotify.test.invalid/message?token=apptoken";
+const EXPECTED_URL_PREFIX: &str = "https://gotify.test.invalid/message";
+
+/// The application token travels in Gotify's documented `X-Gotify-Key` header
+/// rather than Sonarr's `?token=` query parameter. Both are still accepted by
+/// the server (`appTokenHeader`/`appTokenQuery` in gotify/server's REST-API
+/// spec), and only the header keeps the token out of reverse-proxy access logs.
+/// The token therefore no longer appears in the URL and is asserted on the
+/// request headers instead — a stronger check than the query-string prefix it
+/// replaces, because it also pins the name of the credential header.
+const EXPECTED_TOKEN_HEADER: (&str, &str) = ("x-gotify-key", "apptoken");
 
 static PLUGIN_WASM: OnceLock<PathBuf> = OnceLock::new();
 
@@ -112,10 +121,11 @@ fn assert_artifact_is_a_component(wasm_path: &Path) {
 /// `scryer:notification/notification@1.0.0`.
 ///
 /// This is also the regression guard for the *import set*. The PDK links one
-/// crate against two different component contracts, and `scryer-plugin-sdk`
-/// still carries Extism host functions behind its `net` and process modules —
-/// so a component that accidentally keeps a live `scryer:indexer/host` or
-/// `extism:host/user` import compiles perfectly and then fails to instantiate
+/// crate against two different component contracts, and the published
+/// `scryer-plugin-sdk` still declares host-function externs behind its `net`
+/// and process modules — so a component that accidentally keeps a live
+/// `scryer:indexer/host` import, or one of the legacy host-namespace imports
+/// that SDK can still emit, compiles perfectly and then fails to instantiate
 /// under this host.
 fn assert_world_conformance(wasm_path: &Path) {
     let engine = Engine::default();
@@ -135,7 +145,7 @@ fn assert_world_conformance(wasm_path: &Path) {
 // describe
 // ---------------------------------------------------------------------------
 
-/// `describe` is a world export now, not an Extism entry point: the host calls
+/// `describe` is a world export now, not a bare exported symbol: the host calls
 /// it directly and parses the returned bytes as a `PluginDescriptor`.
 fn assert_describe_returns_a_notification_descriptor(wasm_path: &Path) {
     let (mut store, plugin) = instantiate(wasm_path, Script::default());
@@ -203,6 +213,35 @@ fn assert_send_reaches_the_configured_endpoint_over_host_http(wasm_path: &Path) 
             .iter()
             .any(|url| url.starts_with(EXPECTED_URL_PREFIX)),
         "the configured endpoint must be used verbatim; got {:?}",
+        store.data().script.urls
+    );
+
+    // The application token is a header, not a query parameter: it must never
+    // appear in the URL, and it must be sent under the name Gotify documents.
+    let (_, headers) = store
+        .data()
+        .script
+        .requests
+        .iter()
+        .find(|(url, _)| url.starts_with(EXPECTED_URL_PREFIX))
+        .expect("the message request must have been made");
+    let (name, value) = EXPECTED_TOKEN_HEADER;
+    assert_eq!(
+        headers
+            .iter()
+            .find(|(key, _)| key.eq_ignore_ascii_case(name))
+            .map(|(_, value)| value.as_str()),
+        Some(value),
+        "the app token must travel in the {name} header; got {headers:?}"
+    );
+    assert!(
+        !store
+            .data()
+            .script
+            .urls
+            .iter()
+            .any(|url| url.contains("apptoken")),
+        "the app token must not appear in a URL: {:?}",
         store.data().script.urls
     );
 }
@@ -281,7 +320,6 @@ fn assert_a_missing_required_setting_is_a_typed_error(wasm_path: &Path) {
         "the operator has to be told which setting: {error:?}"
     );
 }
-
 
 /// This channel has no interactive action. The host reads that from the
 /// descriptor and never routes one here, so the arm exists to answer rather
@@ -400,6 +438,10 @@ struct Script {
     unset: Vec<String>,
     /// Every URL the channel asked the host to fetch.
     urls: Vec<String>,
+    /// Every request the channel asked the host to make, as `(url, headers)`.
+    /// The credential lives in a header for this channel, so the headers are
+    /// part of the contract this suite pins.
+    requests: Vec<(String, BTreeMap<String, String>)>,
     calls: Vec<String>,
 }
 
@@ -464,6 +506,9 @@ impl ServicesHost for Ctx {
             PluginHostRequest::Http(request) => {
                 self.script.calls.push(format!("http:{}", request.url));
                 self.script.urls.push(request.url.clone());
+                self.script
+                    .requests
+                    .push((request.url.clone(), request.headers.clone()));
                 match self.script.http.clone() {
                     HttpScript::Accepted => {
                         PluginHostResponse::Http(PluginResult::Ok(PluginHttpResponse {
