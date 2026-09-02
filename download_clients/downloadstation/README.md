@@ -41,7 +41,8 @@ DSM restarts; a client that cannot report its serial number fails the call
 rather than re-keying every tracked download.
 
 Removal is supported; removal *with data* is not, because Download Station's
-`delete` API has no delete-data flag — Scryer removes the payload itself.
+`delete` API has no delete-data flag. Scryer then removes only the task entry
+and leaves the downloaded files on the NAS for you to clean up.
 Pause, resume and force-start are not exposed by this client. Download Station
 reports no per-torrent seeding goal, so `can_remove` is reported honestly: true
 once Download Station itself has stopped seeding a torrent, false while it is
