@@ -9,7 +9,7 @@
 //!
 //! ## What the migration changed
 //!
-//! The previous artifact was an Extism-style `cdylib` with four exported
+//! The previous artifact was a plain `cdylib` with four exported
 //! entry points (`scryer_describe`, `scryer_validate_config`,
 //! `scryer_subtitle_search`, `scryer_subtitle_download`) whose host services
 //! arrived through the core-module `scryer:host/v1` pointer ABI. A component
@@ -166,7 +166,7 @@ fn validate_config(
 /// The plugin owns its own upstream windows, so hitting one means "nothing
 /// more this minute" and the host keeps whatever other providers returned.
 /// Every other failure is a real one. Both halves are the pre-migration
-/// behaviour; only the channel changed, from an Extism `FnResult` to the SDK's
+/// behaviour; only the channel changed, from a hard ABI fault to the SDK's
 /// typed [`PluginResult`].
 fn search(request: &SubtitlePluginSearchRequest) -> PluginResult<SubtitlePluginSearchResponse> {
     match subtitle_search_impl(request) {

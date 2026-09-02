@@ -6,7 +6,7 @@
 //! shared `scryer:host/services@1.0.0` import that carries config and HTTP.
 //!
 //! The refresh planner, the path mapping and the Emby API calls are untouched.
-//! What changed is the transport: the two Extism entry points collapse into one
+//! What changed is the transport: the two exported entry points collapse into one
 //! `process` export dispatching the SDK's `PluginNotificationCommand`, and
 //! `config::get` / `http::request` reach Scryer through `notify-common`'s
 //! re-export of [`scryer_plugin_pdk`] rather than the removed core-module host
@@ -229,8 +229,7 @@ fn media_refresh_events() -> Vec<NotificationEventType> {
 /// The world's single `process` entry, dispatching the SDK's notification
 /// command enum.
 ///
-/// One arm per Extism entry point this plugin used to export. `action` is not
-/// one of them: the descriptor advertises no action, so the host does not route
+/// One arm per operation this plugin exports. `action` is not one of them: the descriptor advertises no action, so the host does not route
 /// one here and the arm answers **in-band** with `Unsupported` rather than
 /// trapping. A trap under a component costs the whole instance and replaces the
 /// plugin's own diagnosis with a generic ABI failure.

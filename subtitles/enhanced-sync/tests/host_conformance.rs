@@ -48,7 +48,7 @@ use scryer_plugin_sdk::{
 };
 use wasmtime::component::{Component, HasSelf, Linker, ResourceTable};
 use wasmtime::{Engine, Store};
-use wasmtime_wasi::{DirPerms, FilePerms, WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
+use wasmtime_wasi::{FsPerms, WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
 
 mod subtitle_world {
     wasmtime::component::bindgen!({
@@ -475,18 +475,13 @@ fn instantiate(wasm_path: &Path, preopens: Vec<Preopen>) -> (Store<Ctx>, Subtitl
     let mut builder = WasiCtxBuilder::new();
     builder.inherit_stderr();
     for preopen in &preopens {
-        let (dir_perms, file_perms) = if preopen.writable {
-            (DirPerms::all(), FilePerms::all())
+        let perms = if preopen.writable {
+            FsPerms::ReadWrite
         } else {
-            (DirPerms::READ, FilePerms::READ)
+            FsPerms::ReadOnly
         };
         builder
-            .preopened_dir(
-                &preopen.host_path,
-                preopen.guest_path,
-                dir_perms,
-                file_perms,
-            )
+            .preopened_dir(&preopen.host_path, preopen.guest_path, perms)
             .unwrap_or_else(|error| {
                 panic!(
                     "preopen {} as {}: {error}",

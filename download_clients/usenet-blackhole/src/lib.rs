@@ -110,7 +110,7 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
 
 pub fn scryer_download_add(input: String) -> FnResult<String> {
     let request: AddRequest = serde_json::from_str(&input)?;
-    let config = BlackholeConfig::from_extism()?;
+    let config = BlackholeConfig::from_config()?;
     fs::create_dir_all(&config.nzb_folder)
         .map_err(|error| Error::msg(format!("failed to create NZB folder: {error}")))?;
     let title = clean_file_name(
@@ -136,7 +136,7 @@ pub fn scryer_download_add(input: String) -> FnResult<String> {
 }
 
 pub fn scryer_download_list_queue(_input: String) -> FnResult<String> {
-    let config = BlackholeConfig::from_extism()?;
+    let config = BlackholeConfig::from_config()?;
     let items = scan_watch_folder(&config)
         .into_iter()
         .map(|entry| entry_to_item(&config, entry))
@@ -149,7 +149,7 @@ pub fn scryer_download_list_history(_input: String) -> FnResult<String> {
 }
 
 fn scryer_download_list_queue_inner() -> FnResult<String> {
-    let config = BlackholeConfig::from_extism()?;
+    let config = BlackholeConfig::from_config()?;
     let items = scan_watch_folder(&config)
         .into_iter()
         .map(|entry| entry_to_item(&config, entry))
@@ -158,7 +158,7 @@ fn scryer_download_list_queue_inner() -> FnResult<String> {
 }
 
 pub fn scryer_download_list_completed(_input: String) -> FnResult<String> {
-    let config = BlackholeConfig::from_extism()?;
+    let config = BlackholeConfig::from_config()?;
     let downloads = scan_watch_folder(&config)
         .into_iter()
         .filter(WatchFolderEntry::is_completed)
@@ -204,7 +204,7 @@ pub fn scryer_download_mark_imported(_input: String) -> FnResult<String> {
 }
 
 pub fn scryer_download_status(_input: String) -> FnResult<String> {
-    let config = BlackholeConfig::from_extism()?;
+    let config = BlackholeConfig::from_config()?;
     Ok(serde_json::to_string(&PluginResult::Ok(
         PluginDownloadClientStatus {
             version: None,
@@ -222,14 +222,14 @@ pub fn scryer_download_status(_input: String) -> FnResult<String> {
 }
 
 pub fn scryer_download_test_connection(_input: String) -> FnResult<String> {
-    let config = BlackholeConfig::from_extism()?;
+    let config = BlackholeConfig::from_config()?;
     ensure_directory(&config.nzb_folder, "NZB Folder")?;
     ensure_directory(&config.watch_folder, "Watch Folder")?;
     Ok(serde_json::to_string(&PluginResult::Ok("ok".to_string()))?)
 }
 
 impl BlackholeConfig {
-    fn from_extism() -> Result<Self, Error> {
+    fn from_config() -> Result<Self, Error> {
         Ok(Self {
             nzb_folder: config_value("nzb_folder").unwrap_or_default(),
             watch_folder: config_value("watch_folder").unwrap_or_default(),

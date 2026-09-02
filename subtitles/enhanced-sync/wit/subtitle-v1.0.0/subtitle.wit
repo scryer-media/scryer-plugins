@@ -5,8 +5,8 @@ package scryer:subtitle@1.0.0;
 /// Both payloads are UTF-8 JSON, matching the indexer and archive worlds:
 /// `describe` returns a `PluginDescriptor` document, and `process` exchanges a
 /// `scryer_plugin_sdk::command::PluginCommandRequest` for a
-/// `PluginCommandResponse` — the *same* envelope the wasip1 command ABI already
-/// carries on stdin/stdout, carrying `PluginCommand::Subtitle` and its
+/// `PluginCommandResponse` — the *same* envelope the predecessor command ABI
+/// carried on stdin/stdout, carrying `PluginCommand::Subtitle` and its
 /// `validate-config` / `search` / `download` / `generate` operations. A guest
 /// migrating from the command ABI keeps its request and response types and its
 /// dispatch `match`; only the transport changes. Keeping the payload an opaque

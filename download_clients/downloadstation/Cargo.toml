@@ -29,18 +29,18 @@ crate-type = ["cdylib"]
 
 [dependencies]
 base64 = "0.23"
-scryer-plugin-sdk = "3.10.0"
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
 scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha1 = "0.11"
 urlencoding = "2"
-wit-bindgen = "0.60"
+wit-bindgen = "0.61"
 
 [dev-dependencies]
 postcard = { version = "1", features = ["use-std"] }
-wasmtime = "47.0.3"
-wasmtime-wasi = "47.0.3"
+wasmtime = "48.0.1"
+wasmtime-wasi = "48.0.1"
 
 [profile.plugin-release]
 inherits = "release"

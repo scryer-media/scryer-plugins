@@ -6,7 +6,7 @@
 //! shared `scryer:host/services@1.0.0` import that carries config and HTTP.
 //!
 //! The delivery logic is untouched. What changed is the transport: the two
-//! Extism entry points collapse into one `process` export dispatching the SDK's
+//! exported entry points collapse into one `process` export dispatching the SDK's
 //! `PluginNotificationCommand`, and `config::get` / `http::request` now reach
 //! Scryer through [`scryer_plugin_pdk`] rather than the removed core-module
 //! host ABI.
@@ -51,8 +51,7 @@ const PROVIDER_TYPE: &str = "webhook";
 /// The world's single `process` entry, dispatching the SDK's notification
 /// command enum.
 ///
-/// One arm per Extism entry point this plugin used to export. `action` is not
-/// one of them: the descriptor advertises no action, so the host does not route
+/// One arm per operation this plugin exports. `action` is not one of them: the descriptor advertises no action, so the host does not route
 /// one here and the arm answers **in-band** with `Unsupported` rather than
 /// trapping. A trap under a component costs the whole instance and replaces the
 /// plugin's own diagnosis with a generic ABI failure.
@@ -254,7 +253,7 @@ fn send_notification(req: &PluginNotificationRequest) -> FnResult<PluginNotifica
         serde_json::to_string(&to_webhook_json(req))?
     };
 
-    // Make HTTP request via Extism host function
+    // Make the HTTP request through the host-services import
     let http_req = HttpRequest::new(&webhook_url)
         .with_method(&method)
         .with_header("Content-Type", &content_type)

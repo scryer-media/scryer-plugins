@@ -350,7 +350,7 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
 
 pub fn scryer_download_add(input: String) -> FnResult<String> {
     let request: PluginDownloadClientAddRequest = serde_json::from_str(&input)?;
-    respond(add_torrent(&DelugeConfig::from_extism(), &request))
+    respond(add_torrent(&DelugeConfig::from_config(), &request))
 }
 
 fn add_torrent(
@@ -432,7 +432,7 @@ fn add_torrent(
 }
 
 pub fn scryer_download_list_queue(_input: String) -> FnResult<String> {
-    respond(list_queue_items(&DelugeConfig::from_extism()))
+    respond(list_queue_items(&DelugeConfig::from_config()))
 }
 
 fn list_queue_items(config: &DelugeConfig) -> DelugeResult<Vec<PluginDownloadItem>> {
@@ -459,7 +459,7 @@ pub fn scryer_download_list_history(_input: String) -> FnResult<String> {
 }
 
 pub fn scryer_download_list_completed(_input: String) -> FnResult<String> {
-    let config = DelugeConfig::from_extism();
+    let config = DelugeConfig::from_config();
     respond(list_completed_downloads(&config))
 }
 
@@ -474,7 +474,7 @@ fn list_completed_downloads(config: &DelugeConfig) -> DelugeResult<Vec<PluginCom
 
 pub fn scryer_download_control(input: String) -> FnResult<String> {
     let request: PluginDownloadClientControlRequest = serde_json::from_str(&input)?;
-    respond(control(&DelugeConfig::from_extism(), &request))
+    respond(control(&DelugeConfig::from_config(), &request))
 }
 
 fn control(
@@ -520,7 +520,7 @@ pub fn scryer_download_mark_imported_non_destructive(input: String) -> FnResult<
 fn mark_imported_non_destructive(input: String) -> FnResult<String> {
     let request: PluginDownloadClientMarkImportedRequest = serde_json::from_str(&input)?;
     respond(apply_post_import_label(
-        &DelugeConfig::from_extism(),
+        &DelugeConfig::from_config(),
         &request,
     ))
 }
@@ -563,7 +563,7 @@ fn apply_post_import_label(
 }
 
 pub fn scryer_download_status(_input: String) -> FnResult<String> {
-    respond(client_status(&DelugeConfig::from_extism()))
+    respond(client_status(&DelugeConfig::from_config()))
 }
 
 fn client_status(config: &DelugeConfig) -> DelugeResult<PluginDownloadClientStatus> {
@@ -584,7 +584,7 @@ fn client_status(config: &DelugeConfig) -> DelugeResult<PluginDownloadClientStat
 }
 
 pub fn scryer_download_test_connection(_input: String) -> FnResult<String> {
-    let config = DelugeConfig::from_extism();
+    let config = DelugeConfig::from_config();
     let _ = var::remove(COOKIE_VAR_KEY);
     let _ = var::remove(KNOWN_LABELS_VAR_KEY);
     respond(test_connection(&config))
@@ -668,7 +668,7 @@ fn validate_label_name(field: &'static str, value: &str) -> DelugeResult<()> {
 }
 
 impl DelugeConfig {
-    fn from_extism() -> Self {
+    fn from_config() -> Self {
         let host = config_value("host").unwrap_or_else(|| "localhost".to_string());
         let port = config_value("port").unwrap_or_else(|| "8112".to_string());
         let url_base = config_value("url_base").unwrap_or_default();
@@ -2678,68 +2678,6 @@ mod tests {
             completed_directory: String::new(),
         }
     }
-}
-
-#[cfg(test)]
-mod extism_host_stubs {
-    #[unsafe(no_mangle)]
-    pub extern "C" fn alloc(_len: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn config_get(_ptr: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn http_headers() -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn http_request(_request: u64, _body: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn http_status_code() -> u64 {
-        200
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn length(_offset: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn length_unsafe(_offset: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn load_u64(_offset: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn load_u8(_offset: u64) -> u8 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn store_u64(_offset: u64, _value: u64) {}
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn store_u8(_offset: u64, _value: u8) {}
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn var_get(_ptr: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn var_set(_ptr: u64, _value: u64) {}
 }
 
 // ---------------------------------------------------------------------------

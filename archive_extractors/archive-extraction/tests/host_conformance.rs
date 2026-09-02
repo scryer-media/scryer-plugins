@@ -29,7 +29,7 @@ use scryer_plugin_sdk::{
 };
 use wasmtime::component::{Component, HasSelf, Linker, ResourceTable};
 use wasmtime::{Engine, Store};
-use wasmtime_wasi::{DirPerms, FilePerms, WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
+use wasmtime_wasi::{FsPerms, WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
 
 mod archive_world {
     wasmtime::component::bindgen!({
@@ -713,26 +713,11 @@ fn instantiate(
         // is reading the test failure.
         .inherit_stderr()
         .env("TMPDIR", GUEST_SCRATCH_ROOT)
-        .preopened_dir(
-            source_dir,
-            GUEST_SOURCE_ROOT,
-            DirPerms::READ,
-            FilePerms::READ,
-        )
+        .preopened_dir(source_dir, GUEST_SOURCE_ROOT, FsPerms::ReadOnly)
         .expect("preopen archive source")
-        .preopened_dir(
-            output_dir,
-            GUEST_OUTPUT_ROOT,
-            DirPerms::READ | DirPerms::MUTATE,
-            FilePerms::READ | FilePerms::WRITE,
-        )
+        .preopened_dir(output_dir, GUEST_OUTPUT_ROOT, FsPerms::ReadWrite)
         .expect("preopen archive output")
-        .preopened_dir(
-            scratch.path(),
-            GUEST_SCRATCH_ROOT,
-            DirPerms::READ | DirPerms::MUTATE,
-            FilePerms::READ | FilePerms::WRITE,
-        )
+        .preopened_dir(scratch.path(), GUEST_SCRATCH_ROOT, FsPerms::ReadWrite)
         .expect("preopen archive scratch");
 
     let mut store = Store::new(

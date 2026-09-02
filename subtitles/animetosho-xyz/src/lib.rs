@@ -9,7 +9,7 @@
 //!
 //! ## What the migration changed
 //!
-//! The previous artifact was an Extism-style `cdylib` with four exported entry
+//! The previous artifact was a plain `cdylib` with four exported entry
 //! points (`scryer_describe`, `scryer_validate_config`,
 //! `scryer_subtitle_search`, `scryer_subtitle_download`) whose host services
 //! arrived through the core-module `scryer:host/v1` pointer ABI. A component
@@ -20,7 +20,7 @@
 //!
 //! Provider behaviour is unchanged — the same JSON API and release-page
 //! scraping, the same redirect and 429 backoff policy, the same candidates and
-//! match hints. What used to be an Extism `FnResult` hard failure is now the
+//! match hints. What used to be a hard ABI failure is now the
 //! SDK's typed [`PluginResult::Err`]; the meaning is identical, the channel is
 //! not.
 //!
@@ -160,6 +160,22 @@ fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleComm
                 details: None,
             }))
         }
+        // Alignment moved into this envelope when the subtitle-sync plugin
+        // migrated off its own transport, so every subtitle provider now sees
+        // the operation whether or not it can serve one. AnimeTosho.xyz cannot: it has
+        // no audio decoder and advertises no `sync` capability. Same in-band
+        // refusal as `Generate`, for the same reason.
+        PluginSubtitleCommand::Sync(_) => {
+            PluginSubtitleCommandResult::Sync(PluginResult::Err(PluginError {
+                code: PluginErrorCode::Unsupported,
+                public_message: "AnimeTosho.xyz cannot align subtitles".to_string(),
+                debug_message: Some(
+                    "SubtitleCapabilities::sync is None for this provider".to_string(),
+                ),
+                retry_after_seconds: None,
+                details: None,
+            }))
+        }
     }
 }
 
@@ -189,7 +205,7 @@ fn validate_config(
     }
 }
 
-/// Search failures were an Extism `FnResult` hard failure before the
+/// Search failures were a hard ABI failure before the
 /// migration; they are the SDK's typed [`PluginResult::Err`] now. Same
 /// meaning, typed channel — the host keeps this provider's own diagnosis
 /// instead of a generic ABI fault.

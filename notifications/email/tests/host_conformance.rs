@@ -19,7 +19,7 @@
 //! first-party component exercises. So the stand-in below is not a canned
 //! response: it is a small SMTP responder that answers what was actually
 //! written to it, which is the only way to prove the *sequence* survived the
-//! move from five Extism host functions to one `host-call` import.
+//! move from five host functions to one `host-call` import.
 //!
 //! A mismatch here means the artifact would fail in production, which is the
 //! only failure mode this file is trying to catch.
@@ -108,10 +108,10 @@ fn assert_artifact_is_a_component(wasm_path: &Path) {
 ///
 /// This is also the regression guard for the *import set*, and it matters more
 /// for this plugin than for any other in the family. `scryer_plugin_sdk::net`
-/// still carries the old `#[host_fn] extern "ExtismHost"` socket declarations,
-/// and the SDK is a dependency here — so a single call left routed through it
-/// would compile perfectly, build a valid-looking `.wasm`, and then fail to
-/// instantiate under this host with an unresolvable `extism:host/user` import.
+/// still carries the old socket host-function externs, and the SDK is a
+/// dependency here — so a single call left routed through it would compile
+/// perfectly, build a valid-looking `.wasm`, and then fail to instantiate under
+/// this host with an unresolvable legacy host-namespace import.
 fn assert_world_conformance(wasm_path: &Path) {
     let engine = Engine::default();
     let component =
@@ -130,7 +130,7 @@ fn assert_world_conformance(wasm_path: &Path) {
 // describe
 // ---------------------------------------------------------------------------
 
-/// `describe` is a world export now, not an Extism entry point: the host calls
+/// `describe` is a world export now, not a bare exported symbol: the host calls
 /// it directly and parses the returned bytes as a `PluginDescriptor`.
 ///
 /// The socket grant is part of that document and is what the host resolves

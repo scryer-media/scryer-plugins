@@ -9,7 +9,7 @@
 //!
 //! ## What the migration changed
 //!
-//! The previous artifact was an Extism-style `cdylib` with four exported entry
+//! The previous artifact was a plain `cdylib` with four exported entry
 //! points (`scryer_describe`, `scryer_validate_config`,
 //! `scryer_subtitle_search`, `scryer_subtitle_download`) whose host services
 //! arrived through the core-module `scryer:host/v1` pointer ABI. A component
@@ -21,7 +21,7 @@
 //! Provider behaviour is unchanged — the same login/token lifecycle, the same
 //! feature lookup and identifier preference, the same request pacing and
 //! rate-limit accounting, the same language mapping and match hints. What used
-//! to be an Extism `FnResult` hard failure is now the SDK's typed
+//! to be a hard ABI failure is now the SDK's typed
 //! [`PluginResult::Err`], classified the same way `validate_config` already
 //! classified the identical message.
 //!
@@ -29,7 +29,7 @@
 //!
 //! [`RUNTIME_STATE`] caches the bearer token, the negotiated API base, and the
 //! request pacing clock for the life of one guest instance. That was true of
-//! the Extism build too — neither runtime keeps a guest alive across
+//! the previous build too — neither runtime keeps a guest alive across
 //! invocations — so the migration neither gains nor loses caching. It is
 //! written down here because "a component is instantiated per invocation" is
 //! the thing that makes the `TOKEN_LIFETIME_SECONDS` window look more useful
@@ -267,6 +267,22 @@ fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleComm
                 details: None,
             }))
         }
+        // Alignment moved into this envelope when the subtitle-sync plugin
+        // migrated off its own transport, so every subtitle provider now sees
+        // the operation whether or not it can serve one. OpenSubtitles cannot: it has
+        // no audio decoder and advertises no `sync` capability. Same in-band
+        // refusal as `Generate`, for the same reason.
+        PluginSubtitleCommand::Sync(_) => {
+            PluginSubtitleCommandResult::Sync(PluginResult::Err(PluginError {
+                code: PluginErrorCode::Unsupported,
+                public_message: "OpenSubtitles cannot align subtitles".to_string(),
+                debug_message: Some(
+                    "SubtitleCapabilities::sync is None for this provider".to_string(),
+                ),
+                retry_after_seconds: None,
+                details: None,
+            }))
+        }
     }
 }
 
@@ -322,7 +338,7 @@ fn download(
 /// It reads the same messages `http_error` produces and reaches the same
 /// verdicts, so a search or download failure and a validation failure now
 /// describe the same problem the same way — which they could not do while the
-/// Extism channel flattened everything but the text.
+/// old channel flattened everything but the text.
 fn plugin_error(error: String) -> PluginError {
     let (code, retry_after_seconds) = if error.contains("authentication failed") {
         (PluginErrorCode::AuthFailed, None)

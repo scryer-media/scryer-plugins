@@ -13,10 +13,10 @@
 //! # What is specific to ameNZB
 //!
 //! This is the only subtitle provider that does not own its search: it
-//! delegates to the shared newznab engine (`newznab-common-legacy`), which is
-//! also linked into Preview 1 indexer guests. That shared crate is exactly
-//! where a stray world import would come from, and it would compile and build
-//! perfectly before failing to instantiate here. So [`assert_world_conformance`]
+//! delegates to a shared newznab protocol engine that lives outside the
+//! subtitle family. That shared crate is exactly where a stray world import
+//! would come from, and it would compile and build perfectly before failing to
+//! instantiate here. So [`assert_world_conformance`]
 //! is load-bearing for this plugin in a way it is not for the self-contained
 //! providers, and [`assert_search_drives_the_shared_newznab_engine`] is the
 //! assertion that proves the shared engine actually *works* over
@@ -129,7 +129,7 @@ fn assert_world_conformance(wasm_path: &Path) {
 // describe
 // ---------------------------------------------------------------------------
 
-/// `describe` is a world export now, not an Extism entry point: the host calls
+/// `describe` is a world export now, not a bare exported symbol: the host calls
 /// it directly and parses the returned bytes as a `PluginDescriptor`.
 fn assert_describe_returns_a_catalog_subtitle_descriptor(wasm_path: &Path) {
     let (mut store, plugin) = instantiate(wasm_path, Script::default());
@@ -206,7 +206,7 @@ fn assert_validate_config_reaches_the_host_services(wasm_path: &Path) {
 /// The assertion this whole work package exists for.
 ///
 /// ameNZB's search is `newznab_common::execute_raw_search` — shared code that
-/// also serves Preview 1 indexer guests — followed by one detail-page fetch per
+/// lives outside the subtitle family — followed by one detail-page fetch per
 /// release. Both hops must travel over `scryer:host/services`, at the
 /// configured base URL, carrying the key read from config. If the shared engine
 /// were still bound to another world this component would not have

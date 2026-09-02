@@ -9,7 +9,7 @@
 //!
 //! ## What the migration changed
 //!
-//! The previous artifact was an Extism-style `cdylib` with four exported entry
+//! The previous artifact was a plain `cdylib` with four exported entry
 //! points (`scryer_describe`, `scryer_validate_config`,
 //! `scryer_subtitle_search`, `scryer_subtitle_download`) whose host services
 //! arrived through the core-module `scryer:host/v1` pointer ABI. A component
@@ -20,7 +20,7 @@
 //!
 //! Provider behaviour is unchanged — the same AniList-first entry resolution,
 //! the same name-search fallback policy, the same bounded 429 wait budget, the
-//! same language detection and match hints. What used to be an Extism
+//! same language detection and match hints. What used to be a hard
 //! `FnResult` hard failure is now the SDK's typed [`PluginResult::Err`]; a
 //! rate-limited search still returns an empty result set rather than failing.
 //!
@@ -172,6 +172,22 @@ fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleComm
                 details: None,
             }))
         }
+        // Alignment moved into this envelope when the subtitle-sync plugin
+        // migrated off its own transport, so every subtitle provider now sees
+        // the operation whether or not it can serve one. Jimaku cannot: it has
+        // no audio decoder and advertises no `sync` capability. Same in-band
+        // refusal as `Generate`, for the same reason.
+        PluginSubtitleCommand::Sync(_) => {
+            PluginSubtitleCommandResult::Sync(PluginResult::Err(PluginError {
+                code: PluginErrorCode::Unsupported,
+                public_message: "Jimaku cannot align subtitles".to_string(),
+                debug_message: Some(
+                    "SubtitleCapabilities::sync is None for this provider".to_string(),
+                ),
+                retry_after_seconds: None,
+                details: None,
+            }))
+        }
     }
 }
 
@@ -199,7 +215,7 @@ fn validate_config(
 
 /// A rate-limited search is still an empty result set, not a failure —
 /// `search_subtitles_impl` owns that rule and is unchanged. Every other
-/// failure was an Extism `FnResult` hard failure and is now the SDK's typed
+/// failure was a hard ABI failure and is now the SDK's typed
 /// [`PluginResult::Err`]: same meaning, typed channel.
 fn search(request: &SubtitlePluginSearchRequest) -> PluginResult<SubtitlePluginSearchResponse> {
     let config = match JimakuConfig::from_host() {

@@ -52,7 +52,7 @@ const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 /// Dispatch one `scryer:subtitle/subtitle-provider@1.0.0` operation.
 ///
 /// One arm per former `#[plugin_fn]`, with the bodies unchanged. What changes
-/// is the failure channel: under Extism a failed search or a malformed
+/// is the failure channel: before the move a failed search or a malformed
 /// `provider_file_id` was an `FnResult` fault, so the host saw a string and a
 /// generic ABI failure. Both are now typed `PluginResult::Err`s carrying the
 /// classification `plugin_error` already made for `download`, which is how the
@@ -89,6 +89,22 @@ fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleComm
                 details: None,
             }))
         }
+        // Alignment moved into this envelope when the subtitle-sync plugin
+        // migrated off its own transport, so every subtitle provider now sees
+        // the operation whether or not it can serve one. ameNZB cannot: it has
+        // no audio decoder and advertises no `sync` capability. Same in-band
+        // refusal as `Generate`, for the same reason.
+        PluginSubtitleCommand::Sync(_) => {
+            PluginSubtitleCommandResult::Sync(PluginResult::Err(PluginError {
+                code: PluginErrorCode::Unsupported,
+                public_message: "ameNZB cannot align subtitles".to_string(),
+                debug_message: Some(
+                    "SubtitleCapabilities::sync is None for this provider".to_string(),
+                ),
+                retry_after_seconds: None,
+                details: None,
+            }))
+        }
     }
 }
 
@@ -119,7 +135,7 @@ fn search(
     match subtitle_search_impl(&config, request) {
         Ok(results) => Ok(SubtitlePluginSearchResponse { results }),
         // A rate limit still yields an empty result set rather than a failure,
-        // exactly as it did under Extism: the host treats "no subtitles right
+        // exactly as it did before the move: the host treats "no subtitles right
         // now" as a normal outcome and re-queries later.
         Err(AmenzbError::RateLimited(_)) => Ok(SubtitlePluginSearchResponse::default()),
         Err(error) => Err(error),
@@ -1355,7 +1371,7 @@ impl std::fmt::Display for AmenzbError {
 
 // Qualified rather than imported at the top: the `#[cfg(test)]` twin below
 // replaces this whole function, so a top-level `use` would be unused in the
-// test build. The former `use extism_pdk::*` hid that.
+// test build. The former blanket PDK glob import hid that.
 #[cfg(not(test))]
 fn config_value(key: &str) -> Option<String> {
     scryer_plugin_pdk::config::get(key)
