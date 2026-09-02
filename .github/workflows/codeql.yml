@@ -55,7 +55,7 @@ jobs:
                 *.rs|Cargo.toml|Cargo.lock|*/Cargo.toml|*/Cargo.lock|.cargo/*|rust-toolchain|rust-toolchain.toml)
                   rust=true
                   case "$path" in
-                    archive_extractors/*|download_clients/*|transcoders/*)
+                    archive_extractors/*|download_clients/*)
                       rust_downloads=true
                       ;;
                     indexers/*)

@@ -19,7 +19,7 @@
 //!
 //! ## What the migration changed
 //!
-//! The previous artifact was an Extism-style `cdylib` with three exported
+//! The previous artifact was a plain `cdylib` with three exported
 //! entry points (`scryer_describe`, `scryer_validate_config`,
 //! `scryer_subtitle_generate`) whose host services arrived through the
 //! core-module `scryer:host/v1` pointer ABI. A component has no exported
@@ -30,7 +30,7 @@
 //!
 //! Provider behaviour is unchanged — the same OpenAI endpoints, the same
 //! multipart body, the same `srt` response format. A generation failure was an
-//! Extism `FnResult` hard failure and is now the SDK's typed
+//! hard ABI failure and is now the SDK's typed
 //! [`PluginResult::Err`], classified the way `validate_config` already
 //! classified the identical message.
 //!
@@ -119,6 +119,23 @@ fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleComm
         PluginSubtitleCommand::Download(_) => PluginSubtitleCommandResult::Download(
             PluginResult::Err(catalog_unsupported("download")),
         ),
+        // Alignment moved into this envelope when the subtitle-sync plugin
+        // migrated off its own transport. Whisper generates subtitles; it has
+        // no alignment engine and advertises no `sync` capability, so this
+        // arm answers in-band like the catalog arms above.
+        PluginSubtitleCommand::Sync(_) => {
+            PluginSubtitleCommandResult::Sync(PluginResult::Err(PluginError {
+                code: PluginErrorCode::Unsupported,
+                public_message: "Whisper is a subtitle generator and cannot align existing \
+                                 subtitles"
+                    .to_string(),
+                debug_message: Some(
+                    "SubtitleCapabilities::sync is None for this provider".to_string(),
+                ),
+                retry_after_seconds: None,
+                details: None,
+            }))
+        }
     }
 }
 
@@ -174,7 +191,7 @@ fn generate(
 ///
 /// It reads the same messages [`http_error`] produces and reaches the same
 /// verdicts, so a generation failure and a validation failure now describe the
-/// same problem the same way — which they could not do while the Extism
+/// same problem the same way — which they could not do while the old
 /// channel flattened everything but the text.
 fn plugin_error(error: String) -> PluginError {
     let (code, retry_after_seconds) = if error.contains("authentication failed") {

@@ -44,7 +44,7 @@ use scryer_plugin_sdk::{
 };
 use wasmtime::component::{Component, HasSelf, Linker, ResourceTable};
 use wasmtime::{Engine, Store};
-use wasmtime_wasi::{DirPerms, FilePerms, WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
+use wasmtime_wasi::{FsPerms, WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
 
 mod subtitle_world {
     wasmtime::component::bindgen!({
@@ -127,7 +127,7 @@ fn assert_world_conformance(wasm_path: &Path) {
 // describe
 // ---------------------------------------------------------------------------
 
-/// `describe` is a world export now, not an Extism entry point: the host calls
+/// `describe` is a world export now, not a bare exported symbol: the host calls
 /// it directly and parses the returned bytes as a `PluginDescriptor`. The mode
 /// it advertises is what stops the host routing a `search` here at all.
 fn assert_describe_returns_a_generator_subtitle_descriptor(wasm_path: &Path) {
@@ -348,13 +348,8 @@ fn instantiate(wasm_path: &Path, script: Script) -> (Store<Ctx>, SubtitleProvide
     // test failure.
     wasi.inherit_stderr();
     // Read-only, exactly as a staged generator input should be.
-    wasi.preopened_dir(
-        staged_input_dir(),
-        GUEST_INPUT_DIR,
-        DirPerms::READ,
-        FilePerms::READ,
-    )
-    .expect("preopen the staged generator input directory");
+    wasi.preopened_dir(staged_input_dir(), GUEST_INPUT_DIR, FsPerms::ReadOnly)
+        .expect("preopen the staged generator input directory");
 
     let mut store = Store::new(
         &engine,
