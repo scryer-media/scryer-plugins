@@ -28,10 +28,19 @@ source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/download
 crate-type = ["cdylib"]
 
 [dependencies]
+# `POST /api/torrents/add-urls` answers with an array of hashes, but only the
+# qBittorrent backend fills it — the rTorrent gateway returns `[]` and the route
+# answers 202 (`server/services/rTorrent/clientGatewayService.ts:277-341`). The
+# plugin therefore derives the identity itself, the way Sonarr's core does
+# before it ever calls the client: base32 decoding for a magnet's `btih`, SHA-1
+# over the bencoded `info` dictionary for torrent bytes. Same versions the
+# aria2, qbittorrent, utorrent, downloadstation and freebox clients already pin.
+base64 = "0.23"
 scryer-plugin-sdk = "3.10.0"
 scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+sha1 = "0.11"
 wit-bindgen = "0.60"
 
 [dev-dependencies]
