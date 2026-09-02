@@ -34,6 +34,12 @@ scryer-plugin-sdk = "3.10.0"
 scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# uTorrent's `add-url`/`add-file` answer with nothing but a build number, so the
+# plugin derives the info hash itself: SHA-1 over the bencoded `info`
+# dictionary, the definition Sonarr's
+# `ITorrentFileInfoReader.GetHashFromTorrentFile` implements. Same version the
+# qbittorrent, downloadstation and freebox clients already pin.
+sha1 = "0.11"
 urlencoding = "2"
 wit-bindgen = "0.60"
 
