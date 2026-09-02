@@ -56,6 +56,8 @@ jobs:
             manifest: notifications/gotify/Cargo.toml
           - plugin: jellyfin
             manifest: notifications/jellyfin/Cargo.toml
+          - plugin: kodi
+            manifest: notifications/kodi/Cargo.toml
           - plugin: mailgun
             manifest: notifications/mailgun/Cargo.toml
           - plugin: notifiarr
@@ -76,8 +78,6 @@ jobs:
             manifest: notifications/telegram/Cargo.toml
           - plugin: webhook
             manifest: notifications/webhook/Cargo.toml
-          - plugin: xbmc
-            manifest: notifications/xbmc/Cargo.toml
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 

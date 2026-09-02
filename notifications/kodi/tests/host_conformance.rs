@@ -53,15 +53,18 @@ use notification_world::scryer::host::services::{Host as ServicesHost, HostError
 // What differs per channel
 // ---------------------------------------------------------------------------
 
-const PLUGIN_ID: &str = "xbmc";
-const PROVIDER_TYPE: &str = "xbmc";
-const WASM_NAME: &str = "xbmc_notification.wasm";
+const PLUGIN_ID: &str = "kodi";
+const PROVIDER_TYPE: &str = "kodi";
+const WASM_NAME: &str = "kodi_notification.wasm";
 
 /// The configuration Scryer would have resolved for this channel.
 fn scripted_config(key: &str) -> Option<String> {
     match key {
-        "host" => Some("kodi.test.invalid".to_string()),
-        "notify" => Some("true".to_string()),
+        // `server_url`, not `host`: Scryer builds this channel's HTTP allowlist
+        // from configuration values that parse as URLs, so a bare host reaches
+        // nothing in production. The endpoint assertion below is therefore also
+        // the regression guard for that.
+        "server_url" => Some("http://kodi.test.invalid:8080".to_string()),
         _ => None,
     }
 }
@@ -77,7 +80,7 @@ const EXPECTED_URL_PREFIX: &str = "http://kodi.test.invalid:8080/jsonrpc";
 static PLUGIN_WASM: OnceLock<PathBuf> = OnceLock::new();
 
 #[test]
-fn xbmc_release_wasm_conforms_to_the_notification_host_contract() {
+fn kodi_release_wasm_conforms_to_the_notification_host_contract() {
     let wasm_path = plugin_wasm();
 
     assert_artifact_is_a_component(&wasm_path);
@@ -111,10 +114,11 @@ fn assert_artifact_is_a_component(wasm_path: &Path) {
 /// `scryer:notification/notification@1.0.0`.
 ///
 /// This is also the regression guard for the *import set*. The PDK links one
-/// crate against two different component contracts, and `scryer-plugin-sdk`
-/// still carries Extism host functions behind its `net` and process modules —
-/// so a component that accidentally keeps a live `scryer:indexer/host` or
-/// `extism:host/user` import compiles perfectly and then fails to instantiate
+/// crate against two different component contracts, and the published
+/// `scryer-plugin-sdk` still declares host-function externs behind its `net`
+/// and process modules — so a component that accidentally keeps a live
+/// `scryer:indexer/host` import, or one of the legacy host-namespace imports
+/// that SDK can still emit, compiles perfectly and then fails to instantiate
 /// under this host.
 fn assert_world_conformance(wasm_path: &Path) {
     let engine = Engine::default();
@@ -134,7 +138,7 @@ fn assert_world_conformance(wasm_path: &Path) {
 // describe
 // ---------------------------------------------------------------------------
 
-/// `describe` is a world export now, not an Extism entry point: the host calls
+/// `describe` is a world export now, not a bare exported symbol: the host calls
 /// it directly and parses the returned bytes as a `PluginDescriptor`.
 fn assert_describe_returns_a_notification_descriptor(wasm_path: &Path) {
     let (mut store, plugin) = instantiate(wasm_path, Script::default());

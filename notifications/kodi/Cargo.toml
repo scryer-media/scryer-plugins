@@ -1,23 +1,23 @@
 [package]
-name = "xbmc-notification"
+name = "kodi-notification"
 version = "0.2.0"
 edition = "2024"
 license = "GPL-3.0-only"
-description = "Kodi/XBMC notification plugin"
+description = "Kodi notification and video-library plugin"
 
 [package.metadata.scryer]
 official = true
-plugin_id = "xbmc"
+plugin_id = "kodi"
 status = "beta"
 catalog_versions = ["v3"]
 # TEMPORARY — the placeholder for the first Scryer release whose notification
 # backing is the `scryer:notification/notification@1.0.0` component host. A
-# Preview 1 / Extism runtime cannot instantiate this artifact at all, so the
+# Preview 1 command runtime cannot instantiate this artifact at all, so the
 # floor has to move with that release; 0.18.23 is the same placeholder the
 # archive extractor and the subtitle components carry. Replace at release.
 min_scryer_version = "0.18.23"
-docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/xbmc"
-source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/xbmc"
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/kodi"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/kodi"
 
 [lib]
 crate-type = ["cdylib"]
@@ -26,13 +26,13 @@ crate-type = ["cdylib"]
 notify-common = { path = "../notify-common" }
 serde_json = "1"
 scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
-scryer-plugin-sdk = "3.10.0"
-wit-bindgen = "0.60"
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
+wit-bindgen = "0.61"
 
 [dev-dependencies]
 postcard = { version = "1", features = ["use-std"] }
-wasmtime = "47.0.3"
-wasmtime-wasi = "47.0.3"
+wasmtime = "48.0.1"
+wasmtime-wasi = "48.0.1"
 
 [profile.plugin-release]
 inherits = "release"
