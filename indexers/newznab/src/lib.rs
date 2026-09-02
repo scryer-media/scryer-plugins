@@ -132,7 +132,12 @@ mod tests {
         let ProviderDescriptor::Indexer(indexer) = descriptor.provider else {
             panic!("expected indexer descriptor");
         };
-        assert_eq!(indexer.provider_profiles.len(), 2);
+        let known_profiles = include_str!("../known_newznab_profiles.v1.jsonl")
+            .lines()
+            .filter(|line| !line.trim().is_empty())
+            .count();
+        assert!(known_profiles > 0);
+        assert_eq!(indexer.provider_profiles.len(), known_profiles);
         assert_eq!(indexer.scoring_policies.len(), 3);
         assert!(
             indexer
@@ -145,7 +150,7 @@ mod tests {
             .iter()
             .find(|field| field.key == "profile_id")
             .expect("provider selector");
-        assert_eq!(selector.options.len(), 3);
+        assert_eq!(selector.options.len(), known_profiles + 1);
         let base_url = indexer
             .config_fields
             .iter()
