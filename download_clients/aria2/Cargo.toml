@@ -32,7 +32,15 @@ base64 = "0.23"
 roxmltree = "0.21"
 scryer-plugin-sdk = "3.10.0"
 scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
+serde = "1"
 serde_json = "1"
+# `aria2.addUri` answers with a GID, never with the info hash, and the GID it
+# returns for a magnet or a torrent URL belongs to the metadata download aria2
+# discards once the metainfo resolves. The plugin therefore derives the identity
+# itself: SHA-1 over the bencoded `info` dictionary, the definition Sonarr's
+# `ITorrentFileInfoReader.GetHashFromTorrentFile` implements. Same version the
+# qbittorrent, utorrent, downloadstation and freebox clients already pin.
+sha1 = "0.11"
 wit-bindgen = "0.60"
 
 [dev-dependencies]
