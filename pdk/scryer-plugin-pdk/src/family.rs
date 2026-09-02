@@ -14,6 +14,13 @@
 //! export process: func(request: list<u8>) -> result<list<u8>, invocation-error>;
 //! ```
 //!
+//! `scryer:subtitle@1.1.0` is the first revision to diverge: it adds
+//! `import scryer:runtime/host@1.0.0` and lifts `process` to an `async func`,
+//! so a provider can await an upstream request inside one invocation instead
+//! of blocking a host thread on it. `describe` stays synchronous — it returns
+//! a fixed document and awaits nothing — and the download-client and
+//! notification worlds stay entirely synchronous on their 1.0.0 revisions.
+//!
 //! Both export payloads are UTF-8 JSON, and `process` carries the
 //! [`PluginCommandRequest`]/[`PluginCommandResponse`] envelope defined by the
 //! SDK's command ABI. **A guest owns its request and response types and its
@@ -45,6 +52,8 @@
 //! The macro must be invoked in the same module as `generate!`, because it
 //! names that module's generated `Guest`, `InvocationError`, `export!`, and
 //! `scryer::host::services`.
+
+use std::future::Future;
 
 use scryer_plugin_sdk::PluginDescriptor;
 use scryer_plugin_sdk::command::{
@@ -84,6 +93,24 @@ pub fn descriptor_bytes(descriptor: PluginDescriptor) -> Vec<u8> {
     serde_json::to_vec(&descriptor).unwrap_or_default()
 }
 
+/// Decode one command envelope and check its ABI version.
+///
+/// Both dispatchers below share this so the envelope contract has exactly one
+/// implementation, whatever shape the world's `process` export has.
+fn decode_envelope(request: &[u8]) -> Result<PluginCommand, InvocationFailure> {
+    let request: PluginCommandRequest =
+        serde_json::from_slice(request).map_err(|_| InvocationFailure::InvalidResponse)?;
+    if request.abi_version != COMMAND_ABI_VERSION {
+        return Err(InvocationFailure::InvalidResponse);
+    }
+    Ok(request.command)
+}
+
+/// Encode one dispatch outcome as the world's response payload.
+fn encode_response(result: PluginCommandResult) -> Result<Vec<u8>, InvocationFailure> {
+    serde_json::to_vec(&PluginCommandResponse::new(result)).map_err(|_| InvocationFailure::Failed)
+}
+
 /// Decode one command envelope, dispatch it, and encode the response.
 ///
 /// `handler` receives the whole [`PluginCommand`] and returns the matching
@@ -93,27 +120,51 @@ pub fn dispatch_command<H>(request: Vec<u8>, handler: H) -> Result<Vec<u8>, Invo
 where
     H: FnOnce(PluginCommand) -> Result<PluginCommandResult, InvocationFailure>,
 {
-    let request: PluginCommandRequest =
-        serde_json::from_slice(&request).map_err(|_| InvocationFailure::InvalidResponse)?;
-    if request.abi_version != COMMAND_ABI_VERSION {
-        return Err(InvocationFailure::InvalidResponse);
-    }
-    let response = PluginCommandResponse::new(handler(request.command)?);
-    serde_json::to_vec(&response).map_err(|_| InvocationFailure::Failed)
+    encode_response(handler(decode_envelope(&request)?)?)
 }
 
-/// Dispatch one `scryer:subtitle/subtitle-provider` invocation.
+/// The suspending form of [`dispatch_command`].
+///
+/// `scryer:subtitle@1.1.0` exports `process` as an `async func`, so its handler
+/// may await host capabilities — an HTTP attempt, a rate gate — between the
+/// envelope decode and the response encode. Nothing else about the contract
+/// changes: the same ABI-version check runs first and the same JSON envelope
+/// comes back.
+pub async fn dispatch_command_async<H, F>(
+    request: Vec<u8>,
+    handler: H,
+) -> Result<Vec<u8>, InvocationFailure>
+where
+    H: FnOnce(PluginCommand) -> F,
+    F: Future<Output = Result<PluginCommandResult, InvocationFailure>>,
+{
+    encode_response(handler(decode_envelope(&request)?).await?)
+}
+
+/// Dispatch one `scryer:subtitle/subtitle-provider@1.1.0` invocation.
 ///
 /// The handler sees the SDK's [`PluginSubtitleCommand`] — `ValidateConfig`,
-/// `Search`, `Download`, `Generate`.
-pub fn dispatch_subtitle<H>(request: Vec<u8>, handler: H) -> Result<Vec<u8>, InvocationFailure>
+/// `Search`, `Download`, `Generate` — and is `async`, because the world's
+/// `process` export is. A subtitle provider talking to an upstream API awaits
+/// [`crate::runtime::http`] in the middle of that handler instead of having
+/// the host thread block on it.
+pub async fn dispatch_subtitle<H, F>(
+    request: Vec<u8>,
+    handler: H,
+) -> Result<Vec<u8>, InvocationFailure>
 where
-    H: FnOnce(PluginSubtitleCommand) -> PluginSubtitleCommandResult,
+    H: FnOnce(PluginSubtitleCommand) -> F,
+    F: Future<Output = PluginSubtitleCommandResult>,
 {
-    dispatch_command(request, |command| match command {
-        PluginCommand::Subtitle(command) => Ok(PluginCommandResult::Subtitle(handler(command))),
-        _ => Err(InvocationFailure::InvalidResponse),
+    dispatch_command_async(request, |command| async move {
+        match command {
+            PluginCommand::Subtitle(command) => {
+                Ok(PluginCommandResult::Subtitle(handler(command).await))
+            }
+            _ => Err(InvocationFailure::InvalidResponse),
+        }
     })
+    .await
 }
 
 /// Dispatch one `scryer:download-client/download-client` invocation.
@@ -153,6 +204,29 @@ mod tests {
         SubtitlePluginValidateConfigResponse, SubtitleValidateConfigStatus,
     };
 
+    /// Drive a future that cannot suspend to completion.
+    ///
+    /// These cases exercise the envelope contract, not the host: no capability
+    /// is installed, so every handler here resolves on its first poll. Polling
+    /// once and refusing to loop keeps a future that *would* suspend from
+    /// silently hanging the suite.
+    fn now_or_never<F: Future>(future: F) -> F::Output {
+        use std::task::{Context, Poll, RawWaker, RawWakerVTable, Waker};
+
+        const VTABLE: RawWakerVTable = RawWakerVTable::new(
+            |_| RawWaker::new(std::ptr::null(), &VTABLE),
+            |_| {},
+            |_| {},
+            |_| {},
+        );
+        // SAFETY: every function in `VTABLE` ignores its data pointer.
+        let waker = unsafe { Waker::from_raw(RawWaker::new(std::ptr::null(), &VTABLE)) };
+        match std::pin::pin!(future).poll(&mut Context::from_waker(&waker)) {
+            Poll::Ready(output) => output,
+            Poll::Pending => panic!("the dispatch future suspended without a host to wait on"),
+        }
+    }
+
     fn validate_config_request() -> Vec<u8> {
         serde_json::to_vec(&PluginCommandRequest::new(PluginCommand::Subtitle(
             PluginSubtitleCommand::ValidateConfig(SubtitlePluginValidateConfigRequest::default()),
@@ -160,7 +234,7 @@ mod tests {
         .expect("encode request")
     }
 
-    fn ok_validate(command: PluginSubtitleCommand) -> PluginSubtitleCommandResult {
+    async fn ok_validate(command: PluginSubtitleCommand) -> PluginSubtitleCommandResult {
         match command {
             PluginSubtitleCommand::ValidateConfig(_) => {
                 PluginSubtitleCommandResult::ValidateConfig(PluginResult::Ok(
@@ -179,8 +253,8 @@ mod tests {
 
     #[test]
     fn a_subtitle_envelope_round_trips_through_the_world_payload() {
-        let encoded =
-            dispatch_subtitle(validate_config_request(), ok_validate).expect("dispatch succeeds");
+        let encoded = now_or_never(dispatch_subtitle(validate_config_request(), ok_validate))
+            .expect("dispatch succeeds");
         let response: PluginCommandResponse =
             serde_json::from_slice(&encoded).expect("decode response");
         assert_eq!(response.abi_version, COMMAND_ABI_VERSION);
@@ -203,7 +277,7 @@ mod tests {
         ))
         .expect("encode request");
         assert_eq!(
-            dispatch_subtitle(request, ok_validate),
+            now_or_never(dispatch_subtitle(request, ok_validate)),
             Err(InvocationFailure::InvalidResponse)
         );
     }
@@ -215,7 +289,7 @@ mod tests {
         request["abi_version"] = serde_json::json!(COMMAND_ABI_VERSION + 1);
         let request = serde_json::to_vec(&request).expect("encode request");
         assert_eq!(
-            dispatch_subtitle(request, ok_validate),
+            now_or_never(dispatch_subtitle(request, ok_validate)),
             Err(InvocationFailure::InvalidResponse)
         );
     }

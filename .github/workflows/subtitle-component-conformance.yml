@@ -1,4 +1,4 @@
-# Host conformance for `scryer:subtitle/subtitle-provider@1.0.0` components.
+# Host conformance for `scryer:subtitle/subtitle-provider@1.1.0` components.
 #
 # The sibling of archive-extraction-conformance.yml, one level up: that world
 # has a single implementation, this one will have several, so the plugin is a
@@ -18,7 +18,7 @@ on:
       - subtitles/opensubtitles/**
       - subtitles/subdl/**
       - subtitles/tsukihime/**
-      - indexers/newznab-common-legacy/**
+      - indexers/newznab-common/**
       - pdk/scryer-plugin-pdk/**
       - .github/workflows/subtitle-component-conformance.yml
   workflow_dispatch:
@@ -40,16 +40,17 @@ jobs:
       matrix:
         include:
           # ameNZB is the only provider here whose search comes from a
-          # shared crate (`indexers/newznab-common-legacy`), and it is now
-          # that crate's only consumer. The engine is the *synchronous*
-          # newznab client: it reaches Scryer only through the PDK's
-          # world-agnostic surfaces, which is what lets an indexer protocol
-          # engine link into a subtitle component at all. Its async sibling
-          # `indexers/newznab-common` cannot be substituted — that one calls
-          # `scryer:indexer/host@1.1.0` imports this world does not serve.
-          # So this row is the only guard that the sync engine stays
-          # world-agnostic: a stray import there builds cleanly and only
-          # fails at instantiation.
+          # shared crate: the async `indexers/newznab-common` engine that the
+          # five newznab-family indexers also link. It can be shared because
+          # `scryer:subtitle@1.1.0` lifts `process` as an `async func` and
+          # the engine reaches HTTP, clocks, state and config only through
+          # `scryer_plugin_pdk::runtime`, which dispatches to whichever
+          # capability world the running guest installed — the family-neutral
+          # `scryer:runtime/host@1.0.0` here, `scryer:indexer/host@1.1.0` in
+          # an indexer. So this row is the only guard that the engine stays
+          # world-agnostic: a stray `scryer:indexer/host` import builds
+          # cleanly and only fails at instantiation, and the conformance
+          # suite asserts the artifact's non-WASI import set on top.
           - plugin: amenzb-subtitles
             manifest: subtitles/amenzb/Cargo.toml
           - plugin: animetosho-xyz-subtitles

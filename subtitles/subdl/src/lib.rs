@@ -1,11 +1,13 @@
 //! Subdl subtitles, as a WASI Preview 2 component.
 //!
-//! The plugin implements `scryer:subtitle/subtitle-provider@1.0.0`: two
+//! The plugin implements `scryer:subtitle/subtitle-provider@1.1.0`: two
 //! exports carrying UTF-8 JSON (`describe` returns a `PluginDescriptor`,
 //! `process` exchanges a `PluginCommandRequest` for a
-//! `PluginCommandResponse`), plus the shared `scryer:host/services@1.0.0`
-//! import every non-archive family world uses for config, plugin state, and
-//! HTTP.
+//! `PluginCommandResponse`, and `process` is an `async func` on this world
+//! revision), plus two imports: the shared `scryer:host/services@1.0.0` door
+//! every non-archive family world uses for config, plugin state, and HTTP,
+//! and the family-neutral typed `scryer:runtime/host@1.0.0` surface reached
+//! through `scryer_plugin_pdk::runtime`.
 //!
 //! ## What the migration changed
 //!
@@ -61,11 +63,11 @@ use serde::{Deserialize, Serialize};
 wit_bindgen::generate!({
     // Fully qualified: `path` resolves two packages, so a bare world name is
     // ambiguous even though only one of them declares a world.
-    world: "scryer:subtitle/subtitle-provider@1.0.0",
-    // Two packages, two paths, matching the host's own bindgen: the shared
+    world: "scryer:subtitle/subtitle-provider@1.1.0",
+    // Three packages, three paths, matching the host's own bindgen: the shared
     // `scryer:host` package is listed first so the family package's
     // `import scryer:host/services@1.0.0` resolves against it.
-    path: ["wit/host-v1.0.0", "wit/subtitle-v1.0.0"],
+    path: ["wit/host-v1.0.0", "wit/runtime-v1.0.0", "wit/subtitle-v1.1.0"],
     // The shared host package lives in its own WIT package, so wit-bindgen
     // asks explicitly whether to generate for it. Yes: the PDK holds only a
     // `fn` pointer and the entry macro binds it to this module's
@@ -219,7 +221,7 @@ struct DownloadArtifact {
 /// This is the whole of the world's request surface: `describe` is owned by
 /// the PDK entry macro, and every operational failure is reported in-band
 /// through [`PluginResult`], never as a world-level `invocation-error`.
-fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleCommandResult {
+async fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleCommandResult {
     match command {
         PluginSubtitleCommand::ValidateConfig(request) => {
             PluginSubtitleCommandResult::ValidateConfig(PluginResult::Ok(validate_config(&request)))

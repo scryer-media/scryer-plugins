@@ -10,11 +10,11 @@ official = true
 plugin_id = "animetosho-xyz-subtitles"
 catalog_versions = ["v3"]
 # TEMPORARY — the placeholder for the first Scryer release whose subtitle
-# backing is the `scryer:subtitle/subtitle-provider@1.0.0` component host. A
-# Preview 1 command runtime cannot instantiate this artifact at all, so the
-# floor has to move with that release; 0.18.23 is the same placeholder the
-# tsukihime pilot and the archive extractor carry. Replace them together with
-# the real version at release.
+# host serves `scryer:subtitle/subtitle-provider@1.1.0`. A host that only
+# serves the 1.0.0 world (or the Preview 1 command runtime before it) cannot
+# bind this artifact at all, so the floor has to move with that release;
+# 0.18.23 is the same placeholder every migrated subtitle provider carries.
+# Replace them all with the real version at release.
 min_scryer_version = "0.18.23"
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/animetosho-xyz"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/animetosho-xyz"
@@ -31,10 +31,11 @@ scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
 scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-wit-bindgen = "0.61"
+wit-bindgen = { version = "0.61", features = ["async"] }
 
 [dev-dependencies]
 postcard = { version = "1", features = ["use-std"] }
+tokio = { version = "1", features = ["rt", "time", "macros"] }
 wasmtime = "48.0.1"
 wasmtime-wasi = "48.0.1"
 

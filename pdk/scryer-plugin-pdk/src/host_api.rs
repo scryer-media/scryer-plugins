@@ -100,7 +100,7 @@ pub mod config {
         if super::host::host_call_installed() {
             return Ok(super::host::config_get(key)?);
         }
-        if let Some(config_get) = crate::component::installed_config_get() {
+        if let Some(config_get) = crate::runtime::installed_config_get() {
             return Ok(config_get(&key.into()));
         }
         Ok(super::host::config_get(key)?)

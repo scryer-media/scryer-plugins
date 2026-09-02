@@ -7,17 +7,18 @@
 //! Every plugin family is a WASI Preview 2 component. There are two guest
 //! shapes in this crate, and nothing else is loadable:
 //!
-//! | Shape | Target | Entry | Host services | Diagnostics |
-//! |---|---|---|---|---|
-//! | Family component (subtitles, download clients, notifications) | `wasm32-wasip2` `cdylib` | [`scryer_subtitle_component_main!`] and siblings | `scryer:host/services@1.0.0`, through [`host`] | stderr, through [`log`] |
-//! | Indexer component | `wasm32-wasip2` `cdylib` | [`scryer_indexer_component_main!`] | `scryer:indexer/host`, through [`component`] | the world's `log` import, through [`log`] |
+//! | Shape | Target | Entry | Host services | Typed capabilities | Diagnostics |
+//! |---|---|---|---|---|---|
+//! | Family component (subtitles, download clients, notifications) | `wasm32-wasip2` `cdylib` | [`scryer_subtitle_component_main!`] and siblings | `scryer:host/services@1.0.0`, through [`host`] | `scryer:runtime/host@1.0.0` on `scryer:subtitle@1.1.0`, through [`runtime`]; none on the 1.0.0 worlds | stderr, through [`log`] |
+//! | Indexer component | `wasm32-wasip2` `cdylib` | [`scryer_indexer_component_main!`] | `scryer:indexer/host`, through [`component`] | `scryer:indexer/host@1.1.0`, through [`runtime`] | the world's `log` import, through [`log`] |
 //!
 //! Crates shared between shapes — `newznab-common` and its kin — call
-//! [`log::log`] and let the installed hook decide where the line goes. That
-//! indirection is not decoration: naming the indexer world's `log` import from
-//! code a family component can reach keeps that import alive in the artifact,
-//! and it then fails to instantiate under a host that does not serve it. See
-//! [`log`] for the whole contract.
+//! [`log::log`], [`runtime::http`] and the other hook-backed entry points, and
+//! let the installed backend decide which world serves them. That indirection
+//! is not decoration: naming a capability world's import from code the other
+//! shape can reach keeps that import alive in the artifact, and it then fails
+//! to instantiate under a host that does not serve it. See [`log`] and
+//! [`runtime`] for the whole contract.
 //!
 //! ### What 0.6 changed
 //!
@@ -55,7 +56,11 @@
 //! whole of the boilerplate:
 //!
 //! ```ignore
-//! wit_bindgen::generate!({ world: "subtitle-provider", path: "wit" });
+//! wit_bindgen::generate!({
+//!     world: "scryer:subtitle/subtitle-provider@1.1.0",
+//!     path: ["wit/host-v1.0.0", "wit/runtime-v1.0.0", "wit/subtitle-v1.1.0"],
+//!     generate_all,
+//! });
 //!
 //! scryer_plugin_pdk::scryer_subtitle_component_main!(
 //!     descriptor = build_descriptor,
@@ -63,7 +68,8 @@
 //! );
 //! ```
 //!
-//! The handler is a plain dispatch `match` over the SDK command types:
+//! The handler is a plain dispatch `match` over the SDK command types — an
+//! `async fn` on `scryer:subtitle@1.1.0`, where `process` is an `async func`:
 //! `process` carries a [`PluginCommandRequest`]/[`PluginCommandResponse`] JSON
 //! envelope. See [`family`] for the contract.
 //!
@@ -97,6 +103,7 @@ pub mod family;
 pub mod host;
 mod host_api;
 pub mod log;
+pub mod runtime;
 
 pub use download_client_bridge::{
     LegacyDownloadClientFunctions, bridge_download_client_command,
@@ -176,6 +183,7 @@ macro_rules! scryer_indexer_component_main {
             fn describe() -> ::std::vec::Vec<u8> {
                 $crate::component::install_config_get();
                 $crate::component::install_log();
+                $crate::component::install_indexer_runtime();
                 $crate::component::descriptor_bytes($descriptor())
             }
 
@@ -187,6 +195,7 @@ macro_rules! scryer_indexer_component_main {
             > {
                 $crate::component::install_config_get();
                 $crate::component::install_log();
+                $crate::component::install_indexer_runtime();
                 $crate::component::dispatch_search(request, $search).await
             }
 
@@ -198,6 +207,7 @@ macro_rules! scryer_indexer_component_main {
             > {
                 $crate::component::install_config_get();
                 $crate::component::install_log();
+                $crate::component::install_indexer_runtime();
                 let descriptor = $descriptor();
                 let parallelism = $crate::component::strategy_plan_parallelism(&descriptor)
                     .ok_or($crate::component::InvocationError::InvalidResponse)?;
@@ -212,6 +222,7 @@ macro_rules! scryer_indexer_component_main {
             > {
                 $crate::component::install_config_get();
                 $crate::component::install_log();
+                $crate::component::install_indexer_runtime();
                 $crate::component::unsupported_action_response(request)
             }
         }
@@ -227,6 +238,7 @@ macro_rules! scryer_indexer_component_main {
             fn describe() -> ::std::vec::Vec<u8> {
                 $crate::component::install_config_get();
                 $crate::component::install_log();
+                $crate::component::install_indexer_runtime();
                 $crate::component::descriptor_bytes($descriptor())
             }
 
@@ -238,6 +250,7 @@ macro_rules! scryer_indexer_component_main {
             > {
                 $crate::component::install_config_get();
                 $crate::component::install_log();
+                $crate::component::install_indexer_runtime();
                 $crate::component::dispatch_search(request, $search).await
             }
 
@@ -249,6 +262,7 @@ macro_rules! scryer_indexer_component_main {
             > {
                 $crate::component::install_config_get();
                 $crate::component::install_log();
+                $crate::component::install_indexer_runtime();
                 let descriptor = $descriptor();
                 let parallelism = $crate::component::strategy_plan_parallelism(&descriptor)
                     .ok_or($crate::component::InvocationError::InvalidResponse)?;
@@ -263,6 +277,7 @@ macro_rules! scryer_indexer_component_main {
             > {
                 $crate::component::install_config_get();
                 $crate::component::install_log();
+                $crate::component::install_indexer_runtime();
                 $crate::component::dispatch_action(request, $action).await
             }
         }
@@ -284,6 +299,14 @@ macro_rules! scryer_indexer_component_main {
 ///    the top of *both* exports — Scryer instantiates a component once per
 ///    invocation, so a fresh instance always starts with an empty registry;
 /// 4. the `export!` that makes it the component's implementation.
+///
+/// The macro has two arms. The default one is the synchronous world the
+/// download-client and notification families still use. The `async` arm, which
+/// [`scryer_subtitle_component_main!`] selects, emits an `async fn process`
+/// against `scryer:subtitle@1.1.0` and additionally installs the
+/// `scryer:runtime/host@1.0.0` backend, so the handler and every shared crate
+/// beneath it can await [`runtime::http`] and the pacing gates built on it.
+/// `describe` stays synchronous in both arms.
 ///
 /// The log sink is stderr, which every family component host already captures
 /// as a size-capped tail and re-emits through `tracing`. A family world has no
@@ -343,13 +366,68 @@ macro_rules! __scryer_family_component_main {
 
         export!($component);
     };
+    (
+        async,
+        component = $component:ident,
+        transport = $transport:ident,
+        dispatch = $dispatch:path,
+        descriptor = $descriptor:expr,
+        handler = $handler:expr $(,)?
+    ) => {
+        fn $transport(
+            request: &[u8],
+        ) -> ::std::result::Result<::std::vec::Vec<u8>, $crate::host::HostTransportError> {
+            self::scryer::host::services::host_call(request).map_err(|error| match error {
+                self::scryer::host::services::HostError::InvalidRequest => {
+                    $crate::host::HostTransportError::InvalidRequest
+                }
+                self::scryer::host::services::HostError::Failed => {
+                    $crate::host::HostTransportError::Failed
+                }
+            })
+        }
+
+        struct $component;
+
+        impl Guest for $component {
+            fn describe() -> ::std::vec::Vec<u8> {
+                $crate::host::install_host_call($transport);
+                $crate::log::install_stderr_log();
+                $crate::runtime::install_runtime_host();
+                $crate::family::descriptor_bytes($descriptor())
+            }
+
+            async fn process(
+                request: ::std::vec::Vec<u8>,
+            ) -> ::std::result::Result<::std::vec::Vec<u8>, InvocationError> {
+                $crate::host::install_host_call($transport);
+                $crate::log::install_stderr_log();
+                $crate::runtime::install_runtime_host();
+                $dispatch(request, $handler)
+                    .await
+                    .map_err(|failure| match failure {
+                        $crate::family::InvocationFailure::Failed => InvocationError::Failed,
+                        $crate::family::InvocationFailure::Cancelled => InvocationError::Cancelled,
+                        $crate::family::InvocationFailure::InvalidResponse => {
+                            InvocationError::InvalidResponse
+                        }
+                    })
+            }
+        }
+
+        export!($component);
+    };
 }
 
-/// Define a `scryer:subtitle/subtitle-provider@1.0.0` component from a
-/// descriptor factory and a [`PluginSubtitleCommand`] handler.
+/// Define a `scryer:subtitle/subtitle-provider@1.1.0` component from a
+/// descriptor factory and an `async` [`PluginSubtitleCommand`] handler.
 ///
 /// ```ignore
-/// wit_bindgen::generate!({ world: "subtitle-provider", path: "wit" });
+/// wit_bindgen::generate!({
+///     world: "scryer:subtitle/subtitle-provider@1.1.0",
+///     path: ["wit/host-v1.0.0", "wit/runtime-v1.0.0", "wit/subtitle-v1.1.0"],
+///     generate_all,
+/// });
 ///
 /// scryer_plugin_pdk::scryer_subtitle_component_main!(
 ///     descriptor = build_descriptor,
@@ -360,6 +438,7 @@ macro_rules! __scryer_family_component_main {
 macro_rules! scryer_subtitle_component_main {
     (descriptor = $descriptor:expr, handler = $handler:expr $(,)?) => {
         $crate::__scryer_family_component_main!(
+            async,
             component = ScryerSubtitleComponent,
             transport = __scryer_subtitle_host_call,
             dispatch = $crate::family::dispatch_subtitle,

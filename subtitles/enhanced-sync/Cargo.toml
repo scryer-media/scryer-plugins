@@ -11,11 +11,11 @@ official = true
 plugin_id = "enhanced-subtitle-sync"
 catalog_versions = ["v3"]
 # TEMPORARY — the placeholder for the first Scryer release whose subtitle
-# backing is the `scryer:subtitle/subtitle-provider@1.0.0` component host. A
-# Preview 1 command runtime cannot instantiate this artifact at all, so the
-# floor has to move with that release; 0.18.23 is the same placeholder the
-# archive extractor and tsukihime carry. Replace all three with the real
-# version at release.
+# host serves `scryer:subtitle/subtitle-provider@1.1.0`. A host that only
+# serves the 1.0.0 world (or the Preview 1 command runtime before it) cannot
+# bind this artifact at all, so the floor has to move with that release;
+# 0.18.23 is the same placeholder every migrated subtitle provider carries.
+# Replace them all with the real version at release.
 min_scryer_version = "0.18.23"
 # Both flavors are kept on purpose. Unlike the catalog providers — which are
 # I/O-bound and gained nothing from SIMD, so their variants were dropped — this
@@ -39,7 +39,7 @@ rustfft = "6"
 encoding_rs = "0.8"
 chardetng = "1.0"
 symphonia = { version = "0.6.1", default-features = false, features = ["aac", "flac", "mp3", "vorbis", "pcm", "mkv", "isomp4", "wav"] }
-wit-bindgen = "0.61"
+wit-bindgen = { version = "0.61", features = ["async"] }
 
 [build-dependencies]
 cc = "1"
@@ -49,6 +49,7 @@ zstd = "0.13"
 [dev-dependencies]
 postcard = { version = "1", features = ["use-std"] }
 tempfile = "3"
+tokio = { version = "1", features = ["rt", "time", "macros"] }
 wasmtime = "48.0.1"
 wasmtime-wasi = "48.0.1"
 
