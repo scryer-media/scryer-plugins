@@ -14,11 +14,10 @@
 //! export process: func(request: list<u8>) -> result<list<u8>, invocation-error>;
 //! ```
 //!
-//! Both export payloads are UTF-8 JSON, and `process` carries exactly the
-//! [`PluginCommandRequest`]/[`PluginCommandResponse`] envelope the Preview 1
-//! command ABI already moved over stdin/stdout. **A migrating guest keeps its
-//! request and response types and its dispatch `match`; only the transport
-//! changes.** That is the whole reason this module is thin: it decodes the
+//! Both export payloads are UTF-8 JSON, and `process` carries the
+//! [`PluginCommandRequest`]/[`PluginCommandResponse`] envelope defined by the
+//! SDK's command ABI. **A guest owns its request and response types and its
+//! dispatch `match`.** That is the whole reason this module is thin: it decodes the
 //! envelope, checks the ABI version and the family tag, calls the plugin's
 //! existing handler, and encodes the response.
 //!
@@ -106,8 +105,7 @@ where
 /// Dispatch one `scryer:subtitle/subtitle-provider` invocation.
 ///
 /// The handler sees the SDK's [`PluginSubtitleCommand`] — `ValidateConfig`,
-/// `Search`, `Download`, `Generate` — exactly as a Preview 1 subtitle command
-/// plugin does.
+/// `Search`, `Download`, `Generate`.
 pub fn dispatch_subtitle<H>(request: Vec<u8>, handler: H) -> Result<Vec<u8>, InvocationFailure>
 where
     H: FnOnce(PluginSubtitleCommand) -> PluginSubtitleCommandResult,

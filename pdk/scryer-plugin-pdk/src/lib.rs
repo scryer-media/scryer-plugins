@@ -4,14 +4,13 @@
 //!
 //! ## Transports
 //!
-//! Every plugin family is moving to WASI Preview 2 components. There are three
-//! guest shapes in this crate, and only the first two are current:
+//! Every plugin family is a WASI Preview 2 component. There are two guest
+//! shapes in this crate, and nothing else is loadable:
 //!
 //! | Shape | Target | Entry | Host services | Diagnostics |
 //! |---|---|---|---|---|
 //! | Family component (subtitles, download clients, notifications) | `wasm32-wasip2` `cdylib` | [`scryer_subtitle_component_main!`] and siblings | `scryer:host/services@1.0.0`, through [`host`] | stderr, through [`log`] |
 //! | Indexer component | `wasm32-wasip2` `cdylib` | [`scryer_indexer_component_main!`] | `scryer:indexer/host`, through [`component`] | the world's `log` import, through [`log`] |
-//! | Preview 1 command (being retired) | `wasm32-wasip1` command | [`run_subtitle_plugin_with_descriptor`] and siblings | none — see below | stderr, through [`log`] |
 //!
 //! Crates shared between shapes — `newznab-common` and its kin — call
 //! [`log::log`] and let the installed hook decide where the line goes. That
@@ -34,10 +33,9 @@
 //! The signatures of `host::config_get`, `host::http`, `host::state_*`,
 //! `host::socket_*` and `host::process_exec` are unchanged, as are the
 //! [`config`], [`var`] and [`http`] convenience modules built on them, so a
-//! plugin body migrates without edits. What changed is that a Preview 1
-//! command guest now has no transport at all: those functions report
-//! [`host::HostCallError::Unavailable`] there, exactly as they do in a native
-//! `cargo test`. A family plugin must therefore ship as a component.
+//! plugin body migrated without edits. Outside a component — in a native
+//! `cargo test`, say — no transport is installed and those functions report
+//! [`host::HostCallError::Unavailable`].
 //!
 //! ## What this crate is (and is not)
 //!
@@ -65,57 +63,17 @@
 //! );
 //! ```
 //!
-//! The handler keeps the SDK types and the dispatch `match` a Preview 1
-//! command plugin already had — `process` carries the same
-//! [`PluginCommandRequest`]/[`PluginCommandResponse`] JSON envelope that used
-//! to travel over stdin/stdout. See [`family`] for the contract.
-//!
-//! ## Usage — a Preview 1 command plugin
-//!
-//! A legacy plugin provides a descriptor factory and a typed request handler to
-//! the matching descriptor-aware runner, such as
-//! [`run_archive_plugin_with_descriptor`] or
-//! [`run_subtitle_sync_plugin_with_descriptor`]. The PDK owns the standardized
-//! `describe` command; release tooling invokes it and embeds the returned
-//! descriptor in the final Wasm artifact. Operational failures are reported
-//! *in-band* through the response type, never by exiting non-zero. A non-zero
-//! exit is reserved for protocol-level faults (malformed request, unwritable
-//! stdout) and guest panics.
-//!
-//! ```no_run
-//! use scryer_plugin_pdk::{
-//!     ArchivePluginProcessRequest, ArchivePluginProcessResponse, ArchivePluginStatus,
-//! };
-//!
-//! fn handle(_request: ArchivePluginProcessRequest) -> ArchivePluginProcessResponse {
-//!     ArchivePluginProcessResponse {
-//!         status: ArchivePluginStatus::Ok,
-//!         files: vec![],
-//!         expanded_bytes: None,
-//!         copied_bytes: None,
-//!         staged_bytes: None,
-//!         error_code: None,
-//!         message: None,
-//!     }
-//! }
-//!
-//! # fn descriptor() -> scryer_plugin_pdk::sdk::PluginDescriptor { unimplemented!() }
-//! scryer_plugin_pdk::scryer_archive_plugin_main!(
-//!     descriptor = descriptor,
-//!     handler = handle,
-//! );
-//! ```
+//! The handler is a plain dispatch `match` over the SDK command types:
+//! `process` carries a [`PluginCommandRequest`]/[`PluginCommandResponse`] JSON
+//! envelope. See [`family`] for the contract.
 //!
 //! ## Building the guest artifact
 //!
-//! Legacy plugins are **command** binaries, so they must have a `main` (via the
-//! macro or an explicit `fn main`) and be built for a `wasm32-wasip1` target.
-//! The resulting module exports `_start` and `memory` and — for the archive
-//! plugin — imports exactly the two frozen host crypto functions under
-//! `extism:host/user` (see RFC 123 §5). Build guests with `panic = "abort"`.
-//! Indexers use [`scryer_indexer_component_main!`], a `cdylib`, and the
-//! `wasm32-wasip2` target. The component imports single-attempt HTTP and time
-//! capabilities; it owns upstream pacing, quotas, retries, and fanout.
+//! Every family builds a `cdylib` for `wasm32-wasip2` — indexers through
+//! [`scryer_indexer_component_main!`], the rest through their family entry
+//! macro. A component imports single-attempt HTTP and time capabilities; it
+//! owns upstream pacing, quotas, retries, and fanout. Build guests with
+//! `panic = "abort"`.
 //!
 //! The host enables the full wasm feature surface Scryer supports, and the
 //! catalog `feature_sets` metadata selects a matching flavor per host. Build
@@ -124,29 +82,27 @@
 //!
 //! | Flavor | `required_features` | How to build |
 //! |---|---|---|
-//! | baseline | `[]` | legacy: `cargo build --profile plugin-release --target wasm32-wasip1`; indexer: `--target wasm32-wasip2` |
+//! | baseline | `[]` | `cargo build --profile plugin-release --target wasm32-wasip2` |
 //! | simd | `["simd128"]` | as baseline with `RUSTFLAGS="-C target-feature=+simd128"` |
 //! | relaxed-simd | `["simd128","relaxed-simd"]` | `RUSTFLAGS="-C target-feature=+simd128,+relaxed-simd"` |
 //!
 //! Exceptions (`wasm_exceptions`) are host-enabled as a forward capability; no
-//! current legacy guest emits exception-handling opcodes, so there is no exceptions
+//! current guest emits exception-handling opcodes, so there is no exceptions
 //! flavor to build until a toolchain emits them. See `README.md` for the full
 //! build matrix and rationale.
 
 pub mod component;
 mod download_client_bridge;
-mod extism_compat;
 pub mod family;
-mod framing;
 pub mod host;
+mod host_api;
 pub mod log;
 
 pub use download_client_bridge::{
     LegacyDownloadClientFunctions, bridge_download_client_command,
-    legacy_download_client_descriptor, run_download_client_bridge_with_descriptor,
+    legacy_download_client_descriptor,
 };
-pub use extism_compat::{Error, FnResult, HttpRequest, HttpResponse, config, http, var};
-pub use framing::{FramingError, process, process_json, process_json_result};
+pub use host_api::{Error, FnResult, HttpRequest, HttpResponse, config, http, var};
 
 // One wire-protocol source of truth (RFC 123 §2.6): the protocol types live in
 // `scryer-plugin-sdk` and are re-exported here so a plugin can depend on the PDK
@@ -177,7 +133,6 @@ pub use scryer_plugin_sdk::command::{
     PluginNotificationCommand, PluginNotificationCommandResult, PluginSubtitleCommand,
     PluginSubtitleCommandResult,
 };
-#[cfg(feature = "archive-extract")]
 pub use scryer_plugin_sdk::host::{
     PluginArchiveExtractRequest, PluginArchiveExtractResponse, PluginArchiveExtractedFile,
 };
@@ -189,332 +144,19 @@ pub use scryer_plugin_sdk::host::{
 };
 
 use std::io::{self, Write};
-use std::process;
 
 /// Install a best-effort panic hook that reports the panic to stderr.
 ///
 /// Guests build with `panic = "abort"`, so after this hook runs the process
 /// aborts (which the host observes as a trap / non-zero exit). Installing the
 /// hook still fires under an unwinding build, and does not itself terminate the
-/// process, so it is safe to call from native tests. [`run_archive_plugin`]
-/// installs it automatically before dispatch.
+/// process, so it is safe to call from native tests.
 pub fn install_panic_hook() {
     std::panic::set_hook(Box::new(|info| {
         let mut stderr = io::stderr();
         let _ = writeln!(stderr, "scryer-plugin-pdk: guest panic: {info}");
         let _ = stderr.flush();
     }));
-}
-
-/// Command entry glue: read one request from stdin, dispatch it to `handler`,
-/// write exactly one response to stdout, flush, and exit.
-///
-/// - Clean success → exit `0`.
-/// - A protocol-level fault (malformed request, unwritable stdout, response
-///   serialization failure) → message to stderr, non-zero exit.
-/// - Operational failures are *not* errors here; the handler reports them
-///   in-band via [`ArchivePluginStatus`].
-///
-/// Never returns.
-pub fn run_archive_plugin<H>(handler: H) -> !
-where
-    H: Fn(ArchivePluginProcessRequest) -> ArchivePluginProcessResponse,
-{
-    install_panic_hook();
-
-    let stdin = io::stdin();
-    let stdout = io::stdout();
-    let result = framing::process(stdin.lock(), stdout.lock(), handler);
-
-    let _ = io::stdout().flush();
-
-    match result {
-        Ok(()) => process::exit(0),
-        Err(error) => {
-            let mut stderr = io::stderr();
-            let _ = writeln!(stderr, "scryer-plugin-pdk: {error}");
-            let _ = stderr.flush();
-            process::exit(error.exit_code())
-        }
-    }
-}
-
-fn is_describe_command() -> bool {
-    std::env::args().nth(1).as_deref() == Some("describe")
-}
-
-fn write_descriptor_json<W, T>(mut output: W, descriptor: &T) -> Result<(), String>
-where
-    W: Write,
-    T: serde::Serialize,
-{
-    let json = serde_json::to_vec(descriptor)
-        .map_err(|error| format!("failed to serialize plugin descriptor: {error}"))?;
-    output
-        .write_all(&json)
-        .map_err(|error| format!("failed to write plugin descriptor: {error}"))?;
-    output
-        .flush()
-        .map_err(|error| format!("failed to flush plugin descriptor: {error}"))
-}
-
-fn run_descriptor_command<D>(descriptor: D) -> !
-where
-    D: FnOnce() -> sdk::PluginDescriptor,
-{
-    install_panic_hook();
-    let stdout = io::stdout();
-    match write_descriptor_json(stdout.lock(), &descriptor()) {
-        Ok(()) => process::exit(0),
-        Err(error) => {
-            let mut stderr = io::stderr();
-            let _ = writeln!(stderr, "scryer-plugin-pdk: {error}");
-            let _ = stderr.flush();
-            process::exit(2)
-        }
-    }
-}
-
-/// Run an archive plugin and own its standardized `describe` command.
-///
-/// When the first argument is `describe`, the PDK calls `descriptor` lazily,
-/// writes exactly one [`sdk::PluginDescriptor`] JSON document to stdout, and
-/// exits. Otherwise it dispatches one archive request to `handler` using the
-/// normal command protocol.
-///
-/// Release tooling is responsible for invoking `describe` and embedding the
-/// returned descriptor in the final Wasm artifact.
-pub fn run_archive_plugin_with_descriptor<D, H>(descriptor: D, handler: H) -> !
-where
-    D: FnOnce() -> sdk::PluginDescriptor,
-    H: Fn(ArchivePluginProcessRequest) -> ArchivePluginProcessResponse,
-{
-    if is_describe_command() {
-        run_descriptor_command(descriptor);
-    }
-    run_archive_plugin(handler)
-}
-
-/// Command entry glue for SDK 3.5 subtitle-sync plugins.
-///
-/// Never returns.
-pub fn run_subtitle_sync_plugin<H>(handler: H) -> !
-where
-    H: Fn(SubtitleSyncPluginProcessRequest) -> SubtitleSyncPluginProcessResponse,
-{
-    install_panic_hook();
-
-    let stdin = io::stdin();
-    let stdout = io::stdout();
-    let result = framing::process_json(stdin.lock(), stdout.lock(), handler);
-
-    let _ = io::stdout().flush();
-
-    match result {
-        Ok(()) => process::exit(0),
-        Err(error) => {
-            let mut stderr = io::stderr();
-            let _ = writeln!(stderr, "scryer-plugin-pdk: {error}");
-            let _ = stderr.flush();
-            process::exit(error.exit_code())
-        }
-    }
-}
-
-/// Run a subtitle-sync plugin and own its standardized `describe` command.
-///
-/// When the first argument is `describe`, the PDK calls `descriptor` lazily,
-/// writes exactly one [`sdk::PluginDescriptor`] JSON document to stdout, and
-/// exits. Otherwise it dispatches one subtitle-sync request to `handler` using
-/// the normal command protocol.
-///
-/// Release tooling is responsible for invoking `describe` and embedding the
-/// returned descriptor in the final Wasm artifact.
-pub fn run_subtitle_sync_plugin_with_descriptor<D, H>(descriptor: D, handler: H) -> !
-where
-    D: FnOnce() -> sdk::PluginDescriptor,
-    H: Fn(SubtitleSyncPluginProcessRequest) -> SubtitleSyncPluginProcessResponse,
-{
-    if is_describe_command() {
-        run_descriptor_command(descriptor);
-    }
-    run_subtitle_sync_plugin(handler)
-}
-
-fn run_command_plugin<H>(handler: H) -> !
-where
-    H: Fn(PluginCommand) -> Result<PluginCommandResult, String>,
-{
-    install_panic_hook();
-    let stdin = io::stdin();
-    let stdout = io::stdout();
-    let result = framing::process_json_result(
-        stdin.lock(),
-        stdout.lock(),
-        |request: PluginCommandRequest| {
-            if request.abi_version != sdk::command::COMMAND_ABI_VERSION {
-                return Err(FramingError::Dispatch(format!(
-                    "unsupported command ABI version {}",
-                    request.abi_version
-                )));
-            }
-            let response = handler(request.command).map_err(FramingError::Dispatch)?;
-            Ok(PluginCommandResponse::new(response))
-        },
-    );
-    let _ = io::stdout().flush();
-    match result {
-        Ok(()) => process::exit(0),
-        Err(error) => {
-            let mut stderr = io::stderr();
-            let _ = writeln!(stderr, "scryer-plugin-pdk: {error}");
-            let _ = stderr.flush();
-            process::exit(error.exit_code())
-        }
-    }
-}
-
-fn run_command_plugin_with_descriptor<D, H>(descriptor: D, handler: H) -> !
-where
-    D: FnOnce() -> sdk::PluginDescriptor,
-    H: Fn(PluginCommand) -> Result<PluginCommandResult, String>,
-{
-    if is_describe_command() {
-        run_descriptor_command(descriptor);
-    }
-    run_command_plugin(handler)
-}
-
-/// Run a native indexer command plugin.
-pub fn run_indexer_plugin_with_descriptor<D, H>(descriptor: D, handler: H) -> !
-where
-    D: FnOnce() -> sdk::PluginDescriptor,
-    H: Fn(PluginIndexerCommand) -> PluginIndexerCommandResult,
-{
-    run_command_plugin_with_descriptor(descriptor, move |command| match command {
-        PluginCommand::Indexer(command) => Ok(PluginCommandResult::Indexer(handler(command))),
-        _ => Err("indexer command runner received another plugin family".to_string()),
-    })
-}
-
-/// Run a native download-client command plugin.
-pub fn run_download_client_plugin_with_descriptor<D, H>(descriptor: D, handler: H) -> !
-where
-    D: FnOnce() -> sdk::PluginDescriptor,
-    H: Fn(PluginDownloadClientCommand) -> PluginDownloadClientCommandResult,
-{
-    run_command_plugin_with_descriptor(descriptor, move |command| match command {
-        PluginCommand::DownloadClient(command) => {
-            Ok(PluginCommandResult::DownloadClient(handler(command)))
-        }
-        _ => Err("download-client command runner received another plugin family".to_string()),
-    })
-}
-
-/// Run a native notification command plugin.
-pub fn run_notification_plugin_with_descriptor<D, H>(descriptor: D, handler: H) -> !
-where
-    D: FnOnce() -> sdk::PluginDescriptor,
-    H: Fn(PluginNotificationCommand) -> PluginNotificationCommandResult,
-{
-    run_command_plugin_with_descriptor(descriptor, move |command| match command {
-        PluginCommand::Notification(command) => {
-            Ok(PluginCommandResult::Notification(handler(command)))
-        }
-        _ => Err("notification command runner received another plugin family".to_string()),
-    })
-}
-
-/// Run a native catalog subtitle command plugin.
-pub fn run_subtitle_plugin_with_descriptor<D, H>(descriptor: D, handler: H) -> !
-where
-    D: FnOnce() -> sdk::PluginDescriptor,
-    H: Fn(PluginSubtitleCommand) -> PluginSubtitleCommandResult,
-{
-    run_command_plugin_with_descriptor(descriptor, move |command| match command {
-        PluginCommand::Subtitle(command) => Ok(PluginCommandResult::Subtitle(handler(command))),
-        _ => Err("subtitle command runner received another plugin family".to_string()),
-    })
-}
-
-/// Define the command `main` for an archive plugin from a descriptor factory
-/// and request handler.
-///
-/// ```no_run
-/// use scryer_plugin_pdk::{ArchivePluginProcessRequest, ArchivePluginProcessResponse};
-/// # fn descriptor() -> scryer_plugin_pdk::sdk::PluginDescriptor { unimplemented!() }
-/// # fn handle(_: ArchivePluginProcessRequest) -> ArchivePluginProcessResponse { unimplemented!() }
-/// scryer_plugin_pdk::scryer_archive_plugin_main!(
-///     descriptor = descriptor,
-///     handler = handle,
-/// );
-/// ```
-#[macro_export]
-macro_rules! scryer_archive_plugin_main {
-    (descriptor = $descriptor:expr, handler = $handler:expr $(,)?) => {
-        fn main() {
-            $crate::run_archive_plugin_with_descriptor($descriptor, $handler);
-        }
-    };
-    ($handler:expr) => {
-        fn main() {
-            $crate::run_archive_plugin($handler);
-        }
-    };
-}
-
-/// Define the command `main` for a subtitle-sync plugin from a descriptor
-/// factory and request handler.
-///
-/// ```no_run
-/// use scryer_plugin_pdk::{
-///     SubtitleSyncPluginProcessRequest, SubtitleSyncPluginProcessResponse,
-/// };
-/// # fn descriptor() -> scryer_plugin_pdk::sdk::PluginDescriptor { unimplemented!() }
-/// # fn handle(_: SubtitleSyncPluginProcessRequest) -> SubtitleSyncPluginProcessResponse { unimplemented!() }
-/// scryer_plugin_pdk::scryer_subtitle_sync_plugin_main!(
-///     descriptor = descriptor,
-///     handler = handle,
-/// );
-/// ```
-#[macro_export]
-macro_rules! scryer_subtitle_sync_plugin_main {
-    (descriptor = $descriptor:expr, handler = $handler:expr $(,)?) => {
-        fn main() {
-            $crate::run_subtitle_sync_plugin_with_descriptor($descriptor, $handler);
-        }
-    };
-    ($handler:expr) => {
-        fn main() {
-            $crate::run_subtitle_sync_plugin($handler);
-        }
-    };
-}
-
-/// Emit the command-ABI marker used by Scryer to select the native command
-/// runtime. Each command macro expands this once in the guest artifact.
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __scryer_command_abi_marker {
-    () => {
-        #[used]
-        #[cfg_attr(
-            target_arch = "wasm32",
-            unsafe(link_section = "scryer.plugin.command_abi")
-        )]
-        static SCRYER_PLUGIN_COMMAND_ABI_V1: [u8; 2] =
-            $crate::sdk::command::COMMAND_ABI_VERSION.to_le_bytes();
-    };
-}
-
-#[macro_export]
-macro_rules! scryer_indexer_plugin_main {
-    (descriptor = $descriptor:expr, handler = $handler:expr $(,)?) => {
-        $crate::__scryer_command_abi_marker!();
-        fn main() {
-            $crate::run_indexer_plugin_with_descriptor($descriptor, $handler);
-        }
-    };
 }
 
 /// Define a WASIp2 component indexer from async search and optional action
@@ -631,47 +273,6 @@ macro_rules! scryer_indexer_component_main {
     };
 }
 
-#[macro_export]
-macro_rules! scryer_download_client_plugin_main {
-    (descriptor = $descriptor:expr, handler = $handler:expr $(,)?) => {
-        $crate::__scryer_command_abi_marker!();
-        fn main() {
-            $crate::run_download_client_plugin_with_descriptor($descriptor, $handler);
-        }
-    };
-}
-
-// `scryer_download_client_bridge_main!` was deleted in 0.6.0. It was the
-// short-lived macro that wrapped a client's legacy JSON exports into
-// `LegacyDownloadClientFunctions` and handed them to
-// `run_download_client_bridge_with_descriptor`. All sixteen first-party clients
-// now build that table directly — they have to, because the macro's initializer
-// never learned `mark_imported_non_destructive` and so could no longer even
-// construct the struct: any invocation was an E0063, which is why zero
-// invocations remained. `run_download_client_bridge_with_descriptor` and
-// `LegacyDownloadClientFunctions` are kept and still exported; only the
-// uncompilable wrapper is gone.
-
-#[macro_export]
-macro_rules! scryer_notification_plugin_main {
-    (descriptor = $descriptor:expr, handler = $handler:expr $(,)?) => {
-        $crate::__scryer_command_abi_marker!();
-        fn main() {
-            $crate::run_notification_plugin_with_descriptor($descriptor, $handler);
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! scryer_subtitle_plugin_main {
-    (descriptor = $descriptor:expr, handler = $handler:expr $(,)?) => {
-        $crate::__scryer_command_abi_marker!();
-        fn main() {
-            $crate::run_subtitle_plugin_with_descriptor($descriptor, $handler);
-        }
-    };
-}
-
 /// The shared body of every family component entry macro.
 ///
 /// It expands to four things, in the module that invoked `wit_bindgen`:
@@ -747,9 +348,6 @@ macro_rules! __scryer_family_component_main {
 /// Define a `scryer:subtitle/subtitle-provider@1.0.0` component from a
 /// descriptor factory and a [`PluginSubtitleCommand`] handler.
 ///
-/// The handler is the same one a Preview 1 subtitle command plugin passes to
-/// [`run_subtitle_plugin_with_descriptor`]; only the transport changes.
-///
 /// ```ignore
 /// wit_bindgen::generate!({ world: "subtitle-provider", path: "wit" });
 ///
@@ -799,31 +397,4 @@ macro_rules! scryer_notification_component_main {
             handler = $handler,
         );
     };
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    crate::__scryer_command_abi_marker!();
-
-    #[derive(serde::Serialize)]
-    struct TestDescriptor<'a> {
-        id: &'a str,
-    }
-
-    #[test]
-    fn descriptor_writer_emits_one_json_document() {
-        let mut output = Vec::new();
-        write_descriptor_json(&mut output, &TestDescriptor { id: "test" }).unwrap();
-        assert_eq!(output, br#"{"id":"test"}"#);
-    }
-
-    #[test]
-    fn command_abi_marker_compiles_on_host_targets() {
-        assert_eq!(
-            SCRYER_PLUGIN_COMMAND_ABI_V1,
-            sdk::command::COMMAND_ABI_VERSION.to_le_bytes()
-        );
-    }
 }

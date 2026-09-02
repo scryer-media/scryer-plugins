@@ -1,5 +1,0 @@
-# Extism 1.30.0 is the latest official release and still requires unsupported
-# Wasmtime 43. Remove this exception when Extism ships its Wasmtime 46 migration:
-# https://github.com/extism/extism/pull/905
-[advisories]
-ignore = ["RUSTSEC-2026-0269"]

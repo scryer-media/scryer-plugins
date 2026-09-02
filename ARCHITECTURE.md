@@ -42,6 +42,6 @@ Operational rules:
 - plugin releases append immutable `releases[]` entries instead of overwriting one flat row
 - Scryer owns built-in pinning; this repo can publish official plugins, but it
   no longer declares built-in candidates
-- release artifacts are optimized with `wasm-opt -Oz`, compressed with
+- release artifacts are stripped with `wasm-tools strip`, compressed with
   `zstd -19`, hashed with BLAKE3, and signed with cosign keyless bundles
 - new automation belongs in xtask rather than ad hoc shell or Python helpers

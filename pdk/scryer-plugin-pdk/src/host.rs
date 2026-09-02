@@ -42,7 +42,6 @@
 use std::fmt;
 use std::sync::{PoisonError, RwLock};
 
-#[cfg(feature = "archive-extract")]
 use scryer_plugin_sdk::host::{PluginArchiveExtractRequest, PluginArchiveExtractResponse};
 use scryer_plugin_sdk::host::{
     PluginConfigGetRequest, PluginHostRequest, PluginHostResponse, PluginHttpRequest,
@@ -290,7 +289,6 @@ pub fn process_exec(
 /// A host with no archive extractor installed answers in-band, so the caller
 /// sees [`HostCallError::Service`] carrying a `PluginErrorCode::Unsupported`
 /// error rather than a transport failure.
-#[cfg(feature = "archive-extract")]
 pub fn archive_extract(
     request: PluginArchiveExtractRequest,
 ) -> Result<PluginArchiveExtractResponse, HostCallError> {
@@ -374,27 +372,19 @@ mod tests {
         assert!(!host_call_installed());
     }
 
-    #[cfg(feature = "archive-extract")]
     #[test]
     fn an_unsupported_capability_arrives_as_a_typed_service_error() {
         let _guard = lock_registry();
 
-        // Every optional field is populated on purpose. `PluginError` carries
-        // `#[serde(skip_serializing_if = "Option::is_none")]` on
-        // `debug_message` and `retry_after_seconds`, which is correct for the
-        // JSON command envelope and wrong for postcard: a non-self-describing
-        // format writes fewer fields than the derived deserializer reads, so a
-        // `None` there makes the response undecodable
-        // ("Hit the end of buffer"). That asymmetry is the *host's* to fix —
-        // see `postcard_rejects_a_plugin_error_with_skipped_fields` below,
-        // which pins the hazard so it is not rediscovered from a confusing
-        // decode error in production.
+        // The natural host answer: no debug message, no retry hint. The SDK's
+        // `PluginError` round-trips through postcard with those fields unset,
+        // so this is exactly the wire shape a host with no extractor emits.
         fn transport(_request: &[u8]) -> Result<Vec<u8>, HostTransportError> {
             let response = PluginHostResponse::ArchiveExtract(PluginResult::Err(PluginError {
                 code: PluginErrorCode::Unsupported,
                 public_message: "no archive extractor is installed".to_string(),
-                debug_message: Some("no archive extractor is installed".to_string()),
-                retry_after_seconds: Some(0),
+                debug_message: None,
+                retry_after_seconds: None,
                 details: None,
             }));
             postcard::to_allocvec(&response).map_err(|_| HostTransportError::Failed)
@@ -417,33 +407,6 @@ mod tests {
         );
 
         clear_host_call();
-    }
-
-    /// Pin the encoding hazard on the in-band error path.
-    ///
-    /// This is not PDK behaviour under test — it is a property of the SDK's
-    /// `PluginError` that the whole "capability availability is in-band"
-    /// contract depends on. A host answering `Unsupported` with the natural
-    /// `debug_message: None, retry_after_seconds: None` produces bytes this
-    /// guest cannot decode, and the plugin sees `Decode` instead of
-    /// `Service(Unsupported)`. When the SDK drops `skip_serializing_if` from
-    /// those fields (or the transport stops using postcard), this test starts
-    /// failing and should simply be deleted.
-    #[test]
-    fn postcard_rejects_a_plugin_error_with_skipped_fields() {
-        let error = PluginError {
-            code: PluginErrorCode::Unsupported,
-            public_message: "no archive extractor is installed".to_string(),
-            debug_message: None,
-            retry_after_seconds: None,
-            details: None,
-        };
-        let encoded = postcard::to_allocvec(&error).expect("encode");
-        assert!(
-            postcard::from_bytes::<PluginError>(&encoded).is_err(),
-            "PluginError now round-trips through postcard; delete this test and the \
-             work-around in the test above"
-        );
     }
 
     #[test]

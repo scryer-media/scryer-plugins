@@ -1,23 +1,11 @@
 use anyhow::{Context, Result, anyhow, bail};
-use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use extism::{CurrentPlugin, Error as ExtismError, Manifest, UserData, Val, ValType, host_fn};
 mod client_strata;
 mod component_descriptor;
 mod plugin_new;
-use client_strata::{build_publication_strata, parse_stratum_drops};
+use client_strata::{TARGET_WASIP1, TARGET_WASIP2, build_publication_strata, parse_stratum_drops};
 use scryer_plugin_sdk::{
-    EXPORT_ARCHIVE_PROCESS, EXPORT_DESCRIBE, EXPORT_DOWNLOAD_ADD, EXPORT_DOWNLOAD_CONTROL,
-    EXPORT_DOWNLOAD_LIST_COMPLETED, EXPORT_DOWNLOAD_LIST_HISTORY, EXPORT_DOWNLOAD_LIST_QUEUE,
-    EXPORT_DOWNLOAD_LIST_RECENT_COMPLETED, EXPORT_DOWNLOAD_MARK_IMPORTED, EXPORT_DOWNLOAD_STATUS,
-    EXPORT_DOWNLOAD_TEST_CONNECTION, EXPORT_INDEXER_ACTION, EXPORT_INDEXER_SEARCH,
-    EXPORT_NOTIFICATION_ACTION, EXPORT_NOTIFICATION_SEND, EXPORT_SUBSYNC_ALIGN,
-    EXPORT_SUBTITLE_DOWNLOAD, EXPORT_SUBTITLE_GENERATE, EXPORT_SUBTITLE_SEARCH,
-    EXPORT_VALIDATE_CONFIG, PluginDescriptor, PluginResult, ProviderDescriptor, SDK_VERSION,
-    SubtitleProviderMode, SubtitleSyncAlignRequest, SubtitleSyncAlignResponse,
-    SubtitleSyncInputSubtitle, SubtitleSyncReferenceSubtitle,
-    command::{COMMAND_ABI_CUSTOM_SECTION, COMMAND_ABI_VERSION},
-    host::HOST_ABI_MODULE,
+    EXPORT_DESCRIBE, PluginDescriptor, ProviderDescriptor, SDK_VERSION,
     host_version_matches_constraint, plugin_descriptor_sdk_constraint,
     validate_plugin_descriptor_host_permissions, validate_sdk_contract,
 };
@@ -31,22 +19,25 @@ use std::io::BufWriter;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Stdio};
-use std::sync::LazyLock;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH};
 use toml_edit::{DocumentMut, value};
-use wasmtime::{Caller, Config, Engine, ExternType, Linker, Module, Store};
-use wasmtime_wasi::p1::WasiP1Ctx;
-use wasmtime_wasi::p2::pipe::{MemoryInputPipe, MemoryOutputPipe};
-use wasmtime_wasi::{I32Exit, WasiCtxBuilder};
 
 const BLUE: &str = "\x1b[0;34m";
 const GREEN: &str = "\x1b[0;32m";
 const YELLOW: &str = "\x1b[1;33m";
 const BOLD: &str = "\x1b[1m";
 const RESET: &str = "\x1b[0m";
-const LEGACY_WASM_TARGET: &str = "wasm32-wasip1";
-const INDEXER_COMPONENT_WASM_TARGET: &str = "wasm32-wasip2";
-const WASM_TARGETS: [&str; 2] = [LEGACY_WASM_TARGET, INDEXER_COMPONENT_WASM_TARGET];
+/// The one target this repository builds. Every plugin family ships a WASI
+/// Preview 2 component; there is no Preview 1 build path left anywhere in the
+/// tooling.
+const COMPONENT_WASM_TARGET: &str = TARGET_WASIP2;
+/// Artifact `runtime` values a published catalog document may legally carry.
+///
+/// `wasm32-wasip1` is here as a *historical wire value*, not a build target:
+/// releases published before the component cut (and the retired plugins capped
+/// at Scryer 0.18.21) still carry those rows, and validating the master catalog
+/// has to keep accepting them. See [`client_strata`] for who reads them.
+const CATALOG_ARTIFACT_RUNTIMES: [&str; 2] = [TARGET_WASIP1, TARGET_WASIP2];
 #[allow(dead_code)]
 const CATALOG_V2_SCHEMA: &str = "scryer.plugin.catalog.v2";
 const CHILD_CATALOG_V2_SCHEMA: &str = "scryer.plugin.child_catalog.v2";
@@ -56,8 +47,6 @@ const PLUGIN_MANIFEST_SCHEMA: &str = "scryer.plugin.v1";
 const PLUGIN_DESCRIPTOR_CUSTOM_SECTION_V1: &str = "scryer.plugin-descriptor.v1";
 const PLUGIN_DESCRIPTOR_CUSTOM_SECTION_PREFIX: &str = "scryer.plugin-descriptor.";
 const PLUGIN_DESCRIPTOR_CUSTOM_SECTION_MAX_BYTES: usize = 1024 * 1024;
-const WASM_OPT_LEVEL_SIZE: &str = "-Oz";
-const WASM_OPT_LEVEL_SPEED: &str = "-O3";
 const ZSTD_LEVEL: &str = "-19";
 const BOUNDED_TASK_CONCURRENCY: usize = 8;
 const SHORT_CATALOG_HASH_LEN: usize = 12;
@@ -67,6 +56,13 @@ const OFFICIAL_RELEASE_WORKFLOW_ENV: &str = "SCRYER_OFFICIAL_RELEASE_WORKFLOW_PA
 const OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX_ENV: &str = "SCRYER_OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX";
 const DEFAULT_OFFICIAL_PLUGIN_RELEASE_TAG_PREFIX: &str = "plugins-v3";
 const RELEASE_SOURCE_ROOT_ENV: &str = "SCRYER_PLUGIN_RELEASE_SOURCE_ROOT";
+/// Point every cargo invocation at a checkout of `scryer-plugin-sdk` on disk.
+///
+/// The fleet resolves the SDK from a git source, so the override is injected as
+/// `--config patch."<git url>".scryer-plugin-sdk.path="…"` — a `[patch.crates-io]`
+/// entry would silently do nothing. The git URL is read from `xtask/Cargo.toml`,
+/// which is the same declaration every plugin manifest mirrors; when xtask is
+/// back on a published version the override falls back to patching crates.io.
 const SDK_LOCAL_OVERRIDE_ENV: &str = "SCRYER_PLUGIN_SDK_LOCAL_PATH";
 const CENTRAL_CATALOG_RELEASE_TAG: &str = "catalog/v2";
 const DEFAULT_CENTRAL_CATALOG_V3_RELEASE_TAG: &str = "catalog/v3";
@@ -110,7 +106,6 @@ const ENHANCED_SYNC_FFMPEG_VENDOR_METADATA: &str = "SCRYER_VENDOR_METADATA";
 const ENHANCED_SYNC_LIBFVAD_VENDOR_DIR: &str = "subtitles/enhanced-sync/vendor/libfvad";
 const ENHANCED_SYNC_LIBFVAD_VENDOR_ARCHIVE: &str = "source.tar.zst";
 const ENHANCED_SYNC_LIBFVAD_VENDOR_METADATA: &str = "SCRYER_VENDOR_METADATA";
-const ENHANCED_SUBTITLE_SYNC_PLUGIN_ID: &str = "enhanced-subtitle-sync";
 const CARDIGANN_PLUGIN_DIR: &str = "indexers/cardigann-engine";
 const CARDIGANN_DEFINITION_INDEX_ASSET: &str =
     "indexers/cardigann-engine/known_cardigann_definitions.v1.jsonl";
@@ -121,8 +116,6 @@ const CARDIGANN_GATE_SOURCE_DIR_ENV: &str = "CARDIGANN_GATE_SOURCE_DIR";
 const CARDIGANN_GATE_INDEX_OUT_ENV: &str = "CARDIGANN_GATE_INDEX_OUT";
 const CARDIGANN_GATE_BODIES_OUT_ENV: &str = "CARDIGANN_GATE_BODIES_OUT";
 const CARDIGANN_GATE_REPORT_OUT_ENV: &str = "CARDIGANN_GATE_REPORT_OUT";
-const SUBTITLE_SYNC_PARITY_FORMATS: &[&str] = &["srt", "vtt", "ass", "ssa"];
-const SUBTITLE_SYNC_FLOAT_TOLERANCE: f64 = 1.0e-9;
 const FFMPEG_VENDOR_PATHS: &[&str] = &[
     "COPYING.LGPLv2.1",
     "LICENSE.md",
@@ -150,86 +143,13 @@ const LIBFVAD_VENDOR_PATHS: &[&str] = &[
     "include",
     "src",
 ];
-const AUDIT_IGNORE_ADVISORIES: &[&str] = &[
-    // Extism 1.30.0 pins Wasmtime 43.0.2 upstream. Legacy Extism plugin
-    // compatibility requires that runtime until Extism moves to a patched line.
-    "RUSTSEC-2026-0085",
-    "RUSTSEC-2026-0086",
-    "RUSTSEC-2026-0087",
-    "RUSTSEC-2026-0088",
-    "RUSTSEC-2026-0089",
-    "RUSTSEC-2026-0091",
-    "RUSTSEC-2026-0092",
-    "RUSTSEC-2026-0093",
-    "RUSTSEC-2026-0094",
-    "RUSTSEC-2026-0095",
-    "RUSTSEC-2026-0096",
-    "RUSTSEC-2026-0114",
-    "RUSTSEC-2026-0222",
-];
-
-host_fn!(socket_unsupported(_state: (); _input: String) -> String {
-    Ok(
-        r#"{"ok":false,"error":{"code":"unsupported","message":"socket host calls are unavailable during descriptor validation"}}"#
-            .to_string(),
-    )
-});
-
-host_fn!(process_unsupported(_state: (); _input: String) -> String {
-    Ok(
-        r#"{"ok":false,"error":{"code":"unsupported","message":"process host calls are unavailable during descriptor validation"}}"#
-            .to_string(),
-    )
-});
-
-fn archive_aes_cbc_decrypt_unsupported(
-    _current: &mut CurrentPlugin,
-    _input: &[Val],
-    output: &mut [Val],
-    _state: UserData<()>,
-) -> Result<(), ExtismError> {
-    output[0] = Val::I64(-3);
-    Ok(())
-}
-
-fn archive_crc32_unsupported(
-    _current: &mut CurrentPlugin,
-    _input: &[Val],
-    output: &mut [Val],
-    _state: UserData<()>,
-) -> Result<(), ExtismError> {
-    output[0] = Val::I64(-1);
-    Ok(())
-}
-
-fn native_host_call_unsupported(
-    _current: &mut CurrentPlugin,
-    _input: &[Val],
-    output: &mut [Val],
-    _state: UserData<()>,
-) -> Result<(), ExtismError> {
-    output[0] = Val::I32(0);
-    Ok(())
-}
-
-fn native_host_response_unavailable(
-    _current: &mut CurrentPlugin,
-    _input: &[Val],
-    output: &mut [Val],
-    _state: UserData<()>,
-) -> Result<(), ExtismError> {
-    output[0] = Val::I32(-1);
-    Ok(())
-}
-
-fn native_host_response_drop_unsupported(
-    _current: &mut CurrentPlugin,
-    _input: &[Val],
-    _output: &mut [Val],
-    _state: UserData<()>,
-) -> Result<(), ExtismError> {
-    Ok(())
-}
+/// Advisories `cargo xtask ci audit` waives across every crate it audits.
+///
+/// Empty on purpose. The previous entries were all Wasmtime 47 advisories,
+/// and every lockfile in the fleet (plugins and `xtask`) now resolves Wasmtime
+/// 48.0.1, so a clean `cargo audit` needs no waivers. Add an entry only with
+/// the advisory id, the crate it covers, and why it cannot be upgraded.
+const AUDIT_IGNORE_ADVISORIES: &[&str] = &[];
 
 #[derive(Clone)]
 struct RustupToolchain {
@@ -779,12 +699,6 @@ struct PreparedPluginVariant {
     compressed_br: PreparedCompressedArtifact,
 }
 
-#[derive(Clone, Debug)]
-struct BuiltPluginVariant {
-    feature_set: WasmFeatureSet,
-    wasm_path: PathBuf,
-}
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum ReleaseImpact {
     PluginChanged,
@@ -935,74 +849,23 @@ impl WasmRequiredFeature {
             Self::RelaxedSimd => "relaxed-simd",
         }
     }
-
-    fn wasm_opt_flag(self) -> &'static str {
-        match self {
-            Self::Simd128 => "--enable-simd",
-            Self::RelaxedSimd => "--enable-relaxed-simd",
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
-#[serde(rename_all = "lowercase")]
-enum WasmOptLevel {
-    Size,
-    Speed,
-}
-
-impl WasmOptLevel {
-    fn parse(value: &str) -> Result<Self> {
-        match value.trim() {
-            "size" => Ok(Self::Size),
-            "speed" => Ok(Self::Speed),
-            other => bail!(
-                "unsupported package.metadata.scryer.feature_sets wasm_opt value '{other}'; wasm_opt must be \"size\" or \"speed\""
-            ),
-        }
-    }
-
-    fn wasm_opt_flag(self) -> &'static str {
-        match self {
-            Self::Size => WASM_OPT_LEVEL_SIZE,
-            Self::Speed => WASM_OPT_LEVEL_SPEED,
-        }
-    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 struct WasmFeatureSet {
     required_features: Vec<WasmRequiredFeature>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    wasm_opt: Option<WasmOptLevel>,
 }
 
 impl WasmFeatureSet {
     fn new(mut required_features: Vec<WasmRequiredFeature>) -> Self {
         required_features.sort();
         required_features.dedup();
-        Self {
-            required_features,
-            wasm_opt: None,
-        }
-    }
-
-    fn with_wasm_opt(
-        mut required_features: Vec<WasmRequiredFeature>,
-        wasm_opt: Option<WasmOptLevel>,
-    ) -> Self {
-        required_features.sort();
-        required_features.dedup();
-        Self {
-            required_features,
-            wasm_opt,
-        }
+        Self { required_features }
     }
 
     fn baseline() -> Self {
         Self {
             required_features: Vec::new(),
-            wasm_opt: None,
         }
     }
 
@@ -1069,20 +932,6 @@ impl WasmFeatureSet {
                 .join(",+")
         ))
     }
-
-    fn effective_wasm_opt_level(&self) -> WasmOptLevel {
-        if let Some(wasm_opt) = self.wasm_opt {
-            wasm_opt
-        } else if self.is_baseline() {
-            WasmOptLevel::Size
-        } else {
-            WasmOptLevel::Speed
-        }
-    }
-
-    fn wasm_opt_level(&self) -> &'static str {
-        self.effective_wasm_opt_level().wasm_opt_flag()
-    }
 }
 
 fn default_feature_sets() -> Vec<WasmFeatureSet> {
@@ -1129,35 +978,23 @@ fn parse_feature_sets(
                 WasmRequiredFeature::parse(feature)
             })
             .collect::<Result<Vec<_>>>()?;
-        let wasm_opt = match table.get("wasm_opt") {
-            Some(value) => {
-                let value = value.as_str().ok_or_else(|| {
-                    anyhow!(
-                        "{} package.metadata.scryer.feature_sets wasm_opt must be a string",
-                        manifest_path.display()
-                    )
-                })?;
-                Some(WasmOptLevel::parse(value)?)
-            }
-            None => None,
-        };
-        let feature_set = WasmFeatureSet::with_wasm_opt(required_features, wasm_opt);
-        feature_set.validate()?;
-        match parsed_by_features.get(&feature_set.required_features) {
-            Some(existing)
-                if existing.effective_wasm_opt_level()
-                    != feature_set.effective_wasm_opt_level() =>
-            {
+        // `required_features` is the only key a feature set may carry. Anything
+        // else — including the retired `wasm_opt` level, which no longer has a
+        // build step to drive — is a manifest error rather than a silent no-op.
+        for (key, _) in table.iter() {
+            if key.trim() != "required_features" {
                 bail!(
-                    "{} package.metadata.scryer.feature_sets contains duplicate required_features entries with conflicting wasm_opt values",
-                    manifest_path.display()
+                    "{} package.metadata.scryer.feature_sets entries may only set required_features; found unsupported key '{}'",
+                    manifest_path.display(),
+                    key.trim()
                 );
             }
-            Some(_) => {}
-            None => {
-                parsed_by_features.insert(feature_set.required_features.clone(), feature_set);
-            }
         }
+        let feature_set = WasmFeatureSet::new(required_features);
+        feature_set.validate()?;
+        parsed_by_features
+            .entry(feature_set.required_features.clone())
+            .or_insert(feature_set);
     }
 
     if parsed_by_features.is_empty() {
@@ -1894,14 +1731,26 @@ fn apply_local_sdk_override(command: &mut Command) -> Result<()> {
         return Ok(());
     };
 
-    command.args([
-        "--config",
-        &format!(
-            "patch.crates-io.scryer-plugin-sdk.path=\"{}\"",
-            path.display()
-        ),
-    ]);
+    command.args(["--config", &local_sdk_override_config(&path)?]);
     Ok(())
+}
+
+/// Build the `--config` patch entry that redirects `scryer-plugin-sdk` at `path`.
+///
+/// A `[patch]` table only overrides the *source* a dependency actually comes
+/// from, so a git-sourced SDK has to be patched under its git URL. The URL is
+/// taken from `xtask/Cargo.toml` rather than hard-coded, so this keeps working
+/// if the fleet moves to a different fork — and degrades to `patch.crates-io`
+/// once the SDK is a published version again.
+fn local_sdk_override_config(path: &Path) -> Result<String> {
+    let source = match sdk_dependency_from_manifest(&repo_root().join("xtask/Cargo.toml")) {
+        Ok(SdkDependency::Git { url, .. }) => format!("\"{url}\""),
+        Ok(SdkDependency::Published(_)) | Err(_) => "crates-io".to_string(),
+    };
+    Ok(format!(
+        "patch.{source}.scryer-plugin-sdk.path=\"{}\"",
+        path.display()
+    ))
 }
 
 fn repo_cargo_command_in(ctx: &TaskContext, cwd: &Path) -> Result<Command> {
@@ -1970,10 +1819,7 @@ fn require_wasm_target(ctx: &TaskContext, target: &str) -> Result<()> {
 }
 
 fn require_wasm_targets(ctx: &TaskContext) -> Result<()> {
-    for target in WASM_TARGETS {
-        require_wasm_target(ctx, target)?;
-    }
-    Ok(())
+    require_wasm_target(ctx, COMPONENT_WASM_TARGET)
 }
 
 fn git_capture(ctx: &TaskContext, args: &[&str]) -> Result<String> {
@@ -3283,7 +3129,7 @@ fn prefetch_plugin_dependencies(ctx: &TaskContext, plugin_dir: &Path) -> Result<
         )
     })?;
 
-    let target = wasm_target_for_plugin(plugin_dir);
+    let target = COMPONENT_WASM_TARGET;
     let mut target_command = repo_cargo_command_in(ctx, plugin_dir)?;
     target_command.args(["fetch", "--locked", "--target", target]);
     run_checked(&mut target_command).with_context(|| {
@@ -3292,46 +3138,6 @@ fn prefetch_plugin_dependencies(ctx: &TaskContext, plugin_dir: &Path) -> Result<
             plugin_dir.display()
         )
     })
-}
-
-/// Plugin families whose artifacts are WASI Preview 2 components.
-///
-/// Indexers moved first; archive extractors followed, because the host's
-/// archive backing is component-only — a core module built against the removed
-/// guest-pointer crypto ABI cannot instantiate at all. Subtitles, download
-/// clients and notifications follow together: they share one world shape
-/// (`describe` + `process` over the command envelope, plus the
-/// `scryer:host/services@1.0.0` import), and the host's Preview 1 command
-/// runtime for them is retired in the same release, so there is no staged
-/// middle state to model here.
-///
-/// This is a hard cut, deliberately: while the per-plugin migrations land, a
-/// plugin in one of these families that has not moved yet fails to build for
-/// `wasm32-wasip2`. That failure is the migration's to-do list and is not
-/// papered over.
-///
-/// Transcoders are the one family still on Preview 1. They use neither the PDK
-/// host services nor a family world, so nothing forces them yet.
-const COMPONENT_PLUGIN_FAMILIES: [&str; 5] = [
-    "indexers",
-    "archive_extractors",
-    "subtitles",
-    "download_clients",
-    "notifications",
-];
-
-/// Component families build for `wasm32-wasip2`; every other family retains the
-/// established Preview 1 command/reactor target.
-fn wasm_target_for_plugin(plugin_dir: &Path) -> &'static str {
-    let family = plugin_dir
-        .parent()
-        .and_then(Path::file_name)
-        .and_then(OsStr::to_str);
-    if family.is_some_and(|family| COMPONENT_PLUGIN_FAMILIES.contains(&family)) {
-        INDEXER_COMPONENT_WASM_TARGET
-    } else {
-        LEGACY_WASM_TARGET
-    }
 }
 
 fn wasm_variant_target_dir(plugin_dir: &Path, feature_set: &WasmFeatureSet) -> PathBuf {
@@ -3359,7 +3165,7 @@ fn build_plugin_wasm(
     validate_plugin_release_profile(&cargo_toml)?;
     let wasm_filename = wasm_filename_for_manifest(&cargo_toml)?;
     let command_wasm_filename = crate_name_from_manifest(&cargo_toml)? + ".wasm";
-    let target = wasm_target_for_plugin(plugin_dir);
+    let target = COMPONENT_WASM_TARGET;
 
     step(format!("Building {}", plugin_dir.display()));
     ensure_lockfile(ctx, plugin_dir)?;
@@ -3375,15 +3181,15 @@ fn build_plugin_wasm(
     if let Some(rust_target_feature_flag) = feature_set.rust_target_feature_flag() {
         append_rustflags(&mut build, &rust_target_feature_flag);
     }
-    build.args([
-        "build",
-        "--profile",
-        "plugin-release",
-        "--target",
-        target,
-        "--locked",
-        "--offline",
-    ]);
+    build.args(["build", "--profile", "plugin-release", "--target", target]);
+    // A local SDK override deliberately replaces a locked git source, which
+    // cargo can only honour by rewriting the plugin's lockfile — so `--locked`
+    // and the override are mutually exclusive. Outside an override the lockfile
+    // stays authoritative.
+    if local_sdk_override_path()?.is_none() {
+        build.arg("--locked");
+    }
+    build.arg("--offline");
     run_checked(&mut build)?;
 
     let artifact_dir = wasm_variant_target_dir(plugin_dir, feature_set)
@@ -3392,16 +3198,21 @@ fn build_plugin_wasm(
     select_built_wasm(&artifact_dir, &wasm_filename, &command_wasm_filename)
 }
 
+/// Pick the artifact `cargo build` produced.
+///
+/// A `cdylib` component lands under the manifest's `[lib] name`; a command
+/// module lands under the crate name. Both are checked because `xtask` still
+/// accepts a third-party command-model plugin.
 fn select_built_wasm(
     artifact_dir: &Path,
-    legacy_wasm_filename: &str,
+    lib_wasm_filename: &str,
     command_wasm_filename: &str,
 ) -> Result<PathBuf> {
     let command_wasm = artifact_dir.join(command_wasm_filename);
     if command_wasm.is_file() {
         return Ok(command_wasm);
     }
-    let built_wasm = artifact_dir.join(legacy_wasm_filename);
+    let built_wasm = artifact_dir.join(lib_wasm_filename);
     if built_wasm.is_file() {
         return Ok(built_wasm);
     }
@@ -3412,635 +3223,26 @@ fn select_built_wasm(
     )
 }
 
-const COMMAND_MODEL_DESCRIBE_TIMEOUT: Duration = Duration::from_secs(10);
-const COMMAND_MODEL_EPOCH_TICK: Duration = Duration::from_millis(100);
-const COMMAND_MODEL_DESCRIBE_MEMORY_CAP_BYTES: usize = 64 * 1024 * 1024;
-const COMMAND_WASI_IMPORT_MODULE: &str = "wasi_snapshot_preview1";
-const LEGACY_PLUGIN_EXPORTS: &[&str] = &[
-    EXPORT_DESCRIBE,
-    EXPORT_VALIDATE_CONFIG,
-    EXPORT_INDEXER_SEARCH,
-    EXPORT_INDEXER_ACTION,
-    EXPORT_DOWNLOAD_ADD,
-    EXPORT_DOWNLOAD_LIST_QUEUE,
-    EXPORT_DOWNLOAD_LIST_HISTORY,
-    EXPORT_DOWNLOAD_LIST_COMPLETED,
-    EXPORT_DOWNLOAD_LIST_RECENT_COMPLETED,
-    EXPORT_DOWNLOAD_CONTROL,
-    EXPORT_DOWNLOAD_MARK_IMPORTED,
-    EXPORT_DOWNLOAD_STATUS,
-    EXPORT_DOWNLOAD_TEST_CONNECTION,
-    EXPORT_NOTIFICATION_SEND,
-    EXPORT_NOTIFICATION_ACTION,
-    EXPORT_SUBTITLE_SEARCH,
-    EXPORT_SUBTITLE_DOWNLOAD,
-    EXPORT_SUBTITLE_GENERATE,
-    EXPORT_SUBSYNC_ALIGN,
-    EXPORT_ARCHIVE_PROCESS,
-];
-const COMMAND_MODEL_DESCRIBE_TABLE_ELEMENTS: usize = 100_000;
-const COMMAND_MODEL_STDOUT_LIMIT_BYTES: usize = 1024 * 1024;
-const COMMAND_MODEL_STDERR_LIMIT_BYTES: usize = 64 * 1024;
-
-static COMMAND_MODEL_ENGINE: LazyLock<Engine> = LazyLock::new(|| {
-    let engine = Engine::new(&command_model_engine_config())
-        .expect("command-model validation wasmtime config must be valid");
-    spawn_command_model_epoch_ticker(engine.clone());
-    engine
-});
-
-struct CommandModelDescribeCtx {
-    wasi: WasiP1Ctx,
-    limits: CommandModelDescribeLimits,
-}
-
-struct CommandModelDescribeLimits {
-    memory_denied: bool,
-}
-
-impl CommandModelDescribeLimits {
-    fn new() -> Self {
-        Self {
-            memory_denied: false,
-        }
-    }
-}
-
-impl wasmtime::ResourceLimiter for CommandModelDescribeLimits {
-    fn memory_growing(
-        &mut self,
-        _current: usize,
-        desired: usize,
-        _maximum: Option<usize>,
-    ) -> wasmtime::Result<bool> {
-        if desired > COMMAND_MODEL_DESCRIBE_MEMORY_CAP_BYTES {
-            self.memory_denied = true;
-            return Ok(false);
-        }
-        Ok(true)
-    }
-
-    fn table_growing(
-        &mut self,
-        _current: usize,
-        desired: usize,
-        _maximum: Option<usize>,
-    ) -> wasmtime::Result<bool> {
-        Ok(desired <= COMMAND_MODEL_DESCRIBE_TABLE_ELEMENTS)
-    }
-}
-
-fn command_model_engine_config() -> Config {
-    let mut config = Config::new();
-    config.epoch_interruption(true);
-    config.wasm_simd(true);
-    config.wasm_relaxed_simd(true);
-    config.wasm_threads(true);
-    config.wasm_exceptions(true);
-    config
-}
-
-fn command_model_engine() -> &'static Engine {
-    &COMMAND_MODEL_ENGINE
-}
-
-fn command_model_deadline_ticks(timeout: Duration) -> u64 {
-    let tick = COMMAND_MODEL_EPOCH_TICK.as_millis().max(1);
-    timeout.as_millis().div_ceil(tick).max(1) as u64
-}
-
-fn spawn_command_model_epoch_ticker(engine: Engine) {
-    std::thread::Builder::new()
-        .name("scryer-plugin-xtask-command-epoch".to_string())
-        .spawn(move || {
-            loop {
-                std::thread::sleep(COMMAND_MODEL_EPOCH_TICK);
-                engine.increment_epoch();
-            }
-        })
-        .expect("spawn command-model validation epoch ticker");
-}
-
-fn command_model_descriptor_from_wasm(
-    wasm_path: &Path,
-    wasm: &[u8],
-) -> Result<Option<PluginDescriptor>> {
-    let command_abi_version = command_abi_version(wasm)?;
-    let engine = command_model_engine();
-    let module = match Module::from_binary(engine, wasm) {
-        Ok(module) => module,
-        Err(_) => return Ok(None),
-    };
-
-    let mut has_start = false;
-    let mut has_describe = false;
-    let mut has_memory = false;
-    for export in module.exports() {
-        match export.name() {
-            "_start" => has_start = true,
-            name if name == EXPORT_DESCRIBE => has_describe = true,
-            "memory" => has_memory = matches!(export.ty(), ExternType::Memory(_)),
-            _ => {}
-        }
-    }
-
-    if let Some(abi_version) = command_abi_version {
-        if abi_version != COMMAND_ABI_VERSION {
-            bail!(
-                "{} declares unsupported command ABI version {abi_version}",
-                wasm_path.display()
-            );
-        }
-        validate_command_module_shape(wasm_path, &module)?;
-        if !has_start {
-            bail!(
-                "{} declares the command ABI but does not export _start",
-                wasm_path.display()
-            );
-        }
-        if has_describe {
-            bail!(
-                "{} declares the command ABI but still exports the legacy {EXPORT_DESCRIBE} operation",
-                wasm_path.display()
-            );
-        }
-    } else if !has_start || has_describe {
-        return Ok(None);
-    }
-    if !has_memory {
-        bail!(
-            "{} looks like a command-model plugin but does not export a linear memory named 'memory'",
-            wasm_path.display()
-        );
-    }
-
-    let descriptor = run_command_model_describe(wasm_path, engine, &module)?;
-    Ok(Some(descriptor))
-}
-
-fn validate_command_module_shape(wasm_path: &Path, module: &Module) -> Result<()> {
-    for import in module.imports() {
-        if !matches!(
-            import.module(),
-            COMMAND_WASI_IMPORT_MODULE | HOST_ABI_MODULE
-        ) {
-            bail!(
-                "{} command module imports unsupported {}::{}",
-                wasm_path.display(),
-                import.module(),
-                import.name()
-            );
-        }
-    }
-    for export in module.exports() {
-        if LEGACY_PLUGIN_EXPORTS.contains(&export.name()) {
-            bail!(
-                "{} command module exports legacy operation {}",
-                wasm_path.display(),
-                export.name()
-            );
-        }
-    }
-    Ok(())
-}
-
-fn run_command_model_describe(
-    wasm_path: &Path,
-    engine: &Engine,
-    module: &Module,
-) -> Result<PluginDescriptor> {
-    let mut linker: Linker<CommandModelDescribeCtx> = Linker::new(engine);
-    wasmtime_wasi::p1::add_to_linker_sync(&mut linker, |ctx: &mut CommandModelDescribeCtx| {
-        &mut ctx.wasi
-    })
-    .map_err(|error| {
-        anyhow!("failed to wire WASI preview1 for command-model describe: {error:#}")
-    })?;
-    linker
-        .func_wrap(
-            "extism:host/user",
-            "host_aes_cbc_decrypt",
-            command_model_aes_cbc_decrypt_unsupported,
-        )
-        .map_err(|error| {
-            anyhow!("failed to define host_aes_cbc_decrypt for command-model describe: {error:#}")
-        })?;
-    linker
-        .func_wrap(
-            "extism:host/user",
-            "host_crc32",
-            command_model_crc32_unsupported,
-        )
-        .map_err(|error| {
-            anyhow!("failed to define host_crc32 for command-model describe: {error:#}")
-        })?;
-    linker
-        .func_wrap(
-            "extism:host/user",
-            "scryer_aes_cbc_decrypt",
-            command_model_aes_cbc_decrypt_unsupported,
-        )
-        .map_err(|error| {
-            anyhow!("failed to define scryer_aes_cbc_decrypt for command-model describe: {error:#}")
-        })?;
-    linker
-        .func_wrap(
-            "extism:host/user",
-            "scryer_crc32",
-            command_model_crc32_unsupported,
-        )
-        .map_err(|error| {
-            anyhow!("failed to define scryer_crc32 for command-model describe: {error:#}")
-        })?;
-    add_command_model_host_abi_to_linker(&mut linker)?;
-    let stdout = MemoryOutputPipe::new(COMMAND_MODEL_STDOUT_LIMIT_BYTES);
-    let stderr = MemoryOutputPipe::new(COMMAND_MODEL_STDERR_LIMIT_BYTES);
-    let wasi = WasiCtxBuilder::new()
-        .stdin(MemoryInputPipe::new(Vec::<u8>::new()))
-        .stdout(stdout.clone())
-        .stderr(stderr.clone())
-        .args(&["archive-extraction", "describe"])
-        .build_p1();
-    let mut store = Store::new(
-        engine,
-        CommandModelDescribeCtx {
-            wasi,
-            limits: CommandModelDescribeLimits::new(),
-        },
-    );
-    store.limiter(|ctx| &mut ctx.limits);
-    store.set_epoch_deadline(command_model_deadline_ticks(COMMAND_MODEL_DESCRIBE_TIMEOUT));
-
-    let instance = linker.instantiate(&mut store, module).map_err(|error| {
-        if store.data().limits.memory_denied {
-            return anyhow!(
-                "{} describe exceeded the {} MiB memory limit",
-                wasm_path.display(),
-                COMMAND_MODEL_DESCRIBE_MEMORY_CAP_BYTES / 1024 / 1024
-            );
-        }
-        anyhow!(
-            "failed to instantiate {} for describe: {error:#}",
-            wasm_path.display()
-        )
-    })?;
-    let start = instance
-        .get_typed_func::<(), ()>(&mut store, "_start")
-        .map_err(|error| {
-            anyhow!(
-                "{} is not a wasip1 command plugin: {error:#}",
-                wasm_path.display()
-            )
-        })?;
-
-    let result = start.call(&mut store, ());
-
-    match result {
-        Ok(()) => {}
-        Err(error) => {
-            if store.data().limits.memory_denied {
-                bail!(
-                    "{} describe exceeded the {} MiB memory limit",
-                    wasm_path.display(),
-                    COMMAND_MODEL_DESCRIBE_MEMORY_CAP_BYTES / 1024 / 1024
-                );
-            }
-            if let Some(exit) = error.downcast_ref::<I32Exit>() {
-                if exit.0 != 0 {
-                    bail!(
-                        "{} describe exited with status {}: {}",
-                        wasm_path.display(),
-                        exit.0,
-                        stderr_tail(&stderr)
-                    );
-                }
-            } else {
-                bail!(
-                    "{} describe trapped or timed out: {error:#}; stderr: {}",
-                    wasm_path.display(),
-                    stderr_tail(&stderr)
-                );
-            }
-        }
-    }
-
-    let stdout_bytes = stdout.contents();
-    serde_json::from_slice::<PluginDescriptor>(&stdout_bytes).with_context(|| {
-        format!(
-            "{} describe returned invalid PluginDescriptor JSON: {}",
-            wasm_path.display(),
-            String::from_utf8_lossy(&stdout_bytes)
-        )
-    })
-}
-
-fn stderr_tail(stderr: &MemoryOutputPipe) -> String {
-    let bytes = stderr.contents();
-    let start = bytes.len().saturating_sub(4096);
-    String::from_utf8_lossy(&bytes[start..]).into_owned()
-}
-
-fn command_model_aes_cbc_decrypt_unsupported(
-    _caller: Caller<'_, CommandModelDescribeCtx>,
-    _key_ptr: i64,
-    _key_len: i64,
-    _iv_ptr: i64,
-    _buf_ptr: i64,
-    _buf_len: i64,
-) -> i64 {
-    -3
-}
-
-fn command_model_crc32_unsupported(
-    _caller: Caller<'_, CommandModelDescribeCtx>,
-    _seed: i64,
-    _buf_ptr: i64,
-    _buf_len: i64,
-) -> i64 {
-    -1
-}
-
-/// Define fail-closed native host ABI imports so command modules can be
-/// instantiated for `describe` without gaining access to host services.
-fn add_command_model_host_abi_to_linker(
-    linker: &mut Linker<CommandModelDescribeCtx>,
-) -> Result<()> {
-    linker
-        .func_wrap(
-            HOST_ABI_MODULE,
-            "scryer_host_call",
-            command_model_host_call_unavailable,
-        )
-        .map_err(|error| {
-            anyhow!("failed to define native host call for command-model describe: {error:#}")
-        })?;
-    linker
-        .func_wrap(
-            HOST_ABI_MODULE,
-            "scryer_host_response_len",
-            command_model_host_response_len_unavailable,
-        )
-        .map_err(|error| {
-            anyhow!(
-                "failed to define native host response length for command-model describe: {error:#}"
-            )
-        })?;
-    linker
-        .func_wrap(
-            HOST_ABI_MODULE,
-            "scryer_host_response_read",
-            command_model_host_response_read_unavailable,
-        )
-        .map_err(|error| {
-            anyhow!(
-                "failed to define native host response read for command-model describe: {error:#}"
-            )
-        })?;
-    linker
-        .func_wrap(
-            HOST_ABI_MODULE,
-            "scryer_host_response_drop",
-            command_model_host_response_drop_unavailable,
-        )
-        .map_err(|error| {
-            anyhow!(
-                "failed to define native host response drop for command-model describe: {error:#}"
-            )
-        })?;
-    Ok(())
-}
-
-fn command_model_host_call_unavailable(
-    _caller: Caller<'_, CommandModelDescribeCtx>,
-    _request_ptr: i32,
-    _request_len: i32,
-) -> i32 {
-    0
-}
-
-fn command_model_host_response_len_unavailable(
-    _caller: Caller<'_, CommandModelDescribeCtx>,
-    _handle: i32,
-) -> i32 {
-    -1
-}
-
-fn command_model_host_response_read_unavailable(
-    _caller: Caller<'_, CommandModelDescribeCtx>,
-    _handle: i32,
-    _destination_ptr: i32,
-    _destination_len: i32,
-) -> i32 {
-    -1
-}
-
-fn command_model_host_response_drop_unavailable(
-    _caller: Caller<'_, CommandModelDescribeCtx>,
-    _handle: i32,
-) {
-}
-
-fn required_exports_for_descriptor(descriptor: &PluginDescriptor) -> Vec<&'static str> {
-    let mut exports = vec![EXPORT_DESCRIBE];
-    match &descriptor.provider {
-        ProviderDescriptor::Indexer(_) => exports.push(EXPORT_INDEXER_SEARCH),
-        ProviderDescriptor::DownloadClient(_) => exports.extend([
-            EXPORT_DOWNLOAD_ADD,
-            EXPORT_DOWNLOAD_LIST_QUEUE,
-            EXPORT_DOWNLOAD_LIST_HISTORY,
-            EXPORT_DOWNLOAD_LIST_COMPLETED,
-            EXPORT_DOWNLOAD_CONTROL,
-            EXPORT_DOWNLOAD_MARK_IMPORTED,
-            EXPORT_DOWNLOAD_STATUS,
-            EXPORT_DOWNLOAD_TEST_CONNECTION,
-        ]),
-        ProviderDescriptor::Notification(_) => exports.push(EXPORT_NOTIFICATION_SEND),
-        ProviderDescriptor::ArchiveExtractor(_) => exports.push(EXPORT_ARCHIVE_PROCESS),
-        ProviderDescriptor::Subtitle(subtitle) => {
-            exports.push(EXPORT_VALIDATE_CONFIG);
-            match subtitle.capabilities.mode {
-                SubtitleProviderMode::Catalog => {
-                    exports.extend([EXPORT_SUBTITLE_SEARCH, EXPORT_SUBTITLE_DOWNLOAD]);
-                }
-                SubtitleProviderMode::Generator => exports.push(EXPORT_SUBTITLE_GENERATE),
-                SubtitleProviderMode::Sync => exports.push(EXPORT_SUBSYNC_ALIGN),
-            }
-        }
-    }
-    exports
-}
-
-fn instantiate_plugin_from_wasm(wasm_path: &Path, timeout: Duration) -> Result<extism::Plugin> {
-    let bytes =
-        fs::read(wasm_path).with_context(|| format!("failed to read {}", wasm_path.display()))?;
-    let manifest = Manifest::new([extism::Wasm::data(bytes)]).with_timeout(timeout);
-    let socket_stubs = UserData::new(());
-    extism::PluginBuilder::new(manifest)
-        .with_wasi(true)
-        .with_function_in_namespace(
-            "extism:host/user",
-            "scryer_socket_open",
-            [ValType::I64],
-            [ValType::I64],
-            socket_stubs.clone(),
-            socket_unsupported,
-        )
-        .with_function_in_namespace(
-            "extism:host/user",
-            "scryer_socket_read",
-            [ValType::I64],
-            [ValType::I64],
-            socket_stubs.clone(),
-            socket_unsupported,
-        )
-        .with_function_in_namespace(
-            "extism:host/user",
-            "scryer_socket_write",
-            [ValType::I64],
-            [ValType::I64],
-            socket_stubs.clone(),
-            socket_unsupported,
-        )
-        .with_function_in_namespace(
-            "extism:host/user",
-            "scryer_socket_starttls",
-            [ValType::I64],
-            [ValType::I64],
-            socket_stubs.clone(),
-            socket_unsupported,
-        )
-        .with_function_in_namespace(
-            "extism:host/user",
-            "scryer_socket_close",
-            [ValType::I64],
-            [ValType::I64],
-            socket_stubs.clone(),
-            socket_unsupported,
-        )
-        .with_function_in_namespace(
-            "extism:host/user",
-            "scryer_process_exec",
-            [ValType::I64],
-            [ValType::I64],
-            socket_stubs.clone(),
-            process_unsupported,
-        )
-        .with_function_in_namespace(
-            HOST_ABI_MODULE,
-            "scryer_host_call",
-            [ValType::I32, ValType::I32],
-            [ValType::I32],
-            socket_stubs.clone(),
-            native_host_call_unsupported,
-        )
-        .with_function_in_namespace(
-            HOST_ABI_MODULE,
-            "scryer_host_response_len",
-            [ValType::I32],
-            [ValType::I32],
-            socket_stubs.clone(),
-            native_host_response_unavailable,
-        )
-        .with_function_in_namespace(
-            HOST_ABI_MODULE,
-            "scryer_host_response_read",
-            [ValType::I32, ValType::I32, ValType::I32],
-            [ValType::I32],
-            socket_stubs.clone(),
-            native_host_response_unavailable,
-        )
-        .with_function_in_namespace(
-            HOST_ABI_MODULE,
-            "scryer_host_response_drop",
-            [ValType::I32],
-            [],
-            socket_stubs.clone(),
-            native_host_response_drop_unsupported,
-        )
-        .with_function_in_namespace(
-            "extism:host/user",
-            "host_aes_cbc_decrypt",
-            [
-                ValType::I64,
-                ValType::I64,
-                ValType::I64,
-                ValType::I64,
-                ValType::I64,
-            ],
-            [ValType::I64],
-            socket_stubs.clone(),
-            archive_aes_cbc_decrypt_unsupported,
-        )
-        .with_function_in_namespace(
-            "extism:host/user",
-            "host_crc32",
-            [ValType::I64, ValType::I64, ValType::I64],
-            [ValType::I64],
-            socket_stubs.clone(),
-            archive_crc32_unsupported,
-        )
-        .with_function_in_namespace(
-            "extism:host/user",
-            "scryer_aes_cbc_decrypt",
-            [
-                ValType::I64,
-                ValType::I64,
-                ValType::I64,
-                ValType::I64,
-                ValType::I64,
-            ],
-            [ValType::I64],
-            socket_stubs.clone(),
-            archive_aes_cbc_decrypt_unsupported,
-        )
-        .with_function_in_namespace(
-            "extism:host/user",
-            "scryer_crc32",
-            [ValType::I64, ValType::I64, ValType::I64],
-            [ValType::I64],
-            socket_stubs.clone(),
-            archive_crc32_unsupported,
-        )
-        .build()
-        .with_context(|| format!("failed to instantiate {}", wasm_path.display()))
-}
-
+/// Read a plugin's descriptor out of its built artifact.
+///
+/// There is exactly one supported shape: a WASI Preview 2 **component** that
+/// carries the descriptor custom section. Every plugin family ships one, so a
+/// core module — a Preview 1 command plugin, a legacy reactor, anything else —
+/// is simply not a valid plugin artifact and gets a hard error naming the
+/// section it lacks.
 fn load_descriptor_from_wasm(wasm_path: &Path) -> Result<PluginDescriptor> {
     let bytes =
         fs::read(wasm_path).with_context(|| format!("failed to read {}", wasm_path.display()))?;
     if let Some(descriptor) = component_descriptor::descriptor_from_component(&bytes)? {
         return Ok(descriptor);
     }
-    if let Some(descriptor) = command_model_descriptor_from_wasm(wasm_path, &bytes)? {
-        return Ok(descriptor);
-    }
 
-    let mut plugin = instantiate_plugin_from_wasm(wasm_path, COMMAND_MODEL_DESCRIBE_TIMEOUT)?;
-
-    if !plugin.function_exists(EXPORT_DESCRIBE) {
-        bail!("plugin is missing required export {EXPORT_DESCRIBE}");
-    }
-
-    let output: String = plugin
-        .call::<&str, String>(EXPORT_DESCRIBE, "")
-        .with_context(|| format!("{EXPORT_DESCRIBE} failed"))?;
-    let descriptor: PluginDescriptor =
-        serde_json::from_str(&output).context("scryer_describe returned invalid JSON")?;
-
-    let missing = required_exports_for_descriptor(&descriptor)
-        .into_iter()
-        .filter(|export| !plugin.function_exists(export))
-        .collect::<Vec<_>>();
-    if !missing.is_empty() {
-        bail!(
-            "{} ({}) is missing required export(s): {}",
-            descriptor.id,
-            descriptor.plugin_type(),
-            missing.join(", ")
-        );
-    }
-
-    Ok(descriptor)
+    bail!(
+        "{} is not a WASI Preview 2 component carrying the `{PLUGIN_DESCRIPTOR_CUSTOM_SECTION_V1}` \
+custom section; core modules are no longer a supported plugin artifact — rebuild this plugin as a \
+`{COMPONENT_WASM_TARGET}` component",
+        wasm_path.display()
+    )
 }
 
 fn validate_descriptor_contract(descriptor: &PluginDescriptor) -> Result<()> {
@@ -4059,247 +3261,6 @@ fn validate_descriptor_contract(descriptor: &PluginDescriptor) -> Result<()> {
     }
     validate_plugin_descriptor_host_permissions(descriptor).map_err(anyhow::Error::msg)?;
     Ok(())
-}
-
-fn validate_subtitle_sync_variant_parity(
-    plugin_dir: &Path,
-    descriptor: &PluginDescriptor,
-    variants: &[BuiltPluginVariant],
-) -> Result<()> {
-    if subtitle_sync_uses_command_model(descriptor) {
-        ok("subtitle-sync command-model descriptor validated; legacy export parity check skipped");
-        return Ok(());
-    }
-
-    let Some(baseline) = variants
-        .iter()
-        .find(|variant| variant.feature_set.is_baseline())
-    else {
-        return Ok(());
-    };
-    let optimized_variants = variants
-        .iter()
-        .filter(|variant| !variant.feature_set.is_baseline())
-        .collect::<Vec<_>>();
-    if optimized_variants.is_empty() {
-        return Ok(());
-    }
-
-    for optimized in optimized_variants {
-        for subtitle_format in SUBTITLE_SYNC_PARITY_FORMATS {
-            let request = subtitle_sync_parity_request(plugin_dir, subtitle_format)?;
-            let baseline_response = call_subtitle_sync_align(&baseline.wasm_path, &request)
-                .with_context(|| {
-                    format!("baseline subtitle-sync parity run failed for {subtitle_format}")
-                })?;
-            let optimized_response = call_subtitle_sync_align(&optimized.wasm_path, &request)
-                .with_context(|| {
-                    format!(
-                        "{} subtitle-sync parity run failed for {subtitle_format}",
-                        optimized.feature_set.slug()
-                    )
-                })?;
-            assert_subtitle_sync_parity(
-                subtitle_format,
-                &optimized.feature_set,
-                &baseline_response,
-                &optimized_response,
-            )?;
-        }
-    }
-
-    ok(format!(
-        "subtitle-sync scalar/SIMD parity validated across {} subtitle format(s)",
-        SUBTITLE_SYNC_PARITY_FORMATS.len()
-    ));
-    Ok(())
-}
-
-fn subtitle_sync_uses_command_model(descriptor: &PluginDescriptor) -> bool {
-    match &descriptor.provider {
-        ProviderDescriptor::Subtitle(subtitle) => {
-            matches!(subtitle.capabilities.mode, SubtitleProviderMode::Sync)
-                && subtitle
-                    .capabilities
-                    .sync
-                    .as_ref()
-                    .is_some_and(|sync| sync.command_model)
-        }
-        _ => false,
-    }
-}
-
-fn subtitle_sync_parity_request(plugin_dir: &Path, subtitle_format: &str) -> Result<String> {
-    let fixture_root = plugin_dir.join("tests/fixtures/test-data");
-    let subtitle_path = fixture_root
-        .join("subtitles")
-        .join(subtitle_format)
-        .join(format!("late_1750.{subtitle_format}"));
-    let reference_path = fixture_root
-        .join("subtitles")
-        .join(subtitle_format)
-        .join(format!("aligned.{subtitle_format}"));
-    let subtitle_content = fs::read(&subtitle_path)
-        .with_context(|| format!("failed to read {}", subtitle_path.display()))?;
-    let reference_content = fs::read(&reference_path)
-        .with_context(|| format!("failed to read {}", reference_path.display()))?;
-
-    let request = SubtitleSyncAlignRequest {
-        input: scryer_plugin_sdk::SubtitleSyncAlignInputRef {
-            path: fixture_root.join("media/missing-reference.mp4"),
-        },
-        subtitle: SubtitleSyncInputSubtitle {
-            content_base64: BASE64.encode(subtitle_content),
-            format: subtitle_format.to_string(),
-            file_name: subtitle_path
-                .file_name()
-                .and_then(|name| name.to_str())
-                .map(str::to_string),
-            encoding_hint: Some("utf-8".to_string()),
-        },
-        reference_subtitle: Some(SubtitleSyncReferenceSubtitle {
-            content_base64: BASE64.encode(reference_content),
-            format: subtitle_format.to_string(),
-            file_name: reference_path
-                .file_name()
-                .and_then(|name| name.to_str())
-                .map(str::to_string),
-            encoding_hint: Some("utf-8".to_string()),
-        }),
-        subtitle_spans: Vec::new(),
-        max_offset_seconds: 8,
-        sync_options: Some(scryer_plugin_sdk::SubtitleSyncOptions::default()),
-        selector: Some(scryer_plugin_sdk::AudioStreamSelector::Default),
-        expected_codec: None,
-    };
-    serde_json::to_string(&request).context("failed to encode subtitle-sync parity request")
-}
-
-fn call_subtitle_sync_align(
-    wasm_path: &Path,
-    request_json: &str,
-) -> Result<SubtitleSyncAlignResponse> {
-    let mut plugin = instantiate_plugin_from_wasm(wasm_path, std::time::Duration::from_secs(30))?;
-    if !plugin.function_exists(EXPORT_SUBSYNC_ALIGN) {
-        bail!("plugin is missing required export {EXPORT_SUBSYNC_ALIGN}");
-    }
-
-    let output: String = plugin
-        .call::<&str, String>(EXPORT_SUBSYNC_ALIGN, request_json)
-        .with_context(|| format!("{EXPORT_SUBSYNC_ALIGN} failed"))?;
-    match serde_json::from_str::<PluginResult<SubtitleSyncAlignResponse>>(&output)
-        .context("scryer_subsync_align returned invalid JSON")?
-    {
-        PluginResult::Ok(response) => Ok(response),
-        PluginResult::Err(error) => bail!(
-            "scryer_subsync_align returned plugin error: {}",
-            error.public_message
-        ),
-    }
-}
-
-fn assert_subtitle_sync_parity(
-    subtitle_format: &str,
-    optimized_feature_set: &WasmFeatureSet,
-    baseline: &SubtitleSyncAlignResponse,
-    optimized: &SubtitleSyncAlignResponse,
-) -> Result<()> {
-    let context = || {
-        format!(
-            "subtitle-sync scalar/SIMD parity mismatch for {subtitle_format} against {}",
-            optimized_feature_set.slug()
-        )
-    };
-
-    if baseline.applied != optimized.applied {
-        bail!("{}: applied differs", context());
-    }
-    if baseline.offset_ms != optimized.offset_ms {
-        bail!(
-            "{}: offset_ms differs (baseline {}, optimized {})",
-            context(),
-            baseline.offset_ms,
-            optimized.offset_ms
-        );
-    }
-    if baseline.skipped_reason != optimized.skipped_reason {
-        bail!(
-            "{}: skipped_reason differs (baseline {:?}, optimized {:?})",
-            context(),
-            baseline.skipped_reason,
-            optimized.skipped_reason
-        );
-    }
-    if baseline
-        .rewritten_subtitle
-        .as_ref()
-        .map(|rewritten| (rewritten.format.as_str(), rewritten.content_base64.as_str()))
-        != optimized
-            .rewritten_subtitle
-            .as_ref()
-            .map(|rewritten| (rewritten.format.as_str(), rewritten.content_base64.as_str()))
-    {
-        bail!("{}: rewritten subtitle bytes differ", context());
-    }
-    if baseline.warnings != optimized.warnings {
-        bail!(
-            "{}: warnings differ (baseline {:?}, optimized {:?})",
-            context(),
-            baseline.warnings,
-            optimized.warnings
-        );
-    }
-    if baseline.message != optimized.message {
-        bail!(
-            "{}: message differs (baseline {:?}, optimized {:?})",
-            context(),
-            baseline.message,
-            optimized.message
-        );
-    }
-
-    compare_optional_float(context(), "score", baseline.score, optimized.score)?;
-    compare_optional_float(
-        context(),
-        "selected_framerate_ratio",
-        baseline.selected_framerate_ratio,
-        optimized.selected_framerate_ratio,
-    )?;
-    compare_optional_float(
-        context(),
-        "consistency_ratio",
-        baseline.consistency_ratio,
-        optimized.consistency_ratio,
-    )?;
-    compare_optional_float(
-        context(),
-        "nosplit_score",
-        baseline.nosplit_score,
-        optimized.nosplit_score,
-    )?;
-    compare_optional_float(
-        context(),
-        "split_score",
-        baseline.split_score,
-        optimized.split_score,
-    )?;
-
-    Ok(())
-}
-
-fn compare_optional_float(
-    context: String,
-    field: &str,
-    baseline: Option<f64>,
-    optimized: Option<f64>,
-) -> Result<()> {
-    match (baseline, optimized) {
-        (Some(left), Some(right)) if (left - right).abs() <= SUBTITLE_SYNC_FLOAT_TOLERANCE => {
-            Ok(())
-        }
-        (None, None) => Ok(()),
-        _ => bail!("{context}: {field} differs (baseline {baseline:?}, optimized {optimized:?})"),
-    }
 }
 
 fn run_plugin_validate(ctx: &TaskContext, args: PluginValidateArgs) -> Result<()> {
@@ -4323,7 +3284,6 @@ fn run_plugin_validate(ctx: &TaskContext, args: PluginValidateArgs) -> Result<()
     let manifest_metadata = plugin_manifest_metadata(&plugin_dir.join("Cargo.toml"))?;
     let mut descriptor = None;
     let mut descriptor_json = None;
-    let mut built_variants = Vec::new();
     for feature_set in &manifest_metadata.feature_sets {
         let wasm_path = build_plugin_wasm(ctx, &plugin_dir, feature_set)?;
         let current_descriptor = load_descriptor_from_wasm(&wasm_path)?;
@@ -4340,15 +3300,8 @@ fn run_plugin_validate(ctx: &TaskContext, args: PluginValidateArgs) -> Result<()
             descriptor_json = Some(current_descriptor_json);
             descriptor = Some(current_descriptor);
         }
-        built_variants.push(BuiltPluginVariant {
-            feature_set: feature_set.clone(),
-            wasm_path,
-        });
     }
     let descriptor = descriptor.expect("feature_sets should never be empty");
-    if descriptor.id == ENHANCED_SUBTITLE_SYNC_PLUGIN_ID {
-        validate_subtitle_sync_variant_parity(&plugin_dir, &descriptor, &built_variants)?;
-    }
     ok(format!(
         "Validated {} {} ({}) across {} feature set(s)",
         descriptor.id,
@@ -4364,7 +3317,6 @@ fn run_doctor(ctx: &TaskContext) -> Result<()> {
     for (tool, args) in [
         ("git", ["--version"].as_slice()),
         ("cargo", ["--version"].as_slice()),
-        ("wasm-opt", ["--version"].as_slice()),
         ("wasm-tools", ["--version"].as_slice()),
         ("zstd", ["--version"].as_slice()),
         ("cosign", ["version"].as_slice()),
@@ -4389,7 +3341,9 @@ fn run_doctor(ctx: &TaskContext) -> Result<()> {
                 Err(error) => warn(error.to_string()),
             }
         }
-        Ok(SdkDependency::Git { reference, version }) => {
+        Ok(SdkDependency::Git {
+            reference, version, ..
+        }) => {
             ok(format!(
                 "temporary git-sourced scryer-plugin-sdk dependency active ({reference} -> {version})"
             ));
@@ -4397,7 +3351,7 @@ fn run_doctor(ctx: &TaskContext) -> Result<()> {
         Err(error) => warn(error.to_string()),
     }
     ok(format!(
-        "release artifacts use wasm-opt {WASM_OPT_LEVEL_SIZE}/{WASM_OPT_LEVEL_SPEED} and zstd {ZSTD_LEVEL}"
+        "release artifacts are stripped with wasm-tools and compressed with zstd {ZSTD_LEVEL}"
     ));
     Ok(())
 }
@@ -4537,10 +3491,12 @@ fn run_ci_audit(ctx: &TaskContext, scope: &CiScopeArgs) -> Result<()> {
         step("Running cargo audit for selected plugin crates");
     }
     ensure_cargo_audit(ctx)?;
-    warn(format!(
-        "Ignoring advisories pending upstream runtime fixes: {}",
-        AUDIT_IGNORE_ADVISORIES.join(" ")
-    ));
+    if !AUDIT_IGNORE_ADVISORIES.is_empty() {
+        warn(format!(
+            "Ignoring advisories pending upstream runtime fixes: {}",
+            AUDIT_IGNORE_ADVISORIES.join(" ")
+        ));
+    }
     let project_dirs = scoped_ci_project_dirs(ctx, scope)?;
     run_bounded(project_dirs, |project_dir| {
         let relative = path_relative_to_repo(ctx, &project_dir)?;
@@ -4870,44 +3826,66 @@ fn run_pdk_release(ctx: &TaskContext, args: PdkReleaseArgs) -> Result<()> {
     Ok(())
 }
 
+/// How `xtask/Cargo.toml` — and therefore the whole repository — resolves
+/// `scryer-plugin-sdk`. Every plugin manifest mirrors this one declaration, so
+/// it is the single source of truth for scaffolding and for the local override.
+#[derive(Clone, Debug, PartialEq, Eq)]
 enum SdkDependency {
     Published(String),
-    Git { reference: String, version: String },
+    Git {
+        url: String,
+        reference: SdkGitReference,
+        version: String,
+    },
+}
+
+/// The `tag`/`rev`/`branch` key pinning a git-sourced SDK dependency.
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct SdkGitReference {
+    key: String,
+    value: String,
+}
+
+impl std::fmt::Display for SdkGitReference {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(formatter, "{} {}", self.key, self.value)
+    }
 }
 
 fn current_sdk_dependency(ctx: &TaskContext) -> Result<SdkDependency> {
-    let manifest_path = ctx.repo_root.join("xtask/Cargo.toml");
-    let document = fs::read_to_string(&manifest_path)?
+    sdk_dependency_from_manifest(&ctx.repo_root.join("xtask/Cargo.toml"))
+}
+
+fn sdk_dependency_from_manifest(manifest_path: &Path) -> Result<SdkDependency> {
+    let document = fs::read_to_string(manifest_path)?
         .parse::<DocumentMut>()
         .with_context(|| format!("failed to parse {}", manifest_path.display()))?;
     let dependency = &document["dependencies"]["scryer-plugin-sdk"];
     if let Some(version) = dependency.as_str() {
         return Ok(SdkDependency::Published(version.trim().to_string()));
     }
-    let Some(_) = dependency.get("git").and_then(|item| item.as_str()) else {
+    let Some(url) = dependency.get("git").and_then(|item| item.as_str()) else {
         return Err(anyhow!(
-            "xtask/Cargo.toml must depend on scryer-plugin-sdk by version or temporary git source"
+            "{} must depend on scryer-plugin-sdk by version or temporary git source",
+            manifest_path.display()
         ));
     };
-    let reference = dependency
-        .get("tag")
-        .and_then(|item| item.as_str())
-        .map(|value| format!("tag {}", value.trim()))
-        .or_else(|| {
+    let url = url.trim().to_string();
+    let reference = ["tag", "rev", "branch"]
+        .into_iter()
+        .find_map(|key| {
             dependency
-                .get("rev")
+                .get(key)
                 .and_then(|item| item.as_str())
-                .map(|value| format!("rev {}", value.trim()))
-        })
-        .or_else(|| {
-            dependency
-                .get("branch")
-                .and_then(|item| item.as_str())
-                .map(|value| format!("branch {}", value.trim()))
+                .map(|value| SdkGitReference {
+                    key: key.to_string(),
+                    value: value.trim().to_string(),
+                })
         })
         .ok_or_else(|| {
             anyhow!(
-                "xtask/Cargo.toml temporary scryer-plugin-sdk git dependency must specify tag, rev, or branch"
+                "{} temporary scryer-plugin-sdk git dependency must specify tag, rev, or branch",
+                manifest_path.display()
             )
         })?;
     let version = dependency
@@ -4917,13 +3895,18 @@ fn current_sdk_dependency(ctx: &TaskContext) -> Result<SdkDependency> {
         .filter(|value| !value.is_empty())
         .ok_or_else(|| {
             anyhow!(
-                "xtask/Cargo.toml temporary scryer-plugin-sdk git dependency must include version = \"<semver>\""
+                "{} temporary scryer-plugin-sdk git dependency must include version = \"<semver>\"",
+                manifest_path.display()
             )
         })?
         .to_string();
     Version::parse(&version)
         .with_context(|| format!("invalid SDK version declared for git dependency {reference}"))?;
-    Ok(SdkDependency::Git { reference, version })
+    Ok(SdkDependency::Git {
+        url,
+        reference,
+        version,
+    })
 }
 
 fn ensure_current_sdk_dependency_is_published(ctx: &TaskContext) -> Result<()> {
@@ -5249,31 +4232,25 @@ fn optimize_and_compress_wasm(
     let compressed = dist.join(plugin_variant_logical_file_name(feature_set, lane, "zst"));
     let compressed_br = dist.join(plugin_variant_logical_file_name(feature_set, lane, "br"));
     let input = fs::read(wasm).with_context(|| format!("failed to read {}", wasm.display()))?;
-    if is_component_wasm(&input) {
-        // Binaryen does not support component binaries. Keep Rust's release
-        // optimization intact, remove only nonessential sections, then have
-        // wasm-tools validate the exact component representation we package.
-        run_checked(
-            ctx.command("wasm-tools")
-                .arg("strip")
-                .arg(wasm)
-                .arg("-o")
-                .arg(&optimized),
-        )?;
-        run_checked(ctx.command("wasm-tools").arg("validate").arg(&optimized))?;
-    } else {
-        let mut wasm_opt = ctx.command("wasm-opt");
-        wasm_opt
-            .arg(feature_set.wasm_opt_level())
-            .arg("--enable-bulk-memory")
-            .arg("--enable-sign-ext")
-            .arg("--enable-nontrapping-float-to-int");
-        for required_feature in &feature_set.required_features {
-            wasm_opt.arg(required_feature.wasm_opt_flag());
-        }
-        wasm_opt.arg(wasm).arg("-o").arg(&optimized);
-        run_checked(&mut wasm_opt)?;
+    if !is_component_wasm(&input) {
+        bail!(
+            "{} is not a WASI Preview 2 component; every plugin family builds one and there is no \
+core-module packaging path left",
+            wasm.display()
+        );
     }
+    // Keep Rust's release optimization intact, remove only nonessential
+    // sections, then have wasm-tools validate the exact component
+    // representation we package. There is no Binaryen step: `wasm-opt` cannot
+    // read a component binary.
+    run_checked(
+        ctx.command("wasm-tools")
+            .arg("strip")
+            .arg(wasm)
+            .arg("-o")
+            .arg(&optimized),
+    )?;
+    run_checked(ctx.command("wasm-tools").arg("validate").arg(&optimized))?;
     let descriptor = load_descriptor_from_wasm(&optimized)?;
     validate_descriptor_contract(&descriptor)?;
     embed_plugin_descriptor(&optimized, &descriptor)?;
@@ -5322,50 +4299,6 @@ fn write_wasm_u32_leb(mut value: u32, output: &mut Vec<u8>) {
             break;
         }
     }
-}
-
-fn command_abi_version(wasm: &[u8]) -> Result<Option<u16>> {
-    if is_component_wasm(wasm) {
-        return Ok(None);
-    }
-    if !is_core_wasm(wasm) {
-        bail!("plugin artifact is not a core WebAssembly module");
-    }
-    let mut offset = 8usize;
-    let mut found = None;
-    while offset < wasm.len() {
-        let section_id = wasm[offset];
-        offset += 1;
-        let section_len = read_wasm_u32_leb(wasm, &mut offset)? as usize;
-        let section_end = offset
-            .checked_add(section_len)
-            .filter(|end| *end <= wasm.len())
-            .ok_or_else(|| anyhow!("truncated WASM section payload"))?;
-        if section_id == 0 {
-            let mut custom_offset = offset;
-            let name_len = read_wasm_u32_leb(wasm, &mut custom_offset)? as usize;
-            let name_end = custom_offset
-                .checked_add(name_len)
-                .filter(|end| *end <= section_end)
-                .ok_or_else(|| anyhow!("truncated WASM custom section name"))?;
-            let name = std::str::from_utf8(&wasm[custom_offset..name_end])
-                .context("WASM custom section name is not UTF-8")?;
-            if name == COMMAND_ABI_CUSTOM_SECTION {
-                if found.is_some() {
-                    bail!("plugin artifact contains multiple command ABI markers");
-                }
-                let payload = &wasm[name_end..section_end];
-                let bytes: [u8; 2] = payload.try_into().map_err(|_| {
-                    anyhow!(
-                        "plugin command ABI marker must contain a two-byte little-endian version"
-                    )
-                })?;
-                found = Some(u16::from_le_bytes(bytes));
-            }
-        }
-        offset = section_end;
-    }
-    Ok(found)
 }
 
 fn descriptor_custom_section(wasm: &[u8]) -> Result<Option<(&str, &[u8])>> {
@@ -5444,19 +4377,22 @@ fn is_component_wasm(wasm: &[u8]) -> bool {
 fn embed_plugin_descriptor(wasm_path: &Path, descriptor: &PluginDescriptor) -> Result<()> {
     let wasm =
         fs::read(wasm_path).with_context(|| format!("failed to read {}", wasm_path.display()))?;
-    let command_model = command_abi_version(&wasm)?.is_some()
-        || matches!(descriptor.provider, ProviderDescriptor::ArchiveExtractor(_))
-        || subtitle_sync_uses_command_model(descriptor);
-    if command_model && contains_legacy_describe_marker(&wasm) {
+    // Older Scryer hosts classify an artifact by scanning its bytes for the raw
+    // `scryer_describe` marker and loading anything that carries it as a legacy
+    // reactor. Archive extractors are the one family whose artifacts still have
+    // to survive that scan, so their bytes must never contain the marker.
+    let guard_legacy_describe_marker =
+        matches!(descriptor.provider, ProviderDescriptor::ArchiveExtractor(_));
+    if guard_legacy_describe_marker && contains_legacy_describe_marker(&wasm) {
         bail!(
-            "{} contains the raw '{EXPORT_DESCRIBE}' byte sequence; older Scryer hosts would misclassify this command plugin as a legacy reactor",
+            "{} contains the raw '{EXPORT_DESCRIBE}' byte sequence; older Scryer hosts would misclassify this artifact as a legacy reactor",
             wasm_path.display()
         );
     }
 
     let descriptor_json = serialize_embedded_descriptor(descriptor)?;
     let embedded = append_plugin_descriptor_custom_section(&wasm, &descriptor_json)?;
-    if command_model && contains_legacy_describe_marker(&embedded) {
+    if guard_legacy_describe_marker && contains_legacy_describe_marker(&embedded) {
         bail!(
             "embedding metadata introduced the raw '{EXPORT_DESCRIBE}' byte sequence into {}",
             wasm_path.display()
@@ -6753,7 +5689,7 @@ fn catalog_v3_release_from_prepared_assets(
             let primary_url =
                 versioned_distribution_url(&distribution_base_url, version, &file_name);
             artifacts.push(catalog_v3_plugin_artifact_from_staged_file(
-                wasm_target_for_plugin(&plugin.plugin_dir),
+                COMPONENT_WASM_TARGET,
                 &variant.feature_set,
                 variant.wasm_digests.clone(),
                 variant.bytes,
@@ -7589,7 +6525,7 @@ fn run_community_scaffold(_ctx: &TaskContext, plugin_id: &str, output_dir: &Path
                 min_scryer_version: None,
                 max_scryer_version: None,
                 artifacts: vec![CatalogV3PluginArtifact {
-                    runtime: INDEXER_COMPONENT_WASM_TARGET.to_string(),
+                    runtime: COMPONENT_WASM_TARGET.to_string(),
                     required_features: Vec::new(),
                     wasm_digests: vec![
                         "blake3:REPLACE_ME".to_string(),
@@ -7613,7 +6549,7 @@ fn run_community_scaffold(_ctx: &TaskContext, plugin_id: &str, output_dir: &Path
     )?;
     fs::write(
         output_dir.join(".github/workflows/release-plugin.yml"),
-        "name: release-plugin\non:\n  push:\n    tags: ['v*']\npermissions:\n  contents: write\n  id-token: write\njobs:\n  build-sign-release:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: sigstore/cosign-installer@v4.1.1\n        with:\n          cosign-release: v3.0.2\n      - run: echo 'For this indexer, install wasm32-wasip2 and wasm-tools, build the component, then run wasm-tools strip and wasm-tools validate before packaging. Do not run wasm-opt on the component. Legacy non-indexer command plugins instead use wasm32-wasip1 and wasm-opt.'\n",
+        "name: release-plugin\non:\n  push:\n    tags: ['v*']\npermissions:\n  contents: write\n  id-token: write\njobs:\n  build-sign-release:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: sigstore/cosign-installer@v4.1.1\n        with:\n          cosign-release: v3.0.2\n      - run: echo 'Install wasm32-wasip2 and wasm-tools, build the component, then run wasm-tools strip and wasm-tools validate before packaging.'\n",
     )?;
     ok(format!("scaffolded {}", output_dir.display()));
     Ok(())
@@ -8047,12 +6983,12 @@ fn validate_catalog_v3_plugin_entry(plugin: &CatalogV3PluginEntry) -> Result<()>
         }
         let mut artifact_variants = BTreeSet::new();
         for artifact in &release.artifacts {
-            if !WASM_TARGETS.contains(&artifact.runtime.trim()) {
+            if !CATALOG_ARTIFACT_RUNTIMES.contains(&artifact.runtime.trim()) {
                 bail!(
                     "{} {}: artifact runtime must be one of {}",
                     plugin.id,
                     release.version,
-                    WASM_TARGETS.join(", ")
+                    CATALOG_ARTIFACT_RUNTIMES.join(", ")
                 );
             }
             let normalized_required_features_set =
@@ -9178,7 +8114,7 @@ Vendored from FFmpeg upstream:
 
 The plugin build configures this vendored tree as a narrow static FFmpeg
 `avformat`/`avcodec`/`swresample`/`avutil` build and links it into the final
-Rust `wasm32-wasip1` plugin artifact. FFmpeg source files are licensed by
+Rust `wasm32-wasip2` component artifact. FFmpeg source files are licensed by
 FFmpeg under LGPL-2.1-or-later unless the individual file states otherwise.
 
 Keep the configured build narrow: no programs, only the targeted audio
@@ -9214,7 +8150,7 @@ Vendored from libfvad upstream:
   plugin
 
 The plugin build compiles this vendored tree as a narrow static C library and
-links it into the final Rust `wasm32-wasip1` plugin artifact. libfvad is a
+links it into the final Rust `wasm32-wasip2` component artifact. libfvad is a
 standalone extraction of the WebRTC VAD engine; it is licensed under
 BSD-3-Clause, with the additional patent grant included in `PATENTS`.
 
@@ -9377,32 +8313,6 @@ mod tests {
     }
 
     #[test]
-    fn command_abi_marker_round_trips() {
-        let name = COMMAND_ABI_CUSTOM_SECTION.as_bytes();
-        let payload = COMMAND_ABI_VERSION.to_le_bytes();
-        let mut body = Vec::new();
-        write_wasm_u32_leb(
-            name.len().try_into().expect("section name length"),
-            &mut body,
-        );
-        body.extend_from_slice(name);
-        body.extend_from_slice(&payload);
-
-        let mut wasm = b"\0asm\x01\0\0\0".to_vec();
-        wasm.push(0);
-        write_wasm_u32_leb(
-            body.len().try_into().expect("section body length"),
-            &mut wasm,
-        );
-        wasm.extend_from_slice(&body);
-
-        assert_eq!(
-            command_abi_version(&wasm).expect("parse command ABI marker"),
-            Some(COMMAND_ABI_VERSION)
-        );
-    }
-
-    #[test]
     fn command_artifact_precedes_a_stale_legacy_artifact() {
         let directory = tempfile::tempdir().expect("create artifact directory");
         let legacy = directory.path().join("plugin_name.wasm");
@@ -9443,6 +8353,12 @@ mod tests {
         assert!(error.to_string().contains("reserved custom section"));
     }
 
+    /// A release as the *published* catalog carries it.
+    ///
+    /// The runtime is deliberately `wasm32-wasip1`: the stratum projections
+    /// exercised below are about what shipped Scryers can parse, and the
+    /// ≤ 0.18.11 band accepts nothing else. It is a historical wire value, not
+    /// something this repository still builds.
     fn catalog_v3_test_release(
         plugin_id: &str,
         version: &str,
@@ -9455,7 +8371,7 @@ mod tests {
             min_scryer_version: min_scryer_version.map(str::to_string),
             max_scryer_version: None,
             artifacts: vec![CatalogV3PluginArtifact {
-                runtime: LEGACY_WASM_TARGET.to_string(),
+                runtime: TARGET_WASIP1.to_string(),
                 required_features: Vec::new(),
                 wasm_digests: vec![
                     "blake3:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -9527,38 +8443,6 @@ mod tests {
             default_catalog_versions(),
             BTreeSet::from([CatalogVersion::V3])
         );
-    }
-
-    #[test]
-    fn legacy_subtitle_sync_requires_align_export() {
-        let descriptor = PluginDescriptor {
-            id: "enhanced-subtitle-sync".to_string(),
-            name: "Enhanced Subtitle Sync".to_string(),
-            version: "1.0.0".to_string(),
-            sdk_version: SDK_VERSION.to_string(),
-            sdk_constraint: current_sdk_constraint(),
-            socket_permissions: Vec::new(),
-            provider: ProviderDescriptor::Subtitle(scryer_plugin_sdk::SubtitleDescriptor {
-                provider_type: "enhanced-subtitle-sync".to_string(),
-                provider_aliases: Vec::new(),
-                config_fields: Vec::new(),
-                default_base_url: None,
-                allowed_hosts: Vec::new(),
-                capabilities: scryer_plugin_sdk::SubtitleCapabilities {
-                    mode: SubtitleProviderMode::Sync,
-                    sync: Some(scryer_plugin_sdk::SubtitleSyncCapabilities {
-                        command_model: false,
-                        ..Default::default()
-                    }),
-                    ..Default::default()
-                },
-            }),
-        };
-
-        let exports = required_exports_for_descriptor(&descriptor);
-
-        assert!(exports.contains(&EXPORT_VALIDATE_CONFIG));
-        assert!(exports.contains(&EXPORT_SUBSYNC_ALIGN));
     }
 
     #[test]
@@ -9913,7 +8797,7 @@ support_tier = "verified_community"
                 min_scryer_version: None,
                 max_scryer_version: None,
                 artifacts: vec![CatalogV3PluginArtifact {
-                    runtime: LEGACY_WASM_TARGET.to_string(),
+                    runtime: COMPONENT_WASM_TARGET.to_string(),
                     required_features: Vec::new(),
                     wasm_digests: vec![
                         "blake3:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -10221,7 +9105,7 @@ support_tier = "verified_community"
                 min_scryer_version: None,
                 max_scryer_version: None,
                 artifacts: vec![CatalogV3PluginArtifact {
-                    runtime: LEGACY_WASM_TARGET.to_string(),
+                    runtime: COMPONENT_WASM_TARGET.to_string(),
                     required_features: Vec::new(),
                     wasm_digests: vec![
                         "blake3:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -10433,19 +9317,7 @@ min_scryer_version = "1.4.0"
     }
 
     #[test]
-    fn feature_set_wasm_opt_defaults_match_current_release_policy() {
-        let baseline = WasmFeatureSet::baseline();
-        let simd = WasmFeatureSet::new(vec![
-            WasmRequiredFeature::Simd128,
-            WasmRequiredFeature::RelaxedSimd,
-        ]);
-
-        assert_eq!(baseline.wasm_opt_level(), WASM_OPT_LEVEL_SIZE);
-        assert_eq!(simd.wasm_opt_level(), WASM_OPT_LEVEL_SPEED);
-    }
-
-    #[test]
-    fn plugin_manifest_metadata_accepts_explicit_baseline_speed_wasm_opt() {
+    fn plugin_manifest_metadata_rejects_unknown_feature_set_key() {
         let manifest = write_temp_manifest(
             r#"[package]
 name = "email-notification"
@@ -10465,123 +9337,18 @@ distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
 "#,
         );
 
-        let metadata = plugin_manifest_metadata(manifest.path()).expect("read manifest metadata");
+        let error = plugin_manifest_metadata(manifest.path()).expect_err("unknown key should fail");
 
-        assert_eq!(metadata.feature_sets.len(), 1);
-        assert!(metadata.feature_sets[0].is_baseline());
-        assert_eq!(
-            metadata.feature_sets[0].effective_wasm_opt_level(),
-            WasmOptLevel::Speed
-        );
-        assert_eq!(
-            metadata.feature_sets[0].wasm_opt_level(),
-            WASM_OPT_LEVEL_SPEED
-        );
-        assert_eq!(metadata.feature_sets[0].artifact_stem(), "plugin");
-    }
-
-    #[test]
-    fn plugin_manifest_metadata_accepts_explicit_simd_size_wasm_opt() {
-        let manifest = write_temp_manifest(
-            r#"[package]
-name = "email-notification"
-version = "0.1.0"
-edition = "2021"
-license = "GPL-3.0-only"
-description = "Email notifications"
-
-[package.metadata.scryer]
-official = true
-plugin_id = "email"
-catalog_versions = ["v3"]
-feature_sets = [{ required_features = ["simd128", "relaxed-simd"], wasm_opt = "size" }]
-docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
-source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
-distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
-"#,
-        );
-
-        let metadata = plugin_manifest_metadata(manifest.path()).expect("read manifest metadata");
-
-        assert_eq!(metadata.feature_sets.len(), 1);
-        assert_eq!(
-            metadata.feature_sets[0].required_features,
-            vec![
-                WasmRequiredFeature::Simd128,
-                WasmRequiredFeature::RelaxedSimd,
-            ]
-        );
-        assert_eq!(
-            metadata.feature_sets[0].effective_wasm_opt_level(),
-            WasmOptLevel::Size
-        );
-        assert_eq!(
-            metadata.feature_sets[0].wasm_opt_level(),
-            WASM_OPT_LEVEL_SIZE
-        );
-        assert_eq!(
-            metadata.feature_sets[0].artifact_stem(),
-            "plugin-simd128-relaxed-simd"
+        assert!(
+            error
+                .to_string()
+                .contains("found unsupported key 'wasm_opt'"),
+            "{error}"
         );
     }
 
     #[test]
-    fn plugin_manifest_metadata_rejects_invalid_wasm_opt() {
-        let manifest = write_temp_manifest(
-            r#"[package]
-name = "email-notification"
-version = "0.1.0"
-edition = "2021"
-license = "GPL-3.0-only"
-description = "Email notifications"
-
-[package.metadata.scryer]
-official = true
-plugin_id = "email"
-catalog_versions = ["v3"]
-feature_sets = [{ required_features = [], wasm_opt = "fast-ish" }]
-docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
-source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
-distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
-"#,
-        );
-
-        let error = plugin_manifest_metadata(manifest.path()).expect_err("wasm_opt should fail");
-
-        assert!(error.to_string().contains("wasm_opt must be"));
-    }
-
-    #[test]
-    fn plugin_manifest_metadata_rejects_conflicting_duplicate_wasm_opt() {
-        let manifest = write_temp_manifest(
-            r#"[package]
-name = "email-notification"
-version = "0.1.0"
-edition = "2021"
-license = "GPL-3.0-only"
-description = "Email notifications"
-
-[package.metadata.scryer]
-official = true
-plugin_id = "email"
-catalog_versions = ["v3"]
-feature_sets = [
-    { required_features = [], wasm_opt = "size" },
-    { required_features = [], wasm_opt = "speed" },
-]
-docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
-source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
-distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
-"#,
-        );
-
-        let error = plugin_manifest_metadata(manifest.path()).expect_err("conflict should fail");
-
-        assert!(error.to_string().contains("conflicting wasm_opt"));
-    }
-
-    #[test]
-    fn plugin_manifest_metadata_dedupes_equivalent_duplicate_wasm_opt() {
+    fn plugin_manifest_metadata_dedupes_equivalent_duplicate_feature_sets() {
         let manifest = write_temp_manifest(
             r#"[package]
 name = "email-notification"
@@ -10596,7 +9363,7 @@ plugin_id = "email"
 catalog_versions = ["v3"]
 feature_sets = [
     { required_features = [] },
-    { required_features = [], wasm_opt = "size" },
+    { required_features = [] },
 ]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/email"

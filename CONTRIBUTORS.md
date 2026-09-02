@@ -20,7 +20,8 @@ git config core.hooksPath .githooks
 The versioned `pre-commit` hook will block commits when `gitleaks` reports staged secrets or when staged diffs contain machine-local usernames or home-directory paths.
 
 This repo pins its Rust toolchain in `rust-toolchain.toml` and declares
-`wasm32-wasip1` there. The `xtask` build flow also runs plugin Wasm builds
+`wasm32-wasip2` there — every plugin family is a WASI Preview 2 component, and
+no Preview 1 target is installed or built any more. The `xtask` build flow also runs plugin Wasm builds
 through `rustup run <toolchain> cargo ...` and will install the Wasm target
 automatically when rustup is available, so built-in/plugin release flows do not
 depend on whichever `cargo` happens to be first on `PATH`.

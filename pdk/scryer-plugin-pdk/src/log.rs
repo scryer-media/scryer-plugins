@@ -10,7 +10,6 @@
 //! |---|---|
 //! | Indexer component | the indexer world's `log` import, i.e. Scryer's host log service |
 //! | Family component (subtitle, download client, notification) | guest **stderr**, which the family component hosts capture as a size-capped tail and re-emit through `tracing` |
-//! | Preview 1 command guest | guest stderr, captured the same way by the command host |
 //! | Native `cargo test` | stderr, so an assertion failure shows the run that produced it |
 //!
 //! Shared crates — `newznab-common` and friends — are linked into *several* of
@@ -31,9 +30,9 @@
 //!
 //! With no hook installed, [`log`] writes to stderr. That is deliberate: every
 //! guest shape Scryer runs has a stderr its host already collects, so the
-//! fallback is the *correct* sink for a Preview 1 command guest and a
-//! test-visible one natively. A silent default would have quietly deleted the
-//! diagnostics of every plugin that has not yet installed a hook.
+//! fallback is a test-visible sink natively and a collected one in a guest. A
+//! silent default would have quietly deleted the diagnostics of every plugin
+//! that has not yet installed a hook.
 
 use std::fmt;
 use std::io::Write;
@@ -194,9 +193,8 @@ mod tests {
         clear_log();
 
         assert!(!log_installed());
-        // The fallback is what a Preview 1 command guest and a native test both
-        // want; the assertion that matters is that this path is reached at all
-        // and does not panic.
+        // The fallback is what a native test wants; the assertion that matters
+        // is that this path is reached at all and does not panic.
         log(LogLevel::Info, "no sink installed");
     }
 

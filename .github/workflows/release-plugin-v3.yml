@@ -29,12 +29,11 @@ env:
   RELEASE_PLUGIN_CACHE_SCOPE: release-plugin-v3
   RELEASE_PLUGIN_PLAN_SCCACHE_LANE: linux-host-xtask
   RELEASE_PLUGIN_PLAN_SCCACHE_BUILD_FLAVOR: xtask-release
-  RELEASE_PLUGIN_BUILD_SCCACHE_LANE: linux-wasm32-wasip1-plugin-release
+  RELEASE_PLUGIN_BUILD_SCCACHE_LANE: linux-wasm32-wasip2-plugin-release
   RELEASE_PLUGIN_BUILD_SCCACHE_BUILD_FLAVOR: plugin-release
   SCCACHE_VERSION: v0.10.0
   WASI_SDK_VERSION: "33.0"
   WASI_SDK_RELEASE_TAG: wasi-sdk-33
-  BINARYEN_RELEASE_TAG: version_129
   WASM_TOOLS_VERSION: "1.253.0"
   CF_JURISDICTION_URL: ${{ secrets.CF_JURISDICTION_URL }}
   CF_R2_PUBLIC_BASE_URL: https://cdn.scryer.media/scryer
@@ -253,7 +252,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
         with:
-          targets: wasm32-wasip1
+          targets: wasm32-wasip2
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
@@ -261,9 +260,7 @@ jobs:
           workspaces: |
             xtask -> xtask/target
             download_clients/qbittorrent -> download_clients/qbittorrent/target
-            indexers/dognzb -> indexers/dognzb/target
             indexers/newznab -> indexers/newznab/target
-            indexers/nzbgeek -> indexers/nzbgeek/target
             indexers/torrent-rss -> indexers/torrent-rss/target
             indexers/torznab -> indexers/torznab/target
             notifications/email -> notifications/email/target
@@ -296,34 +293,27 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           case "$(uname -m)" in
             x86_64)
-              binaryen_archive="binaryen-${BINARYEN_RELEASE_TAG}-x86_64-linux.tar.gz"
               wasm_tools_archive="wasm-tools-${WASM_TOOLS_VERSION}-x86_64-linux.tar.gz"
               wasm_tools_sha256="4e2898f7ca3bd0536218ed9b7b36ff7b86954c57ae0e6272fde69728cbe01088"
               ;;
             aarch64|arm64)
-              binaryen_archive="binaryen-${BINARYEN_RELEASE_TAG}-aarch64-linux.tar.gz"
               wasm_tools_archive="wasm-tools-${WASM_TOOLS_VERSION}-aarch64-linux.tar.gz"
               wasm_tools_sha256="4a9a1c6a0885aaf17f433f2927bd61b1fe40069836f750f4e9f9ccd661106c65"
               ;;
             *)
-              echo "Unsupported architecture for binaryen: $(uname -m)" >&2
+              echo "Unsupported architecture for wasm-tools: $(uname -m)" >&2
               exit 1
               ;;
           esac
           wasi_sdk_archive="wasi-sdk-${WASI_SDK_VERSION}-x86_64-linux.tar.gz"
-          binaryen_url="https://github.com/WebAssembly/binaryen/releases/download/${BINARYEN_RELEASE_TAG}/${binaryen_archive}"
           wasm_tools_url="https://github.com/bytecodealliance/wasm-tools/releases/download/v${WASM_TOOLS_VERSION}/${wasm_tools_archive}"
           wasi_sdk_url="https://github.com/WebAssembly/wasi-sdk/releases/download/${WASI_SDK_RELEASE_TAG}/${wasi_sdk_archive}"
           tmpdir="$(mktemp -d)"
-          curl -fsSL "$binaryen_url" -o "$tmpdir/$binaryen_archive"
           curl -fsSL "$wasm_tools_url" -o "$tmpdir/$wasm_tools_archive"
           curl -fsSL "$wasi_sdk_url" -o "$tmpdir/$wasi_sdk_archive"
           printf '%s  %s\n' "$wasm_tools_sha256" "$tmpdir/$wasm_tools_archive" | sha256sum --check --strict
-          tar -xzf "$tmpdir/$binaryen_archive" -C "$tmpdir"
           tar -xzf "$tmpdir/$wasm_tools_archive" -C "$tmpdir"
-          sudo install -m 0755 "$tmpdir"/binaryen-*/bin/wasm-opt /usr/local/bin/wasm-opt
           sudo install -m 0755 "$tmpdir"/wasm-tools-*/wasm-tools /usr/local/bin/wasm-tools
-          wasm-opt --version
           wasm-tools --version
           wasi_sdk_root="${RUNNER_TEMP}/wasi-sdk-${WASI_SDK_VERSION}"
           rm -rf "$wasi_sdk_root"

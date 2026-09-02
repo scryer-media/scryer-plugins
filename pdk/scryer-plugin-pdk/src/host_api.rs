@@ -1,13 +1,19 @@
-//! Small source-compatibility layer for first-party Extism plugin migrations.
+//! The guest-facing convenience API over Scryer's host services.
 //!
-//! This is not an Extism runtime. It preserves the narrow `Error`, config, and
-//! HTTP call shapes the first-party clients already use while routing each
-//! operation through Scryer's host services in [`crate::host`].
+//! `HttpRequest`, `HttpResponse`, `Error`, `FnResult`, and the [`config`],
+//! [`var`] and [`http`] modules are what a plugin body actually calls; each one
+//! routes through [`crate::host`], which is the only door to the host that
+//! exists. Every name here is re-exported from the crate root, so plugins say
+//! `scryer_plugin_pdk::{config, http, var, HttpRequest}` and never name this
+//! module.
 //!
-//! Keeping these shapes is what makes the component migration mechanical: a
-//! plugin swaps `use extism_pdk::*` for the PDK's re-exports and its body —
-//! `config::get`, `var::get`/`set`, `http::request` — compiles unchanged over
-//! the new transport.
+//! The shapes are deliberately narrow and deliberately stable. They were
+//! settled when the first-party plugins were ported and they have not moved
+//! since: `config::get` returns `Result<Option<String>>` so a caller can tell a
+//! host failure from an unset optional setting, `var` is a typed JSON helper
+//! over plugin state, and `http::request` takes a built request plus an
+//! optional body. Changing any of these signatures is a breaking change for
+//! every plugin in the fleet.
 
 use std::collections::BTreeMap;
 
@@ -79,9 +85,9 @@ pub mod config {
 
     /// Return one descriptor-bound configuration value.
     ///
-    /// This intentionally preserves Extism's `Result<Option<String>>` source
-    /// shape so callers can either propagate host failures or treat them as a
-    /// missing optional setting.
+    /// The `Result<Option<String>>` shape is deliberate: a caller can either
+    /// propagate a host failure or treat the value as a missing optional
+    /// setting.
     pub fn get(key: impl Into<String>) -> FnResult<Option<String>> {
         // Two component contracts reach configuration by different imports, so
         // the discriminator is which one this instance actually has, not what
@@ -101,7 +107,7 @@ pub mod config {
     }
 }
 
-/// Typed persistent state compatible with Extism's small `var` helper.
+/// Typed persistent state, as a small JSON-encoded key/value helper.
 pub mod var {
     use super::{FnResult, host};
 
@@ -156,7 +162,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn request_builder_preserves_extism_source_shape() {
+    fn request_builder_preserves_source_shape() {
         let request = HttpRequest::new("https://downloader.example/api")
             .with_method("POST")
             .with_header("X-Test", "one");
@@ -165,12 +171,12 @@ mod tests {
     }
 
     #[test]
-    fn config_get_preserves_extism_result_shape() {
+    fn config_get_preserves_result_shape() {
         let _result: FnResult<Option<String>> = config::get("base_url");
     }
 
     #[test]
-    fn var_preserves_extism_result_shapes() {
+    fn var_preserves_result_shapes() {
         let _get: FnResult<Option<String>> = var::get("key");
         let _set: FnResult<()> = var::set("key", "value");
         let _remove: FnResult<()> = var::remove("key");

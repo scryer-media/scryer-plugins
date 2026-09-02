@@ -11,31 +11,13 @@ keywords = ["scryer", "plugin", "wasm", "wasip2"]
 categories = ["wasm"]
 
 [dependencies]
-scryer-plugin-sdk = "3.10.0"
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 postcard = { version = "1", features = ["use-std"] }
 anyhow = "1"
 futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
-wit-bindgen = { version = "0.60", features = ["async"] }
-
-# TEMPORARY — this feature comes out once the SDK release is published.
-#
-# `PluginHostRequest::ArchiveExtract` and its request/response records exist
-# only in the in-repo SDK that ships with the WASI-component family hosts. The
-# published 3.10.0 carries config/state/HTTP/socket/process and nothing else,
-# so `host::archive_extract` cannot be compiled against it.
-#
-# Gating it keeps this crate buildable from crates.io for every plugin that
-# does not need the capability yet — the whole migrated indexer fleet — while a
-# plugin that does need it opts in *and* supplies the newer SDK through its own
-# workspace `[patch.crates-io]`. Deliberately not a default feature: a default
-# would make the published crate unbuildable.
-#
-# When the SDK release lands: bump `scryer-plugin-sdk` above, delete this
-# section, and make `host::archive_extract` unconditional.
-[features]
-archive-extract = []
+wit-bindgen = { version = "0.61", features = ["async"] }
 
 [[example]]
 name = "component_smoke"
