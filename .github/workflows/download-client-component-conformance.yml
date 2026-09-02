@@ -30,9 +30,6 @@ on:
       - download_clients/downloadstation/**
       - download_clients/flood/**
       - download_clients/freebox/**
-      - download_clients/hadouken/**
-      - download_clients/nzbvortex/**
-      - download_clients/pneumatic/**
       - download_clients/qbittorrent/**
       - download_clients/rqbit/**
       - download_clients/rtorrent/**
@@ -75,12 +72,6 @@ jobs:
             manifest: download_clients/flood/Cargo.toml
           - plugin: freebox
             manifest: download_clients/freebox/Cargo.toml
-          - plugin: hadouken
-            manifest: download_clients/hadouken/Cargo.toml
-          - plugin: nzbvortex
-            manifest: download_clients/nzbvortex/Cargo.toml
-          - plugin: pneumatic
-            manifest: download_clients/pneumatic/Cargo.toml
           - plugin: rqbit
             manifest: download_clients/rqbit/Cargo.toml
           - plugin: rtorrent

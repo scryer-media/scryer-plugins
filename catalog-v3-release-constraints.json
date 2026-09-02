@@ -59,6 +59,11 @@
       "plugin_id": "synology",
       "version": "0.1.3",
       "max_scryer_version": "0.19.8"
+    },
+    {
+      "plugin_id": "trakt",
+      "version": "0.1.4",
+      "max_scryer_version": "0.19.8"
     }
   ]
 }
