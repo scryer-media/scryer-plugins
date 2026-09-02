@@ -37,7 +37,6 @@ on:
       - download_clients/transmission/**
       - download_clients/tribler/**
       - download_clients/usenet-blackhole/**
-      - download_clients/utorrent/**
       - pdk/scryer-plugin-pdk/**
       - .github/workflows/download-client-component-conformance.yml
   workflow_dispatch:
@@ -84,8 +83,6 @@ jobs:
             manifest: download_clients/tribler/Cargo.toml
           - plugin: usenet-blackhole
             manifest: download_clients/usenet-blackhole/Cargo.toml
-          - plugin: utorrent
-            manifest: download_clients/utorrent/Cargo.toml
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
