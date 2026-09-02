@@ -26,7 +26,6 @@ use std::collections::HashMap;
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use indexer_command_compat::structured_plugin_error;
 use quick_xml::escape::unescape;
 use quick_xml::events::{Event, attributes::Attribute};
 use quick_xml::{Reader, XmlVersion};
@@ -50,16 +49,46 @@ use url::Url;
 
 /// Emit one diagnostic through the PDK's world-agnostic sink.
 ///
-/// This replaces `indexer_command_compat::log!`, which hard-coded `eprintln!`.
-/// The behaviour is the same wherever this crate is linked today — the family
-/// component hosts and the Preview 1 command host both capture guest stderr,
-/// and the PDK's default sink is stderr — but it is now the *installed* sink
-/// that decides, so a consumer that later becomes an indexer component gets
-/// host-service logging without touching this engine.
+/// This replaces the migration shim's `log!`, which hard-coded `eprintln!`.
+/// The behaviour is the same wherever this crate is linked today — the
+/// component hosts capture guest stderr and the PDK's default sink is stderr —
+/// but it is now the *installed* sink that decides, so a consumer that later
+/// becomes an indexer component gets host-service logging without touching
+/// this engine.
 macro_rules! log {
     ($level:expr, $($argument:tt)*) => {
         scryer_plugin_pdk::log::log($level, &format!($($argument)*))
     };
+}
+
+/// A [`PluginError`] carried inside the PDK's boxed [`Error`] so a caller can
+/// recover the typed error instead of collapsing it to a generic `Temporary`.
+///
+/// This used to live in a separate migration-shim crate that existed only to
+/// hold it for `dognzb` and `nzbgeek`. Both of those plugins are gone, so the
+/// only consumers of the type are this crate's own `?`-returning search paths
+/// and the tests below — the *identity* never crosses a crate boundary. Owning
+/// it here is what let that shim be deleted.
+#[derive(Debug)]
+pub struct StructuredPluginError(PluginError);
+
+impl StructuredPluginError {
+    pub fn plugin_error(&self) -> &PluginError {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for StructuredPluginError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(&self.0.public_message)
+    }
+}
+
+impl std::error::Error for StructuredPluginError {}
+
+/// Box a typed [`PluginError`] as a [`StructuredPluginError`].
+pub fn structured_plugin_error(error: PluginError) -> Error {
+    Error::new(StructuredPluginError(error))
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -4609,7 +4638,7 @@ mod tests {
             "later page was malformed".to_string(),
         );
         let structured = error
-            .downcast_ref::<indexer_command_compat::StructuredPluginError>()
+            .downcast_ref::<StructuredPluginError>()
             .expect("structured plugin error");
         let Some(PluginErrorDetails::IndexerSearch(IndexerSearchPluginError::PartialResults {
             response,

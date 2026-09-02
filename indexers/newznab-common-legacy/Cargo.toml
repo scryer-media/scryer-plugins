@@ -5,13 +5,6 @@ edition = "2021"
 license = "GPL-3.0-only"
 
 [dependencies]
-# Kept only for `structured_plugin_error` / `StructuredPluginError`. That type's
-# *identity* is the contract: `indexer_command_compat::to_plugin_result` — which
-# `dognzb` and `nzbgeek` reach through `scryer_indexer_main!` — recovers a typed
-# rate-limit or partial-results error by downcasting to it. Minting the same
-# error from a different crate would silently degrade both plugins to a generic
-# `Temporary`, so this dependency stays until those two migrate.
-indexer-command-compat = { path = "../command-compat" }
 # The path PDK, not the published 0.5.10: 0.5.10's `host.rs` still declares the
 # deleted `#[link(wasm_import_module = "scryer:host/v1")]` extern, so every host
 # call from this engine was a dead import in a component — the reason
@@ -20,7 +13,7 @@ indexer-command-compat = { path = "../command-compat" }
 # world-agnostic.
 scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
 quick-xml = "0.41"
-scryer-plugin-sdk = "3.9.0"
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 httpdate = "1"
