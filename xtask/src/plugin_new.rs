@@ -45,11 +45,11 @@ const SUBTITLE_WIT_PACKAGES: [&str; 3] = ["host-v1.0.0", "runtime-v1.0.0", "subt
 
 /// The Scryer floor for a component plugin.
 ///
-/// A Preview 1 host cannot instantiate a component at all, so a new plugin has
-/// to declare the first release whose family host is component-backed. This is
-/// the same placeholder the first-party components carry; replace it with the
-/// real release when one ships.
-const COMPONENT_MIN_SCRYER_VERSION: &str = "0.18.23";
+/// Scryer 0.20.0 is the first release whose family hosts are all
+/// component-backed (and whose subtitle host serves world 1.1.0). A Preview 1
+/// host cannot instantiate a component at all, so a new plugin declares that
+/// release as its floor, the same one every first-party component carries.
+const COMPONENT_MIN_SCRYER_VERSION: &str = "0.20.0";
 
 const WIT_BINDGEN_VERSION: &str = "0.61";
 const PDK_PATH_FROM_PLUGIN: &str = "../../pdk/scryer-plugin-pdk";
