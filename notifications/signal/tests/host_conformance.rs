@@ -58,10 +58,15 @@ const PROVIDER_TYPE: &str = "signal";
 const WASM_NAME: &str = "signal_notification.wasm";
 
 /// The configuration Scryer would have resolved for this channel.
+///
+/// `server_url` rather than the legacy `host`/`port` pair, because that is the
+/// only shape Scryer's loader can turn into an HTTP allowlist entry: it unions
+/// the descriptor's static hosts with the hostname of every configuration value
+/// that parses as a URL (`crates/scryer-plugins/src/loader.rs`,
+/// `allowed_hosts_for_descriptor`/`host_from_url`), and a bare host never does.
 fn scripted_config(key: &str) -> Option<String> {
     match key {
-        "host" => Some("signal.test.invalid".to_string()),
-        "port" => Some("8080".to_string()),
+        "server_url" => Some("http://signal.test.invalid:8080".to_string()),
         "sender_number" => Some("+15550001111".to_string()),
         "receiver_id" => Some("+15550002222".to_string()),
         _ => None,
@@ -114,10 +119,11 @@ fn assert_artifact_is_a_component(wasm_path: &Path) {
 /// `scryer:notification/notification@1.0.0`.
 ///
 /// This is also the regression guard for the *import set*. The PDK links one
-/// crate against two different component contracts, and `scryer-plugin-sdk`
-/// still carries Extism host functions behind its `net` and process modules —
-/// so a component that accidentally keeps a live `scryer:indexer/host` or
-/// `extism:host/user` import compiles perfectly and then fails to instantiate
+/// crate against two different component contracts, and the published
+/// `scryer-plugin-sdk` still declares host-function externs behind its `net`
+/// and process modules — so a component that accidentally keeps a live
+/// `scryer:indexer/host` import, or one of the legacy host-namespace imports
+/// that SDK can still emit, compiles perfectly and then fails to instantiate
 /// under this host.
 fn assert_world_conformance(wasm_path: &Path) {
     let engine = Engine::default();
@@ -137,7 +143,7 @@ fn assert_world_conformance(wasm_path: &Path) {
 // describe
 // ---------------------------------------------------------------------------
 
-/// `describe` is a world export now, not an Extism entry point: the host calls
+/// `describe` is a world export now, not a bare exported symbol: the host calls
 /// it directly and parses the returned bytes as a `PluginDescriptor`.
 fn assert_describe_returns_a_notification_descriptor(wasm_path: &Path) {
     let (mut store, plugin) = instantiate(wasm_path, Script::default());
@@ -265,7 +271,7 @@ fn assert_a_refused_http_capability_stays_in_band(wasm_path: &Path) {
 /// part that matters under a component — the instance survives it.
 fn assert_a_missing_required_setting_is_a_typed_error(wasm_path: &Path) {
     let script = Script {
-        unset: vec!["host".to_string()],
+        unset: vec!["server_url".to_string()],
         ..Script::default()
     };
     let (mut store, plugin) = instantiate(wasm_path, script);
@@ -279,8 +285,8 @@ fn assert_a_missing_required_setting_is_a_typed_error(wasm_path: &Path) {
     };
     assert_eq!(error.code, PluginErrorCode::InvalidConfig);
     assert!(
-        error.public_message.contains("host"),
-        "the operator has to be told which setting: {error:?}"
+        error.public_message.contains("server_url") && error.public_message.contains("host"),
+        "the operator has to be told which setting, including the legacy fallback: {error:?}"
     );
 }
 
