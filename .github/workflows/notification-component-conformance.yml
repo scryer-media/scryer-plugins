@@ -68,12 +68,8 @@ jobs:
             manifest: notifications/pushcut/Cargo.toml
           - plugin: pushover
             manifest: notifications/pushover/Cargo.toml
-          - plugin: sendgrid
-            manifest: notifications/sendgrid/Cargo.toml
           - plugin: signal
             manifest: notifications/signal/Cargo.toml
-          - plugin: simplepush
-            manifest: notifications/simplepush/Cargo.toml
           - plugin: slack
             manifest: notifications/slack/Cargo.toml
           - plugin: telegram
