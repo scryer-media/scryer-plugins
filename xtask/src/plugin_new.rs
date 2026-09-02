@@ -7,10 +7,13 @@
 //! handler. There is no Preview 1 / Extism scaffold any more: that shape
 //! cannot be loaded by any current Scryer host.
 //!
-//! Only the notification family is scaffolded today. The other four families
-//! differ in their world, their WIT package and their command enum, and a
-//! wrong-shaped scaffold is worse than none — so they report what to copy
-//! instead of generating something that does not build.
+//! Two families are scaffolded today: notification, whose `process` is
+//! synchronous, and subtitle, whose `scryer:subtitle@1.1.0` world lifts
+//! `process` as an `async func` and imports the family-neutral
+//! `scryer:runtime/host@1.0.0` alongside the shared services door. The
+//! remaining three differ in their world, their WIT package and their command
+//! enum, and a wrong-shaped scaffold is worse than none — so they report what
+//! to copy instead of generating something that does not build.
 
 use anyhow::{Context, Result, bail};
 use std::fs;
@@ -24,12 +27,21 @@ use crate::{
 const NOTIFICATION_LIB_RS_TEMPLATE: &str =
     include_str!("../templates/plugin_new/notification/lib.rs.tpl");
 
+const SUBTITLE_LIB_RS_TEMPLATE: &str = include_str!("../templates/plugin_new/subtitle/lib.rs.tpl");
+
 /// The WIT packages a notification component's `wit/` directory must carry.
 ///
 /// They are copied from a sibling plugin in the same family rather than
 /// vendored into `xtask`, so a scaffold can never drift from the contract the
 /// family actually ships.
 const NOTIFICATION_WIT_PACKAGES: [&str; 2] = ["host-v1.0.0", "notification-v1.0.0"];
+
+/// The WIT packages a subtitle component's `wit/` directory must carry.
+///
+/// Three, not two: `scryer:subtitle@1.1.0` imports the family-neutral
+/// `scryer:runtime/host@1.0.0` for the typed capabilities an `async` `process`
+/// awaits, on top of the shared encoded `scryer:host/services@1.0.0` door.
+const SUBTITLE_WIT_PACKAGES: [&str; 3] = ["host-v1.0.0", "runtime-v1.0.0", "subtitle-v1.1.0"];
 
 /// The Scryer floor for a component plugin.
 ///
@@ -309,11 +321,12 @@ impl PluginKindArg {
     }
 
     fn ensure_scaffoldable(self) -> Result<()> {
-        if matches!(self, Self::Notification) {
+        if matches!(self, Self::Notification | Self::Subtitle) {
             return Ok(());
         }
         bail!(
-            "`plugin new` scaffolds notification components only. The {} family has its own world, \
+            "`plugin new` scaffolds notification and subtitle components only. The {} family has \
+its own world, \
 WIT package and command enum, so copy `{}` — its Cargo.toml, its `wit/` directory, its \
 `wit_bindgen::generate!` block and its family entry macro — and rename it instead.",
             self.directory(),
@@ -324,6 +337,7 @@ WIT package and command enum, so copy `{}` — its Cargo.toml, its `wit/` direct
     fn wit_packages(self) -> &'static [&'static str] {
         match self {
             Self::Notification => &NOTIFICATION_WIT_PACKAGES,
+            Self::Subtitle => &SUBTITLE_WIT_PACKAGES,
             // Unreachable while `ensure_scaffoldable` gates everything else.
             _ => &[],
         }
@@ -332,6 +346,7 @@ WIT package and command enum, so copy `{}` — its Cargo.toml, its `wit/` direct
     fn lib_rs_template(self) -> &'static str {
         match self {
             Self::Notification => NOTIFICATION_LIB_RS_TEMPLATE,
+            Self::Subtitle => SUBTITLE_LIB_RS_TEMPLATE,
             _ => "",
         }
     }
@@ -384,16 +399,48 @@ mod tests {
         );
     }
 
+    /// The subtitle scaffold has to be an `async` component on the 1.1.0 world.
+    ///
+    /// A synchronous handler compiles against neither the entry macro nor the
+    /// world, and a scaffold still pointing at `subtitle-v1.0.0` would generate
+    /// a sync `process` the 1.1.0 host is no longer the only thing that reads.
+    /// Both are asserted here rather than discovered at the contributor's first
+    /// `cargo build`.
     #[test]
-    fn non_notification_families_report_what_to_copy() {
+    fn render_lib_rs_produces_an_async_subtitle_component() {
+        let spec =
+            ScaffoldSpec::new(PluginKindArg::Subtitle, "Example Plugin").expect("build spec");
+        let lib_rs = spec.render_lib_rs().expect("render lib.rs");
+
+        assert!(lib_rs.contains("scryer:subtitle/subtitle-provider@1.1.0"));
+        assert!(lib_rs.contains(
+            "path: [\"wit/host-v1.0.0\", \"wit/runtime-v1.0.0\", \"wit/subtitle-v1.1.0\"]"
+        ));
+        assert!(lib_rs.contains("scryer_plugin_pdk::scryer_subtitle_component_main!"));
+        assert!(lib_rs.contains(
+            "async fn handle_subtitle_command(command: PluginSubtitleCommand) \
+-> PluginSubtitleCommandResult"
+        ));
+        assert!(lib_rs.contains("ProviderDescriptor::Subtitle("));
+        assert!(
+            !lib_rs.contains("subtitle-v1.0.0"),
+            "the scaffold must not vendor the retired sync world"
+        );
+        assert!(
+            !lib_rs.contains("{{") && !lib_rs.contains("}}"),
+            "left template placeholders behind"
+        );
+    }
+
+    #[test]
+    fn unscaffolded_families_report_what_to_copy() {
         for kind in [
             PluginKindArg::Indexer,
             PluginKindArg::DownloadClient,
-            PluginKindArg::Subtitle,
             PluginKindArg::ArchiveExtractor,
         ] {
             let error = ScaffoldSpec::new(kind, "Example Plugin")
-                .expect_err("only notifications are scaffolded");
+                .expect_err("only notifications and subtitles are scaffolded");
             let message = error.to_string();
             assert!(
                 message.contains(kind.reference_plugin()),
@@ -525,48 +572,60 @@ mod tests {
         )
         .expect("write xtask manifest");
 
-        // A sibling plugin supplies the family WIT, exactly as in the repo.
-        let sibling_wit = ctx.repo_root.join("notifications/reference/wit");
-        for package in NOTIFICATION_WIT_PACKAGES {
-            fs::create_dir_all(sibling_wit.join(package)).expect("create sibling wit package");
-            fs::write(
-                sibling_wit.join(package).join("contract.wit"),
-                format!("// {package}\n"),
-            )
-            .expect("write sibling wit");
+        // A sibling plugin supplies the family WIT, exactly as in the repo. Both
+        // scaffoldable families are exercised, because the subtitle scaffold
+        // vendors a third package the notification one does not and a missing
+        // `runtime-v1.0.0` would only surface at the contributor's first build.
+        for (kind, family_dir, packages) in [
+            (
+                PluginKindArg::Notification,
+                "notifications/reference/wit",
+                &NOTIFICATION_WIT_PACKAGES[..],
+            ),
+            (
+                PluginKindArg::Subtitle,
+                "subtitles/reference/wit",
+                &SUBTITLE_WIT_PACKAGES[..],
+            ),
+        ] {
+            let sibling_wit = ctx.repo_root.join(family_dir);
+            for package in packages {
+                fs::create_dir_all(sibling_wit.join(package)).expect("create sibling wit package");
+                fs::write(
+                    sibling_wit.join(package).join("contract.wit"),
+                    format!("// {package}\n"),
+                )
+                .expect("write sibling wit");
+            }
+
+            let seed = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("system time before unix epoch")
+                .as_nanos();
+            let plugin_name = format!("Scaffold Test {seed}");
+            let plugin_dir =
+                scaffold_plugin(&ctx, &ctx.repo_root, kind, &plugin_name).expect("scaffold plugin");
+
+            let cargo_toml = plugin_dir.join("Cargo.toml");
+            let lib_rs = plugin_dir.join("src/lib.rs");
+            assert!(cargo_toml.is_file(), "Cargo.toml should exist");
+            assert!(lib_rs.is_file(), "src/lib.rs should exist");
+            for package in packages {
+                assert!(
+                    plugin_dir
+                        .join("wit")
+                        .join(package)
+                        .join("contract.wit")
+                        .is_file(),
+                    "{package} should be vendored into the {kind:?} scaffold"
+                );
+            }
+
+            let mut fmt_check =
+                repo_cargo_command_in(&ctx, &plugin_dir).expect("cargo fmt command");
+            fmt_check.args(["fmt", "--check", "--manifest-path", "Cargo.toml"]);
+            run_checked(&mut fmt_check).expect("generated crate should be fmt clean");
         }
-
-        let seed = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("system time before unix epoch")
-            .as_nanos();
-        let plugin_name = format!("Scaffold Test {seed}");
-        let plugin_dir = scaffold_plugin(
-            &ctx,
-            &ctx.repo_root,
-            PluginKindArg::Notification,
-            &plugin_name,
-        )
-        .expect("scaffold plugin");
-
-        let cargo_toml = plugin_dir.join("Cargo.toml");
-        let lib_rs = plugin_dir.join("src/lib.rs");
-        assert!(cargo_toml.is_file(), "Cargo.toml should exist");
-        assert!(lib_rs.is_file(), "src/lib.rs should exist");
-        for package in NOTIFICATION_WIT_PACKAGES {
-            assert!(
-                plugin_dir
-                    .join("wit")
-                    .join(package)
-                    .join("contract.wit")
-                    .is_file(),
-                "{package} should be vendored into the scaffold"
-            );
-        }
-
-        let mut fmt_check = repo_cargo_command_in(&ctx, &plugin_dir).expect("cargo fmt command");
-        fmt_check.args(["fmt", "--check", "--manifest-path", "Cargo.toml"]);
-        run_checked(&mut fmt_check).expect("generated crate should be fmt clean");
 
         drop(temp_dir);
     }
