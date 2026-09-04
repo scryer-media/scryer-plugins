@@ -1,11 +1,12 @@
 [package]
 name = "whisper-subtitle-provider"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Whisper subtitle provider with locally generated subtitle output"
 
 [package.metadata.scryer]
+status = "deprecated"
 official = false
 feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 

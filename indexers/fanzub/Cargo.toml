@@ -1,6 +1,6 @@
 [package]
 name = "fanzub-indexer"
-version = "2.1.0"
+version = "2.1.1"
 edition = "2024"
 autolib = false
 license = "GPL-3.0-only"
@@ -9,7 +9,7 @@ description = "Fanzub RSS indexer for anime Usenet releases"
 [package.metadata.scryer]
 official = true
 plugin_id = "fanzub"
-status = "beta"
+status = "deprecated"
 catalog_versions = ["v3"]
 min_scryer_version = "0.18.22"
 feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
