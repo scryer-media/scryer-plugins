@@ -19,7 +19,7 @@
 //! So the family entry macros ([`crate::scryer_subtitle_component_main`] and
 //! its siblings) install a one-line shim over that generated import through
 //! [`install_host_call`], and this module holds nothing but a `fn` pointer.
-//! The pattern is `unrar_rs::component_abi`'s: the crate that owns the
+//! The pattern is `unrar_rs::hooks`'s: the crate that owns the
 //! encoding never learns what the transport is.
 //!
 //! Two consequences worth stating plainly:
