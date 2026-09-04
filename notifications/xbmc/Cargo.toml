@@ -1,6 +1,6 @@
 [package]
 name = "xbmc-notification"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Kodi/XBMC notification plugin"
@@ -8,7 +8,7 @@ description = "Kodi/XBMC notification plugin"
 [package.metadata.scryer]
 official = true
 plugin_id = "xbmc"
-status = "beta"
+status = "deprecated"
 catalog_versions = ["v3"]
 min_scryer_version = "0.18.0"
 feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]

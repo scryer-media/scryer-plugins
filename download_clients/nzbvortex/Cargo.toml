@@ -1,6 +1,6 @@
 [package]
 name = "nzbvortex-download-client"
-version = "1.0.3"
+version = "1.0.4"
 edition = "2024"
 rust-version = "1.97.1"
 autolib = false
@@ -10,7 +10,7 @@ description = "NZBVortex usenet download client plugin"
 [package.metadata.scryer]
 official = true
 plugin_id = "nzbvortex"
-status = "beta"
+status = "deprecated"
 catalog_versions = ["v3"]
 min_scryer_version = "0.18.12"
 feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]

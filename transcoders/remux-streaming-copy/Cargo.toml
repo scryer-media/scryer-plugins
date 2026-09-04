@@ -1,6 +1,6 @@
 [package]
 name = "remux-streaming-copy-transcoder"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Experimental unpublished media transcoder plugin for REMUX-to-streaming-copy workflows"
@@ -9,7 +9,7 @@ description = "Experimental unpublished media transcoder plugin for REMUX-to-str
 # Intentionally not official/published; this future transcoder depends on SDK/runtime hooks that do not exist yet.
 official = false
 plugin_id = "remux-streaming-copy"
-status = "experimental"
+status = "deprecated"
 catalog_versions = ["v3"]
 min_scryer_version = "0.18.0"
 feature_sets = [
