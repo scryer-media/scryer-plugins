@@ -16,7 +16,7 @@
 //! has no exported linear memory for a host to slice, and no stdio protocol, so
 //! both halves move onto the canonical ABI: payloads cross as `list<u8>`, and
 //! the crypto delegation inside unrar-rs is re-pointed at
-//! [`unrar_rs::component_abi`] hooks that this crate wires to the world's
+//! [`unrar_rs::hooks`] that this crate wires to the world's
 //! `crypto` import. Extraction behaviour itself — formats, limits, path safety,
 //! partial-output cleanup — is unchanged.
 //!
@@ -40,7 +40,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::io::{self, Read, Write};
 use std::path::{Component, Path, PathBuf};
-use unrar_rs::component_abi::{HostAesError, HostCryptoHooks, install_host_crypto_hooks};
+use unrar_rs::hooks::{HostAesError, HostCryptoHooks, install_host_crypto_hooks};
 use unrar_rs::{ExtractOptions, RarArchive, RarError};
 
 mod par2;
