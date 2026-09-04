@@ -25,7 +25,7 @@ checksum = "e9d4ee0d472d1cd2e28c97dfa124b3d8d992e10eb0a035f33f5d12e3a177ba3b"
 
 [[package]]
 name = "amenzb-subtitles"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "base64 0.23.1",
  "newznab-common",
