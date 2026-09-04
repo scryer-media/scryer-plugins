@@ -136,8 +136,11 @@ jobs:
           install -d xtask/target/debug
           install -m 0755 xtask-artifact/xtask xtask/target/debug/xtask
 
-      - name: Install WASI SDK for enhanced subtitle sync
-        if: ${{ matrix.plugin_id == 'enhanced-subtitle-sync' }}
+      # Only the plugins that compile C sources need this. Every other official
+      # plugin — including the migrated `wasm32-wasip2` components — builds
+      # from pure Rust and needs nothing but the rustup target above.
+      - name: Install WASI SDK for native plugin libraries
+        if: ${{ matrix.plugin_id == 'enhanced-subtitle-sync' || matrix.plugin_id == 'archive-extraction' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -161,6 +164,14 @@ jobs:
             echo "LLVM_NM=$wasi_sdk_root/bin/llvm-nm"
             echo "LLVM_RANLIB=$wasi_sdk_root/bin/llvm-ranlib"
             echo "LLVM_STRIP=$wasi_sdk_root/bin/llvm-strip"
+            # Both plugins here build for `wasm32-wasip2` now — archive
+            # extractors and subtitles are component families — and their C
+            # sources are compiled by cc-rs, which resolves its compiler per
+            # target and otherwise falls back to whatever `clang` is first on
+            # PATH. Naming the WASI SDK toolchain for the component target keeps
+            # that resolution independent of PATH order.
+            echo "CC_wasm32_wasip2=$wasi_sdk_root/bin/clang"
+            echo "AR_wasm32_wasip2=$wasi_sdk_root/bin/llvm-ar"
           } >> "$GITHUB_ENV"
 
       - name: Prefetch plugin release dependencies
