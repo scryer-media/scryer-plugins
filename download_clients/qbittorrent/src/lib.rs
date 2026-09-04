@@ -238,7 +238,7 @@ fn build_descriptor_json() -> Result<String, Error> {
 
 pub fn scryer_download_add(input: String) -> FnResult<String> {
     let request: PluginDownloadClientAddRequest = serde_json::from_str(&input)?;
-    let config = match QbittorrentConfig::from_extism() {
+    let config = match QbittorrentConfig::from_config() {
         Ok(config) => config,
         Err(err) => {
             return plugin_error_response::<PluginDownloadClientAddResponse>(
@@ -414,7 +414,7 @@ fn handle_download_add(
 }
 
 pub fn scryer_download_list_queue(input: String) -> FnResult<String> {
-    let config = QbittorrentConfig::from_extism()?;
+    let config = QbittorrentConfig::from_config()?;
     let scope = scoped_feedback_request(&input).map(|(scope, _)| scope);
     let torrents = list_torrents(&config, Some("all"))?
         .into_iter()
@@ -464,7 +464,7 @@ fn defers_to_global_limits(torrent: &QbTorrent) -> bool {
 }
 
 pub fn scryer_download_list_completed(input: String) -> FnResult<String> {
-    let config = QbittorrentConfig::from_extism()?;
+    let config = QbittorrentConfig::from_config()?;
     if let Some((scope, _)) = scoped_feedback_request(&input) {
         return Ok(serde_json::to_string(&PluginResult::Ok(
             scoped_completed_downloads(&config, &scope, None)?,
@@ -476,7 +476,7 @@ pub fn scryer_download_list_completed(input: String) -> FnResult<String> {
 }
 
 pub fn scryer_download_list_recent_completed(input: String) -> FnResult<String> {
-    let config = QbittorrentConfig::from_extism()?;
+    let config = QbittorrentConfig::from_config()?;
     if let Some((scope, limit)) = scoped_feedback_request(&input) {
         return Ok(serde_json::to_string(&PluginResult::Ok(
             scoped_completed_downloads(&config, &scope, limit)?,
@@ -667,7 +667,7 @@ where
 }
 
 pub fn scryer_download_list_history(_input: String) -> FnResult<String> {
-    let config = QbittorrentConfig::from_extism()?;
+    let config = QbittorrentConfig::from_config()?;
     Ok(serde_json::to_string(&PluginResult::Ok(
         completed_history_items(&config)?,
     ))?)
@@ -701,7 +701,7 @@ fn handle_download_control(
         }));
     }
 
-    let config = QbittorrentConfig::from_extism()?;
+    let config = QbittorrentConfig::from_config()?;
 
     match request.action {
         DownloadControlAction::Pause | DownloadControlAction::Resume => {
@@ -771,7 +771,7 @@ fn mark_imported_non_destructive(input: String) -> FnResult<String> {
         );
     }
 
-    let config = QbittorrentConfig::from_extism()?;
+    let config = QbittorrentConfig::from_config()?;
 
     let Some(torrent) = torrent_by_hash(&config, &hash)? else {
         return Ok(serde_json::to_string(&PluginResult::Ok(()))?);
@@ -821,7 +821,7 @@ fn preserve_routing_category_tag(
 }
 
 pub fn scryer_download_status(_input: String) -> FnResult<String> {
-    let config = QbittorrentConfig::from_extism()?;
+    let config = QbittorrentConfig::from_config()?;
     let version = get_text(&config, "/app/version")?;
     let preferences: QbPreferences = get_json(&config, "/app/preferences")?;
     let categories: HashMap<String, QbCategory> = get_json(&config, "/torrents/categories")?;
@@ -872,7 +872,7 @@ pub fn scryer_download_status(_input: String) -> FnResult<String> {
 }
 
 pub fn scryer_download_test_connection(_input: String) -> FnResult<String> {
-    let config = QbittorrentConfig::from_extism()?;
+    let config = QbittorrentConfig::from_config()?;
     var::remove(COOKIE_VAR_KEY)?;
     let version = get_text(&config, "/app/version")?;
     Ok(serde_json::to_string(&PluginResult::Ok(version))?)
@@ -901,7 +901,7 @@ impl QbittorrentConfig {
         !self.username.trim().is_empty() && !self.password.is_empty()
     }
 
-    fn from_extism() -> Result<Self, Error> {
+    fn from_config() -> Result<Self, Error> {
         let base_url = config::get("base_url")
             .map_err(|e| Error::msg(format!("missing config base_url: {e}")))?
             .unwrap_or_default();
@@ -2500,68 +2500,6 @@ fn is_localhost_url(url: &str) -> bool {
 }
 
 #[cfg(test)]
-mod extism_host_stubs {
-    #[unsafe(no_mangle)]
-    pub extern "C" fn alloc(_len: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn config_get(_ptr: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn http_headers() -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn http_request(_request: u64, _body: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn http_status_code() -> u64 {
-        200
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn length(_offset: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn length_unsafe(_offset: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn load_u64(_offset: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn load_u8(_offset: u64) -> u8 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn store_u64(_offset: u64, _value: u64) {}
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn store_u8(_offset: u64, _value: u8) {}
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn var_get(_ptr: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn var_set(_ptr: u64, _value: u64) {}
-}
-
-#[cfg(test)]
 mod tests {
     use super::*;
 
@@ -3773,16 +3711,62 @@ mod tests {
     }
 }
 
-scryer_plugin_pdk::scryer_download_client_bridge_main!(
-    describe = scryer_describe,
-    add = scryer_download_add,
-    list_queue = scryer_download_list_queue,
-    list_history = scryer_download_list_history,
-    list_completed = scryer_download_list_completed,
-    list_recent_completed = Some(scryer_download_list_recent_completed),
-    control = scryer_download_control,
-    mark_imported = scryer_download_mark_imported,
-    mark_imported_non_destructive = Some(scryer_download_mark_imported_non_destructive),
-    status = scryer_download_status,
-    test_connection = scryer_download_test_connection,
+// ---------------------------------------------------------------------------
+// `scryer:download-client/download-client@1.0.0`
+// ---------------------------------------------------------------------------
+//
+// Transport only. Every operation above is untouched: the same URLs, the same
+// SID cookie in plugin state, the same 204-bodied login, the same category
+// 409 handling. What changed is how the host reaches them — a `process`
+// export carrying the very command envelope the Preview 1 runner already
+// moved over stdin/stdout, instead of a `main` reading stdin.
+//
+// The function table is the single source of truth for both exports, so
+// `describe` and `process` cannot drift apart, and the operation semantics —
+// merged failed history, scoped listings, non-destructive mark-imported —
+// stay in the PDK bridge where every client shares them.
+
+wit_bindgen::generate!({
+    // Fully qualified: `path` resolves two packages, so a bare world name is
+    // ambiguous even though only one of them declares a world.
+    world: "scryer:download-client/download-client@1.0.0",
+    // The shared `scryer:host` package is listed first so the family package's
+    // `import scryer:host/services@1.0.0` resolves against it.
+    path: ["wit/host-v1.0.0", "wit/download-client-v1.0.0"],
+    // The host package is its own WIT package, so wit-bindgen asks explicitly
+    // whether to generate for it. Yes: the PDK holds only a `fn` pointer and
+    // the entry macro binds it to this module's
+    // `scryer::host::services::host-call`.
+    generate_all,
+});
+
+fn functions() -> LegacyDownloadClientFunctions {
+    LegacyDownloadClientFunctions {
+        describe: scryer_describe,
+        add: scryer_download_add,
+        list_queue: scryer_download_list_queue,
+        list_history: scryer_download_list_history,
+        list_completed: scryer_download_list_completed,
+        list_recent_completed: Some(scryer_download_list_recent_completed),
+        control: scryer_download_control,
+        mark_imported: scryer_download_mark_imported,
+        mark_imported_non_destructive: Some(scryer_download_mark_imported_non_destructive),
+        status: scryer_download_status,
+        test_connection: scryer_download_test_connection,
+    }
+}
+
+fn build_descriptor() -> PluginDescriptor {
+    legacy_download_client_descriptor(&functions())
+}
+
+fn handle_download_client_command(
+    command: PluginDownloadClientCommand,
+) -> PluginDownloadClientCommandResult {
+    bridge_download_client_command(&functions(), command)
+}
+
+scryer_plugin_pdk::scryer_download_client_component_main!(
+    descriptor = build_descriptor,
+    handler = handle_download_client_command,
 );

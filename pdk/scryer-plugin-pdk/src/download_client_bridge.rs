@@ -1,16 +1,17 @@
-//! Temporary source bridge for the DLC-first command migration.
+//! Source bridge for the download-client command surface.
 //!
 //! The first-party clients keep their operation implementations while this
 //! bridge turns the former JSON export functions into the typed command
-//! protocol. It is intentionally PDK-owned so every migrated client has the
-//! same exact completed-download lookup and no one reintroduces a raw path API.
+//! protocol their component entry macro dispatches. It is intentionally
+//! PDK-owned so every client has the same exact completed-download lookup and
+//! no one reintroduces a raw path API.
 
 use std::collections::HashMap;
 
 use crate::sdk;
 use crate::{
     FnResult, PluginDownloadClientCommand, PluginDownloadClientCommandResult,
-    PluginDownloadGetCompletedRequest, run_download_client_plugin_with_descriptor,
+    PluginDownloadGetCompletedRequest,
 };
 
 pub struct LegacyDownloadClientFunctions {
@@ -35,15 +36,15 @@ pub fn legacy_download_client_descriptor(
     serde_json::from_str(&raw).expect("first-party command DLC descriptor must be valid")
 }
 
-pub fn run_download_client_bridge_with_descriptor(functions: LegacyDownloadClientFunctions) -> ! {
-    let descriptor = legacy_download_client_descriptor(&functions);
-    run_download_client_plugin_with_descriptor(
-        move || descriptor,
-        move |command| bridge_download_client_command(&functions, command),
-    )
-}
-
-fn bridge_download_client_command(
+/// Dispatch one download-client command against a legacy function table.
+///
+/// Public because the bridge is transport-independent: a client on
+/// `scryer:download-client/download-client@1.0.0` keeps this bridge verbatim
+/// and hands it to
+/// [`crate::scryer_download_client_component_main!`] as its handler, so the
+/// operation semantics — merged failed history, scoped listings,
+/// non-destructive mark-imported — stay in exactly one place.
+pub fn bridge_download_client_command(
     functions: &LegacyDownloadClientFunctions,
     command: PluginDownloadClientCommand,
 ) -> PluginDownloadClientCommandResult {

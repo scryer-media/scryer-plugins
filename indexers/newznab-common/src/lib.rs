@@ -15,9 +15,8 @@ use std::time::SystemTime;
 use quick_xml::escape::unescape;
 use quick_xml::events::{Event, attributes::Attribute};
 use quick_xml::{Reader, XmlVersion};
-use scryer_plugin_pdk::component::{
-    self, LogLevel, StructuredPluginError, structured_plugin_error,
-};
+use scryer_plugin_pdk::component::{self, StructuredPluginError, structured_plugin_error};
+use scryer_plugin_pdk::log::LogLevel;
 use scryer_plugin_pdk::*;
 pub use scryer_plugin_sdk::command::{PluginActionRequest, PluginActionResponse};
 pub use scryer_plugin_sdk::{
@@ -35,9 +34,16 @@ use serde::{Deserialize, Serialize};
 use unicode_normalization::{UnicodeNormalization, char::is_combining_mark};
 use url::Url;
 
+/// Emit one diagnostic through the PDK's world-agnostic sink.
+///
+/// Deliberately *not* `component::log`: naming the indexer world's `log` import
+/// keeps it alive in any artifact that can reach this crate, and this engine is
+/// linked into family components too. `scryer_indexer_component_main!` installs
+/// the indexer host as the sink, so an indexer's lines land exactly where they
+/// did before.
 macro_rules! log {
     ($level:expr, $($argument:tt)*) => {
-        component::log($level, format!($($argument)*))
+        scryer_plugin_pdk::log::log($level, &format!($($argument)*))
     };
 }
 
@@ -2916,16 +2922,16 @@ fn parse_error_xml(body: &str) -> Option<(String, String)> {
     let mut buf = Vec::new();
     loop {
         match reader.read_event_into(&mut buf) {
-            Ok(Event::Empty(ref e)) | Ok(Event::Start(ref e)) if e.name().as_ref() == b"error" => {
+            Ok(Event::Empty(ref e)) | Ok(Event::Start(ref e)) if e.name().as_ref() == "error" => {
                 let mut code = None;
                 let mut description = None;
                 for attr in e.attributes().flatten() {
                     match attr.key.as_ref() {
-                        b"code" => {
-                            code = String::from_utf8(attr.value.to_vec()).ok();
+                        "code" => {
+                            code = Some(attr.value.to_string());
                         }
-                        b"description" => {
-                            description = String::from_utf8(attr.value.to_vec()).ok();
+                        "description" => {
+                            description = Some(attr.value.to_string());
                         }
                         _ => {}
                     }
@@ -2937,15 +2943,11 @@ fn parse_error_xml(body: &str) -> Option<(String, String)> {
                     ));
                 }
             }
-            Ok(Event::Empty(ref e)) | Ok(Event::Start(ref e))
-                if e.name().as_ref() == b"account" =>
-            {
+            Ok(Event::Empty(ref e)) | Ok(Event::Start(ref e)) if e.name().as_ref() == "account" => {
                 for attr in e.attributes().flatten() {
-                    if attr.key.as_ref() == b"status" {
-                        if let Ok(status) = String::from_utf8(attr.value.to_vec()) {
-                            if let Some(error) = error_from_account_status(&status) {
-                                return Some(error);
-                            }
+                    if attr.key.as_ref() == "status" {
+                        if let Some(error) = error_from_account_status(attr.value.as_ref()) {
+                            return Some(error);
                         }
                     }
                 }
@@ -3129,7 +3131,7 @@ fn parse_newznab_xml(
     loop {
         match reader.read_event_into(&mut buf) {
             Ok(Event::Start(ref e)) => {
-                let tag_name = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag_name = e.name().as_ref().to_string();
                 if !saw_rss_root {
                     if tag_name != "rss" {
                         return Err(Error::msg(format!(
@@ -3176,30 +3178,21 @@ fn parse_newznab_xml(
             }
             Ok(Event::Empty(ref e)) if !in_item => {
                 // Parse <limits> or <newznab:limits> at channel level
-                let name_bytes = e.name().as_ref().to_vec();
-                let local_name = String::from_utf8_lossy(&name_bytes);
+                let local_name = e.name().as_ref().to_string();
                 if local_name == "limits" || local_name.ends_with(":limits") {
                     for a in e.attributes().flatten() {
                         match a.key.as_ref() {
-                            b"api_current" => {
-                                api_limits.api_current = String::from_utf8(a.value.to_vec())
-                                    .ok()
-                                    .and_then(|v| v.parse().ok());
+                            "api_current" => {
+                                api_limits.api_current = a.value.parse().ok();
                             }
-                            b"api_max" => {
-                                api_limits.api_max = String::from_utf8(a.value.to_vec())
-                                    .ok()
-                                    .and_then(|v| v.parse().ok());
+                            "api_max" => {
+                                api_limits.api_max = a.value.parse().ok();
                             }
-                            b"grab_current" => {
-                                api_limits.grab_current = String::from_utf8(a.value.to_vec())
-                                    .ok()
-                                    .and_then(|v| v.parse().ok());
+                            "grab_current" => {
+                                api_limits.grab_current = a.value.parse().ok();
                             }
-                            b"grab_max" => {
-                                api_limits.grab_max = String::from_utf8(a.value.to_vec())
-                                    .ok()
-                                    .and_then(|v| v.parse().ok());
+                            "grab_max" => {
+                                api_limits.grab_max = a.value.parse().ok();
                             }
                             _ => {}
                         }
@@ -3208,11 +3201,11 @@ fn parse_newznab_xml(
             }
             Ok(Event::Empty(ref e)) if in_item => {
                 let qname = e.name();
-                let local_name = String::from_utf8_lossy(qname.as_ref());
+                let local_name = qname.as_ref();
                 let is_attr = local_name == "attr" || local_name.ends_with(":attr");
                 if is_attr {
                     push_attr_element(e, &mut attrs);
-                } else if qname.as_ref() == b"enclosure" {
+                } else if qname.as_ref() == "enclosure" {
                     parse_enclosure_attrs(
                         e,
                         &mut download_url,
@@ -3223,11 +3216,7 @@ fn parse_newznab_xml(
             }
             Ok(Event::Text(ref e)) if in_item => {
                 if let Some(ref tag) = current_tag {
-                    let text = e
-                        .decode()
-                        .ok()
-                        .and_then(|decoded| unescape(&decoded).ok().map(|text| text.to_string()))
-                        .unwrap_or_default();
+                    let text = unescape(e).map(|text| text.to_string()).unwrap_or_default();
                     match tag.as_str() {
                         "title" => title = Some(text),
                         "guid" => guid = Some(text),
@@ -3239,7 +3228,7 @@ fn parse_newznab_xml(
                 }
             }
             Ok(Event::End(ref e)) => {
-                let tag_name = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag_name = e.name().as_ref().to_string();
                 if tag_name == "rss" {
                     saw_rss_end = true;
                 } else if tag_name == "channel" {
@@ -3349,11 +3338,11 @@ fn push_attr_element(e: &quick_xml::events::BytesStart<'_>, attrs: &mut Vec<(Str
     let mut attr_value = None;
     for a in e.attributes().flatten() {
         match a.key.as_ref() {
-            b"name" => {
-                attr_name = String::from_utf8(a.value.to_vec()).ok();
+            "name" => {
+                attr_name = Some(a.value.to_string());
             }
-            b"value" => {
-                attr_value = String::from_utf8(a.value.to_vec()).ok();
+            "value" => {
+                attr_value = Some(a.value.to_string());
             }
             _ => {}
         }
@@ -3375,14 +3364,14 @@ fn parse_enclosure_attrs(
 
     for attr in e.attributes().flatten() {
         match attr.key.as_ref() {
-            b"url" => {
+            "url" => {
                 candidate_url = normalized_attr_value(&attr);
             }
-            b"length" => {
+            "length" => {
                 candidate_size = normalized_attr_value(&attr)
                     .and_then(|v| v.replace(',', "").parse::<i64>().ok());
             }
-            b"type" => {
+            "type" => {
                 candidate_type = normalized_attr_value(&attr);
             }
             _ => {}
@@ -3486,34 +3475,34 @@ fn parse_categories(body: &[u8]) -> Vec<NewznabCategoryOption> {
 
     loop {
         match reader.read_event_into(&mut buf) {
-            Ok(Event::Start(event)) if event.name().as_ref() == b"categories" => {
+            Ok(Event::Start(event)) if event.name().as_ref() == "categories" => {
                 in_categories = true;
             }
-            Ok(Event::End(event)) if event.name().as_ref() == b"categories" => {
+            Ok(Event::End(event)) if event.name().as_ref() == "categories" => {
                 if let Some(category) = current_category.take() {
                     categories.push(category);
                 }
                 break;
             }
-            Ok(Event::Start(event)) if in_categories && event.name().as_ref() == b"category" => {
+            Ok(Event::Start(event)) if in_categories && event.name().as_ref() == "category" => {
                 if let Some(category) = current_category.take() {
                     categories.push(category);
                 }
                 current_category = category_from_attrs(&event);
             }
-            Ok(Event::Empty(event)) if in_categories && event.name().as_ref() == b"category" => {
+            Ok(Event::Empty(event)) if in_categories && event.name().as_ref() == "category" => {
                 if let Some(category) = category_from_attrs(&event) {
                     categories.push(category);
                 }
             }
-            Ok(Event::Empty(event)) if in_categories && event.name().as_ref() == b"subcat" => {
+            Ok(Event::Empty(event)) if in_categories && event.name().as_ref() == "subcat" => {
                 if let (Some(category), Some(subcategory)) =
                     (current_category.as_mut(), category_from_attrs(&event))
                 {
                     category.subcategories.push(subcategory);
                 }
             }
-            Ok(Event::Start(event)) if in_categories && event.name().as_ref() == b"subcat" => {
+            Ok(Event::Start(event)) if in_categories && event.name().as_ref() == "subcat" => {
                 if let (Some(category), Some(subcategory)) =
                     (current_category.as_mut(), category_from_attrs(&event))
                 {
@@ -3536,8 +3525,8 @@ fn parse_categories(body: &[u8]) -> Vec<NewznabCategoryOption> {
 }
 
 fn category_from_attrs(event: &quick_xml::events::BytesStart<'_>) -> Option<NewznabCategoryOption> {
-    let id = attr_value(event, b"id")?.parse::<i64>().ok()?;
-    let name = attr_value(event, b"name").unwrap_or_else(|| id.to_string());
+    let id = attr_value(event, "id")?.parse::<i64>().ok()?;
+    let name = attr_value(event, "name").unwrap_or_else(|| id.to_string());
     Some(NewznabCategoryOption {
         id,
         name,
@@ -3545,7 +3534,7 @@ fn category_from_attrs(event: &quick_xml::events::BytesStart<'_>) -> Option<Newz
     })
 }
 
-fn attr_value(event: &quick_xml::events::BytesStart<'_>, name: &[u8]) -> Option<String> {
+fn attr_value(event: &quick_xml::events::BytesStart<'_>, name: &str) -> Option<String> {
     event
         .attributes()
         .flatten()

@@ -1,0 +1,189 @@
+name: cardigann-definitions
+
+# Refreshes the Cardigann plugin's baked definition corpus from upstream
+# Prowlarr/Indexers. The engine's own admission gate decides what may be baked,
+# so this job never ships a definition this engine cannot execute; anything that
+# fails is excluded and listed in the pull request body for a human to read.
+#
+# It opens a pull request and never writes to a protected branch: the version
+# bump it makes is only a patch bump on the crate, and publishing still goes
+# through the normal release-plugin-v3 path afterwards.
+
+on:
+  workflow_dispatch:
+    inputs:
+      definitions_ref:
+        description: "Prowlarr/Indexers ref to sync from"
+        required: false
+        default: master
+        type: string
+  schedule:
+    # Sundays, early UTC — the corpus moves slowly and this only opens a PR.
+    - cron: "17 5 * * 0"
+
+permissions: read-all
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+env:
+  DEFINITIONS_REF: ${{ inputs.definitions_ref || 'master' }}
+  CARDIGANN_CRATE_DIR: indexers/cardigann-engine
+  SYNC_BRANCH: chore/cardigann-definitions-sync
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check out the Prowlarr definition corpus
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Prowlarr/Indexers
+          ref: ${{ env.DEFINITIONS_REF }}
+          path: prowlarr-indexers
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        with:
+          toolchain: 1.97.1
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+
+      - name: Record the upstream corpus commit
+        id: upstream
+        working-directory: prowlarr-indexers
+        run: |
+          set -euo pipefail
+          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Sync the bundled definitions
+        working-directory: xtask
+        run: |
+          set -euo pipefail
+          cargo run --locked -- cardigann sync-definitions \
+            --source "$GITHUB_WORKSPACE/prowlarr-indexers/definitions/v11" \
+            --report "$RUNNER_TEMP/cardigann-sync-report.json"
+
+      - name: Decide whether anything changed
+        id: changed
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- "$CARDIGANN_CRATE_DIR"; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump the crate patch version
+        if: ${{ steps.changed.outputs.changed == 'true' }}
+        id: version
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import os
+          import re
+          from pathlib import Path
+
+          manifest = Path(os.environ["CARDIGANN_CRATE_DIR"], "Cargo.toml")
+          text = manifest.read_text(encoding="utf-8")
+          match = re.search(r'(?m)^version = "(\d+)\.(\d+)\.(\d+)"$', text)
+          if match is None:
+              raise SystemExit("could not find the crate version")
+          major, minor, patch = (int(part) for part in match.groups())
+          previous = f"{major}.{minor}.{patch}"
+          bumped = f"{major}.{minor}.{patch + 1}"
+          manifest.write_text(
+              text[: match.start()] + f'version = "{bumped}"' + text[match.end() :],
+              encoding="utf-8",
+          )
+          print(f"previous={previous}")
+          print(f"bumped={bumped}")
+          PY
+          # Keep the crate's committed lockfile in step with its own version so
+          # every `--locked` build in CI still resolves.
+          cargo update --manifest-path "$CARDIGANN_CRATE_DIR/Cargo.toml" --workspace
+
+      - name: Re-check the crate against the refreshed corpus
+        if: ${{ steps.changed.outputs.changed == 'true' }}
+        working-directory: ${{ env.CARDIGANN_CRATE_DIR }}
+        run: cargo test --locked
+
+      - name: Render the pull request body
+        if: ${{ steps.changed.outputs.changed == 'true' }}
+        env:
+          UPSTREAM_COMMIT: ${{ steps.upstream.outputs.commit }}
+          PREVIOUS_VERSION: ${{ steps.version.outputs.previous }}
+          BUMPED_VERSION: ${{ steps.version.outputs.bumped }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' > "$RUNNER_TEMP/pr-body.md"
+          import json
+          import os
+
+          report = json.load(open(os.environ["RUNNER_TEMP"] + "/cardigann-sync-report.json"))
+          commit = os.environ["UPSTREAM_COMMIT"]
+          excluded = report["excluded"]
+
+          print("Regenerated the bundled Cardigann definition corpus from")
+          print(f"[Prowlarr/Indexers@{commit[:12]}](https://github.com/Prowlarr/Indexers/commit/{commit}).")
+          print()
+          print(f"- Crate version: `{os.environ['PREVIOUS_VERSION']}` -> `{os.environ['BUMPED_VERSION']}`")
+          print(f"- Candidates: {report['candidates']}")
+          print(f"- Baked: {report['accepted']}")
+          print(f"- Excluded: {len(excluded)}")
+          print()
+          if excluded:
+              print("### Excluded definitions")
+              print()
+              print("These did not parse, validate, or reach a first HTTP request under this")
+              print("engine, so they were left out rather than shipped broken.")
+              print()
+              print("| Definition | Reason |")
+              print("| --- | --- |")
+              for item in excluded:
+                  reason = item["reason"].replace("|", "\\|").replace("\n", " ")
+                  print(f"| `{item['file']}` | {reason} |")
+          else:
+              print("Every candidate definition cleared the gate.")
+          print()
+          print("Publishing still goes through the normal plugin release path once this merges.")
+          PY
+
+      - name: Open the sync pull request
+        if: ${{ steps.changed.outputs.changed == 'true' }}
+        env:
+          UPSTREAM_SHORT: ${{ steps.upstream.outputs.short }}
+          BUMPED_VERSION: ${{ steps.version.outputs.bumped }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$SYNC_BRANCH"
+          git add "$CARDIGANN_CRATE_DIR"
+          git commit -m "chore: sync bundled Cardigann definitions to ${UPSTREAM_SHORT}"
+          git push --force-with-lease --set-upstream origin "$SYNC_BRANCH"
+          existing="$(gh pr list --head "$SYNC_BRANCH" --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh pr edit "$existing" \
+              --title "chore: sync bundled Cardigann definitions (${BUMPED_VERSION})" \
+              --body-file "$RUNNER_TEMP/pr-body.md"
+          else
+            gh pr create \
+              --title "chore: sync bundled Cardigann definitions (${BUMPED_VERSION})" \
+              --body-file "$RUNNER_TEMP/pr-body.md" \
+              --base "${GITHUB_REF_NAME}"
+          fi
+
+      - name: Report an unchanged corpus
+        if: ${{ steps.changed.outputs.changed != 'true' }}
+        run: echo "The bundled Cardigann definitions already match upstream."

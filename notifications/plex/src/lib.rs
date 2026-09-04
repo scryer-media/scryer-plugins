@@ -1,5 +1,24 @@
-use extism_pdk::*;
 use notify_common::*;
+
+wit_bindgen::generate!({
+    // Fully qualified: `path` resolves two packages, so a bare world name is
+    // ambiguous even though only one of them declares a world.
+    world: "scryer:notification/notification@1.0.0",
+    // Two packages, two paths, matching the host's own bindgen: the shared
+    // `scryer:host` package is listed first so the family package's
+    // `import scryer:host/services@1.0.0` resolves against it.
+    path: ["wit/host-v1.0.0", "wit/notification-v1.0.0"],
+    // The shared host package lives in its own WIT package, so wit-bindgen
+    // asks explicitly whether to generate for it. Yes: the PDK holds only a
+    // `fn` pointer and the entry macro binds it to this module's
+    // `scryer::host::services::host-call`.
+    generate_all,
+});
+
+scryer_plugin_pdk::scryer_notification_component_main!(
+    descriptor = build_descriptor,
+    handler = handle_notification_command,
+);
 
 const PLEX_CLIENT_IDENTIFIER: &str = "scryer";
 const PLEX_PRODUCT: &str = "Scryer";
@@ -10,8 +29,7 @@ const PLEX_PINS_URL: &str = "https://plex.tv/api/v2/pins";
 const PLEX_RESOURCES_URL: &str = "https://plex.tv/api/v2/resources";
 const PLEX_SIGN_IN_URL: &str = "https://app.plex.tv/auth/#!";
 
-#[plugin_fn]
-pub fn scryer_describe(_input: String) -> FnResult<String> {
+fn build_descriptor() -> PluginDescriptor {
     let mut descriptor = build_notification_descriptor(
         "plex",
         "Plex Media Server",
@@ -24,7 +42,7 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
         false,
     );
     add_notification_allowed_hosts(&mut descriptor, &["app.plex.tv", "plex.tv"]);
-    Ok(serde_json::to_string(&descriptor)?)
+    descriptor
 }
 
 fn config_fields() -> Vec<ConfigFieldDef> {
@@ -125,50 +143,36 @@ fn config_fields() -> Vec<ConfigFieldDef> {
     ]
 }
 
-#[plugin_fn]
-pub fn scryer_notification_send(input: String) -> FnResult<String> {
-    let req: PluginNotificationRequest = serde_json::from_str(&input)?;
+fn send_notification(req: &PluginNotificationRequest) -> FnResult<PluginNotificationResponse> {
     if let Err(message) = validate_plex_config() {
-        return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
-            message,
-            Some("invalid_config".to_string()),
-        )))?);
+        return Ok(error_response(message, Some("invalid_config".to_string())));
     }
-    if !config_bool("update_library") || !should_update_library(&req) {
-        return Ok(serde_json::to_string(&PluginResult::Ok(ok_response()))?);
+    if !config_bool("update_library") || !should_update_library(req) {
+        return Ok(ok_response());
     }
     let path_mappings = match configured_path_mappings() {
         Ok(mappings) => mappings,
         Err(message) => {
-            return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
-                message,
-                Some("invalid_config".to_string()),
-            )))?);
+            return Ok(error_response(message, Some("invalid_config".to_string())));
         }
     };
-    let path = update_path(&req).map(|path| map_path(&path, &path_mappings));
-    let section_types = section_types_for_request(&req);
+    let path = update_path(req).map(|path| map_path(&path, &path_mappings));
+    let section_types = section_types_for_request(req);
     let targets = match refresh_targets(path.as_deref(), &section_types) {
         Ok(targets) => targets,
         Err(error) => {
-            return Ok(serde_json::to_string(&PluginResult::Ok(error_response(
-                error.to_string(),
-                None,
-            )))?);
+            return Ok(error_response(error.to_string(), None));
         }
     };
     let mut responses = Vec::new();
     for target in targets {
         responses.push(refresh_section(&target.section_id, target.path.as_deref()));
     }
-    Ok(serde_json::to_string(&PluginResult::Ok(merge_responses(
-        responses,
-    )))?)
+    Ok(merge_responses(responses))
 }
 
-#[plugin_fn]
-pub fn scryer_notification_action(input: String) -> FnResult<String> {
-    let request: serde_json::Value = serde_json::from_str(&input)?;
+fn handle_action(action: &PluginActionRequest) -> FnResult<serde_json::Value> {
+    let request = action_request_value(action);
     let response = match action_name(&request).as_deref() {
         Some("startOAuth") => start_oauth(),
         Some("continueOAuth") => continue_oauth(&request)?,
@@ -178,7 +182,7 @@ pub fn scryer_notification_action(input: String) -> FnResult<String> {
         _ => serde_json::json!({}),
     };
 
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+    Ok(response)
 }
 
 fn start_oauth() -> serde_json::Value {
@@ -863,6 +867,60 @@ fn host_from_uri(uri: &str) -> Option<String> {
 
 fn locality_hint(local: bool) -> &'static str {
     if local { "Local" } else { "Remote" }
+}
+
+/// The world's single `process` entry, dispatching the SDK's notification
+/// command enum.
+///
+/// One arm per operation this plugin exports — and this channel
+/// exported three, so `action` is a real operation here rather than the in-band
+/// `Unsupported` most channels answer with. Its OAuth handlers are unchanged;
+/// only the envelope around them moved.
+///
+/// A failure in either operation used to be a hard ABI fault: the
+/// host saw a string and a generic ABI error, and could not tell a
+/// misconfigured channel from a broken one. Both are now typed
+/// `PluginResult::Err`, which also means a failed OAuth exchange no longer
+/// takes the component instance down with it.
+///
+/// A configuration failure used to be a hard ABI fault — the host
+/// saw a string and a generic ABI error, and could not tell a misconfigured
+/// channel from a broken one. It is now a typed `PluginResult::Err`.
+fn handle_notification_command(
+    command: PluginNotificationCommand,
+) -> PluginNotificationCommandResult {
+    match command {
+        PluginNotificationCommand::Send(request) => {
+            PluginNotificationCommandResult::Send(match send_notification(&request) {
+                Ok(response) => PluginResult::Ok(response),
+                Err(error) => PluginResult::Err(config_error(error)),
+            })
+        }
+        PluginNotificationCommand::Action(request) => {
+            PluginNotificationCommandResult::Action(match handle_action(&request) {
+                Ok(payload) => PluginResult::Ok(PluginActionResponse { payload }),
+                Err(error) => PluginResult::Err(config_error(error)),
+            })
+        }
+    }
+}
+
+/// Rebuild the JSON document the action handlers have always read.
+///
+/// The old `scryer_notification_action` received one opaque JSON string:
+/// the action name alongside a `query` object of parameters. The command
+/// envelope splits those into `PluginActionRequest::action` and `::payload`,
+/// and the host fills the payload with exactly `{"query": {..}}`. Re-joining
+/// them here keeps `action_name`, `action_param` and every handler below
+/// byte-for-byte unchanged, so the OAuth flows are not re-derived as part of a
+/// transport migration.
+fn action_request_value(request: &PluginActionRequest) -> serde_json::Value {
+    let mut value = match request.payload.clone() {
+        value @ serde_json::Value::Object(_) => value,
+        other => serde_json::json!({ "query": other }),
+    };
+    value["action"] = serde_json::Value::String(request.action.clone());
+    value
 }
 
 #[cfg(test)]

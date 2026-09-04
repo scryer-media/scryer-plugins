@@ -1,19 +1,90 @@
-use extism_pdk::*;
+//! Generic webhook notifications, as a WASI Preview 2 component.
+//!
+//! The plugin implements `scryer:notification/notification@1.0.0`: two exports
+//! carrying UTF-8 JSON (`describe` returns a `PluginDescriptor`, `process`
+//! exchanges a `PluginCommandRequest` for a `PluginCommandResponse`), plus the
+//! shared `scryer:host/services@1.0.0` import that carries config and HTTP.
+//!
+//! The delivery logic is untouched. What changed is the transport: the two
+//! exported entry points collapse into one `process` export dispatching the SDK's
+//! `PluginNotificationCommand`, and `config::get` / `http::request` now reach
+//! Scryer through [`scryer_plugin_pdk`] rather than the removed core-module
+//! host ABI.
+
+use scryer_plugin_pdk::sdk::command::{PluginNotificationCommand, PluginNotificationCommandResult};
+use scryer_plugin_pdk::{FnResult, HttpRequest, config, http};
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldOption, ConfigFieldType, NotificationCapabilities,
     NotificationDeliveryMode, NotificationDescriptor, NotificationEventType,
-    NotificationPayloadFormat, PluginDescriptor, PluginNotificationRequest,
-    PluginNotificationResponse, PluginResult, ProviderDescriptor, SDK_VERSION, to_webhook_json,
+    NotificationPayloadFormat, PluginDescriptor, PluginError, PluginErrorCode,
+    PluginNotificationRequest, PluginNotificationResponse, PluginResult, ProviderDescriptor,
+    SDK_VERSION, to_webhook_json,
 };
+
+wit_bindgen::generate!({
+    // Fully qualified: `path` resolves two packages, so a bare world name is
+    // ambiguous even though only one of them declares a world.
+    world: "scryer:notification/notification@1.0.0",
+    // Two packages, two paths, matching the host's own bindgen: the shared
+    // `scryer:host` package is listed first so the family package's
+    // `import scryer:host/services@1.0.0` resolves against it.
+    path: ["wit/host-v1.0.0", "wit/notification-v1.0.0"],
+    // The shared host package lives in its own WIT package, so wit-bindgen
+    // asks explicitly whether to generate for it. Yes: the PDK holds only a
+    // `fn` pointer and the entry macro binds it to this module's
+    // `scryer::host::services::host-call`.
+    generate_all,
+});
+
+scryer_plugin_pdk::scryer_notification_component_main!(
+    descriptor = build_descriptor,
+    handler = handle_notification_command,
+);
+
+const PROVIDER_TYPE: &str = "webhook";
 
 // ---------------------------------------------------------------------------
 // Plugin exports
 // ---------------------------------------------------------------------------
 
-#[plugin_fn]
-pub fn scryer_describe(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&build_descriptor())?)
+/// The world's single `process` entry, dispatching the SDK's notification
+/// command enum.
+///
+/// One arm per operation this plugin exports. `action` is not one of them: the descriptor advertises no action, so the host does not route
+/// one here and the arm answers **in-band** with `Unsupported` rather than
+/// trapping. A trap under a component costs the whole instance and replaces the
+/// plugin's own diagnosis with a generic ABI failure.
+fn handle_notification_command(
+    command: PluginNotificationCommand,
+) -> PluginNotificationCommandResult {
+    match command {
+        PluginNotificationCommand::Send(request) => {
+            PluginNotificationCommandResult::Send(match send_notification(&request) {
+                Ok(response) => PluginResult::Ok(response),
+                Err(error) => PluginResult::Err(plugin_error(
+                    PluginErrorCode::InvalidConfig,
+                    error.to_string(),
+                )),
+            })
+        }
+        PluginNotificationCommand::Action(_) => {
+            PluginNotificationCommandResult::Action(PluginResult::Err(plugin_error(
+                PluginErrorCode::Unsupported,
+                format!("{PROVIDER_TYPE} does not implement notification actions"),
+            )))
+        }
+    }
+}
+
+fn plugin_error(code: PluginErrorCode, public_message: String) -> PluginError {
+    PluginError {
+        code,
+        public_message,
+        debug_message: None,
+        retry_after_seconds: None,
+        details: None,
+    }
 }
 
 fn build_descriptor() -> PluginDescriptor {
@@ -71,10 +142,18 @@ fn build_descriptor() -> PluginDescriptor {
                         ConfigFieldOption {
                             value: "POST".to_string(),
                             label: "POST".to_string(),
+                            // Added by SDK 3.10. No notification channel drives
+                            // dependent fields from a select option, so the default
+                            // empty map keeps this descriptor byte-identical.
+                            config_overrides: Default::default(),
                         },
                         ConfigFieldOption {
                             value: "PUT".to_string(),
                             label: "PUT".to_string(),
+                            // Added by SDK 3.10. No notification channel drives
+                            // dependent fields from a select option, so the default
+                            // empty map keeps this descriptor byte-identical.
+                            config_overrides: Default::default(),
                         },
                     ],
                     help_text: None,
@@ -92,10 +171,18 @@ fn build_descriptor() -> PluginDescriptor {
                         ConfigFieldOption {
                             value: "application/json".to_string(),
                             label: "application/json".to_string(),
+                            // Added by SDK 3.10. No notification channel drives
+                            // dependent fields from a select option, so the default
+                            // empty map keeps this descriptor byte-identical.
+                            config_overrides: Default::default(),
                         },
                         ConfigFieldOption {
                             value: "text/plain".to_string(),
                             label: "text/plain".to_string(),
+                            // Added by SDK 3.10. No notification channel drives
+                            // dependent fields from a select option, so the default
+                            // empty map keeps this descriptor byte-identical.
+                            config_overrides: Default::default(),
                         },
                     ],
                     help_text: None,
@@ -127,10 +214,7 @@ fn general_notification_events() -> Vec<NotificationEventType> {
     ]
 }
 
-#[plugin_fn]
-pub fn scryer_notification_send(input: String) -> FnResult<String> {
-    let req: PluginNotificationRequest = serde_json::from_str(&input)?;
-
+fn send_notification(req: &PluginNotificationRequest) -> FnResult<PluginNotificationResponse> {
     // Read config values injected by the host
     let webhook_url = config::get("webhook_url")
         .ok()
@@ -146,7 +230,7 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
             warnings: Vec::new(),
             target_results: Vec::new(),
         };
-        return Ok(serde_json::to_string(&PluginResult::Ok(resp))?);
+        return Ok(resp);
     }
 
     let method = config::get("method")
@@ -166,10 +250,10 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
             req.summary_message
         )
     } else {
-        serde_json::to_string(&to_webhook_json(&req))?
+        serde_json::to_string(&to_webhook_json(req))?
     };
 
-    // Make HTTP request via Extism host function
+    // Make the HTTP request through the host-services import
     let http_req = HttpRequest::new(&webhook_url)
         .with_method(&method)
         .with_header("Content-Type", &content_type)
@@ -188,7 +272,7 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
                     warnings: Vec::new(),
                     target_results: Vec::new(),
                 };
-                Ok(serde_json::to_string(&PluginResult::Ok(resp))?)
+                Ok(resp)
             } else {
                 let body_text = String::from_utf8_lossy(&res.body()).to_string();
                 let resp = PluginNotificationResponse {
@@ -200,7 +284,7 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
                     warnings: Vec::new(),
                     target_results: Vec::new(),
                 };
-                Ok(serde_json::to_string(&PluginResult::Ok(resp))?)
+                Ok(resp)
             }
         }
         Err(e) => {
@@ -213,7 +297,7 @@ pub fn scryer_notification_send(input: String) -> FnResult<String> {
                 warnings: Vec::new(),
                 target_results: Vec::new(),
             };
-            Ok(serde_json::to_string(&PluginResult::Ok(resp))?)
+            Ok(resp)
         }
     }
 }

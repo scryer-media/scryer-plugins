@@ -108,6 +108,7 @@ fn plugin_error<T>(code: PluginErrorCode, public_message: impl Into<String>) -> 
         public_message: public_message.into(),
         debug_message: None,
         retry_after_seconds: None,
+        details: None,
     })
 }
 
@@ -174,6 +175,16 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
                     reports_content_paths: true,
                     ..DownloadTorrentCapabilities::default()
                 }),
+                // SDK 3.10 addition. `false` is the SDK's own default and therefore exactly
+                // what this client's pre-3.10 descriptor already meant to a 3.10 host;
+                // advertising category-scoped feedback would be a behaviour change, not a
+                // transport one, so it stays off across the component migration.
+                category_scoped_feedback: false,
+                // SDK 3.10 addition, and `false` is both the SDK's default and the
+                // truth: this client's function table passes
+                // `mark_imported_non_destructive: None`, so the bridge has nothing to
+                // route a non-destructive handoff to.
+                mark_imported_non_destructive: false,
             },
         }),
     };
@@ -182,7 +193,7 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
 
 pub fn scryer_download_add(input: String) -> FnResult<String> {
     let request: PluginDownloadClientAddRequest = serde_json::from_str(&input)?;
-    let config = RqbitConfig::from_extism()?;
+    let config = RqbitConfig::from_config()?;
     let body = if let Some(bytes) = request.source.torrent_bytes_base64.as_deref() {
         STANDARD
             .decode(bytes)
@@ -225,7 +236,7 @@ pub fn scryer_download_add(input: String) -> FnResult<String> {
 }
 
 pub fn scryer_download_list_queue(_input: String) -> FnResult<String> {
-    let config = RqbitConfig::from_extism()?;
+    let config = RqbitConfig::from_config()?;
     let items = list_torrents(&config)?
         .into_iter()
         .filter(|torrent| is_visible_torrent(&config, torrent))
@@ -235,7 +246,7 @@ pub fn scryer_download_list_queue(_input: String) -> FnResult<String> {
 }
 
 pub fn scryer_download_list_history(_input: String) -> FnResult<String> {
-    let config = RqbitConfig::from_extism()?;
+    let config = RqbitConfig::from_config()?;
     let items = list_torrents(&config)?
         .into_iter()
         .filter(|torrent| is_visible_torrent(&config, torrent))
@@ -245,7 +256,7 @@ pub fn scryer_download_list_history(_input: String) -> FnResult<String> {
 }
 
 pub fn scryer_download_list_completed(_input: String) -> FnResult<String> {
-    let config = RqbitConfig::from_extism()?;
+    let config = RqbitConfig::from_config()?;
     let downloads = list_torrents(&config)?
         .into_iter()
         .filter(|torrent| is_visible_torrent(&config, torrent))
@@ -257,7 +268,7 @@ pub fn scryer_download_list_completed(_input: String) -> FnResult<String> {
 
 pub fn scryer_download_control(input: String) -> FnResult<String> {
     let request: PluginDownloadClientControlRequest = serde_json::from_str(&input)?;
-    let config = RqbitConfig::from_extism()?;
+    let config = RqbitConfig::from_config()?;
     let hash = normalize_hash(&request.client_item_id);
     if hash.is_empty() {
         return Ok(serde_json::to_string(&plugin_error::<()>(
@@ -295,7 +306,7 @@ pub fn scryer_download_mark_imported(input: String) -> FnResult<String> {
 }
 
 pub fn scryer_download_status(_input: String) -> FnResult<String> {
-    let config = RqbitConfig::from_extism()?;
+    let config = RqbitConfig::from_config()?;
     let root: RootResponse = serde_json::from_str(&get_text(&config, "")?)
         .map_err(|error| Error::msg(format!("RQBit root response parse failed: {error}")))?;
     Ok(serde_json::to_string(&PluginResult::Ok(
@@ -311,7 +322,7 @@ pub fn scryer_download_status(_input: String) -> FnResult<String> {
 }
 
 pub fn scryer_download_test_connection(_input: String) -> FnResult<String> {
-    let config = RqbitConfig::from_extism()?;
+    let config = RqbitConfig::from_config()?;
     let root: RootResponse = serde_json::from_str(&get_text(&config, "")?)
         .map_err(|error| Error::msg(format!("RQBit root response parse failed: {error}")))?;
     if version_lt(&root.version, "8.0.0") {
@@ -327,7 +338,7 @@ pub fn scryer_download_test_connection(_input: String) -> FnResult<String> {
 }
 
 impl RqbitConfig {
-    fn from_extism() -> Result<Self, Error> {
+    fn from_config() -> Result<Self, Error> {
         let host = config_value("host").unwrap_or_else(|| "localhost".to_string());
         let port = config_value("port").unwrap_or_else(|| "3030".to_string());
         let url_base = config_value("url_base").unwrap_or_else(|| "/".to_string());
@@ -584,6 +595,7 @@ fn torrent_to_completed(torrent: TorrentWithStats) -> PluginCompletedDownload {
         size_bytes: Some(torrent.stats.total_bytes),
         completed_at,
         parameters: Vec::new(),
+        release_name: None,
     }
 }
 
@@ -1281,77 +1293,61 @@ mod tests {
     }
 }
 
-#[cfg(test)]
-mod extism_host_stubs {
-    #[unsafe(no_mangle)]
-    pub extern "C" fn alloc(_len: u64) -> u64 {
-        0
+// ---------------------------------------------------------------------------
+// `scryer:download-client/download-client@1.0.0`
+// ---------------------------------------------------------------------------
+//
+// Transport only. Every operation above is untouched — the same URLs, headers,
+// status rules and plugin state. What changed is how the host reaches them: a
+// `process` export carrying the very command envelope the Preview 1 runner
+// already moved over stdin/stdout, instead of a `main` reading stdin.
+//
+// The function table is the single source of truth for both exports, so
+// `describe` and `process` cannot drift apart, and the operation semantics —
+// merged failed history, scoped listings, non-destructive mark-imported — stay
+// in the PDK bridge where every client shares them.
+
+wit_bindgen::generate!({
+    // Fully qualified: `path` resolves two packages, so a bare world name is
+    // ambiguous even though only one of them declares a world.
+    world: "scryer:download-client/download-client@1.0.0",
+    // The shared `scryer:host` package is listed first so the family package's
+    // `import scryer:host/services@1.0.0` resolves against it.
+    path: ["wit/host-v1.0.0", "wit/download-client-v1.0.0"],
+    // The host package is its own WIT package, so wit-bindgen asks explicitly
+    // whether to generate for it. Yes: the PDK holds only a `fn` pointer and
+    // the entry macro binds it to this module's
+    // `scryer::host::services::host-call`.
+    generate_all,
+});
+
+fn functions() -> LegacyDownloadClientFunctions {
+    LegacyDownloadClientFunctions {
+        describe: scryer_describe,
+        add: scryer_download_add,
+        list_queue: scryer_download_list_queue,
+        list_history: scryer_download_list_history,
+        list_completed: scryer_download_list_completed,
+        list_recent_completed: None,
+        control: scryer_download_control,
+        mark_imported: scryer_download_mark_imported,
+        mark_imported_non_destructive: None,
+        status: scryer_download_status,
+        test_connection: scryer_download_test_connection,
     }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn config_get(_ptr: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn http_headers() -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn http_request(_request: u64, _body: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn http_status_code() -> u64 {
-        200
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn length(_offset: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn length_unsafe(_offset: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn load_u64(_offset: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn load_u8(_offset: u64) -> u8 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn store_u64(_offset: u64, _value: u64) {}
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn store_u8(_offset: u64, _value: u8) {}
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn var_get(_ptr: u64) -> u64 {
-        0
-    }
-
-    #[unsafe(no_mangle)]
-    pub extern "C" fn var_set(_ptr: u64, _value: u64) {}
 }
 
-scryer_plugin_pdk::scryer_download_client_bridge_main!(
-    describe = scryer_describe,
-    add = scryer_download_add,
-    list_queue = scryer_download_list_queue,
-    list_history = scryer_download_list_history,
-    list_completed = scryer_download_list_completed,
-    list_recent_completed = None,
-    control = scryer_download_control,
-    mark_imported = scryer_download_mark_imported,
-    status = scryer_download_status,
-    test_connection = scryer_download_test_connection,
+fn build_descriptor() -> PluginDescriptor {
+    legacy_download_client_descriptor(&functions())
+}
+
+fn handle_download_client_command(
+    command: PluginDownloadClientCommand,
+) -> PluginDownloadClientCommandResult {
+    bridge_download_client_command(&functions(), command)
+}
+
+scryer_plugin_pdk::scryer_download_client_component_main!(
+    descriptor = build_descriptor,
+    handler = handle_download_client_command,
 );

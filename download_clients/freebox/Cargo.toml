@@ -1,9 +1,8 @@
 [package]
 name = "freebox-download-client"
-version = "1.1.2"
+version = "2.0.0"
 edition = "2024"
 rust-version = "1.97.1"
-autolib = false
 license = "GPL-3.0-only"
 description = "Freebox Download torrent client plugin"
 
@@ -12,24 +11,35 @@ official = true
 plugin_id = "freebox"
 status = "beta"
 catalog_versions = ["v3"]
-min_scryer_version = "0.18.12"
-feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
+# Scryer 0.20.0 is the first release whose download-client backing is the
+# `scryer:download-client/download-client@1.0.0` component host. Earlier
+# releases run the Preview 1 command runtime and cannot instantiate this
+# artifact at all, so the floor is load-bearing, not advisory.
+min_scryer_version = "0.20.0"
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/freebox"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/freebox"
 
-[[bin]]
-name = "freebox-download-client"
-path = "src/lib.rs"
+# A component, not a Preview 1 command binary: the world's `describe` and
+# `process` are exported from the library itself, so there is no `main` and no
+# `[[bin]]`. xtask's `select_built_wasm` already accepts either artifact name.
+[lib]
+crate-type = ["cdylib"]
 
 [dependencies]
 base64 = "0.23"
 hmac = "0.13"
-scryer-plugin-sdk = "3.7.0"
-scryer-plugin-pdk = "0.5.7"
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha1 = "0.11"
 urlencoding = "2"
+wit-bindgen = "0.61"
+
+[dev-dependencies]
+postcard = { version = "1", features = ["use-std"] }
+wasmtime = "48.0.1"
+wasmtime-wasi = "48.0.1"
 
 [profile.plugin-release]
 inherits = "release"

@@ -1,20 +1,77 @@
+//! AnimeTosho.xyz subtitles, as a WASI Preview 2 component.
+//!
+//! The plugin implements `scryer:subtitle/subtitle-provider@1.1.0`: two
+//! exports carrying UTF-8 JSON (`describe` returns a `PluginDescriptor`,
+//! `process` exchanges a `PluginCommandRequest` for a
+//! `PluginCommandResponse`, and `process` is an `async func` on this world
+//! revision), plus two imports: the shared `scryer:host/services@1.0.0` door
+//! every non-archive family world uses for config, plugin state, and HTTP,
+//! and the family-neutral typed `scryer:runtime/host@1.0.0` surface reached
+//! through `scryer_plugin_pdk::runtime`.
+//!
+//! ## What the migration changed
+//!
+//! The previous artifact was a plain `cdylib` with four exported entry
+//! points (`scryer_describe`, `scryer_validate_config`,
+//! `scryer_subtitle_search`, `scryer_subtitle_download`) whose host services
+//! arrived through the core-module `scryer:host/v1` pointer ABI. A component
+//! has no exported linear memory for a host to slice, so both halves move onto
+//! the canonical ABI: the four entry points collapse into one `process` export
+//! dispatching the SDK's [`PluginSubtitleCommand`], and host services cross as
+//! postcard `list<u8>` values through [`scryer_plugin_pdk::host`].
+//!
+//! Provider behaviour is unchanged — the same JSON API and release-page
+//! scraping, the same redirect and 429 backoff policy, the same candidates and
+//! match hints. What used to be a hard ABI failure is now the
+//! SDK's typed [`PluginResult::Err`]; the meaning is identical, the channel is
+//! not.
+//!
+//! ## No host archive extraction here
+//!
+//! AnimeTosho serves XZ-compressed attachments, but this provider has never
+//! decompressed them: it verifies the XZ magic and hands the container to
+//! Scryer as `application/x-xz`. There is therefore nothing to route through
+//! [`scryer_plugin_pdk::host::archive_extract`], and the plugin does not enable
+//! the PDK's `archive-extract` feature.
+
 use std::collections::HashSet;
 use std::time::Duration;
 
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
-use extism_pdk::*;
+use scryer_plugin_pdk::sdk::command::{PluginSubtitleCommand, PluginSubtitleCommandResult};
+use scryer_plugin_pdk::{HttpRequest, HttpResponse, config, http};
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldRole, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor,
-    PluginResult, ProviderDescriptor, SDK_VERSION, SubtitleCapabilities, SubtitleDescriptor,
-    SubtitleMatchHint, SubtitleMatchHintKind, SubtitlePluginCandidate,
-    SubtitlePluginDownloadRequest, SubtitlePluginDownloadResponse, SubtitlePluginSearchRequest,
-    SubtitlePluginSearchResponse, SubtitlePluginValidateConfigRequest,
+    PluginError, PluginErrorCode, PluginResult, ProviderDescriptor, SDK_VERSION,
+    SubtitleCapabilities, SubtitleDescriptor, SubtitleMatchHint, SubtitleMatchHintKind,
+    SubtitlePluginCandidate, SubtitlePluginDownloadRequest, SubtitlePluginDownloadResponse,
+    SubtitlePluginSearchRequest, SubtitlePluginSearchResponse, SubtitlePluginValidateConfigRequest,
     SubtitlePluginValidateConfigResponse, SubtitleProviderMode, SubtitleQueryMediaKind,
     SubtitleValidateConfigStatus,
 };
 use serde::{Deserialize, Serialize};
+
+wit_bindgen::generate!({
+    // Fully qualified: `path` resolves two packages, so a bare world name is
+    // ambiguous even though only one of them declares a world.
+    world: "scryer:subtitle/subtitle-provider@1.1.0",
+    // Three packages, three paths, matching the host's own bindgen: the shared
+    // `scryer:host` package is listed first so the family package's
+    // `import scryer:host/services@1.0.0` resolves against it.
+    path: ["wit/host-v1.0.0", "wit/runtime-v1.0.0", "wit/subtitle-v1.1.0"],
+    // The shared host package lives in its own WIT package, so wit-bindgen
+    // asks explicitly whether to generate for it. Yes: the PDK holds only a
+    // `fn` pointer and the entry macro binds it to this module's
+    // `scryer::host::services::host-call`.
+    generate_all,
+});
+
+scryer_plugin_pdk::scryer_subtitle_component_main!(
+    descriptor = descriptor,
+    handler = handle_subtitle_command,
+);
 
 const DEFAULT_BASE_URL: &str = "https://feed.animetosho.xyz";
 const DEFAULT_SITE_URL: &str = "https://animetosho.xyz";
@@ -72,15 +129,62 @@ struct AnimeToshoDownloadRef {
     format: String,
 }
 
-#[plugin_fn]
-pub fn scryer_describe(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&descriptor())?)
+/// One `process` invocation, dispatched by operation.
+///
+/// This is the whole of the world's request surface: `describe` is owned by
+/// the PDK entry macro, and every operational failure is reported in-band
+/// through [`PluginResult`], never as a world-level `invocation-error`.
+async fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleCommandResult {
+    match command {
+        PluginSubtitleCommand::ValidateConfig(request) => {
+            PluginSubtitleCommandResult::ValidateConfig(PluginResult::Ok(validate_config(&request)))
+        }
+        PluginSubtitleCommand::Search(request) => {
+            PluginSubtitleCommandResult::Search(search(&request))
+        }
+        PluginSubtitleCommand::Download(request) => {
+            PluginSubtitleCommandResult::Download(download(&request))
+        }
+        // AnimeTosho is a catalog provider: it serves subtitles that already
+        // exist upstream and has no generator. The host reads
+        // `SubtitleCapabilities::mode` and never routes a generate here, so
+        // this arm answers in-band rather than trapping.
+        PluginSubtitleCommand::Generate(_) => {
+            PluginSubtitleCommandResult::Generate(PluginResult::Err(PluginError {
+                code: PluginErrorCode::Unsupported,
+                public_message: "AnimeTosho.xyz is a catalog subtitle provider and cannot \
+                                 generate subtitles"
+                    .to_string(),
+                debug_message: Some(
+                    "SubtitleProviderMode::Catalog advertises no generate capability".to_string(),
+                ),
+                retry_after_seconds: None,
+                details: None,
+            }))
+        }
+        // Alignment moved into this envelope when the subtitle-sync plugin
+        // migrated off its own transport, so every subtitle provider now sees
+        // the operation whether or not it can serve one. AnimeTosho.xyz cannot: it has
+        // no audio decoder and advertises no `sync` capability. Same in-band
+        // refusal as `Generate`, for the same reason.
+        PluginSubtitleCommand::Sync(_) => {
+            PluginSubtitleCommandResult::Sync(PluginResult::Err(PluginError {
+                code: PluginErrorCode::Unsupported,
+                public_message: "AnimeTosho.xyz cannot align subtitles".to_string(),
+                debug_message: Some(
+                    "SubtitleCapabilities::sync is None for this provider".to_string(),
+                ),
+                retry_after_seconds: None,
+                details: None,
+            }))
+        }
+    }
 }
 
-#[plugin_fn]
-pub fn scryer_validate_config(input: String) -> FnResult<String> {
-    let _: SubtitlePluginValidateConfigRequest = serde_json::from_str(&input)?;
-    let response = match AnimeToshoConfig::from_extism() {
+fn validate_config(
+    _request: &SubtitlePluginValidateConfigRequest,
+) -> SubtitlePluginValidateConfigResponse {
+    match AnimeToshoConfig::from_host() {
         Ok(config) => {
             match get_json::<Vec<ReleaseSummary>>(&config, "/json/v1/search?q=naruto&limit=1") {
                 Ok(_) => SubtitlePluginValidateConfigResponse {
@@ -100,32 +204,75 @@ pub fn scryer_validate_config(input: String) -> FnResult<String> {
             message: Some(error),
             retry_after_seconds: None,
         },
+    }
+}
+
+/// Search failures were a hard ABI failure before the
+/// migration; they are the SDK's typed [`PluginResult::Err`] now. Same
+/// meaning, typed channel — the host keeps this provider's own diagnosis
+/// instead of a generic ABI fault.
+fn search(request: &SubtitlePluginSearchRequest) -> PluginResult<SubtitlePluginSearchResponse> {
+    let config = match AnimeToshoConfig::from_host() {
+        Ok(config) => config,
+        Err(error) => return PluginResult::Err(plugin_error(error)),
     };
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+    match search_subtitles_impl(&config, request) {
+        Ok(results) => PluginResult::Ok(SubtitlePluginSearchResponse { results }),
+        Err(error) => PluginResult::Err(plugin_error(error)),
+    }
 }
 
-#[plugin_fn]
-pub fn scryer_subtitle_search(input: String) -> FnResult<String> {
-    let request: SubtitlePluginSearchRequest = serde_json::from_str(&input)?;
-    let config = AnimeToshoConfig::from_extism().map_err(Error::msg)?;
-    let results = search_subtitles_impl(&config, &request).map_err(Error::msg)?;
-    Ok(serde_json::to_string(&PluginResult::Ok(
-        SubtitlePluginSearchResponse { results },
-    ))?)
+fn download(
+    request: &SubtitlePluginDownloadRequest,
+) -> PluginResult<SubtitlePluginDownloadResponse> {
+    let config = match AnimeToshoConfig::from_host() {
+        Ok(config) => config,
+        Err(error) => return PluginResult::Err(plugin_error(error)),
+    };
+    let reference: AnimeToshoDownloadRef = match serde_json::from_str(&request.provider_file_id) {
+        Ok(reference) => reference,
+        Err(error) => {
+            return PluginResult::Err(plugin_error(format!(
+                "AnimeTosho subtitle reference is not valid: {error}"
+            )));
+        }
+    };
+    match download_subtitle_impl(&config, &reference) {
+        Ok(response) => PluginResult::Ok(response),
+        Err(error) => PluginResult::Err(plugin_error(error)),
+    }
 }
 
-#[plugin_fn]
-pub fn scryer_subtitle_download(input: String) -> FnResult<String> {
-    let request: SubtitlePluginDownloadRequest = serde_json::from_str(&input)?;
-    let config = AnimeToshoConfig::from_extism().map_err(Error::msg)?;
-    let reference: AnimeToshoDownloadRef =
-        serde_json::from_str(&request.provider_file_id).map_err(Error::msg)?;
-    let response = download_subtitle_impl(&config, &reference).map_err(Error::msg)?;
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+/// Map this provider's string failures onto the SDK's typed error.
+///
+/// The rate-limit branch reads the message the provider already produced, so
+/// the retry hint the upstream sent survives the migration rather than being
+/// flattened into a generic temporary failure.
+fn plugin_error(error: String) -> PluginError {
+    let (code, retry_after_seconds) = if error.contains("rate limited") {
+        (
+            PluginErrorCode::RateLimited,
+            retry_after_from_message(&error),
+        )
+    } else {
+        (PluginErrorCode::Temporary, None)
+    };
+    PluginError {
+        code,
+        public_message: error,
+        debug_message: None,
+        retry_after_seconds,
+        details: None,
+    }
+}
+
+fn retry_after_from_message(error: &str) -> Option<i64> {
+    let (_, tail) = error.split_once("retry after ")?;
+    tail.trim_end_matches('s').trim().parse::<i64>().ok()
 }
 
 impl AnimeToshoConfig {
-    fn from_extism() -> Result<Self, String> {
+    fn from_host() -> Result<Self, String> {
         Ok(Self {
             base_url: config_string("base_url")?.unwrap_or_else(|| DEFAULT_BASE_URL.to_string()),
             site_url: config_string("site_url")?.unwrap_or_else(|| DEFAULT_SITE_URL.to_string()),

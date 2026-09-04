@@ -1,0 +1,547 @@
+{"schema_version":1,"id":"0daykiev","display_name":"0day.kiev","kind":"private","base_url":"https://tracker.0day.community/"}
+{"schema_version":1,"id":"0magnet","display_name":"0Magnet","kind":"public","base_url":"https://13mag.net/"}
+{"schema_version":1,"id":"1337x","display_name":"1337x","kind":"public","base_url":"https://1337x.to/"}
+{"schema_version":1,"id":"13city","display_name":"13City","kind":"private","base_url":"https://13city.org/"}
+{"schema_version":1,"id":"1ptbar","display_name":"1ptbar","kind":"private","base_url":"https://1ptba.com/"}
+{"schema_version":1,"id":"3dtorrents","display_name":"3D Torrents","kind":"private","base_url":"http://www.3dtorrents.org/"}
+{"schema_version":1,"id":"3dvault-api","display_name":"3D Vault (API)","kind":"private","base_url":"https://3dvault.org/"}
+{"schema_version":1,"id":"4thd","display_name":"4thD","kind":"private","base_url":"https://4thd.xyz/"}
+{"schema_version":1,"id":"52bt","display_name":"52BT","kind":"public","base_url":"https://eufo9g1k.529075.xyz/"}
+{"schema_version":1,"id":"52pt","display_name":"52PT","kind":"private","base_url":"https://52pt.site/"}
+{"schema_version":1,"id":"Bittorrentfiles","display_name":"Bittorrentfiles","kind":"private","base_url":"https://bittorrentfiles.me/"}
+{"schema_version":1,"id":"abnormal-api","display_name":"Abnormal (API)","kind":"private","base_url":"https://abn.lol/"}
+{"schema_version":1,"id":"abtorrents","display_name":"ABtorrents","kind":"private","base_url":"https://usefultrash.net/"}
+{"schema_version":1,"id":"acgrip","display_name":"ACG.RIP","kind":"public","base_url":"https://acg.rip/"}
+{"schema_version":1,"id":"acrossthetasman","display_name":"Across The Tasman","kind":"private","base_url":"https://acrossthetasman.com/"}
+{"schema_version":1,"id":"aftershock","display_name":"Aftershock","kind":"private","base_url":"https://aftershock-tracker.net/"}
+{"schema_version":1,"id":"agsvpt","display_name":"AGSVPT","kind":"private","base_url":"https://www.agsvpt.com/"}
+{"schema_version":1,"id":"aidoruonline","display_name":"Aidoru!Online","kind":"private","base_url":"https://aidoru-online.me/"}
+{"schema_version":1,"id":"aither-api","display_name":"Aither (API)","kind":"private","base_url":"https://aither.cc/"}
+{"schema_version":1,"id":"alingpt","display_name":"alingPT","kind":"private","base_url":"https://pt.aling.de/"}
+{"schema_version":1,"id":"amigosshare","display_name":"Amigos Share Club","kind":"private","base_url":"https://cliente.amigos-share.club/"}
+{"schema_version":1,"id":"anibt","display_name":"Anibt","kind":"public","base_url":"https://anibt.net/"}
+{"schema_version":1,"id":"animebybelka","display_name":"Anime by Belka","kind":"semi-private","base_url":"https://anibelka.com/"}
+{"schema_version":1,"id":"animelayer","display_name":"AnimeLayer","kind":"semi-private","base_url":"https://animelayer.ru/"}
+{"schema_version":1,"id":"animetorrentsro","display_name":"AnimeTorrents.ro","kind":"private","base_url":"https://animetorrents.io/"}
+{"schema_version":1,"id":"animetosho-xyz","display_name":"Anime Tosho","kind":"semi-private","base_url":"https://animetosho.xyz/"}
+{"schema_version":1,"id":"animeworld-api","display_name":"AnimeWorld (API)","kind":"private","base_url":"https://animeworld.cx/"}
+{"schema_version":1,"id":"anisource","display_name":"AniSource","kind":"public","base_url":"https://asnet.pw/"}
+{"schema_version":1,"id":"anthelion-api","display_name":"Anthelion (API)","kind":"private","base_url":"https://anthelion.me/"}
+{"schema_version":1,"id":"arabafenice","display_name":"ArabaFenice","kind":"private","base_url":"https://www.arabafenice.me/"}
+{"schema_version":1,"id":"arabicsource-api","display_name":"ArabicSource (API)","kind":"private","base_url":"https://arabicsource.net/"}
+{"schema_version":1,"id":"arabp2p","display_name":"ArabP2P","kind":"private","base_url":"https://www.arabp2p.net/"}
+{"schema_version":1,"id":"arabscene","display_name":"ArabScene","kind":"private","base_url":"https://arabscene.me/"}
+{"schema_version":1,"id":"arabtorrents","display_name":"ArabTorrents","kind":"private","base_url":"https://arab-torrents.net/"}
+{"schema_version":1,"id":"asiancinema","display_name":"AsianCinema","kind":"private","base_url":"https://eiga.moi/"}
+{"schema_version":1,"id":"asiandvdclub","display_name":"AsianDVDClub","kind":"private","base_url":"https://asiandvdclub.org/"}
+{"schema_version":1,"id":"audiences","display_name":"Audiences","kind":"private","base_url":"https://audiences.me/"}
+{"schema_version":1,"id":"audionews","display_name":"AudioNews","kind":"private","base_url":"https://audionews.org/"}
+{"schema_version":1,"id":"aussierules","display_name":"Aussierul.es","kind":"private","base_url":"https://aussierul.es/"}
+{"schema_version":1,"id":"azusa","display_name":"Azusa (梓喵)","kind":"private","base_url":"https://azusa.wiki/"}
+{"schema_version":1,"id":"backups","display_name":"Back-ups","kind":"private","base_url":"https://back-ups.me/"}
+{"schema_version":1,"id":"bangumi-moe","display_name":"Bangumi Moe","kind":"public","base_url":"https://bangumi.moe/"}
+{"schema_version":1,"id":"baozipt","display_name":"baoziPT","kind":"private","base_url":"https://p.t-baozi.cc/"}
+{"schema_version":1,"id":"beload","display_name":"Beload","kind":"private","base_url":"https://beload.org/"}
+{"schema_version":1,"id":"best-torrents","display_name":"Best-Torrents","kind":"semi-private","base_url":"https://best-torrents.com/"}
+{"schema_version":1,"id":"bestcore","display_name":"Best-Core","kind":"private","base_url":"https://best-core.info/"}
+{"schema_version":1,"id":"bibliotik","display_name":"Bibliotik","kind":"private","base_url":"https://bibliotik.me/"}
+{"schema_version":1,"id":"bigbbs","display_name":"BigBBS","kind":"private","base_url":"https://bigbbs.eu/"}
+{"schema_version":1,"id":"bigcore","display_name":"BigCore","kind":"private","base_url":"https://bigcore.eu/"}
+{"schema_version":1,"id":"bigfangroup","display_name":"BigFANGroup","kind":"public","base_url":"https://bigfangroup.org/"}
+{"schema_version":1,"id":"bitbazis","display_name":"Bit-Bázis","kind":"private","base_url":"https://bitbazis.net/"}
+{"schema_version":1,"id":"bitded","display_name":"Bitded","kind":"private","base_url":"http://dedbit-new.dedbit.com/"}
+{"schema_version":1,"id":"bitgamer","display_name":"bitGAMER","kind":"private","base_url":"https://bitgamer.ch/"}
+{"schema_version":1,"id":"bithumen","display_name":"BitHUmen","kind":"private","base_url":"https://bithumen.be/"}
+{"schema_version":1,"id":"bitmagnet","display_name":"BitMagnet (Local DHT)","kind":"semi-private","base_url":"http://127.0.0.1:3333/"}
+{"schema_version":1,"id":"bitpalace","display_name":"Bitpalace","kind":"private","base_url":"https://bitpalace.cc/"}
+{"schema_version":1,"id":"bitporn","display_name":"BitPorn (API)","kind":"private","base_url":"https://bitporn.eu/"}
+{"schema_version":1,"id":"bitturk","display_name":"BiTTuRK","kind":"private","base_url":"https://bitturk.net/"}
+{"schema_version":1,"id":"bjshare","display_name":"BJ-Share","kind":"private","base_url":"https://bj-share.info/"}
+{"schema_version":1,"id":"bluebirdhd","display_name":"BlueBird","kind":"private","base_url":"https://bluebird-hd.org/"}
+{"schema_version":1,"id":"blueroms","display_name":"BlueRoms","kind":"public","base_url":"https://www.blueroms.ws/"}
+{"schema_version":1,"id":"bluetorrents","display_name":"BlueTorrents","kind":"private","base_url":"https://bluetorrents.com/"}
+{"schema_version":1,"id":"bluraytracker","display_name":"BlurayTracker","kind":"private","base_url":"https://bluraytracker.cz/"}
+{"schema_version":1,"id":"blutopia-api","display_name":"Blutopia (API)","kind":"private","base_url":"https://blutopia.cc/"}
+{"schema_version":1,"id":"booktracker","display_name":"BookTracker","kind":"semi-private","base_url":"https://booktracker.org/"}
+{"schema_version":1,"id":"bootytape","display_name":"BootyTape","kind":"semi-private","base_url":"https://ssl.bootytape.com/"}
+{"schema_version":1,"id":"borgzelle","display_name":"Borgzelle","kind":"private","base_url":"https://borgzelle.borg/"}
+{"schema_version":1,"id":"boxingtorrents","display_name":"Boxing Torrents","kind":"private","base_url":"https://tc-boxing.com/"}
+{"schema_version":1,"id":"brasiltracker","display_name":"BrasilTracker","kind":"private","base_url":"https://brasiltracker.org/"}
+{"schema_version":1,"id":"btarg","display_name":"BTArg","kind":"private","base_url":"https://www.btarg.com.ar/"}
+{"schema_version":1,"id":"btdirectory","display_name":"BTdirectory","kind":"public","base_url":"https://btmulu.live/"}
+{"schema_version":1,"id":"btetree","display_name":"BT.etree","kind":"public","base_url":"https://bt.etree.org/"}
+{"schema_version":1,"id":"btnext","display_name":"BTNext","kind":"private","base_url":"https://tracker.btnext.com/"}
+{"schema_version":1,"id":"btschool","display_name":"BTSCHOOL","kind":"private","base_url":"https://pt.btschool.club/"}
+{"schema_version":1,"id":"bwtorrents","display_name":"BwTorrents","kind":"private","base_url":"https://bwtorrents.tv/"}
+{"schema_version":1,"id":"byrbt","display_name":"BYRBT","kind":"private","base_url":"https://byr.pt/"}
+{"schema_version":1,"id":"byrutor","display_name":"Byrutor","kind":"public","base_url":"https://byrutgame.org/"}
+{"schema_version":1,"id":"c411","display_name":"C411","kind":"private","base_url":"https://c411.org/"}
+{"schema_version":1,"id":"cangbaoge","display_name":"cangbaoge (CBG)","kind":"private","base_url":"https://cangbao.ge/"}
+{"schema_version":1,"id":"capybarabr","display_name":"CapybaraBR (API)","kind":"private","base_url":"https://capybarabr.com/"}
+{"schema_version":1,"id":"carpathians","display_name":"Carpathians","kind":"private","base_url":"https://mycarpathians.net/"}
+{"schema_version":1,"id":"carpt","display_name":"CarPT","kind":"private","base_url":"https://carpt.net/"}
+{"schema_version":1,"id":"cathoderaytube","display_name":"Cathode-Ray.Tube","kind":"private","base_url":"https://www.cathode-ray.tube/"}
+{"schema_version":1,"id":"catorrent","display_name":"Catorrent","kind":"public","base_url":"https://catorrent.net/"}
+{"schema_version":1,"id":"ceskeforum","display_name":"CeskeForum","kind":"private","base_url":"https://t.ceskeforum.com/"}
+{"schema_version":1,"id":"cgpeers","display_name":"CGPeers","kind":"private","base_url":"https://cgpeers.to/"}
+{"schema_version":1,"id":"chdbits","display_name":"CHDBits","kind":"private","base_url":"https://ptchdbits.co/"}
+{"schema_version":1,"id":"cinemageddon","display_name":"Cinemageddon","kind":"private","base_url":"https://cinemageddon.net/"}
+{"schema_version":1,"id":"cinemamovies","display_name":"CinemaMovieS_ZT","kind":"private","base_url":"https://cinemamovies.pl/"}
+{"schema_version":1,"id":"cinematik","display_name":"Cinematik (API)","kind":"private","base_url":"https://cinematik.net/"}
+{"schema_version":1,"id":"clearjav-api","display_name":"ClearJAV (API)","kind":"private","base_url":"https://clearjav.com/"}
+{"schema_version":1,"id":"coastalcrew","display_name":"Coastal-Music-Crew","kind":"private","base_url":"https://coastal-crew.bounceme.net/"}
+{"schema_version":1,"id":"comicat","display_name":"comicat","kind":"semi-private","base_url":"https://www.comicat.org/"}
+{"schema_version":1,"id":"concen","display_name":"ConCen","kind":"private","base_url":"https://concen.org/"}
+{"schema_version":1,"id":"concertos","display_name":"Concertos (API)","kind":"private","base_url":"https://concertos.live/"}
+{"schema_version":1,"id":"crabpt","display_name":"CrabPT (蟹黄堡)","kind":"private","base_url":"https://crabpt.vip/"}
+{"schema_version":1,"id":"crackingpatching","display_name":"CrackingPatching","kind":"public","base_url":"https://crackingpatching.com/"}
+{"schema_version":1,"id":"crazyspirits-api","display_name":"CrazySpirits (API)","kind":"private","base_url":"https://crazyspirits.com/"}
+{"schema_version":1,"id":"crnaberza","display_name":"CrnaBerza","kind":"private","base_url":"https://www.crnaberza.com/"}
+{"schema_version":1,"id":"crnaberza2fa","display_name":"CrnaBerza2FA","kind":"private","base_url":"https://www.crnaberza.com/"}
+{"schema_version":1,"id":"crt2fa","display_name":"CRT2FA","kind":"private","base_url":"https://www.cathode-ray.tube/"}
+{"schema_version":1,"id":"cspt","display_name":"Caishen (财神)","kind":"private","base_url":"https://cspt.top/"}
+{"schema_version":1,"id":"cyanbug","display_name":"cyanbug (大青虫)","kind":"private","base_url":"https://cyanbug.net/"}
+{"schema_version":1,"id":"cyclingarchiveclub","display_name":"CyclingArchiveClub","kind":"private","base_url":"https://cyclingarchive.club/"}
+{"schema_version":1,"id":"czteam-api","display_name":"CZTeam (API)","kind":"private","base_url":"https://czteam.me/"}
+{"schema_version":1,"id":"damagnet","display_name":"DaMagNet","kind":"public","base_url":"https://damag.net/"}
+{"schema_version":1,"id":"darkpeers-api","display_name":"Darkpeers (API)","kind":"private","base_url":"https://darkpeers.org/"}
+{"schema_version":1,"id":"dasunerwartete","display_name":"Das Unerwartete","kind":"private","base_url":"https://dasunerwartete.biz/"}
+{"schema_version":1,"id":"dasunerwartete-api","display_name":"Das Unerwartete (API)","kind":"private","base_url":"https://dasunerwartete.biz/"}
+{"schema_version":1,"id":"datascene-api","display_name":"DataScene (API)","kind":"private","base_url":"https://datascene.xyz/"}
+{"schema_version":1,"id":"daxiangjiao","display_name":"DaXiangJiao (大香蕉)","kind":"private","base_url":"https://pt.daxiangjiao.org/"}
+{"schema_version":1,"id":"deildu","display_name":"Deildu","kind":"semi-private","base_url":"https://deildu.net/"}
+{"schema_version":1,"id":"depthstudio","display_name":"Depth Studio","kind":"private","base_url":"https://dstudio.me/"}
+{"schema_version":1,"id":"desitorrents-api","display_name":"DesiTorrents (API)","kind":"private","base_url":"https://torrent.desi/"}
+{"schema_version":1,"id":"devil-torrents","display_name":"Devil-Torrents","kind":"semi-private","base_url":"https://devil-torrents.pl/"}
+{"schema_version":1,"id":"diablotorrent","display_name":"Diablo Torrent","kind":"private","base_url":"https://diablotorrent.net/"}
+{"schema_version":1,"id":"diginette-api","display_name":"Diginette (API)","kind":"private","base_url":"https://diginette.org/"}
+{"schema_version":1,"id":"digitalcore-api","display_name":"DigitalCore (API)","kind":"private","base_url":"https://digitalcore.club/"}
+{"schema_version":1,"id":"dimeadozen","display_name":"DimeADozen","kind":"private","base_url":"http://www.dimeadozen.org/"}
+{"schema_version":1,"id":"discfan","display_name":"DiscFan","kind":"private","base_url":"https://discfan.net/"}
+{"schema_version":1,"id":"dmhy","display_name":"dmhy","kind":"public","base_url":"https://share.dmhy.org/"}
+{"schema_version":1,"id":"docspedia","display_name":"DocsPedia","kind":"private","base_url":"https://www.docspedia.world/"}
+{"schema_version":1,"id":"dreadvault-api","display_name":"DreadVault (API)","kind":"private","base_url":"https://dreadvault.org/"}
+{"schema_version":1,"id":"dreamingtree","display_name":"DreamingTree","kind":"semi-private","base_url":"https://dreamingtree.org/"}
+{"schema_version":1,"id":"drugari","display_name":"Drugari","kind":"private","base_url":"http://drugari.org/"}
+{"schema_version":1,"id":"ds-reloaded","display_name":"DS-Reloaded","kind":"private","base_url":"https://ds-reloaded.com/"}
+{"schema_version":1,"id":"dubhe","display_name":"dubhe (天枢)","kind":"private","base_url":"https://dubhe.site/"}
+{"schema_version":1,"id":"dxp","display_name":"DXP","kind":"semi-private","base_url":"https://dxp.ru/"}
+{"schema_version":1,"id":"ebookbay","display_name":"EBookBay","kind":"public","base_url":"https://ebb.la/"}
+{"schema_version":1,"id":"ebooks-shares","display_name":"Ebooks-Shares","kind":"private","base_url":"https://ebooks-shares.org/"}
+{"schema_version":1,"id":"ehentai","display_name":"E-Hentai","kind":"public","base_url":"https://e-hentai.org/"}
+{"schema_version":1,"id":"electro-torrent","display_name":"Electro-Torrent","kind":"semi-private","base_url":"https://electro-torrent.pl/"}
+{"schema_version":1,"id":"empornium","display_name":"Empornium","kind":"private","base_url":"https://www.empornium.sx/"}
+{"schema_version":1,"id":"empornium2fa","display_name":"Empornium2FA","kind":"private","base_url":"https://www.empornium.sx/"}
+{"schema_version":1,"id":"emuwarez","display_name":"eMuwarez (API)","kind":"private","base_url":"https://emuwarez.com/"}
+{"schema_version":1,"id":"estone","display_name":"eStone","kind":"private","base_url":"https://estone.cc/"}
+{"schema_version":1,"id":"ex-torrenty","display_name":"Ex-torrenty","kind":"semi-private","base_url":"https://ex-torrenty.org/"}
+{"schema_version":1,"id":"exitorrent-org","display_name":"exitorrent.org","kind":"private","base_url":"https://exitorrent.org/"}
+{"schema_version":1,"id":"exkinoray","display_name":"ExKinoRay","kind":"semi-private","base_url":"https://exkinoray.ru/"}
+{"schema_version":1,"id":"explosiv-world","display_name":"Explosiv-World","kind":"private","base_url":"https://explosiv-world.biz/"}
+{"schema_version":1,"id":"extratorrent-st","display_name":"ExtraTorrent.st","kind":"public","base_url":"https://extratorrent.st/"}
+{"schema_version":1,"id":"extremebits","display_name":"ExtremeBits","kind":"private","base_url":"https://extremebits.net/"}
+{"schema_version":1,"id":"eztv","display_name":"EZTV","kind":"public","base_url":"https://eztvx.to/"}
+{"schema_version":1,"id":"eztvl","display_name":"EZTVL","kind":"semi-private","base_url":"https://eztvx.to/"}
+{"schema_version":1,"id":"f1carreras-api","display_name":"F1Carreras (API)","kind":"private","base_url":"https://f1carreras.xyz/"}
+{"schema_version":1,"id":"f1gp","display_name":"F1GP","kind":"private","base_url":"https://f1gp.xyz/"}
+{"schema_version":1,"id":"fanoin","display_name":"FANO.IN","kind":"private","base_url":"https://www.fano.in/"}
+{"schema_version":1,"id":"fappaizuri","display_name":"Fappaizuri","kind":"private","base_url":"https://www.fappaizuri.me/"}
+{"schema_version":1,"id":"fappaizuri2fa","display_name":"Fappaizuri2FA","kind":"private","base_url":"https://www.fappaizuri.me/"}
+{"schema_version":1,"id":"femdomcult","display_name":"Femdomcult","kind":"private","base_url":"https://femdomcult.org/"}
+{"schema_version":1,"id":"fenyarnyek-tracker","display_name":"Fenyarnyek-Tracker","kind":"semi-private","base_url":"http://tracker.fenyarnyek.com/"}
+{"schema_version":1,"id":"file-tracker","display_name":"File-Tracker","kind":"semi-private","base_url":"https://file-tracker.net/"}
+{"schema_version":1,"id":"filemood","display_name":"FileMood","kind":"public","base_url":"https://filemood.com/"}
+{"schema_version":1,"id":"finelite","display_name":"FinElite","kind":"private","base_url":"https://finelite.org/"}
+{"schema_version":1,"id":"flood","display_name":"Flood","kind":"private","base_url":"https://flood.st/"}
+{"schema_version":1,"id":"freefarm","display_name":"Free Farm (自由农场)","kind":"private","base_url":"https://pt.0ff.cc/"}
+{"schema_version":1,"id":"freejavtorrent","display_name":"Free JAV Torrent","kind":"public","base_url":"https://www.freejavtorrent.com/"}
+{"schema_version":1,"id":"funfile","display_name":"FunFile","kind":"private","base_url":"https://www.funfile.org/"}
+{"schema_version":1,"id":"funzone-api","display_name":"funZone (API)","kind":"private","base_url":"https://myfunzone.org/"}
+{"schema_version":1,"id":"futuretorrent","display_name":"FutureTorrent","kind":"private","base_url":"https://futuretorrent.org/"}
+{"schema_version":1,"id":"fuzer","display_name":"Fuzer","kind":"private","base_url":"https://www.fuzer.xyz/"}
+{"schema_version":1,"id":"g3minitr4ck3r-api","display_name":"G3MINI TR4CK3R (API)","kind":"private","base_url":"https://gemini-tracker.org/"}
+{"schema_version":1,"id":"gamestorrents","display_name":"GamesTorrents","kind":"public","base_url":"https://www.gamestorrents.app/"}
+{"schema_version":1,"id":"gay-torrents","display_name":"Gay-Torrents.net","kind":"semi-private","base_url":"https://www.gay-torrents.net/"}
+{"schema_version":1,"id":"gaytorrentru","display_name":"GAYtorrent.ru","kind":"private","base_url":"https://www.gaytor.rent/"}
+{"schema_version":1,"id":"generationfree-api","display_name":"Generation-Free (API)","kind":"private","base_url":"https://generation-free.org/"}
+{"schema_version":1,"id":"ggpt","display_name":"GGPT","kind":"private","base_url":"https://www.gamegamept.com/"}
+{"schema_version":1,"id":"gigatorrents","display_name":"GigaTorrents","kind":"private","base_url":"https://gigatorrents.ws/"}
+{"schema_version":1,"id":"girotorrent","display_name":"Girotorrent","kind":"private","base_url":"https://girotorrent.org/"}
+{"schema_version":1,"id":"haidan","display_name":"HaiDan","kind":"private","base_url":"https://www.haidan.cc/"}
+{"schema_version":1,"id":"haitang","display_name":"Hǎitáng (海棠PT)","kind":"private","base_url":"https://www.htpt.cc/"}
+{"schema_version":1,"id":"happyfappy","display_name":"HappyFappy","kind":"private","base_url":"https://www.happyfappy.net/"}
+{"schema_version":1,"id":"happyfappy2fa","display_name":"HappyFappy2FA","kind":"private","base_url":"https://www.happyfappy.net/"}
+{"schema_version":1,"id":"hawke-uno","display_name":"hawke-uno","kind":"private","base_url":"https://hawke.uno/"}
+{"schema_version":1,"id":"hd-club","display_name":"HD-CLUB","kind":"private","base_url":"https://hd-czech.eu/"}
+{"schema_version":1,"id":"hd-unit3d-api","display_name":"HD-UNiT3D (API)","kind":"private","base_url":"https://hd-united.vn/"}
+{"schema_version":1,"id":"hdarea","display_name":"HDArea","kind":"private","base_url":"https://hdarea.club/"}
+{"schema_version":1,"id":"hdbao","display_name":"HDBao","kind":"private","base_url":"https://hdbao.cc/"}
+{"schema_version":1,"id":"hdc","display_name":"HDCiTY","kind":"private","base_url":"https://hdcity.city/"}
+{"schema_version":1,"id":"hdclone","display_name":"HDClone","kind":"private","base_url":"https://pt.hdclone.top/"}
+{"schema_version":1,"id":"hddolby","display_name":"HD Dolby","kind":"private","base_url":"https://www.hddolby.com/"}
+{"schema_version":1,"id":"hdfans","display_name":"HDFans","kind":"private","base_url":"https://hdfans.org/"}
+{"schema_version":1,"id":"hdforever","display_name":"HD-Forever","kind":"private","base_url":"https://hdf.world/"}
+{"schema_version":1,"id":"hdforever2fa","display_name":"HD-Forever2FA","kind":"private","base_url":"https://hdf.world/"}
+{"schema_version":1,"id":"hdgalaktik","display_name":"HDGalaKtik","kind":"semi-private","base_url":"https://www.trackerpmr.com/"}
+{"schema_version":1,"id":"hdhome","display_name":"HDHome","kind":"private","base_url":"https://hdhome.org/"}
+{"schema_version":1,"id":"hdkylin","display_name":"HDKylin (麒麟)","kind":"private","base_url":"https://na.hdkylin.com/"}
+{"schema_version":1,"id":"hdolimpo-api","display_name":"HD-Olimpo (API)","kind":"private","base_url":"https://hd-olimpo.club/"}
+{"schema_version":1,"id":"hdonly-api","display_name":"HD-Only (API)","kind":"private","base_url":"https://hd-only.org/"}
+{"schema_version":1,"id":"hdroute","display_name":"HDRoute","kind":"private","base_url":"http://hdroute.org/"}
+{"schema_version":1,"id":"hdsky","display_name":"HDSky","kind":"private","base_url":"https://hdsky.me/"}
+{"schema_version":1,"id":"hdspace","display_name":"HD-Space","kind":"private","base_url":"https://hd-space.org/"}
+{"schema_version":1,"id":"hdspacecookie","display_name":"HD-SpaceCookie","kind":"private","base_url":"https://hd-space.org/"}
+{"schema_version":1,"id":"hdtime","display_name":"HDtime","kind":"private","base_url":"https://hdtime.org/"}
+{"schema_version":1,"id":"hdtorrents","display_name":"HD-Torrents","kind":"private","base_url":"https://hdts.ru/"}
+{"schema_version":1,"id":"hdtorrentsit","display_name":"HDTorrents.it (API)","kind":"private","base_url":"https://hdtorrents.eu/"}
+{"schema_version":1,"id":"hdturk","display_name":"HDTurk","kind":"private","base_url":"https://hdturk.club/"}
+{"schema_version":1,"id":"hdu","display_name":"HDU","kind":"private","base_url":"https://pt.upxin.net/"}
+{"schema_version":1,"id":"hdvideo","display_name":"HDVideo","kind":"private","base_url":"https://hdvideo.top/"}
+{"schema_version":1,"id":"hdzero-api","display_name":"HDZero (API)","kind":"private","base_url":"https://hdzero.org/"}
+{"schema_version":1,"id":"hebits","display_name":"Hebits","kind":"private","base_url":"https://hebits.net/"}
+{"schema_version":1,"id":"hellashut","display_name":"HellasHut","kind":"private","base_url":"https://hellashut.net/"}
+{"schema_version":1,"id":"hellashut-api","display_name":"HellasHut (API)","kind":"private","base_url":"https://hellashut.net/"}
+{"schema_version":1,"id":"hellenic-hd-api","display_name":"HELLENIC-HD (API)","kind":"private","base_url":"https://hellenic-hd.cc/"}
+{"schema_version":1,"id":"helltorrents","display_name":"HellTorrents","kind":"semi-private","base_url":"https://helltorrents.com/"}
+{"schema_version":1,"id":"herobit","display_name":"HeroBit","kind":"private","base_url":"https://herobit.info/"}
+{"schema_version":1,"id":"hhanclub","display_name":"HHanClub","kind":"private","base_url":"https://hhanclub.net/"}
+{"schema_version":1,"id":"hhd-api","display_name":"HHD (API)","kind":"private","base_url":"https://homiehelpdesk.net/"}
+{"schema_version":1,"id":"houseofdevil","display_name":"House of Devil","kind":"private","base_url":"https://h-o-d.org/"}
+{"schema_version":1,"id":"hqmusic","display_name":"HQMusic","kind":"private","base_url":"https://tracker.hqmusic.info/"}
+{"schema_version":1,"id":"hudbt","display_name":"HUDBT (蝴蝶)","kind":"private","base_url":"https://hudbt.hust.edu.cn/"}
+{"schema_version":1,"id":"huntorrent","display_name":"HunTorrent","kind":"semi-private","base_url":"https://huntorrent.org/"}
+{"schema_version":1,"id":"hxpt","display_name":"HxPT (好学)","kind":"private","base_url":"https://www.hxpt.org/"}
+{"schema_version":1,"id":"ilcorsaroblu","display_name":"Il Corsaro Blu","kind":"semi-private","base_url":"https://ilcorsaroblu.org/"}
+{"schema_version":1,"id":"immortuos","display_name":"Immortuos","kind":"private","base_url":"https://immortuos.life/"}
+{"schema_version":1,"id":"indietorrents","display_name":"Indietorrents","kind":"private","base_url":"https://www.indietorrents.com/"}
+{"schema_version":1,"id":"infinityhd-api","display_name":"InfinityHD (API)","kind":"private","base_url":"https://infinityhd.net/"}
+{"schema_version":1,"id":"infire","display_name":"Infire","kind":"private","base_url":"https://infire.si/"}
+{"schema_version":1,"id":"insanetracker","display_name":"Insane Tracker","kind":"private","base_url":"https://newinsane.info/"}
+{"schema_version":1,"id":"internetarchive","display_name":"Internet Archive","kind":"public","base_url":"https://archive.org/"}
+{"schema_version":1,"id":"itatorrents","display_name":"ItaTorrents","kind":"private","base_url":"https://itatorrents.xyz/"}
+{"schema_version":1,"id":"jme-reunit3d-api","display_name":"JME-REUNIT3D (API)","kind":"private","base_url":"https://jme-reunit3d.de/"}
+{"schema_version":1,"id":"jpopsuki","display_name":"JPopsuki","kind":"private","base_url":"https://jpopsuki.eu/"}
+{"schema_version":1,"id":"jptv4us-api","display_name":"JPTV4us (API)","kind":"private","base_url":"https://jptv4.us/"}
+{"schema_version":1,"id":"kamept","display_name":"KamePT","kind":"private","base_url":"https://kamept.com/"}
+{"schema_version":1,"id":"karagarga","display_name":"Karagarga","kind":"private","base_url":"https://karagarga.in/"}
+{"schema_version":1,"id":"keepfriends","display_name":"Keep Friends","kind":"private","base_url":"https://pt.keepfrds.com/"}
+{"schema_version":1,"id":"kelu","display_name":"Kelu","kind":"private","base_url":"https://our.kelu.one/"}
+{"schema_version":1,"id":"kickasstorrents-to","display_name":"kickasstorrents.to","kind":"public","base_url":"https://kickass.torrentbay.st/"}
+{"schema_version":1,"id":"kickasstorrents-ws","display_name":"kickasstorrents.ws","kind":"public","base_url":"https://kickass.ws/"}
+{"schema_version":1,"id":"kinorun","display_name":"Kinorun","kind":"semi-private","base_url":"http://kinorun.top/"}
+{"schema_version":1,"id":"kinozal","display_name":"Kinozal","kind":"semi-private","base_url":"https://kinozal.me/"}
+{"schema_version":1,"id":"kinozal-magnet","display_name":"Kinozal (M)","kind":"semi-private","base_url":"https://kinozal.me/"}
+{"schema_version":1,"id":"korsar","display_name":"Korsar","kind":"private","base_url":"http://filbi1976.org/"}
+{"schema_version":1,"id":"krazyzone","display_name":"KrazyZone","kind":"private","base_url":"https://krazyzone.net/"}
+{"schema_version":1,"id":"kufei","display_name":"Kufei (库非)","kind":"private","base_url":"https://kufei.org/"}
+{"schema_version":1,"id":"kufirc","display_name":"Kufirc","kind":"private","base_url":"https://kufirc.com/"}
+{"schema_version":1,"id":"kufirc2fa","display_name":"Kufirc2FA","kind":"private","base_url":"https://kufirc.com/"}
+{"schema_version":1,"id":"lajidui","display_name":"lajidui","kind":"private","base_url":"https://pt.lajidui.top/"}
+{"schema_version":1,"id":"lastdigitalunderground","display_name":"Last Digital Underground","kind":"private","base_url":"https://theldu.to/"}
+{"schema_version":1,"id":"lastfiles","display_name":"LastFiles","kind":"private","base_url":"https://lastfiles.ro/"}
+{"schema_version":1,"id":"lat-team-api","display_name":"Lat-Team (API)","kind":"private","base_url":"https://lat-team.com/"}
+{"schema_version":1,"id":"learnflakes","display_name":"LearnFlakes","kind":"private","base_url":"https://learnflakes.net/"}
+{"schema_version":1,"id":"leech24","display_name":"leech24","kind":"private","base_url":"https://leech24.net/"}
+{"schema_version":1,"id":"lemonhd-net","display_name":"LemonHD.net","kind":"private","base_url":"https://lemonhd.net/"}
+{"schema_version":1,"id":"lesaloon","display_name":"LeSaloon","kind":"private","base_url":"https://lesaloonv2-0.lol/"}
+{"schema_version":1,"id":"letseed","display_name":"LetSeed","kind":"private","base_url":"https://letseed.org/"}
+{"schema_version":1,"id":"libranet","display_name":"LibraNet","kind":"private","base_url":"https://libranet.org/"}
+{"schema_version":1,"id":"limetorrents","display_name":"LimeTorrents","kind":"public","base_url":"https://www.limetorrents.fun/"}
+{"schema_version":1,"id":"linkomanija","display_name":"LinkoManija","kind":"private","base_url":"https://www.linkomanija.net/"}
+{"schema_version":1,"id":"linuxtracker","display_name":"LinuxTracker","kind":"public","base_url":"https://linuxtracker.org/"}
+{"schema_version":1,"id":"locadora","display_name":"Locadora (API)","kind":"private","base_url":"https://locadora.cc/"}
+{"schema_version":1,"id":"longpt","display_name":"LongPT","kind":"private","base_url":"https://longpt.org/"}
+{"schema_version":1,"id":"losslessclub","display_name":"LosslessClub","kind":"private","base_url":"https://losslessclub.com/"}
+{"schema_version":1,"id":"lp-bits","display_name":"LP-Bits 2.0","kind":"private","base_url":"https://lp-bits.com/"}
+{"schema_version":1,"id":"lst","display_name":"LST","kind":"private","base_url":"https://lst.gg/"}
+{"schema_version":1,"id":"luckpt","display_name":"LuckPT","kind":"private","base_url":"https://pt.luckpt.de/"}
+{"schema_version":1,"id":"luminarr-api","display_name":"Luminarr (API)","kind":"private","base_url":"https://luminarr.me/"}
+{"schema_version":1,"id":"mactorrentsdownload","display_name":"Mac Torrents Download","kind":"public","base_url":"https://www.torrentmac.net/"}
+{"schema_version":1,"id":"madsrevolution","display_name":"MaDs Revolution","kind":"private","base_url":"https://madsrevolution.net/"}
+{"schema_version":1,"id":"magico","display_name":"Magico","kind":"private","base_url":"https://mpellas.me/"}
+{"schema_version":1,"id":"magnetcat","display_name":"Magnet Cat","kind":"public","base_url":"https://magnetcatcat.com/"}
+{"schema_version":1,"id":"magnetdownload","display_name":"MagnetDownload","kind":"public","base_url":"https://www.magnetdownload.com/"}
+{"schema_version":1,"id":"majomparade","display_name":"Majomparádé","kind":"private","base_url":"https://majomparade.eu/"}
+{"schema_version":1,"id":"makingoff","display_name":"Making Off","kind":"private","base_url":"https://makingoff.org/"}
+{"schema_version":1,"id":"malayabits-api","display_name":"Malayabits (API)","kind":"private","base_url":"https://malayabits.cc/"}
+{"schema_version":1,"id":"march","display_name":"March","kind":"private","base_url":"https://duckboobee.org/"}
+{"schema_version":1,"id":"marinetracker","display_name":"Marine Tracker","kind":"semi-private","base_url":"https://seatracker.org/"}
+{"schema_version":1,"id":"matrix","display_name":"Matrix","kind":"private","base_url":"https://matrixworld.info/"}
+{"schema_version":1,"id":"mazepa","display_name":"Mazepa","kind":"semi-private","base_url":"https://mazepa.to/"}
+{"schema_version":1,"id":"mdan","display_name":"MDAN","kind":"private","base_url":"https://bt.mdan.org/"}
+{"schema_version":1,"id":"megapeer","display_name":"MegaPeer","kind":"public","base_url":"https://megapeer.vip/"}
+{"schema_version":1,"id":"memphis","display_name":"Memphis","kind":"private","base_url":"https://memphis.fit/"}
+{"schema_version":1,"id":"mesevilag","display_name":"MeseVilág","kind":"private","base_url":"https://mese-vilag.net/"}
+{"schema_version":1,"id":"metalguru","display_name":"MetalGuru","kind":"private","base_url":"https://metalguru.me/"}
+{"schema_version":1,"id":"metaltracker","display_name":"Metal Tracker","kind":"semi-private","base_url":"https://en.metal-tracker.com/"}
+{"schema_version":1,"id":"midnightscene","display_name":"MidnightScene","kind":"private","base_url":"https://midnightscene.cc/"}
+{"schema_version":1,"id":"mikan","display_name":"Mikan","kind":"public","base_url":"https://mikanani.me/"}
+{"schema_version":1,"id":"milkie","display_name":"Milkie","kind":"private","base_url":"https://milkie.cc/"}
+{"schema_version":1,"id":"milnueve-api","display_name":"Milnueve (API)","kind":"private","base_url":"https://tracker.milnueve.cc/"}
+{"schema_version":1,"id":"miobt","display_name":"MioBT","kind":"semi-private","base_url":"https://miobt.com/"}
+{"schema_version":1,"id":"mixtapetorrent","display_name":"MixtapeTorrent","kind":"public","base_url":"http://www.mixtapetorrent.com/"}
+{"schema_version":1,"id":"mma-torrents","display_name":"MMA-torrents","kind":"private","base_url":"https://mma-torrents.com/"}
+{"schema_version":1,"id":"mnv","display_name":"MNV","kind":"private","base_url":"https://mnvv2.info/"}
+{"schema_version":1,"id":"mojblink","display_name":"MOJBLiNK","kind":"private","base_url":"https://www.mojblink.si/"}
+{"schema_version":1,"id":"momentpt","display_name":"MomentPT","kind":"private","base_url":"https://www.momentpt.top/"}
+{"schema_version":1,"id":"monikadesign-api","display_name":"MonikaDesign (API)","kind":"private","base_url":"https://monikadesign.uk/"}
+{"schema_version":1,"id":"mousebits","display_name":"MouseBits","kind":"private","base_url":"https://mousebits.com/"}
+{"schema_version":1,"id":"musebootlegs","display_name":"MuseBootlegs","kind":"semi-private","base_url":"https://musebootlegs.com/"}
+{"schema_version":1,"id":"musopia","display_name":"Musopia (音乐乌托邦)","kind":"private","base_url":"https://www.musopia.vip/"}
+{"schema_version":1,"id":"muxuege","display_name":"Muxuege","kind":"private","base_url":"https://pt.muxuege.org/"}
+{"schema_version":1,"id":"mvgroupforum","display_name":"MVGroup Forum","kind":"semi-private","base_url":"https://forums.mvgroup.org/"}
+{"schema_version":1,"id":"mvgroupmain","display_name":"MVGroup Main","kind":"semi-private","base_url":"https://forums.mvgroup.org/"}
+{"schema_version":1,"id":"mypornclub","display_name":"MyPornClub","kind":"public","base_url":"https://myporn.club/"}
+{"schema_version":1,"id":"myspleen","display_name":"MySpleen","kind":"private","base_url":"https://www.myspleen.org/"}
+{"schema_version":1,"id":"nanyangpt","display_name":"NanyangPT (南洋)","kind":"private","base_url":"https://nanyangpt.com/"}
+{"schema_version":1,"id":"ncore","display_name":"nCore","kind":"private","base_url":"https://ncore.pro/"}
+{"schema_version":1,"id":"nekobt","display_name":"nekoBT","kind":"public","base_url":"https://nekobt.to/"}
+{"schema_version":1,"id":"nethd","display_name":"NetHD","kind":"semi-private","base_url":"https://nethd.org/"}
+{"schema_version":1,"id":"new-team","display_name":"New-Team","kind":"semi-private","base_url":"https://new-team.org/"}
+{"schema_version":1,"id":"newheaven","display_name":"New Heaven","kind":"private","base_url":"https://newheaven.nl/"}
+{"schema_version":1,"id":"newretro","display_name":"The New Retro","kind":"private","base_url":"https://new-retro.eu/"}
+{"schema_version":1,"id":"newstudio","display_name":"NewStudio","kind":"public","base_url":"https://newstudio.tv/"}
+{"schema_version":1,"id":"newstudiol","display_name":"NewStudioL","kind":"semi-private","base_url":"https://newstudio.tv/"}
+{"schema_version":1,"id":"nicept","display_name":"NicePT","kind":"private","base_url":"https://www.nicept.net/"}
+{"schema_version":1,"id":"nipponsei","display_name":"Nipponsei","kind":"public","base_url":"https://nipponsei.minglong.org/"}
+{"schema_version":1,"id":"nirvana","display_name":"Nirvana (API)","kind":"private","base_url":"https://nirvana.li/"}
+{"schema_version":1,"id":"njtupt","display_name":"njtupt (浦园)","kind":"private","base_url":"https://njtupt.top/"}
+{"schema_version":1,"id":"nobs","display_name":"NOBS","kind":"private","base_url":"https://nobs.rawsmoke.net/"}
+{"schema_version":1,"id":"noname-club","display_name":"NoNaMe Club","kind":"public","base_url":"https://nnmclub.to/"}
+{"schema_version":1,"id":"noname-clubl","display_name":"NoNaMe ClubL","kind":"semi-private","base_url":"https://nnmclub.to/"}
+{"schema_version":1,"id":"nordicbytes","display_name":"NordicBytes","kind":"private","base_url":"https://nordicbytes.org/"}
+{"schema_version":1,"id":"nordicquality-api","display_name":"NordicQuality (API)","kind":"private","base_url":"https://nordicq.org/"}
+{"schema_version":1,"id":"nostradamus","display_name":"Nostradamus","kind":"private","base_url":"https://nostradamus.foo/"}
+{"schema_version":1,"id":"novahd","display_name":"NovaHD","kind":"private","base_url":"https://pt.novahd.top/"}
+{"schema_version":1,"id":"nyaasi","display_name":"Nyaa.si","kind":"public","base_url":"https://nyaa.si/"}
+{"schema_version":1,"id":"okpt","display_name":"OKPT","kind":"private","base_url":"https://www.okpt.net/"}
+{"schema_version":1,"id":"oldgreektracker","display_name":"Old Greek Tracker (OGT)","kind":"private","base_url":"https://oldgreektracker.xyz/"}
+{"schema_version":1,"id":"oldtoonsworld","display_name":"OldToonsWorld (API)","kind":"private","base_url":"https://oldtoons.world/"}
+{"schema_version":1,"id":"onejav","display_name":"OneJAV","kind":"public","base_url":"https://onejav.com/"}
+{"schema_version":1,"id":"onlyencodes-api","display_name":"OnlyEncodes+ (API)","kind":"private","base_url":"https://onlyencodes.cc/"}
+{"schema_version":1,"id":"opencd","display_name":"OpenCD","kind":"private","base_url":"https://open.cd/"}
+{"schema_version":1,"id":"opensharing","display_name":"OpenSharing","kind":"public","base_url":"https://opensharing.org/"}
+{"schema_version":1,"id":"order66","display_name":"Order66","kind":"private","base_url":"https://executeorder66.info/"}
+{"schema_version":1,"id":"oshenpt","display_name":"OshenPT","kind":"private","base_url":"https://www.oshen.win/"}
+{"schema_version":1,"id":"ourbits","display_name":"OurBits","kind":"private","base_url":"https://ourbits.club/"}
+{"schema_version":1,"id":"p2pbg","display_name":"P2PBG","kind":"private","base_url":"https://www.p2pbg.com/"}
+{"schema_version":1,"id":"panda","display_name":"Panda","kind":"private","base_url":"https://pandapt.net/"}
+{"schema_version":1,"id":"pandacd","display_name":"PandaCD","kind":"public","base_url":"https://pandacd.io/"}
+{"schema_version":1,"id":"parabellumhd-api","display_name":"ParabellumHD (API)","kind":"private","base_url":"https://parabellumhd.cx/"}
+{"schema_version":1,"id":"party-tracker","display_name":"Party-Tracker","kind":"private","base_url":"https://party-tracker.info/"}
+{"schema_version":1,"id":"pctorrent","display_name":"PC-torrent","kind":"public","base_url":"https://pc-torrents.games/"}
+{"schema_version":1,"id":"peeratiko","display_name":"Peeratiko","kind":"private","base_url":"https://peeratiko.org/"}
+{"schema_version":1,"id":"peergarden","display_name":"PeerGarden","kind":"private","base_url":"https://peergarden.org/"}
+{"schema_version":1,"id":"peersfm","display_name":"Peers.FM","kind":"private","base_url":"https://peers.fm/"}
+{"schema_version":1,"id":"phoenixproject","display_name":"Phoenix Project","kind":"private","base_url":"https://phoenixproject.app/"}
+{"schema_version":1,"id":"pier720","display_name":"720pier","kind":"private","base_url":"https://720pier.ru/"}
+{"schema_version":1,"id":"pignetwork","display_name":"PigNetwork (猪猪网)","kind":"private","base_url":"https://piggo.me/"}
+{"schema_version":1,"id":"pixelcove","display_name":"PixelCove","kind":"private","base_url":"https://www.pixelcove.me/"}
+{"schema_version":1,"id":"pixelcove2fa","display_name":"PixelCove2FA","kind":"private","base_url":"https://www.pixelcove.me/"}
+{"schema_version":1,"id":"playletpt","display_name":"PlayletPT","kind":"private","base_url":"https://playlet.cc/"}
+{"schema_version":1,"id":"plugintorrent","display_name":"plugintorrent","kind":"public","base_url":"https://plugintorrent.com/"}
+{"schema_version":1,"id":"podzemlje","display_name":"Podzemlje","kind":"private","base_url":"https://podzemlje.net/"}
+{"schema_version":1,"id":"polishtorrent","display_name":"Polish Torrent (API)","kind":"private","base_url":"https://polishtorrent.top/"}
+{"schema_version":1,"id":"polishtracker-api","display_name":"PolishTracker (API)","kind":"private","base_url":"https://pte.nu/"}
+{"schema_version":1,"id":"polskie-torrenty","display_name":"Polskie-Torrenty","kind":"semi-private","base_url":"https://polskie-torrenty.eu/"}
+{"schema_version":1,"id":"pornolab","display_name":"PornoLab","kind":"semi-private","base_url":"https://pornolab.net/"}
+{"schema_version":1,"id":"pornotorrent","display_name":"PornoTorrent","kind":"public","base_url":"https://pornotorrent.com.br/"}
+{"schema_version":1,"id":"pornrips","display_name":"PornRips","kind":"public","base_url":"https://pornrips.to/"}
+{"schema_version":1,"id":"pornxlab","display_name":"PornXLab","kind":"public","base_url":"https://www.pornxlab.com/"}
+{"schema_version":1,"id":"portugas-api","display_name":"Portugas (API)","kind":"private","base_url":"https://portugas.org/"}
+{"schema_version":1,"id":"postman","display_name":"Postman","kind":"public","base_url":"http://tracker2.postman.i2p/"}
+{"schema_version":1,"id":"postman-api","display_name":"Postman (API)","kind":"semi-private","base_url":"http://tracker2.postman.i2p/"}
+{"schema_version":1,"id":"proaudiotorrents","display_name":"ProAudioTorrents","kind":"private","base_url":"https://proaudiotorrents.org/"}
+{"schema_version":1,"id":"proporno","display_name":"ProPorno","kind":"semi-private","base_url":"https://proporno.org/"}
+{"schema_version":1,"id":"ptcafe","display_name":"PTCafe (咖啡)","kind":"private","base_url":"https://ptcafe.club/"}
+{"schema_version":1,"id":"ptcc","display_name":"PTCC (我的PT)","kind":"private","base_url":"https://cc.mypt.cc/"}
+{"schema_version":1,"id":"pterclub","display_name":"PTerClub (PT之友俱乐部)","kind":"private","base_url":"https://pterclub.net/"}
+{"schema_version":1,"id":"ptfans","display_name":"PTFans","kind":"private","base_url":"https://ptfans.cc/"}
+{"schema_version":1,"id":"ptfiles","display_name":"PTFiles","kind":"private","base_url":"https://ptfiles.net/"}
+{"schema_version":1,"id":"ptgtk","display_name":"PT GTK","kind":"private","base_url":"https://pt.gtkpw.xyz/"}
+{"schema_version":1,"id":"pthome","display_name":"PThome","kind":"private","base_url":"https://www.pthome.net/"}
+{"schema_version":1,"id":"ptitzmx","display_name":"PT分享站 (itzmx)","kind":"private","base_url":"https://pt.itzmx.com/"}
+{"schema_version":1,"id":"ptlao","display_name":"PTLAO","kind":"private","base_url":"https://ptlao.top/"}
+{"schema_version":1,"id":"ptlgs","display_name":"PTLGS","kind":"private","base_url":"https://ptlgs.org/"}
+{"schema_version":1,"id":"ptsbao","display_name":"PTSBAO (烧包)","kind":"private","base_url":"https://ptsbao.club/"}
+{"schema_version":1,"id":"ptskit","display_name":"PTSKIT","kind":"private","base_url":"https://www.ptskit.org/"}
+{"schema_version":1,"id":"pttey","display_name":"PTTey","kind":"private","base_url":"https://pt.tey.cc/"}
+{"schema_version":1,"id":"pttime","display_name":"PTTime","kind":"private","base_url":"https://www.pttime.org/"}
+{"schema_version":1,"id":"ptying","display_name":"PTYING (樱花)","kind":"private","base_url":"https://pt.ying.us.kg/"}
+{"schema_version":1,"id":"ptzone","display_name":"PTzone","kind":"private","base_url":"https://ptzone.xyz/"}
+{"schema_version":1,"id":"punkshorror","display_name":"Punk's Horror Tracker","kind":"private","base_url":"https://punck-tracker.net/"}
+{"schema_version":1,"id":"puntotorrent","display_name":"PuntoTorrent","kind":"private","base_url":"https://xbt.puntotorrent.com/"}
+{"schema_version":1,"id":"pussytorrents","display_name":"PussyTorrents","kind":"semi-private","base_url":"https://pussytorrents.org/"}
+{"schema_version":1,"id":"putao","display_name":"PuTao (葡萄)","kind":"private","base_url":"https://pt.sjtu.edu.cn/"}
+{"schema_version":1,"id":"pwtorrents","display_name":"PWTorrents","kind":"private","base_url":"https://pwtorrents.net/"}
+{"schema_version":1,"id":"pwtorrents2fa","display_name":"PWTorrents2FA","kind":"private","base_url":"https://pwtorrents.net/"}
+{"schema_version":1,"id":"qingwa","display_name":"Qingwa (青蛙)","kind":"private","base_url":"https://www.qingwapt.com/"}
+{"schema_version":1,"id":"r3vwtf","display_name":"R3V WTF!","kind":"private","base_url":"https://r3vuk.wtf/"}
+{"schema_version":1,"id":"racing4everyone-api","display_name":"Racing4Everyone (API)","kind":"private","base_url":"https://racing4everyone.eu/"}
+{"schema_version":1,"id":"racingforme","display_name":"RacingForMe","kind":"private","base_url":"https://www.racingfor.me/"}
+{"schema_version":1,"id":"railgunpt","display_name":"RailgunPT","kind":"private","base_url":"https://bilibili.download/"}
+{"schema_version":1,"id":"rainbowtracker","display_name":"Rainbow Tracker","kind":"semi-private","base_url":"https://gaytracker.ru/"}
+{"schema_version":1,"id":"rastastugan-api","display_name":"Rastastugan (API)","kind":"private","base_url":"https://rastastugan.org/"}
+{"schema_version":1,"id":"redstartorrent","display_name":"Red Star Torrent","kind":"private","base_url":"http://rstorrent.org.pl/"}
+{"schema_version":1,"id":"reelflix-api","display_name":"ReelFLiX (API)","kind":"private","base_url":"https://reelflix.cc/"}
+{"schema_version":1,"id":"retromoviesclub-api","display_name":"RetroMoviesClub (API)","kind":"private","base_url":"https://retro-movies.club/"}
+{"schema_version":1,"id":"retrotoon","display_name":"RetroToon","kind":"private","base_url":"https://www.retrotoon.world/"}
+{"schema_version":1,"id":"rgfootball","display_name":"RGFootball","kind":"semi-private","base_url":"https://rgfootball.net/"}
+{"schema_version":1,"id":"rintor","display_name":"RinTor","kind":"semi-private","base_url":"https://rintor.org/"}
+{"schema_version":1,"id":"rintornet","display_name":"RinTor.NeT","kind":"public","base_url":"https://www.rintor.net/"}
+{"schema_version":1,"id":"riperam","display_name":"RiperAM","kind":"semi-private","base_url":"https://riperam.org/"}
+{"schema_version":1,"id":"rockethd","display_name":"RocketHD (API)","kind":"private","base_url":"https://rocket-hd.cc/"}
+{"schema_version":1,"id":"romanianmetaltorrents","display_name":"Romanian Metal Torrents","kind":"private","base_url":"https://metal.iplay.ro/"}
+{"schema_version":1,"id":"rousi-pro","display_name":"Rousi.pro","kind":"private","base_url":"https://rousi.pro/"}
+{"schema_version":1,"id":"rudub","display_name":"RUDUB","kind":"semi-private","base_url":"https://r4.rudub.world/"}
+{"schema_version":1,"id":"rustorka","display_name":"Rustorka","kind":"semi-private","base_url":"https://rustorka.com/"}
+{"schema_version":1,"id":"rutor","display_name":"RuTor","kind":"public","base_url":"https://rutor.info/"}
+{"schema_version":1,"id":"samaritano","display_name":"SAMARITANO (API)","kind":"private","base_url":"https://samaritano.cc/"}
+{"schema_version":1,"id":"sbpt","display_name":"SBPT","kind":"private","base_url":"https://sbpt.link/"}
+{"schema_version":1,"id":"scenerush","display_name":"SceneRush","kind":"private","base_url":"https://www.scene-rush.pt/"}
+{"schema_version":1,"id":"scenetime-api","display_name":"SceneTime (API)","kind":"private","base_url":"https://www.scenetime.com/"}
+{"schema_version":1,"id":"seedcore-api","display_name":"SeedCore (API)","kind":"private","base_url":"https://seedcore.net/"}
+{"schema_version":1,"id":"seedfile","display_name":"SeedFile","kind":"private","base_url":"https://seedfile.io/"}
+{"schema_version":1,"id":"seedpool-api","display_name":"seedpool (API)","kind":"private","base_url":"https://seedpool.org/"}
+{"schema_version":1,"id":"selezen","display_name":"seleZen","kind":"semi-private","base_url":"https://use.selezen.club/"}
+{"schema_version":1,"id":"sewerpt","display_name":"SewerPT","kind":"private","base_url":"https://sewerpt.com/"}
+{"schema_version":1,"id":"sextorrent-api","display_name":"SexTorrent (API)","kind":"private","base_url":"https://sextorrent.myds.me/"}
+{"schema_version":1,"id":"sexypics","display_name":"Sexy-Pics","kind":"public","base_url":"https://www.sexy-pics.us/"}
+{"schema_version":1,"id":"shadowbit","display_name":"Shadowbit","kind":"private","base_url":"https://shadowbit.cc/"}
+{"schema_version":1,"id":"shakaw","display_name":"ShaKaw","kind":"private","base_url":"https://tracker.shakaw.com.br/"}
+{"schema_version":1,"id":"shanaproject","display_name":"Shana Project","kind":"public","base_url":"https://www.shanaproject.com/"}
+{"schema_version":1,"id":"shareisland-api","display_name":"Shareisland (API)","kind":"private","base_url":"https://shareisland.org/"}
+{"schema_version":1,"id":"showrss-yml","display_name":"showRSS","kind":"public","base_url":"https://showrss.info/"}
+{"schema_version":1,"id":"siambit","display_name":"SiamBIT","kind":"private","base_url":"https://bearbit.org/"}
+{"schema_version":1,"id":"siqi","display_name":"Siqi","kind":"private","base_url":"https://si-qi.xyz/"}
+{"schema_version":1,"id":"skidrowrepack","display_name":"SkidrowRepack","kind":"public","base_url":"https://skidrowrepack.com/"}
+{"schema_version":1,"id":"skipthecommercials-api","display_name":"SkipTheCommercials (API)","kind":"private","base_url":"https://skipthecommercials.xyz/"}
+{"schema_version":1,"id":"sktorrent","display_name":"Sk-CzTorrent","kind":"semi-private","base_url":"https://sktorrent.eu/"}
+{"schema_version":1,"id":"sktorrent-org","display_name":"SkTorrent.org","kind":"semi-private","base_url":"https://sktorrent.org/"}
+{"schema_version":1,"id":"slobitgames","display_name":"Slobit Games","kind":"private","base_url":"https://games.slo-bitcloud.eu/"}
+{"schema_version":1,"id":"snowpt","display_name":"SnowPT","kind":"private","base_url":"https://skyeysnow.com/"}
+{"schema_version":1,"id":"sosulki","display_name":"sosulki","kind":"public","base_url":"https://sosulki.bosk.cc/"}
+{"schema_version":1,"id":"soulvoice","display_name":"SoulVoice (聆音Club)","kind":"private","base_url":"https://pt.soulvoice.club/"}
+{"schema_version":1,"id":"speedmasterhd","display_name":"Speedmaster HD","kind":"private","base_url":"https://speedmaster-hd.net/"}
+{"schema_version":1,"id":"spiritofrevolution","display_name":"Spirit of Revolution","kind":"private","base_url":"https://sor-next.org/"}
+{"schema_version":1,"id":"sportscora","display_name":"SportsCora (API)","kind":"private","base_url":"https://sportscora.com/"}
+{"schema_version":1,"id":"sportscult","display_name":"SportsCult","kind":"private","base_url":"https://sportscult.org/"}
+{"schema_version":1,"id":"springsunday","display_name":"SpringSunday","kind":"private","base_url":"https://springsunday.net/"}
+{"schema_version":1,"id":"sukebeinyaasi","display_name":"sukebei.nyaa.si","kind":"public","base_url":"https://sukebei.nyaa.si/"}
+{"schema_version":1,"id":"superbits","display_name":"Superbits","kind":"private","base_url":"https://superbits.org/"}
+{"schema_version":1,"id":"swarmazon-api","display_name":"Swarmazon (API)","kind":"private","base_url":"https://swarmazon.club/"}
+{"schema_version":1,"id":"tangpt","display_name":"TangPT (躺平)","kind":"private","base_url":"https://www.tangpt.top/"}
+{"schema_version":1,"id":"tapochek","display_name":"Tapochek","kind":"private","base_url":"https://tapochek.net/"}
+{"schema_version":1,"id":"tasmanit","display_name":"Tasmanit","kind":"private","base_url":"https://tasmanit.es/"}
+{"schema_version":1,"id":"teamctgame","display_name":"Team CT Game","kind":"private","base_url":"https://tctg.pm/"}
+{"schema_version":1,"id":"teamflix","display_name":"TeamFlix","kind":"private","base_url":"https://tracker.teamflix.cc/"}
+{"schema_version":1,"id":"teamhd","display_name":"TeamHD","kind":"private","base_url":"https://teamhd.org/"}
+{"schema_version":1,"id":"teamos","display_name":"TeamOS","kind":"private","base_url":"https://www.teamos.xyz/"}
+{"schema_version":1,"id":"thebrothers","display_name":"The Brothers","kind":"private","base_url":"https://leo-test.store/"}
+{"schema_version":1,"id":"thecrazyones","display_name":"The Crazy Ones","kind":"private","base_url":"https://thecrazyones.hopto.org/"}
+{"schema_version":1,"id":"theempire","display_name":"The Empire","kind":"private","base_url":"https://theempire.click/"}
+{"schema_version":1,"id":"thefallingangels","display_name":"The Falling Angels","kind":"private","base_url":"https://tfa.tf/"}
+{"schema_version":1,"id":"thegeeks","display_name":"The Geeks","kind":"private","base_url":"https://thegeeks.click/"}
+{"schema_version":1,"id":"thekitchen","display_name":"The Kitchen","kind":"private","base_url":"https://thekitchen.click/"}
+{"schema_version":1,"id":"theleachzone-api","display_name":"TheLeachZone (API)","kind":"private","base_url":"https://tlzdigital.com/"}
+{"schema_version":1,"id":"themixingbowl","display_name":"themixingbowl","kind":"semi-private","base_url":"https://tmb.dj/"}
+{"schema_version":1,"id":"thenewfun","display_name":"The-New-Fun","kind":"private","base_url":"https://the-new-fun.com/"}
+{"schema_version":1,"id":"theoccult","display_name":"The Occult","kind":"private","base_url":"https://theoccult.click/"}
+{"schema_version":1,"id":"theoldschool-api","display_name":"The Old School (API)","kind":"private","base_url":"https://theoldschool.cc/"}
+{"schema_version":1,"id":"theparadiese","display_name":"The Paradiese","kind":"private","base_url":"https://theparadiese.hopto.org/"}
+{"schema_version":1,"id":"thepiratebay","display_name":"The Pirate Bay","kind":"public","base_url":"https://thepiratebay.org/"}
+{"schema_version":1,"id":"theplace","display_name":"The Place","kind":"private","base_url":"https://theplace.click/"}
+{"schema_version":1,"id":"theshow","display_name":"The Show","kind":"private","base_url":"https://theshow.click/"}
+{"schema_version":1,"id":"thevault","display_name":"The Vault","kind":"private","base_url":"https://thevault.click/"}
+{"schema_version":1,"id":"tjupt","display_name":"TJUPT (北洋园PT)","kind":"private","base_url":"https://tjupt.org/"}
+{"schema_version":1,"id":"tlfbits","display_name":"TLFBits","kind":"private","base_url":"https://pt.eastgame.org/"}
+{"schema_version":1,"id":"tmghub","display_name":"TmGHuB","kind":"private","base_url":"https://tmghub.org/"}
+{"schema_version":1,"id":"tocashare","display_name":"Toca Share (API)","kind":"private","base_url":"https://tocashare.biz/"}
+{"schema_version":1,"id":"tokyotosho","display_name":"Tokyo Toshokan","kind":"public","base_url":"https://www.tokyotosho.info/"}
+{"schema_version":1,"id":"tormac","display_name":"Tormac","kind":"private","base_url":"https://tormac.org/"}
+{"schema_version":1,"id":"tornado","display_name":"Tornado","kind":"private","base_url":"https://www.tornado.si/"}
+{"schema_version":1,"id":"torrent-heaven","display_name":"Torrent Heaven","kind":"private","base_url":"https://www.torrentheaven.org/"}
+{"schema_version":1,"id":"torrent-pirat","display_name":"torrent-pirat","kind":"public","base_url":"http://www.torrent-pirat.com/"}
+{"schema_version":1,"id":"torrent-turk","display_name":"TOrrent-tuRK","kind":"private","base_url":"https://torrent-turk.de/"}
+{"schema_version":1,"id":"torrent9","display_name":"Torrent9","kind":"public","base_url":"https://www6.torrent9.to/"}
+{"schema_version":1,"id":"torrentbd","display_name":"TorrentBD","kind":"private","base_url":"https://www.torrentbd.net/"}
+{"schema_version":1,"id":"torrentby","display_name":"torrent.by","kind":"public","base_url":"https://torrent.by/"}
+{"schema_version":1,"id":"torrentbyte","display_name":"TorrentByte","kind":"public","base_url":"https://torrentbyte.cc/"}
+{"schema_version":1,"id":"torrentccf","display_name":"TorrentCCF","kind":"private","base_url":"https://et8.org/"}
+{"schema_version":1,"id":"torrentclaw","display_name":"TorrentClaw","kind":"private","base_url":"https://torrentclaw.com/"}
+{"schema_version":1,"id":"torrentcore","display_name":"Torrent[CORE]","kind":"public","base_url":"https://torrentcore.xyz/"}
+{"schema_version":1,"id":"torrentdd","display_name":"TorrentDD","kind":"private","base_url":"https://www.torrentdd.com/"}
+{"schema_version":1,"id":"torrentdownload","display_name":"TorrentDownload","kind":"public","base_url":"https://www.torrentdownload.info/"}
+{"schema_version":1,"id":"torrentdownloads","display_name":"Torrent Downloads","kind":"public","base_url":"https://www.torrentdownloads.pro/"}
+{"schema_version":1,"id":"torrenteros-api","display_name":"Torrenteros (API)","kind":"private","base_url":"https://torrenteros.org/"}
+{"schema_version":1,"id":"torrenthaven-api","display_name":"TorrentHaven (API)","kind":"private","base_url":"https://torrenthaven.org/"}
+{"schema_version":1,"id":"torrenthr-api","display_name":"TorrentHR (API)","kind":"private","base_url":"https://www.torrenthr.org/"}
+{"schema_version":1,"id":"torrenting","display_name":"Torrenting","kind":"private","base_url":"https://torrenting.com/"}
+{"schema_version":1,"id":"torrentkitty","display_name":"TorrentKitty","kind":"public","base_url":"https://www.torrentkitty.cam/"}
+{"schema_version":1,"id":"torrentleech","display_name":"TorrentLeech","kind":"private","base_url":"https://www.torrentleech.org/"}
+{"schema_version":1,"id":"torrentlt","display_name":"Torrent.LT","kind":"private","base_url":"https://torrent.lt/"}
+{"schema_version":1,"id":"torrentmasters","display_name":"TorrentMasters","kind":"semi-private","base_url":"https://torrentmasters.org/"}
+{"schema_version":1,"id":"torrentoyunindir","display_name":"Torrent Oyun indir","kind":"public","base_url":"https://1.torrentoyunindir.com/"}
+{"schema_version":1,"id":"torrentproject2","display_name":"TorrentProject2","kind":"public","base_url":"https://torrentproject2.net/"}
+{"schema_version":1,"id":"torrentsome","display_name":"Torrentsome","kind":"public","base_url":"https://torrentsome260.com/"}
+{"schema_version":1,"id":"torrenttip","display_name":"Torrenttip","kind":"public","base_url":"https://torrenttip241.top/"}
+{"schema_version":1,"id":"torrenttrader","display_name":"Torrent Trader","kind":"private","base_url":"https://the-torrent-trader.com/"}
+{"schema_version":1,"id":"totheglory","display_name":"ToTheGlory","kind":"private","base_url":"https://totheglory.im/"}
+{"schema_version":1,"id":"totheglory2fa","display_name":"ToTheGlory2FA","kind":"private","base_url":"https://totheglory.im/"}
+{"schema_version":1,"id":"tr4ker","display_name":"TR4KER","kind":"semi-private","base_url":"https://tr4ker.net/"}
+{"schema_version":1,"id":"trackermk","display_name":"TrackerMK","kind":"private","base_url":"https://trackermk.com/"}
+{"schema_version":1,"id":"trackerzero","display_name":"TrackerZero","kind":"private","base_url":"https://trackerzero.it/"}
+{"schema_version":1,"id":"traht","display_name":"TrahT","kind":"semi-private","base_url":"https://traht.org/"}
+{"schema_version":1,"id":"trancetraffic","display_name":"TranceTraffic","kind":"private","base_url":"https://www.trancetraffic.com/"}
+{"schema_version":1,"id":"trezzor","display_name":"TreZzoR","kind":"private","base_url":"https://tracker.czech-server.com/"}
+{"schema_version":1,"id":"trezzorcookie","display_name":"TreZzoRCookie","kind":"private","base_url":"https://tracker.czech-server.com/"}
+{"schema_version":1,"id":"tribalmixes","display_name":"TribalMixes","kind":"semi-private","base_url":"https://www.tribalmixes.com/"}
+{"schema_version":1,"id":"turkseed-api","display_name":"TurkSeed (API)","kind":"private","base_url":"https://turkseed.com/"}
+{"schema_version":1,"id":"turktorrent","display_name":"TurkTorrent","kind":"private","base_url":"https://turktorrent.us/"}
+{"schema_version":1,"id":"u2","display_name":"U2","kind":"private","base_url":"https://u2.dmhy.org/"}
+{"schema_version":1,"id":"u3c3","display_name":"U3C3","kind":"public","base_url":"https://u3c3.com/"}
+{"schema_version":1,"id":"ubits","display_name":"UBits","kind":"private","base_url":"https://ubits.club/"}
+{"schema_version":1,"id":"uindex","display_name":"Uindex","kind":"public","base_url":"https://uindex.org/"}
+{"schema_version":1,"id":"ultrabits-api","display_name":"Ultrabits (API)","kind":"private","base_url":"https://ultrabits.org/"}
+{"schema_version":1,"id":"ultrahd","display_name":"UltraHD","kind":"private","base_url":"https://ultrahd.net/"}
+{"schema_version":1,"id":"unbreakable","display_name":"Unbreakable","kind":"private","base_url":"https://unbreakable5.eu/"}
+{"schema_version":1,"id":"unionfansub","display_name":"Union Fansub","kind":"semi-private","base_url":"https://torrent.unionfansub.com/"}
+{"schema_version":1,"id":"unlimitz","display_name":"Unlimitz","kind":"private","base_url":"https://www.unlimitz.biz/"}
+{"schema_version":1,"id":"uploadcx","display_name":"upload.cx (API)","kind":"private","base_url":"https://upload.cx/"}
+{"schema_version":1,"id":"upscalevault-api","display_name":"Upscale Vault (API)","kind":"private","base_url":"https://upscalevault.com/"}
+{"schema_version":1,"id":"utopia","display_name":"UTOPIA (API)","kind":"private","base_url":"https://utp.to/"}
+{"schema_version":1,"id":"uztracker","display_name":"UzTracker","kind":"semi-private","base_url":"https://uztracker.me/"}
+{"schema_version":1,"id":"v3x","display_name":"V3X","kind":"private","base_url":"https://v3x.club/"}
+{"schema_version":1,"id":"vault-network","display_name":"Vault network","kind":"private","base_url":"https://vault-network.net/"}
+{"schema_version":1,"id":"vc-lib","display_name":"VC-Lib","kind":"private","base_url":"https://pt.vclib.online/"}
+{"schema_version":1,"id":"vietmediaf","display_name":"VietMediaF","kind":"private","base_url":"https://tracker.vietmediaf.store/"}
+{"schema_version":1,"id":"vsthouse","display_name":"VSTHouse","kind":"public","base_url":"https://vsthouse.ru/"}
+{"schema_version":1,"id":"vstorrent","display_name":"VSTorrent","kind":"public","base_url":"https://vstorrent.org/"}
+{"schema_version":1,"id":"vsttorrents","display_name":"VST Torrentz","kind":"public","base_url":"https://vsttorrentz.net/"}
+{"schema_version":1,"id":"whiteangel","display_name":"White Angel","kind":"private","base_url":"https://white-angel.hu/"}
+{"schema_version":1,"id":"wihd","display_name":"World-In-HD","kind":"private","base_url":"https://world-in-hd.net/"}
+{"schema_version":1,"id":"wintersakura","display_name":"WinterSakura","kind":"private","base_url":"https://wintersakura.net/"}
+{"schema_version":1,"id":"world-of-tomorrow","display_name":"World-of-Tomorrow","kind":"private","base_url":"https://w-o-t.pro/"}
+{"schema_version":1,"id":"world-torrent","display_name":"World-torrent","kind":"public","base_url":"https://www.darkfox4.cc/"}
+{"schema_version":1,"id":"xdy","display_name":"XDY (修道院)","kind":"private","base_url":"https://xdypt.vip/"}
+{"schema_version":1,"id":"xingtan","display_name":"Xingtan (杏坛)","kind":"private","base_url":"https://xingtan.one/"}
+{"schema_version":1,"id":"xingwan","display_name":"Xingwan (星湾)","kind":"private","base_url":"https://xingwan.cc/"}
+{"schema_version":1,"id":"xingyung","display_name":"Xingyung (星陨阁)","kind":"private","base_url":"https://pt.xingyungept.org/"}
+{"schema_version":1,"id":"xloli","display_name":"xloli","kind":"private","base_url":"https://mua.xloli.cc/"}
+{"schema_version":1,"id":"xtorrenty","display_name":"xTorrenty","kind":"private","base_url":"https://xtorrenty.org/"}
+{"schema_version":1,"id":"xtremebytes","display_name":"Xtreme Bytes","kind":"private","base_url":"https://xtremebytes.net/"}
+{"schema_version":1,"id":"xwtclassics","display_name":"XWT-Classics","kind":"private","base_url":"https://xwt-classics.net/"}
+{"schema_version":1,"id":"xwtclassics2fa","display_name":"XWT-Classics2FA","kind":"private","base_url":"https://xwt-classics.net/"}
+{"schema_version":1,"id":"xwtorrents","display_name":"XWtorrents","kind":"private","base_url":"https://xtremewrestlingtorrents.net/"}
+{"schema_version":1,"id":"xwtorrents2fa","display_name":"XWtorrents2FA","kind":"private","base_url":"https://xtremewrestlingtorrents.net/"}
+{"schema_version":1,"id":"xxxclub","display_name":"XXXClub","kind":"public","base_url":"https://xxxclub.to/"}
+{"schema_version":1,"id":"xxxtor","display_name":"xxxtor","kind":"public","base_url":"https://xxxtor.com/"}
+{"schema_version":1,"id":"yggreborn-api","display_name":"YggReborn (API)","kind":"private","base_url":"https://www.yggreborn.org/"}
+{"schema_version":1,"id":"yts","display_name":"YTS","kind":"public","base_url":"https://yts.gg/"}
+{"schema_version":1,"id":"yuscene-api","display_name":"YUSCENE (API)","kind":"private","base_url":"https://yu-scene.net/"}
+{"schema_version":1,"id":"zamundarip","display_name":"Zamunda RIP","kind":"public","base_url":"https://zamunda.rip/"}
+{"schema_version":1,"id":"zappateers","display_name":"Zappateers","kind":"private","base_url":"https://zappateers.com/"}
+{"schema_version":1,"id":"zenith","display_name":"Zenith","kind":"private","base_url":"https://znth.cx/"}
+{"schema_version":1,"id":"zmpt","display_name":"ZmPT (织梦)","kind":"private","base_url":"https://zmpt.cc/"}
+{"schema_version":1,"id":"zrpt","display_name":"ZRPT (自然)","kind":"private","base_url":"https://zrpt.cc/"}
+{"schema_version":1,"id":"ztracker","display_name":"Ztracker","kind":"semi-private","base_url":"https://ztracker.cc/"}

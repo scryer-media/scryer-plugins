@@ -1,2 +1,0 @@
-    IndexerCapabilities, IndexerDescriptor, IndexerSourceKind, PluginDescriptor, PluginResult,
-    PluginSearchResponse, ProviderDescriptor, SDK_VERSION,

@@ -11,7 +11,9 @@ For humans and agents alike:
 - `cargo xtask release-publish-tags --pr <number>` creates publication tags after that PR merges
 - `cargo xtask catalog render-v3` is the local central catalog validation/render pass
 - `cargo xtask plugin validate <path>` is the current SDK ABI check for a plugin crate
-- `cargo xtask plugin new <kind> <name>` is the scaffold path for new plugin crates
+- `cargo xtask plugin new <kind> <name>` is the scaffold path for new plugin
+  crates; it covers the notification and subtitle families and points the other
+  three at the first-party plugin to copy
 - release automation must stay in `cargo xtask`; do not add shell wrappers
 - official plugin inventory is declared in each plugin crate `Cargo.toml` under
   `package.metadata.scryer`, with `package.description` as the canonical
@@ -42,6 +44,13 @@ Operational rules:
 - plugin releases append immutable `releases[]` entries instead of overwriting one flat row
 - Scryer owns built-in pinning; this repo can publish official plugins, but it
   no longer declares built-in candidates
-- release artifacts are optimized with `wasm-opt -Oz`, compressed with
+- release artifacts are stripped with `wasm-tools strip`, compressed with
   `zstd -19`, hashed with BLAKE3, and signed with cosign keyless bundles
+- every family is a WASI Preview 2 component exporting only `describe` and
+  `process`; host capabilities arrive through `scryer:host/services@1.0.0` (the
+  encoded door, imported by every world) and, where a world has adopted it, the
+  family-neutral typed `scryer:runtime/host@1.0.0`
+- `scryer:subtitle@1.1.0` lifts `process` as an `async func` and imports both
+  packages; the indexer, download-client, notification and archive-extractor
+  worlds remain synchronous on their current revisions
 - new automation belongs in xtask rather than ad hoc shell or Python helpers

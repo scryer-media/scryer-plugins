@@ -1,25 +1,38 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64;
-use extism_pdk::*;
 use newznab_common::{
     NewznabConfig, NewznabHitBudget, NewznabHttpBehavior, SearchRequest, SearchResult,
     current_sdk_constraint, execute_raw_search, is_hit_budget_exhausted_error,
 };
+use scryer_plugin_pdk::component::StructuredPluginError;
+use scryer_plugin_pdk::runtime::{self, PluginHttpRequest};
+use scryer_plugin_pdk::{Error, PluginSubtitleCommand, PluginSubtitleCommandResult, var};
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldRole, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor,
     PluginError, PluginErrorCode, PluginResult, ProviderDescriptor, SDK_VERSION,
     SubtitleCapabilities, SubtitleDescriptor, SubtitleMatchHint, SubtitleMatchHintKind,
     SubtitlePluginCandidate, SubtitlePluginDownloadRequest, SubtitlePluginDownloadResponse,
-    SubtitlePluginSearchRequest, SubtitlePluginSearchResponse, SubtitlePluginValidateConfigRequest,
+    SubtitlePluginSearchRequest, SubtitlePluginSearchResponse,
     SubtitlePluginValidateConfigResponse, SubtitleProviderMode, SubtitleQueryMediaKind,
     SubtitleValidateConfigStatus,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use url::Url;
+
+wit_bindgen::generate!({
+    world: "scryer:subtitle/subtitle-provider@1.1.0",
+    path: ["wit/host-v1.0.0", "wit/runtime-v1.0.0", "wit/subtitle-v1.1.0"],
+    generate_all,
+});
+
+scryer_plugin_pdk::scryer_subtitle_component_main!(
+    descriptor = build_descriptor,
+    handler = handle_subtitle_command,
+);
 
 const PROVIDER_ID: &str = "amenzb-subtitles";
 const PROVIDER_TYPE: &str = "amenzb";
@@ -36,9 +49,106 @@ const RATE_LIMIT_BACKOFF_SECONDS: u64 = 30;
 const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
     (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-#[plugin_fn]
-pub fn scryer_describe(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&build_descriptor())?)
+/// Dispatch one `scryer:subtitle/subtitle-provider@1.1.0` operation.
+///
+/// One arm per former `#[plugin_fn]`, with the bodies unchanged. What changes
+/// is the failure channel: before the move a failed search or a malformed
+/// `provider_file_id` was an `FnResult` fault, so the host saw a string and a
+/// generic ABI failure. Both are now typed `PluginResult::Err`s carrying the
+/// classification `plugin_error` already made for `download`, which is how the
+/// rate-limit `retry_after_seconds` reaches Scryer instead of being dropped.
+async fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleCommandResult {
+    match command {
+        PluginSubtitleCommand::ValidateConfig(_) => {
+            PluginSubtitleCommandResult::ValidateConfig(PluginResult::Ok(validate_config()))
+        }
+        PluginSubtitleCommand::Search(request) => {
+            PluginSubtitleCommandResult::Search(match search(&request).await {
+                Ok(response) => PluginResult::Ok(response),
+                Err(error) => PluginResult::Err(plugin_error(error)),
+            })
+        }
+        PluginSubtitleCommand::Download(request) => {
+            PluginSubtitleCommandResult::Download(match download(&request).await {
+                Ok(response) => PluginResult::Ok(response),
+                Err(error) => PluginResult::Err(plugin_error(error)),
+            })
+        }
+        // ameNZB is a `Catalog` provider, so the host never routes a generation
+        // request here. The arm answers in-band rather than trapping, because a
+        // missing capability is information the host can act on and an
+        // `invocation-error` is not.
+        PluginSubtitleCommand::Generate(_) => {
+            PluginSubtitleCommandResult::Generate(PluginResult::Err(PluginError {
+                code: PluginErrorCode::Unsupported,
+                public_message: "ameNZB does not generate subtitles".to_string(),
+                debug_message: Some(
+                    "amenzb-subtitles is a catalog provider; it has no generation mode".to_string(),
+                ),
+                retry_after_seconds: None,
+                details: None,
+            }))
+        }
+        // Alignment moved into this envelope when the subtitle-sync plugin
+        // migrated off its own transport, so every subtitle provider now sees
+        // the operation whether or not it can serve one. ameNZB cannot: it has
+        // no audio decoder and advertises no `sync` capability. Same in-band
+        // refusal as `Generate`, for the same reason.
+        PluginSubtitleCommand::Sync(_) => {
+            PluginSubtitleCommandResult::Sync(PluginResult::Err(PluginError {
+                code: PluginErrorCode::Unsupported,
+                public_message: "ameNZB cannot align subtitles".to_string(),
+                debug_message: Some(
+                    "SubtitleCapabilities::sync is None for this provider".to_string(),
+                ),
+                retry_after_seconds: None,
+                details: None,
+            }))
+        }
+    }
+}
+
+fn validate_config() -> SubtitlePluginValidateConfigResponse {
+    match AmenzbConfig::from_host() {
+        Ok(config) if config.api_key.trim().is_empty() => SubtitlePluginValidateConfigResponse {
+            status: SubtitleValidateConfigStatus::InvalidConfig,
+            message: Some("ameNZB API key is required".to_string()),
+            retry_after_seconds: None,
+        },
+        Ok(_) => SubtitlePluginValidateConfigResponse {
+            status: SubtitleValidateConfigStatus::Valid,
+            message: None,
+            retry_after_seconds: None,
+        },
+        Err(error) => SubtitlePluginValidateConfigResponse {
+            status: SubtitleValidateConfigStatus::InvalidConfig,
+            message: Some(error),
+            retry_after_seconds: None,
+        },
+    }
+}
+
+async fn search(
+    request: &SubtitlePluginSearchRequest,
+) -> Result<SubtitlePluginSearchResponse, AmenzbError> {
+    let config = AmenzbConfig::from_host().map_err(AmenzbError::Message)?;
+    match subtitle_search_impl(&config, request).await {
+        Ok(results) => Ok(SubtitlePluginSearchResponse { results }),
+        // A rate limit still yields an empty result set rather than a failure,
+        // exactly as it did before the move: the host treats "no subtitles right
+        // now" as a normal outcome and re-queries later.
+        Err(AmenzbError::RateLimited(_)) => Ok(SubtitlePluginSearchResponse::default()),
+        Err(error) => Err(error),
+    }
+}
+
+async fn download(
+    request: &SubtitlePluginDownloadRequest,
+) -> Result<SubtitlePluginDownloadResponse, AmenzbError> {
+    let config = AmenzbConfig::from_host().map_err(AmenzbError::Message)?;
+    let reference: AmenzbDownloadRef = serde_json::from_str(&request.provider_file_id)
+        .map_err(|error| AmenzbError::Message(format!("invalid ameNZB file reference: {error}")))?;
+    subtitle_download_impl(&config, &reference).await
 }
 
 fn build_descriptor() -> PluginDescriptor {
@@ -69,54 +179,6 @@ fn build_descriptor() -> PluginDescriptor {
             },
         }),
     }
-}
-
-#[plugin_fn]
-pub fn scryer_validate_config(input: String) -> FnResult<String> {
-    let _: SubtitlePluginValidateConfigRequest = serde_json::from_str(&input)?;
-    let response = match AmenzbConfig::from_extism() {
-        Ok(config) if config.api_key.trim().is_empty() => SubtitlePluginValidateConfigResponse {
-            status: SubtitleValidateConfigStatus::InvalidConfig,
-            message: Some("ameNZB API key is required".to_string()),
-            retry_after_seconds: None,
-        },
-        Ok(_) => SubtitlePluginValidateConfigResponse {
-            status: SubtitleValidateConfigStatus::Valid,
-            message: None,
-            retry_after_seconds: None,
-        },
-        Err(error) => SubtitlePluginValidateConfigResponse {
-            status: SubtitleValidateConfigStatus::InvalidConfig,
-            message: Some(error),
-            retry_after_seconds: None,
-        },
-    };
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
-}
-
-#[plugin_fn]
-pub fn scryer_subtitle_search(input: String) -> FnResult<String> {
-    let request: SubtitlePluginSearchRequest = serde_json::from_str(&input)?;
-    let config = AmenzbConfig::from_extism().map_err(Error::msg)?;
-    let response = match subtitle_search_impl(&config, &request) {
-        Ok(results) => SubtitlePluginSearchResponse { results },
-        Err(AmenzbError::RateLimited(_)) => SubtitlePluginSearchResponse::default(),
-        Err(error) => return Err(Error::msg(error.to_string()).into()),
-    };
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
-}
-
-#[plugin_fn]
-pub fn scryer_subtitle_download(input: String) -> FnResult<String> {
-    let request: SubtitlePluginDownloadRequest = serde_json::from_str(&input)?;
-    let config = AmenzbConfig::from_extism().map_err(Error::msg)?;
-    let reference: AmenzbDownloadRef =
-        serde_json::from_str(&request.provider_file_id).map_err(Error::msg)?;
-    let result = match subtitle_download_impl(&config, &reference) {
-        Ok(response) => PluginResult::Ok(response),
-        Err(error) => PluginResult::Err(plugin_error(error)),
-    };
-    Ok(serde_json::to_string(&result)?)
 }
 
 fn config_fields() -> Vec<ConfigFieldDef> {
@@ -207,7 +269,7 @@ struct AmenzbConfig {
 }
 
 impl AmenzbConfig {
-    fn from_extism() -> Result<Self, String> {
+    fn from_host() -> Result<Self, String> {
         Ok(Self {
             base_url: config_value("base_url").unwrap_or_else(|| DEFAULT_BASE_URL.to_string()),
             api_key: config_value("api_key").unwrap_or_default(),
@@ -268,7 +330,7 @@ fn apply_http_behavior(config: &mut NewznabConfig) {
     };
 }
 
-fn subtitle_search_impl(
+async fn subtitle_search_impl(
     config: &AmenzbConfig,
     request: &SubtitlePluginSearchRequest,
 ) -> Result<Vec<SubtitlePluginCandidate>, AmenzbError> {
@@ -283,6 +345,7 @@ fn subtitle_search_impl(
         &search_request,
         amenzb_metadata_extractor,
     )
+    .await
     .map_err(AmenzbError::from_search_error)?;
 
     let requested_languages = requested_languages(&request.languages);
@@ -302,7 +365,7 @@ fn subtitle_search_impl(
         };
         detail_fetches += 1;
         let url = format!("{}/release/{release_id}", config.site_url());
-        let page = match http_get_follow(&url, "text/html, */*", &behavior) {
+        let page = match http_get_follow(&url, "text/html, */*", &behavior).await {
             Ok(page) => page,
             Err(AmenzbError::RateLimited(_)) => return Ok(results),
             Err(error) => return Err(error),
@@ -356,7 +419,7 @@ fn search_request_for(
     }
 }
 
-fn subtitle_download_impl(
+async fn subtitle_download_impl(
     config: &AmenzbConfig,
     reference: &AmenzbDownloadRef,
 ) -> Result<SubtitlePluginDownloadResponse, AmenzbError> {
@@ -366,7 +429,8 @@ fn subtitle_download_impl(
         "application/octet-stream, text/plain, */*",
         &config.http_behavior(),
         |url| validate_download_url(config, url),
-    )?;
+    )
+    .await?;
     if response.status == 429 {
         return Err(AmenzbError::RateLimited(retry_after_seconds(&response)));
     }
@@ -707,15 +771,15 @@ struct HttpResponse {
     body: String,
 }
 
-fn http_get_follow(
+async fn http_get_follow(
     url: &str,
     accept: &str,
     behavior: &NewznabHttpBehavior,
 ) -> Result<HttpResponse, AmenzbError> {
-    http_get_follow_checked(url, accept, behavior, |_| Ok(()))
+    http_get_follow_checked(url, accept, behavior, |_| Ok(())).await
 }
 
-fn http_get_follow_checked<F>(
+async fn http_get_follow_checked<F>(
     url: &str,
     accept: &str,
     behavior: &NewznabHttpBehavior,
@@ -727,7 +791,7 @@ where
     let mut current = url.to_string();
     validate_url(&current)?;
     for _ in 0..=MAX_REDIRECTS {
-        let response = http_get_with_retry(&current, accept, behavior)?;
+        let response = http_get_with_retry(&current, accept, behavior).await?;
         if !matches!(response.status, 300..=399) {
             return Ok(response);
         }
@@ -736,14 +800,18 @@ where
         };
         current = resolve_location(&current, &location)?;
         validate_url(&current)?;
-        std::thread::sleep(Duration::from_millis(100));
+        // A courtesy pause between hops. It yields the invocation now instead
+        // of blocking the component's thread, which is the difference between
+        // a redirect chain that shares the host's executor and one that pins
+        // it.
+        runtime::sleep(100).await;
     }
     Err(AmenzbError::Message(
         "ameNZB request exceeded redirect limit".to_string(),
     ))
 }
 
-fn http_get_with_retry(
+async fn http_get_with_retry(
     url: &str,
     accept: &str,
     behavior: &NewznabHttpBehavior,
@@ -752,10 +820,10 @@ fn http_get_with_retry(
     let mut attempt = 1usize;
     loop {
         if !behavior.pre_request_delay.is_zero() {
-            std::thread::sleep(behavior.pre_request_delay);
+            runtime::sleep(duration_ms(behavior.pre_request_delay)).await;
         }
         record_http_hit_budget_use(behavior)?;
-        let response = http_get_once(url, accept, behavior)?;
+        let response = http_get_once(url, accept, behavior).await?;
         if response.status == 429 || matches!(response.status, 500 | 502 | 503 | 504) {
             let delay = retry_after_seconds(&response)
                 .map(Duration::from_secs)
@@ -766,7 +834,7 @@ fn http_get_with_retry(
                 && attempt < behavior.retry_max_attempts.max(1)
                 && total_wait + delay <= behavior.retry_total_budget
             {
-                std::thread::sleep(delay);
+                runtime::sleep(duration_ms(delay)).await;
                 total_wait += delay;
                 attempt += 1;
                 continue;
@@ -776,30 +844,53 @@ fn http_get_with_retry(
     }
 }
 
-fn http_get_once(
+/// One upstream attempt, through the typed `scryer:runtime/host` door.
+///
+/// The same door the shared newznab engine uses for its own requests, so a
+/// search and the detail fetches that follow it are subject to one egress
+/// policy and one set of host-side limits rather than two.
+async fn http_get_once(
     url: &str,
     accept: &str,
     behavior: &NewznabHttpBehavior,
 ) -> Result<HttpResponse, AmenzbError> {
-    let request = HttpRequest::new(url)
-        .with_header("Accept", accept)
-        .with_header("Accept-Encoding", "gzip")
-        .with_header("Accept-Language", "en-US,en;q=0.9")
-        .with_header("Cache-Control", "no-cache")
-        .with_header("Pragma", "no-cache")
-        .with_header("User-Agent", &behavior.user_agent);
-    let response = http::request::<Vec<u8>>(&request, None)
-        .map_err(|error| AmenzbError::Message(format!("HTTP request failed: {error}")))?;
-    let headers = response
-        .headers()
-        .iter()
-        .map(|(key, value)| (key.to_ascii_lowercase(), value.to_string()))
-        .collect::<HashMap<_, _>>();
-    Ok(HttpResponse {
-        status: response.status_code(),
-        headers,
-        body: String::from_utf8_lossy(&response.body()).to_string(),
+    let response = runtime::http_fields(PluginHttpRequest {
+        url: url.to_string(),
+        method: Some("GET".to_string()),
+        headers: BTreeMap::from([
+            ("Accept".to_string(), accept.to_string()),
+            ("Accept-Encoding".to_string(), "gzip".to_string()),
+            ("Accept-Language".to_string(), "en-US,en;q=0.9".to_string()),
+            ("Cache-Control".to_string(), "no-cache".to_string()),
+            ("Pragma".to_string(), "no-cache".to_string()),
+            ("User-Agent".to_string(), behavior.user_agent.clone()),
+        ]),
+        body: Vec::new(),
     })
+    .await
+    .map_err(|error| AmenzbError::Message(format!("HTTP request failed: {error}")))?;
+
+    // First value wins per field, which is what the previous map-shaped
+    // response gave: `location` and `retry-after` are single-valued in
+    // practice, and taking the first keeps a repeated field from silently
+    // changing which redirect this follows.
+    let mut headers = HashMap::new();
+    for (name, value) in &response.headers {
+        headers
+            .entry(name.to_ascii_lowercase())
+            .or_insert_with(|| value.clone());
+    }
+
+    Ok(HttpResponse {
+        status: response.status,
+        headers,
+        body: String::from_utf8_lossy(&response.body).to_string(),
+    })
+}
+
+/// Saturating milliseconds, for handing a `Duration` to the host's sleep.
+fn duration_ms(duration: Duration) -> u64 {
+    duration.as_millis().try_into().unwrap_or(u64::MAX)
 }
 
 fn validate_download_url(config: &AmenzbConfig, url: &str) -> Result<(), AmenzbError> {
@@ -1286,6 +1377,29 @@ enum AmenzbError {
 
 impl AmenzbError {
     fn from_search_error(error: Error) -> Self {
+        // The shared engine classifies its own failures now: a rate limit or an
+        // exhausted hit budget comes back as a structured `PluginError`
+        // carrying the code and the host's `retry_after_seconds`, where the
+        // forked engine returned a bare string this had to sniff. Reading the
+        // code first is what lets ameNZB pass a real backoff up instead of the
+        // `None` a string match could only ever produce.
+        if let Some(structured) = error.downcast_ref::<StructuredPluginError>() {
+            let plugin_error = structured.plugin_error();
+            if plugin_error.code == PluginErrorCode::RateLimited {
+                return Self::RateLimited(
+                    plugin_error
+                        .retry_after_seconds
+                        .and_then(|seconds| u64::try_from(seconds).ok()),
+                );
+            }
+            return Self::Message(
+                plugin_error
+                    .debug_message
+                    .clone()
+                    .unwrap_or_else(|| plugin_error.public_message.clone()),
+            );
+        }
+
         let message = error.to_string();
         if is_hit_budget_exhausted_error(&error)
             || message.contains("429")
@@ -1307,9 +1421,12 @@ impl std::fmt::Display for AmenzbError {
     }
 }
 
+// Qualified rather than imported at the top: the `#[cfg(test)]` twin below
+// replaces this whole function, so a top-level `use` would be unused in the
+// test build. The former blanket PDK glob import hid that.
 #[cfg(not(test))]
 fn config_value(key: &str) -> Option<String> {
-    config::get(key)
+    scryer_plugin_pdk::config::get(key)
         .ok()
         .flatten()
         .map(|value| value.trim().to_string())

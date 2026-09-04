@@ -9,7 +9,7 @@ Vendored from libfvad upstream:
   plugin
 
 The plugin build compiles this vendored tree as a narrow static C library and
-links it into the final Rust `wasm32-wasip1` plugin artifact. libfvad is a
+links it into the final Rust `wasm32-wasip2` component artifact. libfvad is a
 standalone extraction of the WebRTC VAD engine; it is licensed under
 BSD-3-Clause, with the additional patent grant included in `PATENTS`.
 

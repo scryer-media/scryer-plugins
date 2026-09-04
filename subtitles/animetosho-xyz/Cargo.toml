@@ -1,6 +1,6 @@
 [package]
 name = "animetosho-xyz-subtitle-provider"
-version = "0.1.1"
+version = "1.0.0"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "AnimeTosho.xyz subtitle provider for anime episode releases"
@@ -9,8 +9,11 @@ description = "AnimeTosho.xyz subtitle provider for anime episode releases"
 official = true
 plugin_id = "animetosho-xyz-subtitles"
 catalog_versions = ["v3"]
-min_scryer_version = "0.18.0"
-feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
+# Scryer 0.20.0 is the first release whose subtitle host serves
+# `scryer:subtitle/subtitle-provider@1.1.0`. A host that only serves the 1.0.0
+# world (or the Preview 1 command runtime before it) cannot bind this artifact
+# at all, so the floor is load-bearing, not advisory.
+min_scryer_version = "0.20.0"
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/animetosho-xyz"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/animetosho-xyz"
 
@@ -19,10 +22,20 @@ crate-type = ["cdylib"]
 
 [dependencies]
 base64 = "0.23"
-extism-pdk = "1.4"
+# Needs no host archive extraction: this provider hands
+# the compressed attachment to Scryer verbatim (see `download_subtitle_impl`),
+# so it needs nothing beyond the published SDK.
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-scryer-plugin-sdk = "3.7.0"
+wit-bindgen = { version = "0.61", features = ["async"] }
+
+[dev-dependencies]
+postcard = { version = "1", features = ["use-std"] }
+tokio = { version = "1", features = ["rt", "time", "macros"] }
+wasmtime = "48.0.1"
+wasmtime-wasi = "48.0.1"
 
 [profile.plugin-release]
 inherits = "release"

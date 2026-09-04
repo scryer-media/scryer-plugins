@@ -1,6 +1,6 @@
 [package]
 name = "nyaa-indexer"
-version = "2.1.0"
+version = "2.2.0"
 edition = "2024"
 autolib = false
 license = "GPL-3.0-only"
@@ -11,8 +11,7 @@ official = true
 plugin_id = "nyaa"
 status = "beta"
 catalog_versions = ["v3"]
-min_scryer_version = "0.18.22"
-feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
+min_scryer_version = "0.20.0"
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/nyaa"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/indexers/nyaa"
 
@@ -22,10 +21,12 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.5.11" }
-rss-indexer-common = { path = "../rss-common" }
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
+base64 = "0.23"
+quick-xml = "0.42"
 serde_json = "1"
-scryer-plugin-sdk = "3.10.0"
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
+url = "2"
 
 [profile.plugin-release]
 inherits = "release"
