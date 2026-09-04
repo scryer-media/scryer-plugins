@@ -1340,9 +1340,9 @@ checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 
 [[package]]
 name = "par2-rs"
-version = "0.8.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb4e76b0a6663ba5412782fcbcf247338b49bd9cd7c5bfa248695b076463a0dd"
+checksum = "886fc3580c754f2515f7d1af48baeab0e29957fa513c550bdf3ad3c5e43e0d63"
 dependencies = [
  "aws-lc-sys 0.44.0",
  "bytes",
