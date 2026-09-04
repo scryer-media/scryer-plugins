@@ -774,17 +774,38 @@ jobs:
           )
           existing_dir="existing-central-catalog-v3"
           mkdir -p "${existing_dir}"
-          gh release download "catalog/v3" \
+          # The merge base must be the FULL catalog. The modern redirect points
+          # at the unfiltered master; the legacy redirect's rungs are
+          # per-stratum projections, and merging against a projection would
+          # silently drop every release the projection filtered out (the whole
+          # component fleet). The modern redirect does not exist until the
+          # first publish after the strata change, so bootstrap once from the
+          # legacy redirect — at that point its last rung is still the full
+          # catalog.
+          existing_redirect="catalog-v3.modern.redirect.json"
+          existing_redirect_bundle="catalog-v3.modern.redirect.bundle.json"
+          if ! gh release download "catalog/v3" \
             --repo "${GITHUB_REPOSITORY}" \
-            --pattern catalog-v3.redirect.json \
-            --pattern catalog-v3.redirect.bundle.json \
+            --pattern "${existing_redirect}" \
+            --pattern "${existing_redirect_bundle}" \
             --dir "${existing_dir}" \
-            --clobber
+            --clobber \
+            || [ ! -s "${existing_dir}/${existing_redirect}" ]; then
+            echo "modern redirect not published yet; bootstrapping the merge base from the legacy redirect"
+            existing_redirect="catalog-v3.redirect.json"
+            existing_redirect_bundle="catalog-v3.redirect.bundle.json"
+            gh release download "catalog/v3" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --pattern "${existing_redirect}" \
+              --pattern "${existing_redirect_bundle}" \
+              --dir "${existing_dir}" \
+              --clobber
+          fi
           verify_release_blob_tag_bound \
-            "${existing_dir}/catalog-v3.redirect.json" \
-            "${existing_dir}/catalog-v3.redirect.bundle.json" \
+            "${existing_dir}/${existing_redirect}" \
+            "${existing_dir}/${existing_redirect_bundle}" \
             "${GITHUB_REPOSITORY}"
-          catalog_asset="$(python3 -c 'import json, sys; from pathlib import Path; redirect = json.loads(Path("existing-central-catalog-v3/catalog-v3.redirect.json").read_text()); artifacts = redirect.get("artifacts") or []; sys.exit("catalog-v3 redirect does not contain any artifacts") if not artifacts else None; print(artifacts[-1]["url"].rsplit("/", 1)[-1])')"
+          catalog_asset="$(python3 -c 'import json, sys; from pathlib import Path; redirect = json.loads(Path(sys.argv[1]).read_text()); artifacts = redirect.get("artifacts") or []; sys.exit("catalog-v3 redirect does not contain any artifacts") if not artifacts else None; print(artifacts[-1]["url"].rsplit("/", 1)[-1])' "${existing_dir}/${existing_redirect}")"
           gh release download "catalog/v3" \
             --repo "${GITHUB_REPOSITORY}" \
             --pattern "${catalog_asset}" \
@@ -815,19 +836,21 @@ jobs:
               "${GITHUB_REPOSITORY}" \
               "${GITHUB_REF}"
           done
-          cosign sign-blob \
-            --yes \
-            --bundle "dist/catalog-v3/catalog-v3.redirect.bundle.json" \
-            "dist/catalog-v3/catalog-v3.redirect.json"
-          verify_release_blob \
-            "dist/catalog-v3/catalog-v3.redirect.json" \
-            "dist/catalog-v3/catalog-v3.redirect.bundle.json" \
-            "${GITHUB_REPOSITORY}" \
-            "${GITHUB_REF}"
-          cp "dist/catalog-v3/catalog-v3.redirect.bundle.json" \
-            "dist/catalog-v3/catalog-v3.redirect.sigstore.json"
+          for redirect_name in catalog-v3.redirect catalog-v3.modern.redirect; do
+            cosign sign-blob \
+              --yes \
+              --bundle "dist/catalog-v3/${redirect_name}.bundle.json" \
+              "dist/catalog-v3/${redirect_name}.json"
+            verify_release_blob \
+              "dist/catalog-v3/${redirect_name}.json" \
+              "dist/catalog-v3/${redirect_name}.bundle.json" \
+              "${GITHUB_REPOSITORY}" \
+              "${GITHUB_REF}"
+            cp "dist/catalog-v3/${redirect_name}.bundle.json" \
+              "dist/catalog-v3/${redirect_name}.sigstore.json"
+          done
 
-          python3 -c 'import json; from pathlib import Path; root = Path("dist/catalog-v3"); redirect = json.loads((root / "catalog-v3.redirect.json").read_text()); catalog_assets = [artifact["url"].rsplit("/", 1)[-1] for artifact in redirect["artifacts"]]; catalog = json.loads((root / "catalog-v3.json").read_text()); rule_pack_assets = sorted({artifact["url"].rsplit("/", 1)[-1] for rule_pack in catalog["rule_packs"] for release in rule_pack["releases"] for artifact in release["artifacts"]}); print("\n".join(catalog_assets + rule_pack_assets))' > dist/catalog-v3/v3-central-assets.txt
+          python3 -c 'import json; from pathlib import Path; root = Path("dist/catalog-v3"); catalog_assets = sorted({artifact["url"].rsplit("/", 1)[-1] for name in ("catalog-v3.redirect.json", "catalog-v3.modern.redirect.json") for artifact in json.loads((root / name).read_text())["artifacts"]}); catalog = json.loads((root / "catalog-v3.json").read_text()); rule_pack_assets = sorted({artifact["url"].rsplit("/", 1)[-1] for rule_pack in catalog["rule_packs"] for release in rule_pack["releases"] for artifact in release["artifacts"]}); print("\n".join(catalog_assets + rule_pack_assets))' > dist/catalog-v3/v3-central-assets.txt
 
           while IFS= read -r asset_name; do
             [ -n "${asset_name}" ] || continue
@@ -858,6 +881,9 @@ jobs:
             "dist/catalog-v3/catalog-v3.redirect.json"
             "dist/catalog-v3/catalog-v3.redirect.bundle.json"
             "dist/catalog-v3/catalog-v3.redirect.sigstore.json"
+            "dist/catalog-v3/catalog-v3.modern.redirect.json"
+            "dist/catalog-v3/catalog-v3.modern.redirect.bundle.json"
+            "dist/catalog-v3/catalog-v3.modern.redirect.sigstore.json"
           )
           while IFS= read -r asset_name; do
             [ -n "${asset_name}" ] || continue
@@ -942,17 +968,34 @@ jobs:
           source .github/scripts/release-plugin-v3-identity.sh
           existing_dir="existing-central-catalog-v3"
           mkdir -p "${existing_dir}"
-          gh release download "catalog/v3" \
+          # Diagnostics render against the FULL catalog, so prefer the modern
+          # redirect (unfiltered master) and fall back to the legacy redirect
+          # only before the first post-strata publish. See the same logic in
+          # publish-central-catalog.
+          existing_redirect="catalog-v3.modern.redirect.json"
+          existing_redirect_bundle="catalog-v3.modern.redirect.bundle.json"
+          if ! gh release download "catalog/v3" \
             --repo "${GITHUB_REPOSITORY}" \
-            --pattern catalog-v3.redirect.json \
-            --pattern catalog-v3.redirect.bundle.json \
+            --pattern "${existing_redirect}" \
+            --pattern "${existing_redirect_bundle}" \
             --dir "${existing_dir}" \
-            --clobber
+            --clobber \
+            || [ ! -s "${existing_dir}/${existing_redirect}" ]; then
+            echo "modern redirect not published yet; using the legacy redirect"
+            existing_redirect="catalog-v3.redirect.json"
+            existing_redirect_bundle="catalog-v3.redirect.bundle.json"
+            gh release download "catalog/v3" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --pattern "${existing_redirect}" \
+              --pattern "${existing_redirect_bundle}" \
+              --dir "${existing_dir}" \
+              --clobber
+          fi
           verify_release_blob_tag_bound \
-            "${existing_dir}/catalog-v3.redirect.json" \
-            "${existing_dir}/catalog-v3.redirect.bundle.json" \
+            "${existing_dir}/${existing_redirect}" \
+            "${existing_dir}/${existing_redirect_bundle}" \
             "${GITHUB_REPOSITORY}"
-          catalog_asset="$(python3 -c 'import json, sys; from pathlib import Path; redirect = json.loads(Path("existing-central-catalog-v3/catalog-v3.redirect.json").read_text()); artifacts = redirect.get("artifacts") or []; sys.exit("catalog-v3 redirect does not contain any artifacts") if not artifacts else None; print(artifacts[-1]["url"].rsplit("/", 1)[-1])')"
+          catalog_asset="$(python3 -c 'import json, sys; from pathlib import Path; redirect = json.loads(Path(sys.argv[1]).read_text()); artifacts = redirect.get("artifacts") or []; sys.exit("catalog-v3 redirect does not contain any artifacts") if not artifacts else None; print(artifacts[-1]["url"].rsplit("/", 1)[-1])' "${existing_dir}/${existing_redirect}")"
           gh release download "catalog/v3" \
             --repo "${GITHUB_REPOSITORY}" \
             --pattern "${catalog_asset}" \
