@@ -27,7 +27,7 @@ serde_json = "1"
 sevenz-rust2 = { version = "0.22", default-features = false, features = ["aes256", "bzip2", "deflate", "ppmd"] }
 unrar-rs = { version = "0.8.0", default-features = false, features = ["crypto-host", "crc-host"] }
 wit-bindgen = "0.61"
-zip = { version = "8.6.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+zip = { version = "7.1.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 
 [dev-dependencies]
 aws-lc-sys = "0.45"
