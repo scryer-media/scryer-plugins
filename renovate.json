@@ -5,7 +5,11 @@
     "helpers:pinGitHubActionDigests"
   ],
   "dependencyDashboard": true,
-  "prConcurrentLimit": 5,
+  "schedule": ["before 5am on monday"],
+  "updateNotScheduled": false,
+  "rebaseWhen": "conflicted",
+  "prConcurrentLimit": 2,
+  "prHourlyLimit": 2,
   "packageRules": [
     {
       "matchManagers": ["cargo"],
