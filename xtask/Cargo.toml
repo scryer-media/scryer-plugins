@@ -7,7 +7,7 @@ license = "GPL-3.0-only"
 
 [dependencies]
 anyhow = "1"
-brotli = "8"
+brotli = "9"
 clap = { version = "4", features = ["derive"] }
 semver = "1"
 serde = { version = "1", features = ["derive"] }
