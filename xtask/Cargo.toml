@@ -26,9 +26,9 @@ wasmtime-wasi = "48.0.0"
 zstd = "0.13"
 
 [dev-dependencies]
-aws-lc-sys = "0.44"
+aws-lc-sys = "0.45"
 crc32fast = "1"
-sevenz-rust2 = { version = "0.21", default-features = false, features = ["compress"] }
+sevenz-rust2 = { version = "0.22", default-features = false, features = ["compress"] }
 zip = { version = "8.0.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 
 [profile.xtask-release]

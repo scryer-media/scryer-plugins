@@ -519,9 +519,9 @@ dependencies = [
 
 [[package]]
 name = "quick-xml"
-version = "0.41.0"
+version = "0.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e660451e55124f798a69a5af3f49ccfbefbd41910eefd25caf2393e1f3473ec1"
+checksum = "41b1177fdf999d2321d3fb46ff47159d9c1fb9ad66a4879f8c50a0b504615e9b"
 dependencies = [
  "memchr",
 ]
@@ -629,9 +629,9 @@ dependencies = [
 
 [[package]]
 name = "scryer-plugin-sdk"
-version = "3.9.0"
+version = "3.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b260fc3b99907202339abd8bf6eea51b4df58353012fd2bfae0c01e33e98d3b2"
+checksum = "25292f556b1d8696d7ecf39ee1f3eac836d3eb479e18346b21af27a0946981fe"
 dependencies = [
  "base64 0.23.1",
  "extism-pdk",

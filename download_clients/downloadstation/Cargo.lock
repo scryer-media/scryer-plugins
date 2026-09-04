@@ -486,9 +486,9 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scryer-plugin-pdk"
-version = "0.5.7"
+version = "0.5.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2f255509498ffe45625db032d4b299212161ba1b4fad6e27964a494b90addcb"
+checksum = "c035942af8fb31e29b44fdfc0a0c62a18e8e5942ee3db85811f8f57f6ca070e8"
 dependencies = [
  "anyhow",
  "postcard",
@@ -499,9 +499,9 @@ dependencies = [
 
 [[package]]
 name = "scryer-plugin-sdk"
-version = "3.7.0"
+version = "3.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f73f24bd4107cc339f1ea7144cc69bfecd8309acf7fcdad2420da93ce1063a41"
+checksum = "25292f556b1d8696d7ecf39ee1f3eac836d3eb479e18346b21af27a0946981fe"
 dependencies = [
  "base64 0.23.1",
  "extism-pdk",
