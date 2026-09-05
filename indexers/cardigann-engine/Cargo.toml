@@ -1,6 +1,6 @@
 [package]
 name = "cardigann-engine"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 autolib = false
 license = "GPL-3.0-only"
@@ -25,7 +25,11 @@ crate-type = ["cdylib"]
 base64 = "0.23"
 chrono = { version = "0.4", default-features = false, features = ["alloc", "std"] }
 encoding_rs = "0.8"
+fancy-regex = "0.18"
 html-escape = "0.2"
+# Kept in lockstep with `scraper`: the engine stamps `:contains` marker
+# attributes onto the parsed DOM, which needs scraper's own `QualName` type.
+html5ever = "0.39"
 indexmap = { version = "2", features = ["serde"] }
 percent-encoding = "2"
 regex = "1"

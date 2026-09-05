@@ -66,7 +66,46 @@ fn build_descriptor() -> sdk::PluginDescriptor {
                 search: true,
                 imdb_search: true,
                 tvdb_search: true,
-                anidb_search: true,
+                // Cardigann has no AniDB concept: no definition binds an AniDB
+                // id, so advertising it would route id searches this engine
+                // cannot answer.
+                anidb_search: false,
+                // The engine binds `.Query.IMDBID`, `.Query.TVDBID` and
+                // `.Query.TMDBID` from the host's `<source>_id` keys, so the
+                // host has to know it may route those ids here at all.
+                supported_ids: std::collections::HashMap::from([
+                    (
+                        "movie".to_string(),
+                        vec!["imdb_id".to_string(), "tmdb_id".to_string()],
+                    ),
+                    (
+                        "series".to_string(),
+                        vec![
+                            "tvdb_id".to_string(),
+                            "imdb_id".to_string(),
+                            "tmdb_id".to_string(),
+                        ],
+                    ),
+                    (
+                        "anime".to_string(),
+                        vec![
+                            "tvdb_id".to_string(),
+                            "imdb_id".to_string(),
+                            "tmdb_id".to_string(),
+                        ],
+                    ),
+                ]),
+                supported_external_ids: vec![
+                    "imdb_id".to_string(),
+                    "tvdb_id".to_string(),
+                    "tmdb_id".to_string(),
+                    "tvmaze_id".to_string(),
+                    "tvrage_id".to_string(),
+                ],
+                // 90 definitions expand `.Query.Season`/`.Query.Ep`, which the
+                // engine already binds; these name them for the host.
+                season_param: Some("season".to_string()),
+                episode_param: Some("ep".to_string()),
                 query_param: Some("query".to_string()),
                 protocols: vec![sdk::IndexerProtocol::Torrent],
                 feed_modes: vec![
@@ -77,6 +116,10 @@ fn build_descriptor() -> sdk::PluginDescriptor {
                 ],
                 search_inputs: vec![
                     sdk::IndexerSearchInput::TextQuery,
+                    sdk::IndexerSearchInput::IdQuery,
+                    sdk::IndexerSearchInput::AggregateIdQuery,
+                    sdk::IndexerSearchInput::Season,
+                    sdk::IndexerSearchInput::Episode,
                     sdk::IndexerSearchInput::Category,
                     sdk::IndexerSearchInput::Offset,
                     sdk::IndexerSearchInput::Limit,
@@ -431,6 +474,53 @@ search:
                 .and_then(|field| field.role),
             Some(sdk::ConfigFieldRole::ConnectionUrl)
         );
+    }
+
+    /// Cardigann definitions read `.Query.IMDBID`, `.Query.TVDBID`,
+    /// `.Query.TMDBID`, `.Query.Season` and `.Query.Ep`, so the descriptor has
+    /// to tell the host it may route id and episode searches here. AniDB has no
+    /// Cardigann counterpart and stays off.
+    #[test]
+    fn the_descriptor_advertises_the_ids_and_episode_inputs_the_engine_binds() {
+        let descriptor = build_descriptor();
+        let sdk::ProviderDescriptor::Indexer(indexer) = descriptor.provider else {
+            panic!("expected indexer descriptor");
+        };
+        let capabilities = indexer.capabilities;
+        assert!(!capabilities.anidb_search);
+        assert_eq!(
+            capabilities.supported_ids.get("movie"),
+            Some(&vec!["imdb_id".to_string(), "tmdb_id".to_string()])
+        );
+        for facet in ["series", "anime"] {
+            assert_eq!(
+                capabilities.supported_ids.get(facet),
+                Some(&vec![
+                    "tvdb_id".to_string(),
+                    "imdb_id".to_string(),
+                    "tmdb_id".to_string(),
+                ]),
+                "{facet}"
+            );
+        }
+        assert!(
+            capabilities
+                .supported_external_ids
+                .contains(&"imdb_id".to_string())
+        );
+        assert_eq!(capabilities.season_param.as_deref(), Some("season"));
+        assert_eq!(capabilities.episode_param.as_deref(), Some("ep"));
+        for input in [
+            sdk::IndexerSearchInput::IdQuery,
+            sdk::IndexerSearchInput::AggregateIdQuery,
+            sdk::IndexerSearchInput::Season,
+            sdk::IndexerSearchInput::Episode,
+        ] {
+            assert!(capabilities.search_inputs.contains(&input), "{input:?}");
+        }
+        // One configured indexer still shares a login session, so the engine
+        // deliberately declines a parallel strategy plan.
+        assert!(indexer.strategy_plan.is_none());
     }
 
     /// One option per bundled definition is what makes this descriptor large,

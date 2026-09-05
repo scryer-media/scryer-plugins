@@ -83,31 +83,97 @@ fn regex_replace(value: &str, args: &[String]) -> Result<String, String> {
     let replacement = args.get(1).map(String::as_str).unwrap_or_default();
     cardigann_regex(pattern)
         .map_err(|error| format!("invalid re_replace pattern `{pattern}`: {error}"))
-        .map(|regex| regex.replace_all(value, replacement).into_owned())
+        .map(|regex| {
+            regex
+                .replace_all(value, cardigann_replacement(replacement).as_str())
+                .into_owned()
+        })
 }
 
 fn regexp_extract(value: &str, args: &[String]) -> Result<String, String> {
     let pattern = args.first().map(String::as_str).unwrap_or_default();
     let regex = cardigann_regex(pattern)
         .map_err(|error| format!("invalid regexp pattern `{pattern}`: {error}"))?;
-    let captures = regex
+    // Prowlarr reads `Groups[1].Value` of the match, which is the empty string
+    // when nothing matched. Erroring here instead dropped whole rows through
+    // the required-field path.
+    let Some(captures) = regex
         .captures(value)
-        .ok_or_else(|| format!("regexp `{pattern}` did not match `{value}`"))?;
+        .map_err(|error| format!("regexp `{pattern}` failed on `{value}`: {error}"))?
+    else {
+        return Ok(String::new());
+    };
     let group = args
         .get(1)
         .and_then(|value| value.parse::<usize>().ok())
         .unwrap_or_else(|| usize::from(captures.len() > 1));
-    captures
+    Ok(captures
         .get(group)
         .map(|capture| capture.as_str().to_string())
-        .ok_or_else(|| format!("regexp `{pattern}` has no capture group {group}"))
+        .unwrap_or_default())
 }
 
-pub(crate) fn cardigann_regex(pattern: &str) -> Result<Regex, regex::Error> {
+/// Compile a Cardigann pattern with the .NET dialect the corpus is written in.
+///
+/// `fancy-regex` supplies the lookaround, atomic groups and backreferences 38
+/// definitions rely on and the plain `regex` crate rejects; the rewrite below
+/// covers .NET's Unicode *block* names, which have no Rust equivalent but map
+/// onto the script of the same name for every block the corpus names.
+pub(crate) fn cardigann_regex(pattern: &str) -> Result<fancy_regex::Regex, fancy_regex::Error> {
+    fancy_regex::Regex::new(&rewrite_unicode_blocks(pattern))
+}
+
+fn rewrite_unicode_blocks(pattern: &str) -> String {
+    // `\p{IsCJKUnifiedIdeographs}` is the one block whose Rust spelling is not
+    // simply the block name, so it keeps its own mapping.
     let pattern = pattern
         .replace(r"\p{IsCJKUnifiedIdeographs}", r"\p{Han}")
         .replace(r"\P{IsCJKUnifiedIdeographs}", r"\P{Han}");
-    Regex::new(&pattern)
+    let blocks = Regex::new(r"\\([pP])\{Is(\w+)\}").expect("static Unicode block regex");
+    blocks.replace_all(&pattern, r"\${1}{${2}}").into_owned()
+}
+
+/// Rewrite a .NET replacement string into the Rust dialect.
+///
+/// .NET reads `$1x` as group 1 followed by a literal `x`; Rust (and
+/// `fancy-regex`) read it as the group named `1x`, which is always empty. 38
+/// definitions write the .NET form, so brace the group number whenever a word
+/// character follows it. `${1}`, `$$` and `$name` are already unambiguous and
+/// are left alone.
+pub(crate) fn cardigann_replacement(replacement: &str) -> String {
+    let mut output = String::with_capacity(replacement.len());
+    let mut characters = replacement.chars().peekable();
+    while let Some(character) = characters.next() {
+        if character != '$' {
+            output.push(character);
+            continue;
+        }
+        match characters.peek() {
+            Some('$') | Some('{') | None => {
+                output.push('$');
+                if let Some(next) = characters.next() {
+                    output.push(next);
+                }
+            }
+            Some(next) if next.is_ascii_digit() => {
+                let mut digits = String::new();
+                while characters.peek().is_some_and(char::is_ascii_digit) {
+                    digits.push(characters.next().expect("peeked digit"));
+                }
+                let braced = characters
+                    .peek()
+                    .is_some_and(|next| next.is_alphanumeric() || *next == '_');
+                if braced {
+                    output.push_str(&format!("${{{digits}}}"));
+                } else {
+                    output.push('$');
+                    output.push_str(&digits);
+                }
+            }
+            Some(_) => output.push('$'),
+        }
+    }
+    output
 }
 
 fn split(value: &str, args: &[String]) -> String {
@@ -366,32 +432,58 @@ fn dotnet_to_chrono_pattern(pattern: &str) -> String {
     output
 }
 
+/// Prowlarr's `DateTimeUtil.FromTimeAgo`.
+///
+/// The corpus writes relative times in every abbreviation a tracker template
+/// happens to use — `3 hrs ago`, `5 mins ago`, `2 wks`, `1h` — so the unit is
+/// matched by containment rather than by a fixed word list. Commas, `ago` and
+/// `and` are noise; a value that mentions `now` is now; a month is 30 days and
+/// a year 365.
 fn parse_relative_time(value: &str) -> Result<String, String> {
+    parse_relative_time_at(value, now_utc())
+}
+
+fn parse_relative_time_at(value: &str, now: DateTime<Utc>) -> Result<String, String> {
     let normalized = value.trim().to_lowercase();
-    if normalized == "now" || normalized == "just now" {
-        return Ok(now_utc().to_rfc3339());
+    if normalized.contains("now") {
+        return Ok(now.to_rfc3339());
     }
-    let regex = Regex::new(r"(?i)(\d+(?:\.\d+)?)\s*(second|minute|hour|day|week|month|year)s?")
-        .expect("static relative time regex");
+    let normalized = normalized
+        .replace(',', "")
+        .replace("ago", "")
+        .replace("and", "");
+    let regex = Regex::new(r"([\d\.]+)\s*([^\d\s\.]+)").expect("static relative time regex");
     let mut seconds = 0f64;
+    let mut matched = false;
     for captures in regex.captures_iter(&normalized) {
         let amount = captures[1].parse::<f64>().unwrap_or_default();
-        let factor = match &captures[2].to_ascii_lowercase()[..] {
-            "second" => 1.0,
-            "minute" => 60.0,
-            "hour" => 3_600.0,
-            "day" => 86_400.0,
-            "week" => 604_800.0,
-            "month" => 2_629_746.0,
-            "year" => 31_556_952.0,
-            _ => 0.0,
+        let unit = &captures[2];
+        let factor = if unit.contains("sec") || unit == "s" {
+            1.0
+        } else if unit.contains("min") || unit == "m" {
+            60.0
+        } else if unit.contains("hour") || unit.contains("hr") || unit == "h" {
+            3_600.0
+        } else if unit.contains("day") || unit == "d" {
+            86_400.0
+        } else if unit.contains("week") || unit.contains("wk") || unit == "w" {
+            604_800.0
+        } else if unit.contains("month") || unit == "mo" {
+            2_592_000.0
+        } else if unit.contains("year") || unit == "y" {
+            31_536_000.0
+        } else {
+            return Err(format!(
+                "could not parse relative time `{value}`: unknown unit `{unit}`"
+            ));
         };
         seconds += amount * factor;
+        matched = true;
     }
-    if seconds == 0.0 {
+    if !matched {
         return Err(format!("could not parse relative time `{value}`"));
     }
-    Ok((now_utc() - Duration::seconds(seconds.round() as i64)).to_rfc3339())
+    Ok((now - Duration::seconds(seconds.round() as i64)).to_rfc3339())
 }
 
 fn now_utc() -> DateTime<Utc> {
@@ -693,6 +785,115 @@ mod tests {
             apply_filters("<a 'x'>&", &htmlencode, &Variables::new()).unwrap(),
             "&lt;a &#39;x&#39;&gt;&amp;"
         );
+    }
+
+    /// The corpus is written in the .NET dialect: lookaround, backreferences,
+    /// `\p{IsXxx}` block names, and `$1x` meaning "group 1 then x". Each of
+    /// these used to fail at compile time, which became a filter error, which
+    /// dropped the row.
+    #[test]
+    fn accepts_the_dotnet_regex_dialect_the_corpus_is_written_in() {
+        let re_replace = |pattern: &str, replacement: &str, value: &str| {
+            apply_filters(
+                value,
+                &[FilterBlock {
+                    name: "re_replace".into(),
+                    args: Some(serde_yaml::Value::Sequence(vec![
+                        serde_yaml::Value::String(pattern.into()),
+                        serde_yaml::Value::String(replacement.into()),
+                    ])),
+                }],
+                &Variables::new(),
+            )
+        };
+
+        // Lookahead: strip a trailing marker only when a size unit follows.
+        assert_eq!(
+            re_replace(r"\s+(?=GB)", "", "12 GB").unwrap(),
+            "12GB",
+            "lookahead"
+        );
+        // Lookbehind.
+        assert_eq!(
+            re_replace(r"(?<=Season )0+", "", "Season 007").unwrap(),
+            "Season 7"
+        );
+        // Backreference.
+        assert_eq!(
+            re_replace(r"(\w+) \1", "$1", "repeat repeat tail").unwrap(),
+            "repeat tail"
+        );
+        // .NET Unicode block name.
+        assert_eq!(
+            re_replace(r"[\p{IsCyrillic}]+", "-", "abcДЕФghi").unwrap(),
+            "abc-ghi"
+        );
+        // `$1x` is group 1 followed by a literal `x` in .NET, not the group
+        // named `1x`.
+        assert_eq!(
+            re_replace(r"^(\d+)$", "$1x264", "1080").unwrap(),
+            "1080x264"
+        );
+        // The unambiguous forms keep their meaning.
+        assert_eq!(re_replace(r"^(\d+)$", "${1}p", "1080").unwrap(), "1080p");
+        assert_eq!(re_replace(r"^\d+$", "$$", "1080").unwrap(), "$");
+        assert_eq!(
+            re_replace(r"^(?<width>\d+)$", "$width!", "1080").unwrap(),
+            "1080!"
+        );
+
+        assert_eq!(cardigann_replacement("$1x"), "${1}x");
+        assert_eq!(cardigann_replacement("$1 x"), "$1 x");
+        assert_eq!(cardigann_replacement("$10"), "$10");
+        assert_eq!(cardigann_replacement("${1}x"), "${1}x");
+        assert_eq!(cardigann_replacement("$$1x"), "$$1x");
+        assert_eq!(cardigann_replacement("$name"), "$name");
+        assert_eq!(cardigann_replacement("trailing$"), "trailing$");
+
+        // An unparseable pattern is still an error.
+        assert!(re_replace("(unclosed", "", "value").is_err());
+    }
+
+    /// Prowlarr reads `Groups[1].Value` of a failed match, which is empty.
+    #[test]
+    fn a_regexp_filter_that_does_not_match_yields_an_empty_string() {
+        let regexp = |pattern: &str, value: &str| {
+            apply_filters(
+                value,
+                &[FilterBlock {
+                    name: "regexp".into(),
+                    args: Some(serde_yaml::Value::String(pattern.into())),
+                }],
+                &Variables::new(),
+            )
+        };
+        assert_eq!(regexp(r"size=(\d+)", "no size here").unwrap(), "");
+        assert_eq!(regexp(r"size=(\d+)", "size=42").unwrap(), "42");
+        assert!(regexp("(unclosed", "size=42").is_err());
+    }
+
+    /// Prowlarr's `FromTimeAgo` matches any unit token containing the unit
+    /// name, so `3 hrs ago` and `5 mins ago` are ordinary corpus values.
+    #[test]
+    fn parses_the_abbreviated_relative_times_prowlarr_accepts() {
+        let ago = |value: &str| {
+            let parsed = parse_relative_time(value).unwrap();
+            let parsed = DateTime::parse_from_rfc3339(&parsed)
+                .unwrap()
+                .with_timezone(&Utc);
+            (now_utc() - parsed).num_seconds()
+        };
+        assert!((ago("3 hrs ago") - 3 * 3600).abs() <= 2);
+        assert!((ago("5 mins ago") - 5 * 60).abs() <= 2);
+        assert!((ago("2 wks") - 14 * 86_400).abs() <= 2);
+        assert!((ago("1h") - 3600).abs() <= 2);
+        assert!((ago("30 secs ago") - 30).abs() <= 2);
+        assert!((ago("1 mo") - 30 * 86_400).abs() <= 2);
+        assert!((ago("1 year") - 365 * 86_400).abs() <= 2);
+        assert!((ago("1 day, 2 hours and 3 minutes ago") - (86_400 + 7_200 + 180)).abs() <= 2);
+        assert!(ago("just now").abs() <= 2);
+        // Prowlarr throws on a unit it cannot name, and so does this.
+        assert!(parse_relative_time("2 fortnights ago").is_err());
     }
 
     #[test]

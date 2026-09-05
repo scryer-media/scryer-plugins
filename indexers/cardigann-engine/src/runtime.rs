@@ -1,10 +1,12 @@
 use std::collections::{BTreeMap, BTreeSet};
+use std::sync::OnceLock;
 use std::time::Duration;
 
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use chrono::{DateTime, Datelike, Utc};
+use html5ever::{LocalName, QualName, ns};
 use roxmltree::{Document as XmlDocument, Node as XmlNode};
-use scraper::{ElementRef, Html, Selector};
+use scraper::{ElementRef, Html, Node, Selector, StrTendril};
 use scryer_plugin_pdk::component;
 use scryer_plugin_sdk::host::PluginHttpRequest;
 use scryer_plugin_sdk::{
@@ -143,10 +145,6 @@ struct Context {
     #[serde(default)]
     relogin_attempts: u8,
     #[serde(default)]
-    ratio_loaded: bool,
-    #[serde(default)]
-    ratio_value: Option<f64>,
-    #[serde(default)]
     redirect_hops: u8,
     #[serde(default)]
     current_request: Option<RequestState>,
@@ -170,7 +168,6 @@ enum Continuation {
     SimpleCaptcha(Context),
     CaptchaImage(Context),
     ManualCaptcha(Context),
-    Ratio(Context),
     TestConnection(Context),
     SearchResponse(Context),
     GrabResolveBefore(Context),
@@ -187,7 +184,6 @@ impl Continuation {
             | Self::SimpleCaptcha(context)
             | Self::CaptchaImage(context)
             | Self::ManualCaptcha(context)
-            | Self::Ratio(context)
             | Self::TestConnection(context)
             | Self::SearchResponse(context)
             | Self::GrabResolveBefore(context)
@@ -226,8 +222,6 @@ pub fn begin(
         grab_selector_page_body: None,
         grab_selector_index: 0,
         relogin_attempts: 0,
-        ratio_loaded: false,
-        ratio_value: None,
         redirect_hops: 0,
         current_request: None,
         seen_get_urls: BTreeSet::new(),
@@ -601,33 +595,6 @@ pub fn resume(continuation: &[u8], input: ResumeInput) -> Result<Step, String> {
                 Continuation::ManualCaptcha(context),
             )
         }
-        (Continuation::Ratio(mut context), ResumeInput::Http(response)) => {
-            merge_response_cookies(&mut context.cookies, &response);
-            let definition = context.definition.clone();
-            if let Some(request) = follow_redirect(
-                &definition,
-                &mut context,
-                &response,
-                definition.followredirect,
-            )? {
-                return need_redirect(request, Continuation::Ratio(context));
-            }
-            require_success(&response, "ratio")?;
-            let ratio = definition
-                .ratio
-                .as_ref()
-                .ok_or_else(|| "ratio block disappeared".to_string())?;
-            let value = select_html_value(
-                &definition,
-                &response.body,
-                &ratio.field,
-                &context.variables,
-                true,
-            )?;
-            context.ratio_value = value.trim().parse::<f64>().ok();
-            context.ratio_loaded = true;
-            continue_operation(&definition, context)
-        }
         (Continuation::ManualCaptcha(mut context), ResumeInput::ManualInteraction(values)) => {
             let value = values
                 .get("CAPTCHA")
@@ -666,7 +633,9 @@ pub fn resume(continuation: &[u8], input: ResumeInput) -> Result<Step, String> {
                     .and_then(|test| test.selector.as_deref())
                 {
                     let selector = parse_selector(selector_text)?;
-                    let document = Html::parse_document(&decode_body(&definition, &response.body));
+                    let mut document =
+                        Html::parse_document(&decode_body(&definition, &response.body));
+                    mark_contains(&mut document, &selector.needles);
                     if select_matching_element(&document.root_element(), &selector).is_none() {
                         return Ok(failed(
                             "login_test_failed",
@@ -719,14 +688,8 @@ pub fn resume(continuation: &[u8], input: ResumeInput) -> Result<Step, String> {
                 .paths
                 .get(context.search_path)
                 .ok_or_else(|| "search continuation refers to a missing path".to_string())?;
-            let mut parsed =
+            let parsed =
                 parse_search_response(&definition, path, &response, &mut context.variables)?;
-            if let Some(ratio) = context.ratio_value {
-                for result in &mut parsed {
-                    result.minimum_seed_ratio.get_or_insert(ratio);
-                    result.minimum_seed_time_minutes.get_or_insert(0);
-                }
-            }
             context.results.extend(parsed);
             context.search_path += 1;
             next_search(&definition, context)
@@ -901,7 +864,8 @@ fn submit_form_login(mut context: Context, response: &PluginHttpResponse) -> Res
         .as_ref()
         .ok_or_else(|| "login block disappeared".to_string())?;
     let body = decode_body(&definition, &response.body);
-    let document = Html::parse_document(&body);
+    let mut document = Html::parse_document(&body);
+    mark_contains(&mut document, &login_needles(login, &context.variables));
     if !context.config.contains_key("simpleCaptchaSelection") {
         let selector = parse_selector(r#"script[src*="simpleCaptcha"]"#)?;
         if select_matching_element(&document.root_element(), &selector).is_some() {
@@ -970,14 +934,11 @@ fn submit_form_login(mut context: Context, response: &PluginHttpResponse) -> Res
     let form_selector = parse_selector(form_selector_text)?;
     let form = document
         .select(&form_selector.css)
-        .find(|element| form_selector.matches_text(element))
+        .next()
         .ok_or_else(|| format!("login form selector `{form_selector_text}` did not match"))?;
     let input_selector = parse_selector("input")?;
     let mut inputs = Vec::new();
-    for input in form
-        .select(&input_selector.css)
-        .filter(|element| input_selector.matches_text(element))
-    {
+    for input in form.select(&input_selector.css) {
         let Some(name) = input.value().attr("name") else {
             continue;
         };
@@ -998,7 +959,7 @@ fn submit_form_login(mut context: Context, response: &PluginHttpResponse) -> Res
             let selector = parse_selector(&key)?;
             document
                 .select(&selector.css)
-                .find(|element| selector.matches_text(element))
+                .next()
                 .and_then(|element| element.value().attr("name"))
                 .ok_or_else(|| format!("login input selector `{key}` did not match a named input"))?
                 .to_string()
@@ -1044,7 +1005,7 @@ fn submit_form_login(mut context: Context, response: &PluginHttpResponse) -> Res
             let selector = parse_selector(&captcha.input)?;
             document
                 .select(&selector.css)
-                .find(|element| selector.matches_text(element))
+                .next()
                 .and_then(|element| element.value().attr("name"))
                 .ok_or_else(|| {
                     format!(
@@ -1089,26 +1050,14 @@ fn submit_form_login(mut context: Context, response: &PluginHttpResponse) -> Res
     )
 }
 
+/// Start the operation the caller asked for.
+///
+/// The definition's `ratio:` block is deliberately not consulted. In Cardigann
+/// it is a Jackett-era display of the operator's own account ratio, and Prowlarr
+/// parses it without ever evaluating it. Fetching it cost one extra
+/// authenticated request before every search and grab on 328 definitions and
+/// stamped a fabricated `minimum_seed_ratio` onto every release.
 fn continue_operation(definition: &Definition, context: Context) -> Result<Step, String> {
-    if let Some(ratio) = definition.ratio.as_ref()
-        && !context.ratio_loaded
-    {
-        let path = ratio.path.as_deref().unwrap_or("");
-        let url = if path.is_empty() {
-            configured_base_url(definition, &context)?
-        } else {
-            resolve_url(
-                definition,
-                &context,
-                &render(path, &context.variables)?,
-                None,
-            )?
-        };
-        return need_http(
-            http_request("GET", url, Vec::new(), common_headers(&context, None)),
-            Continuation::Ratio(context),
-        );
-    }
     match &context.operation {
         StoredOperation::TestConnection => {
             let path = definition
@@ -1577,19 +1526,25 @@ fn search_variables(
     request: &PluginSearchRequest,
 ) -> Result<Variables, String> {
     let mut variables = base_variables(definition, config);
+    // The host keys external ids `<source>_id` (`imdb_id`, `tvdb_id`, …), which
+    // is what the sibling Newznab and Torznab plugins read. Cardigann
+    // definitions predate that spelling, so accept the bare and `id`-suffixed
+    // forms too rather than silently binding every `.Query.*ID` to null.
     let id = |keys: &[&str]| {
         keys.iter()
-            .find_map(|key| request.ids.get(*key).cloned())
+            .find_map(|key| {
+                request
+                    .ids
+                    .get(*key)
+                    .map(|value| value.trim())
+                    .filter(|value| !value.is_empty())
+                    .map(str::to_string)
+            })
             .unwrap_or_default()
     };
+    let imdb = id(&["imdb_id", "imdb", "imdbid"]);
     let query_values = [
-        (
-            "Type",
-            request
-                .facet
-                .clone()
-                .unwrap_or_else(|| "search".to_string()),
-        ),
+        ("Type", cardigann_search_type(request.facet.as_deref())),
         ("Q", request.query.clone()),
         ("Keywords", request.query.clone()),
         ("Limit", request.limit.to_string()),
@@ -1615,16 +1570,17 @@ fn search_variables(
                 .map(|value| value.to_string())
                 .unwrap_or_default(),
         ),
-        ("IMDBID", id(&["imdb", "imdbid"])),
-        (
-            "IMDBIDShort",
-            id(&["imdb", "imdbid"]).trim_start_matches("tt").to_string(),
-        ),
-        ("TMDBID", id(&["tmdb", "tmdbid"])),
-        ("TVDBID", id(&["tvdb", "tvdbid"])),
-        ("TVMazeID", id(&["tvmaze", "tvmazeid"])),
-        ("TraktID", id(&["trakt", "traktid"])),
-        ("DoubanID", id(&["douban", "doubanid"])),
+        // Prowlarr binds `.Query.IMDBID` to the `tt`-prefixed, seven-digit form
+        // and `.Query.IMDBIDShort` to the bare id, whichever spelling reached
+        // it. 238 definitions read one of the two.
+        ("IMDBID", full_imdb_id(&imdb)),
+        ("IMDBIDShort", short_imdb_id(&imdb)),
+        ("TMDBID", id(&["tmdb_id", "tmdb", "tmdbid"])),
+        ("TVDBID", id(&["tvdb_id", "tvdb", "tvdbid"])),
+        ("TVRageID", id(&["tvrage_id", "tvrage", "rageid"])),
+        ("TVMazeID", id(&["tvmaze_id", "tvmaze", "tvmazeid"])),
+        ("TraktID", id(&["trakt_id", "trakt", "traktid"])),
+        ("DoubanID", id(&["douban_id", "douban", "doubanid"])),
         // The host reports a genuinely known release year on the typed search
         // context, which survives every search strategy it derives from one
         // request. Everything else Cardigann can name — `.Query.Artist`,
@@ -1672,6 +1628,48 @@ fn search_variables(
     )?;
     variables.insert(".Keywords".to_string(), Value::String(keywords));
     Ok(variables)
+}
+
+/// The Cardigann mode name for a Scryer search facet.
+///
+/// Definitions expand `{{ .Query.Type }}` straight into a `t=` parameter, so it
+/// has to carry Cardigann's own vocabulary (`search`, `tv-search`,
+/// `movie-search`) rather than the host's facet names.
+fn cardigann_search_type(facet: Option<&str>) -> String {
+    // Scryer's media facets are `movie`, `series`, and `anime`. A `collection`
+    // subject is a movie collection and a `special` is a series special;
+    // `title` carries no medium, so it stays a plain search.
+    match facet.map(str::trim).unwrap_or_default() {
+        "movie" | "collection" => "movie-search",
+        "series" | "anime" | "special" => "tv-search",
+        _ => "search",
+    }
+    .to_string()
+}
+
+/// The digits of an IMDb id, with a `tt` prefix or its absence both accepted.
+fn imdb_digits(value: &str) -> String {
+    value
+        .trim()
+        .trim_start_matches("tt")
+        .trim_start_matches("TT")
+        .chars()
+        .take_while(char::is_ascii_digit)
+        .collect()
+}
+
+/// Prowlarr's `FullImdbId`: `tt` plus the id padded to seven digits.
+fn full_imdb_id(value: &str) -> String {
+    let digits = imdb_digits(value);
+    if digits.is_empty() || digits.chars().all(|digit| digit == '0') {
+        return String::new();
+    }
+    let digits = digits.trim_start_matches('0');
+    format!("tt{digits:0>7}")
+}
+
+fn short_imdb_id(value: &str) -> String {
+    imdb_digits(value)
 }
 
 fn map_categories(definition: &Definition, request: &PluginSearchRequest) -> Vec<String> {
@@ -2184,7 +2182,9 @@ fn retry_login_if_needed(
                 .map(|value| value.contains("html"))
                 .unwrap_or(true)
                 && parse_selector(selector_text).is_ok_and(|selector| {
-                    let document = Html::parse_document(&decode_body(definition, &response.body));
+                    let mut document =
+                        Html::parse_document(&decode_body(definition, &response.body));
+                    mark_contains(&mut document, &selector.needles);
                     select_matching_element(&document.root_element(), &selector).is_none()
                 })
         });
@@ -2204,22 +2204,27 @@ fn grab_url(context: &Context) -> Result<String, String> {
     }
 }
 
+/// A Cardigann selector, with every `:contains(…)` pseudo rewritten into a
+/// marker attribute.
+///
+/// `scraper` has no `:contains`. Stripping the pseudo out of the selector text
+/// and testing the finally matched element's text instead is right for
+/// `a:contains("Download")` and wrong everywhere else: `tr:not(:contains("x"))`
+/// became `tr:not()` and inverted its meaning, and `tr:has(td:contains("x"))`
+/// degraded to "the row mentions x somewhere". Rewriting each occurrence into
+/// `[data-cardigann-contains-…]` keeps the test in the position the definition
+/// wrote it, at the cost of one document pass ([`mark_contains`]) that stamps
+/// the attribute onto every element whose text contains the needle.
 struct CardigannSelector {
     css: Selector,
-    contains: Vec<String>,
+    /// The needles a document must be marked with before this selector can
+    /// match anything.
+    needles: Vec<String>,
 }
 
 impl CardigannSelector {
     fn matches_element(&self, element: &ElementRef<'_>) -> bool {
-        self.css.matches(element) && self.matches_text(element)
-    }
-
-    fn matches_text(&self, element: &ElementRef<'_>) -> bool {
-        if self.contains.is_empty() {
-            return true;
-        }
-        let text = element.text().collect::<String>();
-        self.contains.iter().all(|expected| text.contains(expected))
+        self.css.matches(element)
     }
 }
 
@@ -2227,27 +2232,222 @@ fn select_matching_element<'a>(
     root: &ElementRef<'a>,
     selector: &CardigannSelector,
 ) -> Option<ElementRef<'a>> {
-    selector.matches_element(root).then_some(*root).or_else(|| {
-        root.select(&selector.css)
-            .find(|element| selector.matches_text(element))
+    selector
+        .matches_element(root)
+        .then_some(*root)
+        .or_else(|| root.select(&selector.css).next())
+}
+
+fn contains_pattern() -> &'static regex::Regex {
+    static PATTERN: OnceLock<regex::Regex> = OnceLock::new();
+    PATTERN.get_or_init(|| {
+        regex::Regex::new(r#":contains\(\s*(?:"([^"]*)"|'([^']*)'|([^)]*))\s*\)"#)
+            .expect("static contains selector regex")
     })
 }
 
-fn parse_selector(selector: &str) -> Result<CardigannSelector, String> {
-    let contains_pattern =
-        regex::Regex::new(r#":contains\(\s*(?:\"([^\"]*)\"|'([^']*)'|([^)]*))\s*\)"#)
-            .expect("static contains selector regex");
-    let contains = contains_pattern
-        .captures_iter(selector)
-        .filter_map(|captures| {
-            (1..=3)
-                .find_map(|index| captures.get(index))
+/// The needle of one `:contains(…)`. A quoted argument is taken verbatim —
+/// `:contains(" GB")` is a different test from `:contains("GB")` — while the
+/// unquoted form carries no way to express leading or trailing space.
+fn contains_needle(captures: &regex::Captures<'_>) -> String {
+    captures
+        .get(1)
+        .or_else(|| captures.get(2))
+        .map(|value| value.as_str().to_string())
+        .unwrap_or_else(|| {
+            captures
+                .get(3)
                 .map(|value| value.as_str().trim().to_string())
+                .unwrap_or_default()
         })
-        .collect();
-    let css = contains_pattern.replace_all(selector, "").into_owned();
+}
+
+fn contains_needles(selector: &str) -> Vec<String> {
+    contains_pattern()
+        .captures_iter(selector)
+        .map(|captures| contains_needle(&captures))
+        .collect()
+}
+
+/// The attribute name that stands for one needle. Derived from the needle
+/// (FNV-1a) so marking is idempotent and two selectors over the same document
+/// can never claim each other's marker.
+fn contains_marker(needle: &str) -> String {
+    let mut hash = 0xcbf2_9ce4_8422_2325_u64;
+    for byte in needle.as_bytes() {
+        hash ^= u64::from(*byte);
+        hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
+    }
+    format!("data-cardigann-contains-{hash:016x}")
+}
+
+/// Stamp each needle's marker attribute onto every element of `document` whose
+/// text contains it. Must run before a selector carrying that needle is used
+/// against the document; running it twice, or with overlapping needle sets, is
+/// harmless.
+fn mark_contains(document: &mut Html, needles: &[String]) {
+    if needles.is_empty() {
+        return;
+    }
+    let markers = needles
+        .iter()
+        .map(|needle| {
+            (
+                needle.clone(),
+                QualName::new(
+                    None,
+                    ns!(),
+                    LocalName::from(contains_marker(needle).as_str()),
+                ),
+            )
+        })
+        .collect::<Vec<_>>();
+    let ids = document
+        .tree
+        .nodes()
+        .filter(|node| node.value().is_element())
+        .map(|node| node.id())
+        .collect::<Vec<_>>();
+    for id in ids {
+        let Some(element) = document.tree.get(id).and_then(ElementRef::wrap) else {
+            continue;
+        };
+        let text = element.text().collect::<String>();
+        let matched = markers
+            .iter()
+            .filter(|(needle, name)| {
+                text.contains(needle.as_str())
+                    && !element.value().attrs.iter().any(|(key, _)| key == name)
+            })
+            .map(|(_, name)| name.clone())
+            .collect::<Vec<_>>();
+        if matched.is_empty() {
+            continue;
+        }
+        let Some(mut node) = document.tree.get_mut(id) else {
+            continue;
+        };
+        let Node::Element(element) = node.value() else {
+            continue;
+        };
+        for name in matched {
+            element.attrs.push((name, StrTendril::new()));
+        }
+        // `Element::attr` binary-searches this list, so it has to stay ordered.
+        element
+            .attrs
+            .sort_unstable_by(|left, right| left.0.cmp(&right.0));
+    }
+}
+
+/// Every `:contains(…)` needle a selector field can reach, rendered the way the
+/// field's own evaluation renders it.
+///
+/// A needle whose text is itself templated cannot always be resolved here (the
+/// row's `.Result.*` bindings do not exist yet), so the raw form is harvested
+/// alongside the rendered one.
+fn field_needles(field: &SelectorField, variables: &Variables, needles: &mut Vec<String>) {
+    let mut harvest = |selector: &str| {
+        let rendered = render(selector, variables).unwrap_or_else(|_| selector.to_string());
+        needles.extend(contains_needles(&rendered));
+        if rendered != selector {
+            needles.extend(contains_needles(selector));
+        }
+    };
+    if let Some(selector) = field.selector.as_deref() {
+        harvest(selector);
+    }
+    if let Some(cases) = field.case.as_ref() {
+        for selector in cases.keys() {
+            harvest(selector);
+        }
+    }
+    match field.remove.as_ref() {
+        Some(serde_yaml::Value::Sequence(values)) => {
+            for value in values.iter().filter_map(scalar_to_string) {
+                harvest(&value);
+            }
+        }
+        Some(value) => {
+            if let Some(value) = scalar_to_string(value) {
+                harvest(&value);
+            }
+        }
+        None => {}
+    }
+}
+
+/// Every needle the search-response parse can use, so one pass over the parsed
+/// document serves the row selector and all of its fields.
+fn search_response_needles(definition: &Definition, variables: &Variables) -> Vec<String> {
+    let rows = &definition.search.rows;
+    let mut needles = contains_needles(
+        &render(&rows.selector, variables).unwrap_or_else(|_| rows.selector.clone()),
+    );
+    needles.extend(contains_needles(&rows.selector));
+    for field in rows
+        .count
+        .iter()
+        .chain(rows.date_headers.iter())
+        .chain(definition.search.fields.values())
+    {
+        field_needles(field, variables, &mut needles);
+    }
+    needles.sort();
+    needles.dedup();
+    needles
+}
+
+fn login_needles(login: &LoginBlock, variables: &Variables) -> Vec<String> {
+    let mut needles = contains_needles(login.form.as_deref().unwrap_or("form"));
+    if login.selectors {
+        for key in login.inputs.keys() {
+            needles.extend(contains_needles(key));
+        }
+    }
+    if let Some(captcha) = login.captcha.as_ref() {
+        needles.extend(contains_needles(&captcha.selector));
+        if login.selectors {
+            needles.extend(contains_needles(&captcha.input));
+        }
+    }
+    for field in login
+        .selector_inputs
+        .values()
+        .chain(login.get_selector_inputs.values())
+    {
+        field_needles(field, variables, &mut needles);
+    }
+    needles.sort();
+    needles.dedup();
+    needles
+}
+
+fn error_needles(errors: &[crate::definition::ErrorBlock], variables: &Variables) -> Vec<String> {
+    let mut needles = Vec::new();
+    for error in errors {
+        needles.extend(contains_needles(&error.selector));
+        if let Some(message) = error.message.as_ref() {
+            field_needles(message, variables, &mut needles);
+        }
+    }
+    needles.sort();
+    needles.dedup();
+    needles
+}
+
+fn parse_selector(selector: &str) -> Result<CardigannSelector, String> {
+    let mut needles = Vec::new();
+    let css = contains_pattern()
+        .replace_all(selector, |captures: &regex::Captures<'_>| {
+            let needle = contains_needle(captures);
+            let marker = contains_marker(&needle);
+            needles.push(needle);
+            format!("[{marker}]")
+        })
+        .into_owned();
     Selector::parse(&css)
-        .map(|css| CardigannSelector { css, contains })
+        .map(|css| CardigannSelector { css, needles })
         .map_err(|error| format!("invalid CSS selector `{selector}`: {error:?}"))
 }
 
@@ -2274,7 +2474,8 @@ fn check_error_blocks(
     variables: &Variables,
     phase: &str,
 ) -> Result<(), String> {
-    let document = Html::parse_document(&decode_body(definition, &response.body));
+    let mut document = Html::parse_document(&decode_body(definition, &response.body));
+    mark_contains(&mut document, &error_needles(errors, variables));
     for error in errors {
         if error.path.is_some() {
             return Err(format!(
@@ -2324,7 +2525,10 @@ fn select_html_value(
     variables: &Variables,
     required: bool,
 ) -> Result<String, String> {
-    let document = Html::parse_document(&decode_body(definition, body));
+    let mut document = Html::parse_document(&decode_body(definition, body));
+    let mut needles = Vec::new();
+    field_needles(field, variables, &mut needles);
+    mark_contains(&mut document, &needles);
     select_element_value(
         definition,
         &document.root_element(),
@@ -2361,6 +2565,13 @@ fn select_element_value(
                 );
             }
         }
+        // Prowlarr: when no case selector matches, the field is null (an error
+        // when required). Falling through to the field's own selector would
+        // hand back the row's text instead.
+        if required {
+            return Err("none of the case selectors matched".to_string());
+        }
+        return Ok(String::new());
     }
     let selector_text = render(field.selector.as_deref().unwrap_or(":scope"), variables)?;
     let selector = parse_selector(&selector_text)?;
@@ -2390,10 +2601,7 @@ fn select_element_value(
         };
         for remove_selector in remove_selectors {
             let remove_selector = parse_selector(&render(&remove_selector, variables)?)?;
-            for removed in element
-                .select(&remove_selector.css)
-                .filter(|element| remove_selector.matches_text(element))
-            {
+            for removed in element.select(&remove_selector.css) {
                 let removed_text = removed.text().collect::<String>();
                 value = value.replace(removed_text.trim(), "");
             }
@@ -2466,30 +2674,22 @@ fn parse_xml_results(
         &render(&definition.search.rows.selector, variables)?,
     )?;
     let mut results = Vec::new();
-    let mut parsed_rows = 0;
-    let mut last_error: Option<String> = None;
     for row in rows {
         let mut row_variables = variables.clone();
+        // A row that will not parse is skipped on its own, and a feed whose
+        // rows all fail is an empty result rather than an indexer failure.
         match parse_xml_row(definition, row, &mut row_variables) {
-            Ok(Some(mut result)) => {
-                normalize_result(definition, &mut result);
-                if should_keep_row(definition, &result, &row_variables) {
-                    results.push(result);
+            Ok(parsed) => {
+                if let Some(mut result) = parsed {
+                    normalize_result(definition, &mut result);
+                    if should_keep_row(definition, &result, &row_variables) {
+                        results.push(result);
+                    }
                 }
                 *variables = row_variables;
-                parsed_rows += 1;
             }
-            Ok(None) => {
-                *variables = row_variables;
-                parsed_rows += 1;
-            }
-            Err(error) => last_error = Some(error),
+            Err(_) => continue,
         }
-    }
-    if parsed_rows == 0
-        && let Some(error) = last_error
-    {
-        return Err(format!("all XML rows failed: {error}"));
     }
     Ok(results)
 }
@@ -2553,6 +2753,10 @@ fn xml_field_value(
                 );
             }
         }
+        if required {
+            return Err("none of the case selectors matched".to_string());
+        }
+        return Ok(String::new());
     }
     let selector = render(field.selector.as_deref().unwrap_or(""), variables)?;
     let node = xml_select_many(root, &selector)?.into_iter().next();
@@ -2655,7 +2859,9 @@ fn parse_markup_results(
         &definition.search.preprocessing_filters,
         variables,
     )?;
-    let document = Html::parse_document(&preprocessed);
+    let needles = search_response_needles(definition, variables);
+    let mut document = Html::parse_document(&preprocessed);
+    mark_contains(&mut document, &needles);
     if let Some(count) = definition.search.rows.count.as_ref() {
         let value = select_element_value(
             definition,
@@ -2670,18 +2876,13 @@ fn parse_markup_results(
     }
     let row_selector_text = render(&definition.search.rows.selector, variables)?;
     let row_selector = parse_selector(&row_selector_text)?;
-    let rows = document
-        .select(&row_selector.css)
-        .filter(|element| row_selector.matches_text(element))
-        .collect::<Vec<_>>();
+    let rows = document.select(&row_selector.css).collect::<Vec<_>>();
     let mut results = Vec::new();
-    let mut parsed_rows = 0;
-    let mut last_error: Option<String> = None;
     let mut index = 0;
     while index < rows.len() {
         let row = &rows[index];
         let mut row_variables = variables.clone();
-        let parsed = (|| {
+        let parsed = (|| -> Result<Option<PluginSearchResult>, String> {
             let parsed = if definition.search.rows.after == 0 {
                 parse_markup_row(definition, row, &mut row_variables)?
             } else {
@@ -2691,7 +2892,8 @@ fn parse_markup_results(
                     .take(definition.search.rows.after + 1)
                     .map(ElementRef::html)
                     .collect::<String>();
-                let merged = Html::parse_fragment(&trailing);
+                let mut merged = Html::parse_fragment(&trailing);
+                mark_contains(&mut merged, &needles);
                 parse_markup_row(definition, &merged.root_element(), &mut row_variables)?
             };
             if let Some(mut result) = parsed {
@@ -2708,22 +2910,18 @@ fn parse_markup_results(
             }
             Ok(None)
         })();
-        match parsed {
-            Ok(result) => {
-                *variables = row_variables;
-                parsed_rows += 1;
-                if let Some(result) = result {
-                    results.push(result);
-                }
+        // A row that fails outside field parsing — a required `dateheaders`
+        // selector, say — is skipped on its own. Prowlarr does the same, and a
+        // page whose rows all fail is an empty page, never an indexer error:
+        // a header row matched by `rows.selector`, a "no results" row, or a
+        // Cloudflare interstitial must not turn into a failing indexer.
+        if let Ok(result) = parsed {
+            *variables = row_variables;
+            if let Some(result) = result {
+                results.push(result);
             }
-            Err(error) => last_error = Some(error),
         }
         index += definition.search.rows.after + 1;
-    }
-    if parsed_rows == 0
-        && let Some(error) = last_error
-    {
-        return Err(format!("all HTML rows failed: {error}"));
     }
     Ok(results)
 }
@@ -2773,6 +2971,13 @@ fn should_keep_row(
     })
 }
 
+/// Parse one HTML row into a release, Prowlarr's way.
+///
+/// A field that cannot be read — a selector that missed a required field, a
+/// filter that errored on the tracker's own malformed value — binds
+/// `.Result.<name>` to null and is skipped; the row is still emitted, because
+/// one unreadable date or size is not a reason to lose the release. A row that
+/// ends up with no title is the row that gets dropped.
 fn parse_markup_row(
     definition: &Definition,
     row: &ElementRef<'_>,
@@ -2782,17 +2987,23 @@ fn parse_markup_row(
     for (field_name, field) in &definition.search.fields {
         let (name, modifiers) = split_field_name(field_name);
         let required = !field.optional && !is_implicitly_optional(name);
-        let value = match select_element_value(definition, row, field, variables, required) {
-            Ok(value) if !value.is_empty() => value,
-            Ok(_) | Err(_) if !required => field
+        let default_value = || {
+            field
                 .default_value
                 .as_ref()
                 .and_then(scalar_to_string)
                 .map(|value| render(&value, variables))
-                .transpose()?
-                .unwrap_or_default(),
-            Err(error) => return Err(format!("field `{field_name}`: {error}")),
+                .transpose()
+                .map(Option::unwrap_or_default)
+        };
+        let value = match select_element_value(definition, row, field, variables, required) {
+            Ok(value) if value.is_empty() && !required => default_value()?,
             Ok(value) => value,
+            Err(_) if !required => default_value()?,
+            Err(_) => {
+                variables.insert(format!(".Result.{name}"), Value::Null);
+                continue;
+            }
         };
         variables.insert(
             format!(".Result.{name}"),
@@ -2808,7 +3019,9 @@ fn parse_markup_row(
             .or_else(|| variables.get(".Config.sitelink").and_then(Value::as_str))
             .or_else(|| definition.links.first().map(String::as_str))
             .unwrap_or_default();
-        apply_result_field(&mut result, name, &modifiers, value, base_url)?;
+        if apply_result_field(&mut result, name, &modifiers, value, base_url).is_err() {
+            variables.insert(format!(".Result.{name}"), Value::Null);
+        }
     }
     if result.title.is_empty() {
         Ok(None)
@@ -3466,17 +3679,274 @@ search:
     minimumseedtime: { selector: td.seedtime }
 "#;
 
+    /// Match `selector` against `html` the way the engine does: mark the
+    /// document with the selector's `:contains` needles, then select.
+    fn select_count(html: &str, selector: &str) -> usize {
+        let mut document = Html::parse_document(html);
+        let selector = parse_selector(selector).unwrap();
+        mark_contains(&mut document, &selector.needles);
+        document.select(&selector.css).count()
+    }
+
     #[test]
     fn supports_has_and_cardigann_contains_selectors() {
-        let document = Html::parse_document(
-            "<table><tr><td><a>needle</a></td></tr><tr><td>other</td></tr></table>",
+        assert_eq!(
+            select_count(
+                "<table><tr><td><a>needle</a></td></tr><tr><td>other</td></tr></table>",
+                "tr:has(a):contains(\"needle\")",
+            ),
+            1
         );
-        let selector = parse_selector("tr:has(a):contains(\"needle\")").unwrap();
-        let matches = document
-            .select(&selector.css)
-            .filter(|element| selector.matches_text(element))
-            .count();
-        assert_eq!(matches, 1);
+    }
+
+    /// `:contains` is evaluated where it is written. Stripping it from the
+    /// selector text turned `tr:not(:contains("Sticky"))` into `tr:not()` — the
+    /// opposite test, on 51 definitions — and reduced
+    /// `tr:has(td.name:contains(…))` to "the row mentions it somewhere".
+    #[test]
+    fn evaluates_contains_inside_not_and_has_where_it_is_written() {
+        const ROWS: &str = r#"<table>
+            <tr class=result><td class=name>Sticky Announcement</td><td class=uploader>needle</td></tr>
+            <tr class=result><td class=name>Fixture Release needle</td><td class=uploader>someone</td></tr>
+            <tr class=result><td class=name>Another Release</td><td class=uploader>someone</td></tr>
+        </table>"#;
+
+        // `:not(:contains(...))` excludes only the rows whose text contains it.
+        assert_eq!(
+            select_count(ROWS, r#"tr.result:not(:contains("Sticky"))"#),
+            2
+        );
+        // `:has(td.name:contains(...))` requires the needle in that cell, not
+        // anywhere in the row: row one carries "needle" in the uploader cell.
+        assert_eq!(
+            select_count(ROWS, r#"tr.result:has(td.name:contains("needle"))"#),
+            1
+        );
+        // Plain top-level `:contains` still means "this element's text".
+        assert_eq!(select_count(ROWS, r#"td.name:contains("Release")"#), 2);
+        // Stacked negations compose.
+        assert_eq!(
+            select_count(
+                ROWS,
+                r#"tr.result:not(:contains("Sticky")):not(:contains("Another"))"#,
+            ),
+            1
+        );
+        // A quoted needle keeps its whitespace: " GB" is not "GB".
+        assert_eq!(
+            select_count(
+                "<div><span>12GB</span><span>12 GB</span></div>",
+                r#"span:contains(" GB")"#
+            ),
+            1
+        );
+    }
+
+    /// The whole search parse has to see the marked document: 12 definitions
+    /// put `:contains` inside a pseudo in `rows.selector`, and the rest use it
+    /// in field and `case:` selectors.
+    #[test]
+    fn positional_contains_reaches_row_and_field_selectors() {
+        let definition = parse_definition(
+            r#"
+id: fixture
+name: Fixture
+type: public
+links: [https://tracker.example/]
+caps: {}
+search:
+  paths:
+    - path: search
+  rows:
+    selector: 'tr.result:not(:contains("Sticky"))'
+  fields:
+    title: { selector: 'td.name' }
+    download: { selector: 'a.download', attribute: href }
+    downloadvolumefactor:
+      case:
+        'td.flags:contains("Free")': "0"
+        '*': "1"
+"#,
+        )
+        .unwrap();
+        let results = parse_search_response(
+            &definition,
+            &definition.search.paths[0],
+            &PluginHttpResponse {
+                status: 200,
+                headers: BTreeMap::new(),
+                set_cookie_headers: Vec::new(),
+                body: br#"<table>
+                    <tr class=result><td class=name>Sticky Announcement</td><td class=flags>Free</td><td><a class=download href='/download/0'>DL</a></td></tr>
+                    <tr class=result><td class=name>Fixture One</td><td class=flags>Free</td><td><a class=download href='/download/1'>DL</a></td></tr>
+                    <tr class=result><td class=name>Fixture Two</td><td class=flags>Paid</td><td><a class=download href='/download/2'>DL</a></td></tr>
+                </table>"#.to_vec(),
+            },
+            &mut Variables::new(),
+        )
+        .unwrap();
+        assert_eq!(
+            results
+                .iter()
+                .map(|result| result.title.as_str())
+                .collect::<Vec<_>>(),
+            ["Fixture One", "Fixture Two"],
+            "the sticky row is the only one excluded"
+        );
+        assert_eq!(results[0].download_volume_factor, Some(0.0));
+        assert_eq!(results[1].download_volume_factor, Some(1.0));
+    }
+
+    /// The `"*"` catch-all is written last in the corpus and must stay last:
+    /// a sorted map tests it first, and every freeleech case collapses to the
+    /// fallback.
+    #[test]
+    fn html_and_xml_case_maps_take_the_first_matching_selector() {
+        let definition = parse_definition(PUBLIC_DEFINITION).unwrap();
+        let html_field: SelectorField =
+            serde_yaml::from_str("case:\n  img[src*=\"free\"]: \"0\"\n  \"*\": \"1\"\n").unwrap();
+        for (markup, expected) in [
+            (
+                "<tr class=result><td><img src='/badge-free.png'></td></tr>",
+                "0",
+            ),
+            (
+                "<tr class=result><td><img src='/badge-paid.png'></td></tr>",
+                "1",
+            ),
+        ] {
+            let document = Html::parse_document(&format!("<table>{markup}</table>"));
+            let row = document
+                .select(&Selector::parse("tr.result").unwrap())
+                .next()
+                .unwrap();
+            assert_eq!(
+                select_element_value(&definition, &row, &html_field, &Variables::new(), true)
+                    .unwrap(),
+                expected,
+                "{markup}"
+            );
+        }
+
+        // Without a catch-all, an unmatched case is null: an error when the
+        // field is required, empty otherwise, never the row's own text.
+        let no_fallback: SelectorField =
+            serde_yaml::from_str("case:\n  img[src*=\"free\"]: \"0\"\n").unwrap();
+        let document = Html::parse_document(
+            "<table><tr class=result><td><img src='/badge-paid.png'>row text</td></tr></table>",
+        );
+        let row = document
+            .select(&Selector::parse("tr.result").unwrap())
+            .next()
+            .unwrap();
+        assert!(
+            select_element_value(&definition, &row, &no_fallback, &Variables::new(), true).is_err()
+        );
+        assert_eq!(
+            select_element_value(&definition, &row, &no_fallback, &Variables::new(), false)
+                .unwrap(),
+            ""
+        );
+
+        let xml_field: SelectorField =
+            serde_yaml::from_str("case:\n  freeleech: \"0\"\n  \"*\": \"1\"\n").unwrap();
+        for (markup, expected) in [
+            ("<item><freeleech>yes</freeleech></item>", "0"),
+            ("<item><paid>yes</paid></item>", "1"),
+        ] {
+            let source = format!("<rss>{markup}</rss>");
+            let document = XmlDocument::parse(&source).unwrap();
+            let item = xml_select_many(document.root(), "item")
+                .unwrap()
+                .into_iter()
+                .next()
+                .unwrap();
+            assert_eq!(
+                xml_field_value(&definition, item, &xml_field, &Variables::new(), true).unwrap(),
+                expected,
+                "{markup}"
+            );
+        }
+    }
+
+    /// The host keys ids `<source>_id`. Reading only the bare Cardigann
+    /// spellings left every `.Query.*ID` null, which silently turned an id
+    /// search into an empty keyword search.
+    #[test]
+    fn binds_host_id_keys_and_cardigann_search_types() {
+        let definition = parse_definition(PUBLIC_DEFINITION).unwrap();
+        let request = PluginSearchRequest {
+            query: "fixture".to_string(),
+            ids: std::collections::HashMap::from([
+                ("imdb_id".to_string(), "tt0111161".to_string()),
+                ("tmdb_id".to_string(), "278".to_string()),
+                ("tvdb_id".to_string(), "81189".to_string()),
+                ("tvrage_id".to_string(), "18164".to_string()),
+                ("tvmaze_id".to_string(), "169".to_string()),
+            ]),
+            facet: Some("series".to_string()),
+            category: None,
+            categories: Vec::new(),
+            limit: 100,
+            season: None,
+            episode: None,
+            absolute_episode: None,
+            tagged_aliases: Vec::new(),
+            context: None,
+        };
+        let variables = search_variables(&definition, &BTreeMap::new(), &request).unwrap();
+        let value = |name: &str| {
+            variables
+                .get(name)
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .to_string()
+        };
+        assert_eq!(value(".Query.IMDBID"), "tt0111161");
+        assert_eq!(value(".Query.IMDBIDShort"), "0111161");
+        assert_eq!(value(".Query.TMDBID"), "278");
+        assert_eq!(value(".Query.TVDBID"), "81189");
+        assert_eq!(value(".Query.TVRageID"), "18164");
+        assert_eq!(value(".Query.TVMazeID"), "169");
+        assert_eq!(value(".Query.Type"), "tv-search");
+
+        // The bare spellings a pasted definition may still carry keep working,
+        // and a bare id is promoted to the `tt` form Prowlarr binds.
+        let mut bare = request.clone();
+        bare.ids = std::collections::HashMap::from([("imdbid".to_string(), "111161".to_string())]);
+        bare.facet = Some("movie".to_string());
+        let variables = search_variables(&definition, &BTreeMap::new(), &bare).unwrap();
+        assert_eq!(
+            variables.get(".Query.IMDBID").and_then(Value::as_str),
+            Some("tt0111161")
+        );
+        assert_eq!(
+            variables.get(".Query.IMDBIDShort").and_then(Value::as_str),
+            Some("111161")
+        );
+        assert_eq!(
+            variables.get(".Query.Type").and_then(Value::as_str),
+            Some("movie-search")
+        );
+
+        for (facet, expected) in [
+            (Some("movie"), "movie-search"),
+            (Some("series"), "tv-search"),
+            (Some("anime"), "tv-search"),
+            (Some("special"), "tv-search"),
+            (Some("collection"), "movie-search"),
+            (Some("title"), "search"),
+            (Some("music"), "search"),
+            (None, "search"),
+        ] {
+            assert_eq!(cardigann_search_type(facet), expected, "{facet:?}");
+        }
+
+        let mut empty = request.clone();
+        empty.ids = std::collections::HashMap::from([("imdb_id".to_string(), "  ".to_string())]);
+        let variables = search_variables(&definition, &BTreeMap::new(), &empty).unwrap();
+        assert_eq!(variables.get(".Query.IMDBID"), Some(&Value::Null));
+        assert_eq!(variables.get(".Query.IMDBIDShort"), Some(&Value::Null));
     }
 
     #[test]
@@ -3502,7 +3972,7 @@ search:
     }
 
     #[test]
-    fn skips_malformed_markup_and_xml_rows_but_reports_all_row_failures() {
+    fn skips_malformed_markup_and_xml_rows_and_treats_no_rows_as_empty() {
         let html = parse_definition(PUBLIC_DEFINITION).unwrap();
         let html_path = &html.search.paths[0];
         let mut variables = Variables::new();
@@ -3547,7 +4017,11 @@ search:
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].title, "xml valid");
 
-        let error = parse_search_response(
+        // A page whose only matched row yields no title is an empty result, the
+        // way Prowlarr reports it. The previous "all HTML rows failed" error
+        // turned a decorative header row, a "no results" row, or a Cloudflare
+        // interstitial into a failing indexer.
+        let results = parse_search_response(
             &html,
             html_path,
             &PluginHttpResponse {
@@ -3558,8 +4032,69 @@ search:
             },
             &mut Variables::new(),
         )
-        .unwrap_err();
-        assert!(error.contains("all HTML rows failed"));
+        .unwrap();
+        assert!(results.is_empty());
+
+        let results = parse_search_response(
+            &xml,
+            xml_path,
+            &PluginHttpResponse {
+                status: 200,
+                headers: BTreeMap::new(),
+                set_cookie_headers: Vec::new(),
+                body: b"<rss><item><link>/broken</link></item></rss>".to_vec(),
+            },
+            &mut Variables::new(),
+        )
+        .unwrap();
+        assert!(results.is_empty());
+    }
+
+    /// Prowlarr records a field error, binds `.Result.<name>` to null, and
+    /// still emits the release. Dropping the row instead is how a single
+    /// divergent filter — a date layout, a regex dialect — turned into missing
+    /// releases.
+    #[test]
+    fn a_failing_field_filter_keeps_the_release_without_that_field() {
+        let definition = parse_definition(
+            r#"
+id: fixture
+name: Fixture
+type: public
+links: [https://tracker.example/]
+caps: {}
+search:
+  paths:
+    - path: search
+  rows:
+    selector: tr.result
+  fields:
+    title: { selector: a.title }
+    download: { selector: a.download, attribute: href }
+    date:
+      selector: td.date
+      filters:
+        - { name: timeago }
+    size: { selector: td.size }
+"#,
+        )
+        .unwrap();
+        let results = parse_search_response(
+            &definition,
+            &definition.search.paths[0],
+            &PluginHttpResponse {
+                status: 200,
+                headers: BTreeMap::new(),
+                set_cookie_headers: Vec::new(),
+                body: br#"<table><tr class=result><td><a class=title>Fixture Release</a><a class=download href='/download/1'>DL</a></td><td class=date>not a date</td><td class=size>1 GiB</td></tr></table>"#.to_vec(),
+            },
+            &mut Variables::new(),
+        )
+        .unwrap();
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].title, "Fixture Release");
+        assert_eq!(results[0].size_bytes, Some(1_073_741_824));
+        assert!(results[0].published_at.is_none());
     }
 
     #[test]
@@ -4261,6 +4796,55 @@ search:
         );
     }
 
+    /// Cardigann's `ratio:` block is a Jackett-era display of the operator's own
+    /// account ratio; Prowlarr parses it and never evaluates it. Fetching it
+    /// spent an extra authenticated request before every search and grab and
+    /// stamped a seeding requirement the tracker never stated onto every
+    /// release.
+    #[test]
+    fn a_ratio_block_costs_no_request_and_stamps_no_seed_requirement() {
+        let definition = PUBLIC_DEFINITION.replace(
+            "search:\n",
+            "ratio:\n  path: account\n  selector: span.ratio\nsearch:\n",
+        );
+        // The block still parses, so the definition stays admissible.
+        assert!(parse_definition(&definition).unwrap().ratio.is_some());
+
+        let first = begin(
+            compiled(&definition),
+            Operation::Search(Box::new(PluginSearchRequest {
+                query: "fixture".into(),
+                ..Default::default()
+            })),
+            BTreeMap::new(),
+        )
+        .unwrap();
+        let Step::NeedHttp {
+            request,
+            continuation,
+        } = first
+        else {
+            panic!("search must yield HTTP")
+        };
+        assert_eq!(request.url, "https://tracker.example/search?q=fixture");
+
+        let Step::Complete { output } = resume(
+            &continuation,
+            ResumeInput::Http(PluginHttpResponse {
+                status: 200,
+                headers: BTreeMap::new(),
+                set_cookie_headers: Vec::new(),
+                body: br#"<table><tr class=result><td><a class=title href='/details/1'>Fixture Release</a><a class=download href='/download/1'>DL</a></td><td class=size>2 GiB</td><td class=seeders>42</td></tr></table>"#.to_vec(),
+            }),
+        )
+        .unwrap() else {
+            panic!("search must complete")
+        };
+        assert_eq!(output["results"][0]["title"], "Fixture Release");
+        assert!(output["results"][0]["minimum_seed_ratio"].is_null());
+        assert!(output["results"][0]["minimum_seed_time_minutes"].is_null());
+    }
+
     #[test]
     fn executes_form_login_before_search_and_carries_cookie() {
         let definition = PUBLIC_DEFINITION.replace(
@@ -4954,8 +5538,6 @@ search:
             grab_selector_page_body: None,
             grab_selector_index: 0,
             relogin_attempts: 0,
-            ratio_loaded: false,
-            ratio_value: None,
             redirect_hops: 0,
             current_request: None,
             seen_get_urls: BTreeSet::new(),
