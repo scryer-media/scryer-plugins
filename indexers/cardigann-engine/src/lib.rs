@@ -37,7 +37,7 @@ const HOST_CONFIG_KEYS: [&str; 5] = [
 fn build_descriptor() -> sdk::PluginDescriptor {
     sdk::PluginDescriptor {
         id: "cardigann-engine".to_string(),
-        name: "Cardigann Indexer".to_string(),
+        name: "Advanced Indexers".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: sdk::SDK_VERSION.to_string(),
         sdk_constraint: sdk::current_sdk_constraint(),

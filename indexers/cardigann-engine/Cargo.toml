@@ -1,10 +1,10 @@
 [package]
 name = "cardigann-engine"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 autolib = false
 license = "GPL-3.0-only"
-description = "Prowlarr Cardigann v11 definition engine for Scryer"
+description = "Advanced indexers for Scryer: runs Prowlarr Cardigann v11 tracker definitions"
 
 [package.metadata.scryer]
 official = true
