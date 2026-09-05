@@ -75,7 +75,9 @@ pub fn selector(rows: &[IndexRow]) -> sdk::ConfigFieldDef {
     sdk::ConfigFieldDef {
         key: "definition".to_string(),
         label: "Tracker Definition".to_string(),
-        field_type: sdk::ConfigFieldType::Select,
+        // Hundreds of bundled definitions: an unfiltered list is not something
+        // an operator can reasonably scan.
+        field_type: sdk::ConfigFieldType::FilteredSelect,
         required: false,
         default_value: None,
         value_source: sdk::ConfigFieldValueSource::User,
@@ -87,6 +89,7 @@ pub fn selector(rows: &[IndexRow]) -> sdk::ConfigFieldDef {
              definition into the Cardigann Definition field instead."
                 .to_string(),
         ),
+        ..Default::default()
     }
 }
 

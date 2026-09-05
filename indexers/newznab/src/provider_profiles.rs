@@ -133,7 +133,7 @@ pub(super) fn selector(profiles: &[IndexerProviderProfile]) -> ConfigFieldDef {
     ConfigFieldDef {
         key: "profile_id".to_string(),
         label: "Known provider".to_string(),
-        field_type: ConfigFieldType::Select,
+        field_type: ConfigFieldType::FilteredSelect,
         required: false,
         default_value: None,
         value_source: Default::default(),
@@ -144,6 +144,7 @@ pub(super) fn selector(profiles: &[IndexerProviderProfile]) -> ConfigFieldDef {
             "Use a known provider preset, or Custom for another Newznab-compatible service."
                 .to_string(),
         ),
+        ..Default::default()
     }
 }
 
