@@ -21,8 +21,18 @@
       "max_scryer_version": "0.19.8"
     },
     {
+      "plugin_id": "pneumatic",
+      "version": "1.0.5",
+      "max_scryer_version": "0.19.8"
+    },
+    {
       "plugin_id": "hadouken",
       "version": "1.1.2",
+      "max_scryer_version": "0.19.8"
+    },
+    {
+      "plugin_id": "hadouken",
+      "version": "1.1.3",
       "max_scryer_version": "0.19.8"
     },
     {
@@ -31,8 +41,18 @@
       "max_scryer_version": "0.19.8"
     },
     {
+      "plugin_id": "nzbvortex",
+      "version": "1.0.4",
+      "max_scryer_version": "0.19.8"
+    },
+    {
       "plugin_id": "fanzub",
       "version": "2.1.0",
+      "max_scryer_version": "0.19.8"
+    },
+    {
+      "plugin_id": "fanzub",
+      "version": "2.1.1",
       "max_scryer_version": "0.19.8"
     },
     {
@@ -41,8 +61,18 @@
       "max_scryer_version": "0.19.8"
     },
     {
+      "plugin_id": "twitter",
+      "version": "0.1.4",
+      "max_scryer_version": "0.19.8"
+    },
+    {
       "plugin_id": "prowl",
       "version": "0.1.3",
+      "max_scryer_version": "0.19.8"
+    },
+    {
+      "plugin_id": "prowl",
+      "version": "0.1.4",
       "max_scryer_version": "0.19.8"
     },
     {
@@ -51,8 +81,18 @@
       "max_scryer_version": "0.19.8"
     },
     {
+      "plugin_id": "pushbullet",
+      "version": "0.1.4",
+      "max_scryer_version": "0.19.8"
+    },
+    {
       "plugin_id": "join",
       "version": "0.1.4",
+      "max_scryer_version": "0.19.8"
+    },
+    {
+      "plugin_id": "join",
+      "version": "0.1.5",
       "max_scryer_version": "0.19.8"
     },
     {
@@ -61,8 +101,18 @@
       "max_scryer_version": "0.19.8"
     },
     {
+      "plugin_id": "synology",
+      "version": "0.1.4",
+      "max_scryer_version": "0.19.8"
+    },
+    {
       "plugin_id": "trakt",
       "version": "0.1.4",
+      "max_scryer_version": "0.19.8"
+    },
+    {
+      "plugin_id": "trakt",
+      "version": "0.1.5",
       "max_scryer_version": "0.19.8"
     },
     {
@@ -71,8 +121,18 @@
       "max_scryer_version": "0.19.8"
     },
     {
+      "plugin_id": "sendgrid",
+      "version": "0.1.4",
+      "max_scryer_version": "0.19.8"
+    },
+    {
       "plugin_id": "simplepush",
       "version": "0.1.3",
+      "max_scryer_version": "0.19.8"
+    },
+    {
+      "plugin_id": "simplepush",
+      "version": "0.1.4",
       "max_scryer_version": "0.19.8"
     },
     {
@@ -81,8 +141,18 @@
       "max_scryer_version": "0.19.8"
     },
     {
+      "plugin_id": "xbmc",
+      "version": "0.1.5",
+      "max_scryer_version": "0.19.8"
+    },
+    {
       "plugin_id": "utorrent",
       "version": "1.1.2",
+      "max_scryer_version": "0.19.8"
+    },
+    {
+      "plugin_id": "utorrent",
+      "version": "1.1.3",
       "max_scryer_version": "0.19.8"
     }
   ]
