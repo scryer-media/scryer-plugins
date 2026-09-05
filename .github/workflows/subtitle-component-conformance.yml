@@ -20,6 +20,9 @@ on:
       - subtitles/tsukihime/**
       - indexers/newznab-common/**
       - pdk/scryer-plugin-pdk/**
+      # The shared conformance harness: a change to it changes every
+      # plugin's suite in this matrix.
+      - pdk/scryer-plugin-conformance/**
       - .github/workflows/subtitle-component-conformance.yml
   workflow_dispatch:
 

@@ -21,7 +21,7 @@ path = "src/lib.rs"
 
 [dependencies]
 liblzma = { version = "=0.4.8", default-features = false, features = ["static", "wasm"] }
-par2-rs = { version = "0.8.0", default-features = false }
+par2-rs = { version = "0.9.0", default-features = false }
 scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
 serde_json = "1"
 sevenz-rust2 = { version = "0.22", default-features = false, features = ["aes256", "bzip2", "deflate", "ppmd"] }
@@ -32,7 +32,7 @@ zip = { version = "7.1.0", default-features = false, features = ["deflate-flate2
 [dev-dependencies]
 aws-lc-sys = "0.45"
 crc32fast = "1"
-par2-rs = "0.8.0"
+par2-rs = "0.9.0"
 sevenz-rust2 = { version = "0.22", default-features = false, features = ["compress"] }
 tempfile = "3"
 wasmtime = "48.0.1"

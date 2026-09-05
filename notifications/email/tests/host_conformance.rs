@@ -1,14 +1,5 @@
-//! Conformance against the real Scryer host, run on the RELEASE artifact.
-//!
-//! This suite exists because the plugin's contract is not "these functions
-//! behave" but "this exact `.wasm` runs under Scryer's notification host". It
-//! therefore builds the shipping `wasm32-wasip2` component and drives it the
-//! way `crates/scryer-plugins/src/wasmtime_host/notification_component_host.rs`
-//! does: the world is linked as `scryer:notification/notification@1.0.0`, the
-//! shared `scryer:host/services@1.0.0` import is served by a scripted stand-in
-//! for `CommandHost` speaking the same postcard
-//! `PluginHostRequest`/`PluginHostResponse`, WASI Preview 2 comes from the
-//! linker, and `process` carries the `PluginCommandRequest` JSON envelope.
+//! Conformance against the real Scryer notification host, run on the RELEASE
+//! artifact.
 //!
 //! # Why this one is not a webhook test with the nouns changed
 //!
@@ -21,47 +12,31 @@
 //! written to it, which is the only way to prove the *sequence* survived the
 //! move from five host functions to one `host-call` import.
 //!
-//! A mismatch here means the artifact would fail in production, which is the
-//! only failure mode this file is trying to catch.
+//! The family-shared half of the suite — the artifact and world checks, the
+//! descriptor identity, the action and wrong-family arms, and the
+//! `ConfigGet`/`StateGet`/`StateSet`/`StateDelete` switchboard — comes from
+//! `scryer-plugin-conformance`. Only the socket half lives here.
 
-use std::collections::VecDeque;
-use std::path::{Path, PathBuf};
-use std::process::Command;
-use std::sync::OnceLock;
+// conformance: bespoke
+
+use std::collections::{BTreeMap, VecDeque};
 
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
-use scryer_plugin_sdk::command::{
-    PluginActionRequest, PluginCommand, PluginCommandRequest, PluginCommandResponse,
-    PluginCommandResult, PluginDownloadClientCommand, PluginDownloadGetCompletedRequest,
-    PluginNotificationCommand, PluginNotificationCommandResult,
+use scryer_plugin_conformance::notification::{
+    Check, NotificationConformance, call_notification, instantiate_with,
 };
-use scryer_plugin_sdk::host::{
-    PluginConfigGetResponse, PluginHostRequest, PluginHostResponse, PluginStateGetResponse,
-    PluginStateMutationResponse,
+use scryer_plugin_conformance::{
+    ConfigSource, HostErrorKind, HostResponder, Script, StateSource, default_respond, unsupported,
 };
+use scryer_plugin_sdk::command::{PluginNotificationCommand, PluginNotificationCommandResult};
+use scryer_plugin_sdk::host::{PluginHostRequest, PluginHostResponse};
 use scryer_plugin_sdk::{
     NotificationEventType, PluginError, PluginErrorCode, PluginNotificationApp,
     PluginNotificationExternalIds, PluginNotificationRequest, PluginNotificationTitle,
     PluginResult, SocketCloseResponse, SocketOpenResponse, SocketReadResponse,
     SocketStartTlsResponse, SocketWriteResponse,
 };
-use wasmtime::component::{Component, HasSelf, Linker, ResourceTable};
-use wasmtime::{Engine, Store};
-use wasmtime_wasi::{WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
-
-mod notification_world {
-    wasmtime::component::bindgen!({
-        world: "scryer:notification/notification@1.0.0",
-        // Two packages, two paths — the same layout the host's bindgen uses,
-        // and the same two files this crate vendors for its own guest
-        // bindings.
-        path: ["wit/host-v1.0.0", "wit/notification-v1.0.0"],
-    });
-}
-
-use notification_world::Notification;
-use notification_world::scryer::host::services::{Host as ServicesHost, HostError};
 
 const SMTP_HOST: &str = "smtp.email-notification.invalid";
 const SMTP_PORT: u16 = 587;
@@ -69,118 +44,78 @@ const FROM_ADDRESS: &str = "scryer@example.com";
 const TO_ADDRESS: &str = "ops@example.com";
 const SOCKET_HANDLE: u32 = 7;
 
-static PLUGIN_WASM: OnceLock<PathBuf> = OnceLock::new();
-
 #[test]
 fn email_release_wasm_conforms_to_the_notification_host_contract() {
-    let wasm_path = email_plugin_wasm();
+    let conformance = conformance();
 
-    assert_artifact_is_a_component(&wasm_path);
-    assert_world_conformance(&wasm_path);
-    assert_describe_returns_a_socket_scoped_notification_descriptor(&wasm_path);
-    assert_send_reaches_config_and_drives_smtp_over_host_sockets(&wasm_path);
-    assert_starttls_upgrade_is_a_host_call(&wasm_path);
-    assert_missing_socket_service_stays_in_band(&wasm_path);
-    assert_permission_denied_is_in_band_and_not_unsupported(&wasm_path);
-    assert_action_is_unsupported_in_band(&wasm_path);
-    assert_another_family_is_an_invocation_error(&wasm_path);
+    conformance.assert_artifact_is_a_component();
+    conformance.assert_world_conformance();
+    conformance.assert_describe_returns_a_notification_descriptor();
+    assert_send_reaches_config_and_drives_smtp_over_host_sockets(&conformance);
+    assert_starttls_upgrade_is_a_host_call(&conformance);
+    assert_missing_socket_service_stays_in_band(&conformance);
+    assert_permission_denied_is_in_band_and_not_unsupported(&conformance);
+    conformance.assert_action_is_unsupported_in_band();
+    conformance.assert_another_family_is_an_invocation_error();
 }
 
-// ---------------------------------------------------------------------------
-// Artifact shape
-// ---------------------------------------------------------------------------
-
-/// The notification host has no core-module backing, so a core wasm artifact is
-/// not a degraded plugin but an uninstallable one. Check the component preamble
-/// directly rather than inferring it from a link failure.
-fn assert_artifact_is_a_component(wasm_path: &Path) {
-    let bytes = std::fs::read(wasm_path).expect("read email plugin wasm");
-    assert!(
-        bytes.starts_with(b"\0asm\r\0\x01\0"),
-        "the release artifact must be a WebAssembly component, not a core module"
-    );
-}
-
-/// The exact check the host performs on install: the artifact compiles, every
-/// import it emits is satisfiable from WASI Preview 2 plus the world's
-/// `services` interface, and its exports match
-/// `scryer:notification/notification@1.0.0`.
+/// The shared suite, minus every check that assumes an HTTP channel.
 ///
-/// This is also the regression guard for the *import set*, and it matters more
-/// for this plugin than for any other in the family. `scryer_plugin_sdk::net`
-/// still carries the old socket host-function externs, and the SDK is a
-/// dependency here — so a single call left routed through it would compile
-/// perfectly, build a valid-looking `.wasm`, and then fail to instantiate under
-/// this host with an unresolvable legacy host-namespace import.
-fn assert_world_conformance(wasm_path: &Path) {
-    let engine = Engine::default();
-    let component =
-        Component::from_file(&engine, wasm_path).expect("compile notification component");
-    let mut linker = Linker::new(&engine);
-    wasmtime_wasi::p2::add_to_linker_sync(&mut linker).expect("register WASI Preview 2");
-    Notification::add_to_linker::<Ctx, HasSelf<Ctx>>(&mut linker, |ctx| ctx)
-        .expect("register the shared host services");
-    linker
-        .instantiate_pre(&component)
-        .and_then(notification_world::NotificationPre::new)
-        .expect("the artifact must satisfy scryer:notification/notification@1.0.0");
-}
-
-// ---------------------------------------------------------------------------
-// describe
-// ---------------------------------------------------------------------------
-
-/// `describe` is a world export now, not a bare exported symbol: the host calls
-/// it directly and parses the returned bytes as a `PluginDescriptor`.
-///
-/// The socket grant is part of that document and is what the host resolves
-/// `${smtp_host}` against, so an assertion on it here is an assertion on the
-/// authority this component is allowed to ask for at all.
-fn assert_describe_returns_a_socket_scoped_notification_descriptor(wasm_path: &Path) {
-    let (mut store, plugin) = instantiate(wasm_path, Script::default());
-    let bytes = plugin.call_describe(&mut store).expect("call describe");
-    let descriptor: serde_json::Value = serde_json::from_slice(&bytes).unwrap_or_else(|error| {
-        panic!(
-            "describe did not return valid JSON ({error}): {}",
-            String::from_utf8_lossy(&bytes)
+/// The descriptor defaults go too: they say this channel holds no authority
+/// beyond HTTP, and email's whole point is that it holds a socket grant. The
+/// grant is asserted in their place — it is part of the packaging document the
+/// host resolves `${smtp_host}` against, so an assertion on it is an assertion
+/// on the authority this component is allowed to ask for at all.
+fn conformance() -> NotificationConformance {
+    NotificationConformance::new(env!("CARGO_MANIFEST_DIR"), "email")
+        .wasm("email_notification.wasm")
+        .config("smtp_host", SMTP_HOST)
+        .config("smtp_port", &SMTP_PORT.to_string())
+        .config("security", "starttls")
+        .config("from_address", FROM_ADDRESS)
+        .config("to_addresses", TO_ADDRESS)
+        .without_descriptor_defaults()
+        .expects_descriptor(
+            &["socket_permissions", "0", "host_pattern"],
+            serde_json::json!("${smtp_host}"),
         )
-    });
-
-    assert_eq!(descriptor["id"], "email");
-    // `ProviderDescriptor` is internally tagged on `kind`, so the notification
-    // fields sit alongside it rather than under a nested key.
-    assert_eq!(descriptor["provider"]["kind"], "notification");
-    assert_eq!(descriptor["provider"]["provider_type"], "email");
-
-    let permission = &descriptor["socket_permissions"][0];
-    assert_eq!(
-        permission["host_pattern"], "${smtp_host}",
-        "the socket grant must stay bound to this channel's own configuration"
-    );
-    assert_eq!(permission["ports"], serde_json::json!([25, 465, 587]));
-    assert_eq!(
-        permission["tls_modes"],
-        serde_json::json!(["plain", "starttls", "tls"])
-    );
-
-    // `describe` must be a pure function of the artifact: the host runs it
-    // during packaging against an inert services import, so it may not touch
-    // config, state, HTTP, or sockets.
-    assert!(
-        store.data().script.calls.is_empty(),
-        "describe used host services: {:?}",
-        store.data().script.calls
-    );
+        .expects_descriptor(
+            &["socket_permissions", "0", "ports"],
+            serde_json::json!([25, 465, 587]),
+        )
+        .expects_descriptor(
+            &["socket_permissions", "0", "tls_modes"],
+            serde_json::json!(["plain", "starttls", "tls"]),
+        )
+        .without(Check::SendReachesTheConfiguredEndpoint)
+        .without(Check::UpstreamFailureIsReported)
+        .without(Check::RefusedHttpStaysInBand)
+        .without(Check::MissingRequiredSetting)
 }
 
-// ---------------------------------------------------------------------------
-// process
-// ---------------------------------------------------------------------------
+/// The configuration the shared switchboard answers from, plus the socket
+/// behaviour this channel's own responder adds.
+fn script() -> Script {
+    Script {
+        config: ConfigSource::Resolved(BTreeMap::from([
+            ("smtp_host".to_string(), SMTP_HOST.to_string()),
+            ("smtp_port".to_string(), SMTP_PORT.to_string()),
+            ("security".to_string(), "starttls".to_string()),
+            ("from_address".to_string(), FROM_ADDRESS.to_string()),
+            ("to_addresses".to_string(), TO_ADDRESS.to_string()),
+        ])),
+        state: StateSource::Ephemeral,
+        ..Script::default()
+    }
+}
 
 /// The whole delivery — configuration and every byte of the SMTP conversation —
 /// travels over the one `host-call` import.
-fn assert_send_reaches_config_and_drives_smtp_over_host_sockets(wasm_path: &Path) {
-    let (mut store, plugin) = instantiate(wasm_path, Script::default());
+fn assert_send_reaches_config_and_drives_smtp_over_host_sockets(
+    conformance: &NotificationConformance,
+) {
+    let (mut store, plugin) =
+        instantiate_with(&conformance.wasm_path(), script(), SmtpResponder::default());
     let result = call_notification(
         &mut store,
         &plugin,
@@ -216,7 +151,7 @@ fn assert_send_reaches_config_and_drives_smtp_over_host_sockets(wasm_path: &Path
     );
 
     // The conversation itself, not merely that *a* socket was opened.
-    let transcript = store.data().script.transcript.join("");
+    let transcript = store.data().responder.transcript.join("");
     for expected in [
         "EHLO scryer.local",
         "STARTTLS",
@@ -236,8 +171,9 @@ fn assert_send_reaches_config_and_drives_smtp_over_host_sockets(wasm_path: &Path
 /// STARTTLS is the one step that cannot be expressed as reads and writes: the
 /// guest asks the *host* to upgrade the stream in place, because the guest has
 /// no TLS stack and — deliberately — no `wasi:sockets` to bring one to.
-fn assert_starttls_upgrade_is_a_host_call(wasm_path: &Path) {
-    let (mut store, plugin) = instantiate(wasm_path, Script::default());
+fn assert_starttls_upgrade_is_a_host_call(conformance: &NotificationConformance) {
+    let (mut store, plugin) =
+        instantiate_with(&conformance.wasm_path(), script(), SmtpResponder::default());
     let _ = call_notification(
         &mut store,
         &plugin,
@@ -265,7 +201,7 @@ fn assert_starttls_upgrade_is_a_host_call(wasm_path: &Path) {
         "the stream must be opened in the clear and upgraded afterwards: {calls:?}"
     );
     assert!(
-        store.data().script.tls_upgraded,
+        store.data().responder.tls_upgraded,
         "the plugin must actually complete the upgrade before sending mail"
     );
 }
@@ -275,12 +211,12 @@ fn assert_starttls_upgrade_is_a_host_call(wasm_path: &Path) {
 /// `Unsupported` through the response, never through `host-error`, and the
 /// channel must surface that as a typed plugin error rather than a world-level
 /// invocation failure.
-fn assert_missing_socket_service_stays_in_band(wasm_path: &Path) {
-    let script = Script {
+fn assert_missing_socket_service_stays_in_band(conformance: &NotificationConformance) {
+    let responder = SmtpResponder {
         socket: SocketScript::Unsupported,
-        ..Script::default()
+        ..SmtpResponder::default()
     };
-    let (mut store, plugin) = instantiate(wasm_path, script);
+    let (mut store, plugin) = instantiate_with(&conformance.wasm_path(), script(), responder);
 
     let result = call_notification(
         &mut store,
@@ -298,12 +234,12 @@ fn assert_missing_socket_service_stays_in_band(wasm_path: &Path) {
 /// absent service. The host reports it `Permanent` — the grant is what it is
 /// and retrying cannot change it — and this plugin must pass that through
 /// rather than re-deriving a code of its own.
-fn assert_permission_denied_is_in_band_and_not_unsupported(wasm_path: &Path) {
-    let script = Script {
+fn assert_permission_denied_is_in_band_and_not_unsupported(conformance: &NotificationConformance) {
+    let responder = SmtpResponder {
         socket: SocketScript::PermissionDenied,
-        ..Script::default()
+        ..SmtpResponder::default()
     };
-    let (mut store, plugin) = instantiate(wasm_path, script);
+    let (mut store, plugin) = instantiate_with(&conformance.wasm_path(), script(), responder);
 
     let result = call_notification(
         &mut store,
@@ -324,101 +260,8 @@ fn assert_permission_denied_is_in_band_and_not_unsupported(wasm_path: &Path) {
     );
 }
 
-/// Email has no interactive action. The host reads that from the descriptor and
-/// never routes one here, so the arm exists to answer rather than to trap.
-fn assert_action_is_unsupported_in_band(wasm_path: &Path) {
-    let (mut store, plugin) = instantiate(wasm_path, Script::default());
-    let result = call_notification(
-        &mut store,
-        &plugin,
-        PluginNotificationCommand::Action(PluginActionRequest {
-            action: "test".to_string(),
-            payload: serde_json::Value::Null,
-        }),
-    );
-    let PluginNotificationCommandResult::Action(PluginResult::Err(error)) = result else {
-        panic!("action must report an in-band error: {result:?}");
-    };
-    assert_eq!(error.code, PluginErrorCode::Unsupported);
-}
-
-/// The one thing that *is* a world-level `invocation-error`: an envelope this
-/// plugin cannot answer at all.
-fn assert_another_family_is_an_invocation_error(wasm_path: &Path) {
-    let (mut store, plugin) = instantiate(wasm_path, Script::default());
-    let request = serde_json::to_vec(&PluginCommandRequest::new(PluginCommand::DownloadClient(
-        PluginDownloadClientCommand::GetCompleted(PluginDownloadGetCompletedRequest {
-            client_item_id: "opaque".to_string(),
-        }),
-    )))
-    .expect("encode a download-client envelope");
-
-    let outcome = plugin
-        .call_process(&mut store, &request)
-        .expect("process call itself succeeds");
-    assert!(
-        outcome.is_err(),
-        "a download-client command must not produce a notification response"
-    );
-}
-
 // ---------------------------------------------------------------------------
-// Driving the component
-// ---------------------------------------------------------------------------
-
-fn call_notification(
-    store: &mut Store<Ctx>,
-    plugin: &Notification,
-    command: PluginNotificationCommand,
-) -> PluginNotificationCommandResult {
-    let request = serde_json::to_vec(&PluginCommandRequest::new(PluginCommand::Notification(
-        command,
-    )))
-    .expect("encode the command envelope");
-    let encoded = plugin
-        .call_process(store, &request)
-        .expect("process call itself succeeds")
-        .expect("process returned an invocation-error");
-    let response: PluginCommandResponse =
-        serde_json::from_slice(&encoded).unwrap_or_else(|error| {
-            panic!(
-                "process did not return a command response ({error}): {}",
-                String::from_utf8_lossy(&encoded)
-            )
-        });
-    match response.response {
-        PluginCommandResult::Notification(result) => result,
-        other => panic!("process answered another family: {other:?}"),
-    }
-}
-
-fn instantiate(wasm_path: &Path, script: Script) -> (Store<Ctx>, Notification) {
-    let engine = Engine::default();
-    let component =
-        Component::from_file(&engine, wasm_path).expect("compile notification component");
-    let mut linker = Linker::new(&engine);
-    wasmtime_wasi::p2::add_to_linker_sync(&mut linker).expect("register WASI Preview 2");
-    Notification::add_to_linker::<Ctx, HasSelf<Ctx>>(&mut linker, |ctx| ctx)
-        .expect("register the shared host services");
-
-    let mut store = Store::new(
-        &engine,
-        Ctx {
-            table: ResourceTable::new(),
-            // The host captures guest stderr and tails it into its own error
-            // messages; inheriting it here puts the same text in front of
-            // whoever is reading the test failure.
-            wasi: WasiCtxBuilder::new().inherit_stderr().build(),
-            script,
-        },
-    );
-    let plugin = Notification::instantiate(&mut store, &component, &linker)
-        .expect("instantiate the notification component");
-    (store, plugin)
-}
-
-// ---------------------------------------------------------------------------
-// A scripted `CommandHost` with a working SMTP server behind its socket table
+// A working SMTP server behind the shared switchboard's socket arms
 // ---------------------------------------------------------------------------
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -433,7 +276,7 @@ enum SocketScript {
 }
 
 #[derive(Clone, Debug, Default)]
-struct Script {
+struct SmtpResponder {
     socket: SocketScript,
     /// Bytes the server has queued for the guest to read.
     outbound: VecDeque<u8>,
@@ -442,10 +285,9 @@ struct Script {
     /// Whether the server is inside a `DATA` block.
     in_data: bool,
     tls_upgraded: bool,
-    calls: Vec<String>,
 }
 
-impl Script {
+impl SmtpResponder {
     fn greet(&mut self) {
         self.reply("220 smtp.test.invalid ESMTP ready\r\n");
     }
@@ -496,69 +338,22 @@ impl Script {
     }
 }
 
-struct Ctx {
-    table: ResourceTable,
-    wasi: WasiCtx,
-    script: Script,
-}
-
-impl WasiView for Ctx {
-    fn ctx(&mut self) -> WasiCtxView<'_> {
-        WasiCtxView {
-            ctx: &mut self.wasi,
-            table: &mut self.table,
-        }
-    }
-}
-
-impl ServicesHost for Ctx {
-    /// The shared host import, standing in for Scryer's `CommandHost`.
+impl HostResponder for SmtpResponder {
+    /// The five socket variants, with everything else handed back to the
+    /// family-shared switchboard.
     ///
     /// `host-error` is reserved for the transport: a request that cannot be
     /// decoded. Everything a real host would refuse — an unconfigured
     /// capability, a denied socket grant — is a well-formed response carrying a
     /// typed `PluginError`, which is what the two failure scripts exercise.
-    fn host_call(&mut self, request: Vec<u8>) -> Result<Vec<u8>, HostError> {
-        let request: PluginHostRequest =
-            postcard::from_bytes(&request).map_err(|_| HostError::InvalidRequest)?;
-
+    fn respond(
+        &mut self,
+        request: PluginHostRequest,
+        script: &mut Script,
+    ) -> Result<PluginHostResponse, HostErrorKind> {
         let response = match request {
-            PluginHostRequest::ConfigGet(request) => {
-                self.script
-                    .calls
-                    .push(format!("config_get:{}", request.key));
-                let value = match request.key.as_str() {
-                    "smtp_host" => Some(SMTP_HOST.to_string()),
-                    "smtp_port" => Some(SMTP_PORT.to_string()),
-                    "security" => Some("starttls".to_string()),
-                    "from_address" => Some(FROM_ADDRESS.to_string()),
-                    "to_addresses" => Some(TO_ADDRESS.to_string()),
-                    _ => None,
-                };
-                PluginHostResponse::ConfigGet(PluginResult::Ok(PluginConfigGetResponse { value }))
-            }
-            PluginHostRequest::StateGet(request) => {
-                self.script.calls.push(format!("state_get:{}", request.key));
-                PluginHostResponse::StateGet(PluginResult::Ok(PluginStateGetResponse {
-                    value: None,
-                }))
-            }
-            PluginHostRequest::StateSet(request) => {
-                self.script.calls.push(format!("state_set:{}", request.key));
-                PluginHostResponse::StateSet(PluginResult::Ok(PluginStateMutationResponse {
-                    changed: true,
-                }))
-            }
-            PluginHostRequest::StateDelete(request) => {
-                self.script
-                    .calls
-                    .push(format!("state_delete:{}", request.key));
-                PluginHostResponse::StateDelete(PluginResult::Ok(PluginStateMutationResponse {
-                    changed: true,
-                }))
-            }
             PluginHostRequest::SocketOpen(request) => {
-                self.script.calls.push(format!(
+                script.calls.push(format!(
                     "socket_open:{}:{}:{}",
                     request.host,
                     request.port,
@@ -568,9 +363,9 @@ impl ServicesHost for Ctx {
                         scryer_plugin_sdk::SocketTlsMode::Tls => "tls",
                     }
                 ));
-                match self.script.socket {
+                match self.socket {
                     SocketScript::Connected => {
-                        self.script.greet();
+                        self.greet();
                         PluginHostResponse::SocketOpen(PluginResult::Ok(SocketOpenResponse {
                             handle: SOCKET_HANDLE,
                         }))
@@ -584,19 +379,19 @@ impl ServicesHost for Ctx {
                 }
             }
             PluginHostRequest::SocketWrite(request) => {
-                self.script.calls.push("socket_write".to_string());
+                script.calls.push("socket_write".to_string());
                 let data = BASE64
                     .decode(request.data_base64)
                     .expect("the guest must base64 what it writes");
-                self.script.handle_written(&data);
+                self.handle_written(&data);
                 PluginHostResponse::SocketWrite(PluginResult::Ok(SocketWriteResponse {
                     bytes_written: data.len(),
                 }))
             }
             PluginHostRequest::SocketRead(request) => {
-                self.script.calls.push("socket_read".to_string());
-                let take = request.max_bytes.min(self.script.outbound.len());
-                let data: Vec<u8> = self.script.outbound.drain(..take).collect();
+                script.calls.push("socket_read".to_string());
+                let take = request.max_bytes.min(self.outbound.len());
+                let data: Vec<u8> = self.outbound.drain(..take).collect();
                 let eof = data.is_empty();
                 PluginHostResponse::SocketRead(PluginResult::Ok(SocketReadResponse {
                     data_base64: BASE64.encode(&data),
@@ -604,44 +399,24 @@ impl ServicesHost for Ctx {
                 }))
             }
             PluginHostRequest::SocketStartTls(request) => {
-                self.script
+                script
                     .calls
                     .push(format!("socket_starttls:{}", request.host));
-                self.script.tls_upgraded = true;
+                self.tls_upgraded = true;
                 PluginHostResponse::SocketStartTls(PluginResult::Ok(SocketStartTlsResponse {
                     handle: SOCKET_HANDLE,
                 }))
             }
             PluginHostRequest::SocketClose(_) => {
-                self.script.calls.push("socket_close".to_string());
+                script.calls.push("socket_close".to_string());
                 PluginHostResponse::SocketClose(PluginResult::Ok(SocketCloseResponse {
                     closed: true,
                 }))
             }
-            other => {
-                self.script.calls.push(format!("unscripted:{other:?}"));
-                return Err(HostError::Failed);
-            }
+            other => return default_respond(other, script),
         };
 
-        postcard::to_allocvec(&response).map_err(|_| HostError::Failed)
-    }
-}
-
-/// The in-band "this host cannot do that" answer.
-///
-/// Every optional field is populated deliberately: the published SDK's
-/// `PluginError` still carries `skip_serializing_if` on `debug_message` and
-/// `retry_after_seconds`, which a non-self-describing format like postcard
-/// cannot round-trip — a `None` there produces bytes the guest decoder rejects
-/// outright. Until that lands, a host answering in-band must fill them in.
-fn unsupported(message: &str) -> PluginError {
-    PluginError {
-        code: PluginErrorCode::Unsupported,
-        public_message: message.to_string(),
-        debug_message: Some(message.to_string()),
-        retry_after_seconds: Some(0),
-        details: None,
+        Ok(response)
     }
 }
 
@@ -663,6 +438,9 @@ fn permission_denied() -> PluginError {
 // Fixtures
 // ---------------------------------------------------------------------------
 
+/// This channel's own notification fixture rather than the family's: email
+/// renders whatever media the request carries into the message body, and the
+/// transcript assertions above are written against a request with none.
 fn test_request() -> PluginNotificationRequest {
     PluginNotificationRequest {
         schema_version: 1,
@@ -708,26 +486,4 @@ fn test_request() -> PluginNotificationRequest {
         manual_interaction: None,
         media_request: None,
     }
-}
-
-fn email_plugin_wasm() -> PathBuf {
-    PLUGIN_WASM
-        .get_or_init(|| {
-            let plugin_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-            let cargo = std::env::var_os("CARGO").unwrap_or_else(|| "cargo".into());
-            let status = Command::new(cargo)
-                .arg("build")
-                .arg("--manifest-path")
-                .arg(plugin_root.join("Cargo.toml"))
-                .arg("--profile")
-                .arg("plugin-release")
-                .arg("--target")
-                .arg("wasm32-wasip2")
-                .status()
-                .expect("run cargo build for the email plugin");
-            assert!(status.success(), "email plugin build failed: {status}");
-
-            plugin_root.join("target/wasm32-wasip2/plugin-release/email_notification.wasm")
-        })
-        .clone()
 }
