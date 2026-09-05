@@ -388,8 +388,13 @@ pub struct SelectorField {
     pub optional: bool,
     #[serde(default, rename = "default")]
     pub default_value: Option<serde_yaml::Value>,
+    /// Cardigann evaluates `case:` entries in definition order and takes the
+    /// first selector that matches, so the conventional `"*"` catch-all must
+    /// stay last. An ordered map is therefore part of the semantics, not a
+    /// storage detail: a sorted map floats `*` to the front and every case
+    /// resolves to the fallback.
     #[serde(default, deserialize_with = "deserialize_optional_string_map")]
-    pub case: Option<BTreeMap<String, String>>,
+    pub case: Option<IndexMap<String, String>>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -473,11 +478,11 @@ where
 
 fn deserialize_optional_string_map<'de, D>(
     deserializer: D,
-) -> Result<Option<BTreeMap<String, String>>, D::Error>
+) -> Result<Option<IndexMap<String, String>>, D::Error>
 where
     D: Deserializer<'de>,
 {
-    Option::<BTreeMap<String, serde_yaml::Value>>::deserialize(deserializer)?.map_or(
+    Option::<IndexMap<String, serde_yaml::Value>>::deserialize(deserializer)?.map_or(
         Ok(None),
         |map| {
             map.into_iter()
@@ -486,7 +491,7 @@ where
                         .map(|value| (key, value))
                         .ok_or_else(|| D::Error::custom("case values must be scalars"))
                 })
-                .collect::<Result<BTreeMap<_, _>, _>>()
+                .collect::<Result<IndexMap<_, _>, _>>()
                 .map(Some)
         },
     )
@@ -560,6 +565,43 @@ search:
         assert_eq!(path.categories, ["1", "2"]);
         assert_eq!(definition.request_delay, Some(2.5));
         assert!(definition.test_link_torrent);
+    }
+
+    /// Cardigann takes the first matching `case:` entry, and the corpus writes
+    /// the `"*"` catch-all last. Definition order therefore has to survive both
+    /// YAML parsing and the compiled-IR JSON round trip the continuation uses.
+    #[test]
+    fn keeps_case_entries_in_definition_order_through_the_compiled_ir() {
+        let field: SelectorField = serde_yaml::from_str(
+            r#"
+case:
+  img[src*="badge-free"]: "0"
+  img[src*="badge-half"]: "0.5"
+  "*": "1"
+"#,
+        )
+        .unwrap();
+        let ordered = |field: &SelectorField| {
+            field
+                .case
+                .as_ref()
+                .unwrap()
+                .keys()
+                .cloned()
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            ordered(&field),
+            [
+                r#"img[src*="badge-free"]"#,
+                r#"img[src*="badge-half"]"#,
+                "*"
+            ]
+        );
+
+        let round_tripped: SelectorField =
+            serde_json::from_str(&serde_json::to_string(&field).unwrap()).unwrap();
+        assert_eq!(ordered(&round_tripped), ordered(&field));
     }
 
     #[test]

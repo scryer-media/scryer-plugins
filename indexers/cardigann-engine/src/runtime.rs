@@ -1,10 +1,12 @@
 use std::collections::{BTreeMap, BTreeSet};
+use std::sync::OnceLock;
 use std::time::Duration;
 
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use chrono::{DateTime, Datelike, Utc};
+use html5ever::{LocalName, QualName, ns};
 use roxmltree::{Document as XmlDocument, Node as XmlNode};
-use scraper::{ElementRef, Html, Selector};
+use scraper::{ElementRef, Html, Node, Selector, StrTendril};
 use scryer_plugin_pdk::component;
 use scryer_plugin_sdk::host::PluginHttpRequest;
 use scryer_plugin_sdk::{
@@ -143,10 +145,6 @@ struct Context {
     #[serde(default)]
     relogin_attempts: u8,
     #[serde(default)]
-    ratio_loaded: bool,
-    #[serde(default)]
-    ratio_value: Option<f64>,
-    #[serde(default)]
     redirect_hops: u8,
     #[serde(default)]
     current_request: Option<RequestState>,
@@ -170,7 +168,6 @@ enum Continuation {
     SimpleCaptcha(Context),
     CaptchaImage(Context),
     ManualCaptcha(Context),
-    Ratio(Context),
     TestConnection(Context),
     SearchResponse(Context),
     GrabResolveBefore(Context),
@@ -187,7 +184,6 @@ impl Continuation {
             | Self::SimpleCaptcha(context)
             | Self::CaptchaImage(context)
             | Self::ManualCaptcha(context)
-            | Self::Ratio(context)
             | Self::TestConnection(context)
             | Self::SearchResponse(context)
             | Self::GrabResolveBefore(context)
@@ -209,6 +205,18 @@ pub fn begin(
         Operation::Search(request) => StoredOperation::Search(request),
         Operation::Grab(url) => StoredOperation::Grab(url),
     };
+    // Prowlarr's `HttpIndexerBase.Fetch` skips a search whose criteria use an id
+    // the definition's `caps.modes` does not list. Without that gate an id-only
+    // strategy renders an empty keyword search on every definition that cannot
+    // read the id, and the tracker's front page comes back as results.
+    if let StoredOperation::Search(request) = &stored_operation
+        && !id_search_is_supported(&definition, request)
+    {
+        return Ok(Step::Complete {
+            output: serde_json::to_value(PluginSearchResponse::default())
+                .map_err(|error| format!("could not encode search response: {error}"))?,
+        });
+    }
     let cookies = initial_cookies(&definition, &config);
     let mut variables = base_variables(&definition, &config);
     if let StoredOperation::Grab(url) = &stored_operation {
@@ -226,8 +234,6 @@ pub fn begin(
         grab_selector_page_body: None,
         grab_selector_index: 0,
         relogin_attempts: 0,
-        ratio_loaded: false,
-        ratio_value: None,
         redirect_hops: 0,
         current_request: None,
         seen_get_urls: BTreeSet::new(),
@@ -380,7 +386,7 @@ async fn drive_operation<H: EngineHost>(
         session.expires_at_millis = None;
     }
     if let Some(cookie) = config.get("cookie") {
-        merge_cookie_header(&mut session.cookies, cookie);
+        merge_configured_cookies(&mut session.cookies, cookie);
     }
     if !session.cookies.is_empty() {
         config.insert("cookie".to_string(), cookie_header(&session.cookies));
@@ -601,33 +607,6 @@ pub fn resume(continuation: &[u8], input: ResumeInput) -> Result<Step, String> {
                 Continuation::ManualCaptcha(context),
             )
         }
-        (Continuation::Ratio(mut context), ResumeInput::Http(response)) => {
-            merge_response_cookies(&mut context.cookies, &response);
-            let definition = context.definition.clone();
-            if let Some(request) = follow_redirect(
-                &definition,
-                &mut context,
-                &response,
-                definition.followredirect,
-            )? {
-                return need_redirect(request, Continuation::Ratio(context));
-            }
-            require_success(&response, "ratio")?;
-            let ratio = definition
-                .ratio
-                .as_ref()
-                .ok_or_else(|| "ratio block disappeared".to_string())?;
-            let value = select_html_value(
-                &definition,
-                &response.body,
-                &ratio.field,
-                &context.variables,
-                true,
-            )?;
-            context.ratio_value = value.trim().parse::<f64>().ok();
-            context.ratio_loaded = true;
-            continue_operation(&definition, context)
-        }
         (Continuation::ManualCaptcha(mut context), ResumeInput::ManualInteraction(values)) => {
             let value = values
                 .get("CAPTCHA")
@@ -666,7 +645,9 @@ pub fn resume(continuation: &[u8], input: ResumeInput) -> Result<Step, String> {
                     .and_then(|test| test.selector.as_deref())
                 {
                     let selector = parse_selector(selector_text)?;
-                    let document = Html::parse_document(&decode_body(&definition, &response.body));
+                    let mut document =
+                        Html::parse_document(&decode_body(&definition, &response.body));
+                    mark_contains(&mut document, &selector.needles);
                     if select_matching_element(&document.root_element(), &selector).is_none() {
                         return Ok(failed(
                             "login_test_failed",
@@ -719,14 +700,8 @@ pub fn resume(continuation: &[u8], input: ResumeInput) -> Result<Step, String> {
                 .paths
                 .get(context.search_path)
                 .ok_or_else(|| "search continuation refers to a missing path".to_string())?;
-            let mut parsed =
+            let parsed =
                 parse_search_response(&definition, path, &response, &mut context.variables)?;
-            if let Some(ratio) = context.ratio_value {
-                for result in &mut parsed {
-                    result.minimum_seed_ratio.get_or_insert(ratio);
-                    result.minimum_seed_time_minutes.get_or_insert(0);
-                }
-            }
             context.results.extend(parsed);
             context.search_path += 1;
             next_search(&definition, context)
@@ -901,7 +876,8 @@ fn submit_form_login(mut context: Context, response: &PluginHttpResponse) -> Res
         .as_ref()
         .ok_or_else(|| "login block disappeared".to_string())?;
     let body = decode_body(&definition, &response.body);
-    let document = Html::parse_document(&body);
+    let mut document = Html::parse_document(&body);
+    mark_contains(&mut document, &login_needles(login, &context.variables));
     if !context.config.contains_key("simpleCaptchaSelection") {
         let selector = parse_selector(r#"script[src*="simpleCaptcha"]"#)?;
         if select_matching_element(&document.root_element(), &selector).is_some() {
@@ -970,14 +946,11 @@ fn submit_form_login(mut context: Context, response: &PluginHttpResponse) -> Res
     let form_selector = parse_selector(form_selector_text)?;
     let form = document
         .select(&form_selector.css)
-        .find(|element| form_selector.matches_text(element))
+        .next()
         .ok_or_else(|| format!("login form selector `{form_selector_text}` did not match"))?;
     let input_selector = parse_selector("input")?;
     let mut inputs = Vec::new();
-    for input in form
-        .select(&input_selector.css)
-        .filter(|element| input_selector.matches_text(element))
-    {
+    for input in form.select(&input_selector.css) {
         let Some(name) = input.value().attr("name") else {
             continue;
         };
@@ -998,7 +971,7 @@ fn submit_form_login(mut context: Context, response: &PluginHttpResponse) -> Res
             let selector = parse_selector(&key)?;
             document
                 .select(&selector.css)
-                .find(|element| selector.matches_text(element))
+                .next()
                 .and_then(|element| element.value().attr("name"))
                 .ok_or_else(|| format!("login input selector `{key}` did not match a named input"))?
                 .to_string()
@@ -1044,7 +1017,7 @@ fn submit_form_login(mut context: Context, response: &PluginHttpResponse) -> Res
             let selector = parse_selector(&captcha.input)?;
             document
                 .select(&selector.css)
-                .find(|element| selector.matches_text(element))
+                .next()
                 .and_then(|element| element.value().attr("name"))
                 .ok_or_else(|| {
                     format!(
@@ -1089,26 +1062,14 @@ fn submit_form_login(mut context: Context, response: &PluginHttpResponse) -> Res
     )
 }
 
+/// Start the operation the caller asked for.
+///
+/// The definition's `ratio:` block is deliberately not consulted. In Cardigann
+/// it is a Jackett-era display of the operator's own account ratio, and Prowlarr
+/// parses it without ever evaluating it. Fetching it cost one extra
+/// authenticated request before every search and grab on 328 definitions and
+/// stamped a fabricated `minimum_seed_ratio` onto every release.
 fn continue_operation(definition: &Definition, context: Context) -> Result<Step, String> {
-    if let Some(ratio) = definition.ratio.as_ref()
-        && !context.ratio_loaded
-    {
-        let path = ratio.path.as_deref().unwrap_or("");
-        let url = if path.is_empty() {
-            configured_base_url(definition, &context)?
-        } else {
-            resolve_url(
-                definition,
-                &context,
-                &render(path, &context.variables)?,
-                None,
-            )?
-        };
-        return need_http(
-            http_request("GET", url, Vec::new(), common_headers(&context, None)),
-            Continuation::Ratio(context),
-        );
-    }
     match &context.operation {
         StoredOperation::TestConnection => {
             let path = definition
@@ -1309,11 +1270,7 @@ fn finish_grab(mut context: Context, body: &[u8]) -> Result<Step, String> {
         let hash = select_html_value(&definition, body, &infohash.hash, &context.variables, true)?;
         let title =
             select_html_value(&definition, body, &infohash.title, &context.variables, true)?;
-        let magnet = format!(
-            "magnet:?xt=urn:btih:{}&dn={}",
-            hash,
-            url::form_urlencoded::byte_serialize(title.as_bytes()).collect::<String>()
-        );
+        let magnet = public_magnet_link(&hash, &title);
         return complete_grab(&context, &magnet, &download.method, Vec::new());
     }
     context.grab_selector_page_body = Some(body.to_vec());
@@ -1418,11 +1375,26 @@ fn complete_grab(
 }
 
 fn complete_grab_response(context: &Context, response: PluginHttpResponse) -> Result<Step, String> {
-    const MAX_TORRENT_BYTES: usize = 2 * 1024 * 1024;
+    // A multi-file torrent's piece table alone can run past a megabyte, so the
+    // old 2 MiB ceiling rejected legitimate season packs.
+    const MAX_TORRENT_BYTES: usize = 64 * 1024 * 1024;
     if response.body.len() > MAX_TORRENT_BYTES {
         return Err(format!(
             "torrent response exceeded the {MAX_TORRENT_BYTES}-byte runtime limit"
         ));
+    }
+    // Prowlarr rejects an HTML-typed download outright: it is a login wall, a
+    // rate-limit notice or an interstitial, never a torrent. A tracker that
+    // mislabels a real bencoded body is still believed.
+    let html_typed = response.headers.iter().any(|(name, value)| {
+        name.eq_ignore_ascii_case("content-type")
+            && value.to_ascii_lowercase().contains("text/html")
+    });
+    if html_typed && response.body.first() != Some(&b'd') {
+        return Err(
+            "tracker returned an HTML page instead of a torrent; the session is probably expired"
+                .to_string(),
+        );
     }
     let request = context
         .current_request
@@ -1577,19 +1549,25 @@ fn search_variables(
     request: &PluginSearchRequest,
 ) -> Result<Variables, String> {
     let mut variables = base_variables(definition, config);
+    // The host keys external ids `<source>_id` (`imdb_id`, `tvdb_id`, …), which
+    // is what the sibling Newznab and Torznab plugins read. Cardigann
+    // definitions predate that spelling, so accept the bare and `id`-suffixed
+    // forms too rather than silently binding every `.Query.*ID` to null.
     let id = |keys: &[&str]| {
         keys.iter()
-            .find_map(|key| request.ids.get(*key).cloned())
+            .find_map(|key| {
+                request
+                    .ids
+                    .get(*key)
+                    .map(|value| value.trim())
+                    .filter(|value| !value.is_empty())
+                    .map(str::to_string)
+            })
             .unwrap_or_default()
     };
+    let imdb = id(&["imdb_id", "imdb", "imdbid"]);
     let query_values = [
-        (
-            "Type",
-            request
-                .facet
-                .clone()
-                .unwrap_or_else(|| "search".to_string()),
-        ),
+        ("Type", cardigann_search_type(request.facet.as_deref())),
         ("Q", request.query.clone()),
         ("Keywords", request.query.clone()),
         ("Limit", request.limit.to_string()),
@@ -1615,16 +1593,17 @@ fn search_variables(
                 .map(|value| value.to_string())
                 .unwrap_or_default(),
         ),
-        ("IMDBID", id(&["imdb", "imdbid"])),
-        (
-            "IMDBIDShort",
-            id(&["imdb", "imdbid"]).trim_start_matches("tt").to_string(),
-        ),
-        ("TMDBID", id(&["tmdb", "tmdbid"])),
-        ("TVDBID", id(&["tvdb", "tvdbid"])),
-        ("TVMazeID", id(&["tvmaze", "tvmazeid"])),
-        ("TraktID", id(&["trakt", "traktid"])),
-        ("DoubanID", id(&["douban", "doubanid"])),
+        // Prowlarr binds `.Query.IMDBID` to the `tt`-prefixed, seven-digit form
+        // and `.Query.IMDBIDShort` to the bare id, whichever spelling reached
+        // it. 238 definitions read one of the two.
+        ("IMDBID", full_imdb_id(&imdb)),
+        ("IMDBIDShort", short_imdb_id(&imdb)),
+        ("TMDBID", id(&["tmdb_id", "tmdb", "tmdbid"])),
+        ("TVDBID", id(&["tvdb_id", "tvdb", "tvdbid"])),
+        ("TVRageID", id(&["tvrage_id", "tvrage", "rageid"])),
+        ("TVMazeID", id(&["tvmaze_id", "tvmaze", "tvmazeid"])),
+        ("TraktID", id(&["trakt_id", "trakt", "traktid"])),
+        ("DoubanID", id(&["douban_id", "douban", "doubanid"])),
         // The host reports a genuinely known release year on the typed search
         // context, which survives every search strategy it derives from one
         // request. Everything else Cardigann can name — `.Query.Artist`,
@@ -1672,6 +1651,111 @@ fn search_variables(
     )?;
     variables.insert(".Keywords".to_string(), Value::String(keywords));
     Ok(variables)
+}
+
+/// The Cardigann mode name for a Scryer search facet.
+///
+/// Definitions expand `{{ .Query.Type }}` straight into a `t=` parameter, so it
+/// has to carry Cardigann's own vocabulary (`search`, `tv-search`,
+/// `movie-search`) rather than the host's facet names.
+fn cardigann_search_type(facet: Option<&str>) -> String {
+    // Scryer's media facets are `movie`, `series`, and `anime`. A `collection`
+    // subject is a movie collection and a `special` is a series special;
+    // `title` carries no medium, so it stays a plain search.
+    match facet.map(str::trim).unwrap_or_default() {
+        "movie" | "collection" => "movie-search",
+        "series" | "anime" | "special" => "tv-search",
+        _ => "search",
+    }
+    .to_string()
+}
+
+/// The Cardigann `caps.modes` parameter name for a host external-id key.
+///
+/// The host keys ids `<source>_id`; the bare and `id`-suffixed spellings are
+/// accepted for the same reason [`search_variables`] accepts them.
+fn cardigann_id_parameter(key: &str) -> Option<&'static str> {
+    match key.trim().to_ascii_lowercase().as_str() {
+        "imdb_id" | "imdb" | "imdbid" => Some("imdbid"),
+        "tmdb_id" | "tmdb" | "tmdbid" => Some("tmdbid"),
+        "tvdb_id" | "tvdb" | "tvdbid" => Some("tvdbid"),
+        "tvrage_id" | "tvrage" | "tvrageid" | "rageid" => Some("rid"),
+        "tvmaze_id" | "tvmaze" | "tvmazeid" => Some("tvmazeid"),
+        "trakt_id" | "trakt" | "traktid" => Some("traktid"),
+        "douban_id" | "douban" | "doubanid" => Some("doubanid"),
+        _ => None,
+    }
+}
+
+/// The parameters `caps.modes` lists for one Cardigann search mode.
+///
+/// A missing or malformed `modes` block, or a mode the definition does not
+/// declare, yields nothing — which is what "this definition supports no id for
+/// that facet" means.
+fn caps_mode_parameters(definition: &Definition, mode: &str) -> Vec<String> {
+    definition
+        .caps
+        .get("modes")
+        .and_then(serde_yaml::Value::as_mapping)
+        .and_then(|modes| modes.get(serde_yaml::Value::String(mode.to_string())))
+        .and_then(serde_yaml::Value::as_sequence)
+        .map(|values| values.iter().filter_map(scalar_to_string).collect())
+        .unwrap_or_default()
+}
+
+/// Whether this request may be sent to this definition at all.
+///
+/// An id-only search (no keywords) against a definition whose `caps.modes` lists
+/// none of the supplied ids renders an empty keyword search and returns the
+/// tracker's front page, so Prowlarr skips it outright. A request that also
+/// carries keywords still scopes the search, so it proceeds either way.
+fn id_search_is_supported(definition: &Definition, request: &PluginSearchRequest) -> bool {
+    if !request.query.trim().is_empty() {
+        return true;
+    }
+    let supplied = request
+        .ids
+        .iter()
+        .filter(|(_, value)| !value.trim().is_empty())
+        .map(|(key, _)| key.as_str())
+        .collect::<Vec<_>>();
+    if supplied.is_empty() {
+        return true;
+    }
+    let parameters =
+        caps_mode_parameters(definition, &cardigann_search_type(request.facet.as_deref()));
+    supplied.into_iter().any(|key| {
+        cardigann_id_parameter(key).is_some_and(|parameter| {
+            parameters
+                .iter()
+                .any(|candidate| candidate.trim().eq_ignore_ascii_case(parameter))
+        })
+    })
+}
+
+/// The digits of an IMDb id, with a `tt` prefix or its absence both accepted.
+fn imdb_digits(value: &str) -> String {
+    value
+        .trim()
+        .trim_start_matches("tt")
+        .trim_start_matches("TT")
+        .chars()
+        .take_while(char::is_ascii_digit)
+        .collect()
+}
+
+/// Prowlarr's `FullImdbId`: `tt` plus the id padded to seven digits.
+fn full_imdb_id(value: &str) -> String {
+    let digits = imdb_digits(value);
+    if digits.is_empty() || digits.chars().all(|digit| digit == '0') {
+        return String::new();
+    }
+    let digits = digits.trim_start_matches('0');
+    format!("tt{digits:0>7}")
+}
+
+fn short_imdb_id(value: &str) -> String {
+    imdb_digits(value)
 }
 
 fn map_categories(definition: &Definition, request: &PluginSearchRequest) -> Vec<String> {
@@ -1726,28 +1810,119 @@ fn map_categories(definition: &Definition, request: &PluginSearchRequest) -> Vec
     if mapped.is_empty() {
         mapped = defaults;
     }
-    mapped.sort();
-    mapped.dedup();
+    // Prowlarr's `MapTorznabCapsToTrackers` keeps the definition's mapping order
+    // and only de-duplicates, which is the order `{{ range .Categories }}`
+    // renders. Sorting reordered every multi-category request.
+    let mut seen = BTreeSet::new();
+    mapped.retain(|id| seen.insert(id.clone()));
     mapped
 }
 
+/// Whether a definition's mapped category answers one of the request's.
+///
+/// A request category may be a torznab id (`5040`), a standard name (`TV/HD`) or
+/// a bare parent name (`Movies`). A parent matches the parent itself and every
+/// child under it — Prowlarr expands a parent id to its whole subtree — while a
+/// child matches only its own name.
 fn category_matches(requested: &[String], category: &str) -> bool {
     requested.iter().any(|requested| {
         let requested = torznab_category_path(requested).unwrap_or(requested);
-        requested.eq_ignore_ascii_case(category)
-            || category
+        if requested.eq_ignore_ascii_case(category) {
+            return true;
+        }
+        // Only a parent expands; `TV/HD` must never claim `TV/HD Something`.
+        !requested.contains('/')
+            && category
                 .to_ascii_lowercase()
-                .starts_with(&requested.to_ascii_lowercase())
+                .starts_with(&format!("{}/", requested.to_ascii_lowercase()))
     })
 }
 
+/// The standard newznab category tree Prowlarr routes request categories
+/// through (`NewznabStandardCategory`). Custom (`>= 100000`) categories are a
+/// per-indexer construct the engine does not synthesize.
+const STANDARD_CATEGORIES: &[(&str, &str)] = &[
+    ("1000", "Console"),
+    ("1010", "Console/NDS"),
+    ("1020", "Console/PSP"),
+    ("1030", "Console/Wii"),
+    ("1040", "Console/XBox"),
+    ("1050", "Console/XBox 360"),
+    ("1060", "Console/Wiiware"),
+    ("1070", "Console/XBox 360 DLC"),
+    ("1080", "Console/PS3"),
+    ("1090", "Console/Other"),
+    ("1110", "Console/3DS"),
+    ("1120", "Console/PS Vita"),
+    ("1130", "Console/WiiU"),
+    ("1140", "Console/XBox One"),
+    ("1180", "Console/PS4"),
+    ("2000", "Movies"),
+    ("2010", "Movies/Foreign"),
+    ("2020", "Movies/Other"),
+    ("2030", "Movies/SD"),
+    ("2040", "Movies/HD"),
+    ("2045", "Movies/UHD"),
+    ("2050", "Movies/BluRay"),
+    ("2060", "Movies/3D"),
+    ("2070", "Movies/DVD"),
+    ("2080", "Movies/WEB-DL"),
+    ("2090", "Movies/x265"),
+    ("3000", "Audio"),
+    ("3010", "Audio/MP3"),
+    ("3020", "Audio/Video"),
+    ("3030", "Audio/Audiobook"),
+    ("3040", "Audio/Lossless"),
+    ("3050", "Audio/Other"),
+    ("3060", "Audio/Foreign"),
+    ("4000", "PC"),
+    ("4010", "PC/0day"),
+    ("4020", "PC/ISO"),
+    ("4030", "PC/Mac"),
+    ("4040", "PC/Mobile-Other"),
+    ("4050", "PC/Games"),
+    ("4060", "PC/Mobile-iOS"),
+    ("4070", "PC/Mobile-Android"),
+    ("5000", "TV"),
+    ("5010", "TV/WEB-DL"),
+    ("5020", "TV/Foreign"),
+    ("5030", "TV/SD"),
+    ("5040", "TV/HD"),
+    ("5045", "TV/UHD"),
+    ("5050", "TV/Other"),
+    ("5060", "TV/Sport"),
+    ("5070", "TV/Anime"),
+    ("5080", "TV/Documentary"),
+    ("5090", "TV/x265"),
+    ("6000", "XXX"),
+    ("6010", "XXX/DVD"),
+    ("6020", "XXX/WMV"),
+    ("6030", "XXX/XviD"),
+    ("6040", "XXX/x264"),
+    ("6045", "XXX/UHD"),
+    ("6050", "XXX/Pack"),
+    ("6060", "XXX/ImageSet"),
+    ("6070", "XXX/Other"),
+    ("6080", "XXX/SD"),
+    ("6090", "XXX/WEB-DL"),
+    ("7000", "Books"),
+    ("7010", "Books/Mags"),
+    ("7020", "Books/EBook"),
+    ("7030", "Books/Comics"),
+    ("7040", "Books/Technical"),
+    ("7050", "Books/Other"),
+    ("7060", "Books/Foreign"),
+    ("8000", "Other"),
+    ("8010", "Other/Misc"),
+    ("8020", "Other/Hashed"),
+];
+
 fn torznab_category_path(category: &str) -> Option<&'static str> {
-    match category {
-        "2000" => Some("Movies"),
-        "5000" => Some("TV"),
-        "5070" => Some("TV/Anime"),
-        _ => None,
-    }
+    let category = category.trim();
+    STANDARD_CATEGORIES
+        .iter()
+        .find(|(id, _)| *id == category)
+        .map(|(_, name)| *name)
 }
 
 fn initial_cookies(
@@ -1757,11 +1932,11 @@ fn initial_cookies(
     let mut cookies = BTreeMap::new();
     if let Some(login) = definition.login.as_ref() {
         for cookie in &login.cookies {
-            merge_cookie_header(&mut cookies, cookie);
+            merge_configured_cookies(&mut cookies, cookie);
         }
     }
     if let Some(cookie) = config.get("cookie") {
-        merge_cookie_header(&mut cookies, cookie);
+        merge_configured_cookies(&mut cookies, cookie);
     }
     cookies
 }
@@ -1780,6 +1955,58 @@ fn merge_response_cookies(
         changed |= merge_cookie_header(cookies, header);
     }
     changed
+}
+
+/// The attribute names a `Cookie` header may not be carrying as a cookie.
+///
+/// Prowlarr's `CookieUtil.FilterProps`, minus its `DISCORD` typo for the
+/// RFC 2965 `Discard` attribute, which is what the list means.
+const COOKIE_ATTRIBUTE_NAMES: [&str; 12] = [
+    "COMMENT",
+    "COMMENTURL",
+    "DISCARD",
+    "DOMAIN",
+    "EXPIRES",
+    "MAX-AGE",
+    "PATH",
+    "PORT",
+    "SECURE",
+    "VERSION",
+    "HTTPONLY",
+    "SAMESITE",
+];
+
+/// Every cookie in a `Cookie`-header value (`uid=1; pass=abc; …`), the way
+/// Prowlarr's `CookieUtil.CookieHeaderToDictionary` reads one.
+///
+/// This is not [`merge_cookie_header`]: a `Set-Cookie` field carries one cookie
+/// followed by its attributes, while the operator's `cookie` setting and a
+/// definition's `login.cookies` are browser `Cookie` headers carrying every
+/// cookie of the session. Parsing the latter as the former kept only the first
+/// pair and silently dropped the rest.
+fn parse_cookie_header(header: &str) -> Vec<(String, String)> {
+    static PATTERN: OnceLock<regex::Regex> = OnceLock::new();
+    let pattern = PATTERN.get_or_init(|| {
+        regex::Regex::new(r#"([^()<>@,;:\\"/\[\]?={}\s]+)=([^,;\\"\s]+)"#)
+            .expect("static cookie header regex")
+    });
+    pattern
+        .captures_iter(header)
+        .filter_map(|captures| {
+            let name = captures.get(1)?.as_str();
+            if COOKIE_ATTRIBUTE_NAMES.contains(&name.to_ascii_uppercase().as_str()) {
+                return None;
+            }
+            Some((name.to_string(), captures.get(2)?.as_str().to_string()))
+        })
+        .collect()
+}
+
+/// Merge a configured or definition-supplied `Cookie` header into the jar.
+fn merge_configured_cookies(cookies: &mut BTreeMap<String, String>, header: &str) {
+    for (name, value) in parse_cookie_header(header) {
+        cookies.insert(name, value);
+    }
 }
 
 fn merge_cookie_header(cookies: &mut BTreeMap<String, String>, header: &str) -> bool {
@@ -1882,11 +2109,7 @@ fn download_headers_for_url(
     url: &str,
 ) -> Result<BTreeMap<String, String>, String> {
     let base = configured_base_url(definition, context)?;
-    let same_origin = Url::parse(&base)
-        .ok()
-        .zip(Url::parse(url).ok())
-        .is_some_and(|(base, target)| base.origin() == target.origin());
-    if same_origin {
+    if same_site_urls(&base, url) {
         download_headers(definition, context, None)
     } else {
         Ok(BTreeMap::from([(
@@ -2031,7 +2254,7 @@ fn need_http(
     mut continuation: Continuation,
 ) -> Result<Step, String> {
     let context = continuation.context_mut();
-    if !same_configured_origin(&context.definition, context, &request.url) {
+    if !same_configured_site(&context.definition, context, &request.url) {
         request.headers.remove("cookie");
     }
     context.redirect_hops = 0;
@@ -2048,13 +2271,37 @@ fn need_http(
     })
 }
 
-fn same_configured_origin(definition: &Definition, context: &Context, url: &str) -> bool {
+/// Whether two hosts belong to the same registrable site, the way a cookie
+/// container with a `Domain=.tracker.example` attribute treats them.
+///
+/// Prowlarr keeps one `CookieContainer` per indexer and sends a domain cookie to
+/// every host under it, so a tracker whose download or API endpoint lives on a
+/// sibling subdomain keeps its session. Same-origin stripping lost it.
+fn same_site_host(base_host: &str, target_host: &str) -> bool {
+    let base = base_host.to_ascii_lowercase();
+    let target = target_host.to_ascii_lowercase();
+    if base.is_empty() || target.is_empty() {
+        return false;
+    }
+    base == target || target.ends_with(&format!(".{base}")) || base.ends_with(&format!(".{target}"))
+}
+
+fn same_site_urls(left: &str, right: &str) -> bool {
+    Url::parse(left)
+        .ok()
+        .zip(Url::parse(right).ok())
+        .is_some_and(|(left, right)| {
+            same_site_host(
+                left.host_str().unwrap_or_default(),
+                right.host_str().unwrap_or_default(),
+            )
+        })
+}
+
+fn same_configured_site(definition: &Definition, context: &Context, url: &str) -> bool {
     configured_base_url(definition, context)
         .ok()
-        .zip(Url::parse(url).ok())
-        .is_some_and(|(base, target)| {
-            Url::parse(&base).is_ok_and(|base| base.origin() == target.origin())
-        })
+        .is_some_and(|base| same_site_urls(&base, url))
 }
 
 fn need_redirect(
@@ -2139,9 +2386,15 @@ fn follow_redirect(
     } else {
         ("GET".to_string(), Vec::new())
     };
-    let headers = if same_origin {
+    // Cookies and the definition's own headers follow the session's site, not
+    // only its origin, so a redirect onto a sibling subdomain keeps them.
+    let headers = if same_site_urls(&previous.url, &target) {
         let mut headers = previous.headers;
-        if !context.cookies.is_empty() {
+        // The jar belongs to the configured site, so a hop that leaves it drops
+        // the cookies even when it stays within the previous request's site.
+        if !same_configured_site(definition, context, &target) {
+            headers.remove("cookie");
+        } else if !context.cookies.is_empty() {
             headers.insert("cookie".to_string(), cookie_header(&context.cookies));
         }
         headers
@@ -2166,11 +2419,13 @@ fn retry_login_if_needed(
         return Ok(None);
     }
 
-    let unauthorized = matches!(response.status, 401 | 403);
-    let redirected_to_login = response.headers.iter().any(|(name, value)| {
-        name.eq_ignore_ascii_case("location")
-            && (!login.path.is_empty() && value.contains(&login.path))
-    });
+    // Prowlarr's `CheckIfLoginIsNeeded`: any redirect that was not followed, any
+    // HTTP error status, or an HTML body missing the login test selector. A 3xx
+    // can only reach here unfollowed — `follow_redirect` returns a fresh request
+    // when redirects are enabled for this request — so the status test is the
+    // whole rule. Narrowing it to 401/403 and a `Location` naming `login.path`
+    // left every other session expiry as a plain search failure.
+    let needs_login = response.status >= 300;
     let content_type = response.headers.iter().find_map(|(name, value)| {
         name.eq_ignore_ascii_case("content-type")
             .then_some(value.as_str())
@@ -2184,16 +2439,25 @@ fn retry_login_if_needed(
                 .map(|value| value.contains("html"))
                 .unwrap_or(true)
                 && parse_selector(selector_text).is_ok_and(|selector| {
-                    let document = Html::parse_document(&decode_body(definition, &response.body));
+                    let mut document =
+                        Html::parse_document(&decode_body(definition, &response.body));
+                    mark_contains(&mut document, &selector.needles);
                     select_matching_element(&document.root_element(), &selector).is_none()
                 })
         });
-    if !(unauthorized || redirected_to_login || missing_login_test) {
+    if !(needs_login || missing_login_test) {
         return Ok(None);
     }
 
     context.relogin_attempts += 1;
     context.cookies = initial_cookies(definition, &context.config);
+    // The request that provoked the re-login is reissued once the session is
+    // back, so it must not still count as a URL this operation has already
+    // asked for.
+    if let Some(request) = context.current_request.as_ref() {
+        let url = request.url.clone();
+        context.seen_get_urls.remove(&url);
+    }
     begin_after_optional_login(definition, context).map(Some)
 }
 
@@ -2204,22 +2468,27 @@ fn grab_url(context: &Context) -> Result<String, String> {
     }
 }
 
+/// A Cardigann selector, with every `:contains(…)` pseudo rewritten into a
+/// marker attribute.
+///
+/// `scraper` has no `:contains`. Stripping the pseudo out of the selector text
+/// and testing the finally matched element's text instead is right for
+/// `a:contains("Download")` and wrong everywhere else: `tr:not(:contains("x"))`
+/// became `tr:not()` and inverted its meaning, and `tr:has(td:contains("x"))`
+/// degraded to "the row mentions x somewhere". Rewriting each occurrence into
+/// `[data-cardigann-contains-…]` keeps the test in the position the definition
+/// wrote it, at the cost of one document pass ([`mark_contains`]) that stamps
+/// the attribute onto every element whose text contains the needle.
 struct CardigannSelector {
     css: Selector,
-    contains: Vec<String>,
+    /// The needles a document must be marked with before this selector can
+    /// match anything.
+    needles: Vec<String>,
 }
 
 impl CardigannSelector {
     fn matches_element(&self, element: &ElementRef<'_>) -> bool {
-        self.css.matches(element) && self.matches_text(element)
-    }
-
-    fn matches_text(&self, element: &ElementRef<'_>) -> bool {
-        if self.contains.is_empty() {
-            return true;
-        }
-        let text = element.text().collect::<String>();
-        self.contains.iter().all(|expected| text.contains(expected))
+        self.css.matches(element)
     }
 }
 
@@ -2227,27 +2496,222 @@ fn select_matching_element<'a>(
     root: &ElementRef<'a>,
     selector: &CardigannSelector,
 ) -> Option<ElementRef<'a>> {
-    selector.matches_element(root).then_some(*root).or_else(|| {
-        root.select(&selector.css)
-            .find(|element| selector.matches_text(element))
+    selector
+        .matches_element(root)
+        .then_some(*root)
+        .or_else(|| root.select(&selector.css).next())
+}
+
+fn contains_pattern() -> &'static regex::Regex {
+    static PATTERN: OnceLock<regex::Regex> = OnceLock::new();
+    PATTERN.get_or_init(|| {
+        regex::Regex::new(r#":contains\(\s*(?:"([^"]*)"|'([^']*)'|([^)]*))\s*\)"#)
+            .expect("static contains selector regex")
     })
 }
 
-fn parse_selector(selector: &str) -> Result<CardigannSelector, String> {
-    let contains_pattern =
-        regex::Regex::new(r#":contains\(\s*(?:\"([^\"]*)\"|'([^']*)'|([^)]*))\s*\)"#)
-            .expect("static contains selector regex");
-    let contains = contains_pattern
-        .captures_iter(selector)
-        .filter_map(|captures| {
-            (1..=3)
-                .find_map(|index| captures.get(index))
+/// The needle of one `:contains(…)`. A quoted argument is taken verbatim —
+/// `:contains(" GB")` is a different test from `:contains("GB")` — while the
+/// unquoted form carries no way to express leading or trailing space.
+fn contains_needle(captures: &regex::Captures<'_>) -> String {
+    captures
+        .get(1)
+        .or_else(|| captures.get(2))
+        .map(|value| value.as_str().to_string())
+        .unwrap_or_else(|| {
+            captures
+                .get(3)
                 .map(|value| value.as_str().trim().to_string())
+                .unwrap_or_default()
         })
-        .collect();
-    let css = contains_pattern.replace_all(selector, "").into_owned();
+}
+
+fn contains_needles(selector: &str) -> Vec<String> {
+    contains_pattern()
+        .captures_iter(selector)
+        .map(|captures| contains_needle(&captures))
+        .collect()
+}
+
+/// The attribute name that stands for one needle. Derived from the needle
+/// (FNV-1a) so marking is idempotent and two selectors over the same document
+/// can never claim each other's marker.
+fn contains_marker(needle: &str) -> String {
+    let mut hash = 0xcbf2_9ce4_8422_2325_u64;
+    for byte in needle.as_bytes() {
+        hash ^= u64::from(*byte);
+        hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
+    }
+    format!("data-cardigann-contains-{hash:016x}")
+}
+
+/// Stamp each needle's marker attribute onto every element of `document` whose
+/// text contains it. Must run before a selector carrying that needle is used
+/// against the document; running it twice, or with overlapping needle sets, is
+/// harmless.
+fn mark_contains(document: &mut Html, needles: &[String]) {
+    if needles.is_empty() {
+        return;
+    }
+    let markers = needles
+        .iter()
+        .map(|needle| {
+            (
+                needle.clone(),
+                QualName::new(
+                    None,
+                    ns!(),
+                    LocalName::from(contains_marker(needle).as_str()),
+                ),
+            )
+        })
+        .collect::<Vec<_>>();
+    let ids = document
+        .tree
+        .nodes()
+        .filter(|node| node.value().is_element())
+        .map(|node| node.id())
+        .collect::<Vec<_>>();
+    for id in ids {
+        let Some(element) = document.tree.get(id).and_then(ElementRef::wrap) else {
+            continue;
+        };
+        let text = element.text().collect::<String>();
+        let matched = markers
+            .iter()
+            .filter(|(needle, name)| {
+                text.contains(needle.as_str())
+                    && !element.value().attrs.iter().any(|(key, _)| key == name)
+            })
+            .map(|(_, name)| name.clone())
+            .collect::<Vec<_>>();
+        if matched.is_empty() {
+            continue;
+        }
+        let Some(mut node) = document.tree.get_mut(id) else {
+            continue;
+        };
+        let Node::Element(element) = node.value() else {
+            continue;
+        };
+        for name in matched {
+            element.attrs.push((name, StrTendril::new()));
+        }
+        // `Element::attr` binary-searches this list, so it has to stay ordered.
+        element
+            .attrs
+            .sort_unstable_by(|left, right| left.0.cmp(&right.0));
+    }
+}
+
+/// Every `:contains(…)` needle a selector field can reach, rendered the way the
+/// field's own evaluation renders it.
+///
+/// A needle whose text is itself templated cannot always be resolved here (the
+/// row's `.Result.*` bindings do not exist yet), so the raw form is harvested
+/// alongside the rendered one.
+fn field_needles(field: &SelectorField, variables: &Variables, needles: &mut Vec<String>) {
+    let mut harvest = |selector: &str| {
+        let rendered = render(selector, variables).unwrap_or_else(|_| selector.to_string());
+        needles.extend(contains_needles(&rendered));
+        if rendered != selector {
+            needles.extend(contains_needles(selector));
+        }
+    };
+    if let Some(selector) = field.selector.as_deref() {
+        harvest(selector);
+    }
+    if let Some(cases) = field.case.as_ref() {
+        for selector in cases.keys() {
+            harvest(selector);
+        }
+    }
+    match field.remove.as_ref() {
+        Some(serde_yaml::Value::Sequence(values)) => {
+            for value in values.iter().filter_map(scalar_to_string) {
+                harvest(&value);
+            }
+        }
+        Some(value) => {
+            if let Some(value) = scalar_to_string(value) {
+                harvest(&value);
+            }
+        }
+        None => {}
+    }
+}
+
+/// Every needle the search-response parse can use, so one pass over the parsed
+/// document serves the row selector and all of its fields.
+fn search_response_needles(definition: &Definition, variables: &Variables) -> Vec<String> {
+    let rows = &definition.search.rows;
+    let mut needles = contains_needles(
+        &render(&rows.selector, variables).unwrap_or_else(|_| rows.selector.clone()),
+    );
+    needles.extend(contains_needles(&rows.selector));
+    for field in rows
+        .count
+        .iter()
+        .chain(rows.date_headers.iter())
+        .chain(definition.search.fields.values())
+    {
+        field_needles(field, variables, &mut needles);
+    }
+    needles.sort();
+    needles.dedup();
+    needles
+}
+
+fn login_needles(login: &LoginBlock, variables: &Variables) -> Vec<String> {
+    let mut needles = contains_needles(login.form.as_deref().unwrap_or("form"));
+    if login.selectors {
+        for key in login.inputs.keys() {
+            needles.extend(contains_needles(key));
+        }
+    }
+    if let Some(captcha) = login.captcha.as_ref() {
+        needles.extend(contains_needles(&captcha.selector));
+        if login.selectors {
+            needles.extend(contains_needles(&captcha.input));
+        }
+    }
+    for field in login
+        .selector_inputs
+        .values()
+        .chain(login.get_selector_inputs.values())
+    {
+        field_needles(field, variables, &mut needles);
+    }
+    needles.sort();
+    needles.dedup();
+    needles
+}
+
+fn error_needles(errors: &[crate::definition::ErrorBlock], variables: &Variables) -> Vec<String> {
+    let mut needles = Vec::new();
+    for error in errors {
+        needles.extend(contains_needles(&error.selector));
+        if let Some(message) = error.message.as_ref() {
+            field_needles(message, variables, &mut needles);
+        }
+    }
+    needles.sort();
+    needles.dedup();
+    needles
+}
+
+fn parse_selector(selector: &str) -> Result<CardigannSelector, String> {
+    let mut needles = Vec::new();
+    let css = contains_pattern()
+        .replace_all(selector, |captures: &regex::Captures<'_>| {
+            let needle = contains_needle(captures);
+            let marker = contains_marker(&needle);
+            needles.push(needle);
+            format!("[{marker}]")
+        })
+        .into_owned();
     Selector::parse(&css)
-        .map(|css| CardigannSelector { css, contains })
+        .map(|css| CardigannSelector { css, needles })
         .map_err(|error| format!("invalid CSS selector `{selector}`: {error:?}"))
 }
 
@@ -2274,7 +2738,8 @@ fn check_error_blocks(
     variables: &Variables,
     phase: &str,
 ) -> Result<(), String> {
-    let document = Html::parse_document(&decode_body(definition, &response.body));
+    let mut document = Html::parse_document(&decode_body(definition, &response.body));
+    mark_contains(&mut document, &error_needles(errors, variables));
     for error in errors {
         if error.path.is_some() {
             return Err(format!(
@@ -2324,7 +2789,10 @@ fn select_html_value(
     variables: &Variables,
     required: bool,
 ) -> Result<String, String> {
-    let document = Html::parse_document(&decode_body(definition, body));
+    let mut document = Html::parse_document(&decode_body(definition, body));
+    let mut needles = Vec::new();
+    field_needles(field, variables, &mut needles);
+    mark_contains(&mut document, &needles);
     select_element_value(
         definition,
         &document.root_element(),
@@ -2361,6 +2829,13 @@ fn select_element_value(
                 );
             }
         }
+        // Prowlarr: when no case selector matches, the field is null (an error
+        // when required). Falling through to the field's own selector would
+        // hand back the row's text instead.
+        if required {
+            return Err("none of the case selectors matched".to_string());
+        }
+        return Ok(String::new());
     }
     let selector_text = render(field.selector.as_deref().unwrap_or(":scope"), variables)?;
     let selector = parse_selector(&selector_text)?;
@@ -2390,10 +2865,7 @@ fn select_element_value(
         };
         for remove_selector in remove_selectors {
             let remove_selector = parse_selector(&render(&remove_selector, variables)?)?;
-            for removed in element
-                .select(&remove_selector.css)
-                .filter(|element| remove_selector.matches_text(element))
-            {
+            for removed in element.select(&remove_selector.css) {
                 let removed_text = removed.text().collect::<String>();
                 value = value.replace(removed_text.trim(), "");
             }
@@ -2466,30 +2938,22 @@ fn parse_xml_results(
         &render(&definition.search.rows.selector, variables)?,
     )?;
     let mut results = Vec::new();
-    let mut parsed_rows = 0;
-    let mut last_error: Option<String> = None;
     for row in rows {
         let mut row_variables = variables.clone();
+        // A row that will not parse is skipped on its own, and a feed whose
+        // rows all fail is an empty result rather than an indexer failure.
         match parse_xml_row(definition, row, &mut row_variables) {
-            Ok(Some(mut result)) => {
-                normalize_result(definition, &mut result);
-                if should_keep_row(definition, &result, &row_variables) {
-                    results.push(result);
+            Ok(parsed) => {
+                if let Some(mut result) = parsed {
+                    normalize_result(definition, &mut result);
+                    if should_keep_row(definition, &result, &row_variables) {
+                        results.push(result);
+                    }
                 }
                 *variables = row_variables;
-                parsed_rows += 1;
             }
-            Ok(None) => {
-                *variables = row_variables;
-                parsed_rows += 1;
-            }
-            Err(error) => last_error = Some(error),
+            Err(_) => continue,
         }
-    }
-    if parsed_rows == 0
-        && let Some(error) = last_error
-    {
-        return Err(format!("all XML rows failed: {error}"));
     }
     Ok(results)
 }
@@ -2553,6 +3017,10 @@ fn xml_field_value(
                 );
             }
         }
+        if required {
+            return Err("none of the case selectors matched".to_string());
+        }
+        return Ok(String::new());
     }
     let selector = render(field.selector.as_deref().unwrap_or(""), variables)?;
     let node = xml_select_many(root, &selector)?.into_iter().next();
@@ -2655,7 +3123,9 @@ fn parse_markup_results(
         &definition.search.preprocessing_filters,
         variables,
     )?;
-    let document = Html::parse_document(&preprocessed);
+    let needles = search_response_needles(definition, variables);
+    let mut document = Html::parse_document(&preprocessed);
+    mark_contains(&mut document, &needles);
     if let Some(count) = definition.search.rows.count.as_ref() {
         let value = select_element_value(
             definition,
@@ -2670,18 +3140,13 @@ fn parse_markup_results(
     }
     let row_selector_text = render(&definition.search.rows.selector, variables)?;
     let row_selector = parse_selector(&row_selector_text)?;
-    let rows = document
-        .select(&row_selector.css)
-        .filter(|element| row_selector.matches_text(element))
-        .collect::<Vec<_>>();
+    let rows = document.select(&row_selector.css).collect::<Vec<_>>();
     let mut results = Vec::new();
-    let mut parsed_rows = 0;
-    let mut last_error: Option<String> = None;
     let mut index = 0;
     while index < rows.len() {
         let row = &rows[index];
         let mut row_variables = variables.clone();
-        let parsed = (|| {
+        let parsed = (|| -> Result<Option<PluginSearchResult>, String> {
             let parsed = if definition.search.rows.after == 0 {
                 parse_markup_row(definition, row, &mut row_variables)?
             } else {
@@ -2691,7 +3156,8 @@ fn parse_markup_results(
                     .take(definition.search.rows.after + 1)
                     .map(ElementRef::html)
                     .collect::<String>();
-                let merged = Html::parse_fragment(&trailing);
+                let mut merged = Html::parse_fragment(&trailing);
+                mark_contains(&mut merged, &needles);
                 parse_markup_row(definition, &merged.root_element(), &mut row_variables)?
             };
             if let Some(mut result) = parsed {
@@ -2708,22 +3174,18 @@ fn parse_markup_results(
             }
             Ok(None)
         })();
-        match parsed {
-            Ok(result) => {
-                *variables = row_variables;
-                parsed_rows += 1;
-                if let Some(result) = result {
-                    results.push(result);
-                }
+        // A row that fails outside field parsing — a required `dateheaders`
+        // selector, say — is skipped on its own. Prowlarr does the same, and a
+        // page whose rows all fail is an empty page, never an indexer error:
+        // a header row matched by `rows.selector`, a "no results" row, or a
+        // Cloudflare interstitial must not turn into a failing indexer.
+        if let Ok(result) = parsed {
+            *variables = row_variables;
+            if let Some(result) = result {
+                results.push(result);
             }
-            Err(error) => last_error = Some(error),
         }
         index += definition.search.rows.after + 1;
-    }
-    if parsed_rows == 0
-        && let Some(error) = last_error
-    {
-        return Err(format!("all HTML rows failed: {error}"));
     }
     Ok(results)
 }
@@ -2747,6 +3209,36 @@ fn previous_date_header(
     Ok(None)
 }
 
+/// Whether this search carried an external id, read back from the `.Query.*ID`
+/// bindings [`search_variables`] made. Nothing new is exposed to definitions:
+/// these are the same names a definition already reads.
+fn is_id_search(variables: &Variables) -> bool {
+    [
+        ".Query.IMDBID",
+        ".Query.TMDBID",
+        ".Query.TVDBID",
+        ".Query.TVRageID",
+        ".Query.TVMazeID",
+        ".Query.TraktID",
+        ".Query.DoubanID",
+    ]
+    .iter()
+    .any(|name| {
+        variables
+            .get(*name)
+            .and_then(Value::as_str)
+            .is_some_and(|value| !value.trim().is_empty())
+    })
+}
+
+/// Prowlarr's `IndexerBase.FilterReleasesByQuery`, which is what `andmatch`
+/// means.
+///
+/// The query is split on runs of non-word characters, one-character terms and
+/// the common words are dropped, and a release passes when a term appears in its
+/// title *or its description*. With more than one term two must match; with one,
+/// one. An RSS search and an id search are not filtered at all. Requiring every
+/// whitespace-separated token in the title alone dropped releases Prowlarr keeps.
 fn should_keep_row(
     definition: &Definition,
     result: &PluginSearchResult,
@@ -2765,14 +3257,47 @@ fn should_keep_row(
         .get(".Query.Q")
         .and_then(Value::as_str)
         .unwrap_or_default();
-    query.split_whitespace().all(|term| {
-        result
-            .title
-            .to_ascii_lowercase()
-            .contains(&term.to_ascii_lowercase())
-    })
+    if query.trim().is_empty() || is_id_search(variables) {
+        return true;
+    }
+    const COMMON_WORDS: [&str; 4] = ["and", "the", "an", "of"];
+    static SEPARATOR: OnceLock<regex::Regex> = OnceLock::new();
+    let separator = SEPARATOR
+        .get_or_init(|| regex::Regex::new(r"[^\w]+").expect("static query separator regex"));
+    let terms = separator
+        .split(query)
+        .filter(|term| {
+            term.chars().count() > 1
+                && !COMMON_WORDS
+                    .iter()
+                    .any(|common| common.eq_ignore_ascii_case(term))
+        })
+        .collect::<Vec<_>>();
+    let title = result.title.to_lowercase();
+    let description = result
+        .provider_extra
+        .get("description")
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+        .to_lowercase();
+    let matches = terms
+        .iter()
+        .filter(|term| {
+            let term = term.to_lowercase();
+            title.contains(&term) || description.contains(&term)
+        })
+        .count();
+    let required = if terms.len() > 1 { 2 } else { 1 };
+    matches >= required
 }
 
+/// Parse one HTML row into a release, Prowlarr's way.
+///
+/// A field that cannot be read — a selector that missed a required field, a
+/// filter that errored on the tracker's own malformed value — binds
+/// `.Result.<name>` to null and is skipped; the row is still emitted, because
+/// one unreadable date or size is not a reason to lose the release. A row that
+/// ends up with no title is the row that gets dropped.
 fn parse_markup_row(
     definition: &Definition,
     row: &ElementRef<'_>,
@@ -2782,17 +3307,23 @@ fn parse_markup_row(
     for (field_name, field) in &definition.search.fields {
         let (name, modifiers) = split_field_name(field_name);
         let required = !field.optional && !is_implicitly_optional(name);
-        let value = match select_element_value(definition, row, field, variables, required) {
-            Ok(value) if !value.is_empty() => value,
-            Ok(_) | Err(_) if !required => field
+        let default_value = || {
+            field
                 .default_value
                 .as_ref()
                 .and_then(scalar_to_string)
                 .map(|value| render(&value, variables))
-                .transpose()?
-                .unwrap_or_default(),
-            Err(error) => return Err(format!("field `{field_name}`: {error}")),
+                .transpose()
+                .map(Option::unwrap_or_default)
+        };
+        let value = match select_element_value(definition, row, field, variables, required) {
+            Ok(value) if value.is_empty() && !required => default_value()?,
             Ok(value) => value,
+            Err(_) if !required => default_value()?,
+            Err(_) => {
+                variables.insert(format!(".Result.{name}"), Value::Null);
+                continue;
+            }
         };
         variables.insert(
             format!(".Result.{name}"),
@@ -2808,7 +3339,9 @@ fn parse_markup_row(
             .or_else(|| variables.get(".Config.sitelink").and_then(Value::as_str))
             .or_else(|| definition.links.first().map(String::as_str))
             .unwrap_or_default();
-        apply_result_field(&mut result, name, &modifiers, value, base_url)?;
+        if apply_result_field(&mut result, name, &modifiers, value, base_url).is_err() {
+            variables.insert(format!(".Result.{name}"), Value::Null);
+        }
     }
     if result.title.is_empty() {
         Ok(None)
@@ -3309,10 +3842,7 @@ fn normalize_result(definition: &Definition, result: &mut PluginSearchResult) {
         && definition.definition_type.eq_ignore_ascii_case("public")
         && let Some(hash) = result.info_hash_v1.as_deref()
     {
-        result.magnet_url = Some(format!(
-            "magnet:?xt=urn:btih:{hash}&dn={}",
-            url::form_urlencoded::byte_serialize(result.title.as_bytes()).collect::<String>()
-        ));
+        result.magnet_url = Some(public_magnet_link(hash, &result.title));
     }
     if result.guid.is_none() {
         result.guid = result
@@ -3331,6 +3861,44 @@ fn normalize_result(definition: &Definition, result: &mut PluginSearchResult) {
     {
         result.indexer_flags.push("Internal".to_string());
     }
+}
+
+/// The tracker list Prowlarr's `MagnetLinkBuilder` puts on every magnet it
+/// synthesizes from a bare infohash. A magnet with no `tr=` entry is only
+/// resolvable through DHT, which several clients do not run.
+const PUBLIC_MAGNET_TRACKERS: [&str; 20] = [
+    "http://tracker.opentrackr.org:1337/announce",
+    "udp://tracker.auctor.tv:6969/announce",
+    "udp://opentracker.i2p.rocks:6969/announce",
+    "https://opentracker.i2p.rocks:443/announce",
+    "udp://open.demonii.com:1337/announce",
+    "udp://tracker.openbittorrent.com:6969/announce",
+    "http://tracker.openbittorrent.com:80/announce",
+    "udp://open.stealth.si:80/announce",
+    "udp://tracker.torrent.eu.org:451/announce",
+    "udp://tracker.moeking.me:6969/announce",
+    "udp://explodie.org:6969/announce",
+    "udp://exodus.desync.com:6969/announce",
+    "udp://uploads.gamecoast.net:6969/announce",
+    "udp://tracker1.bt.moack.co.kr:80/announce",
+    "udp://tracker.tiny-vps.com:6969/announce",
+    "udp://tracker.theoks.net:6969/announce",
+    "udp://tracker.skyts.net:6969/announce",
+    "udp://tracker-udp.gbitt.info:80/announce",
+    "udp://open.tracker.ink:6969/announce",
+    "udp://movies.zsw.ca:6969/announce",
+];
+
+/// Prowlarr's `MagnetLinkBuilder.BuildPublicMagnetLink`.
+fn public_magnet_link(info_hash: &str, title: &str) -> String {
+    let encode =
+        |value: &str| url::form_urlencoded::byte_serialize(value.as_bytes()).collect::<String>();
+    let mut magnet = format!("magnet:?xt=urn:btih:{info_hash}&dn={}", encode(title));
+    for tracker in PUBLIC_MAGNET_TRACKERS {
+        magnet.push_str("&tr=");
+        magnet.push_str(&encode(tracker));
+    }
+    magnet
 }
 
 fn magnet_info_hash(value: &str) -> Option<String> {
@@ -3353,26 +3921,64 @@ fn parse_i64(value: &str) -> Option<i64> {
         .ok()
 }
 
+/// Prowlarr's `ParseUtil.NormalizeNumber` for a non-integer value.
+///
+/// Everything but digits, `.` and `,` is dropped; `,` becomes `.`; and when more
+/// than one `.` survives, all but the last are removed, so the thousands
+/// separators of `1.234,5` fall away and the value reads `1234.5`.
+fn normalize_number(value: &str) -> Option<f64> {
+    let digits = value
+        .chars()
+        .filter(|character| character.is_ascii_digit() || *character == '.' || *character == ',')
+        .collect::<String>()
+        .replace(',', ".");
+    if digits.is_empty() {
+        return None;
+    }
+    let normalized = if digits.matches('.').count() > 1 {
+        let last = digits.rfind('.').expect("counted at least two");
+        format!("{}{}", digits[..last].replace('.', ""), &digits[last..])
+    } else {
+        digits
+    };
+    normalized.parse::<f64>().ok()
+}
+
+/// Prowlarr's `ParseUtil.GetBytes`.
+///
+/// The unit is every letter of the value, lower-cased, with `i` removed, so
+/// `GiB`, `GIB` and `GB` are the same unit — and every unit Prowlarr names is a
+/// power of 1024, never of 1000. (Prowlarr strips the `i` before lower-casing,
+/// which reads an all-caps `GIB` as bytes; lower-casing first is the intent.)
+/// The number is read the `NormalizeNumber` way, which is what makes `1,5 GB`
+/// and `1.234,5 MB` parse.
 fn parse_size(value: &str) -> Option<i64> {
-    if let Ok(bytes) = value.trim().parse::<i64>() {
+    if let Ok(bytes) = value.trim().parse::<i64>()
+        && bytes >= 0
+    {
         return Some(bytes);
     }
-    let regex = regex::Regex::new(r"(?i)([0-9]+(?:[.,][0-9]+)?)\s*([kmgtpe]?i?b)")
-        .expect("static size regex");
-    let captures = regex.captures(value)?;
-    let amount = captures[1].replace(',', ".").parse::<f64>().ok()?;
-    let multiplier = match captures[2].to_ascii_lowercase().as_str() {
-        "kb" => 1_000f64,
-        "kib" => 1_024f64,
-        "mb" => 1_000_000f64,
-        "mib" => 1_048_576f64,
-        "gb" => 1_000_000_000f64,
-        "gib" => 1_073_741_824f64,
-        "tb" => 1_000_000_000_000f64,
-        "tib" => 1_099_511_627_776f64,
-        "pb" => 1_000_000_000_000_000f64,
-        "pib" => 1_125_899_906_842_624f64,
-        _ => 1f64,
+    let amount = normalize_number(value)?;
+    let unit = value
+        .chars()
+        .filter(|character| character.is_alphabetic())
+        .collect::<String>()
+        .to_lowercase()
+        .replace('i', "");
+    let multiplier = if unit.contains("kb") {
+        1_024f64
+    } else if unit.contains("mb") {
+        1_048_576f64
+    } else if unit.contains("gb") {
+        1_073_741_824f64
+    } else if unit.contains("tb") {
+        1_099_511_627_776f64
+    } else if unit.contains("pb") {
+        1_125_899_906_842_624f64
+    } else if unit.contains("eb") {
+        1_152_921_504_606_846_976f64
+    } else {
+        1f64
     };
     Some((amount * multiplier).round() as i64)
 }
@@ -3466,17 +4072,362 @@ search:
     minimumseedtime: { selector: td.seedtime }
 "#;
 
+    /// Match `selector` against `html` the way the engine does: mark the
+    /// document with the selector's `:contains` needles, then select.
+    fn select_count(html: &str, selector: &str) -> usize {
+        let mut document = Html::parse_document(html);
+        let selector = parse_selector(selector).unwrap();
+        mark_contains(&mut document, &selector.needles);
+        document.select(&selector.css).count()
+    }
+
     #[test]
     fn supports_has_and_cardigann_contains_selectors() {
-        let document = Html::parse_document(
-            "<table><tr><td><a>needle</a></td></tr><tr><td>other</td></tr></table>",
+        assert_eq!(
+            select_count(
+                "<table><tr><td><a>needle</a></td></tr><tr><td>other</td></tr></table>",
+                "tr:has(a):contains(\"needle\")",
+            ),
+            1
         );
-        let selector = parse_selector("tr:has(a):contains(\"needle\")").unwrap();
-        let matches = document
-            .select(&selector.css)
-            .filter(|element| selector.matches_text(element))
-            .count();
-        assert_eq!(matches, 1);
+    }
+
+    /// `:contains` is evaluated where it is written. Stripping it from the
+    /// selector text turned `tr:not(:contains("Sticky"))` into `tr:not()` — the
+    /// opposite test, on 51 definitions — and reduced
+    /// `tr:has(td.name:contains(…))` to "the row mentions it somewhere".
+    #[test]
+    fn evaluates_contains_inside_not_and_has_where_it_is_written() {
+        const ROWS: &str = r#"<table>
+            <tr class=result><td class=name>Sticky Announcement</td><td class=uploader>needle</td></tr>
+            <tr class=result><td class=name>Fixture Release needle</td><td class=uploader>someone</td></tr>
+            <tr class=result><td class=name>Another Release</td><td class=uploader>someone</td></tr>
+        </table>"#;
+
+        // `:not(:contains(...))` excludes only the rows whose text contains it.
+        assert_eq!(
+            select_count(ROWS, r#"tr.result:not(:contains("Sticky"))"#),
+            2
+        );
+        // `:has(td.name:contains(...))` requires the needle in that cell, not
+        // anywhere in the row: row one carries "needle" in the uploader cell.
+        assert_eq!(
+            select_count(ROWS, r#"tr.result:has(td.name:contains("needle"))"#),
+            1
+        );
+        // Plain top-level `:contains` still means "this element's text".
+        assert_eq!(select_count(ROWS, r#"td.name:contains("Release")"#), 2);
+        // Stacked negations compose.
+        assert_eq!(
+            select_count(
+                ROWS,
+                r#"tr.result:not(:contains("Sticky")):not(:contains("Another"))"#,
+            ),
+            1
+        );
+        // A quoted needle keeps its whitespace: " GB" is not "GB".
+        assert_eq!(
+            select_count(
+                "<div><span>12GB</span><span>12 GB</span></div>",
+                r#"span:contains(" GB")"#
+            ),
+            1
+        );
+    }
+
+    /// The whole search parse has to see the marked document: 12 definitions
+    /// put `:contains` inside a pseudo in `rows.selector`, and the rest use it
+    /// in field and `case:` selectors.
+    #[test]
+    fn positional_contains_reaches_row_and_field_selectors() {
+        let definition = parse_definition(
+            r#"
+id: fixture
+name: Fixture
+type: public
+links: [https://tracker.example/]
+caps: {}
+search:
+  paths:
+    - path: search
+  rows:
+    selector: 'tr.result:not(:contains("Sticky"))'
+  fields:
+    title: { selector: 'td.name' }
+    download: { selector: 'a.download', attribute: href }
+    downloadvolumefactor:
+      case:
+        'td.flags:contains("Free")': "0"
+        '*': "1"
+"#,
+        )
+        .unwrap();
+        let results = parse_search_response(
+            &definition,
+            &definition.search.paths[0],
+            &PluginHttpResponse {
+                status: 200,
+                headers: BTreeMap::new(),
+                set_cookie_headers: Vec::new(),
+                body: br#"<table>
+                    <tr class=result><td class=name>Sticky Announcement</td><td class=flags>Free</td><td><a class=download href='/download/0'>DL</a></td></tr>
+                    <tr class=result><td class=name>Fixture One</td><td class=flags>Free</td><td><a class=download href='/download/1'>DL</a></td></tr>
+                    <tr class=result><td class=name>Fixture Two</td><td class=flags>Paid</td><td><a class=download href='/download/2'>DL</a></td></tr>
+                </table>"#.to_vec(),
+            },
+            &mut Variables::new(),
+        )
+        .unwrap();
+        assert_eq!(
+            results
+                .iter()
+                .map(|result| result.title.as_str())
+                .collect::<Vec<_>>(),
+            ["Fixture One", "Fixture Two"],
+            "the sticky row is the only one excluded"
+        );
+        assert_eq!(results[0].download_volume_factor, Some(0.0));
+        assert_eq!(results[1].download_volume_factor, Some(1.0));
+    }
+
+    /// The `"*"` catch-all is written last in the corpus and must stay last:
+    /// a sorted map tests it first, and every freeleech case collapses to the
+    /// fallback.
+    #[test]
+    fn html_and_xml_case_maps_take_the_first_matching_selector() {
+        let definition = parse_definition(PUBLIC_DEFINITION).unwrap();
+        let html_field: SelectorField =
+            serde_yaml::from_str("case:\n  img[src*=\"free\"]: \"0\"\n  \"*\": \"1\"\n").unwrap();
+        for (markup, expected) in [
+            (
+                "<tr class=result><td><img src='/badge-free.png'></td></tr>",
+                "0",
+            ),
+            (
+                "<tr class=result><td><img src='/badge-paid.png'></td></tr>",
+                "1",
+            ),
+        ] {
+            let document = Html::parse_document(&format!("<table>{markup}</table>"));
+            let row = document
+                .select(&Selector::parse("tr.result").unwrap())
+                .next()
+                .unwrap();
+            assert_eq!(
+                select_element_value(&definition, &row, &html_field, &Variables::new(), true)
+                    .unwrap(),
+                expected,
+                "{markup}"
+            );
+        }
+
+        // Without a catch-all, an unmatched case is null: an error when the
+        // field is required, empty otherwise, never the row's own text.
+        let no_fallback: SelectorField =
+            serde_yaml::from_str("case:\n  img[src*=\"free\"]: \"0\"\n").unwrap();
+        let document = Html::parse_document(
+            "<table><tr class=result><td><img src='/badge-paid.png'>row text</td></tr></table>",
+        );
+        let row = document
+            .select(&Selector::parse("tr.result").unwrap())
+            .next()
+            .unwrap();
+        assert!(
+            select_element_value(&definition, &row, &no_fallback, &Variables::new(), true).is_err()
+        );
+        assert_eq!(
+            select_element_value(&definition, &row, &no_fallback, &Variables::new(), false)
+                .unwrap(),
+            ""
+        );
+
+        let xml_field: SelectorField =
+            serde_yaml::from_str("case:\n  freeleech: \"0\"\n  \"*\": \"1\"\n").unwrap();
+        for (markup, expected) in [
+            ("<item><freeleech>yes</freeleech></item>", "0"),
+            ("<item><paid>yes</paid></item>", "1"),
+        ] {
+            let source = format!("<rss>{markup}</rss>");
+            let document = XmlDocument::parse(&source).unwrap();
+            let item = xml_select_many(document.root(), "item")
+                .unwrap()
+                .into_iter()
+                .next()
+                .unwrap();
+            assert_eq!(
+                xml_field_value(&definition, item, &xml_field, &Variables::new(), true).unwrap(),
+                expected,
+                "{markup}"
+            );
+        }
+    }
+
+    /// The host keys ids `<source>_id`. Reading only the bare Cardigann
+    /// spellings left every `.Query.*ID` null, which silently turned an id
+    /// search into an empty keyword search.
+    #[test]
+    fn binds_host_id_keys_and_cardigann_search_types() {
+        let definition = parse_definition(PUBLIC_DEFINITION).unwrap();
+        let request = PluginSearchRequest {
+            query: "fixture".to_string(),
+            ids: std::collections::HashMap::from([
+                ("imdb_id".to_string(), "tt0111161".to_string()),
+                ("tmdb_id".to_string(), "278".to_string()),
+                ("tvdb_id".to_string(), "81189".to_string()),
+                ("tvrage_id".to_string(), "18164".to_string()),
+                ("tvmaze_id".to_string(), "169".to_string()),
+            ]),
+            facet: Some("series".to_string()),
+            category: None,
+            categories: Vec::new(),
+            limit: 100,
+            season: None,
+            episode: None,
+            absolute_episode: None,
+            tagged_aliases: Vec::new(),
+            context: None,
+        };
+        let variables = search_variables(&definition, &BTreeMap::new(), &request).unwrap();
+        let value = |name: &str| {
+            variables
+                .get(name)
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .to_string()
+        };
+        assert_eq!(value(".Query.IMDBID"), "tt0111161");
+        assert_eq!(value(".Query.IMDBIDShort"), "0111161");
+        assert_eq!(value(".Query.TMDBID"), "278");
+        assert_eq!(value(".Query.TVDBID"), "81189");
+        assert_eq!(value(".Query.TVRageID"), "18164");
+        assert_eq!(value(".Query.TVMazeID"), "169");
+        assert_eq!(value(".Query.Type"), "tv-search");
+
+        // The bare spellings a pasted definition may still carry keep working,
+        // and a bare id is promoted to the `tt` form Prowlarr binds.
+        let mut bare = request.clone();
+        bare.ids = std::collections::HashMap::from([("imdbid".to_string(), "111161".to_string())]);
+        bare.facet = Some("movie".to_string());
+        let variables = search_variables(&definition, &BTreeMap::new(), &bare).unwrap();
+        assert_eq!(
+            variables.get(".Query.IMDBID").and_then(Value::as_str),
+            Some("tt0111161")
+        );
+        assert_eq!(
+            variables.get(".Query.IMDBIDShort").and_then(Value::as_str),
+            Some("111161")
+        );
+        assert_eq!(
+            variables.get(".Query.Type").and_then(Value::as_str),
+            Some("movie-search")
+        );
+
+        for (facet, expected) in [
+            (Some("movie"), "movie-search"),
+            (Some("series"), "tv-search"),
+            (Some("anime"), "tv-search"),
+            (Some("special"), "tv-search"),
+            (Some("collection"), "movie-search"),
+            (Some("title"), "search"),
+            (Some("music"), "search"),
+            (None, "search"),
+        ] {
+            assert_eq!(cardigann_search_type(facet), expected, "{facet:?}");
+        }
+
+        let mut empty = request.clone();
+        empty.ids = std::collections::HashMap::from([("imdb_id".to_string(), "  ".to_string())]);
+        let variables = search_variables(&definition, &BTreeMap::new(), &empty).unwrap();
+        assert_eq!(variables.get(".Query.IMDBID"), Some(&Value::Null));
+        assert_eq!(variables.get(".Query.IMDBIDShort"), Some(&Value::Null));
+    }
+
+    /// With `supported_ids` declared plugin-wide the host routes id-only
+    /// strategies to every configured Cardigann indexer. A definition whose
+    /// `caps.modes` cannot read the id would render an empty keyword search and
+    /// hand back its front page, so it must not be asked at all.
+    #[test]
+    fn gates_id_only_searches_on_the_definitions_caps_modes() {
+        let with_modes = |modes: &str| {
+            PUBLIC_DEFINITION.replace("caps:\n", &format!("caps:\n  modes:\n{modes}"))
+        };
+        let id_request = |facet: &str, key: &str, value: &str| PluginSearchRequest {
+            query: String::new(),
+            ids: std::collections::HashMap::from([(key.to_string(), value.to_string())]),
+            facet: Some(facet.to_string()),
+            ..Default::default()
+        };
+        let begin_search = |definition: &str, request: PluginSearchRequest| {
+            begin(
+                compiled(definition),
+                Operation::Search(Box::new(request)),
+                BTreeMap::new(),
+            )
+            .unwrap()
+        };
+
+        // The mode lists the id: the search proceeds.
+        assert!(matches!(
+            begin_search(
+                &with_modes("    search: [q]\n    movie-search: [q, imdbid]\n"),
+                id_request("movie", "imdb_id", "tt0111161"),
+            ),
+            Step::NeedHttp { .. }
+        ));
+        // `tv-search` with a season/episode parameter list still gates on the id.
+        assert!(matches!(
+            begin_search(
+                &with_modes("    search: [q]\n    tv-search: [q, season, ep, tvdbid]\n"),
+                id_request("series", "tvdb_id", "81189"),
+            ),
+            Step::NeedHttp { .. }
+        ));
+
+        // The mode does not list the id: zero results, no HTTP request.
+        for (definition, request) in [
+            (
+                with_modes("    search: [q]\n    movie-search: [q]\n"),
+                id_request("movie", "imdb_id", "tt0111161"),
+            ),
+            // The facet's mode is missing entirely.
+            (
+                with_modes("    search: [q]\n"),
+                id_request("movie", "imdb_id", "tt0111161"),
+            ),
+            // A malformed `modes` block supports nothing.
+            (
+                PUBLIC_DEFINITION.replace("caps:\n", "caps:\n  modes: notamapping\n"),
+                id_request("series", "tvdb_id", "81189"),
+            ),
+            // No `modes` block at all.
+            (
+                PUBLIC_DEFINITION.to_string(),
+                id_request("series", "tvdb_id", "81189"),
+            ),
+        ] {
+            let Step::Complete { output } = begin_search(&definition, request) else {
+                panic!("an unsupported id search must complete without a request")
+            };
+            assert_eq!(output["results"], serde_json::json!([]));
+        }
+
+        // Keywords scope the search on their own, so an unsupported id alongside
+        // a query still proceeds.
+        let mut with_query = id_request("movie", "imdb_id", "tt0111161");
+        with_query.query = "fixture".to_string();
+        assert!(matches!(
+            begin_search(&with_modes("    movie-search: [q]\n"), with_query),
+            Step::NeedHttp { .. }
+        ));
+
+        // An RSS request carries neither, and is never gated.
+        assert!(matches!(
+            begin_search(
+                &with_modes("    search: [q]\n"),
+                PluginSearchRequest::default()
+            ),
+            Step::NeedHttp { .. }
+        ));
     }
 
     #[test]
@@ -3502,7 +4453,7 @@ search:
     }
 
     #[test]
-    fn skips_malformed_markup_and_xml_rows_but_reports_all_row_failures() {
+    fn skips_malformed_markup_and_xml_rows_and_treats_no_rows_as_empty() {
         let html = parse_definition(PUBLIC_DEFINITION).unwrap();
         let html_path = &html.search.paths[0];
         let mut variables = Variables::new();
@@ -3547,7 +4498,11 @@ search:
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].title, "xml valid");
 
-        let error = parse_search_response(
+        // A page whose only matched row yields no title is an empty result, the
+        // way Prowlarr reports it. The previous "all HTML rows failed" error
+        // turned a decorative header row, a "no results" row, or a Cloudflare
+        // interstitial into a failing indexer.
+        let results = parse_search_response(
             &html,
             html_path,
             &PluginHttpResponse {
@@ -3558,8 +4513,69 @@ search:
             },
             &mut Variables::new(),
         )
-        .unwrap_err();
-        assert!(error.contains("all HTML rows failed"));
+        .unwrap();
+        assert!(results.is_empty());
+
+        let results = parse_search_response(
+            &xml,
+            xml_path,
+            &PluginHttpResponse {
+                status: 200,
+                headers: BTreeMap::new(),
+                set_cookie_headers: Vec::new(),
+                body: b"<rss><item><link>/broken</link></item></rss>".to_vec(),
+            },
+            &mut Variables::new(),
+        )
+        .unwrap();
+        assert!(results.is_empty());
+    }
+
+    /// Prowlarr records a field error, binds `.Result.<name>` to null, and
+    /// still emits the release. Dropping the row instead is how a single
+    /// divergent filter — a date layout, a regex dialect — turned into missing
+    /// releases.
+    #[test]
+    fn a_failing_field_filter_keeps_the_release_without_that_field() {
+        let definition = parse_definition(
+            r#"
+id: fixture
+name: Fixture
+type: public
+links: [https://tracker.example/]
+caps: {}
+search:
+  paths:
+    - path: search
+  rows:
+    selector: tr.result
+  fields:
+    title: { selector: a.title }
+    download: { selector: a.download, attribute: href }
+    date:
+      selector: td.date
+      filters:
+        - { name: timeago }
+    size: { selector: td.size }
+"#,
+        )
+        .unwrap();
+        let results = parse_search_response(
+            &definition,
+            &definition.search.paths[0],
+            &PluginHttpResponse {
+                status: 200,
+                headers: BTreeMap::new(),
+                set_cookie_headers: Vec::new(),
+                body: br#"<table><tr class=result><td><a class=title>Fixture Release</a><a class=download href='/download/1'>DL</a></td><td class=date>not a date</td><td class=size>1 GiB</td></tr></table>"#.to_vec(),
+            },
+            &mut Variables::new(),
+        )
+        .unwrap();
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].title, "Fixture Release");
+        assert_eq!(results[0].size_bytes, Some(1_073_741_824));
+        assert!(results[0].published_at.is_none());
     }
 
     #[test]
@@ -3635,6 +4651,73 @@ search:
         ))
         .unwrap();
         assert!(!host.requests[0].headers.contains_key("cookie"));
+    }
+
+    /// The operator's `cookie` setting and a definition's `login.cookies` are
+    /// browser `Cookie` headers, not `Set-Cookie` fields. Reading them with the
+    /// `Set-Cookie` parser kept the first pair and dropped every other cookie of
+    /// the session, which is the login method of most cookie-login definitions.
+    #[test]
+    fn parses_the_cookie_setting_and_login_cookies_as_a_cookie_header() {
+        assert_eq!(
+            parse_cookie_header("uid=1; pass=abc; Path=/"),
+            [
+                ("uid".to_string(), "1".to_string()),
+                ("pass".to_string(), "abc".to_string()),
+            ]
+        );
+        // Every attribute name the header may carry is skipped, whatever its
+        // case, and the cookies around it survive.
+        assert_eq!(
+            parse_cookie_header(
+                "uid=1; Domain=.tracker.example; HttpOnly; secure; SameSite=Lax; max-age=600; session=xyz",
+            ),
+            [
+                ("uid".to_string(), "1".to_string()),
+                ("session".to_string(), "xyz".to_string()),
+            ]
+        );
+
+        let definition = parse_definition(&PUBLIC_DEFINITION.replace(
+            "search:\n",
+            "login:\n  method: cookie\n  cookies:\n    - 'first=one; second=two'\nsearch:\n",
+        ))
+        .unwrap();
+        let cookies = initial_cookies(
+            &definition,
+            &BTreeMap::from([("cookie".to_string(), "uid=1; pass=abc; Path=/".to_string())]),
+        );
+        assert_eq!(
+            cookies,
+            BTreeMap::from([
+                ("first".to_string(), "one".to_string()),
+                ("second".to_string(), "two".to_string()),
+                ("uid".to_string(), "1".to_string()),
+                ("pass".to_string(), "abc".to_string()),
+            ])
+        );
+
+        // The driver's own read of the setting agrees with the flow's.
+        let mut host = MockEngineHost {
+            responses: vec![PluginHttpResponse {
+                status: 200,
+                headers: BTreeMap::new(),
+                set_cookie_headers: Vec::new(),
+                body: br#"<table><tr class=result><td><a class=title>one</a><a class=download href='/download'>DL</a></td><td class=size>1 GiB</td><td class=seeders>1</td></tr></table>"#.to_vec(),
+            }],
+            ..Default::default()
+        };
+        block_on(search_with_host(
+            &mut host,
+            parse_definition(PUBLIC_DEFINITION).unwrap(),
+            PluginSearchRequest::default(),
+            BTreeMap::from([("cookie".to_string(), "uid=1; pass=abc; Path=/".to_string())]),
+        ))
+        .unwrap();
+        let sent = host.requests[0].headers["cookie"].clone();
+        assert!(sent.contains("uid=1"), "{sent}");
+        assert!(sent.contains("pass=abc"), "{sent}");
+        assert!(!sent.to_ascii_lowercase().contains("path"), "{sent}");
     }
 
     #[test]
@@ -3931,6 +5014,71 @@ search:
         assert_eq!(result.guid, result.magnet_url);
     }
 
+    /// A magnet synthesized from a bare infohash carries Prowlarr's public
+    /// tracker list; without it the link only resolves through DHT.
+    #[test]
+    fn synthesized_magnets_carry_the_public_tracker_list() {
+        let expect_trackers = |magnet: &str| {
+            for tracker in [
+                PUBLIC_MAGNET_TRACKERS[0],
+                PUBLIC_MAGNET_TRACKERS[PUBLIC_MAGNET_TRACKERS.len() - 1],
+            ] {
+                let encoded =
+                    url::form_urlencoded::byte_serialize(tracker.as_bytes()).collect::<String>();
+                assert!(magnet.contains(&format!("&tr={encoded}")), "{magnet}");
+            }
+            assert_eq!(magnet.matches("&tr=").count(), PUBLIC_MAGNET_TRACKERS.len());
+        };
+
+        // A public definition's `infohash` result field.
+        let definition = parse_definition(PUBLIC_DEFINITION).unwrap();
+        let mut result = PluginSearchResult {
+            title: "Fixture Release".into(),
+            info_hash_v1: Some("0123456789abcdef0123456789abcdef01234567".into()),
+            ..PluginSearchResult::default()
+        };
+        normalize_result(&definition, &mut result);
+        let magnet = result
+            .magnet_url
+            .expect("a public infohash yields a magnet");
+        assert!(
+            magnet.starts_with(
+                "magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567&dn=Fixture+Release"
+            ),
+            "{magnet}"
+        );
+        expect_trackers(&magnet);
+
+        // The `download.infohash` grab path.
+        let with_infohash = PUBLIC_DEFINITION.replace(
+            "search:\n",
+            "download:\n  infohash:\n    hash: { selector: span.hash }\n    title: { selector: span.name }\nsearch:\n",
+        );
+        let Step::NeedHttp { continuation, .. } = begin(
+            compiled(&with_infohash),
+            Operation::Grab("https://tracker.example/details/1".into()),
+            BTreeMap::new(),
+        )
+        .unwrap() else {
+            panic!("details request expected")
+        };
+        let Step::Complete { output } = resume(
+            &continuation,
+            ResumeInput::Http(PluginHttpResponse {
+                status: 200,
+                headers: BTreeMap::new(),
+                set_cookie_headers: Vec::new(),
+                body: br#"<div><span class=hash>0123456789abcdef0123456789abcdef01234567</span><span class=name>Fixture Release</span></div>"#.to_vec(),
+            }),
+        )
+        .unwrap() else {
+            panic!("an infohash grab must complete")
+        };
+        let magnet = output["url"].as_str().expect("a magnet URL").to_string();
+        assert!(magnet.starts_with("magnet:?xt=urn:btih:"), "{magnet}");
+        expect_trackers(&magnet);
+    }
+
     const YEAR_DEFINITION: &str = r#"
 id: fixture
 name: Fixture
@@ -4058,6 +5206,31 @@ search:
         }
     }
 
+    /// `ParseUtil.GetBytes` reads every unit as a power of 1024 and normalizes
+    /// the number before parsing it. Treating `GB` as 1000³ understated every
+    /// size by 7–10 %, and `1.234,5 GB` did not parse at all.
+    #[test]
+    fn parses_sizes_the_prowlarr_way() {
+        for (value, expected) in [
+            ("1 GB", Some(1_073_741_824)),
+            ("1.5 GiB", Some(1_610_612_736)),
+            ("1,5 GB", Some(1_610_612_736)),
+            ("1.234,5 MB", Some(1_294_467_072)),
+            ("700 MB", Some(734_003_200)),
+            ("12345", Some(12_345)),
+            ("2 TB", Some(2_199_023_255_552)),
+            ("512 KB", Some(524_288)),
+            ("1 GIB", Some(1_073_741_824)),
+            // No unit at all is a byte count, whatever surrounds it.
+            ("1 048 576", Some(1_048_576)),
+            // Nothing numeric is no size.
+            ("unknown", None),
+            ("", None),
+        ] {
+            assert_eq!(parse_size(value), expected, "{value}");
+        }
+    }
+
     #[test]
     fn maps_modern_categories_and_uses_defaults_only_as_a_fallback() {
         let definition = parse_definition(
@@ -4132,6 +5305,50 @@ search:
         );
     }
 
+    /// Prowlarr translates the request's torznab ids through the standard
+    /// category tree: a parent id claims its whole subtree, a child id claims
+    /// only its own name, and the definition's mapping order is preserved.
+    #[test]
+    fn translates_request_categories_through_the_standard_category_tree() {
+        let definition = parse_definition(
+            r#"
+id: fixture
+name: Fixture
+type: public
+links: [https://tracker.example/]
+caps:
+  categorymappings:
+    - { id: 40, cat: Movies/UHD }
+    - { id: 10, cat: Movies }
+    - { id: 30, cat: Movies/HD }
+    - { id: 20, cat: TV/HD }
+    - { id: 50, cat: TV/HD Remux }
+search:
+  paths: [{ path: search }]
+"#,
+        )
+        .unwrap();
+        let mapped = |category: &str| {
+            map_categories(
+                &definition,
+                &PluginSearchRequest {
+                    categories: vec![category.to_string()],
+                    ..Default::default()
+                },
+            )
+        };
+        // A child id matches its own name only: `TV/HD Remux` is a different
+        // category, not a child of `TV/HD`.
+        assert_eq!(mapped("5040"), ["20"]);
+        assert_eq!(mapped("TV/HD"), ["20"]);
+        // A parent id claims the parent and every child, in definition order.
+        assert_eq!(mapped("2000"), ["40", "10", "30"]);
+        assert_eq!(mapped("Movies"), ["40", "10", "30"]);
+        // Ids the tree does not name fall through to the literal comparison.
+        assert_eq!(mapped("2045"), ["40"]);
+        assert!(mapped("7020").is_empty());
+    }
+
     #[test]
     fn maps_legacy_categories_without_inventing_defaults() {
         let definition = parse_definition(
@@ -4158,6 +5375,122 @@ search:
             ["2"]
         );
         assert!(map_categories(&definition, &PluginSearchRequest::default()).is_empty());
+    }
+
+    /// `andmatch` is Prowlarr's `FilterReleasesByQuery`: two of the query's
+    /// terms have to appear in the title *or* the description, common words and
+    /// one-character tokens do not count, and RSS and id searches are exempt.
+    #[test]
+    fn andmatch_filters_rows_the_way_prowlarr_filters_releases() {
+        let definition = parse_definition(
+            r#"
+id: fixture
+name: Fixture
+type: public
+links: [https://tracker.example/]
+caps: {}
+search:
+  paths: [{ path: search }]
+  rows:
+    selector: tr.result
+    filters:
+      - { name: andmatch }
+"#,
+        )
+        .unwrap();
+        let row = |title: &str, description: Option<&str>| {
+            let mut result = PluginSearchResult {
+                title: title.to_string(),
+                ..PluginSearchResult::default()
+            };
+            if let Some(description) = description {
+                result.provider_extra.insert(
+                    "description".to_string(),
+                    Value::String(description.to_string()),
+                );
+            }
+            result
+        };
+        let variables = |query: &str| {
+            search_variables(
+                &definition,
+                &BTreeMap::new(),
+                &PluginSearchRequest {
+                    query: query.to_string(),
+                    ..Default::default()
+                },
+            )
+            .unwrap()
+        };
+
+        // Two terms, one present: dropped.
+        assert!(!should_keep_row(
+            &definition,
+            &row("Fixture Release 1080p", None),
+            &variables("fixture missing"),
+        ));
+        // Three terms, two present: kept.
+        assert!(should_keep_row(
+            &definition,
+            &row("Fixture Release 1080p", None),
+            &variables("fixture release missing"),
+        ));
+        // The description counts as much as the title.
+        assert!(should_keep_row(
+            &definition,
+            &row("Fixture 1080p", Some("A release of the second season")),
+            &variables("fixture season"),
+        ));
+        // A single term needs a single match.
+        assert!(should_keep_row(
+            &definition,
+            &row("Fixture Release", None),
+            &variables("fixture"),
+        ));
+        assert!(!should_keep_row(
+            &definition,
+            &row("Fixture Release", None),
+            &variables("missing"),
+        ));
+        // Common words and one-character tokens never count, so `the` alone
+        // leaves a single real term.
+        assert!(should_keep_row(
+            &definition,
+            &row("Fixture Release", None),
+            &variables("the fixture"),
+        ));
+        // Punctuation splits terms the way `[^\w]+` does.
+        assert!(should_keep_row(
+            &definition,
+            &row("Fixture Release 1080p", None),
+            &variables("fixture.release-1080p"),
+        ));
+
+        // An RSS search has no query to filter by.
+        assert!(should_keep_row(
+            &definition,
+            &row("Anything At All", None),
+            &variables(""),
+        ));
+        // An id search is exempt even with a query the title does not answer.
+        let id_variables = search_variables(
+            &definition,
+            &BTreeMap::new(),
+            &PluginSearchRequest {
+                query: "fixture missing".to_string(),
+                ids: std::collections::HashMap::from([(
+                    "imdb_id".to_string(),
+                    "tt0111161".to_string(),
+                )]),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert!(should_keep_row(
+            &definition,
+            &row("Something Else", None),
+            &id_variables,
+        ));
     }
 
     #[test]
@@ -4261,6 +5594,55 @@ search:
         );
     }
 
+    /// Cardigann's `ratio:` block is a Jackett-era display of the operator's own
+    /// account ratio; Prowlarr parses it and never evaluates it. Fetching it
+    /// spent an extra authenticated request before every search and grab and
+    /// stamped a seeding requirement the tracker never stated onto every
+    /// release.
+    #[test]
+    fn a_ratio_block_costs_no_request_and_stamps_no_seed_requirement() {
+        let definition = PUBLIC_DEFINITION.replace(
+            "search:\n",
+            "ratio:\n  path: account\n  selector: span.ratio\nsearch:\n",
+        );
+        // The block still parses, so the definition stays admissible.
+        assert!(parse_definition(&definition).unwrap().ratio.is_some());
+
+        let first = begin(
+            compiled(&definition),
+            Operation::Search(Box::new(PluginSearchRequest {
+                query: "fixture".into(),
+                ..Default::default()
+            })),
+            BTreeMap::new(),
+        )
+        .unwrap();
+        let Step::NeedHttp {
+            request,
+            continuation,
+        } = first
+        else {
+            panic!("search must yield HTTP")
+        };
+        assert_eq!(request.url, "https://tracker.example/search?q=fixture");
+
+        let Step::Complete { output } = resume(
+            &continuation,
+            ResumeInput::Http(PluginHttpResponse {
+                status: 200,
+                headers: BTreeMap::new(),
+                set_cookie_headers: Vec::new(),
+                body: br#"<table><tr class=result><td><a class=title href='/details/1'>Fixture Release</a><a class=download href='/download/1'>DL</a></td><td class=size>2 GiB</td><td class=seeders>42</td></tr></table>"#.to_vec(),
+            }),
+        )
+        .unwrap() else {
+            panic!("search must complete")
+        };
+        assert_eq!(output["results"][0]["title"], "Fixture Release");
+        assert!(output["results"][0]["minimum_seed_ratio"].is_null());
+        assert!(output["results"][0]["minimum_seed_time_minutes"].is_null());
+    }
+
     #[test]
     fn executes_form_login_before_search_and_carries_cookie() {
         let definition = PUBLIC_DEFINITION.replace(
@@ -4324,6 +5706,122 @@ search:
             request.headers.get("cookie").map(String::as_str),
             Some("session=two; theme=dark")
         );
+    }
+
+    /// Prowlarr re-logs in on any unfollowed redirect and any HTTP error, not
+    /// only on 401/403 or a `Location` naming the login path, and then reissues
+    /// the request that provoked it.
+    #[test]
+    fn re_logs_in_once_on_any_unfollowed_redirect_or_error_status() {
+        let definition = PUBLIC_DEFINITION.replace(
+            "search:\n",
+            "login:\n  method: form\n  path: login\nsearch:\n",
+        );
+        let landing = || PluginHttpResponse {
+            status: 200,
+            headers: BTreeMap::new(),
+            set_cookie_headers: Vec::new(),
+            body: br#"<form action='/session'><input name='csrf' value='token'></form>"#.to_vec(),
+        };
+        let logged_in = || PluginHttpResponse {
+            status: 200,
+            headers: BTreeMap::new(),
+            set_cookie_headers: vec!["session=fresh; Path=/".into()],
+            body: Vec::new(),
+        };
+
+        for challenge in [
+            // A redirect to somewhere that is not the login path at all.
+            PluginHttpResponse {
+                status: 302,
+                headers: BTreeMap::from([("location".into(), "/maintenance".into())]),
+                set_cookie_headers: Vec::new(),
+                body: Vec::new(),
+            },
+            PluginHttpResponse {
+                status: 404,
+                headers: BTreeMap::new(),
+                set_cookie_headers: Vec::new(),
+                body: Vec::new(),
+            },
+            PluginHttpResponse {
+                status: 503,
+                headers: BTreeMap::new(),
+                set_cookie_headers: Vec::new(),
+                body: Vec::new(),
+            },
+        ] {
+            let Step::NeedHttp { continuation, .. } = begin(
+                compiled(&definition),
+                Operation::Search(Box::default()),
+                BTreeMap::new(),
+            )
+            .unwrap() else {
+                panic!("login landing request expected")
+            };
+            let Step::NeedHttp { continuation, .. } =
+                resume(&continuation, ResumeInput::Http(landing())).unwrap()
+            else {
+                panic!("login submit expected")
+            };
+            let Step::NeedHttp {
+                request,
+                continuation,
+            } = resume(&continuation, ResumeInput::Http(logged_in())).unwrap()
+            else {
+                panic!("search request expected")
+            };
+            let search_url = request.url.clone();
+
+            // The challenge triggers exactly one re-login, which lands back on
+            // the same search request.
+            let status = challenge.status;
+            let Step::NeedHttp { continuation, .. } =
+                resume(&continuation, ResumeInput::Http(challenge.clone())).unwrap()
+            else {
+                panic!("re-login landing expected for {status}")
+            };
+            let Step::NeedHttp { continuation, .. } =
+                resume(&continuation, ResumeInput::Http(landing())).unwrap()
+            else {
+                panic!("re-login submit expected for {status}")
+            };
+            let Step::NeedHttp {
+                request,
+                continuation,
+            } = resume(&continuation, ResumeInput::Http(logged_in())).unwrap()
+            else {
+                panic!("retried search request expected for {status}")
+            };
+            assert_eq!(request.url, search_url, "{status}");
+
+            // The second failure is not retried again.
+            assert!(
+                resume(&continuation, ResumeInput::Http(challenge)).is_err(),
+                "{status} must fail after one re-login"
+            );
+        }
+
+        // Without a login block there is nothing to retry: the error stands.
+        let Step::NeedHttp { continuation, .. } = begin(
+            compiled(PUBLIC_DEFINITION),
+            Operation::Search(Box::default()),
+            BTreeMap::new(),
+        )
+        .unwrap() else {
+            panic!("search request expected")
+        };
+        let error = resume(
+            &continuation,
+            ResumeInput::Http(PluginHttpResponse {
+                status: 404,
+                headers: BTreeMap::new(),
+                set_cookie_headers: Vec::new(),
+                body: Vec::new(),
+            }),
+        )
+        .unwrap_err();
+        assert_eq!(error, "Cardigann search returned HTTP 404");
     }
 
     #[test]
@@ -4671,6 +6169,63 @@ search:
         );
     }
 
+    /// An HTML-typed download is a login wall, not a torrent, and a large
+    /// multi-file torrent is not a runtime abuse. The old 2 MiB ceiling rejected
+    /// legitimate season packs and an HTML body reached the download client.
+    #[test]
+    fn rejects_html_typed_downloads_and_accepts_large_torrents() {
+        let grab = |content_type: Option<&str>, body: Vec<u8>| {
+            let Step::NeedHttp { continuation, .. } = begin(
+                compiled(PUBLIC_DEFINITION),
+                Operation::Grab("https://tracker.example/download/1".into()),
+                BTreeMap::new(),
+            )
+            .unwrap() else {
+                panic!("direct download request expected")
+            };
+            resume(
+                &continuation,
+                ResumeInput::Http(PluginHttpResponse {
+                    status: 200,
+                    headers: content_type
+                        .map(|value| {
+                            BTreeMap::from([("content-type".to_string(), value.to_string())])
+                        })
+                        .unwrap_or_default(),
+                    set_cookie_headers: Vec::new(),
+                    body,
+                }),
+            )
+        };
+
+        let error = grab(
+            Some("text/html; charset=utf-8"),
+            b"<html>login</html>".to_vec(),
+        )
+        .unwrap_err();
+        assert!(error.contains("HTML page instead of a torrent"), "{error}");
+
+        // A tracker mislabelling a real bencoded body is still believed.
+        assert!(matches!(
+            grab(Some("text/html"), b"d4:infoe".to_vec()).unwrap(),
+            Step::Complete { .. }
+        ));
+
+        // Three megabytes of torrent is an ordinary season pack.
+        let large = std::iter::once(b'd')
+            .chain(std::iter::repeat_n(b'0', 3 * 1024 * 1024))
+            .collect::<Vec<_>>();
+        assert!(matches!(
+            grab(Some("application/x-bittorrent"), large).unwrap(),
+            Step::Complete { .. }
+        ));
+
+        // Past the ceiling it is still refused.
+        let oversized = vec![b'd'; 64 * 1024 * 1024 + 1];
+        let error = grab(None, oversized).unwrap_err();
+        assert!(error.contains("runtime limit"), "{error}");
+    }
+
     #[test]
     fn follows_bounded_same_origin_search_redirects() {
         let definition = PUBLIC_DEFINITION.replace("search:\n", "followredirect: true\nsearch:\n");
@@ -4954,8 +6509,6 @@ search:
             grab_selector_page_body: None,
             grab_selector_index: 0,
             relogin_attempts: 0,
-            ratio_loaded: false,
-            ratio_value: None,
             redirect_hops: 0,
             current_request: None,
             seen_get_urls: BTreeSet::new(),
@@ -4974,6 +6527,80 @@ search:
             panic!("HTTP request expected")
         };
         assert!(!request.headers.contains_key("cookie"));
+    }
+
+    /// A tracker whose download endpoint lives on a sibling subdomain shares the
+    /// session cookie with its base host, exactly as a `Domain=` cookie does in
+    /// Prowlarr's cookie container. Same-origin stripping lost it on every one.
+    #[test]
+    fn attaches_cookies_across_the_configured_site_but_never_beyond_it() {
+        assert!(same_site_host("tracker.example", "dl.tracker.example"));
+        assert!(same_site_host("dl.tracker.example", "tracker.example"));
+        assert!(same_site_host("tracker.example", "TRACKER.example"));
+        assert!(!same_site_host("tracker.example", "elsewhere.example"));
+        assert!(!same_site_host("tracker.example", "nottracker.example"));
+        assert!(!same_site_host("tracker.example", ""));
+
+        let definition = parse_definition(&PUBLIC_DEFINITION.replace(
+            "search:\n",
+            "download:\n  headers: { x-token: abc }\nsearch:\n",
+        ))
+        .unwrap();
+        let mut context = Context {
+            definition: definition.clone(),
+            config: BTreeMap::new(),
+            cookies: BTreeMap::from([("session".to_string(), "secret".to_string())]),
+            operation: StoredOperation::TestConnection,
+            search_path: 0,
+            results: Vec::new(),
+            variables: Variables::new(),
+            grab_before_body: None,
+            grab_selector_page_body: None,
+            grab_selector_index: 0,
+            relogin_attempts: 0,
+            redirect_hops: 0,
+            current_request: None,
+            seen_get_urls: BTreeSet::new(),
+        };
+
+        let sibling = download_headers_for_url(
+            &definition,
+            &context,
+            "https://dl.tracker.example/download/1",
+        )
+        .unwrap();
+        assert_eq!(
+            sibling.get("cookie").map(String::as_str),
+            Some("session=secret")
+        );
+        assert_eq!(sibling.get("x-token").map(String::as_str), Some("abc"));
+
+        let elsewhere = download_headers_for_url(
+            &definition,
+            &context,
+            "https://elsewhere.example/download/1",
+        )
+        .unwrap();
+        assert!(!elsewhere.contains_key("cookie"));
+        assert!(!elsewhere.contains_key("x-token"));
+
+        // The same rule gates the outgoing request itself.
+        context.operation = StoredOperation::TestConnection;
+        for (url, expected) in [
+            ("https://dl.tracker.example/search", true),
+            ("https://tracker.example/search", true),
+            ("https://elsewhere.example/search", false),
+        ] {
+            let headers = common_headers(&context, None);
+            let Step::NeedHttp { request, .. } = need_http(
+                http_request("GET", url.to_string(), Vec::new(), headers),
+                Continuation::TestConnection(context.clone()),
+            )
+            .unwrap() else {
+                panic!("HTTP request expected")
+            };
+            assert_eq!(request.headers.contains_key("cookie"), expected, "{url}");
+        }
     }
 
     #[test]

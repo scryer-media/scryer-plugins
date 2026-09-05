@@ -1,6 +1,6 @@
-# Cardigann Indexer
+# Advanced Indexers
 
-Runs Prowlarr Cardigann v11 tracker definitions as a Scryer WASI Preview 2 indexer component. It is a generic torrent indexer: supply one definition and its selected tracker origin for each configured indexer.
+The Advanced Indexers plugin (plugin id `cardigann-engine`) runs Prowlarr Cardigann v11 tracker definitions as a Scryer WASI Preview 2 indexer component. It is a generic torrent indexer: supply one definition and its selected tracker origin for each configured indexer.
 
 ## Configure in Scryer
 

@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use serde_json::Value;
 
-use crate::filters::{cardigann_regex, url_encode};
+use crate::filters::{cardigann_regex, cardigann_replacement, url_encode};
 
 pub type Variables = BTreeMap<String, Value>;
 
@@ -300,7 +300,9 @@ impl ExpressionParser<'_> {
                 let regex = cardigann_regex(&pattern)
                     .map_err(|error| format!("invalid re_replace pattern `{pattern}`: {error}"))?;
                 Ok(Value::String(
-                    regex.replace_all(&input, replacement.as_str()).into_owned(),
+                    regex
+                        .replace_all(&input, cardigann_replacement(&replacement).as_str())
+                        .into_owned(),
                 ))
             }
             ")" => Err("unexpected `)` in Cardigann template expression".to_string()),
@@ -433,6 +435,24 @@ mod tests {
         assert_eq!(
             render("{{ re_replace .Keywords \"[\\s]+\" \"%\" }}", &vars).unwrap(),
             "arch%linux"
+        );
+    }
+
+    /// The template's `re_replace` shares the filter chain's .NET dialect:
+    /// lookaround compiles, and `$1x` is group 1 followed by `x`.
+    #[test]
+    fn template_re_replace_uses_the_dotnet_regex_dialect() {
+        let vars = BTreeMap::from([(
+            ".Keywords".to_string(),
+            Value::String("season 007".to_string()),
+        )]);
+        assert_eq!(
+            render("{{ re_replace .Keywords \"(?<=season )0+\" \"\" }}", &vars).unwrap(),
+            "season 7"
+        );
+        assert_eq!(
+            render("{{ re_replace .Keywords \"(\\\\d+)$\" \"$1p\" }}", &vars).unwrap(),
+            "season 007p"
         );
     }
 
