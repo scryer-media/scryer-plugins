@@ -1,4 +1,8 @@
-use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, TimeZone, Utc};
+use std::sync::OnceLock;
+
+use chrono::{
+    DateTime, Datelike, Duration, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc, Weekday,
+};
 use encoding_rs::Encoding;
 use percent_encoding::percent_decode_str;
 use regex::Regex;
@@ -338,40 +342,164 @@ fn parse_partial_cardigann_date(
 }
 
 fn parse_fuzzy_time(value: &str) -> Result<String, String> {
-    parse_relative_time(value)
-        .or_else(|_| parse_unknown_datetime(value).map(|date| date.to_rfc3339()))
+    parse_fuzzy_time_at(value, now_utc())
 }
 
-fn parse_unknown_datetime(value: &str) -> Result<DateTime<Utc>, String> {
+fn parse_fuzzy_time_at(value: &str, now: DateTime<Utc>) -> Result<String, String> {
+    parse_relative_time_at(value, now)
+        .or_else(|_| parse_unknown_datetime_at(value, now).map(|date| date.to_rfc3339()))
+}
+
+fn unknown_date_pattern(slot: &'static OnceLock<Regex>, pattern: &str) -> &'static Regex {
+    slot.get_or_init(|| Regex::new(pattern).expect("static unknown-date regex"))
+}
+
+/// The named day and its offset in days from today, if this value opens with
+/// one, together with the text that names it.
+fn relative_day(value: &str) -> Option<(&str, i64)> {
+    const NAMED_DAYS: [(&str, i64); 3] = [("today", 0), ("yesterday", -1), ("tomorrow", 1)];
+    static PATTERNS: [OnceLock<Regex>; 3] = [OnceLock::new(), OnceLock::new(), OnceLock::new()];
+    NAMED_DAYS
+        .iter()
+        .zip(PATTERNS.iter())
+        .find_map(|((name, offset), slot)| {
+            let pattern =
+                unknown_date_pattern(slot, &format!(r"(?i)\b{name}(?:[\s,]+(?:at)?\s*|[\s,]*|$)"));
+            pattern
+                .find(value)
+                .map(|matched| (matched.as_str(), *offset))
+        })
+}
+
+/// A bare time of day, the way `DateTimeUtil.ParseTimeSpan` reads the remainder
+/// of a `Today …` or `<weekday> at …` value. No time at all is midnight.
+fn parse_time_of_day(value: &str) -> Result<Duration, String> {
     let value = value.trim();
-    if value.eq_ignore_ascii_case("now") {
-        return Ok(now_utc());
+    if value.is_empty() {
+        return Ok(Duration::zero());
     }
+    for pattern in ["%H:%M:%S", "%H:%M", "%I:%M:%S %p", "%I:%M %p"] {
+        if let Ok(time) = NaiveTime::parse_from_str(value, pattern) {
+            return Ok(time.signed_duration_since(NaiveTime::MIN));
+        }
+    }
+    Err(format!("could not parse time of day `{value}`"))
+}
+
+/// Prowlarr's `DateTimeUtil.FromUnknown`, for the forms it resolves itself
+/// before handing the rest to its fuzzy parser.
+///
+/// The order is Prowlarr's: RFC 1123, a bare unix timestamp, anything naming
+/// `now`, anything naming `ago`, the named days, `<weekday> at <time>`, then the
+/// two shapes that omit the year, and only then the fixed layouts.
+fn parse_unknown_datetime_at(value: &str, now: DateTime<Utc>) -> Result<DateTime<Utc>, String> {
+    let value = value.trim();
     if let Ok(parsed) = DateTime::parse_from_rfc3339(value) {
         return Ok(parsed.with_timezone(&Utc));
     }
     if let Ok(parsed) = DateTime::parse_from_rfc2822(value) {
         return Ok(parsed.with_timezone(&Utc));
     }
-    if let Ok(timestamp) = value.parse::<i64>()
+    if !value.is_empty()
+        && value.chars().all(|character| character.is_ascii_digit())
+        && let Ok(timestamp) = value.parse::<i64>()
         && let Some(parsed) = Utc.timestamp_opt(timestamp, 0).single()
     {
         return Ok(parsed);
     }
+    let lowered = value.to_lowercase();
+    if lowered.contains("now") {
+        return Ok(now);
+    }
+    static AGO: OnceLock<Regex> = OnceLock::new();
+    if unknown_date_pattern(&AGO, r"(?i)\bago").is_match(value) {
+        return relative_time_at(value, now);
+    }
+    let midnight = now
+        .date_naive()
+        .and_hms_opt(0, 0, 0)
+        .ok_or_else(|| "the current date has no midnight".to_string())?;
+    if let Some((matched, offset)) = relative_day(value) {
+        let time = value.replace(matched, "");
+        let parsed = midnight + parse_time_of_day(&time)? + Duration::days(offset);
+        return Ok(Utc.from_utc_datetime(&parsed));
+    }
+    static WEEKDAY: OnceLock<Regex> = OnceLock::new();
+    let weekday = unknown_date_pattern(
+        &WEEKDAY,
+        r"(?i)\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+at\s+",
+    );
+    if let Some(captures) = weekday.captures(value) {
+        let matched = captures.get(0).expect("group 0 always matches").as_str();
+        let named = captures
+            .get(1)
+            .expect("weekday group")
+            .as_str()
+            .to_lowercase();
+        let time = value.replace(matched, "");
+        let mut parsed = midnight + parse_time_of_day(&time)?;
+        let target = match named.as_str() {
+            "monday" => Weekday::Mon,
+            "tuesday" => Weekday::Tue,
+            "wednesday" => Weekday::Wed,
+            "thursday" => Weekday::Thu,
+            "friday" => Weekday::Fri,
+            "saturday" => Weekday::Sat,
+            _ => Weekday::Sun,
+        };
+        // Prowlarr steps back from today, so today itself counts.
+        while parsed.weekday() != target {
+            parsed -= Duration::days(1);
+        }
+        return Ok(Utc.from_utc_datetime(&parsed));
+    }
+    // The two shapes that leave the year out; both rewrite the value and fall
+    // through to the layouts below.
+    let mut value = value.to_string();
+    static MISSING_YEAR: OnceLock<Regex> = OnceLock::new();
+    if let Some(captures) =
+        unknown_date_pattern(&MISSING_YEAR, r"^(\d{1,2}-\d{1,2})(\s|$)").captures(&value)
+    {
+        let date = captures.get(1).expect("date group").as_str().to_string();
+        value = value.replace(&date, &format!("{}-{date}", now.year()));
+    }
+    static MISSING_YEAR_WITH_MONTH_NAME: OnceLock<Regex> = OnceLock::new();
+    if let Some(captures) = unknown_date_pattern(
+        &MISSING_YEAR_WITH_MONTH_NAME,
+        r"^(\d{1,2}\s+\w{3})\s+(\d{1,2}:\d{1,2}.*)$",
+    )
+    .captures(&value.clone())
+    {
+        let date = captures.get(1).expect("date group").as_str();
+        let time = captures.get(2).expect("time group").as_str();
+        value = format!("{date} {} {time}", now.year());
+    }
     for pattern in [
         "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%dT%H:%M:%S",
         "%Y-%m-%d %H:%M",
         "%d/%m/%Y %H:%M",
         "%m/%d/%Y %H:%M",
+        "%d.%m.%Y %H:%M",
+        "%d %b %Y %H:%M",
         "%b %e, %Y %H:%M",
         "%B %e, %Y %H:%M",
     ] {
-        if let Ok(parsed) = NaiveDateTime::parse_from_str(value, pattern) {
+        if let Ok(parsed) = NaiveDateTime::parse_from_str(&value, pattern) {
             return Ok(Utc.from_utc_datetime(&parsed));
         }
     }
-    for pattern in ["%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%b %e, %Y", "%B %e, %Y"] {
-        if let Ok(parsed) = NaiveDate::parse_from_str(value, pattern)
+    for pattern in [
+        "%Y-%m-%d",
+        "%d/%m/%Y",
+        "%m/%d/%Y",
+        "%d.%m.%Y",
+        "%d %b %Y",
+        "%b %d %Y",
+        "%b %e, %Y",
+        "%B %e, %Y",
+    ] {
+        if let Ok(parsed) = NaiveDate::parse_from_str(&value, pattern)
             && let Some(parsed) = parsed.and_hms_opt(0, 0, 0)
         {
             return Ok(Utc.from_utc_datetime(&parsed));
@@ -381,7 +509,11 @@ fn parse_unknown_datetime(value: &str) -> Result<DateTime<Utc>, String> {
 }
 
 pub(crate) fn normalize_unknown_date(value: &str) -> String {
-    parse_unknown_datetime(value)
+    normalize_unknown_date_at(value, now_utc())
+}
+
+fn normalize_unknown_date_at(value: &str, now: DateTime<Utc>) -> String {
+    parse_unknown_datetime_at(value, now)
         .map(|date| date.to_rfc3339())
         .unwrap_or_else(|_| value.trim().to_string())
 }
@@ -444,9 +576,13 @@ fn parse_relative_time(value: &str) -> Result<String, String> {
 }
 
 fn parse_relative_time_at(value: &str, now: DateTime<Utc>) -> Result<String, String> {
+    relative_time_at(value, now).map(|parsed| parsed.to_rfc3339())
+}
+
+fn relative_time_at(value: &str, now: DateTime<Utc>) -> Result<DateTime<Utc>, String> {
     let normalized = value.trim().to_lowercase();
     if normalized.contains("now") {
-        return Ok(now.to_rfc3339());
+        return Ok(now);
     }
     let normalized = normalized
         .replace(',', "")
@@ -483,7 +619,7 @@ fn parse_relative_time_at(value: &str, now: DateTime<Utc>) -> Result<String, Str
     if !matched {
         return Err(format!("could not parse relative time `{value}`"));
     }
-    Ok((now - Duration::seconds(seconds.round() as i64)).to_rfc3339())
+    Ok(now - Duration::seconds(seconds.round() as i64))
 }
 
 fn now_utc() -> DateTime<Utc> {
@@ -894,6 +1030,52 @@ mod tests {
         assert!(ago("just now").abs() <= 2);
         // Prowlarr throws on a unit it cannot name, and so does this.
         assert!(parse_relative_time("2 fortnights ago").is_err());
+    }
+
+    /// `DateTimeUtil.FromUnknown` resolves the named days, `<weekday> at <time>`
+    /// and the two year-less shapes before it ever reaches a layout. Without
+    /// them an untyped `date` field kept the tracker's own text, which the host
+    /// then had no date for.
+    #[test]
+    fn resolves_the_untyped_date_forms_prowlarr_resolves() {
+        // A Monday, so "Saturday at …" is two days back.
+        let now = Utc.with_ymd_and_hms(2026, 6, 15, 12, 0, 0).unwrap();
+        for (value, expected) in [
+            ("Today 10:30", "2026-06-15T10:30:00+00:00"),
+            ("Yesterday, 23:15", "2026-06-14T23:15:00+00:00"),
+            ("Tomorrow at 08:00", "2026-06-16T08:00:00+00:00"),
+            ("today", "2026-06-15T00:00:00+00:00"),
+            ("Saturday at 14:22", "2026-06-13T14:22:00+00:00"),
+            ("Monday at 09:00", "2026-06-15T09:00:00+00:00"),
+            ("01-02 15:00", "2026-01-02T15:00:00+00:00"),
+            ("1 Jan 10:30", "2026-01-01T10:30:00+00:00"),
+            // The layouts the fallback list gained.
+            ("2026-06-15T10:30:00", "2026-06-15T10:30:00+00:00"),
+            ("15.06.2026 10:30", "2026-06-15T10:30:00+00:00"),
+            ("15.06.2026", "2026-06-15T00:00:00+00:00"),
+            ("15 Jun 2026 10:30", "2026-06-15T10:30:00+00:00"),
+            ("15 Jun 2026", "2026-06-15T00:00:00+00:00"),
+            ("Jun 15 2026", "2026-06-15T00:00:00+00:00"),
+            ("Jun 5, 2026 10:30", "2026-06-05T10:30:00+00:00"),
+            // A bare unix timestamp and an RFC 1123 value keep working.
+            ("1781000000", "2026-06-09T10:13:20+00:00"),
+            (
+                "Sat, 13 Jun 2026 14:22:00 +0000",
+                "2026-06-13T14:22:00+00:00",
+            ),
+        ] {
+            assert_eq!(normalize_unknown_date_at(value, now), expected, "{value}");
+        }
+
+        // `ago` still routes through the relative-time parser.
+        assert_eq!(
+            normalize_unknown_date_at("3 hours ago", now),
+            "2026-06-15T09:00:00+00:00"
+        );
+        // Anything naming `now` is now.
+        assert_eq!(normalize_unknown_date_at("just now", now), now.to_rfc3339());
+        // A value none of it resolves is still handed back unchanged.
+        assert_eq!(normalize_unknown_date_at("  no date  ", now), "no date");
     }
 
     #[test]
