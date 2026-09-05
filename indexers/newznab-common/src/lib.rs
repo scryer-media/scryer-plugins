@@ -374,6 +374,7 @@ pub fn standard_config_fields(default_base_url: Option<&str>) -> Vec<ConfigField
             host_binding: None,
             options: vec![],
             help_text: Some("API endpoint path (e.g. /api, /api/v1/api, /nabapi)".to_string()),
+            advanced: true,
             ..Default::default()
         },
         ConfigFieldDef {
@@ -390,6 +391,7 @@ pub fn standard_config_fields(default_base_url: Option<&str>) -> Vec<ConfigField
                 "Extra query parameters appended to every request (e.g. &dl=1&attrs=poster)"
                     .to_string(),
             ),
+            advanced: true,
             ..Default::default()
         },
         ConfigFieldDef {
@@ -405,6 +407,7 @@ pub fn standard_config_fields(default_base_url: Option<&str>) -> Vec<ConfigField
             help_text: Some(
                 "Minimum delay between upstream request starts; defaults to 2000 ms.".to_string(),
             ),
+            advanced: true,
             ..Default::default()
         },
     ]
@@ -5499,6 +5502,19 @@ mod tests {
         assert_eq!(fields[3].key, "additional_params");
         assert_eq!(fields[4].key, "request_interval_ms");
         assert_eq!(fields[4].default_value.as_deref(), Some("500"));
+
+        // Connecting needs a URL and a key; the rest is tuning and sits behind
+        // the advanced disclosure. Shared with Torznab, which uses these fields
+        // too.
+        assert!(!fields[0].advanced, "base_url is what you connect with");
+        assert!(!fields[1].advanced, "api_key is what you connect with");
+        for index in [2, 3, 4] {
+            assert!(
+                fields[index].advanced,
+                "{} is tuning",
+                fields[index].key
+            );
+        }
     }
 
     /// The API key is not required outright, because Custom may point at a
