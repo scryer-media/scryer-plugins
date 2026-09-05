@@ -247,6 +247,7 @@ fn legacy_config_fields() -> Vec<ConfigFieldDef> {
             "Retained for compatibility; AniNZB always uses its fixed public API endpoint."
                 .to_string(),
         ),
+        ..Default::default()
     }]
 }
 
