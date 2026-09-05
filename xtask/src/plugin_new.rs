@@ -29,6 +29,19 @@ const NOTIFICATION_LIB_RS_TEMPLATE: &str =
 
 const SUBTITLE_LIB_RS_TEMPLATE: &str = include_str!("../templates/plugin_new/subtitle/lib.rs.tpl");
 
+/// The conformance suite a scaffold ships with.
+///
+/// A plugin whose host contract is only checked by hand is a plugin whose host
+/// contract regresses, so the scaffold starts with the family's shared suite
+/// already wired up rather than leaving it as an exercise. Both templates are
+/// thin on purpose: the checks live in `pdk/scryer-plugin-conformance`, and
+/// what a plugin keeps in its own file is what is genuinely its own.
+const NOTIFICATION_HOST_CONFORMANCE_TEMPLATE: &str =
+    include_str!("../templates/plugin_new/notification/host_conformance.rs.tpl");
+
+const SUBTITLE_HOST_CONFORMANCE_TEMPLATE: &str =
+    include_str!("../templates/plugin_new/subtitle/host_conformance.rs.tpl");
+
 /// The WIT packages a notification component's `wit/` directory must carry.
 ///
 /// They are copied from a sibling plugin in the same family rather than
@@ -54,6 +67,7 @@ const COMPONENT_MIN_SCRYER_VERSION: &str = "0.20.0";
 const WIT_BINDGEN_VERSION: &str = "0.61";
 const PDK_PATH_FROM_PLUGIN: &str = "../../pdk/scryer-plugin-pdk";
 const PDK_VERSION: &str = "0.6.0";
+const CONFORMANCE_PATH_FROM_PLUGIN: &str = "../../pdk/scryer-plugin-conformance";
 
 pub(crate) fn run_plugin_new(ctx: &TaskContext, args: PluginNewArgs) -> Result<()> {
     let plugin_dir = scaffold_plugin(ctx, &ctx.repo_root, args.kind, &args.name)?;
@@ -82,6 +96,11 @@ fn scaffold_plugin(
             spec.render_manifest(&current_sdk_dependency(ctx)?),
         )?;
         fs::write(plugin_dir.join("src/lib.rs"), spec.render_lib_rs()?)?;
+        fs::create_dir_all(plugin_dir.join("tests"))?;
+        fs::write(
+            plugin_dir.join("tests/host_conformance.rs"),
+            spec.render_host_conformance()?,
+        )?;
         format_generated_crate(ctx, &plugin_dir)?;
         Ok(())
     })();
@@ -176,6 +195,18 @@ impl ScaffoldSpec {
         )
     }
 
+    /// Render the scaffold's host-conformance suite.
+    fn render_host_conformance(&self) -> Result<String> {
+        render_template(
+            "host_conformance.rs",
+            self.kind.host_conformance_template(),
+            &[
+                ("plugin_id", &self.plugin_id),
+                ("plugin_fn", &self.plugin_id.replace('-', "_")),
+            ],
+        )
+    }
+
     /// Render the scaffold's `Cargo.toml`.
     ///
     /// Written as text rather than assembled with `toml_edit` so the file a
@@ -212,6 +243,16 @@ scryer-plugin-sdk = {sdk_dependency}
 serde_json = "1"
 wit-bindgen = "{wit_bindgen_version}"
 
+# The host-conformance suite in `tests/host_conformance.rs`. It links wasmtime
+# and drives the release artifact, so it is a dev-dependency and nothing else:
+# cargo unifies features across normal and dev dependencies in one build graph,
+# and pulling this into the `cdylib`'s graph would break the wasm32-wasip2
+# build outright.
+[dev-dependencies]
+scryer-plugin-conformance = {{ path = "{conformance_path}", features = [
+    "{conformance_feature}",
+] }}
+
 # `cargo xtask plugin validate` builds this profile, and the host rejects an
 # artifact that unwinds.
 [profile.plugin-release]
@@ -229,6 +270,8 @@ panic = "abort"
             pdk_version = PDK_VERSION,
             sdk_dependency = render_sdk_dependency(sdk),
             wit_bindgen_version = WIT_BINDGEN_VERSION,
+            conformance_path = CONFORMANCE_PATH_FROM_PLUGIN,
+            conformance_feature = self.kind.conformance_feature(),
         )
     }
 }
@@ -350,6 +393,28 @@ WIT package and command enum, so copy `{}` — its Cargo.toml, its `wit/` direct
             _ => "",
         }
     }
+
+    fn host_conformance_template(self) -> &'static str {
+        match self {
+            Self::Notification => NOTIFICATION_HOST_CONFORMANCE_TEMPLATE,
+            Self::Subtitle => SUBTITLE_HOST_CONFORMANCE_TEMPLATE,
+            _ => "",
+        }
+    }
+
+    /// The `scryer-plugin-conformance` feature carrying this family's world.
+    ///
+    /// One feature per family so a plugin's test binary links one `bindgen!`
+    /// expansion rather than three, and so the subtitle family's tokio runtime
+    /// stays out of the synchronous families.
+    fn conformance_feature(self) -> &'static str {
+        match self {
+            Self::Notification => "notification",
+            Self::Subtitle => "subtitle",
+            // Unreachable while `ensure_scaffoldable` gates everything else.
+            _ => "",
+        }
+    }
 }
 
 #[cfg(test)]
@@ -430,6 +495,102 @@ mod tests {
             !lib_rs.contains("{{") && !lib_rs.contains("}}"),
             "left template placeholders behind"
         );
+    }
+
+    /// A scaffold ships with its family's conformance suite already wired up,
+    /// pointed at its own plugin id, and with the checks a stub cannot yet pass
+    /// switched off rather than failing on the contributor's first `cargo
+    /// test`.
+    #[test]
+    fn render_host_conformance_wires_the_shared_suite() {
+        let spec =
+            ScaffoldSpec::new(PluginKindArg::Notification, "Example Plugin").expect("build spec");
+        let suite = spec
+            .render_host_conformance()
+            .expect("render host_conformance.rs");
+
+        assert!(suite.contains("use scryer_plugin_conformance::notification::"));
+        assert!(suite.contains(
+            "NotificationConformance::new(env!(\"CARGO_MANIFEST_DIR\"), \"example-plugin\")"
+        ));
+        assert!(
+            suite.contains(
+                "fn example_plugin_release_wasm_conforms_to_the_notification_host_contract()"
+            ),
+            "the test name is derived from the plugin id: {suite}"
+        );
+        // The scaffolded `send` neither reads config nor posts, so the three
+        // delivery checks are off until it does.
+        assert!(suite.contains("Check::SendReachesTheConfiguredEndpoint"));
+        assert!(suite.contains("Check::UpstreamFailureIsReported"));
+        assert!(suite.contains("Check::RefusedHttpStaysInBand"));
+        assert!(
+            !suite.contains("{{") && !suite.contains("}}"),
+            "left template placeholders behind"
+        );
+    }
+
+    /// The subtitle scaffold takes the subtitle suite, not the notification
+    /// one, and turns off only the check its refusing `Download` arm cannot
+    /// pass.
+    #[test]
+    fn render_host_conformance_wires_the_subtitle_suite() {
+        let spec =
+            ScaffoldSpec::new(PluginKindArg::Subtitle, "Example Plugin").expect("build spec");
+        let suite = spec
+            .render_host_conformance()
+            .expect("render host_conformance.rs");
+
+        assert!(suite.contains("use scryer_plugin_conformance::subtitle::"));
+        assert!(suite.contains(
+            "SubtitleConformance::new(env!(\"CARGO_MANIFEST_DIR\"), \"example-plugin\")"
+        ));
+        assert!(suite.contains("Check::Download"));
+        assert!(
+            !suite.contains("NotificationConformance"),
+            "the subtitle scaffold must not take the notification suite: {suite}"
+        );
+        assert!(
+            !suite.contains("{{") && !suite.contains("}}"),
+            "left template placeholders behind"
+        );
+    }
+
+    /// The suite is a dev-dependency and nothing else. Cargo unifies features
+    /// across normal and dev dependencies in one build graph, so a conformance
+    /// entry under `[dependencies]` would put wasmtime in the `cdylib`'s graph
+    /// and break the `wasm32-wasip2` build outright.
+    #[test]
+    fn render_manifest_takes_the_conformance_suite_as_a_dev_dependency_only() {
+        for (kind, feature) in [
+            (PluginKindArg::Notification, "notification"),
+            (PluginKindArg::Subtitle, "subtitle"),
+        ] {
+            let spec = ScaffoldSpec::new(kind, "Example Plugin").expect("build spec");
+            let manifest = spec.render_manifest(&test_sdk_dependency());
+            let document = manifest.parse::<DocumentMut>().expect("parse manifest");
+
+            let entry = &document["dev-dependencies"]["scryer-plugin-conformance"];
+            assert_eq!(
+                entry.get("path").and_then(|item| item.as_str()),
+                Some(CONFORMANCE_PATH_FROM_PLUGIN)
+            );
+            assert_eq!(
+                entry
+                    .get("features")
+                    .and_then(|item| item.as_array())
+                    .and_then(|features| features.get(0))
+                    .and_then(|feature| feature.as_str()),
+                Some(feature),
+                "{kind:?} must take its own family's world"
+            );
+            assert!(
+                document["dependencies"]
+                    .get("scryer-plugin-conformance")
+                    .is_none(),
+                "the conformance suite must never be a normal dependency"
+            );
+        }
     }
 
     #[test]
@@ -608,8 +769,13 @@ mod tests {
 
             let cargo_toml = plugin_dir.join("Cargo.toml");
             let lib_rs = plugin_dir.join("src/lib.rs");
+            let host_conformance = plugin_dir.join("tests/host_conformance.rs");
             assert!(cargo_toml.is_file(), "Cargo.toml should exist");
             assert!(lib_rs.is_file(), "src/lib.rs should exist");
+            assert!(
+                host_conformance.is_file(),
+                "tests/host_conformance.rs should exist"
+            );
             for package in packages {
                 assert!(
                     plugin_dir

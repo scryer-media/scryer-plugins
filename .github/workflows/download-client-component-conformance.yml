@@ -38,6 +38,9 @@ on:
       - download_clients/tribler/**
       - download_clients/usenet-blackhole/**
       - pdk/scryer-plugin-pdk/**
+      # The shared conformance harness: a change to it changes every
+      # plugin's suite in this matrix.
+      - pdk/scryer-plugin-conformance/**
       - .github/workflows/download-client-component-conformance.yml
   workflow_dispatch:
 

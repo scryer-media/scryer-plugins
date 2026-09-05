@@ -28,9 +28,9 @@ serde_json = "1"
 wit-bindgen = "0.61"
 
 [dev-dependencies]
-postcard = { version = "1", features = ["use-std"] }
-wasmtime = "48.0.1"
-wasmtime-wasi = "48.0.1"
+scryer-plugin-conformance = { path = "../../pdk/scryer-plugin-conformance", features = [
+    "notification",
+] }
 
 [profile.plugin-release]
 inherits = "release"

@@ -21,6 +21,9 @@ on:
     paths:
       - notifications/**
       - pdk/scryer-plugin-pdk/**
+      # The shared conformance harness: a change to it changes every
+      # plugin's suite in this matrix.
+      - pdk/scryer-plugin-conformance/**
       - .github/workflows/notification-component-conformance.yml
   workflow_dispatch:
 

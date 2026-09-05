@@ -45,10 +45,14 @@ tar = "0.4"
 zstd = "0.13"
 
 [dev-dependencies]
-postcard = { version = "1", features = ["use-std"] }
+# The whole host-conformance suite: it links wasmtime and drives the release
+# artifact. Dev-dependency only — see the crate's own manifest for why.
+scryer-plugin-conformance = { path = "../../pdk/scryer-plugin-conformance", features = [
+    "subtitle",
+] }
 tempfile = "3"
-tokio = { version = "1", features = ["rt", "time", "macros"] }
-wasmtime = "48.0.1"
+# The sync family's authority is WASI preopens, not host services, so this
+# suite stages its own `WasiCtx` rather than taking the shared one.
 wasmtime-wasi = "48.0.1"
 
 [profile.plugin-release]
