@@ -1,3 +1,49 @@
+//! OpenSubtitles, as a WASI Preview 2 component.
+//!
+//! The plugin implements `scryer:subtitle/subtitle-provider@1.1.0`: two
+//! exports carrying UTF-8 JSON (`describe` returns a `PluginDescriptor`,
+//! `process` exchanges a `PluginCommandRequest` for a
+//! `PluginCommandResponse`, and `process` is an `async func` on this world
+//! revision), plus two imports: the shared `scryer:host/services@1.0.0` door
+//! every non-archive family world uses for config, plugin state, and HTTP,
+//! and the family-neutral typed `scryer:runtime/host@1.0.0` surface reached
+//! through `scryer_plugin_pdk::runtime`.
+//!
+//! ## What the migration changed
+//!
+//! The previous artifact was a plain `cdylib` with four exported entry
+//! points (`scryer_describe`, `scryer_validate_config`,
+//! `scryer_subtitle_search`, `scryer_subtitle_download`) whose host services
+//! arrived through the core-module `scryer:host/v1` pointer ABI. A component
+//! has no exported linear memory for a host to slice, so both halves move onto
+//! the canonical ABI: the four entry points collapse into one `process` export
+//! dispatching the SDK's [`PluginSubtitleCommand`], and host services cross as
+//! postcard `list<u8>` values through [`scryer_plugin_pdk::host`].
+//!
+//! Provider behaviour is unchanged — the same login/token lifecycle, the same
+//! feature lookup and identifier preference, the same request pacing and
+//! rate-limit accounting, the same language mapping and match hints. What used
+//! to be a hard ABI failure is now the SDK's typed
+//! [`PluginResult::Err`], classified the same way `validate_config` already
+//! classified the identical message.
+//!
+//! ## `RUNTIME_STATE` is still instance-scoped
+//!
+//! [`RUNTIME_STATE`] caches the bearer token, the negotiated API base, and the
+//! request pacing clock for the life of one guest instance. That was true of
+//! the previous build too — neither runtime keeps a guest alive across
+//! invocations — so the migration neither gains nor loses caching. It is
+//! written down here because "a component is instantiated per invocation" is
+//! the thing that makes the `TOKEN_LIFETIME_SECONDS` window look more useful
+//! than it is: the token is reused within a single `process` call, across the
+//! login, download, and content-fetch hops, and nowhere else.
+//!
+//! ## No host archive extraction here
+//!
+//! The download endpoint returns a plain `srt` document, so there is nothing
+//! to route through [`scryer_plugin_pdk::host::archive_extract`] and the
+//! plugin does not enable the PDK's `archive-extract` feature.
+
 use std::collections::hash_map::DefaultHasher;
 use std::collections::{BTreeSet, HashSet};
 use std::hash::{Hash, Hasher};
@@ -6,18 +52,39 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
-use extism_pdk::*;
+use scryer_plugin_pdk::sdk::command::{PluginSubtitleCommand, PluginSubtitleCommandResult};
+use scryer_plugin_pdk::{HttpRequest, HttpResponse, config, http};
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
-    ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginHostBindingId,
-    PluginResult, ProviderDescriptor, SDK_VERSION, SubtitleCapabilities, SubtitleDescriptor,
-    SubtitleMatchHint, SubtitleMatchHintKind, SubtitlePluginCandidate,
-    SubtitlePluginDownloadRequest, SubtitlePluginDownloadResponse, SubtitlePluginSearchRequest,
-    SubtitlePluginSearchResponse, SubtitlePluginValidateConfigRequest,
+    ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginError,
+    PluginErrorCode, PluginHostBindingId, PluginResult, ProviderDescriptor, SDK_VERSION,
+    SubtitleCapabilities, SubtitleDescriptor, SubtitleMatchHint, SubtitleMatchHintKind,
+    SubtitlePluginCandidate, SubtitlePluginDownloadRequest, SubtitlePluginDownloadResponse,
+    SubtitlePluginSearchRequest, SubtitlePluginSearchResponse, SubtitlePluginValidateConfigRequest,
     SubtitlePluginValidateConfigResponse, SubtitleProviderMode, SubtitleQueryMediaKind,
     SubtitleValidateConfigStatus,
 };
 use serde::{Deserialize, Serialize};
+
+wit_bindgen::generate!({
+    // Fully qualified: `path` resolves two packages, so a bare world name is
+    // ambiguous even though only one of them declares a world.
+    world: "scryer:subtitle/subtitle-provider@1.1.0",
+    // Three packages, three paths, matching the host's own bindgen: the shared
+    // `scryer:host` package is listed first so the family package's
+    // `import scryer:host/services@1.0.0` resolves against it.
+    path: ["wit/host-v1.0.0", "wit/runtime-v1.0.0", "wit/subtitle-v1.1.0"],
+    // The shared host package lives in its own WIT package, so wit-bindgen
+    // asks explicitly whether to generate for it. Yes: the PDK holds only a
+    // `fn` pointer and the entry macro binds it to this module's
+    // `scryer::host::services::host-call`.
+    generate_all,
+});
+
+scryer_plugin_pdk::scryer_subtitle_component_main!(
+    descriptor = descriptor,
+    handler = handle_subtitle_command,
+);
 
 const DEFAULT_API_BASE: &str = "https://api.opensubtitles.com/api/v1";
 const TOKEN_LIFETIME_SECONDS: u64 = 11 * 60 * 60;
@@ -169,15 +236,62 @@ struct DownloadResponse {
     link: String,
 }
 
-#[plugin_fn]
-pub fn scryer_describe(_input: String) -> FnResult<String> {
-    Ok(serde_json::to_string(&descriptor())?)
+/// One `process` invocation, dispatched by operation.
+///
+/// This is the whole of the world's request surface: `describe` is owned by
+/// the PDK entry macro, and every operational failure is reported in-band
+/// through [`PluginResult`], never as a world-level `invocation-error`.
+async fn handle_subtitle_command(command: PluginSubtitleCommand) -> PluginSubtitleCommandResult {
+    match command {
+        PluginSubtitleCommand::ValidateConfig(request) => {
+            PluginSubtitleCommandResult::ValidateConfig(PluginResult::Ok(validate_config(&request)))
+        }
+        PluginSubtitleCommand::Search(request) => {
+            PluginSubtitleCommandResult::Search(search(&request))
+        }
+        PluginSubtitleCommand::Download(request) => {
+            PluginSubtitleCommandResult::Download(download(&request))
+        }
+        // OpenSubtitles is a catalog provider: it serves subtitles that
+        // already exist upstream and has no generator. The host reads
+        // `SubtitleCapabilities::mode` and never routes a generate here, so
+        // this arm answers in-band rather than trapping.
+        PluginSubtitleCommand::Generate(_) => {
+            PluginSubtitleCommandResult::Generate(PluginResult::Err(PluginError {
+                code: PluginErrorCode::Unsupported,
+                public_message: "OpenSubtitles is a catalog subtitle provider and cannot \
+                                 generate subtitles"
+                    .to_string(),
+                debug_message: Some(
+                    "SubtitleProviderMode::Catalog advertises no generate capability".to_string(),
+                ),
+                retry_after_seconds: None,
+                details: None,
+            }))
+        }
+        // Alignment moved into this envelope when the subtitle-sync plugin
+        // migrated off its own transport, so every subtitle provider now sees
+        // the operation whether or not it can serve one. OpenSubtitles cannot: it has
+        // no audio decoder and advertises no `sync` capability. Same in-band
+        // refusal as `Generate`, for the same reason.
+        PluginSubtitleCommand::Sync(_) => {
+            PluginSubtitleCommandResult::Sync(PluginResult::Err(PluginError {
+                code: PluginErrorCode::Unsupported,
+                public_message: "OpenSubtitles cannot align subtitles".to_string(),
+                debug_message: Some(
+                    "SubtitleCapabilities::sync is None for this provider".to_string(),
+                ),
+                retry_after_seconds: None,
+                details: None,
+            }))
+        }
+    }
 }
 
-#[plugin_fn]
-pub fn scryer_validate_config(input: String) -> FnResult<String> {
-    let _: SubtitlePluginValidateConfigRequest = serde_json::from_str(&input)?;
-    let response = match OpenSubtitlesConfig::from_extism() {
+fn validate_config(
+    _request: &SubtitlePluginValidateConfigRequest,
+) -> SubtitlePluginValidateConfigResponse {
+    match OpenSubtitlesConfig::from_host() {
         Ok(config) => {
             clear_token();
             match validate_authenticated_session(&config) {
@@ -194,31 +308,70 @@ pub fn scryer_validate_config(input: String) -> FnResult<String> {
             message: Some(error),
             retry_after_seconds: None,
         },
+    }
+}
+
+fn search(request: &SubtitlePluginSearchRequest) -> PluginResult<SubtitlePluginSearchResponse> {
+    let config = match OpenSubtitlesConfig::from_host() {
+        Ok(config) => config,
+        Err(error) => return PluginResult::Err(plugin_error(error)),
     };
-
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+    match search_subtitles_impl(&config, request) {
+        Ok(results) => PluginResult::Ok(SubtitlePluginSearchResponse { results }),
+        Err(error) => PluginResult::Err(plugin_error(error)),
+    }
 }
 
-#[plugin_fn]
-pub fn scryer_subtitle_search(input: String) -> FnResult<String> {
-    let request: SubtitlePluginSearchRequest = serde_json::from_str(&input)?;
-    let config = OpenSubtitlesConfig::from_extism().map_err(Error::msg)?;
-    let results = search_subtitles_impl(&config, &request).map_err(Error::msg)?;
-    Ok(serde_json::to_string(&PluginResult::Ok(
-        SubtitlePluginSearchResponse { results },
-    ))?)
+fn download(
+    request: &SubtitlePluginDownloadRequest,
+) -> PluginResult<SubtitlePluginDownloadResponse> {
+    let config = match OpenSubtitlesConfig::from_host() {
+        Ok(config) => config,
+        Err(error) => return PluginResult::Err(plugin_error(error)),
+    };
+    match download_subtitle_impl(&config, request) {
+        Ok(response) => PluginResult::Ok(response),
+        Err(error) => PluginResult::Err(plugin_error(error)),
+    }
 }
 
-#[plugin_fn]
-pub fn scryer_subtitle_download(input: String) -> FnResult<String> {
-    let request: SubtitlePluginDownloadRequest = serde_json::from_str(&input)?;
-    let config = OpenSubtitlesConfig::from_extism().map_err(Error::msg)?;
-    let response = download_subtitle_impl(&config, &request).map_err(Error::msg)?;
-    Ok(serde_json::to_string(&PluginResult::Ok(response))?)
+/// The typed counterpart of [`validation_error_response`].
+///
+/// It reads the same messages `http_error` produces and reaches the same
+/// verdicts, so a search or download failure and a validation failure now
+/// describe the same problem the same way — which they could not do while the
+/// old channel flattened everything but the text.
+fn plugin_error(error: String) -> PluginError {
+    let (code, retry_after_seconds) = if error.contains("authentication failed") {
+        (PluginErrorCode::AuthFailed, None)
+    } else if error.contains("rate limited") {
+        (
+            PluginErrorCode::RateLimited,
+            retry_after_from_message(&error),
+        )
+    } else if error.contains("required") || error.contains("missing") {
+        (PluginErrorCode::InvalidConfig, None)
+    } else if error.contains("request failed") {
+        (PluginErrorCode::UpstreamUnavailable, None)
+    } else {
+        (PluginErrorCode::Temporary, None)
+    };
+    PluginError {
+        code,
+        public_message: error,
+        debug_message: None,
+        retry_after_seconds,
+        details: None,
+    }
+}
+
+fn retry_after_from_message(error: &str) -> Option<i64> {
+    let (_, tail) = error.split_once("retry after ")?;
+    tail.trim_end_matches('s').trim().parse::<i64>().ok()
 }
 
 impl OpenSubtitlesConfig {
-    fn from_extism() -> Result<Self, String> {
+    fn from_host() -> Result<Self, String> {
         let api_key = config_required_string("api_key")?;
         let username = config_required_string("username")?;
         let password = config_required_string("password")?;

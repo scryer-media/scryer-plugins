@@ -1,10 +1,47 @@
 # Archive Extraction License
 
-The archive-extraction plugin is licensed under GPL-3.0-or-later, with the
-additional UnRAR source-code restriction below for RAR extraction and recovery
-code carried through its `unrar-rs` dependency.
+## Plugin-authored code
 
-## UnRAR Source-Code Restriction
+Except where a file states otherwise, source code authored for the
+archive-extraction plugin is licensed under the GNU General Public License,
+version 3 or, at your option, any later version (GPL-3.0-or-later).
+
+## Additional permission to combine with unrar-rs
+
+As an additional permission under section 7 of GNU GPL version 3, the
+copyright holders of the archive-extraction plugin grant permission to link
+or combine covered plugin code with the unrar-rs library, including modified
+versions of that library governed by the unRAR license restriction, and to
+convey the resulting combined work.
+
+This permission does not relicense unrar-rs or any UnRAR-derived material.
+Those portions remain governed by their applicable license terms. Nothing in
+this permission excuses a distributor from complying with those terms,
+including preservation of required license notices. The applicable unRAR
+notice is reproduced below and in the unrar-rs license.
+
+The Corresponding Source for a non-source distribution of such a combined
+work shall include the exact unrar-rs source used to build it, including any
+modifications and the scripts needed to control compilation and installation.
+
+You may remove this additional permission from a modified version of the
+plugin. Conveying that modified version combined with unrar-rs requires
+permission equivalent to this exception.
+
+## What distributed artifacts contain
+
+`unrar-rs` is an unconditional dependency of this crate, so every built
+plugin artifact (the WebAssembly module) contains UnRAR-derived RAR
+extraction and recovery code, and the unRAR license restriction travels with
+that component.
+
+## unRAR license restriction
+
+The RAR engine in unrar-rs was developed using the source code of the unRAR
+program. All copyrights to the original unRAR code are owned by Alexander
+Roshal. The license for the original unRAR code has the following
+restriction, which continues to govern the UnRAR-derived code incorporated
+into distributed plugin artifacts:
 
 UnRAR source code may be used in any software to handle
 RAR archives without limitations free of charge, but cannot be

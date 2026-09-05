@@ -1,23 +1,23 @@
 [package]
 name = "scryer-plugin-pdk"
-version = "0.5.11"
+version = "0.6.0"
 edition = "2024"
 rust-version = "1.97.1"
 license = "GPL-3.0-only"
-description = "Guest runtime bindings for Scryer command-model WebAssembly plugins."
+description = "Guest runtime bindings for Scryer WebAssembly plugin components."
 repository = "https://github.com/scryer-media/scryer-plugins"
 readme = "README.md"
-keywords = ["scryer", "plugin", "wasm", "wasip1"]
+keywords = ["scryer", "plugin", "wasm", "wasip2"]
 categories = ["wasm"]
 
 [dependencies]
-scryer-plugin-sdk = "3.10.0"
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 postcard = { version = "1", features = ["use-std"] }
 anyhow = "1"
 futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
-wit-bindgen = { version = "0.60", features = ["async"] }
+wit-bindgen = { version = "0.61", features = ["async"] }
 
 [[example]]
 name = "component_smoke"

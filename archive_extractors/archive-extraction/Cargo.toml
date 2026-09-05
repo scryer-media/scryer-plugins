@@ -1,38 +1,42 @@
 [package]
 name = "archive-extraction-archive-extractor"
-version = "0.1.11"
+version = "1.0.0"
 edition = "2024"
+autolib = false
 license-file = "LICENSE"
-description = "Optional archive extraction plugin for RAR, ZIP, and 7z"
+description = "Optional archive extraction plugin for RAR, ZIP, 7z, and XZ with PAR2 recovery"
 
 [package.metadata.scryer]
 official = true
 plugin_id = "archive-extraction"
 catalog_versions = ["v3"]
-min_scryer_version = "0.18.0"
-feature_sets = [{ required_features = [], wasm_opt = "speed" }, { required_features = ["simd128", "relaxed-simd"] }]
+min_scryer_version = "0.20.0"
+feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/archive_extractors/archive-extraction"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/archive_extractors/archive-extraction"
 
-[[bin]]
-name = "archive_extraction_archive_extractor"
-path = "src/main.rs"
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
 
 [dependencies]
-scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk" }
-scryer-plugin-sdk = "3.7.0"
+liblzma = { version = "=0.4.8", default-features = false, features = ["static", "wasm"] }
+par2-rs = { version = "0.9.0", default-features = false }
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
 serde_json = "1"
-sevenz-rust2 = { version = "0.21", default-features = false, features = ["aes256", "bzip2", "deflate", "ppmd"] }
-unrar-rs = { version = "0.5.3", default-features = false, features = ["crypto-host", "crc-host", "host-abi-extism"] }
-zip = { version = "8.6.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+sevenz-rust2 = { version = "0.22", default-features = false, features = ["aes256", "bzip2", "deflate", "ppmd"] }
+unrar-rs = { version = "0.8.0", default-features = false, features = ["crypto-host", "crc-host"] }
+wit-bindgen = "0.61"
+zip = { version = "7.1.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 
 [dev-dependencies]
-aws-lc-sys = "0.44"
+aws-lc-sys = "0.45"
 crc32fast = "1"
-sevenz-rust2 = { version = "0.21", default-features = false, features = ["compress"] }
+par2-rs = "0.9.0"
+sevenz-rust2 = { version = "0.22", default-features = false, features = ["compress"] }
 tempfile = "3"
-wasmtime = "47.0.3"
-wasmtime-wasi = "47.0.3"
+wasmtime = "48.0.1"
+wasmtime-wasi = "48.0.1"
 
 [profile.plugin-release]
 inherits = "release"

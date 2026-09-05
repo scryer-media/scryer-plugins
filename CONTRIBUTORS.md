@@ -20,7 +20,8 @@ git config core.hooksPath .githooks
 The versioned `pre-commit` hook will block commits when `gitleaks` reports staged secrets or when staged diffs contain machine-local usernames or home-directory paths.
 
 This repo pins its Rust toolchain in `rust-toolchain.toml` and declares
-`wasm32-wasip1` there. The `xtask` build flow also runs plugin Wasm builds
+`wasm32-wasip2` there — every plugin family is a WASI Preview 2 component, and
+no Preview 1 target is installed or built any more. The `xtask` build flow also runs plugin Wasm builds
 through `rustup run <toolchain> cargo ...` and will install the Wasm target
 automatically when rustup is available, so built-in/plugin release flows do not
 depend on whichever `cargo` happens to be first on `PATH`.
@@ -67,20 +68,39 @@ After a new `scryer-plugin-sdk` version has been published to crates.io,
 maintainers should run `cargo xtask sdk bump <version>` to switch plugin crates
 to the published SDK line and refresh lockfiles.
 
-Required exports are validated from the plugin descriptor:
+Every family world exports exactly two functions — `describe` and `process` —
+and the per-operation entry points are gone: an operation is a variant of the
+family's command enum inside `process`, and a plugin that cannot serve one
+answers `PluginErrorCode::Unsupported` in-band rather than omitting an export.
+The PDK's family entry macro generates both exports, so a plugin crate writes a
+descriptor factory and one command handler.
 
-- `scryer_describe`
-- `scryer_indexer_search` for indexers
-- `scryer_download_add`, `scryer_download_list_queue`, `scryer_download_list_history`, `scryer_download_list_completed`, `scryer_download_control`, `scryer_download_mark_imported`, `scryer_download_status`, and `scryer_download_test_connection` for download clients
-- `scryer_notification_send` for notification plugins
-- `scryer_validate_config` plus `scryer_subtitle_search` and `scryer_subtitle_download` for catalog subtitle providers
-- `scryer_validate_config` plus `scryer_subtitle_generate` for subtitle generators
+Host capabilities reach a component through two import packages:
+
+- `scryer:host/services@1.0.0` — the single encoded door. Everything the SDK
+  models as a postcard request (config, plugin state, HTTP, archive extraction)
+  crosses here, and every family world imports it.
+- `scryer:runtime/host@1.0.0` — the family-neutral *typed* capability surface
+  (HTTP, sleep, the monotonic and wall clocks, the invocation deadline, config,
+  provider profile, state CAS, logging), reached through
+  `scryer_plugin_pdk::runtime`. A world only imports it if its family has
+  adopted it, and the built artifact only carries the import if reachable code
+  actually names one of those capabilities.
+
+`scryer:subtitle@1.1.0` is the first world to lift `process` as an `async func`.
+A subtitle plugin's handler is therefore `async fn handle_subtitle_command(...)`
+and awaits `scryer_plugin_pdk::runtime` calls, which yields the guest task back
+to the host instead of blocking the store for the length of an upstream round
+trip. `describe` stays synchronous in every family. The other four worlds are
+still synchronous on their 1.0.0 revisions.
 
 Use `cargo xtask plugin new <kind> <name>` to scaffold a plugin and
-`cargo xtask plugin validate <path>` before opening a catalog metadata change. The
-validator builds the Wasm module, calls `scryer_describe`, checks descriptor and
-manifest identity, rejects wildcard network permissions, and verifies required
-exports.
+`cargo xtask plugin validate <path>` before opening a catalog metadata change.
+The scaffold covers the notification and subtitle families; the other three
+report which first-party plugin to copy instead of generating a wrong-shaped
+crate. The validator builds the component for `wasm32-wasip2`, instantiates it,
+calls `describe`, checks descriptor and manifest identity, and rejects wildcard
+network permissions.
 
 The JSON Schema bundle for non-Rust authors is committed in the Scryer repo at
 `crates/scryer-plugin-sdk/schemas/plugin-sdk-v1.schema.json`.

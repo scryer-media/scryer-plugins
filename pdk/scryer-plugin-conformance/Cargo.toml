@@ -1,0 +1,36 @@
+[package]
+name = "scryer-plugin-conformance"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97.1"
+license = "GPL-3.0-only"
+description = "Host-conformance harness for Scryer plugin components. Dev-dependency only."
+repository = "https://github.com/scryer-media/scryer-plugins"
+# Never published: this crate links wasmtime, which is meaningless off the host
+# and would be a supply-chain surface nobody consumes.
+publish = false
+
+# The three family worlds are behind features so a plugin's test binary links
+# one `bindgen!` expansion rather than three, and so the subtitle family's
+# tokio runtime stays out of the two synchronous families.
+#
+# This crate is ONLY ever a `[dev-dependencies]` entry. Cargo unifies features
+# across normal and dev dependencies in one build graph, so pulling it in
+# behind a feature of the PDK or of `notify-common` would put `wasmtime` in the
+# `cdylib`'s graph and break the `wasm32-wasip2` build outright.
+[features]
+default = []
+download-client = []
+notification = []
+subtitle = ["dep:tokio"]
+
+[dependencies]
+base64 = "0.23"
+# The exact git spec every plugin uses, so cargo unifies the SDK to one copy in
+# each plugin's lock rather than adding a second source.
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
+postcard = { version = "1", features = ["use-std"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt", "time", "macros"], optional = true }
+wasmtime = "48.0.1"
+wasmtime-wasi = "48.0.1"

@@ -1,9 +1,8 @@
 [package]
 name = "aria2-download-client"
-version = "1.1.2"
+version = "2.0.0"
 edition = "2024"
 rust-version = "1.97.1"
-autolib = false
 license = "GPL-3.0-only"
 description = "Aria2 XML-RPC torrent download client plugin"
 
@@ -12,21 +11,40 @@ official = true
 plugin_id = "aria2"
 status = "beta"
 catalog_versions = ["v3"]
-min_scryer_version = "0.18.12"
-feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
+# Scryer 0.20.0 is the first release whose download-client backing is the
+# `scryer:download-client/download-client@1.0.0` component host. Earlier
+# releases run the Preview 1 command runtime and cannot instantiate this
+# artifact at all, so the floor is load-bearing, not advisory.
+min_scryer_version = "0.20.0"
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/aria2"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/aria2"
 
-[[bin]]
-name = "aria2-download-client"
-path = "src/lib.rs"
+# A component, not a Preview 1 command binary: the world's `describe` and
+# `process` are exported from the library itself, so there is no `main` and no
+# `[[bin]]`. xtask's `select_built_wasm` already accepts either artifact name.
+[lib]
+crate-type = ["cdylib"]
 
 [dependencies]
 base64 = "0.23"
 roxmltree = "0.21"
-scryer-plugin-sdk = "3.7.0"
-scryer-plugin-pdk = "0.5.7"
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
+serde = "1"
 serde_json = "1"
+# `aria2.addUri` answers with a GID, never with the info hash, and the GID it
+# returns for a magnet or a torrent URL belongs to the metadata download aria2
+# discards once the metainfo resolves. The plugin therefore derives the identity
+# itself: SHA-1 over the bencoded `info` dictionary, the definition Sonarr's
+# `ITorrentFileInfoReader.GetHashFromTorrentFile` implements. Same version the
+# qbittorrent, utorrent, downloadstation and freebox clients already pin.
+sha1 = "0.11"
+wit-bindgen = "0.61"
+
+[dev-dependencies]
+scryer-plugin-conformance = { path = "../../pdk/scryer-plugin-conformance", features = [
+    "download-client",
+] }
 
 [profile.plugin-release]
 inherits = "release"

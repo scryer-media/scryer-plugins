@@ -7,7 +7,7 @@ license = "GPL-3.0-only"
 
 [dependencies]
 anyhow = "1"
-brotli = "8"
+brotli = "9"
 clap = { version = "4", features = ["derive"] }
 semver = "1"
 serde = { version = "1", features = ["derive"] }
@@ -16,20 +16,22 @@ base64 = "0.23"
 sha2 = "0.11"
 tiny-keccak = { version = "2", features = ["shake"] }
 blake3 = "1"
-scryer-plugin-sdk = "3.10.0"
+postcard = { version = "1", features = ["use-std"] }
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
 tempfile = "3"
 toml_edit = "0.25"
-extism = "1.30"
 futures = { version = "0.3", default-features = false, features = ["executor"] }
-wasmtime = "48.0.0"
-wasmtime-wasi = "48.0.0"
+wasmtime = "48.0.1"
+# Preview 2 only: the Preview 1 (`p1`) tier pulled in `wiggle` to run
+# command-model modules, and there are no core-module plugin artifacts left.
+wasmtime-wasi = { version = "48.0.1", default-features = false, features = ["p2"] }
 zstd = "0.13"
 
 [dev-dependencies]
-aws-lc-sys = "0.44"
+aws-lc-sys = "0.45"
 crc32fast = "1"
-sevenz-rust2 = { version = "0.21", default-features = false, features = ["compress"] }
-zip = { version = "8.0.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+sevenz-rust2 = { version = "0.22", default-features = false, features = ["compress"] }
+zip = { version = "8.6.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 
 [profile.xtask-release]
 inherits = "dev"

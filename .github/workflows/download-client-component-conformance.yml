@@ -1,0 +1,107 @@
+# Host conformance for `scryer:download-client/download-client@1.0.0` components.
+#
+# The sibling of subtitle-component-conformance.yml. This world has the largest
+# implementation count in the fleet — every first-party download client — so the
+# plugin is a matrix row from the outset. A client migrating to the component
+# ABI adds its directory to `paths` and its manifest to `include`, and gets the
+# same check: the shipping `wasm32-wasip2` artifact instantiated against the
+# real world and driven through `describe`/`process`.
+#
+# What each row proves that `plugin-ci.yml` cannot: the artifact is a component
+# and not a core module, its import set is `scryer:host/services@1.0.0` plus
+# WASI Preview 2 and nothing else (a stray `scryer:indexer/host` compiles fine
+# and then fails to instantiate), `describe` touches no host services, `process`
+# actually reaches the shared import, and a host that refuses a service is
+# answered in-band rather than with a world-level `invocation-error`.
+#
+# qbittorrent's row carries more than the shared suite: it also pins the
+# qBittorrent 5.2 session contract — a 204-bodied login, the SID cookie written
+# through `StateSet` and read back by a *second* instance through `StateGet`,
+# and no re-authentication when a session is already stored. That is the
+# behaviour a component instance cannot hold on its own, so it is the behaviour
+# most worth a host-level test.
+name: download-client-component-conformance
+
+on:
+  pull_request:
+    paths:
+      - download_clients/aria2/**
+      - download_clients/deluge/**
+      - download_clients/downloadstation/**
+      - download_clients/flood/**
+      - download_clients/freebox/**
+      - download_clients/qbittorrent/**
+      - download_clients/rqbit/**
+      - download_clients/rtorrent/**
+      - download_clients/torrent-blackhole/**
+      - download_clients/transmission/**
+      - download_clients/tribler/**
+      - download_clients/usenet-blackhole/**
+      - pdk/scryer-plugin-pdk/**
+      # The shared conformance harness: a change to it changes every
+      # plugin's suite in this matrix.
+      - pdk/scryer-plugin-conformance/**
+      - .github/workflows/download-client-component-conformance.yml
+  workflow_dispatch:
+
+concurrency:
+  group: download-client-component-conformance-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  download-client-component-conformance:
+    name: conformance (${{ matrix.plugin }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # qbittorrent leads deliberately: it is the highest-traffic client
+          # here and the one whose suite covers the session contract.
+          - plugin: qbittorrent
+            manifest: download_clients/qbittorrent/Cargo.toml
+          - plugin: aria2
+            manifest: download_clients/aria2/Cargo.toml
+          - plugin: deluge
+            manifest: download_clients/deluge/Cargo.toml
+          - plugin: downloadstation
+            manifest: download_clients/downloadstation/Cargo.toml
+          - plugin: flood
+            manifest: download_clients/flood/Cargo.toml
+          - plugin: freebox
+            manifest: download_clients/freebox/Cargo.toml
+          - plugin: rqbit
+            manifest: download_clients/rqbit/Cargo.toml
+          - plugin: rtorrent
+            manifest: download_clients/rtorrent/Cargo.toml
+          - plugin: torrent-blackhole
+            manifest: download_clients/torrent-blackhole/Cargo.toml
+          - plugin: transmission
+            manifest: download_clients/transmission/Cargo.toml
+          - plugin: tribler
+            manifest: download_clients/tribler/Cargo.toml
+          - plugin: usenet-blackhole
+            manifest: download_clients/usenet-blackhole/Cargo.toml
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        with:
+          # Download clients are WASI Preview 2 components, and the conformance
+          # suite builds that exact release artifact.
+          targets: wasm32-wasip2
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+
+      # No WASI SDK step: no download-client component compiles C sources. Add
+      # one here if a matrix row ever does.
+
+      - name: Run download-client host conformance
+        run: >-
+          cargo test --locked
+          --manifest-path ${{ matrix.manifest }}
+          --test host_conformance

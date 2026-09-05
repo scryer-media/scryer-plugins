@@ -1,6 +1,6 @@
 [package]
 name = "jimaku-subtitle-provider"
-version = "0.2.6"
+version = "1.0.0"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Anime-focused Jimaku subtitle provider using AniList IDs and optional name fallback"
@@ -9,8 +9,11 @@ description = "Anime-focused Jimaku subtitle provider using AniList IDs and opti
 official = true
 plugin_id = "jimaku"
 catalog_versions = ["v3"]
-min_scryer_version = "0.18.0"
-feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
+# Scryer 0.20.0 is the first release whose subtitle host serves
+# `scryer:subtitle/subtitle-provider@1.1.0`. A host that only serves the 1.0.0
+# world (or the Preview 1 command runtime before it) cannot bind this artifact
+# at all, so the floor is load-bearing, not advisory.
+min_scryer_version = "0.20.0"
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/jimaku"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/jimaku"
 
@@ -19,10 +22,20 @@ crate-type = ["cdylib"]
 
 [dependencies]
 base64 = "0.23"
-extism-pdk = "1.4"
-scryer-plugin-sdk = "3.7.0"
+# Needs no host archive extraction: Jimaku serves
+# archives as-is (see `is_archive`), so nothing here opens one.
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
+scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+wit-bindgen = { version = "0.61", features = ["async"] }
+
+[dev-dependencies]
+# The whole host-conformance suite: it links wasmtime and drives the release
+# artifact. Dev-dependency only — see the crate's own manifest for why.
+scryer-plugin-conformance = { path = "../../pdk/scryer-plugin-conformance", features = [
+    "subtitle",
+] }
 
 [profile.plugin-release]
 inherits = "release"

@@ -120,7 +120,13 @@ fn main() {
     let libfvad_source_dir = out_dir.join("libfvad-source");
     let libfvad_build_dir = out_dir.join("libfvad-build");
     let target = env::var("TARGET").unwrap();
-    let is_wasi = target == "wasm32-wasip1";
+    // Both WASI triples, and the clang target follows `TARGET` rather than
+    // being pinned: the plugin ships as a `wasm32-wasip2` component now, and
+    // compiling its C against the `wasm32-wasip1` libc while rustc links the
+    // `wasm32-wasip2` one is exactly the mismatch that produces link-time
+    // surprises. `wasm32-wasip1` stays accepted so a Preview 1 build of the
+    // vendored sources remains reproducible.
+    let is_wasi = target.starts_with("wasm32-wasi");
     let feature_set = WasmFeatureSet::from_env();
     let vendor_metadata = read_ffmpeg_vendor_metadata(&vendor_dir);
     let libfvad_vendor_metadata = read_libfvad_vendor_metadata(&libfvad_vendor_dir);
@@ -263,7 +269,7 @@ fn build_ffmpeg(
         let sysroot = wasi_sysroot();
         let clang = clang_path();
         let mut extra_cflags = vec![
-            "--target=wasm32-wasip1".to_string(),
+            format!("--target={}", wasi_clang_target()),
             format!("--sysroot={}", sysroot.display()),
             feature_set.c_opt_level_flag().to_string(),
             "-fvisibility=hidden".to_string(),
@@ -276,7 +282,7 @@ fn build_ffmpeg(
                 .map(str::to_string),
         );
         let mut extra_ldflags = vec![
-            "--target=wasm32-wasip1".to_string(),
+            format!("--target={}", wasi_clang_target()),
             format!("--sysroot={}", sysroot.display()),
             "-fuse-ld=lld".to_string(),
             "-nostdlib".to_string(),
@@ -375,7 +381,7 @@ fn build_libfvad(
         let sysroot = wasi_sysroot();
         build
             .compiler(clang_path())
-            .flag("--target=wasm32-wasip1")
+            .flag(format!("--target={}", wasi_clang_target()))
             .flag(format!("--sysroot={}", sysroot.display()))
             .flag(feature_set.c_opt_level_flag())
             .flag("-D_GNU_SOURCE");
@@ -447,7 +453,7 @@ fn build_bridge(
         let sysroot = wasi_sysroot();
         build
             .compiler(clang_path())
-            .flag("--target=wasm32-wasip1")
+            .flag(format!("--target={}", wasi_clang_target()))
             .flag(format!("--sysroot={}", sysroot.display()))
             .flag(feature_set.c_opt_level_flag())
             .flag("-D_GNU_SOURCE");
@@ -488,6 +494,18 @@ fn wasi_sysroot() -> PathBuf {
                 "wasi-libc sysroot not found; set FFMPEG_WASI_SYSROOT or WASI_SYSROOT to the wasi-sysroot directory"
             )
         })
+}
+
+/// The clang triple for the C halves, taken from Cargo's `TARGET`.
+///
+/// This is only ever called from the `is_wasi` branches, so `TARGET` is a
+/// `wasm32-wasi*` triple and clang and rustc agree on which wasi-libc the
+/// objects are compiled against. Pinning it to `wasm32-wasip1` — as this build
+/// script did while the plugin was a Preview 1 command — would compile FFmpeg,
+/// libfvad and the bridge against the Preview 1 libc while rustc links the
+/// Preview 2 one.
+fn wasi_clang_target() -> String {
+    env::var("TARGET").expect("cargo sets TARGET for build scripts")
 }
 
 fn clang_path() -> PathBuf {
