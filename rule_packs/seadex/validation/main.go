@@ -221,7 +221,7 @@ func run() error {
 			}
 		}
 	}
-	git := exec.Command("rtk", "proxy", "git", "rev-parse", "HEAD")
+	git := exec.Command("git", "rev-parse", "HEAD")
 	git.Dir = *scryer
 	revision, err := git.Output()
 	if err != nil {
@@ -238,7 +238,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	cmd := exec.Command("rtk", "proxy", "cargo", "nextest", "run", "--offline", "--no-fail-fast", "--cargo-profile", "release", "-p", "scryer-rules", "--test", "seadex_pack")
+	cmd := exec.Command("cargo", "nextest", "run", "--offline", "--no-fail-fast", "--cargo-profile", "release", "-p", "scryer-rules", "--test", "seadex_pack")
 	cmd.Dir = scratch
 	cmd.Env = append(os.Environ(), "SEADEX_ENGINE_JOBS="+*jobs, "SEADEX_ENGINE_REPORT="+filepath.Join(scratch, "report.json"), "SEADEX_MEMORY_PHASE="+*memoryPhase, "CARGO_TARGET_DIR="+filepath.Join(os.TempDir(), "seadex-engine-target"))
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
