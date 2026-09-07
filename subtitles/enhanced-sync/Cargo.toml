@@ -42,7 +42,7 @@ wit-bindgen = { version = "0.61", features = ["async"] }
 [build-dependencies]
 cc = "1"
 tar = "0.4"
-zstd = "0.13"
+zstd = "0.14"
 
 [dev-dependencies]
 # The whole host-conformance suite: it links wasmtime and drives the release
