@@ -57,7 +57,7 @@ checksum = "c3d036a3c4ab069c7b410a2ce876bd74808d2d0888a82667669f8e783a898bf1"
 name = "archive-extraction-archive-extractor"
 version = "1.0.0"
 dependencies = [
- "aws-lc-sys 0.45.0",
+ "aws-lc-sys",
  "crc32fast",
  "liblzma",
  "par2-rs",
@@ -94,19 +94,6 @@ name = "autocfg"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
-
-[[package]]
-name = "aws-lc-sys"
-version = "0.44.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f09fae7be8bb3174e05c6afdb34199e6dc0c7c04ba9fa237b1967adfbde27483"
-dependencies = [
- "cc",
- "cmake",
- "dunce",
- "fs_extra",
- "pkg-config",
-]
 
 [[package]]
 name = "aws-lc-sys"
@@ -1340,11 +1327,11 @@ checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 
 [[package]]
 name = "par2-rs"
-version = "0.9.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "886fc3580c754f2515f7d1af48baeab0e29957fa513c550bdf3ad3c5e43e0d63"
+checksum = "8380fcb1f1ffb23c8c94f43457aaf1ec3442ed7b9caf8efca091268421e58919"
 dependencies = [
- "aws-lc-sys 0.44.0",
+ "aws-lc-sys",
  "bytes",
  "cap-std",
  "crc-fast",
@@ -2040,6 +2027,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "typed-path"
+version = "0.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e28f89b80c87b8fb0cf04ab448d5dd0dd0ade2f8891bae878de66a75a28600e"
+
+[[package]]
 name = "typenum"
 version = "1.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2068,9 +2061,9 @@ checksum = "b4ac048d71ede7ee76d585517add45da530660ef4390e49b098733c6e897f254"
 
 [[package]]
 name = "unrar-rs"
-version = "0.8.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e06f150ac0c457860a134e9e630a5b423a773c724408b9b4798f87fa8179b618"
+checksum = "3e5b4b91813b2c122baf13c66e8a2c297abe17de6b350d91130c2974f7ec9111"
 dependencies = [
  "aes",
  "blake2s_simd",
@@ -3081,14 +3074,15 @@ dependencies = [
 
 [[package]]
 name = "zip"
-version = "7.1.0"
+version = "7.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9013f1222db8a6d680f13a7ccdc60a781199cd09c2fa4eff58e728bb181757fc"
+checksum = "c42e33efc22a0650c311c2ef19115ce232583abbe80850bc8b66509ebef02de0"
 dependencies = [
  "crc32fast",
  "flate2",
  "indexmap",
  "memchr",
+ "typed-path",
 ]
 
 [[package]]
