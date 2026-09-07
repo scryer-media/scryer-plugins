@@ -16,7 +16,7 @@ func TestEngineCorpus(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	artifacts, err := buildArtifacts(snapshot, Overrides{SchemaVersion: 1, Releases: map[string]Override{}}, nil)
+	artifacts, err := buildArtifacts(snapshot, Overrides{SchemaVersion: 1, Releases: map[string]Override{}}, nil, defaultPackVersion)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +56,7 @@ func TestEngineCorpus(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		fullArtifacts, err := buildArtifacts(full, Overrides{SchemaVersion: 1, Releases: map[string]Override{}}, nil)
+		fullArtifacts, err := buildArtifacts(full, Overrides{SchemaVersion: 1, Releases: map[string]Override{}}, nil, defaultPackVersion)
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -162,11 +162,11 @@ func TestArtifactsDeterministicAndReportChanges(t *testing.T) {
 		t.Fatal(err)
 	}
 	overrides := Overrides{SchemaVersion: 1, Releases: map[string]Override{"release-a": {Aliases: []string{"Show alias"}}, "stale": {Exclude: true}}}
-	first, err := buildArtifacts(snapshot, overrides, &previous)
+	first, err := buildArtifacts(snapshot, overrides, &previous, defaultPackVersion)
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, err := buildArtifacts(snapshot, overrides, &previous)
+	second, err := buildArtifacts(snapshot, overrides, &previous, defaultPackVersion)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -353,7 +353,7 @@ func mustRawEntry(t *testing.T, id, releaseID string) rawEntry {
 
 func TestCheckDoesNotWrite(t *testing.T) {
 	snapshot := normalizedFixture(t)
-	artifacts, err := buildArtifacts(snapshot, Overrides{SchemaVersion: 1, Releases: map[string]Override{}}, nil)
+	artifacts, err := buildArtifacts(snapshot, Overrides{SchemaVersion: 1, Releases: map[string]Override{}}, nil, defaultPackVersion)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -381,6 +381,74 @@ func TestCheckDoesNotWrite(t *testing.T) {
 	content, _ := os.ReadFile(regoPath)
 	if string(content) != "outdated\n" {
 		t.Fatal("check modified an artifact")
+	}
+}
+
+func TestPackVersionGenerateAndCheck(t *testing.T) {
+	snapshot := normalizedFixture(t)
+	directory := t.TempDir()
+	snapshotPath := filepath.Join(directory, "snapshot.json")
+	data, err := json.Marshal(snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(snapshotPath, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	version := "2.3.4-rc.1+build.5"
+	if err := run([]string{"generate", "--snapshot", snapshotPath, "--output-dir", directory, "--pack-version", version}); err != nil {
+		t.Fatal(err)
+	}
+	packBytes, err := os.ReadFile(filepath.Join(directory, "seadex-scoring.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var generated pack
+	if err := json.Unmarshal(packBytes, &generated); err != nil {
+		t.Fatal(err)
+	}
+	if generated.Version != version {
+		t.Fatalf("pack version = %q, want %q", generated.Version, version)
+	}
+	coverageBytes, err := os.ReadFile(filepath.Join(directory, "seadex-coverage.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var report coverage
+	if err := json.Unmarshal(coverageBytes, &report); err != nil {
+		t.Fatal(err)
+	}
+	if report.PackVersion != version {
+		t.Fatalf("coverage pack version = %q, want %q", report.PackVersion, version)
+	}
+	if err := run([]string{"check", "--snapshot", snapshotPath, "--output-dir", directory, "--pack-version", version}); err != nil {
+		t.Fatalf("same version check failed: %v", err)
+	}
+	if err := run([]string{"check", "--snapshot", snapshotPath, "--output-dir", directory}); err == nil {
+		t.Fatal("default version check accepted custom-version artifacts")
+	}
+	if err := run([]string{"generate", "--snapshot", snapshotPath, "--output-dir", directory, "--pack-version", "01.2.3"}); err == nil {
+		t.Fatal("invalid version was accepted")
+	}
+	unchanged, err := os.ReadFile(filepath.Join(directory, "seadex-scoring.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(unchanged, packBytes) {
+		t.Fatal("invalid version replaced artifacts")
+	}
+}
+
+func TestValidateSemVer(t *testing.T) {
+	for _, version := range []string{"0.0.0", "1.2.3", "1.2.3-alpha.1", "1.2.3-01a+build.01", "1.2.3+build.1", "18446744073709551615.0.0"} {
+		if err := validateSemVer(version); err != nil {
+			t.Fatalf("valid version %q was rejected: %v", version, err)
+		}
+	}
+	for _, version := range []string{"", "1.2", "01.2.3", "1.02.3", "1.2.03", "18446744073709551616.0.0", "1.2.3-", "1.2.3-01", "1.2.3-alpha..1", "1.2.3+", "1.2.3+build+metadata", "v1.2.3", "1.2.3-α"} {
+		if err := validateSemVer(version); err == nil {
+			t.Fatalf("invalid version %q was accepted", version)
+		}
 	}
 }
 

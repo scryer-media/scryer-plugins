@@ -18,8 +18,8 @@ Run commands from this directory:
 
 ```sh
 go run . fetch --output snapshot.json.gz
-go run . generate --snapshot snapshot.json.gz --output-dir ..
-go run . check --snapshot snapshot.json.gz --output-dir ..
+go run . generate --snapshot snapshot.json.gz --output-dir .. --pack-version 1.0.0
+go run . check --snapshot snapshot.json.gz --output-dir .. --pack-version 1.0.0
 ```
 
 `fetch` retrieves every SeaDex page and writes a normalized snapshot. It
@@ -41,6 +41,17 @@ Use `--overrides /path/to/overrides.json` to apply reviewed aliases or
 exclusions. No overrides file is committed; the default is an empty override
 set. `check` regenerates in memory and exits nonzero when any artifact is
 missing or differs; it does not write artifacts.
+
+`--pack-version` sets the immutable SemVer version written to both the pack
+and coverage report. It defaults to `1.0.0` for this initial pack. Supply the
+same explicit version to `generate` and `check`; a different version makes
+`check` report the existing artifacts as outdated.
+
+For a snapshot refresh, review the coverage changes against
+`--previous-snapshot` and any reviewed overrides, choose the next pack
+version, then regenerate and check with that exact `--pack-version`. The
+converter never fetches automatically or publishes a pack. Publication after
+merge remains a separately authorized operator action.
 
 ## Snapshot and overrides
 

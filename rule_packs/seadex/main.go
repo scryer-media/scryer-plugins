@@ -16,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -30,12 +31,12 @@ var matcherSource []byte
 var encodingSource []byte
 
 const (
-	schemaVersion  = 1
-	packID         = "seadex-scoring-pack"
-	packVersion    = "1.0.0"
-	ruleID         = "seadex-preferences"
-	defaultAPIURL  = "https://releases.moe/api/collections/entries/records"
-	defaultPerPage = 500
+	schemaVersion      = 1
+	packID             = "seadex-scoring-pack"
+	defaultPackVersion = "1.0.0"
+	ruleID             = "seadex-preferences"
+	defaultAPIURL      = "https://releases.moe/api/collections/entries/records"
+	defaultPerPage     = 500
 )
 
 var artifactNames = []string{"seadex-scoring.json", "seadex-scoring.rego", "seadex-coverage.json"}
@@ -183,6 +184,7 @@ func run(args []string) error {
 		flags.SetOutput(io.Discard)
 		snapshotPath := flags.String("snapshot", "", "normalized SeaDex snapshot")
 		outputDir := flags.String("output-dir", "", "artifact directory")
+		version := flags.String("pack-version", defaultPackVersion, "pack SemVer version")
 		overridesPath := flags.String("overrides", "", "reviewed overrides")
 		previousPath := flags.String("previous-snapshot", "", "previous normalized snapshot")
 		if err := flags.Parse(args[1:]); err != nil {
@@ -190,6 +192,9 @@ func run(args []string) error {
 		}
 		if *snapshotPath == "" || *outputDir == "" {
 			return fmt.Errorf("%s requires --snapshot and --output-dir", args[0])
+		}
+		if err := validateSemVer(*version); err != nil {
+			return fmt.Errorf("invalid --pack-version: %w", err)
 		}
 		snapshot, err := loadSnapshot(*snapshotPath)
 		if err != nil {
@@ -207,7 +212,7 @@ func run(args []string) error {
 			}
 			previous = &value
 		}
-		artifacts, err := buildArtifacts(snapshot, overrides, previous)
+		artifacts, err := buildArtifacts(snapshot, overrides, previous, *version)
 		if err != nil {
 			return err
 		}
@@ -912,9 +917,12 @@ func fetchRecords(apiURL string, timeout time.Duration, perPage int, client *htt
 	return normalizeRawEntries(rawEntries)
 }
 
-func buildArtifacts(snapshot Snapshot, overrides Overrides, previous *Snapshot) (map[string][]byte, error) {
+func buildArtifacts(snapshot Snapshot, overrides Overrides, previous *Snapshot, version string) (map[string][]byte, error) {
 	if err := validateSnapshot(&snapshot); err != nil {
 		return nil, err
+	}
+	if err := validateSemVer(version); err != nil {
+		return nil, fmt.Errorf("invalid pack version: %w", err)
 	}
 	tables, report, err := compileSnapshot(snapshot, overrides)
 	if err != nil {
@@ -932,7 +940,7 @@ func buildArtifacts(snapshot Snapshot, overrides Overrides, previous *Snapshot) 
 	if err := json.Unmarshal(reportBytes, &reportMap); err != nil {
 		return nil, err
 	}
-	packBytes, err := json.MarshalIndent(pack{SchemaVersion: schemaVersion, ID: packID, Name: "SeaDex Scoring Pack", Description: "Prefer exact SeaDex-recommended anime releases.", Author: "community", Version: packVersion, Rules: []packRule{{ID: ruleID, Title: "Prefer SeaDex recommendations", Description: "Boost listed SeaDex releases, with higher priority for best releases.", Category: "Anime", AppliedFacets: []string{"anime"}, RegoSource: policy}}}, "", "  ")
+	packBytes, err := json.MarshalIndent(pack{SchemaVersion: schemaVersion, ID: packID, Name: "SeaDex Scoring Pack", Description: "Prefer exact SeaDex-recommended anime releases.", Author: "community", Version: version, Rules: []packRule{{ID: ruleID, Title: "Prefer SeaDex recommendations", Description: "Boost listed SeaDex releases, with higher priority for best releases.", Category: "Anime", AppliedFacets: []string{"anime"}, RegoSource: policy}}}, "", "  ")
 	if err != nil {
 		return nil, err
 	}
@@ -951,11 +959,92 @@ func buildArtifacts(snapshot Snapshot, overrides Overrides, previous *Snapshot) 
 		return nil, err
 	}
 	matching["encoding"] = encoderStatsBytes
-	coverageBytes, err := json.MarshalIndent(coverage{SchemaVersion: schemaVersion, PackID: packID, PackVersion: packVersion, SnapshotSHA256: snapshotChecksum(snapshot), ConverterRevision: sourceRevision(), Included: arrayOrEmpty(reportMap["included"]), Skipped: arrayOrEmpty(reportMap["skipped"]), Ambiguous: arrayOrEmpty(reportMap["ambiguous"]), StaleOverrides: staleOverrides(snapshot, overrides), Changes: snapshotChanges(snapshot, previous), Matching: matching}, "", "  ")
+	coverageBytes, err := json.MarshalIndent(coverage{SchemaVersion: schemaVersion, PackID: packID, PackVersion: version, SnapshotSHA256: snapshotChecksum(snapshot), ConverterRevision: sourceRevision(), Included: arrayOrEmpty(reportMap["included"]), Skipped: arrayOrEmpty(reportMap["skipped"]), Ambiguous: arrayOrEmpty(reportMap["ambiguous"]), StaleOverrides: staleOverrides(snapshot, overrides), Changes: snapshotChanges(snapshot, previous), Matching: matching}, "", "  ")
 	if err != nil {
 		return nil, err
 	}
 	return map[string][]byte{"seadex-scoring.json": append(packBytes, '\n'), "seadex-scoring.rego": []byte(strings.TrimRight(policy, "\n") + "\n"), "seadex-coverage.json": append(coverageBytes, '\n')}, nil
+}
+
+func validateSemVer(version string) error {
+	coreAndPre, build, hasBuild := strings.Cut(version, "+")
+	if hasBuild && !validBuildMetadata(build) {
+		return errors.New("build metadata must contain dot-separated ASCII alphanumeric or hyphen identifiers")
+	}
+	core, prerelease, hasPrerelease := strings.Cut(coreAndPre, "-")
+	if hasPrerelease && !validPrerelease(prerelease) {
+		return errors.New("prerelease must contain dot-separated ASCII alphanumeric or hyphen identifiers")
+	}
+	parts := strings.Split(core, ".")
+	if len(parts) != 3 {
+		return errors.New("must have major.minor.patch")
+	}
+	for _, part := range parts {
+		if !validNumericIdentifier(part) {
+			return errors.New("major, minor, and patch must be non-negative integers without leading zeroes")
+		}
+	}
+	return nil
+}
+
+func validPrerelease(value string) bool {
+	if value == "" {
+		return false
+	}
+	for _, identifier := range strings.Split(value, ".") {
+		if !validVersionIdentifier(identifier) {
+			return false
+		}
+		if numericVersionIdentifier(identifier) && !validUnboundedNumericIdentifier(identifier) {
+			return false
+		}
+	}
+	return true
+}
+
+func validBuildMetadata(value string) bool {
+	if value == "" {
+		return false
+	}
+	for _, identifier := range strings.Split(value, ".") {
+		if !validVersionIdentifier(identifier) {
+			return false
+		}
+	}
+	return true
+}
+
+func validNumericIdentifier(value string) bool {
+	if !validUnboundedNumericIdentifier(value) {
+		return false
+	}
+	_, err := strconv.ParseUint(value, 10, 64)
+	return err == nil
+}
+
+func validUnboundedNumericIdentifier(value string) bool {
+	return value != "" && (len(value) == 1 || value[0] != '0') && numericVersionIdentifier(value)
+}
+
+func numericVersionIdentifier(value string) bool {
+	for _, character := range value {
+		if character < '0' || character > '9' {
+			return false
+		}
+	}
+	return value != ""
+}
+
+func validVersionIdentifier(value string) bool {
+	if value == "" {
+		return false
+	}
+	for _, character := range value {
+		if !(character >= '0' && character <= '9' || character >= 'A' && character <= 'Z' || character >= 'a' && character <= 'z' || character == '-') {
+			return false
+		}
+	}
+	return true
 }
 
 func arrayOrEmpty(value json.RawMessage) json.RawMessage {
