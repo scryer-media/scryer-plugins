@@ -1,0 +1,174 @@
+use scryer_rules::*;
+use serde_json::{json, Value};
+use std::{env, fs, time::Instant};
+
+// Track live Rust allocations independently of RSS and allocator retention.
+struct MeasuredAllocator;
+static LIVE_BYTES: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+static PEAK_BYTES: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+fn allocated(bytes: usize) {
+    use std::sync::atomic::Ordering::Relaxed;
+    let live = LIVE_BYTES.fetch_add(bytes, Relaxed) + bytes;
+    PEAK_BYTES.fetch_max(live, Relaxed);
+}
+unsafe impl std::alloc::GlobalAlloc for MeasuredAllocator {
+    unsafe fn alloc(&self, layout: std::alloc::Layout) -> *mut u8 {
+        let pointer = unsafe { std::alloc::System.alloc(layout) };
+        if !pointer.is_null() { allocated(layout.size()); }
+        pointer
+    }
+    unsafe fn dealloc(&self, pointer: *mut u8, layout: std::alloc::Layout) {
+        LIVE_BYTES.fetch_sub(layout.size(), std::sync::atomic::Ordering::Relaxed);
+        unsafe { std::alloc::System.dealloc(pointer, layout); }
+    }
+    unsafe fn realloc(&self, pointer: *mut u8, layout: std::alloc::Layout, size: usize) -> *mut u8 {
+        let result = unsafe { std::alloc::System.realloc(pointer, layout, size) };
+        if !result.is_null() {
+            LIVE_BYTES.fetch_sub(layout.size(), std::sync::atomic::Ordering::Relaxed);
+            allocated(size);
+        }
+        result
+    }
+}
+#[global_allocator]
+static ALLOCATOR: MeasuredAllocator = MeasuredAllocator;
+fn live_bytes() -> usize { LIVE_BYTES.load(std::sync::atomic::Ordering::Relaxed) }
+
+__SYNTHETIC_INPUT__
+
+fn rss_kib() -> Option<u64> {
+    let output = std::process::Command::new("ps").args(["-o", "rss=", "-p", &std::process::id().to_string()]).output().ok()?;
+    String::from_utf8_lossy(&output.stdout).trim().parse().ok()
+}
+
+fn case_input(case: &Value) -> UserRuleInput {
+    let mut input = synthetic_test_input();
+    input.release.raw_title=case["title"].as_str().unwrap().into();
+    input.release.release_group=case["group"].as_str().map(str::to_owned);
+    input.release.has_release_group=input.release.release_group.is_some();
+    input.release.extra.clear();
+    input.release.age_days=None; input.release.thumbs_up=None; input.release.thumbs_down=None;
+    input.release.is_password_protected=None;
+    input.context.category=case["facet"].as_str().unwrap_or("anime").into();
+    input.context.media_type=input.context.category.clone();
+    input.context.is_anime=case["is_anime"].as_bool().unwrap_or(true);
+    input.context.search_mode="canonical".into();
+    input.builtin_score.blocked=case["blocked"].as_bool().unwrap_or(false);
+    input.file=None;
+    input
+}
+
+#[test]
+fn seadex_pack_compatibility() {
+    let memory_phase = env::var("SEADEX_MEMORY_PHASE").unwrap_or_else(|_| "installation".into());
+    assert!(["installation", "runtime"].contains(&memory_phase.as_str()));
+    let jobs: Value = serde_json::from_slice(&fs::read(env::var("SEADEX_ENGINE_JOBS").unwrap()).unwrap()).unwrap();
+    let mut reports = Vec::new();
+    for job in jobs.as_array().unwrap() {
+        let rss_before_source_kib = rss_kib();
+        let live_before_source_bytes = live_bytes();
+        let sources: Vec<String> = if let Some(pack) = job["pack"].as_str() {
+            let pack: Value = serde_json::from_slice(&fs::read(pack).unwrap()).unwrap();
+            pack["rules"].as_array().unwrap().iter().map(|r|r["regoSource"].as_str().unwrap().to_owned()).collect()
+        } else { vec![fs::read_to_string(job["source"].as_str().unwrap()).unwrap()] };
+        let source_bytes = sources.iter().map(String::len).sum::<usize>();
+        let policy_count = sources.len();
+        let rss_after_source_kib = rss_kib();
+        let mut policies = Vec::new();
+        let mut validation_ms = 0.0;
+        let mut source_rewrite_ms = 0.0;
+        for (index, source) in sources.iter().enumerate() {
+            let id = format!("seadex_validation_{index}");
+            let started = Instant::now();
+            let rewritten = rewrite_package_declaration(source, &id);
+            source_rewrite_ms += started.elapsed().as_secs_f64()*1000.0;
+            if memory_phase == "installation" {
+                let started = Instant::now();
+                let validation = validation::validate_user_rule(&rewritten, &id).unwrap();
+                validation_ms += started.elapsed().as_secs_f64()*1000.0;
+                assert!(validation.valid, "{}: {:?}", job["name"], validation.errors);
+            }
+            policies.push(UserPolicy {id, name:"SeaDex".into(),rego_source:rewritten,origin:PolicyOrigin::User,applied_facets:vec!["anime".into()]});
+        }
+        let rss_after_validation_kib = rss_kib();
+        drop(sources);
+        let started = Instant::now();
+        let engine = UserRulesEngine::build(&policies).unwrap();
+        let parse_build_ms = started.elapsed().as_secs_f64()*1000.0;
+        let rss_after_build_kib = rss_kib();
+        drop(policies);
+        let rss_loaded_engine_kib = rss_kib();
+        let live_loaded_engine_bytes = live_bytes();
+        PEAK_BYTES.store(live_bytes(), std::sync::atomic::Ordering::Relaxed);
+        let mut evaluator = engine.evaluator();
+        let rss_after_evaluator_kib = rss_kib();
+        let cases = job["cases"].as_array().unwrap();
+        assert!(!cases.is_empty(),"empty corpus");
+        let mut timings = Vec::new();
+        let mut fresh_timings = Vec::new();
+        let mut failures = Vec::new();
+        let mut reused_entries = Vec::new();
+        for case in cases {
+            let input = case_input(case);
+            let started=Instant::now();
+            let result=evaluator.evaluate(&input,&input.context.category).unwrap();
+            timings.push(started.elapsed().as_secs_f64()*1000.0);
+            reused_entries.push(result.entries.iter().map(|e|(e.code.clone(),e.delta,e.rule_set_id.clone())).collect::<Vec<_>>());
+            let score:i32=result.entries.iter().map(|entry|entry.delta).sum();
+            let expected=case["score"].as_i64().unwrap() as i32;
+            let wrong_code=case["code"].as_str().is_some_and(|code|result.entries.first().map(|e|e.code.as_str())!=Some(code));
+            if !result.errors.is_empty() || result.entries.len()>1 || score!=expected || wrong_code {
+                failures.push(format!("{case}: entries={:?}, errors={:?}",result.entries,result.errors));
+            }
+        }
+        let first_eval_ms=timings[0];
+        let batch_ms:f64=timings.iter().sum();
+        timings.sort_by(f64::total_cmp);
+        let rss_after_batch_kib = rss_kib();
+        let live_after_batch_bytes = live_bytes();
+        let peak_evaluation_bytes = PEAK_BYTES.load(std::sync::atomic::Ordering::Relaxed);
+        drop(evaluator);
+        let mut memory_samples = vec![json!({"prepared_evaluators":0,"rss_kib":rss_kib(),"live_bytes":live_bytes()})];
+        let mut retained_evaluators = Vec::new();
+        for index in 0..16 {
+            let case = &cases[index * cases.len() / 16];
+            let mut input = synthetic_test_input();
+            input.release.raw_title = case["title"].as_str().unwrap().into();
+            input.release.release_group = case["group"].as_str().map(str::to_owned);
+            input.release.extra.clear();
+            input.context.is_anime = true;
+            let mut prepared = engine.evaluator();
+            assert!(prepared.evaluate(&input,"anime").unwrap().errors.is_empty());
+            retained_evaluators.push(prepared);
+            if [1,4,16].contains(&retained_evaluators.len()) {
+                memory_samples.push(json!({"prepared_evaluators":retained_evaluators.len(),"rss_kib":rss_kib(),"live_bytes":live_bytes()}));
+            }
+        }
+        drop(retained_evaluators);
+        // Compare the legacy lifecycle only after measuring the production
+        // lifecycle. A search does not also construct a fresh evaluator for
+        // every candidate alongside its reused evaluator.
+        for (case, expected_entries) in cases.iter().zip(&reused_entries) {
+            let input = case_input(case);
+            let started=Instant::now();
+            let mut fresh=engine.evaluator();
+            let result=fresh.evaluate(&input,&input.context.category).unwrap();
+            fresh_timings.push(started.elapsed().as_secs_f64()*1000.0);
+            assert_eq!(*expected_entries, result.entries.iter().map(|e|(e.code.clone(),e.delta,e.rule_set_id.clone())).collect::<Vec<_>>());
+            assert!(result.errors.is_empty(), "fresh evaluator errors: {:?}", result.errors);
+        }
+        let fresh_batch_ms:f64=fresh_timings.iter().sum();
+        fresh_timings.sort_by(f64::total_cmp);
+        reports.push(json!({"name":job["name"],"source_bytes":source_bytes,"policies":policy_count,"cases":cases.len(),
+          "memory_lifecycle":"reused evaluator before fresh comparison",
+          "memory_phase":memory_phase,"validation_executed":memory_phase=="installation","source_rewrite_ms":source_rewrite_ms,
+          "validation_ms":validation_ms,"parse_build_ms":parse_build_ms,"first_eval_ms":first_eval_ms,"reused_evaluator_batch_ms":batch_ms,
+          "fresh_evaluator_batch_ms":fresh_batch_ms,"fresh_evaluator_p95_ms":fresh_timings[(fresh_timings.len()*95).div_ceil(100).saturating_sub(1)],"fresh_evaluator_max_ms":fresh_timings.last(),
+          "p95_eval_ms":timings[(timings.len()*95).div_ceil(100).saturating_sub(1)],"max_eval_ms":timings.last(),
+          "rss_before_source_kib":rss_before_source_kib,"rss_after_source_kib":rss_after_source_kib,"rss_after_validation_kib":rss_after_validation_kib,"rss_after_build_kib":rss_after_build_kib,"rss_loaded_engine_kib":rss_loaded_engine_kib,
+          "live_before_source_bytes":live_before_source_bytes,"live_loaded_engine_bytes":live_loaded_engine_bytes,"live_after_batch_bytes":live_after_batch_bytes,"peak_evaluation_bytes":peak_evaluation_bytes,
+          "rss_after_evaluator_kib":rss_after_evaluator_kib,"rss_after_batch_kib":rss_after_batch_kib,"retained_evaluators_memory":memory_samples,"failures":failures.len()}));
+        fs::write(env::var("SEADEX_ENGINE_REPORT").unwrap(),serde_json::to_vec_pretty(&reports).unwrap()).unwrap();
+        assert!(failures.is_empty(),"{} failures:\n{}",failures.len(),failures.iter().take(30).cloned().collect::<Vec<_>>().join("\n"));
+    }
+}

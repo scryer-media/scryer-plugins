@@ -1,0 +1,366 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "a",
+      "anilist_id": 1,
+      "updated_at": "2026-09-07T00:00:00Z",
+      "notes": "",
+      "theoretical_best": null,
+      "releases": [
+        {
+          "id": "a",
+          "release_group": "Team-A",
+          "is_best": true,
+          "updated_at": "2026-09-07T00:00:00Z",
+          "files": [
+            {
+              "name": "[Team-A] Northern Sky - 01v2 (1080p) [ABCDEF12].mkv",
+              "size": 100
+            },
+            {
+              "name": "[Team-A] Literal `quoted` Story - 01.mkv",
+              "size": 100
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "anilist_id": 2,
+      "updated_at": "2026-09-07T00:00:00Z",
+      "notes": "",
+      "theoretical_best": null,
+      "releases": [
+        {
+          "id": "b",
+          "release_group": "Alt",
+          "is_best": false,
+          "updated_at": "2026-09-07T00:00:00Z",
+          "files": [
+            {
+              "name": "Northern.Sky.S02E01.1080p.x265-Alt.mkv",
+              "size": 100
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "c",
+      "anilist_id": 3,
+      "updated_at": "2026-09-07T00:00:00Z",
+      "notes": "",
+      "theoretical_best": null,
+      "releases": [
+        {
+          "id": "c",
+          "release_group": "G",
+          "is_best": true,
+          "updated_at": "2026-09-07T00:00:00Z",
+          "files": [
+            {
+              "name": "[G] Collision - 01 (1080p).mkv",
+              "size": 100
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "d",
+      "anilist_id": 4,
+      "updated_at": "2026-09-07T00:00:00Z",
+      "notes": "",
+      "theoretical_best": null,
+      "releases": [
+        {
+          "id": "d",
+          "release_group": "G",
+          "is_best": true,
+          "updated_at": "2026-09-07T00:00:00Z",
+          "files": [
+            {
+              "name": "[G] Collision - 01 (1080p).mkv",
+              "size": 100
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "e",
+      "anilist_id": 5,
+      "updated_at": "2026-09-07T00:00:00Z",
+      "notes": "",
+      "theoretical_best": null,
+      "releases": [
+        {
+          "id": "e",
+          "release_group": "G",
+          "is_best": true,
+          "updated_at": "2026-09-07T00:00:00Z",
+          "files": [
+            {
+              "name": "[G] Level - 01.mkv",
+              "size": 100
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "f",
+      "anilist_id": 5,
+      "updated_at": "2026-09-07T00:00:00Z",
+      "notes": "",
+      "theoretical_best": null,
+      "releases": [
+        {
+          "id": "f",
+          "release_group": "G",
+          "is_best": false,
+          "updated_at": "2026-09-07T00:00:00Z",
+          "files": [
+            {
+              "name": "[G] Level - 01.mkv",
+              "size": 100
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g",
+      "anilist_id": 6,
+      "updated_at": "2026-09-07T00:00:00Z",
+      "notes": "",
+      "theoretical_best": null,
+      "releases": [
+        {
+          "id": "g",
+          "release_group": "G",
+          "is_best": true,
+          "updated_at": "2026-09-07T00:00:00Z",
+          "files": [
+            {
+              "name": "[G] Encode - 01 [AAAA0000].mkv",
+              "size": 100
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "h",
+      "anilist_id": 6,
+      "updated_at": "2026-09-07T00:00:00Z",
+      "notes": "",
+      "theoretical_best": null,
+      "releases": [
+        {
+          "id": "h",
+          "release_group": "G",
+          "is_best": true,
+          "updated_at": "2026-09-07T00:00:00Z",
+          "files": [
+            {
+              "name": "[G] Encode - 01 [BBBB0000].mkv",
+              "size": 101
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "i",
+      "anilist_id": 7,
+      "updated_at": "2026-09-07T00:00:00Z",
+      "notes": "",
+      "theoretical_best": null,
+      "releases": [
+        {
+          "id": "i",
+          "release_group": "G",
+          "is_best": true,
+          "updated_at": "2026-09-07T00:00:00Z",
+          "files": [
+            {
+              "name": "[G] Size - 01.mkv",
+              "size": 100
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "j",
+      "anilist_id": 7,
+      "updated_at": "2026-09-07T00:00:00Z",
+      "notes": "",
+      "theoretical_best": null,
+      "releases": [
+        {
+          "id": "j",
+          "release_group": "G",
+          "is_best": true,
+          "updated_at": "2026-09-07T00:00:00Z",
+          "files": [
+            {
+              "name": "[G] Size - 01.mkv",
+              "size": 101
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "k",
+      "anilist_id": 8,
+      "updated_at": "2026-09-07T00:00:00Z",
+      "notes": "",
+      "theoretical_best": null,
+      "releases": [
+        {
+          "id": "k",
+          "release_group": "G",
+          "is_best": true,
+          "updated_at": "2026-09-07T00:00:00Z",
+          "files": [
+            {
+              "name": "[G] 星の旅 - 01.mkv",
+              "size": 100
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "l",
+      "anilist_id": 9,
+      "updated_at": "2026-09-07T00:00:00Z",
+      "notes": "",
+      "theoretical_best": null,
+      "releases": [
+        {
+          "id": "l",
+          "release_group": "G",
+          "is_best": true,
+          "updated_at": "2026-09-07T00:00:00Z",
+          "files": [
+            {
+              "name": "01.mkv",
+              "size": 100
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "m",
+      "anilist_id": 10,
+      "updated_at": "2026-09-07T00:00:00Z",
+      "notes": "",
+      "theoretical_best": null,
+      "releases": [
+        {
+          "id": "m",
+          "release_group": "G",
+          "is_best": true,
+          "updated_at": "2026-09-07T00:00:00Z",
+          "files": [
+            {
+              "name": "Extras/[G] Extra Story - 01.mkv",
+              "size": 100
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n",
+      "anilist_id": 11,
+      "updated_at": "2026-09-07T00:00:00Z",
+      "notes": "",
+      "theoretical_best": null,
+      "releases": [
+        {
+          "id": "n",
+          "release_group": "G",
+          "is_best": true,
+          "updated_at": "2026-09-07T00:00:00Z",
+          "files": [
+            {
+              "name": "[G] __STRICT_COLLISIONS__ Story - 01.mkv",
+              "size": 100
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "o",
+      "anilist_id": 12,
+      "updated_at": "2026-09-07T00:00:00Z",
+      "notes": "",
+      "theoretical_best": null,
+      "releases": [
+        {
+          "id": "o",
+          "release_group": "G",
+          "is_best": true,
+          "updated_at": "2026-09-07T00:00:00Z",
+          "files": [
+            {
+              "name": "[G] Duplicate - 01.mkv",
+              "size": 100
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p",
+      "anilist_id": 12,
+      "updated_at": "2026-09-07T00:00:00Z",
+      "notes": "",
+      "theoretical_best": null,
+      "releases": [
+        {
+          "id": "p",
+          "release_group": "G",
+          "is_best": true,
+          "updated_at": "2026-09-07T00:00:00Z",
+          "files": [
+            {
+              "name": "[G] Duplicate - 01.mkv",
+              "size": 100
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "q",
+      "anilist_id": 13,
+      "updated_at": "2026-09-07T00:00:00Z",
+      "notes": "",
+      "theoretical_best": null,
+      "releases": [
+        {
+          "id": "q",
+          "release_group": "G",
+          "is_best": true,
+          "updated_at": "2026-09-07T00:00:00Z",
+          "files": [
+            {
+              "name": "[G] Escaped \"title\" - 01.mkv",
+              "size": 100
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
