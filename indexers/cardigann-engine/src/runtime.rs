@@ -603,6 +603,7 @@ pub fn resume(continuation: &[u8], input: ResumeInput) -> Result<Step, String> {
                     host_binding: None,
                     options: Vec::new(),
                     help_text: None,
+                    ..Default::default()
                 }],
                 Continuation::ManualCaptcha(context),
             )
@@ -937,6 +938,7 @@ fn submit_form_login(mut context: Context, response: &PluginHttpResponse) -> Res
                 host_binding: None,
                 options: Vec::new(),
                 help_text: None,
+                ..Default::default()
             }],
             Continuation::ManualCaptcha(context),
         );

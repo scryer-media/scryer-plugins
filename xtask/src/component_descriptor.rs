@@ -453,6 +453,33 @@ mod tests {
     use scryer_plugin_sdk::host::{PluginConfigGetRequest, PluginHostRequest, PluginHostResponse};
 
     #[test]
+    fn descriptor_config_fields_support_form_controls() {
+        let value = serde_json::json!({
+            "key": "profile_id",
+            "label": "Provider",
+            "field_type": "filtered_select",
+            "required": false,
+            "options": [{ "value": "custom", "label": "Custom" }],
+            "advanced": true,
+            "visible_when": { "key": "mode", "op": "eq", "values": ["custom"] },
+            "required_when": { "key": "mode", "op": "not_in", "values": [""] }
+        });
+        let encoded = serde_json::to_vec(&value).expect("encode descriptor field");
+        let field: scryer_plugin_sdk::ConfigFieldDef =
+            serde_json::from_slice(&encoded).expect("decode current plugin form controls");
+        let decoded = serde_json::to_value(field).expect("serialize descriptor field");
+        for key in [
+            "field_type",
+            "advanced",
+            "visible_when",
+            "required_when",
+            "options",
+        ] {
+            assert_eq!(decoded[key], value[key], "descriptor field {key} was lost");
+        }
+    }
+
+    #[test]
     fn a_describe_time_host_call_answers_unsupported_in_band() {
         let request =
             postcard::to_allocvec(&PluginHostRequest::ConfigGet(PluginConfigGetRequest {

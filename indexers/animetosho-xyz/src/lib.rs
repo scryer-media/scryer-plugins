@@ -194,6 +194,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             host_binding: None,
             options: vec![],
             help_text: Some("AnimeTosho.xyz feed API base URL".to_string()),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "api_key".to_string(),
@@ -206,6 +207,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             host_binding: None,
             options: vec![],
             help_text: Some("AnimeTosho.xyz API key".to_string()),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "download_mode".to_string(),
@@ -229,6 +231,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
                 },
             ],
             help_text: Some("Use NZB/Newznab results or torrent/Torznab results".to_string()),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "additional_params".to_string(),
@@ -241,6 +244,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             host_binding: None,
             options: vec![],
             help_text: Some("Extra query parameters appended to every request".to_string()),
+            ..Default::default()
         },
     ]
 }
