@@ -1,0 +1,214 @@
+[
+      {
+        "title": "[Team-A] Literal `quoted` Story - 01.mkv",
+        "group": "Team-A",
+        "score": 400,
+        "code": "seadex_strict_best"
+      },
+      {
+        "title": "[Team-A] Northern Sky - 01v2 (1080p) [ABCDEF12].mkv",
+        "group": "Team-A",
+        "score": 400,
+        "code": "seadex_strict_best"
+      },
+      {
+        "title": "[Team-A] Northern Sky - 01v2 (1080p) [ABCDEF12].mkv",
+        "group": null,
+        "score": 400,
+        "code": "seadex_strict_best"
+      },
+      {
+        "title": "C:\\folder\\[TEAM-A] NORTHERN SKY - 01V2 (1080P) [ABCDEF12].MKV",
+        "group": "Team-A",
+        "score": 400
+      },
+      {
+        "title": "[Team-A] Northern\t\tSky - 01v2 (1080p) [ABCDEF12].mkv",
+        "group": "Team-A",
+        "score": 400
+      },
+      {
+        "title": "[Team-A] Northern Sky - 01v2 (1080p) [ABCDEF12].mkv",
+        "group": "Team-A",
+        "score": 0,
+        "facet": "movie"
+      },
+      {
+        "title": "[Team-A] Northern Sky - 01v2 (1080p) [ABCDEF12].mkv",
+        "group": "Team-A",
+        "score": 0,
+        "is_anime": false
+      },
+      {
+        "title": "[Team-A] Northern Sky - 01v2 (1080p) [ABCDEF12].mkv",
+        "group": "Team-A",
+        "score": 400,
+        "blocked": true
+      },
+      {
+        "title": "Northern.Sky.01v2.1080p-Team-A",
+        "group": "Team-A",
+        "score": 400,
+        "code": "seadex_tolerant_best"
+      },
+      {
+        "title": "Northern_Sky_01v2_1080p [Team-A]",
+        "group": "Team-A",
+        "score": 400,
+        "code": "seadex_tolerant_best"
+      },
+      {
+        "title": "Team-A - Northern Sky - 01v2 (1080p)",
+        "group": "Team-A",
+        "score": 400,
+        "code": "seadex_tolerant_best"
+      },
+      {
+        "title": "[Team-A] Northern.Sky - 01v2 [1080p] [ ABCDEF12 ]",
+        "group": "Team-A",
+        "score": 400,
+        "code": "seadex_tolerant_best"
+      },
+      {
+        "title": "Northern.Sky.01v2.1080p-Team-A",
+        "group": null,
+        "score": 0
+      },
+      {
+        "title": "Northern.Sky.01v2.1080p-Team-A",
+        "group": "Wrong",
+        "score": 0
+      },
+      {
+        "title": "Northern.Sky.02v2.1080p-Team-A",
+        "group": "Team-A",
+        "score": 0
+      },
+      {
+        "title": "Northern.Sky.01v1.1080p-Team-A",
+        "group": "Team-A",
+        "score": 0
+      },
+      {
+        "title": "Northern.Sky.01v2.720p-Team-A",
+        "group": "Team-A",
+        "score": 0
+      },
+      {
+        "title": "Northern.Sky.01v2.1080p.x264-Team-A",
+        "group": "Team-A",
+        "score": 0
+      },
+      {
+        "title": "Northern.Sky.S01.Complete.1080p-Team-A",
+        "group": "Team-A",
+        "score": 0
+      },
+      {
+        "title": "Northern.Sky.01v2.1080p",
+        "group": "Team-A",
+        "score": 0
+      },
+      {
+        "title": "Unknown-01-Team-A",
+        "group": "Team-A",
+        "score": 0
+      },
+      {
+        "title": "Northern.Sky.S02E01.1080p.x265-Alt.mkv",
+        "group": "Alt",
+        "score": 200,
+        "code": "seadex_strict_listed"
+      },
+      {
+        "title": "[Alt] Northern Sky S02E01 1080p x265",
+        "group": "Alt",
+        "score": 200,
+        "code": "seadex_tolerant_listed"
+      },
+      {
+        "title": "[Alt] Northern Sky S01E01 1080p x265",
+        "group": "Alt",
+        "score": 0
+      },
+      {
+        "title": "[G] Collision - 01 (1080p).mkv",
+        "group": "G",
+        "score": 0
+      },
+      {
+        "title": "Collision.01.1080p-G",
+        "group": "G",
+        "score": 0
+      },
+      {
+        "title": "[G] Level - 01.mkv",
+        "group": "G",
+        "score": 0
+      },
+      {
+        "title": "Level.01-G",
+        "group": "G",
+        "score": 0
+      },
+      {
+        "title": "Encode.01-G",
+        "group": "G",
+        "score": 0
+      },
+      {
+        "title": "[G] Size - 01.mkv",
+        "group": "G",
+        "score": 0
+      },
+      {
+        "title": "01",
+        "group": "G",
+        "score": 0
+      },
+      {
+        "title": "[G] Extra Story - 01.mkv",
+        "group": "G",
+        "score": 0
+      },
+      {
+        "title": "[G] Encode - 01 [AAAA0000].mkv",
+        "group": "G",
+        "score": 400
+      },
+      {
+        "title": "[G] Encode - 01 [BBBB0000].mkv",
+        "group": "G",
+        "score": 400
+      },
+      {
+        "title": "[G] 星の旅 - 01.mkv",
+        "group": "G",
+        "score": 400
+      },
+      {
+        "title": "[G] 別の旅 - 01.mkv",
+        "group": "G",
+        "score": 0
+      },
+      {
+        "title": "星の旅.01-G",
+        "group": "G",
+        "score": 0
+      },
+      {
+        "title": "[G] __STRICT_COLLISIONS__ Story - 01.mkv",
+        "group": "G",
+        "score": 400
+      },
+      {
+        "title": "[G] Duplicate - 01.mkv",
+        "group": "G",
+        "score": 400
+      },
+      {
+        "title": "[G] Escaped \"title\" - 01.mkv",
+        "group": "G",
+        "score": 400
+      }
+    ]

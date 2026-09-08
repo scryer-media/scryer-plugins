@@ -1,0 +1,64 @@
+{
+  "copied_rule_crate_sha256": "8c0fe389dd508ff7615f9b582f306dc9619b3d335428553f0c9319ab3466316a",
+  "correctness_passed": true,
+  "experimental_limits": false,
+  "jobs": [
+    {
+      "name": "adversarial",
+      "source_bytes": 7955,
+      "policies": 1,
+      "cases": 40,
+      "memory_lifecycle": "reused evaluator before fresh comparison",
+      "memory_phase": "installation",
+      "validation_executed": true,
+      "source_rewrite_ms": 0.048708,
+      "validation_ms": 1.2709590000000002,
+      "parse_build_ms": 0.18954200000000002,
+      "first_eval_ms": 0.594167,
+      "reused_evaluator_batch_ms": 11.938999000000003,
+      "fresh_evaluator_batch_ms": 18.421124000000006,
+      "fresh_evaluator_p95_ms": 0.752375,
+      "fresh_evaluator_max_ms": 0.809542,
+      "p95_eval_ms": 0.5764579999999999,
+      "max_eval_ms": 0.594167,
+      "rss_before_source_kib": 2432,
+      "rss_after_source_kib": 2528,
+      "rss_after_validation_kib": 4640,
+      "rss_after_build_kib": 4672,
+      "rss_loaded_engine_kib": 4672,
+      "live_before_source_bytes": 33080,
+      "live_loaded_engine_bytes": 227304,
+      "live_after_batch_bytes": 573386,
+      "peak_evaluation_bytes": 901723,
+      "rss_after_evaluator_kib": 4672,
+      "rss_after_batch_kib": 5648,
+      "retained_evaluators_memory": [
+        {
+          "prepared_evaluators": 0,
+          "rss_kib": 5648,
+          "live_bytes": 231504
+        },
+        {
+          "prepared_evaluators": 1,
+          "rss_kib": 5648,
+          "live_bytes": 583204
+        },
+        {
+          "prepared_evaluators": 4,
+          "rss_kib": 6192,
+          "live_bytes": 1627781
+        },
+        {
+          "prepared_evaluators": 16,
+          "rss_kib": 10560,
+          "live_bytes": 5836453
+        }
+      ],
+      "failures": 0
+    }
+  ],
+  "max_added_rss_mib": 0,
+  "memory_phase": "installation",
+  "passed": true,
+  "scryer_revision": "21b3e785799dedba1265d4861d69047f76fce8be"
+}

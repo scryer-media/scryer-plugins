@@ -3,6 +3,10 @@ use clap::{Args, Parser, Subcommand, ValueEnum};
 mod client_strata;
 mod component_descriptor;
 mod plugin_new;
+#[cfg(test)]
+mod rule_pack_publication_tests;
+#[cfg(test)]
+mod rule_pack_upload_tests;
 use client_strata::{TARGET_WASIP1, TARGET_WASIP2, build_publication_strata, parse_stratum_drops};
 use scryer_plugin_sdk::{
     EXPORT_DESCRIBE, PluginDescriptor, ProviderDescriptor, SDK_VERSION,
@@ -79,6 +83,7 @@ const CATALOG_V3_SNIPPET_JSON: &str = "catalog-v3.json";
 const CATALOG_V3_MINIFIED_JSON: &str = "catalog-v3.min.json";
 const CATALOG_V3_MINIFIED_ZST: &str = "catalog-v3.min.json.zst";
 const CATALOG_V3_RELEASE_CONSTRAINTS: &str = "catalog-v3-release-constraints.json";
+const PREPARED_RULE_PACK_ARTIFACTS: &str = "prepared-rule-pack-artifacts.json";
 const CATALOG_V3_REDIRECT_JSON: &str = "catalog-v3.redirect.json";
 /// The redirect capability-aware clients (Scryer 0.19.7+) read.
 ///
@@ -216,6 +221,16 @@ struct ReleaseOptions {
 struct ReleasePublishTagsArgs {
     #[arg(long)]
     pr: u64,
+    #[arg(
+        long = "plugin-id",
+        help = "Publish only this plugin id; repeat for multiple plugins"
+    )]
+    plugin_ids: Vec<String>,
+    #[arg(
+        long = "rule-pack-id",
+        help = "Publish only this rule-pack id; repeat for multiple packs"
+    )]
+    rule_pack_ids: Vec<String>,
 }
 
 #[derive(Args)]
@@ -458,6 +473,11 @@ struct CatalogRenderV3Args {
     )]
     plugin_ids: Vec<String>,
     #[arg(
+        long = "rule-pack-id",
+        help = "Only rebuild and merge this rule-pack id; repeat for multiple rule packs"
+    )]
+    rule_pack_ids: Vec<String>,
+    #[arg(
         long,
         help = "Existing catalog-v3 JSON used as the merge base for targeted renders"
     )]
@@ -494,6 +514,8 @@ struct CatalogPrepareV3Args {
     out: Option<PathBuf>,
     #[arg(long = "plugin-id")]
     plugin_ids: Vec<String>,
+    #[arg(long = "rule-pack-id")]
+    rule_pack_ids: Vec<String>,
     #[arg(long)]
     existing_catalog: Option<PathBuf>,
     #[arg(long)]
@@ -2956,9 +2978,17 @@ fn merged_pull_request_commit(ctx: &TaskContext, pr: u64) -> Result<String> {
         .context("merged pull request has no merge commit")
 }
 
-fn publishable_release_targets(ctx: &TaskContext) -> Result<Vec<ReleaseTarget>> {
+fn publishable_release_targets(
+    ctx: &TaskContext,
+    selected_ids: &BTreeSet<String>,
+) -> Result<Vec<ReleaseTarget>> {
     let mut targets = Vec::new();
+    let mut found = BTreeSet::new();
     for candidate in release_publication_candidates(ctx)? {
+        if !selected_ids.is_empty() && !selected_ids.contains(&candidate.plugin_id) {
+            continue;
+        }
+        found.insert(candidate.plugin_id.clone());
         let latest_version = latest_plugin_v3_release_tag(ctx, &candidate.plugin_id)?
             .and_then(|tag| release_tag_version(&candidate.plugin_id, &tag));
         if latest_version
@@ -2980,10 +3010,66 @@ fn publishable_release_targets(ctx: &TaskContext) -> Result<Vec<ReleaseTarget>> 
             ),
         });
     }
-    if targets.is_empty() {
+    if targets.is_empty() && selected_ids.is_empty() {
         bail!("no official plugin manifest versions are newer than their v3 release tags")
     }
+    for id in selected_ids {
+        if !found.contains(id) {
+            bail!("plugin '{id}' was not found among official release candidates");
+        }
+    }
     Ok(targets)
+}
+
+fn selected_rule_pack_tags(
+    ctx: &TaskContext,
+    selected_ids: &BTreeSet<String>,
+) -> Result<Vec<String>> {
+    if selected_ids.is_empty() {
+        return Ok(Vec::new());
+    }
+    let manifest_path = ctx.repo_root.join(RULE_PACK_SOURCE_MANIFEST);
+    let source: RulePackSourceManifest = serde_json::from_slice(&fs::read(&manifest_path)?)
+        .with_context(|| format!("failed to parse {}", manifest_path.display()))?;
+    let mut tags = Vec::new();
+    let mut found = BTreeSet::new();
+    let mut source_ids = BTreeSet::new();
+    for rule_pack in source.rule_packs {
+        validate_rule_pack_source_entry(&rule_pack)?;
+        if !source_ids.insert(rule_pack.id.clone()) {
+            bail!("duplicate rule pack id {}", rule_pack.id);
+        }
+        let asset_name = Path::new(&rule_pack.asset)
+            .file_name()
+            .and_then(|value| value.to_str())
+            .ok_or_else(|| anyhow!("invalid rule pack asset {}", rule_pack.asset))?;
+        if asset_name != rule_pack.asset {
+            bail!(
+                "rule pack asset '{}' must be a bare filename inside rule_packs/",
+                rule_pack.asset
+            );
+        }
+        if !selected_ids.contains(&rule_pack.id) {
+            continue;
+        }
+        let manifest =
+            load_rule_pack_manifest(&ctx.repo_root.join("rule_packs").join(&rule_pack.asset))?;
+        if manifest.id != rule_pack.id {
+            bail!(
+                "rule pack source id '{}' does not match manifest id '{}'",
+                rule_pack.id,
+                manifest.id
+            );
+        }
+        found.insert(rule_pack.id.clone());
+        tags.push(format!("rule-packs/{}/v{}", rule_pack.id, manifest.version));
+    }
+    for id in selected_ids {
+        if !found.contains(id) {
+            bail!("rule pack '{id}' was not found in {RULE_PACK_SOURCE_MANIFEST}");
+        }
+    }
+    Ok(tags)
 }
 
 fn verify_tag_absent_locally_and_remotely(ctx: &TaskContext, tag: &str) -> Result<()> {
@@ -3029,30 +3115,38 @@ fn run_release_publish_tags(ctx: &TaskContext, args: ReleasePublishTagsArgs) -> 
     ok(format!("PR #{} merged at {}", args.pr, merge_commit));
 
     step("Selecting manifest versions to publish");
-    let targets = publishable_release_targets(ctx)?;
-    for target in &targets {
-        println!(
-            "   {} {} ({})",
-            target.plugin_id, target.next_version, target.tag_name
-        );
-        verify_tag_absent_locally_and_remotely(ctx, &target.tag_name)?;
+    let selected_plugin_ids = args.plugin_ids.into_iter().collect::<BTreeSet<_>>();
+    let selected_rule_pack_ids = args.rule_pack_ids.into_iter().collect::<BTreeSet<_>>();
+    let targets = if selected_plugin_ids.is_empty() && !selected_rule_pack_ids.is_empty() {
+        Vec::new()
+    } else {
+        publishable_release_targets(ctx, &selected_plugin_ids)?
+    };
+    let rule_pack_tags = selected_rule_pack_tags(ctx, &selected_rule_pack_ids)?;
+    if targets.is_empty() && rule_pack_tags.is_empty() {
+        bail!("no selected plugin or rule-pack versions are publishable");
+    }
+    let mut component_tags = targets
+        .iter()
+        .map(|target| target.tag_name.clone())
+        .collect::<Vec<_>>();
+    component_tags.extend(rule_pack_tags);
+    for tag in &component_tags {
+        println!("   {tag}");
+        verify_tag_absent_locally_and_remotely(ctx, tag)?;
     }
     let release_tag = repo_release_tag_name(ctx)?;
     verify_tag_absent_locally_and_remotely(ctx, &release_tag)?;
 
-    for target in &targets {
-        step(format!("Creating signed tag {}", target.tag_name));
-        create_and_verify_signed_tag(
-            ctx,
-            &target.tag_name,
-            &format!("Release {}", target.tag_name),
-        )?;
+    for tag in &component_tags {
+        step(format!("Creating signed tag {tag}"));
+        create_and_verify_signed_tag(ctx, tag, &format!("Release {tag}"))?;
     }
     step("Pushing component tags");
     let mut push_tags = ctx.command_in("git", &ctx.repo_root);
     push_tags.arg("push").arg("origin");
-    for target in &targets {
-        push_tags.arg(&target.tag_name);
+    for tag in &component_tags {
+        push_tags.arg(tag);
     }
     run_checked(&mut push_tags)?;
 
@@ -3060,7 +3154,7 @@ fn run_release_publish_tags(ctx: &TaskContext, args: ReleasePublishTagsArgs) -> 
     create_and_verify_signed_tag(
         ctx,
         &release_tag,
-        &format!("Release trigger for {}", release_commit_message(&targets)),
+        &format!("Release trigger for {}", component_tags.join(", ")),
     )?;
     step("Pushing release trigger tag");
     let mut push_trigger = ctx.command_in("git", &ctx.repo_root);
@@ -3069,7 +3163,7 @@ fn run_release_publish_tags(ctx: &TaskContext, args: ReleasePublishTagsArgs) -> 
 
     ok(format!(
         "Pushed {} component tag(s) and trigger tag {release_tag}",
-        targets.len()
+        component_tags.len()
     ));
     Ok(())
 }
@@ -5768,6 +5862,42 @@ fn rule_pack_asset_url(asset_name: &str) -> String {
     )
 }
 
+fn validate_rule_pack_source_entry(entry: &RulePackSourceEntry) -> Result<()> {
+    if !entry
+        .id
+        .as_bytes()
+        .first()
+        .is_some_and(u8::is_ascii_alphanumeric)
+        || !entry
+            .id
+            .bytes()
+            .all(|c| c.is_ascii_alphanumeric() || c == b'-' || c == b'_')
+    {
+        bail!(
+            "invalid rule pack id '{}': expected letters, digits, hyphens or underscores",
+            entry.id
+        );
+    }
+    if entry.asset.contains(['/', '\\'])
+        || Path::new(&entry.asset)
+            .file_name()
+            .and_then(|name| name.to_str())
+            != Some(entry.asset.as_str())
+    {
+        bail!(
+            "rule pack asset '{}' must be a bare filename inside rule_packs/",
+            entry.asset
+        );
+    }
+    if let Some(version) = &entry.min_scryer_version {
+        Version::parse(version).context("invalid rule-pack min_scryer_version")?;
+    }
+    if entry.distribution_base_url.trim().is_empty() {
+        bail!("rule pack '{}' requires distribution_base_url", entry.id);
+    }
+    Ok(())
+}
+
 fn load_rule_pack_manifest(path: &Path) -> Result<RulePackManifestV1> {
     let manifest: RulePackManifestV1 = serde_json::from_slice(&fs::read(path)?)
         .with_context(|| format!("failed to parse {}", path.display()))?;
@@ -5787,7 +5917,7 @@ fn load_rule_pack_manifest(path: &Path) -> Result<RulePackManifestV1> {
     if manifest.author.trim().is_empty() {
         bail!("{}: rule pack author is required", path.display());
     }
-    Version::parse(manifest.version.trim()).with_context(|| {
+    Version::parse(&manifest.version).with_context(|| {
         format!(
             "{}: invalid rule pack version {}",
             path.display(),
@@ -5871,6 +6001,7 @@ fn load_rule_pack_catalog_entries(ctx: &TaskContext) -> Result<Vec<PreparedRuleP
 fn prepare_rule_pack_v3_entries(
     ctx: &TaskContext,
     output_dir: &Path,
+    selected_ids: &BTreeSet<String>,
 ) -> Result<Vec<PreparedRulePackV3>> {
     fs::create_dir_all(output_dir)?;
     let manifest_path = ctx.repo_root.join(RULE_PACK_SOURCE_MANIFEST);
@@ -5880,6 +6011,10 @@ fn prepare_rule_pack_v3_entries(
     let mut ids = BTreeSet::new();
 
     for rule_pack in source.rule_packs {
+        if !selected_ids.is_empty() && !selected_ids.contains(&rule_pack.id) {
+            continue;
+        }
+        validate_rule_pack_source_entry(&rule_pack)?;
         let asset_name = Path::new(&rule_pack.asset)
             .file_name()
             .and_then(|value| value.to_str())
@@ -5995,7 +6130,61 @@ fn prepare_rule_pack_v3_entries(
         });
     }
 
+    if !selected_ids.is_empty() {
+        let prepared_ids = prepared
+            .iter()
+            .map(|rule_pack| rule_pack.entry.id.as_str())
+            .collect::<BTreeSet<_>>();
+        for id in selected_ids {
+            if !prepared_ids.contains(id.as_str()) {
+                bail!("rule pack '{id}' was not found in {RULE_PACK_SOURCE_MANIFEST}");
+            }
+        }
+    }
+
     Ok(prepared)
+}
+
+fn merge_catalog_v3_rule_pack_entries(
+    mut existing: Vec<CatalogV3RulePackEntry>,
+    updates: Vec<CatalogV3RulePackEntry>,
+) -> Result<Vec<CatalogV3RulePackEntry>> {
+    for update in updates {
+        if let Some(current) = existing.iter_mut().find(|entry| entry.id == update.id) {
+            for release in update.releases {
+                if let Some(previous) = current
+                    .releases
+                    .iter()
+                    .find(|previous| previous.version == release.version)
+                {
+                    if serde_json::to_value(previous)? != serde_json::to_value(&release)? {
+                        bail!(
+                            "rule pack '{}' release {} differs from published history; publish a new immutable version",
+                            update.id,
+                            release.version
+                        );
+                    }
+                } else {
+                    current.releases.push(release);
+                }
+            }
+            current.name = update.name;
+            current.description = update.description;
+            current.author = update.author;
+            current.releases.sort_by(|left, right| {
+                Version::parse(&right.version)
+                    .expect("merged rule-pack release versions were validated")
+                    .cmp(
+                        &Version::parse(&left.version)
+                            .expect("merged rule-pack release versions were validated"),
+                    )
+            });
+        } else {
+            existing.push(update);
+        }
+    }
+    existing.sort_by(|left, right| left.id.cmp(&right.id));
+    Ok(existing)
 }
 
 #[allow(dead_code)]
@@ -6031,6 +6220,7 @@ fn run_catalog_render_v3(ctx: &TaskContext, args: CatalogRenderV3Args) -> Result
         CatalogPrepareV3Args {
             out: args.out,
             plugin_ids: args.plugin_ids,
+            rule_pack_ids: args.rule_pack_ids,
             existing_catalog: args.existing_catalog,
             prepared_plugin_root: None,
             allow_release_removals: args.allow_release_removals,
@@ -6054,9 +6244,15 @@ fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Resu
         None => None,
     };
     let allowed_release_removals = parse_catalog_v3_release_keys(&args.allow_release_removals)?;
-    if !args.plugin_ids.is_empty() && existing_catalog.is_none() && !args.allow_selected_rebuild {
+    let selected_rule_pack_ids = args.rule_pack_ids.into_iter().collect::<BTreeSet<_>>();
+    let has_plugin_selection = !args.plugin_ids.is_empty();
+    let has_rule_pack_selection = !selected_rule_pack_ids.is_empty();
+    if (has_plugin_selection || has_rule_pack_selection)
+        && existing_catalog.is_none()
+        && !args.allow_selected_rebuild
+    {
         bail!(
-            "catalog prepare-v3/render-v3 with --plugin-id requires --existing-catalog so selected plugins can be merged into a baseline; use --allow-selected-rebuild only for an intentional full catalog rebuild from prepared plugin snippets"
+            "catalog prepare-v3/render-v3 with selectors requires --existing-catalog so selected entries can be merged into a baseline; use --allow-selected-rebuild only for an intentional full plugin catalog rebuild from prepared plugin snippets"
         );
     }
     if args.allow_selected_rebuild && args.prepared_plugin_root.is_none() {
@@ -6065,15 +6261,24 @@ fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Resu
     if args.allow_selected_rebuild && args.plugin_ids.is_empty() {
         bail!("catalog prepare-v3 --allow-selected-rebuild requires at least one --plugin-id");
     }
-    if args.prepared_plugin_root.is_none() {
+    if args.prepared_plugin_root.is_none() && (!has_rule_pack_selection || has_plugin_selection) {
         ensure_current_sdk_dependency_is_published(ctx)?;
     }
-    let prepared_rule_packs = prepare_rule_pack_v3_entries(ctx, &dist)?;
+    let prepared_rule_packs = if has_plugin_selection && !has_rule_pack_selection {
+        Vec::new()
+    } else {
+        prepare_rule_pack_v3_entries(ctx, &dist, &selected_rule_pack_ids)?
+    };
     let catalog_version = existing_catalog
         .as_ref()
         .map(|catalog| catalog.catalog_version.max(1) + 1)
         .unwrap_or(1);
-    let mut plugins = if args.plugin_ids.is_empty() {
+    let mut plugins = if args.plugin_ids.is_empty() && has_rule_pack_selection {
+        existing_catalog
+            .as_ref()
+            .map(|catalog| catalog.plugins.clone())
+            .unwrap_or_default()
+    } else if args.plugin_ids.is_empty() {
         step("Preparing catalog-v3 assets from current official plugin builds");
         let mut entries = Vec::new();
         for plugin in discover_local_plugins(ctx)? {
@@ -6136,15 +6341,22 @@ fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Resu
     };
     apply_catalog_v3_release_constraints(ctx, &mut plugins)?;
 
+    let rule_packs = merge_catalog_v3_rule_pack_entries(
+        existing_catalog
+            .as_ref()
+            .map(|catalog| catalog.rule_packs.clone())
+            .unwrap_or_default(),
+        prepared_rule_packs
+            .iter()
+            .map(|rule_pack| rule_pack.entry.clone())
+            .collect(),
+    )?;
     let catalog = CatalogV3 {
         schema_version: CATALOG_V3_SCHEMA.to_string(),
         catalog_version,
         plugins,
         community_sources: load_community_catalog_v3_sources(ctx)?,
-        rule_packs: prepared_rule_packs
-            .iter()
-            .map(|rule_pack| rule_pack.entry.clone())
-            .collect(),
+        rule_packs,
     };
     validate_catalog_v3(&catalog)?;
     if let Some(existing) = existing_catalog.as_ref() {
@@ -6154,6 +6366,16 @@ fn run_catalog_prepare_v3(ctx: &TaskContext, args: CatalogPrepareV3Args) -> Resu
             &allowed_release_removals,
         )?;
     }
+    let staged_pack_artifacts = prepared_rule_packs
+        .iter()
+        .flat_map(|pack| &pack.entry.releases)
+        .flat_map(|release| &release.artifacts)
+        .collect::<Vec<_>>();
+    fs::create_dir_all(&dist)?;
+    fs::write(
+        dist.join(PREPARED_RULE_PACK_ARTIFACTS),
+        serde_json::to_vec_pretty(&staged_pack_artifacts)?,
+    )?;
     let central_paths = write_catalog_v3_assets(ctx, &catalog, &dist)?;
 
     // One projection per shipped client stratum, each checked with a pinned
@@ -6413,6 +6635,59 @@ fn run_official_upload_r2(ctx: &TaskContext, dir: &Path) -> Result<()> {
     Ok(())
 }
 
+fn prepared_rule_pack_artifacts_for_upload(
+    dir: &Path,
+    catalog: &CatalogV3,
+) -> Result<Vec<CatalogV3Artifact>> {
+    let manifest_path = dir.join(PREPARED_RULE_PACK_ARTIFACTS);
+    let artifacts: Vec<CatalogV3Artifact> =
+        serde_json::from_slice(&fs::read(&manifest_path).with_context(|| {
+            format!(
+                "missing prepared rule-pack asset manifest {}",
+                manifest_path.display()
+            )
+        })?)?;
+    let catalog_artifacts = catalog
+        .rule_packs
+        .iter()
+        .flat_map(|pack| &pack.releases)
+        .flat_map(|release| &release.artifacts)
+        .map(serde_json::to_value)
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut seen = BTreeSet::new();
+    for artifact in &artifacts {
+        if !seen.insert(&artifact.url) {
+            bail!("duplicate prepared rule-pack artifact {}", artifact.url);
+        }
+        if !catalog_artifacts.contains(&serde_json::to_value(artifact)?) {
+            bail!(
+                "prepared rule-pack artifact is absent from catalog: {}",
+                artifact.url
+            );
+        }
+        for url in [&artifact.url, &artifact.signature_url] {
+            let path = dir.join(url_file_name(url)?);
+            if !path.is_file() {
+                bail!("missing prepared rule-pack asset {}", path.display());
+            }
+        }
+        let path = dir.join(url_file_name(&artifact.url)?);
+        let actual = file_digests(&path)?;
+        if artifact.digests.is_empty()
+            || artifact
+                .digests
+                .iter()
+                .any(|digest| !actual.contains(digest))
+        {
+            bail!(
+                "prepared rule-pack artifact digest mismatch: {}",
+                path.display()
+            );
+        }
+    }
+    Ok(artifacts)
+}
+
 fn run_catalog_upload_v3_r2(ctx: &TaskContext, dir: &Path) -> Result<()> {
     step(format!(
         "Uploading catalog-v3 assets to R2 from {}",
@@ -6420,6 +6695,19 @@ fn run_catalog_upload_v3_r2(ctx: &TaskContext, dir: &Path) -> Result<()> {
     ));
     let config = r2_config_from_env()?;
     let catalog = read_catalog_v3_from_path(ctx, &dir.join(CATALOG_V3_SNIPPET_JSON))?;
+    let prepared_artifacts = prepared_rule_pack_artifacts_for_upload(dir, &catalog)?;
+
+    // Upload locally materialized rule-pack blobs before making a catalog or
+    // redirect that can point clients at them visible. Historical releases are
+    // intentionally absent from a targeted staging directory and remain on
+    // their existing remote URLs.
+    let mut uploaded_rule_pack_artifacts = 0usize;
+    for artifact in &prepared_artifacts {
+        if !upload_catalog_v3_artifact_from_dir(ctx, &config, dir, artifact)? {
+            bail!("prepared rule-pack artifact disappeared: {}", artifact.url);
+        }
+        uploaded_rule_pack_artifacts += 1;
+    }
 
     // Both redirects publish together: the legacy ladder for shipped clients
     // and the modern redirect for capability-aware ones. Their rung sets are
@@ -6456,17 +6744,6 @@ fn run_catalog_upload_v3_r2(ctx: &TaskContext, dir: &Path) -> Result<()> {
             redirect_bundle_name
         );
         upload_file_to_r2(ctx, &config, &redirect_bundle_path, &redirect_bundle_url)?;
-    }
-
-    let mut uploaded_rule_pack_artifacts = 0usize;
-    for rule_pack in &catalog.rule_packs {
-        for release in &rule_pack.releases {
-            for artifact in &release.artifacts {
-                if upload_catalog_v3_artifact_from_dir(ctx, &config, dir, artifact)? {
-                    uploaded_rule_pack_artifacts += 1;
-                }
-            }
-        }
     }
 
     ok(format!(
@@ -9777,5 +10054,108 @@ distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
                 .to_string()
                 .contains("predates the catalog-v2 base SDK")
         );
+    }
+
+    fn rule_pack_release(
+        version: &str,
+        min: Option<&str>,
+        digest: &str,
+    ) -> CatalogV3RulePackRelease {
+        CatalogV3RulePackRelease {
+            version: version.to_string(),
+            min_scryer_version: min.map(str::to_string),
+            rule_pack_digests: vec![digest.to_string()],
+            rule_pack_bytes: Some(1),
+            artifacts: Vec::new(),
+        }
+    }
+
+    fn rule_pack_entry(
+        id: &str,
+        releases: Vec<CatalogV3RulePackRelease>,
+    ) -> CatalogV3RulePackEntry {
+        CatalogV3RulePackEntry {
+            id: id.to_string(),
+            name: id.to_string(),
+            description: "test".to_string(),
+            author: "test".to_string(),
+            releases,
+        }
+    }
+
+    #[test]
+    fn rule_pack_merge_preserves_history_and_orders_semver() {
+        let merged = merge_catalog_v3_rule_pack_entries(
+            vec![
+                rule_pack_entry("other", vec![rule_pack_release("1.0.0", None, "old")]),
+                rule_pack_entry("sea", vec![rule_pack_release("1.9.0", None, "nine")]),
+            ],
+            vec![rule_pack_entry(
+                "sea",
+                vec![rule_pack_release("1.10.0", Some("0.20.0"), "ten")],
+            )],
+        )
+        .unwrap();
+        assert_eq!(
+            merged.iter().map(|p| p.id.as_str()).collect::<Vec<_>>(),
+            vec!["other", "sea"]
+        );
+        assert_eq!(
+            merged[1]
+                .releases
+                .iter()
+                .map(|r| r.version.as_str())
+                .collect::<Vec<_>>(),
+            vec!["1.10.0", "1.9.0"]
+        );
+    }
+
+    #[test]
+    fn rule_pack_merge_rejects_mutated_immutable_release() {
+        let existing = vec![rule_pack_entry(
+            "sea",
+            vec![rule_pack_release("1.0.0", Some("0.20.0"), "original")],
+        )];
+        for replacement in [
+            rule_pack_release("1.0.0", Some("0.20.0"), "changed"),
+            rule_pack_release("1.0.0", Some("0.21.0"), "original"),
+        ] {
+            assert!(
+                merge_catalog_v3_rule_pack_entries(
+                    existing.clone(),
+                    vec![rule_pack_entry("sea", vec![replacement])]
+                )
+                .is_err()
+            );
+        }
+    }
+
+    #[test]
+    fn selected_rule_pack_tags_reject_invalid_source_entries() {
+        for (source, expected) in [
+            (r#"{"rule_packs":[]}"#, "was not found"),
+            (
+                r#"{"rule_packs":[{"id":"sea","asset":"../bad.json","distribution_base_url":"x"}]}"#,
+                "bare filename",
+            ),
+            (
+                r#"{"rule_packs":[{"id":"sea","asset":"a.json","distribution_base_url":"x"},{"id":"sea","asset":"b.json","distribution_base_url":"x"}]}"#,
+                "duplicate",
+            ),
+        ] {
+            let (_dir, ctx) = temp_task_context();
+            let path = ctx.path(RULE_PACK_SOURCE_MANIFEST);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            fs::write(path, source).unwrap();
+            if expected == "duplicate" {
+                fs::write(
+                    ctx.path("rule_packs/a.json"),
+                    r#"{"schema_version":1,"id":"sea","name":"sea","description":"x","author":"x","version":"1.0.0","rules":[{}]}"#,
+                ).unwrap();
+            }
+            let error =
+                selected_rule_pack_tags(&ctx, &BTreeSet::from(["sea".to_string()])).unwrap_err();
+            assert!(error.to_string().contains(expected), "{error:#}");
+        }
     }
 }
