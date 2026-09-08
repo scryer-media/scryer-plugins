@@ -31,7 +31,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Test release identity policy
-        run: bash .github/scripts/release-plugin-v3-identity.test.sh
+        run: |
+          bash .github/scripts/release-plugin-v3-identity.test.sh
+          go test \
+            .github/scripts/release_workflow_plan.go \
+            .github/scripts/release_workflow_plan_test.go
 
   plan:
     runs-on: ubuntu-latest
@@ -182,7 +186,7 @@ jobs:
 
   gate:
     if: ${{ always() }}
-    needs: [plan, quality, wasm-validate]
+    needs: [plan, quality, wasm-validate, release-identity-policy]
     name: plugin-ci gate
     runs-on: ubuntu-latest
     steps:
@@ -191,8 +195,10 @@ jobs:
           MODE: ${{ needs.plan.outputs.mode }}
           QUALITY: ${{ needs.quality.result }}
           WASM_VALIDATE: ${{ needs.wasm-validate.result }}
+          RELEASE_POLICY: ${{ needs.release-identity-policy.result }}
         run: |
           set -euo pipefail
+          test "$RELEASE_POLICY" = success
           case "$MODE" in
             none)
               test "$QUALITY" = skipped

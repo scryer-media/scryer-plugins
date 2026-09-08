@@ -18,6 +18,10 @@ on:
         description: "Whitespace or comma separated plugin ids to inspect from current manifests"
         required: false
         type: string
+      rule_pack_ids:
+        description: "Whitespace or comma separated rule-pack ids to inspect from current manifests"
+        required: false
+        type: string
       catalog_repair_specs:
         description: "Catalog repair diagnostics formatted as plugin_id@version; never publishes"
         required: false
@@ -46,7 +50,10 @@ jobs:
   plan-release:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.catalog_repair_specs == '' }}
     outputs:
-      plugin_matrix: ${{ steps.plugin-plans.outputs.matrix }}
+      plugin_matrix: ${{ steps.plugin-plans.outputs.plugin_matrix }}
+      rule_pack_matrix: ${{ steps.plugin-plans.outputs.rule_pack_matrix }}
+      has_plugins: ${{ steps.plugin-plans.outputs.has_plugins }}
+      has_rule_packs: ${{ steps.plugin-plans.outputs.has_rule_packs }}
     runs-on: ubuntu-latest
     env:
       CARGO_HOME: /home/runner/.cargo
@@ -113,71 +120,79 @@ jobs:
       - name: Build xtask once
         run: cargo build --locked --profile xtask-release --manifest-path xtask/Cargo.toml --bin xtask
 
-      - name: Select plugin release plan
+      - name: Select component release plan
         run: |
           set -euo pipefail
           PLUGIN_IDS_INPUT="${{ github.event_name == 'workflow_dispatch' && inputs.plugin_ids || '' }}"
-          if [ -n "${PLUGIN_IDS_INPUT//[[:space:],]/}" ]; then
-            mapfile -t plugin_ids < <(
-              printf '%s\n' "${PLUGIN_IDS_INPUT}" \
-                | tr ',[:space:]' '\n' \
-                | awk 'NF'
-            )
-            if [ "${#plugin_ids[@]}" -eq 0 ]; then
-              echo "No plugin ids were provided" >&2
-              exit 1
-            fi
-            ./xtask/target/xtask-release/xtask official plan-current "${plugin_ids[@]}" > release-plan.tsv
-            printf 'Selected current plugin release plan\n'
-            while IFS=$'\t' read -r plugin_id version; do
-              printf ' - %s %s\n' "${plugin_id}" "${version}"
-            done < release-plan.tsv
-            exit 0
-          fi
+          RULE_PACK_IDS_INPUT="${{ github.event_name == 'workflow_dispatch' && inputs.rule_pack_ids || '' }}"
+          : > release-plugin-plan.tsv
+          : > release-rule-pack-plan.tsv
 
-          RELEASE_SHA="${{ github.event_name == 'workflow_dispatch' && inputs.release_commit || '' }}"
-          if [ -z "${RELEASE_SHA}" ]; then
-            RELEASE_SHA="$(git rev-parse HEAD)"
+          append_rule_pack() {
+            local rule_pack_id="$1"
+            local asset version
+            asset="$(jq -r --arg id "${rule_pack_id}" '.rule_packs[] | select(.id == $id) | .asset' rule_packs/manifest.json)"
+            if [ -z "${asset}" ] || [ "${asset}" = "null" ] || [[ "${asset}" == */* ]]; then
+              echo "Unknown or unsafe rule pack id ${rule_pack_id}" >&2
+              return 1
+            fi
+            version="$(jq -r '.version' "rule_packs/${asset}")"
+            if [ -z "${version}" ] || [ "${version}" = "null" ]; then
+              echo "Rule pack ${rule_pack_id} has no manifest version" >&2
+              return 1
+            fi
+            printf '%s\t%s\n' "${rule_pack_id}" "${version}" >> release-rule-pack-plan.tsv
+          }
+
+          if [ -n "${PLUGIN_IDS_INPUT//[[:space:],]/}" ] || [ -n "${RULE_PACK_IDS_INPUT//[[:space:],]/}" ]; then
+            if [ -n "${PLUGIN_IDS_INPUT//[[:space:],]/}" ]; then
+              mapfile -t plugin_ids < <(printf '%s\n' "${PLUGIN_IDS_INPUT}" | tr ',[:space:]' '\n' | awk 'NF')
+              if (( ${#plugin_ids[@]} == 0 )); then
+                echo "No plugin ids were provided" >&2
+                exit 1
+              fi
+              ./xtask/target/xtask-release/xtask official plan-current "${plugin_ids[@]}" > release-plugin-plan.tsv
+            fi
+            if [ -n "${RULE_PACK_IDS_INPUT//[[:space:],]/}" ]; then
+              mapfile -t rule_pack_ids < <(printf '%s\n' "${RULE_PACK_IDS_INPUT}" | tr ',[:space:]' '\n' | awk 'NF' | sort -u)
+              if (( ${#rule_pack_ids[@]} == 0 )); then
+                echo "No rule-pack ids were provided" >&2
+                exit 1
+              fi
+              for rule_pack_id in "${rule_pack_ids[@]}"; do
+                append_rule_pack "${rule_pack_id}"
+              done
+            fi
+          else
+            RELEASE_SHA="${{ github.event_name == 'workflow_dispatch' && inputs.release_commit || '' }}"
+            if [ -z "${RELEASE_SHA}" ]; then RELEASE_SHA="$(git rev-parse HEAD)"; fi
+            mapfile -t plugin_tags < <(git tag --points-at "${RELEASE_SHA}" | sort | grep -E '^plugins-v3/[^/]+/v.+$' || true)
+            for tag in "${plugin_tags[@]}"; do
+              plugin_spec="${tag#plugins-v3/}"
+              printf '%s\t%s\n' "${plugin_spec%/v*}" "${tag##*/v}" >> release-plugin-plan.tsv
+            done
+            mapfile -t rule_pack_tags < <(git tag --points-at "${RELEASE_SHA}" | sort | grep -E '^rule-packs/[^/]+/v.+$' || true)
+            for tag in "${rule_pack_tags[@]}"; do
+              rule_pack_spec="${tag#rule-packs/}"
+              rule_pack_id="${rule_pack_spec%/v*}"
+              tag_version="${tag##*/v}"
+              append_rule_pack "${rule_pack_id}"
+              asset="$(jq -r --arg id "${rule_pack_id}" '.rule_packs[] | select(.id == $id) | .asset' rule_packs/manifest.json)"
+              go run .github/scripts/release_workflow_plan.go --check-rule-pack-version --rule-pack-id "${rule_pack_id}" --tag-version "${tag_version}" --manifest "rule_packs/${asset}"
+            done
           fi
-          mapfile -t plugin_tags < <(
-            git tag --points-at "${RELEASE_SHA}" \
-              | sort \
-              | grep -E '^plugins-v3/[^/]+/v.+$' \
-              || true
-          )
-          if [ "${#plugin_tags[@]}" -eq 0 ]; then
-            echo "No plugin release tags point at ${RELEASE_SHA}" >&2
+          sort -u release-plugin-plan.tsv -o release-plugin-plan.tsv
+          sort -u release-rule-pack-plan.tsv -o release-rule-pack-plan.tsv
+          if [ ! -s release-plugin-plan.tsv ] && [ ! -s release-rule-pack-plan.tsv ]; then
+            echo "No plugin or rule-pack release tags point at the selected commit" >&2
             exit 1
           fi
-          : > release-plan.tsv
-          for tag in "${plugin_tags[@]}"; do
-            plugin_spec="${tag#plugins-v3/}"
-            plugin_id="${plugin_spec%/v*}"
-            version="${tag##*/v}"
-            printf '%s\t%s\n' "${plugin_id}" "${version}" >> release-plan.tsv
-          done
-          printf 'Selected plugin release plan for %s\n' "${RELEASE_SHA}"
-          while IFS=$'\t' read -r plugin_id version; do
-            printf ' - %s %s\n' "${plugin_id}" "${version}"
-          done < release-plan.tsv
 
-      - name: Build plugin release matrix
+      - name: Build component release matrices
         id: plugin-plans
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          rows = []
-          for line in Path("release-plan.tsv").read_text().splitlines():
-              plugin_id, version = line.split("\t", 1)
-              rows.append({"plugin_id": plugin_id, "version": version})
-
-          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
-              handle.write(f"matrix={json.dumps({'include': rows})}\n")
-          PY
+          go run .github/scripts/release_workflow_plan.go --plugin-plan release-plugin-plan.tsv --rule-pack-plan release-rule-pack-plan.tsv --github-output "${GITHUB_OUTPUT}"
 
       - name: Show sccache stats
         if: always()
@@ -202,7 +217,8 @@ jobs:
         with:
           name: release-plugin-v3-plan-${{ github.run_id }}
           path: |
-            release-plan.tsv
+            release-plugin-plan.tsv
+            release-rule-pack-plan.tsv
           if-no-files-found: error
           retention-days: 7
 
@@ -216,7 +232,7 @@ jobs:
           retention-days: 7
 
   build-sign-release-plugin:
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') && needs.plan-release.outputs.has_plugins == 'true' }}
     needs: [plan-release]
     name: validate-build-sign-release (${{ matrix.plugin_id }} ${{ matrix.version }})
     strategy:
@@ -532,9 +548,41 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  validate-release-rule-pack:
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') && needs.plan-release.outputs.has_rule_packs == 'true' }}
+    needs: [plan-release]
+    name: validate-rule-pack (${{ matrix.rule_pack_id }} ${{ matrix.version }})
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan-release.outputs.rule_pack_matrix) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Require release trigger tag
+        run: |
+          source .github/scripts/release-plugin-v3-identity.sh
+          require_release_publish_context "${GITHUB_EVENT_NAME}" "${GITHUB_REF}"
+
+      - name: Validate tagged rule-pack manifest
+        run: |
+          set -euo pipefail
+          asset="$(jq -r --arg id "${{ matrix.rule_pack_id }}" '.rule_packs[] | select(.id == $id) | .asset' rule_packs/manifest.json)"
+          test -n "${asset}"
+          test "${asset}" != "null"
+          go run .github/scripts/release_workflow_plan.go \
+            --check-rule-pack-version \
+            --rule-pack-id "${{ matrix.rule_pack_id }}" \
+            --tag-version "${{ matrix.version }}" \
+            --manifest "rule_packs/${asset}"
+
   collect-release-provenance-subjects:
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') }}
-    needs: [build-sign-release-plugin]
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') && needs.plan-release.outputs.has_plugins == 'true' }}
+    needs: [plan-release, build-sign-release-plugin]
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -567,7 +615,7 @@ jobs:
           path: release-subjects.sha256.base64
 
   generate-release-provenance:
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') && needs.collect-release-provenance-subjects.result == 'success' }}
     needs: [collect-release-provenance-subjects]
     permissions:
       actions: read
@@ -580,7 +628,7 @@ jobs:
       compile-generator: true
 
   publish-release-provenance:
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') && needs.plan-release.outputs.has_plugins == 'true' }}
     needs: [plan-release, generate-release-provenance]
     runs-on: ubuntu-latest
     permissions:
@@ -609,8 +657,8 @@ jobs:
           done < <(printf '%s' "${RELEASE_MATRIX}" | jq -r '.include[] | "plugins-v3/\(.plugin_id)/v\(.version)"')
 
   publish-central-catalog:
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') }}
-    needs: [plan-release, build-sign-release-plugin, publish-release-provenance]
+    if: ${{ always() && !cancelled() && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/plugins-v3/release/') && needs.plan-release.result == 'success' && (needs.build-sign-release-plugin.result == 'success' || needs.build-sign-release-plugin.result == 'skipped') && (needs.validate-release-rule-pack.result == 'success' || needs.validate-release-rule-pack.result == 'skipped') && (needs.publish-release-provenance.result == 'success' || needs.publish-release-provenance.result == 'skipped') }}
+    needs: [plan-release, build-sign-release-plugin, validate-release-rule-pack, publish-release-provenance]
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -633,6 +681,19 @@ jobs:
         run: |
           source .github/scripts/release-plugin-v3-identity.sh
           require_release_publish_context "${GITHUB_EVENT_NAME}" "${GITHUB_REF}"
+
+      - name: Require successful selected release paths
+        run: |
+          set -euo pipefail
+          go run .github/scripts/release_workflow_plan.go \
+            --check-central-gate \
+            --event-name "${GITHUB_EVENT_NAME}" \
+            --ref "${GITHUB_REF}" \
+            --has-plugins="${{ needs.plan-release.outputs.has_plugins }}" \
+            --has-rule-packs="${{ needs.plan-release.outputs.has_rule_packs }}" \
+            --plugin-build "${{ needs.build-sign-release-plugin.result }}" \
+            --rule-pack-build "${{ needs.validate-release-rule-pack.result }}" \
+            --provenance "${{ needs.publish-release-provenance.result }}"
 
       - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
 
@@ -660,6 +721,7 @@ jobs:
           path: release-plan-artifact
 
       - name: Download prepared plugin artifacts
+        if: ${{ needs.plan-release.outputs.has_plugins == 'true' }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: release-plugin-v3-prepared-${{ github.run_id }}-*
@@ -675,13 +737,15 @@ jobs:
       - name: Restore full release plan
         run: |
           set -euo pipefail
-          install -m 0644 release-plan-artifact/release-plan.tsv release-plan.tsv
-          if [ ! -s release-plan.tsv ]; then
-            echo "Release plan is empty" >&2
+          install -m 0644 release-plan-artifact/release-plugin-plan.tsv release-plugin-plan.tsv
+          install -m 0644 release-plan-artifact/release-rule-pack-plan.tsv release-rule-pack-plan.tsv
+          if [ ! -s release-plugin-plan.tsv ] && [ ! -s release-rule-pack-plan.tsv ]; then
+            echo "Component release plans are empty" >&2
             exit 1
           fi
 
       - name: Verify prepared plugin artifacts
+        if: ${{ needs.plan-release.outputs.has_plugins == 'true' }}
         run: |
           set -euo pipefail
           readonly parallelism=4
@@ -714,7 +778,7 @@ jobs:
               ./xtask/target/xtask-release/xtask official verify-prepared "prepared-plugins/${plugin_id}"
             ) &
             active_pids+=("$!")
-          done < <(cut -f1 release-plan.tsv | sort -u)
+          done < <(cut -f1 release-plugin-plan.tsv | sort -u)
 
           for pid in "${active_pids[@]}"; do
             if ! wait "${pid}"; then
@@ -724,6 +788,7 @@ jobs:
           (( ! failed ))
 
       - name: Verify selected plugin signing identities
+        if: ${{ needs.plan-release.outputs.has_plugins == 'true' }}
         run: |
           set -euo pipefail
           source .github/scripts/release-plugin-v3-identity.sh
@@ -749,7 +814,7 @@ jobs:
                 "${GITHUB_REPOSITORY}" \
                 "${GITHUB_REF}"
             fi
-          done < <(cut -f1 release-plan.tsv | sort -u)
+          done < <(cut -f1 release-plugin-plan.tsv | sort -u)
 
       - name: Prepare sign and publish central catalog v3
         run: |
@@ -757,11 +822,14 @@ jobs:
           shopt -s nullglob
           source .github/scripts/release-plugin-v3-identity.sh
           require_release_publish_context "${GITHUB_EVENT_NAME}" "${GITHUB_REF}"
-          mapfile -t plugin_ids < <(cut -f1 release-plan.tsv | sort -u)
+          mapfile -t plugin_ids < <(cut -f1 release-plugin-plan.tsv | sort -u)
+          mapfile -t rule_pack_ids < <(cut -f1 release-rule-pack-plan.tsv | sort -u)
           prepare_v3_args=(
             --out dist/catalog-v3
-            --prepared-plugin-root prepared-plugins
           )
+          if (( ${#plugin_ids[@]} > 0 )); then
+            prepare_v3_args+=(--prepared-plugin-root prepared-plugins)
+          fi
           existing_dir="existing-central-catalog-v3"
           mkdir -p "${existing_dir}"
           # The merge base must be the FULL catalog. The modern redirect points
@@ -811,6 +879,9 @@ jobs:
           for plugin_id in "${plugin_ids[@]}"; do
             prepare_v3_args+=(--plugin-id "${plugin_id}")
           done
+          for rule_pack_id in "${rule_pack_ids[@]}"; do
+            prepare_v3_args+=(--rule-pack-id "${rule_pack_id}")
+          done
           ./xtask/target/xtask-release/xtask catalog prepare-v3 "${prepare_v3_args[@]}"
           bash .github/scripts/verify-catalog-v3-release-identities.sh \
             dist/catalog-v3/catalog-v3.json \
@@ -840,10 +911,14 @@ jobs:
               "dist/catalog-v3/${redirect_name}.sigstore.json"
           done
 
-          python3 -c 'import json; from pathlib import Path; root = Path("dist/catalog-v3"); catalog_assets = sorted({artifact["url"].rsplit("/", 1)[-1] for name in ("catalog-v3.redirect.json", "catalog-v3.modern.redirect.json") for artifact in json.loads((root / name).read_text())["artifacts"]}); catalog = json.loads((root / "catalog-v3.json").read_text()); rule_pack_assets = sorted({artifact["url"].rsplit("/", 1)[-1] for rule_pack in catalog["rule_packs"] for release in rule_pack["releases"] for artifact in release["artifacts"]}); print("\n".join(catalog_assets + rule_pack_assets))' > dist/catalog-v3/v3-central-assets.txt
+          go run .github/scripts/release_workflow_plan.go \
+            --central-assets-dir dist/catalog-v3 \
+            > dist/catalog-v3/v3-central-assets.txt
+          test -s dist/catalog-v3/v3-central-assets.txt
 
           while IFS= read -r asset_name; do
             [ -n "${asset_name}" ] || continue
+            test -f "dist/catalog-v3/${asset_name}"
             cosign sign-blob \
               --yes \
               --bundle "dist/catalog-v3/${asset_name}.bundle" \
@@ -857,6 +932,8 @@ jobs:
               "dist/catalog-v3/${asset_name}.sigstore.json"
             zstd -19 -f "dist/catalog-v3/${asset_name}.bundle" -o "dist/catalog-v3/${asset_name}.bundle.zst"
             rm -f "dist/catalog-v3/${asset_name}.bundle"
+            test -s "dist/catalog-v3/${asset_name}.bundle.zst"
+            test -s "dist/catalog-v3/${asset_name}.sigstore.json"
           done < dist/catalog-v3/v3-central-assets.txt
 
           ./xtask/target/xtask-release/xtask catalog upload-v3r2 dist/catalog-v3
