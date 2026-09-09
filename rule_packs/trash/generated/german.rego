@@ -2890,4 +2890,3 @@ score_entry["trash_lang_not_german_or_english"] := -10000 if {
     locale_intent
     trash_lang_not_german_or_english
 }
-

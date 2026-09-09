@@ -44,8 +44,3 @@ score_entry["trash_lq"] := -10000 if {
     locale_intent
     has_fact("trash.locale.asian.lq")
 }
-
-
-
-
-

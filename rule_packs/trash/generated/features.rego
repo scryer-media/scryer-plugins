@@ -30,4 +30,3 @@ score_entry["managed_dual_audio_preferred"] := 200 if {
 }
 score_entry["proper_upload"] := native_feature_revision if { input.release.is_proper_upload == true }
 score_entry["repack_upload"] := native_feature_revision if { input.release.is_repack == true }
-

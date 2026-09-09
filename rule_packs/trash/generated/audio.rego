@@ -36,4 +36,3 @@ native_audio_atmos_bonus := 150 if { native_audio_persona == "audiophile" } else
 native_audio_atmos_missing := -30 if { native_audio_persona == "audiophile"; lower(object.get(input.context, "category", "")) != "anime" } else := 0
 score_entry["atmos_preferred_match"] := native_audio_atmos_bonus if { input.release.is_atmos == true; native_audio_atmos_bonus != 0 }
 score_entry["atmos_preferred_missing"] := native_audio_atmos_missing if { input.release.is_atmos != true; native_audio_atmos_missing != 0 }
-

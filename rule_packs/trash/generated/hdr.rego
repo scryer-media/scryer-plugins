@@ -23,4 +23,3 @@ score_entry["sdr_at_4k"] := native_hdr_sdr_4k if {
   input.release.detected_hdr != true
   native_hdr_sdr_4k != 0
 }
-

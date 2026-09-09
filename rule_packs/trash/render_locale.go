@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -230,7 +231,7 @@ func languageExpr(c languageCondition) string {
 		}
 	case map[string]interface{}:
 		if n, ok := v["named"].(string); ok {
-			value = "has_audio_language(\"" + n + "\")"
+			value = "has_audio_language(" + strconv.Quote(n) + ")"
 		}
 	}
 	if value == "" {

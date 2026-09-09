@@ -85,4 +85,3 @@ score_entry["video_codec_quality_mid"] := native_sv_mid_codec_weight if {
   count(object.get(input.profile, "video_codec_allowlist", [])) == 0
   input.release.video_codec == "H.264"
 }
-

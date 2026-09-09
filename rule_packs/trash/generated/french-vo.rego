@@ -5475,4 +5475,3 @@ score_entry["trash_lang_not_original"] := -10000 if {
     locale_intent
     trash_lang_not_original
 }
-

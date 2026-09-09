@@ -69,4 +69,3 @@ native_size_member_basis if {
 score_entry[native_size_code(native_size_member_ratio)] := min([native_size_curve_delta(native_size_member_ratio), 0]) if { input.release.size_bytes != null; input.release.size_bytes > 0; native_size_member_basis }
 score_entry["size_pack_member_basis"] := 0 if { input.release.size_bytes != null; input.release.size_bytes > 0; native_size_member_basis }
 score_entry[native_size_code(native_size_total_ratio)] := native_size_curve_delta(native_size_total_ratio) if { input.release.size_bytes != null; input.release.size_bytes > 0; not native_size_member_basis }
-

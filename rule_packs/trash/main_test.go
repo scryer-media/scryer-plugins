@@ -286,6 +286,25 @@ func TestGenerateRejectsMalformedLanguageRulesWithoutReplacingArtifacts(t *testi
 	}
 }
 
+func TestValidateSnapshotRejectsUnsafeLanguageMetadata(t *testing.T) {
+	base := snapshot{SchemaVersion: 1, SourceRevision: "0123456789012345678901234567890123456789", GroupRules: json.RawMessage(`[{"index":0}]`)}
+	for name, row := range map[string]languageRow{
+		"code":  {Code: "trash.lang.bad-code", App: "radarr", Stem: "language-not-french", Conditions: []languageCondition{{Language: "original"}}},
+		"app":   {Code: "trash.lang.not_french", App: "other", Stem: "language-not-french", Conditions: []languageCondition{{Language: "original"}}},
+		"stem":  {Code: "trash.lang.not_french", App: "radarr", Stem: "language\ncomment", Conditions: []languageCondition{{Language: "original"}}},
+		"named": {Code: "trash.lang.not_french", App: "radarr", Stem: "language-not-french", Conditions: []languageCondition{{Language: map[string]interface{}{"named": "French"}}}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			candidate := base
+			candidate.LanguageRules = mustMarshalJSON(t, []languageRow{row})
+			data := mustMarshalJSON(t, candidate)
+			if _, err := validateSnapshot(data); err == nil {
+				t.Fatal("accepted malformed language metadata")
+			}
+		})
+	}
+}
+
 func TestGroupRendererRetainsOrderedContextSlots(t *testing.T) {
 	data, err := os.ReadFile("snapshot/core-snapshot-golden.json")
 	if err != nil {

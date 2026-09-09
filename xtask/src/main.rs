@@ -3216,8 +3216,10 @@ fn resumable_release_trigger(
 ) -> Result<String> {
     let resolved = git_capture(ctx, &["rev-parse", &format!("{commit}^{{commit}}")])?;
     let short = resolved.trim().chars().take(12).collect::<String>();
+    // The release workflow accepts one path segment after its tag prefix.
+    let component = component_tag.replace('/', "_");
     Ok(format!(
-        "{}resume/{component_tag}/{short}",
+        "{}resume-{component}-{short}",
         repo_release_tag_prefix()
     ))
 }
@@ -9123,7 +9125,13 @@ mod tests {
         let second = resumable_release_trigger(&ctx, component, &commit).expect("second trigger");
         assert_eq!(first, second);
         assert!(first.starts_with(&repo_release_tag_prefix()));
-        assert!(first.contains(component));
+        assert!(first.contains(&component.replace('/', "_")));
+        assert!(
+            !first
+                .strip_prefix(&repo_release_tag_prefix())
+                .unwrap()
+                .contains('/')
+        );
         create_and_verify_signed_tag(&ctx, &first, "fixture trigger").expect("sign trigger");
         assert_eq!(
             existing_release_trigger_for_commit(&ctx, &commit).expect("find trigger"),

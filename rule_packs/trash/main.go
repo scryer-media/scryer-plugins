@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -24,6 +25,12 @@ const (
 )
 
 var errOutdated = errors.New("outdated artifacts")
+
+var (
+	safeLanguageCode  = regexp.MustCompile(`^trash\.lang\.[a-z0-9_]+$`)
+	safeLanguageStem  = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*$`)
+	safeLanguageNamed = regexp.MustCompile(`^[a-z]{3}$`)
+)
 
 type snapshot struct {
 	SchemaVersion  int             `json:"schema_version"`
@@ -187,7 +194,49 @@ func validateSnapshot(data []byte) (snapshot, error) {
 	if err := json.Unmarshal(value.GroupRules, &groups); err != nil || len(groups) == 0 {
 		return value, errors.New("group_rules is missing or empty")
 	}
+	if err := validateLanguageRows(value.LanguageRules); err != nil {
+		return value, err
+	}
 	return value, nil
+}
+
+func validateLanguageRows(data json.RawMessage) error {
+	if len(data) == 0 {
+		return nil
+	}
+	var rows []languageRow
+	if err := json.Unmarshal(data, &rows); err != nil {
+		return fmt.Errorf("invalid language_rules: %w", err)
+	}
+	for _, row := range rows {
+		if !safeLanguageCode.MatchString(row.Code) || !safeLanguageStem.MatchString(row.Stem) {
+			return fmt.Errorf("invalid language rule metadata")
+		}
+		if row.App != "radarr" && row.App != "sonarr" && row.App != "guide-only" {
+			return fmt.Errorf("invalid language rule app")
+		}
+		if len(row.Conditions) == 0 {
+			return fmt.Errorf("language rule %s has no conditions", row.Code)
+		}
+		for _, condition := range row.Conditions {
+			if !validLanguageValue(condition.Language) {
+				return fmt.Errorf("invalid language condition for %s", row.Code)
+			}
+		}
+	}
+	return nil
+}
+
+func validLanguageValue(value interface{}) bool {
+	if original, ok := value.(string); ok {
+		return original == "original"
+	}
+	named, ok := value.(map[string]interface{})
+	if !ok || len(named) != 1 {
+		return false
+	}
+	code, ok := named["named"].(string)
+	return ok && safeLanguageNamed.MatchString(code)
 }
 
 func build(command string, args []string) error {
@@ -242,6 +291,9 @@ func generate(snap snapshot, detection detectionSnapshot, snapshotBytes []byte, 
 	if err != nil {
 		return nil, err
 	}
+	for index := range rules {
+		rules[index].RegoSource = strings.TrimRight(rules[index].RegoSource, "\n")
+	}
 	payload, err := json.MarshalIndent(pack{1, packID, "TRaSH Guides Scoring Pack", "Reviewed TRaSH Guides scoring, translated from a pinned compiled snapshot.", "scryer-media", version, minHostVersion, rules}, "", "  ")
 	if err != nil {
 		return nil, err
@@ -266,7 +318,7 @@ func generate(snap snapshot, detection detectionSnapshot, snapshotBytes []byte, 
 	artifacts := map[string][]byte{"trash-scoring.json": append(payload, '\n'), "trash-scoring-coverage.json": append(report, '\n')}
 	for _, item := range rules {
 		name := strings.TrimPrefix(item.ID, "trash-guides-")
-		artifacts[filepath.Join("trash", "generated", name+".rego")] = append([]byte(item.RegoSource), '\n')
+		artifacts[filepath.Join("trash", "generated", name+".rego")] = append([]byte(strings.TrimRight(item.RegoSource, "\n")), '\n')
 	}
 	return artifacts, nil
 }
