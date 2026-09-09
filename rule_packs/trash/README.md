@@ -33,8 +33,12 @@ snapshot. It does not invoke the application sync command, run Cargo, fetch
 implicitly, or publish an asset.
 
 The Rego source uses `profile.scoring_persona` with one of `balanced`,
-`audiophile`, `efficient`, or `compatible`. Optional boolean keys in
-`profile.scoring_overrides` disable individual named contributions when false.
+`audiophile`, `efficient`, or `compatible`. The five optional booleans in
+`profile.scoring_overrides` retain persona defaults when unset. `block_upscaled`
+defaults to true; `block_dv_without_fallback` defaults to false. Their −10,000
+penalties remain recoverable through the complete score. The required-language
+bonus compares canonical codes in `profile.required_audio_languages` and
+`release.languages_audio`, and requires every requested language.
 The conversion requires parser-owned `release.normalized_tokens`; all former
 guide-fact detection is performed inside Rego. The locale templates additionally
 consume the existing parsed release/context fields. Generic native replacement

@@ -23,3 +23,12 @@ score_entry["sdr_at_4k"] := native_hdr_sdr_4k if {
   input.release.detected_hdr != true
   native_hdr_sdr_4k != 0
 }
+
+# This preference penalty is recoverable; final eligibility uses the full sum.
+score_entry["dolby_vision_missing_hdr_fallback"] := -10000 if {
+  input.release.is_dolby_vision == true
+  input.profile.scoring_overrides.block_dv_without_fallback == true
+  input.release.has_hdr_fallback != true
+  input.release.is_hdr10plus != true
+  input.release.is_hlg != true
+}

@@ -171,6 +171,10 @@ score_entry["trash.scene"] := trash_unwanted_weight("scene") if { has_detected_f
 score_entry["trash.obfuscated"] := trash_unwanted_weight("obfuscated") if { has_detected_fact("trash.obfuscated") }
 score_entry["trash.retagged"] := trash_unwanted_weight("retagged") if { has_detected_fact("trash.retagged") }
 score_entry["hardcoded_subs"] := trash_unwanted_weight("hardcoded") if { input.release.is_hardcoded_subs == true }
+score_entry["ai_enhanced_upscaled"] := -10000 if {
+  input.release.is_ai_enhanced == true
+  object.get(object.get(input.profile, "scoring_overrides", {}), "block_upscaled", null) != false
+}
 score_entry["trash_guides_anime_raws"] := -10000 if { has_detected_fact("trash.blocked.anime_raws") }
 score_entry["trash_guides_lq_release_title"] := -10000 if { has_detected_fact("trash.blocked.lq_release_title") }
 score_entry["trash_guides_fansub"] := -10000 if { has_detected_fact("trash.blocked.fansub") }

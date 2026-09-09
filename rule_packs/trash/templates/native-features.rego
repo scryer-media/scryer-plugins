@@ -30,3 +30,11 @@ score_entry["managed_dual_audio_preferred"] := 200 if {
 }
 score_entry["proper_upload"] := native_feature_revision if { input.release.is_proper_upload == true }
 score_entry["repack_upload"] := native_feature_revision if { input.release.is_repack == true }
+
+# Both lists contain the host's canonical language codes.
+score_entry["required_audio_languages_match"] := 80 if {
+  count(input.profile.required_audio_languages) > 0
+  every language in input.profile.required_audio_languages {
+    language in input.release.languages_audio
+  }
+}
