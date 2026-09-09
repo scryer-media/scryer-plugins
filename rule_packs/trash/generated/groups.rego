@@ -14,57 +14,21 @@ trash_group_exact := {
         "i": 1,
         "t": "banned"
       },
-      "0X539": {
-        "i": 333,
-        "t": "silver"
-      },
       "224": {
         "i": 2,
         "t": "banned"
-      },
-      "9VOLT": {
-        "i": 144,
-        "t": "bronze"
       },
       "A-DESTINY": {
         "i": 3,
         "t": "banned"
       },
-      "ABDEX": {
-        "i": 145,
-        "t": "bronze"
-      },
-      "AC": {
-        "i": 146,
-        "t": "bronze"
-      },
       "ACEARES": {
         "i": 6,
         "t": "banned"
       },
-      "AERGIA": {
-        "i": 334,
-        "t": "silver"
-      },
-      "AFRO": {
-        "i": 151,
-        "t": "bronze"
-      },
       "AHMADDEV": {
         "i": 7,
         "t": "banned"
-      },
-      "AKIHITOSUBS": {
-        "i": 152,
-        "t": "bronze"
-      },
-      "ALMIGHTY": {
-        "i": 153,
-        "t": "bronze"
-      },
-      "ANE": {
-        "i": 147,
-        "t": "bronze"
       },
       "ANIME CHAP": {
         "i": 9,
@@ -98,10 +62,6 @@ trash_group_exact := {
         "i": 15,
         "t": "banned"
       },
-      "ANIMORPHS": {
-        "i": 154,
-        "t": "bronze"
-      },
       "ANITSU": {
         "i": 17,
         "t": "banned"
@@ -110,77 +70,25 @@ trash_group_exact := {
         "i": 8,
         "t": "banned"
       },
-      "ANOZU": {
-        "i": 155,
-        "t": "bronze"
-      },
-      "AOMUNDSON": {
-        "i": 148,
-        "t": "bronze"
-      },
       "ARATAENC": {
         "i": 18,
         "t": "banned"
-      },
-      "ARC": {
-        "i": 149,
-        "t": "bronze"
       },
       "AREY": {
         "i": 4,
         "t": "banned"
       },
-      "ARG0": {
-        "i": 313,
-        "t": "gold"
-      },
       "ARI": {
         "i": 19,
         "t": "banned"
-      },
-      "ARID": {
-        "i": 314,
-        "t": "gold"
-      },
-      "ARMX": {
-        "i": 291,
-        "t": "bronze"
-      },
-      "ARUKORU": {
-        "i": 156,
-        "t": "bronze"
-      },
-      "ASAKURA": {
-        "i": 335,
-        "t": "silver"
-      },
-      "ASC": {
-        "i": 150,
-        "t": "bronze"
-      },
-      "ASENSHI": {
-        "i": 157,
-        "t": "bronze"
       },
       "ASW": {
         "i": 5,
         "t": "banned"
       },
-      "B00BA": {
-        "i": 158,
-        "t": "bronze"
-      },
       "BAKEDFISH": {
         "i": 23,
         "t": "banned"
-      },
-      "BAWS": {
-        "i": 315,
-        "t": "gold"
-      },
-      "BBT-RMX": {
-        "i": 159,
-        "t": "bronze"
       },
       "BDMV": {
         "i": 20,
@@ -190,65 +98,21 @@ trash_group_exact := {
         "i": 21,
         "t": "banned"
       },
-      "BEATRICE": {
-        "i": 161,
-        "t": "bronze"
-      },
-      "BIRJU": {
-        "i": 162,
-        "t": "bronze"
-      },
       "BJX": {
         "i": 22,
         "t": "banned"
-      },
-      "BKC": {
-        "i": 160,
-        "t": "bronze"
       },
       "BLACKLUSTER": {
         "i": 24,
         "t": "banned"
       },
-      "BLACKROSE": {
-        "i": 336,
-        "t": "silver"
-      },
-      "BLUELOBSTER": {
-        "i": 163,
-        "t": "bronze"
-      },
-      "BLURAYDESUYO": {
-        "i": 164,
-        "t": "bronze"
-      },
-      "BOLSHEVIK": {
-        "i": 165,
-        "t": "bronze"
-      },
       "BONKAI77": {
         "i": 132,
         "t": "banned"
       },
-      "BRRRRRRR": {
-        "i": 166,
-        "t": "bronze"
-      },
-      "BUNNY-APOCALYPSE": {
-        "i": 167,
-        "t": "bronze"
-      },
-      "CAIT-SIDHE": {
-        "i": 172,
-        "t": "bronze"
-      },
       "CAMEESP": {
         "i": 26,
         "t": "banned"
-      },
-      "CAPPYBARA": {
-        "i": 292,
-        "t": "bronze"
       },
       "CAT66": {
         "i": 27,
@@ -258,97 +122,25 @@ trash_group_exact := {
         "i": 25,
         "t": "banned"
       },
-      "CBT": {
-        "i": 168,
-        "t": "bronze"
-      },
       "CERBERUS": {
         "i": 28,
         "t": "banned"
-      },
-      "CHIHIRO": {
-        "i": 173,
-        "t": "bronze"
-      },
-      "CHIMERA": {
-        "i": 174,
-        "t": "bronze"
-      },
-      "CHUCKSMUX": {
-        "i": 175,
-        "t": "bronze"
       },
       "CLEO": {
         "i": 29,
         "t": "banned"
       },
-      "COMMIE": {
-        "i": 176,
-        "t": "bronze"
-      },
-      "CROW": {
-        "i": 177,
-        "t": "bronze"
-      },
-      "CRUCIBLE": {
-        "i": 169,
-        "t": "bronze"
-      },
-      "CSS": {
-        "i": 178,
-        "t": "bronze"
-      },
-      "CTR": {
-        "i": 170,
-        "t": "bronze"
-      },
       "CUAP": {
         "i": 30,
         "t": "banned"
-      },
-      "CUNNY": {
-        "i": 171,
-        "t": "bronze"
-      },
-      "CUNNYSSEUR": {
-        "i": 179,
-        "t": "bronze"
-      },
-      "CYAN": {
-        "i": 337,
-        "t": "silver"
-      },
-      "CYC": {
-        "i": 180,
-        "t": "bronze"
-      },
-      "CYTOX": {
-        "i": 338,
-        "t": "silver"
-      },
-      "D4C": {
-        "i": 181,
-        "t": "bronze"
       },
       "DADDYSUBS": {
         "i": 36,
         "t": "banned"
       },
-      "DAE": {
-        "i": 339,
-        "t": "silver"
-      },
-      "DAMEDESUYO": {
-        "i": 183,
-        "t": "bronze"
-      },
       "DARKFLIX": {
         "i": 31,
         "t": "banned"
-      },
-      "DATTE13": {
-        "i": 184,
-        "t": "bronze"
       },
       "DB": {
         "i": 32,
@@ -370,193 +162,53 @@ trash_group_exact := {
         "i": 39,
         "t": "banned"
       },
-      "DEANZEL": {
-        "i": 293,
-        "t": "bronze"
-      },
-      "DEKINAI": {
-        "i": 185,
-        "t": "bronze"
-      },
-      "DEMIHUMAN": {
-        "i": 316,
-        "t": "gold"
-      },
-      "DERP": {
-        "i": 294,
-        "t": "bronze"
-      },
-      "DIY": {
-        "i": 182,
-        "t": "bronze"
-      },
       "DKB": {
         "i": 34,
         "t": "banned"
-      },
-      "DOC": {
-        "i": 186,
-        "t": "bronze"
-      },
-      "DOKI": {
-        "i": 187,
-        "t": "bronze"
-      },
-      "DOOKY": {
-        "i": 188,
-        "t": "bronze"
       },
       "DP": {
         "i": 35,
         "t": "banned"
       },
-      "DRAG": {
-        "i": 189,
-        "t": "bronze"
-      },
-      "DRAGON-RELEASES": {
-        "i": 190,
-        "t": "bronze"
-      },
-      "DRAGSTERPS": {
-        "i": 191,
-        "t": "bronze"
-      },
       "DSUNS": {
         "i": 40,
         "t": "banned"
-      },
-      "EDGE": {
-        "i": 192,
-        "t": "bronze"
-      },
-      "EJF": {
-        "i": 193,
-        "t": "bronze"
-      },
-      "ELDON": {
-        "i": 295,
-        "t": "bronze"
-      },
-      "EMBER": {
-        "i": 194,
-        "t": "bronze"
       },
       "EMMID": {
         "i": 41,
         "t": "banned"
       },
       "ERAI-RAWS": {
-        "i": 197,
-        "t": "bronze"
-      },
-      "EXP": {
-        "i": 195,
+        "i": 144,
         "t": "bronze"
       },
       "EXREN": {
         "i": 42,
         "t": "banned"
       },
-      "FATESUCKS": {
-        "i": 340,
-        "t": "silver"
-      },
       "FAV": {
         "i": 43,
         "t": "banned"
-      },
-      "FFF": {
-        "i": 198,
-        "t": "bronze"
-      },
-      "FIG": {
-        "i": 296,
-        "t": "bronze"
-      },
-      "FINAL8": {
-        "i": 199,
-        "t": "bronze"
-      },
-      "FLE": {
-        "i": 317,
-        "t": "gold"
-      },
-      "FLUGEL": {
-        "i": 318,
-        "t": "gold"
-      },
-      "FOXTROT": {
-        "i": 341,
-        "t": "silver"
-      },
-      "FREEHOLD": {
-        "i": 200,
-        "t": "bronze"
       },
       "FUNARTS": {
         "i": 44,
         "t": "banned"
       },
-      "GAO": {
-        "i": 343,
-        "t": "silver"
-      },
-      "GEONOPE": {
-        "i": 205,
-        "t": "bronze"
-      },
       "GERMINI": {
         "i": 45,
         "t": "banned"
       },
-      "GETITTWISTED": {
-        "i": 206,
-        "t": "bronze"
-      },
-      "GHOST": {
-        "i": 201,
-        "t": "bronze"
-      },
-      "GHS": {
-        "i": 202,
-        "t": "bronze"
-      },
-      "GJM": {
-        "i": 203,
-        "t": "bronze"
-      },
-      "GRIMF": {
-        "i": 297,
-        "t": "bronze"
-      },
       "GSK_KUN": {
-        "i": 342,
+        "i": 148,
         "t": "silver"
-      },
-      "GST": {
-        "i": 204,
-        "t": "bronze"
       },
       "HAKATA RAMEN": {
         "i": 49,
         "t": "banned"
       },
-      "HALF-BAKED": {
-        "i": 344,
-        "t": "silver"
-      },
       "HALL_OF_C": {
         "i": 50,
         "t": "banned"
-      },
-      "HARK0N": {
-        "i": 207,
-        "t": "bronze"
-      },
-      "HATSUBS": {
-        "i": 345,
-        "t": "silver"
       },
       "HATSUYUKI": {
         "i": 51,
@@ -565,14 +217,6 @@ trash_group_exact := {
       "HAV1T": {
         "i": 46,
         "t": "banned"
-      },
-      "HCHCSEN": {
-        "i": 365,
-        "t": "silver"
-      },
-      "HEADPATTER": {
-        "i": 208,
-        "t": "bronze"
       },
       "HENIL": {
         "i": 47,
@@ -586,56 +230,20 @@ trash_group_exact := {
         "i": 53,
         "t": "banned"
       },
-      "HOLOMUX": {
-        "i": 209,
-        "t": "bronze"
-      },
-      "HORRIBLERIPS": {
-        "i": 210,
-        "t": "bronze"
-      },
-      "HORRIBLESUBS": {
-        "i": 211,
-        "t": "bronze"
-      },
       "HR": {
         "i": 48,
         "t": "banned"
       },
-      "HYDES": {
-        "i": 366,
-        "t": "silver"
-      },
-      "IAHD": {
-        "i": 298,
-        "t": "bronze"
-      },
       "ICEBLUE": {
         "i": 54,
         "t": "banned"
-      },
-      "IK": {
-        "i": 212,
-        "t": "bronze"
-      },
-      "IKAOS": {
-        "i": 299,
-        "t": "bronze"
-      },
-      "INID4C": {
-        "i": 300,
-        "t": "bronze"
-      },
-      "INKA-SUBS": {
-        "i": 213,
-        "t": "bronze"
       },
       "IPUNISHER": {
         "i": 133,
         "t": "banned"
       },
       "IZNJIE BIZNJIE": {
-        "i": 346,
+        "i": 149,
         "t": "silver"
       },
       "JACOBSWAGGEDUP": {
@@ -646,81 +254,25 @@ trash_group_exact := {
         "i": 56,
         "t": "banned"
       },
-      "JOHNTITOR": {
-        "i": 347,
-        "t": "silver"
-      },
-      "JUDAS": {
-        "i": 214,
-        "t": "bronze"
-      },
       "JUDGMENT": {
-        "i": 215,
-        "t": "bronze"
-      },
-      "JYSZE": {
-        "i": 348,
-        "t": "silver"
-      },
-      "KALEIDO": {
-        "i": 218,
-        "t": "bronze"
-      },
-      "KALEIDO-SUBS": {
-        "i": 219,
+        "i": 145,
         "t": "bronze"
       },
       "KALLANGO": {
         "i": 60,
         "t": "banned"
       },
-      "KAMETSU": {
-        "i": 220,
-        "t": "bronze"
-      },
-      "KAN3D2M": {
-        "i": 216,
-        "t": "bronze"
-      },
       "KANJOUTEKI": {
         "i": 61,
         "t": "banned"
-      },
-      "KANTAI": {
-        "i": 221,
-        "t": "bronze"
-      },
-      "KARIOS": {
-        "i": 301,
-        "t": "bronze"
-      },
-      "KAWASUBS": {
-        "i": 222,
-        "t": "bronze"
-      },
-      "KAWATARE": {
-        "i": 223,
-        "t": "bronze"
       },
       "KEKMASTERS": {
         "i": 57,
         "t": "banned"
       },
-      "KH": {
-        "i": 217,
-        "t": "bronze"
-      },
       "KIRION": {
         "i": 62,
         "t": "banned"
-      },
-      "KITSUNE": {
-        "i": 224,
-        "t": "bronze"
-      },
-      "KOALA": {
-        "i": 367,
-        "t": "silver"
       },
       "KQRM": {
         "i": 58,
@@ -730,49 +282,9 @@ trash_group_exact := {
         "i": 59,
         "t": "banned"
       },
-      "KUCHIKIRUKIA": {
-        "i": 302,
-        "t": "bronze"
-      },
-      "KULOT": {
-        "i": 349,
-        "t": "silver"
-      },
-      "LACROIX": {
-        "i": 226,
-        "t": "bronze"
-      },
-      "LAZYREMUX": {
-        "i": 227,
-        "t": "bronze"
-      },
-      "LCE": {
-        "i": 225,
-        "t": "bronze"
-      },
-      "LEGION": {
-        "i": 228,
-        "t": "bronze"
-      },
-      "LIA": {
-        "i": 229,
-        "t": "bronze"
-      },
       "LOLIHOUSE": {
         "i": 63,
         "t": "banned"
-      },
-      "LOSTYEARS": {
-        "i": 320,
-        "t": "gold"
-      },
-      "LULU": {
-        "i": 350,
-        "t": "silver"
-      },
-      "LYS1TH3A": {
-        "i": 319,
-        "t": "gold"
       },
       "M2TS": {
         "i": 64,
@@ -786,10 +298,6 @@ trash_group_exact := {
         "i": 134,
         "t": "banned"
       },
-      "MALD": {
-        "i": 351,
-        "t": "silver"
-      },
       "MAN.K": {
         "i": 68,
         "t": "banned"
@@ -798,14 +306,6 @@ trash_group_exact := {
         "i": 69,
         "t": "banned"
       },
-      "MC": {
-        "i": 230,
-        "t": "bronze"
-      },
-      "MCBALLS": {
-        "i": 321,
-        "t": "gold"
-      },
       "MD": {
         "i": 66,
         "t": "banned"
@@ -813,18 +313,6 @@ trash_group_exact := {
       "MDCX": {
         "i": 135,
         "t": "banned"
-      },
-      "MEAKES": {
-        "i": 353,
-        "t": "silver"
-      },
-      "MEHUL": {
-        "i": 232,
-        "t": "bronze"
-      },
-      "METAL": {
-        "i": 233,
-        "t": "bronze"
       },
       "METALJERK": {
         "i": 70,
@@ -854,21 +342,9 @@ trash_group_exact := {
         "i": 75,
         "t": "banned"
       },
-      "MK": {
-        "i": 231,
-        "t": "bronze"
-      },
       "MODDERS BAY": {
         "i": 76,
         "t": "banned"
-      },
-      "MOTTOJ": {
-        "i": 303,
-        "t": "bronze"
-      },
-      "MOXIE": {
-        "i": 322,
-        "t": "gold"
       },
       "MR. DEADPOOL": {
         "i": 77,
@@ -878,33 +354,9 @@ trash_group_exact := {
         "i": 78,
         "t": "banned"
       },
-      "MTBB": {
-        "i": 352,
-        "t": "silver"
-      },
-      "MYSTERIA": {
-        "i": 234,
-        "t": "bronze"
-      },
-      "NAIYAS": {
-        "i": 304,
-        "t": "bronze"
-      },
       "NAN0": {
-        "i": 323,
+        "i": 146,
         "t": "gold"
-      },
-      "NANDESUKA": {
-        "i": 239,
-        "t": "bronze"
-      },
-      "NEKO-KBARAKA": {
-        "i": 305,
-        "t": "bronze"
-      },
-      "NEKOTAN": {
-        "i": 306,
-        "t": "bronze"
       },
       "NEMDIGGERS": {
         "i": 80,
@@ -914,18 +366,6 @@ trash_group_exact := {
         "i": 136,
         "t": "banned"
       },
-      "NETARO": {
-        "i": 240,
-        "t": "bronze"
-      },
-      "NH": {
-        "i": 235,
-        "t": "bronze"
-      },
-      "NOIY": {
-        "i": 241,
-        "t": "bronze"
-      },
       "NOKOU": {
         "i": 81,
         "t": "banned"
@@ -934,61 +374,17 @@ trash_group_exact := {
         "i": 82,
         "t": "banned"
       },
-      "NOT-VODES": {
-        "i": 354,
-        "t": "silver"
-      },
-      "NPZ": {
-        "i": 307,
-        "t": "bronze"
-      },
       "NS": {
         "i": 79,
         "t": "banned"
-      },
-      "NTRM": {
-        "i": 236,
-        "t": "bronze"
-      },
-      "NTRX": {
-        "i": 237,
-        "t": "bronze"
-      },
-      "NTW": {
-        "i": 238,
-        "t": "bronze"
       },
       "NYANPASU": {
         "i": 83,
         "t": "banned"
       },
-      "O7": {
-        "i": 308,
-        "t": "bronze"
-      },
-      "OKAY-SUBS": {
-        "i": 355,
-        "t": "silver"
-      },
       "OLDCASTLE": {
         "i": 84,
         "t": "banned"
-      },
-      "ORPHAN": {
-        "i": 356,
-        "t": "silver"
-      },
-      "ORZ": {
-        "i": 309,
-        "t": "bronze"
-      },
-      "OZR": {
-        "i": 242,
-        "t": "bronze"
-      },
-      "P9": {
-        "i": 243,
-        "t": "bronze"
       },
       "PANTSU": {
         "i": 85,
@@ -1006,41 +402,21 @@ trash_group_exact := {
         "i": 87,
         "t": "banned"
       },
-      "PIZZA": {
-        "i": 357,
-        "t": "silver"
-      },
-      "PLAYWEB": {
-        "i": 244,
-        "t": "bronze"
-      },
       "PLEX FRIENDLY": {
         "i": 88,
         "t": "banned"
       },
       "PMR": {
-        "i": 324,
+        "i": 147,
         "t": "gold"
       },
       "PNPSUBS": {
         "i": 89,
         "t": "banned"
       },
-      "POG42": {
-        "i": 310,
-        "t": "bronze"
-      },
       "POLARWINDZ": {
         "i": 90,
         "t": "banned"
-      },
-      "POOKIE": {
-        "i": 245,
-        "t": "bronze"
-      },
-      "PROF": {
-        "i": 246,
-        "t": "bronze"
       },
       "PROJECT-GXS": {
         "i": 91,
@@ -1058,22 +434,6 @@ trash_group_exact := {
         "i": 94,
         "t": "banned"
       },
-      "QM": {
-        "i": 247,
-        "t": "bronze"
-      },
-      "QUETZAL": {
-        "i": 248,
-        "t": "bronze"
-      },
-      "RAI": {
-        "i": 249,
-        "t": "bronze"
-      },
-      "RAIN": {
-        "i": 254,
-        "t": "bronze"
-      },
       "RANDO235": {
         "i": 96,
         "t": "banned"
@@ -1086,10 +446,6 @@ trash_group_exact := {
         "i": 98,
         "t": "banned"
       },
-      "RASETSU": {
-        "i": 250,
-        "t": "bronze"
-      },
       "RAZE": {
         "i": 99,
         "t": "banned"
@@ -1097,14 +453,6 @@ trash_group_exact := {
       "REAKTOR": {
         "i": 100,
         "t": "banned"
-      },
-      "REVO": {
-        "i": 251,
-        "t": "bronze"
-      },
-      "REZA": {
-        "i": 358,
-        "t": "silver"
       },
       "RIGHTSHIFTBY2": {
         "i": 101,
@@ -1114,14 +462,6 @@ trash_group_exact := {
         "i": 102,
         "t": "banned"
       },
-      "RMX": {
-        "i": 252,
-        "t": "bronze"
-      },
-      "RUDY": {
-        "i": 253,
-        "t": "bronze"
-      },
       "SAD": {
         "i": 103,
         "t": "banned"
@@ -1129,10 +469,6 @@ trash_group_exact := {
       "SALIERI": {
         "i": 109,
         "t": "banned"
-      },
-      "SAM": {
-        "i": 331,
-        "t": "gold"
       },
       "SAMIR755": {
         "i": 110,
@@ -1142,105 +478,33 @@ trash_group_exact := {
         "i": 111,
         "t": "banned"
       },
-      "SCP-2223": {
-        "i": 255,
-        "t": "bronze"
-      },
-      "SCY": {
-        "i": 325,
-        "t": "gold"
-      },
       "SEIN": {
         "i": 104,
         "t": "banned"
-      },
-      "SEKKON": {
-        "i": 257,
-        "t": "bronze"
       },
       "SEKKUSU\u0026OK": {
         "i": 138,
         "t": "banned"
       },
-      "SENJOU": {
-        "i": 258,
-        "t": "bronze"
-      },
-      "SERENDIPITY": {
-        "i": 259,
-        "t": "bronze"
-      },
-      "SETSUGEN": {
-        "i": 326,
-        "t": "gold"
-      },
-      "SEV": {
-        "i": 256,
-        "t": "bronze"
-      },
-      "SGT": {
-        "i": 311,
-        "t": "bronze"
-      },
       "SHFS": {
         "i": 105,
         "t": "banned"
-      },
-      "SHIMATTA": {
-        "i": 260,
-        "t": "bronze"
       },
       "SHINCAPS": {
         "i": 139,
         "t": "banned"
       },
-      "SHIRσ": {
-        "i": 261,
-        "t": "bronze"
-      },
       "SLAX": {
         "i": 106,
         "t": "banned"
-      },
-      "SLYFOX": {
-        "i": 359,
-        "t": "silver"
-      },
-      "SMOKE": {
-        "i": 262,
-        "t": "bronze"
-      },
-      "SMOL": {
-        "i": 332,
-        "t": "gold"
-      },
-      "SOBSPLEASE": {
-        "i": 263,
-        "t": "bronze"
       },
       "SOKUDO": {
         "i": 112,
         "t": "banned"
       },
-      "SOLCE": {
-        "i": 360,
-        "t": "silver"
-      },
-      "SOM": {
-        "i": 327,
-        "t": "gold"
-      },
-      "SOME-STUFFS": {
-        "i": 264,
-        "t": "bronze"
-      },
       "SPACEFISH": {
         "i": 113,
         "t": "banned"
-      },
-      "SPIRALE": {
-        "i": 265,
-        "t": "bronze"
       },
       "SRW": {
         "i": 107,
@@ -1250,33 +514,17 @@ trash_group_exact := {
         "i": 108,
         "t": "banned"
       },
-      "STARBEZ": {
-        "i": 266,
-        "t": "bronze"
-      },
       "STRAYGODS": {
         "i": 114,
         "t": "banned"
       },
-      "SUBSMIX": {
-        "i": 267,
-        "t": "bronze"
-      },
-      "SUBSPLEASE": {
-        "i": 268,
-        "t": "bronze"
-      },
       "SUBSPLUS+": {
-        "i": 361,
+        "i": 150,
         "t": "silver"
       },
       "SUKI DESU": {
         "i": 115,
         "t": "banned"
-      },
-      "SYLVAR": {
-        "i": 269,
-        "t": "bronze"
       },
       "TEAMTURQUOIZE": {
         "i": 117,
@@ -1287,24 +535,12 @@ trash_group_exact := {
         "t": "banned"
       },
       "TENSHI": {
-        "i": 368,
+        "i": 151,
         "t": "silver"
-      },
-      "THIGHS": {
-        "i": 272,
-        "t": "bronze"
-      },
-      "THORA": {
-        "i": 270,
-        "t": "bronze"
       },
       "TNF": {
         "i": 119,
         "t": "banned"
-      },
-      "TOONSHUB": {
-        "i": 273,
-        "t": "bronze"
       },
       "TOPKEK": {
         "i": 116,
@@ -1314,29 +550,9 @@ trash_group_exact := {
         "i": 120,
         "t": "banned"
       },
-      "TSUNDERE": {
-        "i": 274,
-        "t": "bronze"
-      },
-      "TTGA": {
-        "i": 271,
-        "t": "bronze"
-      },
       "U3-WEB": {
         "i": 121,
         "t": "banned"
-      },
-      "UBA": {
-        "i": 312,
-        "t": "bronze"
-      },
-      "UDF": {
-        "i": 275,
-        "t": "bronze"
-      },
-      "ULTRAREMUX": {
-        "i": 278,
-        "t": "bronze"
       },
       "UNBIASED": {
         "i": 122,
@@ -1346,14 +562,6 @@ trash_group_exact := {
         "i": 140,
         "t": "banned"
       },
-      "UQW": {
-        "i": 276,
-        "t": "bronze"
-      },
-      "URANIME": {
-        "i": 277,
-        "t": "bronze"
-      },
       "USD": {
         "i": 123,
         "t": "banned"
@@ -1362,49 +570,13 @@ trash_group_exact := {
         "i": 124,
         "t": "banned"
       },
-      "VANILLA": {
-        "i": 281,
-        "t": "bronze"
-      },
-      "VARYG": {
-        "i": 279,
-        "t": "bronze"
-      },
       "VIPAPKSTUDIOS": {
         "i": 125,
         "t": "banned"
       },
-      "VIRTUALITY": {
-        "i": 282,
-        "t": "bronze"
-      },
-      "VIVID": {
-        "i": 283,
-        "t": "bronze"
-      },
-      "VODES": {
-        "i": 328,
-        "t": "gold"
-      },
-      "VULCAN": {
-        "i": 280,
-        "t": "bronze"
-      },
-      "WAP": {
-        "i": 363,
-        "t": "silver"
-      },
       "WARDEVIL": {
         "i": 126,
         "t": "banned"
-      },
-      "WBDP": {
-        "i": 284,
-        "t": "bronze"
-      },
-      "WSE": {
-        "i": 285,
-        "t": "bronze"
       },
       "WTF ANIME": {
         "i": 127,
@@ -1422,10 +594,6 @@ trash_group_exact := {
         "i": 129,
         "t": "banned"
       },
-      "YOGHURT": {
-        "i": 287,
-        "t": "bronze"
-      },
       "YOUSHIKIBI": {
         "i": 142,
         "t": "banned"
@@ -1434,78 +602,1026 @@ trash_group_exact := {
         "i": 130,
         "t": "banned"
       },
-      "YUKI": {
-        "i": 288,
-        "t": "bronze"
-      },
       "YUN": {
         "i": 131,
         "t": "banned"
-      },
-      "YURASUKA": {
-        "i": 286,
-        "t": "bronze"
-      },
-      "YURI": {
-        "i": 364,
-        "t": "silver"
-      },
-      "Z4ST1N": {
-        "i": 329,
-        "t": "gold"
-      },
-      "ZEROBUILD": {
-        "i": 330,
-        "t": "gold"
-      },
-      "ZIGZAG": {
-        "i": 290,
-        "t": "bronze"
-      },
-      "ZR": {
-        "i": 289,
-        "t": "bronze"
       },
       "ZZA": {
         "i": 143,
         "t": "banned"
       }
     },
+    "anime_bd": {
+      "9VOLT": {
+        "i": 152,
+        "t": "bronze"
+      },
+      "ABDEX": {
+        "i": 153,
+        "t": "bronze"
+      },
+      "AC": {
+        "i": 154,
+        "t": "bronze"
+      },
+      "AERGIA": {
+        "i": 311,
+        "t": "silver"
+      },
+      "AFRO": {
+        "i": 159,
+        "t": "bronze"
+      },
+      "AKIHITOSUBS": {
+        "i": 160,
+        "t": "bronze"
+      },
+      "ALMIGHTY": {
+        "i": 161,
+        "t": "bronze"
+      },
+      "ANE": {
+        "i": 155,
+        "t": "bronze"
+      },
+      "ANIMORPHS": {
+        "i": 162,
+        "t": "bronze"
+      },
+      "AOMUNDSON": {
+        "i": 156,
+        "t": "bronze"
+      },
+      "ARC": {
+        "i": 157,
+        "t": "bronze"
+      },
+      "ARG0": {
+        "i": 312,
+        "t": "silver"
+      },
+      "ARID": {
+        "i": 313,
+        "t": "silver"
+      },
+      "ARMX": {
+        "i": 281,
+        "t": "bronze"
+      },
+      "ARUKORU": {
+        "i": 163,
+        "t": "bronze"
+      },
+      "ASAKURA": {
+        "i": 164,
+        "t": "bronze"
+      },
+      "ASC": {
+        "i": 158,
+        "t": "bronze"
+      },
+      "ASENSHI": {
+        "i": 165,
+        "t": "bronze"
+      },
+      "B00BA": {
+        "i": 166,
+        "t": "bronze"
+      },
+      "BBT-RMX": {
+        "i": 167,
+        "t": "bronze"
+      },
+      "BEATRICE": {
+        "i": 169,
+        "t": "bronze"
+      },
+      "BIRJU": {
+        "i": 170,
+        "t": "bronze"
+      },
+      "BKC": {
+        "i": 168,
+        "t": "bronze"
+      },
+      "BLACKROSE": {
+        "i": 314,
+        "t": "silver"
+      },
+      "BLURAYDESUYO": {
+        "i": 171,
+        "t": "bronze"
+      },
+      "BOLSHEVIK": {
+        "i": 172,
+        "t": "bronze"
+      },
+      "BRRRRRRR": {
+        "i": 173,
+        "t": "bronze"
+      },
+      "BUNNY-APOCALYPSE": {
+        "i": 174,
+        "t": "bronze"
+      },
+      "CAIT-SIDHE": {
+        "i": 179,
+        "t": "bronze"
+      },
+      "CAPPYBARA": {
+        "i": 282,
+        "t": "bronze"
+      },
+      "CBT": {
+        "i": 175,
+        "t": "bronze"
+      },
+      "CHIHIRO": {
+        "i": 180,
+        "t": "bronze"
+      },
+      "CHIMERA": {
+        "i": 181,
+        "t": "bronze"
+      },
+      "CHUCKSMUX": {
+        "i": 182,
+        "t": "bronze"
+      },
+      "COMMIE": {
+        "i": 183,
+        "t": "bronze"
+      },
+      "CROW": {
+        "i": 184,
+        "t": "bronze"
+      },
+      "CRUCIBLE": {
+        "i": 176,
+        "t": "bronze"
+      },
+      "CSS": {
+        "i": 185,
+        "t": "bronze"
+      },
+      "CTR": {
+        "i": 177,
+        "t": "bronze"
+      },
+      "CUNNY": {
+        "i": 178,
+        "t": "bronze"
+      },
+      "CUNNYSSEUR": {
+        "i": 186,
+        "t": "bronze"
+      },
+      "CYC": {
+        "i": 187,
+        "t": "bronze"
+      },
+      "D4C": {
+        "i": 188,
+        "t": "bronze"
+      },
+      "DAE": {
+        "i": 190,
+        "t": "bronze"
+      },
+      "DATTE13": {
+        "i": 191,
+        "t": "bronze"
+      },
+      "DEANZEL": {
+        "i": 283,
+        "t": "bronze"
+      },
+      "DEKINAI": {
+        "i": 192,
+        "t": "bronze"
+      },
+      "DEMIHUMAN": {
+        "i": 303,
+        "t": "gold"
+      },
+      "DERP": {
+        "i": 284,
+        "t": "bronze"
+      },
+      "DIY": {
+        "i": 189,
+        "t": "bronze"
+      },
+      "DOC": {
+        "i": 193,
+        "t": "bronze"
+      },
+      "DRAG": {
+        "i": 194,
+        "t": "bronze"
+      },
+      "DRAGON-RELEASES": {
+        "i": 195,
+        "t": "bronze"
+      },
+      "DRAGSTERPS": {
+        "i": 196,
+        "t": "bronze"
+      },
+      "EDGE": {
+        "i": 197,
+        "t": "bronze"
+      },
+      "EJF": {
+        "i": 198,
+        "t": "bronze"
+      },
+      "ELDON": {
+        "i": 285,
+        "t": "bronze"
+      },
+      "EMBER": {
+        "i": 199,
+        "t": "bronze"
+      },
+      "EXP": {
+        "i": 200,
+        "t": "bronze"
+      },
+      "FATESUCKS": {
+        "i": 315,
+        "t": "silver"
+      },
+      "FFF": {
+        "i": 201,
+        "t": "bronze"
+      },
+      "FIG": {
+        "i": 286,
+        "t": "bronze"
+      },
+      "FINAL8": {
+        "i": 202,
+        "t": "bronze"
+      },
+      "FLE": {
+        "i": 304,
+        "t": "gold"
+      },
+      "FLUGEL": {
+        "i": 305,
+        "t": "gold"
+      },
+      "FOXTROT": {
+        "i": 203,
+        "t": "bronze"
+      },
+      "FREEHOLD": {
+        "i": 204,
+        "t": "bronze"
+      },
+      "GEONOPE": {
+        "i": 208,
+        "t": "bronze"
+      },
+      "GETITTWISTED": {
+        "i": 209,
+        "t": "bronze"
+      },
+      "GHOST": {
+        "i": 205,
+        "t": "bronze"
+      },
+      "GHS": {
+        "i": 206,
+        "t": "bronze"
+      },
+      "GJM": {
+        "i": 207,
+        "t": "bronze"
+      },
+      "GRIMF": {
+        "i": 287,
+        "t": "bronze"
+      },
+      "HARK0N": {
+        "i": 210,
+        "t": "bronze"
+      },
+      "HCHCSEN": {
+        "i": 327,
+        "t": "silver"
+      },
+      "HEADPATTER": {
+        "i": 211,
+        "t": "bronze"
+      },
+      "HOLOMUX": {
+        "i": 212,
+        "t": "bronze"
+      },
+      "HYDES": {
+        "i": 328,
+        "t": "silver"
+      },
+      "IAHD": {
+        "i": 288,
+        "t": "bronze"
+      },
+      "IK": {
+        "i": 213,
+        "t": "bronze"
+      },
+      "IKAOS": {
+        "i": 289,
+        "t": "bronze"
+      },
+      "INID4C": {
+        "i": 290,
+        "t": "bronze"
+      },
+      "INKA-SUBS": {
+        "i": 214,
+        "t": "bronze"
+      },
+      "JOHNTITOR": {
+        "i": 316,
+        "t": "silver"
+      },
+      "JUDAS": {
+        "i": 215,
+        "t": "bronze"
+      },
+      "JYSZE": {
+        "i": 317,
+        "t": "silver"
+      },
+      "KALEIDO-SUBS": {
+        "i": 217,
+        "t": "bronze"
+      },
+      "KAMETSU": {
+        "i": 218,
+        "t": "bronze"
+      },
+      "KARIOS": {
+        "i": 291,
+        "t": "bronze"
+      },
+      "KAWATARE": {
+        "i": 219,
+        "t": "bronze"
+      },
+      "KH": {
+        "i": 216,
+        "t": "bronze"
+      },
+      "KOALA": {
+        "i": 329,
+        "t": "silver"
+      },
+      "KUCHIKIRUKIA": {
+        "i": 292,
+        "t": "bronze"
+      },
+      "KULOT": {
+        "i": 318,
+        "t": "silver"
+      },
+      "LACROIX": {
+        "i": 221,
+        "t": "bronze"
+      },
+      "LAZYREMUX": {
+        "i": 222,
+        "t": "bronze"
+      },
+      "LCE": {
+        "i": 220,
+        "t": "bronze"
+      },
+      "LEGION": {
+        "i": 223,
+        "t": "bronze"
+      },
+      "LOSTYEARS": {
+        "i": 319,
+        "t": "silver"
+      },
+      "LULU": {
+        "i": 320,
+        "t": "silver"
+      },
+      "LYS1TH3A": {
+        "i": 306,
+        "t": "gold"
+      },
+      "MC": {
+        "i": 224,
+        "t": "bronze"
+      },
+      "MEAKES": {
+        "i": 321,
+        "t": "silver"
+      },
+      "MEHUL": {
+        "i": 227,
+        "t": "bronze"
+      },
+      "METAL": {
+        "i": 228,
+        "t": "bronze"
+      },
+      "MK": {
+        "i": 225,
+        "t": "bronze"
+      },
+      "MOTTOJ": {
+        "i": 293,
+        "t": "bronze"
+      },
+      "MOXIE": {
+        "i": 307,
+        "t": "gold"
+      },
+      "MTBB": {
+        "i": 226,
+        "t": "bronze"
+      },
+      "MYSTERIA": {
+        "i": 229,
+        "t": "bronze"
+      },
+      "NAIYAS": {
+        "i": 294,
+        "t": "bronze"
+      },
+      "NEKO-KBARAKA": {
+        "i": 295,
+        "t": "bronze"
+      },
+      "NEKOTAN": {
+        "i": 296,
+        "t": "bronze"
+      },
+      "NETARO": {
+        "i": 234,
+        "t": "bronze"
+      },
+      "NH": {
+        "i": 230,
+        "t": "bronze"
+      },
+      "NOIY": {
+        "i": 235,
+        "t": "bronze"
+      },
+      "NPZ": {
+        "i": 297,
+        "t": "bronze"
+      },
+      "NTRM": {
+        "i": 231,
+        "t": "bronze"
+      },
+      "NTRX": {
+        "i": 232,
+        "t": "bronze"
+      },
+      "NTW": {
+        "i": 233,
+        "t": "bronze"
+      },
+      "O7": {
+        "i": 298,
+        "t": "bronze"
+      },
+      "OKAY-SUBS": {
+        "i": 237,
+        "t": "bronze"
+      },
+      "ORPHAN": {
+        "i": 322,
+        "t": "silver"
+      },
+      "ORZ": {
+        "i": 299,
+        "t": "bronze"
+      },
+      "OZR": {
+        "i": 236,
+        "t": "bronze"
+      },
+      "P9": {
+        "i": 238,
+        "t": "bronze"
+      },
+      "PIZZA": {
+        "i": 239,
+        "t": "bronze"
+      },
+      "POG42": {
+        "i": 300,
+        "t": "bronze"
+      },
+      "POOKIE": {
+        "i": 240,
+        "t": "bronze"
+      },
+      "PROF": {
+        "i": 241,
+        "t": "bronze"
+      },
+      "QM": {
+        "i": 242,
+        "t": "bronze"
+      },
+      "QUETZAL": {
+        "i": 243,
+        "t": "bronze"
+      },
+      "RAI": {
+        "i": 244,
+        "t": "bronze"
+      },
+      "RAIN": {
+        "i": 249,
+        "t": "bronze"
+      },
+      "RASETSU": {
+        "i": 245,
+        "t": "bronze"
+      },
+      "REVO": {
+        "i": 246,
+        "t": "bronze"
+      },
+      "REZA": {
+        "i": 250,
+        "t": "bronze"
+      },
+      "RMX": {
+        "i": 247,
+        "t": "bronze"
+      },
+      "RUDY": {
+        "i": 248,
+        "t": "bronze"
+      },
+      "SAM": {
+        "i": 309,
+        "t": "gold"
+      },
+      "SCP-2223": {
+        "i": 251,
+        "t": "bronze"
+      },
+      "SCY": {
+        "i": 252,
+        "t": "bronze"
+      },
+      "SEKKON": {
+        "i": 254,
+        "t": "bronze"
+      },
+      "SENJOU": {
+        "i": 255,
+        "t": "bronze"
+      },
+      "SERENDIPITY": {
+        "i": 256,
+        "t": "bronze"
+      },
+      "SEV": {
+        "i": 253,
+        "t": "bronze"
+      },
+      "SGT": {
+        "i": 301,
+        "t": "bronze"
+      },
+      "SHIMATTA": {
+        "i": 257,
+        "t": "bronze"
+      },
+      "SHIRσ": {
+        "i": 258,
+        "t": "bronze"
+      },
+      "SMOKE": {
+        "i": 259,
+        "t": "bronze"
+      },
+      "SMOL": {
+        "i": 310,
+        "t": "gold"
+      },
+      "SOM": {
+        "i": 308,
+        "t": "gold"
+      },
+      "SPIRALE": {
+        "i": 260,
+        "t": "bronze"
+      },
+      "STARBEZ": {
+        "i": 261,
+        "t": "bronze"
+      },
+      "SUBSMIX": {
+        "i": 262,
+        "t": "bronze"
+      },
+      "SYLVAR": {
+        "i": 263,
+        "t": "bronze"
+      },
+      "THIGHS": {
+        "i": 266,
+        "t": "bronze"
+      },
+      "THORA": {
+        "i": 264,
+        "t": "bronze"
+      },
+      "TSUNDERE": {
+        "i": 267,
+        "t": "bronze"
+      },
+      "TTGA": {
+        "i": 265,
+        "t": "bronze"
+      },
+      "UBA": {
+        "i": 302,
+        "t": "bronze"
+      },
+      "UDF": {
+        "i": 268,
+        "t": "bronze"
+      },
+      "ULTRAREMUX": {
+        "i": 270,
+        "t": "bronze"
+      },
+      "UQW": {
+        "i": 269,
+        "t": "bronze"
+      },
+      "VANILLA": {
+        "i": 272,
+        "t": "bronze"
+      },
+      "VIRTUALITY": {
+        "i": 273,
+        "t": "bronze"
+      },
+      "VIVID": {
+        "i": 274,
+        "t": "bronze"
+      },
+      "VODES": {
+        "i": 323,
+        "t": "silver"
+      },
+      "VULCAN": {
+        "i": 271,
+        "t": "bronze"
+      },
+      "WAP": {
+        "i": 324,
+        "t": "silver"
+      },
+      "WBDP": {
+        "i": 275,
+        "t": "bronze"
+      },
+      "WSE": {
+        "i": 276,
+        "t": "bronze"
+      },
+      "YOGHURT": {
+        "i": 278,
+        "t": "bronze"
+      },
+      "YUKI": {
+        "i": 279,
+        "t": "bronze"
+      },
+      "YURASUKA": {
+        "i": 277,
+        "t": "bronze"
+      },
+      "YURI": {
+        "i": 325,
+        "t": "silver"
+      },
+      "ZEROBUILD": {
+        "i": 326,
+        "t": "silver"
+      },
+      "ZR": {
+        "i": 280,
+        "t": "bronze"
+      }
+    },
+    "anime_web": {
+      "0X539": {
+        "i": 376,
+        "t": "silver"
+      },
+      "9VOLT": {
+        "i": 330,
+        "t": "bronze"
+      },
+      "ANOZU": {
+        "i": 331,
+        "t": "bronze"
+      },
+      "ARG0": {
+        "i": 361,
+        "t": "gold"
+      },
+      "ARID": {
+        "i": 362,
+        "t": "gold"
+      },
+      "ASAKURA": {
+        "i": 377,
+        "t": "silver"
+      },
+      "ASENSHI": {
+        "i": 332,
+        "t": "bronze"
+      },
+      "BAWS": {
+        "i": 363,
+        "t": "gold"
+      },
+      "BLACKROSE": {
+        "i": 378,
+        "t": "silver"
+      },
+      "BLUELOBSTER": {
+        "i": 333,
+        "t": "bronze"
+      },
+      "CHIHIRO": {
+        "i": 334,
+        "t": "bronze"
+      },
+      "COMMIE": {
+        "i": 335,
+        "t": "bronze"
+      },
+      "CYAN": {
+        "i": 379,
+        "t": "silver"
+      },
+      "CYTOX": {
+        "i": 380,
+        "t": "silver"
+      },
+      "DAE": {
+        "i": 381,
+        "t": "silver"
+      },
+      "DAMEDESUYO": {
+        "i": 336,
+        "t": "bronze"
+      },
+      "DOKI": {
+        "i": 337,
+        "t": "bronze"
+      },
+      "DOOKY": {
+        "i": 338,
+        "t": "bronze"
+      },
+      "ERAI-RAWS": {
+        "i": 339,
+        "t": "bronze"
+      },
+      "FLE": {
+        "i": 364,
+        "t": "gold"
+      },
+      "FOXTROT": {
+        "i": 382,
+        "t": "silver"
+      },
+      "GAO": {
+        "i": 383,
+        "t": "silver"
+      },
+      "GJM": {
+        "i": 340,
+        "t": "bronze"
+      },
+      "GST": {
+        "i": 341,
+        "t": "bronze"
+      },
+      "HALF-BAKED": {
+        "i": 384,
+        "t": "silver"
+      },
+      "HATSUBS": {
+        "i": 385,
+        "t": "silver"
+      },
+      "HORRIBLERIPS": {
+        "i": 342,
+        "t": "bronze"
+      },
+      "HORRIBLESUBS": {
+        "i": 343,
+        "t": "bronze"
+      },
+      "KALEIDO": {
+        "i": 345,
+        "t": "bronze"
+      },
+      "KAN3D2M": {
+        "i": 344,
+        "t": "bronze"
+      },
+      "KANTAI": {
+        "i": 346,
+        "t": "bronze"
+      },
+      "KAWASUBS": {
+        "i": 347,
+        "t": "bronze"
+      },
+      "KITSUNE": {
+        "i": 348,
+        "t": "bronze"
+      },
+      "LIA": {
+        "i": 349,
+        "t": "bronze"
+      },
+      "LOSTYEARS": {
+        "i": 366,
+        "t": "gold"
+      },
+      "LYS1TH3A": {
+        "i": 365,
+        "t": "gold"
+      },
+      "MALD": {
+        "i": 386,
+        "t": "silver"
+      },
+      "MCBALLS": {
+        "i": 367,
+        "t": "gold"
+      },
+      "MTBB": {
+        "i": 387,
+        "t": "silver"
+      },
+      "NANDESUKA": {
+        "i": 350,
+        "t": "bronze"
+      },
+      "NOT-VODES": {
+        "i": 388,
+        "t": "silver"
+      },
+      "OKAY-SUBS": {
+        "i": 389,
+        "t": "silver"
+      },
+      "PIZZA": {
+        "i": 390,
+        "t": "silver"
+      },
+      "PLAYWEB": {
+        "i": 351,
+        "t": "bronze"
+      },
+      "REZA": {
+        "i": 391,
+        "t": "silver"
+      },
+      "SAM": {
+        "i": 374,
+        "t": "gold"
+      },
+      "SCY": {
+        "i": 368,
+        "t": "gold"
+      },
+      "SETSUGEN": {
+        "i": 369,
+        "t": "gold"
+      },
+      "SLYFOX": {
+        "i": 392,
+        "t": "silver"
+      },
+      "SMOL": {
+        "i": 375,
+        "t": "gold"
+      },
+      "SOBSPLEASE": {
+        "i": 352,
+        "t": "bronze"
+      },
+      "SOLCE": {
+        "i": 393,
+        "t": "silver"
+      },
+      "SOM": {
+        "i": 370,
+        "t": "gold"
+      },
+      "SOME-STUFFS": {
+        "i": 353,
+        "t": "bronze"
+      },
+      "SUBSPLEASE": {
+        "i": 354,
+        "t": "bronze"
+      },
+      "TENSHI": {
+        "i": 394,
+        "t": "silver"
+      },
+      "TOONSHUB": {
+        "i": 355,
+        "t": "bronze"
+      },
+      "TSUNDERE": {
+        "i": 356,
+        "t": "bronze"
+      },
+      "URANIME": {
+        "i": 357,
+        "t": "bronze"
+      },
+      "VARYG": {
+        "i": 358,
+        "t": "bronze"
+      },
+      "VODES": {
+        "i": 371,
+        "t": "gold"
+      },
+      "Z4ST1N": {
+        "i": 372,
+        "t": "gold"
+      },
+      "ZEROBUILD": {
+        "i": 373,
+        "t": "gold"
+      },
+      "ZIGZAG": {
+        "i": 360,
+        "t": "bronze"
+      },
+      "ZR": {
+        "i": 359,
+        "t": "bronze"
+      }
+    },
     "any": {
       "D3US": {
-        "i": 369,
+        "i": 395,
         "t": "banned"
       },
       "JENNAORTEGA": {
-        "i": 377,
+        "i": 403,
         "t": "banned"
       },
       "NOGROP": {
-        "i": 370,
+        "i": 396,
         "t": "banned"
       },
       "PIRATES": {
-        "i": 371,
+        "i": 397,
         "t": "banned"
       },
       "VISIONPLUSHDR-X": {
-        "i": 372,
+        "i": 398,
         "t": "banned"
       },
       "VISIONPLUSHDR1000": {
-        "i": 373,
+        "i": 399,
         "t": "banned"
       },
       "YTS.AG": {
-        "i": 374,
+        "i": 400,
         "t": "banned"
       },
       "YTS.LT": {
-        "i": 375,
+        "i": 401,
         "t": "banned"
       },
       "YTS.MX": {
-        "i": 376,
+        "i": 402,
         "t": "banned"
       }
     }
@@ -1513,1111 +1629,1111 @@ trash_group_exact := {
   "movie": {
     "any": {
       "24XHD": {
-        "i": 378,
-        "t": "banned"
-      },
-      "41RGB": {
-        "i": 379,
-        "t": "banned"
-      },
-      "4K4U": {
-        "i": 380,
-        "t": "banned"
-      },
-      "AOC": {
-        "i": 381,
-        "t": "banned"
-      },
-      "AROMA": {
-        "i": 382,
-        "t": "banned"
-      },
-      "AXXO": {
-        "i": 511,
-        "t": "banned"
-      },
-      "AZAZE": {
-        "i": 383,
-        "t": "banned"
-      },
-      "BARC0DE": {
-        "i": 384,
-        "t": "banned"
-      },
-      "BAT": {
-        "i": 385,
-        "t": "banned"
-      },
-      "BAUCKLEY": {
-        "i": 386,
-        "t": "banned"
-      },
-      "BDC": {
-        "i": 389,
-        "t": "banned"
-      },
-      "BEAST": {
-        "i": 513,
-        "t": "banned"
-      },
-      "BLACKBIT": {
-        "i": 390,
-        "t": "banned"
-      },
-      "BND": {
-        "i": 387,
-        "t": "banned"
-      },
-      "BTM": {
-        "i": 388,
-        "t": "banned"
-      },
-      "C.A.A": {
-        "i": 391,
-        "t": "banned"
-      },
-      "C1NEM4": {
-        "i": 392,
-        "t": "banned"
-      },
-      "C4K": {
-        "i": 393,
-        "t": "banned"
-      },
-      "C76": {
-        "i": 394,
-        "t": "banned"
-      },
-      "CDDHD": {
-        "i": 395,
-        "t": "banned"
-      },
-      "CHAOS": {
-        "i": 396,
-        "t": "banned"
-      },
-      "CHD": {
-        "i": 397,
-        "t": "banned"
-      },
-      "CINE": {
-        "i": 403,
-        "t": "banned"
-      },
-      "CLEANUP": {
-        "i": 398,
-        "t": "banned"
-      },
-      "COLLECTIVE": {
-        "i": 399,
-        "t": "banned"
-      },
-      "CORY": {
         "i": 404,
         "t": "banned"
       },
-      "CREATIVE24": {
-        "i": 400,
-        "t": "banned"
-      },
-      "CREWSADE": {
+      "41RGB": {
         "i": 405,
         "t": "banned"
       },
-      "CTFOH": {
-        "i": 401,
-        "t": "banned"
-      },
-      "CYPHER": {
-        "i": 402,
-        "t": "banned"
-      },
-      "D3G": {
-        "i": 514,
-        "t": "banned"
-      },
-      "D3US": {
+      "4K4U": {
         "i": 406,
         "t": "banned"
       },
-      "DDR": {
+      "AOC": {
         "i": 407,
         "t": "banned"
       },
-      "DNL": {
+      "AROMA": {
         "i": 408,
         "t": "banned"
       },
-      "DRX": {
+      "AXXO": {
+        "i": 537,
+        "t": "banned"
+      },
+      "AZAZE": {
         "i": 409,
         "t": "banned"
       },
-      "E": {
+      "BARC0DE": {
         "i": 410,
         "t": "banned"
       },
-      "ENIAHD": {
-        "i": 413,
-        "t": "banned"
-      },
-      "EPIC": {
+      "BAT": {
         "i": 411,
         "t": "banned"
       },
-      "EUREKA": {
-        "i": 414,
-        "t": "banned"
-      },
-      "EXTREME": {
+      "BAUCKLEY": {
         "i": 412,
         "t": "banned"
       },
-      "FANGDING0": {
-        "i": 422,
-        "t": "banned"
-      },
-      "FERANKI1980": {
-        "i": 423,
-        "t": "banned"
-      },
-      "FF": {
+      "BDC": {
         "i": 415,
         "t": "banned"
       },
-      "FGT": {
+      "BEAST": {
+        "i": 539,
+        "t": "banned"
+      },
+      "BLACKBIT": {
         "i": 416,
         "t": "banned"
       },
-      "FMD": {
+      "BND": {
+        "i": 413,
+        "t": "banned"
+      },
+      "BTM": {
+        "i": 414,
+        "t": "banned"
+      },
+      "C.A.A": {
         "i": 417,
         "t": "banned"
       },
-      "FOXX": {
+      "C1NEM4": {
         "i": 418,
         "t": "banned"
       },
-      "FRDS": {
+      "C4K": {
         "i": 419,
         "t": "banned"
       },
-      "FS": {
+      "C76": {
         "i": 420,
         "t": "banned"
       },
-      "FZHD": {
+      "CDDHD": {
         "i": 421,
         "t": "banned"
       },
-      "G4RIS": {
-        "i": 424,
+      "CHAOS": {
+        "i": 422,
         "t": "banned"
       },
-      "GALAXYRG": {
-        "i": 428,
+      "CHD": {
+        "i": 423,
         "t": "banned"
       },
-      "GHD": {
-        "i": 425,
-        "t": "banned"
-      },
-      "GPTHD": {
-        "i": 426,
-        "t": "banned"
-      },
-      "GUEIRA": {
-        "i": 427,
-        "t": "banned"
-      },
-      "HDHUB4U": {
+      "CINE": {
         "i": 429,
         "t": "banned"
       },
-      "HDS": {
+      "CLEANUP": {
+        "i": 424,
+        "t": "banned"
+      },
+      "COLLECTIVE": {
+        "i": 425,
+        "t": "banned"
+      },
+      "CORY": {
         "i": 430,
         "t": "banned"
       },
-      "HDT": {
+      "CREATIVE24": {
+        "i": 426,
+        "t": "banned"
+      },
+      "CREWSADE": {
         "i": 431,
         "t": "banned"
       },
-      "HDTIME": {
+      "CTFOH": {
+        "i": 427,
+        "t": "banned"
+      },
+      "CYPHER": {
+        "i": 428,
+        "t": "banned"
+      },
+      "D3G": {
+        "i": 540,
+        "t": "banned"
+      },
+      "D3US": {
         "i": 432,
         "t": "banned"
       },
-      "HDWING": {
+      "DDR": {
         "i": 433,
         "t": "banned"
       },
-      "INTENSO": {
-        "i": 515,
-        "t": "banned"
-      },
-      "IPLANET": {
-        "i": 516,
-        "t": "banned"
-      },
-      "IVY": {
-        "i": 517,
-        "t": "banned"
-      },
-      "JENNAORTEGA": {
-        "i": 518,
-        "t": "banned"
-      },
-      "JENNAORTEGAUHD": {
-        "i": 519,
-        "t": "banned"
-      },
-      "JFF": {
+      "DNL": {
         "i": 434,
         "t": "banned"
       },
-      "KC": {
+      "DRX": {
         "i": 435,
         "t": "banned"
       },
-      "KINGDOM": {
-        "i": 437,
-        "t": "banned"
-      },
-      "KIRA": {
+      "E": {
         "i": 436,
         "t": "banned"
       },
-      "L0SERNIGHT": {
-        "i": 438,
-        "t": "banned"
-      },
-      "LAMA": {
+      "ENIAHD": {
         "i": 439,
         "t": "banned"
       },
-      "LCD": {
+      "EPIC": {
+        "i": 437,
+        "t": "banned"
+      },
+      "EUREKA": {
         "i": 440,
         "t": "banned"
       },
-      "LEFFE": {
-        "i": 442,
+      "EXTREME": {
+        "i": 438,
         "t": "banned"
       },
-      "LIBER8": {
-        "i": 444,
-        "t": "banned"
-      },
-      "LIGAS": {
-        "i": 443,
-        "t": "banned"
-      },
-      "LUCY": {
-        "i": 441,
-        "t": "banned"
-      },
-      "MARKII": {
-        "i": 449,
-        "t": "banned"
-      },
-      "MEGUSTA": {
-        "i": 450,
-        "t": "banned"
-      },
-      "MESC": {
-        "i": 451,
-        "t": "banned"
-      },
-      "MHD": {
-        "i": 520,
-        "t": "banned"
-      },
-      "MLH": {
-        "i": 446,
-        "t": "banned"
-      },
-      "MSD": {
-        "i": 521,
-        "t": "banned"
-      },
-      "MT": {
-        "i": 447,
-        "t": "banned"
-      },
-      "MTEAM": {
+      "FANGDING0": {
         "i": 448,
         "t": "banned"
       },
-      "MYSILU": {
-        "i": 452,
+      "FERANKI1980": {
+        "i": 449,
         "t": "banned"
       },
-      "N3G4N": {
-        "i": 453,
+      "FF": {
+        "i": 441,
         "t": "banned"
       },
-      "NHANC3": {
+      "FGT": {
+        "i": 442,
+        "t": "banned"
+      },
+      "FMD": {
+        "i": 443,
+        "t": "banned"
+      },
+      "FOXX": {
+        "i": 444,
+        "t": "banned"
+      },
+      "FRDS": {
+        "i": 445,
+        "t": "banned"
+      },
+      "FS": {
+        "i": 446,
+        "t": "banned"
+      },
+      "FZHD": {
+        "i": 447,
+        "t": "banned"
+      },
+      "G4RIS": {
+        "i": 450,
+        "t": "banned"
+      },
+      "GALAXYRG": {
         "i": 454,
         "t": "banned"
       },
-      "NHD": {
-        "i": 522,
+      "GHD": {
+        "i": 451,
         "t": "banned"
       },
-      "NIKT0": {
-        "i": 524,
+      "GPTHD": {
+        "i": 452,
         "t": "banned"
       },
-      "NOGROP": {
+      "GUEIRA": {
+        "i": 453,
+        "t": "banned"
+      },
+      "HDHUB4U": {
         "i": 455,
         "t": "banned"
       },
-      "NOGROUP": {
+      "HDS": {
         "i": 456,
         "t": "banned"
       },
-      "NOGRP": {
+      "HDT": {
         "i": 457,
         "t": "banned"
       },
-      "NSD": {
-        "i": 523,
-        "t": "banned"
-      },
-      "OFT": {
+      "HDTIME": {
         "i": 458,
         "t": "banned"
       },
-      "OLDT": {
-        "i": 460,
-        "t": "banned"
-      },
-      "ONLYMOVIE": {
+      "HDWING": {
         "i": 459,
         "t": "banned"
       },
-      "PAHE": {
-        "i": 467,
+      "INTENSO": {
+        "i": 541,
         "t": "banned"
       },
-      "PAHE.IN": {
-        "i": 468,
+      "IPLANET": {
+        "i": 542,
         "t": "banned"
       },
-      "PAHE.PH": {
-        "i": 469,
+      "IVY": {
+        "i": 543,
         "t": "banned"
       },
-      "PATOMIEL": {
+      "JENNAORTEGA": {
+        "i": 544,
+        "t": "banned"
+      },
+      "JENNAORTEGAUHD": {
+        "i": 545,
+        "t": "banned"
+      },
+      "JFF": {
+        "i": 460,
+        "t": "banned"
+      },
+      "KC": {
         "i": 461,
         "t": "banned"
       },
-      "PD": {
-        "i": 462,
-        "t": "banned"
-      },
-      "PIRATES": {
-        "i": 470,
-        "t": "banned"
-      },
-      "PRODJI": {
+      "KINGDOM": {
         "i": 463,
         "t": "banned"
       },
-      "PSA": {
+      "KIRA": {
+        "i": 462,
+        "t": "banned"
+      },
+      "L0SERNIGHT": {
         "i": 464,
         "t": "banned"
       },
-      "PTHOME": {
+      "LAMA": {
         "i": 465,
         "t": "banned"
       },
-      "PTNK": {
+      "LCD": {
         "i": 466,
         "t": "banned"
       },
-      "RARBG": {
-        "i": 471,
+      "LEFFE": {
+        "i": 468,
         "t": "banned"
       },
-      "RBB": {
-        "i": 472,
+      "LIBER8": {
+        "i": 470,
         "t": "banned"
       },
-      "RDN": {
-        "i": 473,
+      "LIGAS": {
+        "i": 469,
         "t": "banned"
       },
-      "RIFFTRAX": {
-        "i": 477,
+      "LUCY": {
+        "i": 467,
         "t": "banned"
       },
-      "RIPER": {
-        "i": 476,
-        "t": "banned"
-      },
-      "RK": {
-        "i": 474,
-        "t": "banned"
-      },
-      "RU4HD": {
+      "MARKII": {
         "i": 475,
         "t": "banned"
       },
-      "SANTI": {
+      "MEGUSTA": {
+        "i": 476,
+        "t": "banned"
+      },
+      "MESC": {
+        "i": 477,
+        "t": "banned"
+      },
+      "MHD": {
+        "i": 546,
+        "t": "banned"
+      },
+      "MLH": {
+        "i": 472,
+        "t": "banned"
+      },
+      "MSD": {
+        "i": 547,
+        "t": "banned"
+      },
+      "MT": {
+        "i": 473,
+        "t": "banned"
+      },
+      "MTEAM": {
+        "i": 474,
+        "t": "banned"
+      },
+      "MYSILU": {
         "i": 478,
         "t": "banned"
       },
-      "SCENE": {
-        "i": 482,
-        "t": "banned"
-      },
-      "SHD": {
+      "N3G4N": {
         "i": 479,
         "t": "banned"
       },
-      "SHIELDBEARER": {
-        "i": 483,
-        "t": "banned"
-      },
-      "SIGLA": {
-        "i": 484,
-        "t": "banned"
-      },
-      "STUTTERSHIT": {
+      "NHANC3": {
         "i": 480,
         "t": "banned"
       },
-      "SUNSCREEN": {
+      "NHD": {
+        "i": 548,
+        "t": "banned"
+      },
+      "NIKT0": {
+        "i": 550,
+        "t": "banned"
+      },
+      "NOGROP": {
         "i": 481,
         "t": "banned"
       },
-      "SYNCUP": {
-        "i": 485,
+      "NOGROUP": {
+        "i": 482,
         "t": "banned"
       },
-      "TARS": {
-        "i": 491,
+      "NOGRP": {
+        "i": 483,
         "t": "banned"
       },
-      "TBS": {
+      "NSD": {
+        "i": 549,
+        "t": "banned"
+      },
+      "OFT": {
+        "i": 484,
+        "t": "banned"
+      },
+      "OLDT": {
         "i": 486,
         "t": "banned"
       },
-      "TEKNO3D": {
-        "i": 487,
+      "ONLYMOVIE": {
+        "i": 485,
         "t": "banned"
       },
-      "TIGOLE": {
-        "i": 492,
-        "t": "banned"
-      },
-      "TIKO": {
-        "i": 488,
-        "t": "banned"
-      },
-      "TM": {
-        "i": 489,
-        "t": "banned"
-      },
-      "TOKAR86A": {
-        "i": 525,
-        "t": "banned"
-      },
-      "TURG": {
-        "i": 490,
-        "t": "banned"
-      },
-      "TVR": {
+      "PAHE": {
         "i": 493,
         "t": "banned"
       },
-      "VISIONPLUSHDR": {
+      "PAHE.IN": {
         "i": 494,
         "t": "banned"
       },
-      "VISIONPLUSHDR-X": {
+      "PAHE.PH": {
         "i": 495,
         "t": "banned"
       },
-      "VISIONPLUSHDR1000": {
+      "PATOMIEL": {
+        "i": 487,
+        "t": "banned"
+      },
+      "PD": {
+        "i": 488,
+        "t": "banned"
+      },
+      "PIRATES": {
         "i": 496,
         "t": "banned"
       },
-      "VNLLS": {
-        "i": 526,
+      "PRODJI": {
+        "i": 489,
         "t": "banned"
       },
-      "WAF": {
+      "PSA": {
+        "i": 490,
+        "t": "banned"
+      },
+      "PTHOME": {
+        "i": 491,
+        "t": "banned"
+      },
+      "PTNK": {
+        "i": 492,
+        "t": "banned"
+      },
+      "RARBG": {
         "i": 497,
         "t": "banned"
       },
-      "WIKI": {
-        "i": 499,
-        "t": "banned"
-      },
-      "WTV": {
+      "RBB": {
         "i": 498,
         "t": "banned"
       },
-      "X0R": {
-        "i": 527,
+      "RDN": {
+        "i": 499,
         "t": "banned"
       },
-      "XIQUEXIQUE": {
-        "i": 500,
-        "t": "banned"
-      },
-      "YATOGAM1": {
-        "i": 506,
-        "t": "banned"
-      },
-      "YIFY": {
-        "i": 501,
-        "t": "banned"
-      },
-      "YTS.AG": {
-        "i": 502,
-        "t": "banned"
-      },
-      "YTS.LT": {
+      "RIFFTRAX": {
         "i": 503,
         "t": "banned"
       },
-      "YTS.MX": {
+      "RIPER": {
+        "i": 502,
+        "t": "banned"
+      },
+      "RK": {
+        "i": 500,
+        "t": "banned"
+      },
+      "RU4HD": {
+        "i": 501,
+        "t": "banned"
+      },
+      "SANTI": {
         "i": 504,
         "t": "banned"
       },
-      "YTS.MX|LT|AG": {
+      "SCENE": {
+        "i": 508,
+        "t": "banned"
+      },
+      "SHD": {
         "i": 505,
         "t": "banned"
       },
-      "YUSUKEFLA": {
-        "i": 507,
-        "t": "banned"
-      },
-      "ZEUS": {
+      "SHIELDBEARER": {
         "i": 509,
         "t": "banned"
       },
-      "ZIGZAG": {
+      "SIGLA": {
         "i": 510,
         "t": "banned"
       },
+      "STUTTERSHIT": {
+        "i": 506,
+        "t": "banned"
+      },
+      "SUNSCREEN": {
+        "i": 507,
+        "t": "banned"
+      },
+      "SYNCUP": {
+        "i": 511,
+        "t": "banned"
+      },
+      "TARS": {
+        "i": 517,
+        "t": "banned"
+      },
+      "TBS": {
+        "i": 512,
+        "t": "banned"
+      },
+      "TEKNO3D": {
+        "i": 513,
+        "t": "banned"
+      },
+      "TIGOLE": {
+        "i": 518,
+        "t": "banned"
+      },
+      "TIKO": {
+        "i": 514,
+        "t": "banned"
+      },
+      "TM": {
+        "i": 515,
+        "t": "banned"
+      },
+      "TOKAR86A": {
+        "i": 551,
+        "t": "banned"
+      },
+      "TURG": {
+        "i": 516,
+        "t": "banned"
+      },
+      "TVR": {
+        "i": 519,
+        "t": "banned"
+      },
+      "VISIONPLUSHDR": {
+        "i": 520,
+        "t": "banned"
+      },
+      "VISIONPLUSHDR-X": {
+        "i": 521,
+        "t": "banned"
+      },
+      "VISIONPLUSHDR1000": {
+        "i": 522,
+        "t": "banned"
+      },
+      "VNLLS": {
+        "i": 552,
+        "t": "banned"
+      },
+      "WAF": {
+        "i": 523,
+        "t": "banned"
+      },
+      "WIKI": {
+        "i": 525,
+        "t": "banned"
+      },
+      "WTV": {
+        "i": 524,
+        "t": "banned"
+      },
+      "X0R": {
+        "i": 553,
+        "t": "banned"
+      },
+      "XIQUEXIQUE": {
+        "i": 526,
+        "t": "banned"
+      },
+      "YATOGAM1": {
+        "i": 532,
+        "t": "banned"
+      },
+      "YIFY": {
+        "i": 527,
+        "t": "banned"
+      },
+      "YTS.AG": {
+        "i": 528,
+        "t": "banned"
+      },
+      "YTS.LT": {
+        "i": 529,
+        "t": "banned"
+      },
+      "YTS.MX": {
+        "i": 530,
+        "t": "banned"
+      },
+      "YTS.MX|LT|AG": {
+        "i": 531,
+        "t": "banned"
+      },
+      "YUSUKEFLA": {
+        "i": 533,
+        "t": "banned"
+      },
+      "ZEUS": {
+        "i": 535,
+        "t": "banned"
+      },
+      "ZIGZAG": {
+        "i": 536,
+        "t": "banned"
+      },
       "ZNM": {
-        "i": 508,
+        "i": 534,
         "t": "banned"
       }
     },
     "bluray": {
       "ATELIER": {
-        "i": 536,
+        "i": 562,
         "t": "gold"
       },
       "BBQ": {
-        "i": 537,
+        "i": 563,
         "t": "gold"
       },
       "BHDSTUDIO": {
-        "i": 528,
+        "i": 554,
         "t": "bronze"
       },
       "BMF": {
-        "i": 538,
+        "i": 564,
         "t": "gold"
       },
       "C0KE": {
-        "i": 557,
+        "i": 583,
         "t": "gold"
       },
       "CHOTAB": {
-        "i": 540,
+        "i": 566,
         "t": "gold"
       },
       "CRISC": {
-        "i": 539,
+        "i": 565,
         "t": "gold"
       },
       "CTRLHD": {
-        "i": 541,
+        "i": 567,
         "t": "gold"
       },
       "D-Z0N3": {
-        "i": 542,
+        "i": 568,
         "t": "gold"
       },
       "DARIUSH": {
-        "i": 544,
+        "i": 570,
         "t": "gold"
       },
       "DECIBEL": {
-        "i": 558,
+        "i": 584,
         "t": "gold"
       },
       "DON": {
-        "i": 543,
+        "i": 569,
         "t": "gold"
       },
       "EA": {
-        "i": 559,
+        "i": 585,
         "t": "silver"
       },
       "EBP": {
-        "i": 546,
+        "i": 572,
         "t": "gold"
       },
       "EDPH": {
-        "i": 545,
+        "i": 571,
         "t": "gold"
       },
       "GEEK": {
-        "i": 547,
+        "i": 573,
         "t": "gold"
       },
       "HALLOWED": {
-        "i": 534,
+        "i": 560,
         "t": "bronze"
       },
       "HIDT": {
-        "i": 560,
+        "i": 586,
         "t": "silver"
       },
       "HIFI": {
-        "i": 530,
+        "i": 556,
         "t": "bronze"
       },
       "HISD": {
-        "i": 561,
+        "i": 587,
         "t": "silver"
       },
       "HONE": {
-        "i": 529,
+        "i": 555,
         "t": "bronze"
       },
       "IFT": {
-        "i": 565,
+        "i": 591,
         "t": "silver"
       },
       "LOLHD": {
-        "i": 548,
+        "i": 574,
         "t": "gold"
       },
       "LORD": {
-        "i": 531,
+        "i": 557,
         "t": "bronze"
       },
       "NCMT": {
-        "i": 549,
+        "i": 575,
         "t": "gold"
       },
       "NTB": {
-        "i": 562,
+        "i": 588,
         "t": "silver"
       },
       "PLAYHD": {
-        "i": 535,
+        "i": 561,
         "t": "bronze"
       },
       "PTER": {
-        "i": 550,
+        "i": 576,
         "t": "gold"
       },
       "QOQ": {
-        "i": 563,
+        "i": 589,
         "t": "silver"
       },
       "SA89": {
-        "i": 564,
+        "i": 590,
         "t": "silver"
       },
       "SBR": {
-        "i": 566,
+        "i": 592,
         "t": "silver"
       },
       "SPHD": {
-        "i": 532,
+        "i": 558,
         "t": "bronze"
       },
       "TAYTO": {
-        "i": 552,
+        "i": 578,
         "t": "gold"
       },
       "TDD": {
-        "i": 551,
+        "i": 577,
         "t": "gold"
       },
       "TNP": {
-        "i": 553,
+        "i": 579,
         "t": "gold"
       },
       "VIETHD": {
-        "i": 554,
+        "i": 580,
         "t": "gold"
       },
       "W4NK3R": {
-        "i": 533,
+        "i": 559,
         "t": "bronze"
       },
       "ZOROSENPAI": {
-        "i": 556,
+        "i": 582,
         "t": "gold"
       },
       "ZQ": {
-        "i": 555,
+        "i": 581,
         "t": "gold"
       }
     },
     "remux": {
       "12GAUGESHOTGUN": {
-        "i": 567,
+        "i": 593,
         "t": "bronze"
       },
       "3L": {
-        "i": 578,
+        "i": 604,
         "t": "gold"
       },
       "ATELIER": {
-        "i": 579,
+        "i": 605,
         "t": "gold"
       },
       "BIZKIT": {
-        "i": 582,
+        "i": 608,
         "t": "gold"
       },
       "BLURANIUM": {
-        "i": 580,
+        "i": 606,
         "t": "gold"
       },
       "BMF": {
-        "i": 581,
+        "i": 607,
         "t": "gold"
       },
       "CINEPHILES": {
-        "i": 583,
+        "i": 609,
         "t": "gold"
       },
       "DECIBEL": {
-        "i": 576,
+        "i": 602,
         "t": "bronze"
       },
       "EPSILON": {
-        "i": 568,
+        "i": 594,
         "t": "bronze"
       },
       "FRAMESTOR": {
-        "i": 584,
+        "i": 610,
         "t": "gold"
       },
       "HIFI": {
-        "i": 569,
+        "i": 595,
         "t": "bronze"
       },
       "IFT": {
-        "i": 577,
+        "i": 603,
         "t": "bronze"
       },
       "KRALIMARKO": {
-        "i": 570,
+        "i": 596,
         "t": "bronze"
       },
       "NCMT": {
-        "i": 589,
+        "i": 615,
         "t": "silver"
       },
       "NTB": {
-        "i": 571,
+        "i": 597,
         "t": "bronze"
       },
       "PIRAMIDHEAD": {
-        "i": 585,
+        "i": 611,
         "t": "gold"
       },
       "PLAYBD": {
-        "i": 593,
+        "i": 619,
         "t": "silver"
       },
       "PMP": {
-        "i": 586,
+        "i": 612,
         "t": "gold"
       },
       "PTP": {
-        "i": 572,
+        "i": 598,
         "t": "bronze"
       },
       "SICFOI": {
-        "i": 591,
+        "i": 617,
         "t": "silver"
       },
       "SUMVISION": {
-        "i": 573,
+        "i": 599,
         "t": "bronze"
       },
       "SURFINBIRD": {
-        "i": 590,
+        "i": 616,
         "t": "silver"
       },
       "TEPES": {
-        "i": 592,
+        "i": 618,
         "t": "silver"
       },
       "TOA": {
-        "i": 574,
+        "i": 600,
         "t": "bronze"
       },
       "TRITON": {
-        "i": 575,
+        "i": 601,
         "t": "bronze"
       },
       "WILDCAT": {
-        "i": 587,
+        "i": 613,
         "t": "gold"
       },
       "ZQ": {
-        "i": 588,
+        "i": 614,
         "t": "gold"
       }
     },
     "uhd_bluray": {
       "BHDSTUDIO": {
-        "i": 594,
+        "i": 620,
         "t": "bronze"
       },
       "CTRLHD": {
-        "i": 600,
+        "i": 626,
         "t": "gold"
       },
       "DON": {
-        "i": 601,
+        "i": 627,
         "t": "gold"
       },
       "HALLOWED": {
-        "i": 599,
+        "i": 625,
         "t": "bronze"
       },
       "HIDT": {
-        "i": 605,
+        "i": 631,
         "t": "silver"
       },
       "HONE": {
-        "i": 595,
+        "i": 621,
         "t": "bronze"
       },
       "HQMUX": {
-        "i": 604,
+        "i": 630,
         "t": "silver"
       },
       "MAINFRAME": {
-        "i": 602,
+        "i": 628,
         "t": "gold"
       },
       "PTER": {
-        "i": 596,
+        "i": 622,
         "t": "bronze"
       },
       "RANDOMBYTES": {
-        "i": 606,
+        "i": 632,
         "t": "silver"
       },
       "SPHD": {
-        "i": 597,
+        "i": 623,
         "t": "bronze"
       },
       "W4NK3R": {
-        "i": 603,
+        "i": 629,
         "t": "gold"
       },
       "WEBDV": {
-        "i": 598,
+        "i": 624,
         "t": "bronze"
       }
     },
     "web": {
       "4KBEC": {
-        "i": 642,
+        "i": 668,
         "t": "silver"
       },
       "ABBIE": {
-        "i": 617,
+        "i": 643,
         "t": "gold"
       },
       "AJP69": {
-        "i": 618,
+        "i": 644,
         "t": "gold"
       },
       "APEX": {
-        "i": 619,
+        "i": 645,
         "t": "gold"
       },
       "BLOOM": {
-        "i": 607,
+        "i": 633,
         "t": "bronze"
       },
       "BLUTONIUM": {
-        "i": 620,
+        "i": 646,
         "t": "gold"
       },
       "BYNDR": {
-        "i": 621,
+        "i": 647,
         "t": "gold"
       },
       "CEBEX": {
-        "i": 643,
+        "i": 669,
         "t": "silver"
       },
       "CMRG": {
-        "i": 622,
+        "i": 648,
         "t": "gold"
       },
       "CRFW": {
-        "i": 623,
+        "i": 649,
         "t": "gold"
       },
       "CRUD": {
-        "i": 624,
+        "i": 650,
         "t": "gold"
       },
       "DB": {
-        "i": 652,
+        "i": 678,
         "t": "silver"
       },
       "DOOKY": {
-        "i": 608,
+        "i": 634,
         "t": "bronze"
       },
       "FLIGHTS": {
-        "i": 644,
+        "i": 670,
         "t": "silver"
       },
       "FLUX": {
-        "i": 625,
+        "i": 651,
         "t": "gold"
       },
       "GNOME": {
-        "i": 626,
+        "i": 652,
         "t": "gold"
       },
       "GNOMISSION": {
-        "i": 609,
+        "i": 635,
         "t": "bronze"
       },
       "HHWEB": {
-        "i": 610,
+        "i": 636,
         "t": "bronze"
       },
       "HONE": {
-        "i": 627,
+        "i": 653,
         "t": "gold"
       },
       "KINGS": {
-        "i": 628,
+        "i": 654,
         "t": "gold"
       },
       "KITSUNE": {
-        "i": 629,
+        "i": 655,
         "t": "gold"
       },
       "MADSKY": {
-        "i": 630,
+        "i": 656,
         "t": "gold"
       },
       "MIU": {
-        "i": 646,
+        "i": 672,
         "t": "silver"
       },
       "MONKEE": {
-        "i": 653,
+        "i": 679,
         "t": "silver"
       },
       "MZABI": {
-        "i": 645,
+        "i": 671,
         "t": "silver"
       },
       "NINJACENTRAL": {
-        "i": 611,
+        "i": 637,
         "t": "bronze"
       },
       "NOSIVID": {
-        "i": 631,
+        "i": 657,
         "t": "gold"
       },
       "NPMS": {
-        "i": 612,
+        "i": 638,
         "t": "bronze"
       },
       "NTB": {
-        "i": 633,
+        "i": 659,
         "t": "gold"
       },
       "NTG": {
-        "i": 632,
+        "i": 658,
         "t": "gold"
       },
       "PAXA": {
-        "i": 634,
+        "i": 660,
         "t": "gold"
       },
       "PEXA": {
-        "i": 635,
+        "i": 661,
         "t": "gold"
       },
       "PHOENIX": {
-        "i": 647,
+        "i": 673,
         "t": "silver"
       },
       "PLAYWEB": {
-        "i": 654,
+        "i": 680,
         "t": "silver"
       },
       "RAWR": {
-        "i": 636,
+        "i": 662,
         "t": "gold"
       },
       "ROCCAT": {
-        "i": 613,
+        "i": 639,
         "t": "bronze"
       },
       "SBR": {
-        "i": 649,
+        "i": 675,
         "t": "silver"
       },
       "SIC": {
-        "i": 637,
+        "i": 663,
         "t": "gold"
       },
       "SIGMA": {
-        "i": 615,
+        "i": 641,
         "t": "bronze"
       },
       "SLIGNOME": {
-        "i": 614,
+        "i": 640,
         "t": "bronze"
       },
       "SMURF": {
-        "i": 648,
+        "i": 674,
         "t": "silver"
       },
       "SWAGLANDER": {
-        "i": 616,
+        "i": 642,
         "t": "bronze"
       },
       "TEPES": {
-        "i": 638,
+        "i": 664,
         "t": "gold"
       },
       "THEFARM": {
-        "i": 639,
+        "i": 665,
         "t": "gold"
       },
       "TOMMY": {
-        "i": 650,
+        "i": 676,
         "t": "silver"
       },
       "XEBEC": {
-        "i": 651,
+        "i": 677,
         "t": "silver"
       },
       "XEPA": {
-        "i": 640,
+        "i": 666,
         "t": "gold"
       },
       "ZOROSENPAI": {
-        "i": 641,
+        "i": 667,
         "t": "gold"
       }
     }
@@ -2625,705 +2741,705 @@ trash_group_exact := {
   "series": {
     "any": {
       "BAT": {
-        "i": 655,
-        "t": "banned"
-      },
-      "BIOMA": {
-        "i": 659,
-        "t": "banned"
-      },
-      "BLACKBIT": {
-        "i": 660,
-        "t": "banned"
-      },
-      "BND": {
-        "i": 656,
-        "t": "banned"
-      },
-      "BRINK": {
-        "i": 657,
-        "t": "banned"
-      },
-      "BTM": {
-        "i": 658,
-        "t": "banned"
-      },
-      "C.A.A": {
-        "i": 661,
-        "t": "banned"
-      },
-      "C76": {
-        "i": 662,
-        "t": "banned"
-      },
-      "CHX": {
-        "i": 663,
-        "t": "banned"
-      },
-      "CORY": {
-        "i": 666,
-        "t": "banned"
-      },
-      "CTFOH": {
-        "i": 664,
-        "t": "banned"
-      },
-      "CYPHER": {
-        "i": 665,
-        "t": "banned"
-      },
-      "D3G": {
-        "i": 722,
-        "t": "banned"
-      },
-      "D3US": {
-        "i": 667,
-        "t": "banned"
-      },
-      "DEPRAVED": {
-        "i": 668,
-        "t": "banned"
-      },
-      "ENIAHD": {
-        "i": 671,
-        "t": "banned"
-      },
-      "EVO": {
-        "i": 669,
-        "t": "banned"
-      },
-      "EXTREME": {
-        "i": 670,
-        "t": "banned"
-      },
-      "FERANKI1980": {
-        "i": 676,
-        "t": "banned"
-      },
-      "FF": {
-        "i": 672,
-        "t": "banned"
-      },
-      "FGT": {
-        "i": 673,
-        "t": "banned"
-      },
-      "FMD": {
-        "i": 674,
-        "t": "banned"
-      },
-      "FOXX": {
-        "i": 675,
-        "t": "banned"
-      },
-      "G4RIS": {
-        "i": 677,
-        "t": "banned"
-      },
-      "GHOSTS": {
-        "i": 678,
-        "t": "banned"
-      },
-      "GUEIRA": {
-        "i": 679,
-        "t": "banned"
-      },
-      "HIQVE": {
-        "i": 680,
-        "t": "banned"
-      },
-      "INTENSO": {
-        "i": 723,
-        "t": "banned"
-      },
-      "IVY": {
-        "i": 724,
-        "t": "banned"
-      },
-      "JENNAORTEGA": {
-        "i": 725,
-        "t": "banned"
-      },
-      "JFF": {
         "i": 681,
         "t": "banned"
       },
-      "KC": {
-        "i": 682,
-        "t": "banned"
-      },
-      "LCD": {
-        "i": 683,
-        "t": "banned"
-      },
-      "MEGUSTA": {
+      "BIOMA": {
         "i": 685,
         "t": "banned"
       },
-      "MLH": {
-        "i": 684,
-        "t": "banned"
-      },
-      "N3G4N": {
+      "BLACKBIT": {
         "i": 686,
         "t": "banned"
       },
-      "NHANC3": {
-        "i": 726,
+      "BND": {
+        "i": 682,
         "t": "banned"
       },
-      "NOGROP": {
+      "BRINK": {
+        "i": 683,
+        "t": "banned"
+      },
+      "BTM": {
+        "i": 684,
+        "t": "banned"
+      },
+      "C.A.A": {
         "i": 687,
         "t": "banned"
       },
-      "OFT": {
+      "C76": {
         "i": 688,
         "t": "banned"
       },
-      "OLDT": {
+      "CHX": {
         "i": 689,
         "t": "banned"
       },
-      "PAHE": {
-        "i": 693,
-        "t": "banned"
-      },
-      "PAHE.IN": {
-        "i": 694,
-        "t": "banned"
-      },
-      "PAHE.PH": {
-        "i": 695,
-        "t": "banned"
-      },
-      "PD": {
-        "i": 690,
-        "t": "banned"
-      },
-      "PIRATES": {
-        "i": 696,
-        "t": "banned"
-      },
-      "PSA": {
-        "i": 691,
-        "t": "banned"
-      },
-      "PTHOME": {
+      "CORY": {
         "i": 692,
         "t": "banned"
       },
-      "RIPER": {
-        "i": 698,
+      "CTFOH": {
+        "i": 690,
         "t": "banned"
       },
-      "RK": {
+      "CYPHER": {
+        "i": 691,
+        "t": "banned"
+      },
+      "D3G": {
+        "i": 748,
+        "t": "banned"
+      },
+      "D3US": {
+        "i": 693,
+        "t": "banned"
+      },
+      "DEPRAVED": {
+        "i": 694,
+        "t": "banned"
+      },
+      "ENIAHD": {
         "i": 697,
         "t": "banned"
       },
-      "SASUKEDUCK": {
-        "i": 700,
+      "EVO": {
+        "i": 695,
         "t": "banned"
       },
-      "SHD": {
-        "i": 699,
+      "EXTREME": {
+        "i": 696,
         "t": "banned"
       },
-      "SHIELDBEARER": {
-        "i": 701,
-        "t": "banned"
-      },
-      "SIGLA": {
+      "FERANKI1980": {
         "i": 702,
         "t": "banned"
       },
-      "TARS": {
-        "i": 706,
+      "FF": {
+        "i": 698,
         "t": "banned"
       },
-      "TBS": {
+      "FGT": {
+        "i": 699,
+        "t": "banned"
+      },
+      "FMD": {
+        "i": 700,
+        "t": "banned"
+      },
+      "FOXX": {
+        "i": 701,
+        "t": "banned"
+      },
+      "G4RIS": {
         "i": 703,
         "t": "banned"
       },
-      "TG": {
+      "GHOSTS": {
         "i": 704,
         "t": "banned"
       },
-      "TOKAR86A": {
-        "i": 727,
-        "t": "banned"
-      },
-      "TURG": {
+      "GUEIRA": {
         "i": 705,
         "t": "banned"
       },
-      "VIDEOHOLE": {
+      "HIQVE": {
+        "i": 706,
+        "t": "banned"
+      },
+      "INTENSO": {
+        "i": 749,
+        "t": "banned"
+      },
+      "IVY": {
+        "i": 750,
+        "t": "banned"
+      },
+      "JENNAORTEGA": {
+        "i": 751,
+        "t": "banned"
+      },
+      "JFF": {
         "i": 707,
         "t": "banned"
       },
-      "VISIONPLUSHDR-X": {
+      "KC": {
         "i": 708,
         "t": "banned"
       },
-      "VISIONPLUSHDR1000": {
+      "LCD": {
         "i": 709,
         "t": "banned"
       },
-      "VNLLS": {
-        "i": 728,
-        "t": "banned"
-      },
-      "WORLDMKV": {
-        "i": 729,
-        "t": "banned"
-      },
-      "WTV": {
-        "i": 710,
-        "t": "banned"
-      },
-      "XIQUEXIQUE": {
-        "i": 712,
-        "t": "banned"
-      },
-      "XLF": {
+      "MEGUSTA": {
         "i": 711,
         "t": "banned"
       },
-      "YATOGAM1": {
-        "i": 716,
+      "MLH": {
+        "i": 710,
         "t": "banned"
       },
-      "YTS.AG": {
+      "N3G4N": {
+        "i": 712,
+        "t": "banned"
+      },
+      "NHANC3": {
+        "i": 752,
+        "t": "banned"
+      },
+      "NOGROP": {
         "i": 713,
         "t": "banned"
       },
-      "YTS.LT": {
+      "OFT": {
         "i": 714,
         "t": "banned"
       },
-      "YTS.MX": {
+      "OLDT": {
         "i": 715,
         "t": "banned"
       },
-      "YUSUKEFLA": {
-        "i": 717,
-        "t": "banned"
-      },
-      "ZERO00": {
+      "PAHE": {
         "i": 719,
         "t": "banned"
       },
-      "ZIGZAG": {
+      "PAHE.IN": {
         "i": 720,
         "t": "banned"
       },
-      "ZNM": {
+      "PAHE.PH": {
+        "i": 721,
+        "t": "banned"
+      },
+      "PD": {
+        "i": 716,
+        "t": "banned"
+      },
+      "PIRATES": {
+        "i": 722,
+        "t": "banned"
+      },
+      "PSA": {
+        "i": 717,
+        "t": "banned"
+      },
+      "PTHOME": {
         "i": 718,
+        "t": "banned"
+      },
+      "RIPER": {
+        "i": 724,
+        "t": "banned"
+      },
+      "RK": {
+        "i": 723,
+        "t": "banned"
+      },
+      "SASUKEDUCK": {
+        "i": 726,
+        "t": "banned"
+      },
+      "SHD": {
+        "i": 725,
+        "t": "banned"
+      },
+      "SHIELDBEARER": {
+        "i": 727,
+        "t": "banned"
+      },
+      "SIGLA": {
+        "i": 728,
+        "t": "banned"
+      },
+      "TARS": {
+        "i": 732,
+        "t": "banned"
+      },
+      "TBS": {
+        "i": 729,
+        "t": "banned"
+      },
+      "TG": {
+        "i": 730,
+        "t": "banned"
+      },
+      "TOKAR86A": {
+        "i": 753,
+        "t": "banned"
+      },
+      "TURG": {
+        "i": 731,
+        "t": "banned"
+      },
+      "VIDEOHOLE": {
+        "i": 733,
+        "t": "banned"
+      },
+      "VISIONPLUSHDR-X": {
+        "i": 734,
+        "t": "banned"
+      },
+      "VISIONPLUSHDR1000": {
+        "i": 735,
+        "t": "banned"
+      },
+      "VNLLS": {
+        "i": 754,
+        "t": "banned"
+      },
+      "WORLDMKV": {
+        "i": 755,
+        "t": "banned"
+      },
+      "WTV": {
+        "i": 736,
+        "t": "banned"
+      },
+      "XIQUEXIQUE": {
+        "i": 738,
+        "t": "banned"
+      },
+      "XLF": {
+        "i": 737,
+        "t": "banned"
+      },
+      "YATOGAM1": {
+        "i": 742,
+        "t": "banned"
+      },
+      "YTS.AG": {
+        "i": 739,
+        "t": "banned"
+      },
+      "YTS.LT": {
+        "i": 740,
+        "t": "banned"
+      },
+      "YTS.MX": {
+        "i": 741,
+        "t": "banned"
+      },
+      "YUSUKEFLA": {
+        "i": 743,
+        "t": "banned"
+      },
+      "ZERO00": {
+        "i": 745,
+        "t": "banned"
+      },
+      "ZIGZAG": {
+        "i": 746,
+        "t": "banned"
+      },
+      "ZNM": {
+        "i": 744,
         "t": "banned"
       }
     },
     "bluray": {
       "CHOTAB": {
-        "i": 730,
+        "i": 756,
         "t": "gold"
       },
       "CTRLHD": {
-        "i": 731,
+        "i": 757,
         "t": "gold"
       },
       "DON": {
-        "i": 732,
+        "i": 758,
         "t": "gold"
       },
       "EBP": {
-        "i": 733,
+        "i": 759,
         "t": "gold"
       },
       "NTB": {
-        "i": 734,
+        "i": 760,
         "t": "gold"
       },
       "PTER": {
-        "i": 735,
+        "i": 761,
         "t": "gold"
       },
       "SA89": {
-        "i": 736,
+        "i": 762,
         "t": "silver"
       },
       "SBR": {
-        "i": 737,
+        "i": 763,
         "t": "silver"
       }
     },
     "remux": {
       "12GAUGESHOTGUN": {
-        "i": 742,
+        "i": 768,
         "t": "silver"
       },
       "BLURANIUM": {
-        "i": 738,
+        "i": 764,
         "t": "gold"
       },
       "BMF": {
-        "i": 739,
+        "i": 765,
         "t": "gold"
       },
       "DECIBEL": {
-        "i": 749,
+        "i": 775,
         "t": "silver"
       },
       "EPSILON": {
-        "i": 743,
+        "i": 769,
         "t": "silver"
       },
       "FRAMESTOR": {
-        "i": 740,
+        "i": 766,
         "t": "gold"
       },
       "HIFI": {
-        "i": 744,
+        "i": 770,
         "t": "silver"
       },
       "KRALIMARKO": {
-        "i": 745,
+        "i": 771,
         "t": "silver"
       },
       "PLAYBD": {
-        "i": 750,
+        "i": 776,
         "t": "silver"
       },
       "PMP": {
-        "i": 741,
+        "i": 767,
         "t": "gold"
       },
       "PTER": {
-        "i": 746,
+        "i": 772,
         "t": "silver"
       },
       "SICFOI": {
-        "i": 747,
+        "i": 773,
         "t": "silver"
       },
       "TRITON": {
-        "i": 748,
+        "i": 774,
         "t": "silver"
       }
     },
     "web": {
       "3CTWEB": {
-        "i": 785,
-        "t": "silver"
-      },
-      "4KBEC": {
-        "i": 786,
-        "t": "silver"
-      },
-      "ABBIE": {
-        "i": 760,
-        "t": "gold"
-      },
-      "AJP69": {
-        "i": 761,
-        "t": "gold"
-      },
-      "APEX": {
-        "i": 762,
-        "t": "gold"
-      },
-      "BLOOM": {
-        "i": 751,
-        "t": "bronze"
-      },
-      "BLUTONIUM": {
-        "i": 787,
-        "t": "silver"
-      },
-      "BTW": {
-        "i": 788,
-        "t": "silver"
-      },
-      "BYNDR": {
-        "i": 789,
-        "t": "silver"
-      },
-      "CASSTUDIO": {
-        "i": 764,
-        "t": "gold"
-      },
-      "CEBEX": {
-        "i": 790,
-        "t": "silver"
-      },
-      "CHOTAB": {
-        "i": 792,
-        "t": "silver"
-      },
-      "CINEFEEL": {
-        "i": 794,
-        "t": "silver"
-      },
-      "CIT": {
-        "i": 793,
-        "t": "silver"
-      },
-      "CMRG": {
-        "i": 791,
-        "t": "silver"
-      },
-      "COO7": {
-        "i": 795,
-        "t": "silver"
-      },
-      "CRFW": {
-        "i": 763,
-        "t": "gold"
-      },
-      "CTRLHD": {
-        "i": 765,
-        "t": "gold"
-      },
-      "DB": {
-        "i": 824,
-        "t": "silver"
-      },
-      "DEEP": {
-        "i": 796,
-        "t": "silver"
-      },
-      "DOOKY": {
-        "i": 753,
-        "t": "bronze"
-      },
-      "DRACULA": {
-        "i": 752,
-        "t": "bronze"
-      },
-      "END": {
-        "i": 797,
-        "t": "silver"
-      },
-      "ETHICS": {
-        "i": 798,
-        "t": "silver"
-      },
-      "FC": {
-        "i": 799,
-        "t": "silver"
-      },
-      "FLIGHTS": {
-        "i": 800,
-        "t": "silver"
-      },
-      "FLUX": {
-        "i": 766,
-        "t": "gold"
-      },
-      "GNOME": {
-        "i": 801,
-        "t": "silver"
-      },
-      "HHWEB": {
-        "i": 754,
-        "t": "bronze"
-      },
-      "HONE": {
-        "i": 767,
-        "t": "gold"
-      },
-      "IJP": {
-        "i": 825,
-        "t": "silver"
-      },
-      "IKA": {
-        "i": 826,
-        "t": "silver"
-      },
-      "IT00NZ": {
-        "i": 827,
-        "t": "silver"
-      },
-      "JETIX": {
-        "i": 802,
-        "t": "silver"
-      },
-      "KHN": {
-        "i": 803,
-        "t": "silver"
-      },
-      "KIMCHI": {
-        "i": 804,
-        "t": "silver"
-      },
-      "KINGS": {
-        "i": 768,
-        "t": "gold"
-      },
-      "KITSUNE": {
-        "i": 769,
-        "t": "gold"
-      },
-      "LAZY": {
-        "i": 805,
-        "t": "silver"
-      },
-      "MADSKY": {
-        "i": 770,
-        "t": "gold"
-      },
-      "MIU": {
-        "i": 807,
-        "t": "silver"
-      },
-      "MONKEE": {
-        "i": 784,
-        "t": "gold"
-      },
-      "MZABI": {
-        "i": 806,
-        "t": "silver"
-      },
-      "NINJACENTRAL": {
-        "i": 755,
-        "t": "bronze"
-      },
-      "NOSIVID": {
-        "i": 771,
-        "t": "gold"
-      },
-      "NPMS": {
-        "i": 808,
-        "t": "silver"
-      },
-      "NTB": {
-        "i": 773,
-        "t": "gold"
-      },
-      "NTG": {
-        "i": 772,
-        "t": "gold"
-      },
-      "NYH": {
-        "i": 809,
-        "t": "silver"
-      },
-      "ORBITRON": {
-        "i": 828,
-        "t": "silver"
-      },
-      "PAXA": {
-        "i": 774,
-        "t": "gold"
-      },
-      "PEXA": {
-        "i": 775,
-        "t": "gold"
-      },
-      "PHOENIX": {
-        "i": 810,
-        "t": "silver"
-      },
-      "PLAYWEB": {
-        "i": 829,
-        "t": "silver"
-      },
-      "PSIG": {
         "i": 811,
         "t": "silver"
       },
-      "QOQ": {
-        "i": 776,
-        "t": "gold"
-      },
-      "RAWR": {
-        "i": 777,
-        "t": "gold"
-      },
-      "ROCCAT": {
+      "4KBEC": {
         "i": 812,
         "t": "silver"
       },
-      "RTFM": {
+      "ABBIE": {
+        "i": 786,
+        "t": "gold"
+      },
+      "AJP69": {
+        "i": 787,
+        "t": "gold"
+      },
+      "APEX": {
+        "i": 788,
+        "t": "gold"
+      },
+      "BLOOM": {
+        "i": 777,
+        "t": "bronze"
+      },
+      "BLUTONIUM": {
         "i": 813,
         "t": "silver"
       },
-      "RTN": {
-        "i": 778,
-        "t": "gold"
-      },
-      "SA89": {
+      "BTW": {
         "i": 814,
         "t": "silver"
       },
-      "SBR": {
-        "i": 819,
-        "t": "silver"
-      },
-      "SDCC": {
+      "BYNDR": {
         "i": 815,
         "t": "silver"
       },
-      "SIC": {
-        "i": 779,
+      "CASSTUDIO": {
+        "i": 790,
         "t": "gold"
       },
-      "SIGMA": {
+      "CEBEX": {
         "i": 816,
         "t": "silver"
       },
-      "SLIGNOME": {
-        "i": 756,
-        "t": "bronze"
-      },
-      "SMURF": {
-        "i": 817,
-        "t": "silver"
-      },
-      "SPIRIT": {
+      "CHOTAB": {
         "i": 818,
         "t": "silver"
       },
-      "SWAGLANDER": {
-        "i": 757,
-        "t": "bronze"
-      },
-      "T4H": {
-        "i": 758,
-        "t": "bronze"
-      },
-      "T6D": {
-        "i": 780,
-        "t": "gold"
-      },
-      "TEPES": {
+      "CINEFEEL": {
         "i": 820,
         "t": "silver"
       },
-      "TOMMY": {
-        "i": 781,
-        "t": "gold"
+      "CIT": {
+        "i": 819,
+        "t": "silver"
       },
-      "TVSMASH": {
+      "CMRG": {
+        "i": 817,
+        "t": "silver"
+      },
+      "COO7": {
         "i": 821,
         "t": "silver"
       },
-      "VISION": {
-        "i": 759,
-        "t": "bronze"
-      },
-      "VISUM": {
-        "i": 782,
+      "CRFW": {
+        "i": 789,
         "t": "gold"
       },
-      "WELP": {
+      "CTRLHD": {
+        "i": 791,
+        "t": "gold"
+      },
+      "DB": {
+        "i": 850,
+        "t": "silver"
+      },
+      "DEEP": {
         "i": 822,
         "t": "silver"
       },
-      "XEBEC": {
+      "DOOKY": {
+        "i": 779,
+        "t": "bronze"
+      },
+      "DRACULA": {
+        "i": 778,
+        "t": "bronze"
+      },
+      "END": {
         "i": 823,
         "t": "silver"
       },
-      "XEPA": {
+      "ETHICS": {
+        "i": 824,
+        "t": "silver"
+      },
+      "FC": {
+        "i": 825,
+        "t": "silver"
+      },
+      "FLIGHTS": {
+        "i": 826,
+        "t": "silver"
+      },
+      "FLUX": {
+        "i": 792,
+        "t": "gold"
+      },
+      "GNOME": {
+        "i": 827,
+        "t": "silver"
+      },
+      "HHWEB": {
+        "i": 780,
+        "t": "bronze"
+      },
+      "HONE": {
+        "i": 793,
+        "t": "gold"
+      },
+      "IJP": {
+        "i": 851,
+        "t": "silver"
+      },
+      "IKA": {
+        "i": 852,
+        "t": "silver"
+      },
+      "IT00NZ": {
+        "i": 853,
+        "t": "silver"
+      },
+      "JETIX": {
+        "i": 828,
+        "t": "silver"
+      },
+      "KHN": {
+        "i": 829,
+        "t": "silver"
+      },
+      "KIMCHI": {
+        "i": 830,
+        "t": "silver"
+      },
+      "KINGS": {
+        "i": 794,
+        "t": "gold"
+      },
+      "KITSUNE": {
+        "i": 795,
+        "t": "gold"
+      },
+      "LAZY": {
+        "i": 831,
+        "t": "silver"
+      },
+      "MADSKY": {
+        "i": 796,
+        "t": "gold"
+      },
+      "MIU": {
+        "i": 833,
+        "t": "silver"
+      },
+      "MONKEE": {
+        "i": 810,
+        "t": "gold"
+      },
+      "MZABI": {
+        "i": 832,
+        "t": "silver"
+      },
+      "NINJACENTRAL": {
+        "i": 781,
+        "t": "bronze"
+      },
+      "NOSIVID": {
+        "i": 797,
+        "t": "gold"
+      },
+      "NPMS": {
+        "i": 834,
+        "t": "silver"
+      },
+      "NTB": {
+        "i": 799,
+        "t": "gold"
+      },
+      "NTG": {
+        "i": 798,
+        "t": "gold"
+      },
+      "NYH": {
+        "i": 835,
+        "t": "silver"
+      },
+      "ORBITRON": {
+        "i": 854,
+        "t": "silver"
+      },
+      "PAXA": {
+        "i": 800,
+        "t": "gold"
+      },
+      "PEXA": {
+        "i": 801,
+        "t": "gold"
+      },
+      "PHOENIX": {
+        "i": 836,
+        "t": "silver"
+      },
+      "PLAYWEB": {
+        "i": 855,
+        "t": "silver"
+      },
+      "PSIG": {
+        "i": 837,
+        "t": "silver"
+      },
+      "QOQ": {
+        "i": 802,
+        "t": "gold"
+      },
+      "RAWR": {
+        "i": 803,
+        "t": "gold"
+      },
+      "ROCCAT": {
+        "i": 838,
+        "t": "silver"
+      },
+      "RTFM": {
+        "i": 839,
+        "t": "silver"
+      },
+      "RTN": {
+        "i": 804,
+        "t": "gold"
+      },
+      "SA89": {
+        "i": 840,
+        "t": "silver"
+      },
+      "SBR": {
+        "i": 845,
+        "t": "silver"
+      },
+      "SDCC": {
+        "i": 841,
+        "t": "silver"
+      },
+      "SIC": {
+        "i": 805,
+        "t": "gold"
+      },
+      "SIGMA": {
+        "i": 842,
+        "t": "silver"
+      },
+      "SLIGNOME": {
+        "i": 782,
+        "t": "bronze"
+      },
+      "SMURF": {
+        "i": 843,
+        "t": "silver"
+      },
+      "SPIRIT": {
+        "i": 844,
+        "t": "silver"
+      },
+      "SWAGLANDER": {
         "i": 783,
+        "t": "bronze"
+      },
+      "T4H": {
+        "i": 784,
+        "t": "bronze"
+      },
+      "T6D": {
+        "i": 806,
+        "t": "gold"
+      },
+      "TEPES": {
+        "i": 846,
+        "t": "silver"
+      },
+      "TOMMY": {
+        "i": 807,
+        "t": "gold"
+      },
+      "TVSMASH": {
+        "i": 847,
+        "t": "silver"
+      },
+      "VISION": {
+        "i": 785,
+        "t": "bronze"
+      },
+      "VISUM": {
+        "i": 808,
+        "t": "gold"
+      },
+      "WELP": {
+        "i": 848,
+        "t": "silver"
+      },
+      "XEBEC": {
+        "i": 849,
+        "t": "silver"
+      },
+      "XEPA": {
+        "i": 809,
         "t": "gold"
       }
     }
@@ -3334,12 +3450,12 @@ trash_group_prefix := {
     "any": [
       {
         "m": "MGE",
-        "i": 445,
+        "i": 471,
         "t": "banned"
       },
       {
         "m": "ALFAHD",
-        "i": 512,
+        "i": 538,
         "t": "banned"
       }
     ]
@@ -3348,7 +3464,7 @@ trash_group_prefix := {
     "any": [
       {
         "m": "ALFAHD",
-        "i": 721,
+        "i": 747,
         "t": "banned"
       }
     ]
@@ -3358,12 +3474,17 @@ trash_group_prefix := {
 trash_upper(value) := result if { result := replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(value,"a","A"),"b","B"),"c","C"),"d","D"),"e","E"),"f","F"),"g","G"),"h","H"),"i","I"),"j","J"),"k","K"),"l","L"),"m","M"),"n","N"),"o","O"),"p","P"),"q","Q"),"r","R"),"s","S"),"t","T"),"u","U"),"v","V"),"w","W"),"x","X"),"y","Y"),"z","Z") }
 trash_group_string(field) := value if { value := object.get(input.release,field,""); is_string(value) }
 trash_group_string(field) := "" if { not is_string(object.get(input.release,field,"")) }
-trash_group_context := "anime" if { lower(object.get(input.context,"category","")) == "anime" }
+trash_group_is_anime if { lower(object.get(input.context,"category","")) == "anime" }
+trash_group_is_bluray if { trash_upper(trash_group_string("source")) in {"BLURAY","BR-DISK","BRDISK"} }
+trash_group_is_web if { trash_upper(trash_group_string("source")) in {"WEB-DL","WEBRIP"} }
+trash_group_context := "anime_bd" if { trash_group_is_anime; trash_group_is_bluray }
+trash_group_context := "anime_web" if { trash_group_is_anime; trash_group_is_web }
+trash_group_context := "anime" if { trash_group_is_anime; not trash_group_is_bluray; not trash_group_is_web }
 trash_group_context := "remux" if { lower(object.get(input.context,"category","")) != "anime"; input.release.is_remux }
 trash_group_context := "web" if { lower(object.get(input.context,"category","")) != "anime"; not input.release.is_remux; trash_upper(trash_group_string("source")) in {"WEB-DL","WEBRIP"} }
-trash_group_context := "uhd_bluray" if { lower(object.get(input.context,"category","")) != "anime"; not input.release.is_remux; trash_upper(trash_group_string("source")) in {"BLURAY","BRDISK"}; trash_upper(trash_group_string("quality")) == "2160P" }
-trash_group_context := "bluray" if { lower(object.get(input.context,"category","")) != "anime"; not input.release.is_remux; trash_upper(trash_group_string("source")) in {"BLURAY","BRDISK"}; trash_upper(trash_group_string("quality")) != "2160P" }
-trash_group_context := "any" if { lower(object.get(input.context,"category","")) != "anime"; not input.release.is_remux; not trash_upper(trash_group_string("source")) in {"WEB-DL","WEBRIP","BLURAY","BRDISK"} }
+trash_group_context := "uhd_bluray" if { not trash_group_is_anime; not input.release.is_remux; trash_group_is_bluray; trash_upper(trash_group_string("quality")) == "2160P" }
+trash_group_context := "bluray" if { not trash_group_is_anime; not input.release.is_remux; trash_group_is_bluray; trash_upper(trash_group_string("quality")) != "2160P" }
+trash_group_context := "any" if { not trash_group_is_anime; not input.release.is_remux; not trash_group_is_web; not trash_group_is_bluray }
 trash_group_facets := ["anime"] if { lower(object.get(input.context,"category","")) == "anime" }
 trash_group_facets := ["series"] if { lower(object.get(input.context,"category","")) == "series" }
 trash_group_facets := ["movie"] if { lower(object.get(input.context,"category","")) == "movie" }
@@ -3372,9 +3493,10 @@ trash_group_candidate(facet, context) := rule if { by_facet := object.get(trash_
 trash_group_candidate(facet, context) := rule if { some rule in object.get(object.get(trash_group_prefix,facet,{}),context,[]); startswith(trash_upper(trash_group_string("release_group")),rule.m) }
 trash_group_best(facet, context) := rule if { candidates := [value | value := trash_group_candidate(facet,context)]; count(candidates)>0; rule := candidates[_]; rule.i == min([other.i | other := candidates[_]]) }
 trash_group_slots contains {"p":0,"rule":rule} if { facets:=trash_group_facets; rule:=trash_group_best(facets[0],trash_group_context) }
-trash_group_slots contains {"p":1,"rule":rule} if { facets:=trash_group_facets; rule:=trash_group_best(facets[0],"any") }
-trash_group_slots contains {"p":2,"rule":rule} if { facets:=trash_group_facets; count(facets)>1; rule:=trash_group_best(facets[1],trash_group_context) }
-trash_group_slots contains {"p":3,"rule":rule} if { facets:=trash_group_facets; count(facets)>1; rule:=trash_group_best(facets[1],"any") }
+trash_group_slots contains {"p":1,"rule":rule} if { trash_group_is_anime; rule:=trash_group_best("anime","anime") }
+trash_group_slots contains {"p":2,"rule":rule} if { facets:=trash_group_facets; rule:=trash_group_best(facets[0],"any") }
+trash_group_slots contains {"p":3,"rule":rule} if { facets:=trash_group_facets; count(facets)>1; rule:=trash_group_best(facets[1],trash_group_context) }
+trash_group_slots contains {"p":4,"rule":rule} if { facets:=trash_group_facets; count(facets)>1; rule:=trash_group_best(facets[1],"any") }
 trash_group_selected := candidate.rule if { candidates := trash_group_slots; count(candidates)>0; candidate:=candidates[_]; candidate.p == min([other.p|other:=candidates[_]]) }
 trash_group_weight(tier) := value if { weights := {"balanced":{"gold":300,"silver":150,"bronze":50,"banned":-10000,"unknown":-30},"audiophile":{"gold":500,"silver":250,"bronze":80,"banned":-10000,"unknown":-60},"efficient":{"gold":150,"silver":80,"bronze":30,"banned":-10000,"unknown":-15},"compatible":{"gold":200,"silver":100,"bronze":40,"banned":-10000,"unknown":-20}}; value:=object.get(object.get(weights,lower(object.get(input.profile,"scoring_persona","balanced")),weights["balanced"]),tier,0) }
 score_entry[sprintf("group_%s",[trash_group_selected.t])] := trash_group_weight(trash_group_selected.t) if { trash_group_selected; trash_group_weight(trash_group_selected.t) != 0 }

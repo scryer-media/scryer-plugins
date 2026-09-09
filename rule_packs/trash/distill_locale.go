@@ -71,6 +71,9 @@ func distillLocaleGroupRows(raw rawUpstreamSnapshot) ([]localeGroupRow, []string
 			continue
 		}
 		facet := localeFacet(file.Path, stem)
+		if context == "anime" || context == "anime_bd" || context == "anime_web" {
+			facet = "anime"
+		}
 		for _, record := range file.Records {
 			for _, spec := range record.Specifications {
 				if isTrue(spec.Negate) {
@@ -144,6 +147,12 @@ type localeError struct{ value string }
 
 func (e *localeError) Error() string { return e.value }
 func localeGroupContext(stem string) (string, bool) {
+	if strings.Contains(stem, "anime-bd-tier-") || strings.Contains(stem, "anime-bluray-tier-") {
+		return "anime_bd", true
+	}
+	if strings.Contains(stem, "anime-web-tier-") {
+		return "anime_web", true
+	}
 	if strings.Contains(stem, "anime-") && strings.Contains(stem, "tier-") {
 		return "anime", true
 	}

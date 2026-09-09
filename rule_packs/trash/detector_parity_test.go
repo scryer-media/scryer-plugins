@@ -62,7 +62,7 @@ func TestPinnedRawSnapshotPipelineParity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	missing, added := groupKeyDiff(parsedCore, core)
+	missing, added := groupKeyDiff(parsedCore, legacyAnimeGroupProjection(t, core))
 	if len(missing) != 0 || len(added) != 0 {
 		t.Fatalf("raw core parity missing=%d added=%d", len(missing), len(added))
 	}

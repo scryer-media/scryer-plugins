@@ -133,12 +133,17 @@ func asciiUpper(v string) string {
 const groupRego = `trash_upper(value) := result if { result := replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(value,"a","A"),"b","B"),"c","C"),"d","D"),"e","E"),"f","F"),"g","G"),"h","H"),"i","I"),"j","J"),"k","K"),"l","L"),"m","M"),"n","N"),"o","O"),"p","P"),"q","Q"),"r","R"),"s","S"),"t","T"),"u","U"),"v","V"),"w","W"),"x","X"),"y","Y"),"z","Z") }
 trash_group_string(field) := value if { value := object.get(input.release,field,""); is_string(value) }
 trash_group_string(field) := "" if { not is_string(object.get(input.release,field,"")) }
-trash_group_context := "anime" if { lower(object.get(input.context,"category","")) == "anime" }
+trash_group_is_anime if { lower(object.get(input.context,"category","")) == "anime" }
+trash_group_is_bluray if { trash_upper(trash_group_string("source")) in {"BLURAY","BR-DISK","BRDISK"} }
+trash_group_is_web if { trash_upper(trash_group_string("source")) in {"WEB-DL","WEBRIP"} }
+trash_group_context := "anime_bd" if { trash_group_is_anime; trash_group_is_bluray }
+trash_group_context := "anime_web" if { trash_group_is_anime; trash_group_is_web }
+trash_group_context := "anime" if { trash_group_is_anime; not trash_group_is_bluray; not trash_group_is_web }
 trash_group_context := "remux" if { lower(object.get(input.context,"category","")) != "anime"; input.release.is_remux }
 trash_group_context := "web" if { lower(object.get(input.context,"category","")) != "anime"; not input.release.is_remux; trash_upper(trash_group_string("source")) in {"WEB-DL","WEBRIP"} }
-trash_group_context := "uhd_bluray" if { lower(object.get(input.context,"category","")) != "anime"; not input.release.is_remux; trash_upper(trash_group_string("source")) in {"BLURAY","BRDISK"}; trash_upper(trash_group_string("quality")) == "2160P" }
-trash_group_context := "bluray" if { lower(object.get(input.context,"category","")) != "anime"; not input.release.is_remux; trash_upper(trash_group_string("source")) in {"BLURAY","BRDISK"}; trash_upper(trash_group_string("quality")) != "2160P" }
-trash_group_context := "any" if { lower(object.get(input.context,"category","")) != "anime"; not input.release.is_remux; not trash_upper(trash_group_string("source")) in {"WEB-DL","WEBRIP","BLURAY","BRDISK"} }
+trash_group_context := "uhd_bluray" if { not trash_group_is_anime; not input.release.is_remux; trash_group_is_bluray; trash_upper(trash_group_string("quality")) == "2160P" }
+trash_group_context := "bluray" if { not trash_group_is_anime; not input.release.is_remux; trash_group_is_bluray; trash_upper(trash_group_string("quality")) != "2160P" }
+trash_group_context := "any" if { not trash_group_is_anime; not input.release.is_remux; not trash_group_is_web; not trash_group_is_bluray }
 trash_group_facets := ["anime"] if { lower(object.get(input.context,"category","")) == "anime" }
 trash_group_facets := ["series"] if { lower(object.get(input.context,"category","")) == "series" }
 trash_group_facets := ["movie"] if { lower(object.get(input.context,"category","")) == "movie" }
@@ -147,9 +152,10 @@ trash_group_candidate(facet, context) := rule if { by_facet := object.get(trash_
 trash_group_candidate(facet, context) := rule if { some rule in object.get(object.get(trash_group_prefix,facet,{}),context,[]); startswith(trash_upper(trash_group_string("release_group")),rule.m) }
 trash_group_best(facet, context) := rule if { candidates := [value | value := trash_group_candidate(facet,context)]; count(candidates)>0; rule := candidates[_]; rule.i == min([other.i | other := candidates[_]]) }
 trash_group_slots contains {"p":0,"rule":rule} if { facets:=trash_group_facets; rule:=trash_group_best(facets[0],trash_group_context) }
-trash_group_slots contains {"p":1,"rule":rule} if { facets:=trash_group_facets; rule:=trash_group_best(facets[0],"any") }
-trash_group_slots contains {"p":2,"rule":rule} if { facets:=trash_group_facets; count(facets)>1; rule:=trash_group_best(facets[1],trash_group_context) }
-trash_group_slots contains {"p":3,"rule":rule} if { facets:=trash_group_facets; count(facets)>1; rule:=trash_group_best(facets[1],"any") }
+trash_group_slots contains {"p":1,"rule":rule} if { trash_group_is_anime; rule:=trash_group_best("anime","anime") }
+trash_group_slots contains {"p":2,"rule":rule} if { facets:=trash_group_facets; rule:=trash_group_best(facets[0],"any") }
+trash_group_slots contains {"p":3,"rule":rule} if { facets:=trash_group_facets; count(facets)>1; rule:=trash_group_best(facets[1],trash_group_context) }
+trash_group_slots contains {"p":4,"rule":rule} if { facets:=trash_group_facets; count(facets)>1; rule:=trash_group_best(facets[1],"any") }
 trash_group_selected := candidate.rule if { candidates := trash_group_slots; count(candidates)>0; candidate:=candidates[_]; candidate.p == min([other.p|other:=candidates[_]]) }
 trash_group_weight(tier) := value if { weights := {"balanced":{"gold":300,"silver":150,"bronze":50,"banned":-10000,"unknown":-30},"audiophile":{"gold":500,"silver":250,"bronze":80,"banned":-10000,"unknown":-60},"efficient":{"gold":150,"silver":80,"bronze":30,"banned":-10000,"unknown":-15},"compatible":{"gold":200,"silver":100,"bronze":40,"banned":-10000,"unknown":-20}}; value:=object.get(object.get(weights,lower(object.get(input.profile,"scoring_persona","balanced")),weights["balanced"]),tier,0) }
 score_entry[sprintf("group_%s",[trash_group_selected.t])] := trash_group_weight(trash_group_selected.t) if { trash_group_selected; trash_group_weight(trash_group_selected.t) != 0 }
@@ -171,10 +177,13 @@ score_entry["trash.scene"] := trash_unwanted_weight("scene") if { has_detected_f
 score_entry["trash.obfuscated"] := trash_unwanted_weight("obfuscated") if { has_detected_fact("trash.obfuscated") }
 score_entry["trash.retagged"] := trash_unwanted_weight("retagged") if { has_detected_fact("trash.retagged") }
 score_entry["hardcoded_subs"] := trash_unwanted_weight("hardcoded") if { input.release.is_hardcoded_subs == true }
+trash_upscaled if { input.release.is_ai_enhanced == true }
+trash_upscaled if { has_detected_fact("trash.ai_enhanced") }
 score_entry["ai_enhanced_upscaled"] := -10000 if {
-  input.release.is_ai_enhanced == true
+  trash_upscaled
   object.get(object.get(input.profile, "scoring_overrides", {}), "block_upscaled", null) != false
 }
+score_entry["trash.no_release_group"] := -10000 if { has_detected_fact("trash.no_release_group") }
 score_entry["trash_guides_anime_raws"] := -10000 if { has_detected_fact("trash.blocked.anime_raws") }
 score_entry["trash_guides_lq_release_title"] := -10000 if { has_detected_fact("trash.blocked.lq_release_title") }
 score_entry["trash_guides_fansub"] := -10000 if { has_detected_fact("trash.blocked.fansub") }

@@ -140,7 +140,7 @@ func groupStem(stem string) (tier, context string, active bool) {
 		}
 		return "bronze"
 	}
-	for _, prefix := range []struct{ prefix, context string }{{"web-tier-", "web"}, {"hd-bluray-tier-", "bluray"}, {"uhd-bluray-tier-", "uhd_bluray"}, {"remux-tier-", "remux"}, {"anime-bd-tier-", "anime"}, {"anime-web-tier-", "anime"}} {
+	for _, prefix := range []struct{ prefix, context string }{{"web-tier-", "web"}, {"hd-bluray-tier-", "bluray"}, {"uhd-bluray-tier-", "uhd_bluray"}, {"remux-tier-", "remux"}, {"anime-bd-tier-", "anime_bd"}, {"anime-web-tier-", "anime_web"}} {
 		if value, ok := strings.CutPrefix(stem, prefix.prefix); ok {
 			return mapTier(value), prefix.context, true
 		}

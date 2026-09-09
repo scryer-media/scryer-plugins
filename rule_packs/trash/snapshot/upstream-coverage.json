@@ -1938,13 +1938,13 @@
   "table_counts": {
     "blocked_title_rules": 55,
     "fact_rules": 132,
-    "locale_group_fact_rules": 1317,
+    "locale_group_fact_rules": 1275,
     "no_release_group_fact_facets": 2,
     "service_alias_rules": 106,
     "token_signal_rules": 49
   },
-  "core_sha256": "ec24a5f9ded2c86281981f4f28674918aabdcd1d6739e65399c83f8472939243",
-  "detection_sha256": "d4c0ff4f489147673de7cf08c747ce9cfe0ce67e14a7c7a66a6ffe8932a071a2",
+  "core_sha256": "bc2310b394d0956c9e19a3196cd33a657909e2e46386f37e9392e8984d8f9d89",
+  "detection_sha256": "25f15da7d77a12282bd2c555192bed763debbe9823f448cb3fd76f3d7e0b72ed",
   "ignored_records": [
     "docs/json/radarr/cf/amzn.json:WEBDL:requires_positive_title",
     "docs/json/radarr/cf/amzn.json:WEBRIP:requires_positive_title",

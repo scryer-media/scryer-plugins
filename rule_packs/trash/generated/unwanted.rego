@@ -2835,7 +2835,9 @@ german_subbed if {
 }
 
 locale_context_matches(context) if { context == "any" }
-locale_context_matches(context) if { context == "anime" }
+locale_context_matches(context) if { context == "anime"; detection_facet == "anime" }
+locale_context_matches(context) if { context == "anime_bd"; detection_facet == "anime"; trash_detection_ascii_fold(release_source) in {"bluray", "br-disk", "brdisk"} }
+locale_context_matches(context) if { context == "anime_web"; detection_facet == "anime"; trash_detection_ascii_fold(release_source) in {"web-dl", "webrip"} }
 release_source := value if { value := object.get(input.release, "source", ""); is_string(value) }
 release_group_value := value if { value := object.get(input.release, "release_group", ""); is_string(value) }
 release_quality := value if { value := object.get(input.release, "quality", ""); is_string(value) }
@@ -2843,7 +2845,7 @@ release_group_folded := trash_detection_ascii_fold(release_group_value) if { rel
 locale_context_matches(context) if { context == "web"; trash_detection_ascii_fold(release_source) in {"web-dl", "webrip"} }
 locale_context_matches(context) if { context == "remux"; input.release.is_remux }
 locale_context_matches(context) if { context == "bluray"; trash_detection_ascii_fold(release_source) == "bluray"; not input.release.is_remux; not contains(release_quality, "2160") }
-locale_context_matches(context) if { context == "uhd_bluray"; trash_detection_ascii_fold(release_source) == "bluray"; contains(release_quality, "2160") }
+locale_context_matches(context) if { context == "uhd_bluray"; trash_detection_ascii_fold(release_source) == "bluray"; not input.release.is_remux; contains(release_quality, "2160") }
 detected_facts[code] if {
   normalized_tokens
   some token in normalized_tokens
@@ -2909,7 +2911,7 @@ detected_facts[code] if {
 }
 detected_facts["trash.no_release_group"] if {
   normalized_tokens
-  not release_group_value
+  object.get(input.release, "release_group", null) in {null, ""}
   some facet in trash_detection_tables.no_release_group_fact_facets
   facet == detection_facet
 }
@@ -2982,10 +2984,13 @@ score_entry["trash.scene"] := trash_unwanted_weight("scene") if { has_detected_f
 score_entry["trash.obfuscated"] := trash_unwanted_weight("obfuscated") if { has_detected_fact("trash.obfuscated") }
 score_entry["trash.retagged"] := trash_unwanted_weight("retagged") if { has_detected_fact("trash.retagged") }
 score_entry["hardcoded_subs"] := trash_unwanted_weight("hardcoded") if { input.release.is_hardcoded_subs == true }
+trash_upscaled if { input.release.is_ai_enhanced == true }
+trash_upscaled if { has_detected_fact("trash.ai_enhanced") }
 score_entry["ai_enhanced_upscaled"] := -10000 if {
-  input.release.is_ai_enhanced == true
+  trash_upscaled
   object.get(object.get(input.profile, "scoring_overrides", {}), "block_upscaled", null) != false
 }
+score_entry["trash.no_release_group"] := -10000 if { has_detected_fact("trash.no_release_group") }
 score_entry["trash_guides_anime_raws"] := -10000 if { has_detected_fact("trash.blocked.anime_raws") }
 score_entry["trash_guides_lq_release_title"] := -10000 if { has_detected_fact("trash.blocked.lq_release_title") }
 score_entry["trash_guides_fansub"] := -10000 if { has_detected_fact("trash.blocked.fansub") }

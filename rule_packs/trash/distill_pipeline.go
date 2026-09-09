@@ -302,6 +302,9 @@ func distillFactScores(raw rawUpstreamSnapshot) []factScore {
 			codes = append(codes, "trash.lang."+strings.ReplaceAll(strings.TrimPrefix(stem, "language-"), "-", "_"))
 		}
 		factFacet := localeFacet(file.Path, stem)
+		if context, ok := localeGroupContext(stem); ok && strings.HasPrefix(context, "anime") {
+			factFacet = "anime"
+		}
 		if strings.HasPrefix(stem, "anime-") || stem == "fansub" || stem == "fastsub" || stem == "dubs-only" {
 			factFacet = "anime"
 		}

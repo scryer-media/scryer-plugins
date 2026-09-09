@@ -30,7 +30,9 @@ func TestPinnedGroupKeyParity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	missing, added := groupKeyDiff(expected, actual)
+	// The native oracle collapsed BD/WEB tiers. Preserve its membership check;
+	// source-specific scores are independently checked in review_regression_test.go.
+	missing, added := groupKeyDiff(expected, legacyAnimeGroupProjection(t, actual))
 	if len(missing) != 0 || len(added) != 0 {
 		t.Fatalf("pinned group parity: missing=%d added=%d ignored=%d missing_keys=%v added_keys=%v", len(missing), len(added), len(ignored), firstGroupKeys(missing, 20), firstGroupKeys(added, 20))
 	}
@@ -69,4 +71,29 @@ func firstGroupKeys(values []string, limit int) []string {
 		return values[:limit]
 	}
 	return values
+}
+
+func legacyAnimeGroupProjection(t *testing.T, snap snapshot) snapshot {
+	t.Helper()
+	var rows []groupRule
+	if err := json.Unmarshal(snap.GroupRules, &rows); err != nil {
+		t.Fatal(err)
+	}
+	collapsed := map[string]groupRule{}
+	for _, row := range rows {
+		if row.SourceContext == "anime_bd" || row.SourceContext == "anime_web" {
+			row.SourceContext = "anime"
+		}
+		key := row.Matcher + "|" + row.MatchKind + "|" + row.Facet + "|" + row.SourceContext
+		prior, found := collapsed[key]
+		if !found || groupTierRank(row.Tier) < groupTierRank(prior.Tier) {
+			collapsed[key] = row
+		}
+	}
+	rows = nil
+	for _, row := range collapsed {
+		rows = append(rows, row)
+	}
+	snap.GroupRules = mustMarshalJSON(t, rows)
+	return snap
 }

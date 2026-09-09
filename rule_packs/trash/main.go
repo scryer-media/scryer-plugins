@@ -78,7 +78,9 @@ type coverage struct {
 }
 type changeCoverage struct{ AddedGroups, RemovedGroups int }
 type scoreCoverage struct {
-	Added, Removed, Changed []string `json:"omitempty"`
+	Added   []string `json:"added,omitempty"`
+	Removed []string `json:"removed,omitempty"`
+	Changed []string `json:"changed,omitempty"`
 }
 
 func main() {
@@ -395,13 +397,6 @@ func moduleSource(name, source string) string {
 	return "package scryer.user.trash_guides_" + name + "\nimport rego.v1\n\n" + strings.Join(body, "\n")
 }
 
-func personaSource(body []byte) []byte {
-	text := string(body)
-	for _, key := range []string{"group_gold", "group_silver", "group_bronze", "group_banned", "group_unknown_penalty", "scene_penalty", "obfuscated_penalty", "retagged_penalty", "proper_bonus", "repack_bonus", "upscaled_penalty", "hardcoded_subs_penalty", "anime_dubs_only_penalty", "streaming_tier1", "streaming_tier2", "streaming_anime", "streaming_tier3"} {
-		text = strings.ReplaceAll(text, "input.profile.scoring_weights."+key, "trash_weight(\""+key+"\")")
-	}
-	return []byte(text + "\n# Persona-owned scoring; optional boolean overrides disable a contribution when false.\ntrash_persona := lower(object.get(input.profile, \"scoring_persona\", \"balanced\"))\ntrash_weight(name) := value if { values := {\"balanced\": {\"group_gold\": 180, \"group_silver\": 90, \"group_bronze\": 30, \"group_banned\": -10000, \"group_unknown_penalty\": -10, \"scene_penalty\": -15, \"obfuscated_penalty\": -20, \"retagged_penalty\": -20, \"proper_bonus\": 5, \"repack_bonus\": 10, \"upscaled_penalty\": -100, \"hardcoded_subs_penalty\": -50, \"anime_dubs_only_penalty\": -50, \"streaming_tier1\": 30, \"streaming_tier2\": 20, \"streaming_anime\": 20, \"streaming_tier3\": 10}, \"audiophile\": {\"group_gold\": 240, \"group_silver\": 120, \"group_bronze\": 40, \"group_banned\": -10000, \"group_unknown_penalty\": -20, \"scene_penalty\": -25, \"obfuscated_penalty\": -30, \"retagged_penalty\": -30, \"proper_bonus\": 5, \"repack_bonus\": 15, \"upscaled_penalty\": -150, \"hardcoded_subs_penalty\": -75, \"anime_dubs_only_penalty\": -75, \"streaming_tier1\": 40, \"streaming_tier2\": 30, \"streaming_anime\": 30, \"streaming_tier3\": 15}, \"efficient\": {\"group_gold\": 100, \"group_silver\": 50, \"group_bronze\": 15, \"group_banned\": -10000, \"group_unknown_penalty\": 0, \"scene_penalty\": 0, \"obfuscated_penalty\": -10, \"retagged_penalty\": -10, \"proper_bonus\": 10, \"repack_bonus\": 15, \"upscaled_penalty\": -50, \"hardcoded_subs_penalty\": -25, \"anime_dubs_only_penalty\": -25, \"streaming_tier1\": 15, \"streaming_tier2\": 10, \"streaming_anime\": 10, \"streaming_tier3\": 5}, \"compatible\": {\"group_gold\": 120, \"group_silver\": 60, \"group_bronze\": 20, \"group_banned\": -10000, \"group_unknown_penalty\": 0, \"scene_penalty\": 0, \"obfuscated_penalty\": 0, \"retagged_penalty\": 0, \"proper_bonus\": 0, \"repack_bonus\": 0, \"upscaled_penalty\": 0, \"hardcoded_subs_penalty\": 0, \"anime_dubs_only_penalty\": 0, \"streaming_tier1\": 0, \"streaming_tier2\": 0, \"streaming_anime\": 0, \"streaming_tier3\": 0}}; value := object.get(object.get(values, trash_persona, values[\"balanced\"]), name, 0); object.get(object.get(input.profile, \"scoring_overrides\", {}), name, true) }\n")
-}
 func groupChanges(path string, current snapshot) (int, int, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {

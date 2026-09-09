@@ -453,7 +453,9 @@ german_subbed if {
 }
 
 locale_context_matches(context) if { context == "any" }
-locale_context_matches(context) if { context == "anime" }
+locale_context_matches(context) if { context == "anime"; detection_facet == "anime" }
+locale_context_matches(context) if { context == "anime_bd"; detection_facet == "anime"; trash_detection_ascii_fold(release_source) in {"bluray", "br-disk", "brdisk"} }
+locale_context_matches(context) if { context == "anime_web"; detection_facet == "anime"; trash_detection_ascii_fold(release_source) in {"web-dl", "webrip"} }
 release_source := value if { value := object.get(input.release, "source", ""); is_string(value) }
 release_group_value := value if { value := object.get(input.release, "release_group", ""); is_string(value) }
 release_quality := value if { value := object.get(input.release, "quality", ""); is_string(value) }
@@ -461,7 +463,7 @@ release_group_folded := trash_detection_ascii_fold(release_group_value) if { rel
 locale_context_matches(context) if { context == "web"; trash_detection_ascii_fold(release_source) in {"web-dl", "webrip"} }
 locale_context_matches(context) if { context == "remux"; input.release.is_remux }
 locale_context_matches(context) if { context == "bluray"; trash_detection_ascii_fold(release_source) == "bluray"; not input.release.is_remux; not contains(release_quality, "2160") }
-locale_context_matches(context) if { context == "uhd_bluray"; trash_detection_ascii_fold(release_source) == "bluray"; contains(release_quality, "2160") }
+locale_context_matches(context) if { context == "uhd_bluray"; trash_detection_ascii_fold(release_source) == "bluray"; not input.release.is_remux; contains(release_quality, "2160") }
 detected_facts[code] if {
   normalized_tokens
   some token in normalized_tokens
@@ -527,7 +529,7 @@ detected_facts[code] if {
 }
 detected_facts["trash.no_release_group"] if {
   normalized_tokens
-  not release_group_value
+  object.get(input.release, "release_group", null) in {null, ""}
   some facet in trash_detection_tables.no_release_group_fact_facets
   facet == detection_facet
 }

@@ -204,6 +204,398 @@ trash_detection_tables := {
     ]
   },
   "locale_group_exact": {
+    "anime|4baka": [
+      [
+        "trash.locale.german.group.tier3",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier3",
+        "anime_web"
+      ]
+    ],
+    "anime|abj": [
+      [
+        "trash.locale.german.group.tier2",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier2",
+        "anime_web"
+      ]
+    ],
+    "anime|ainz": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier1",
+        "anime_web"
+      ]
+    ],
+    "anime|ao": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier2",
+        "anime_web"
+      ]
+    ],
+    "anime|ast4u": [
+      [
+        "trash.locale.german.group.tier3",
+        "anime_bd"
+      ]
+    ],
+    "anime|atax": [
+      [
+        "trash.locale.german.group.tier3",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier3",
+        "anime_web"
+      ]
+    ],
+    "anime|baka": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier1",
+        "anime_web"
+      ]
+    ],
+    "anime|bitchnugget": [
+      [
+        "trash.locale.german.group.tier2",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier2",
+        "anime_web"
+      ]
+    ],
+    "anime|buttercup": [
+      [
+        "trash.locale.german.group.tier2",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier2",
+        "anime_web"
+      ]
+    ],
+    "anime|cny": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_bd"
+      ]
+    ],
+    "anime|diva": [
+      [
+        "trash.locale.german.group.tier2",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier2",
+        "anime_web"
+      ]
+    ],
+    "anime|dk": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier1",
+        "anime_web"
+      ],
+      [
+        "trash.locale.german.group.tier2",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier2",
+        "anime_web"
+      ]
+    ],
+    "anime|dogpack404": [
+      [
+        "trash.locale.german.group.tier2",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier2",
+        "anime_web"
+      ]
+    ],
+    "anime|driftking": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier1",
+        "anime_web"
+      ],
+      [
+        "trash.locale.german.group.tier2",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier2",
+        "anime_web"
+      ]
+    ],
+    "anime|fumofriday": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_bd"
+      ]
+    ],
+    "anime|fuuko": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier3",
+        "anime_web"
+      ]
+    ],
+    "anime|gp": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_bd"
+      ]
+    ],
+    "anime|hartz02": [
+      [
+        "trash.locale.german.group.tier2",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier2",
+        "anime_web"
+      ]
+    ],
+    "anime|hdc": [
+      [
+        "trash.locale.german.group.tier3",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier3",
+        "anime_web"
+      ]
+    ],
+    "anime|hishiro": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_web"
+      ]
+    ],
+    "anime|lynacchi": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_web"
+      ]
+    ],
+    "anime|meld": [
+      [
+        "trash.locale.german.group.tier2",
+        "anime_web"
+      ]
+    ],
+    "anime|mindus": [
+      [
+        "trash.locale.german.group.tier3",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier3",
+        "anime_web"
+      ]
+    ],
+    "anime|otaku": [
+      [
+        "trash.locale.german.group.tier3",
+        "anime_web"
+      ]
+    ],
+    "anime|phm": [
+      [
+        "trash.locale.german.group.tier2",
+        "anime_bd"
+      ]
+    ],
+    "anime|princessdiana": [
+      [
+        "trash.locale.german.group.tier2",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier2",
+        "anime_web"
+      ]
+    ],
+    "anime|pudding-sama": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier1",
+        "anime_web"
+      ]
+    ],
+    "anime|puddingsama": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier1",
+        "anime_web"
+      ]
+    ],
+    "anime|rtemp": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier1",
+        "anime_web"
+      ]
+    ],
+    "anime|shw": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier1",
+        "anime_web"
+      ]
+    ],
+    "anime|sixtynine": [
+      [
+        "trash.locale.german.group.tier2",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier2",
+        "anime_web"
+      ]
+    ],
+    "anime|snk": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier1",
+        "anime_web"
+      ]
+    ],
+    "anime|subaru": [
+      [
+        "trash.locale.german.group.tier3",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier3",
+        "anime_web"
+      ]
+    ],
+    "anime|tanuki": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_web"
+      ]
+    ],
+    "anime|tvr": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier1",
+        "anime_web"
+      ]
+    ],
+    "anime|vector": [
+      [
+        "trash.locale.german.group.tier2",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier2",
+        "anime_web"
+      ]
+    ],
+    "anime|w33bshit": [
+      [
+        "trash.locale.german.group.tier3",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier3",
+        "anime_web"
+      ]
+    ],
+    "anime|waechter": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier3",
+        "anime_web"
+      ]
+    ],
+    "anime|warezcx": [
+      [
+        "trash.locale.german.group.tier2",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier2",
+        "anime_web"
+      ]
+    ],
+    "anime|weebpinn": [
+      [
+        "trash.locale.german.group.tier1",
+        "anime_web"
+      ]
+    ],
+    "anime|xiss": [
+      [
+        "trash.locale.german.group.tier2",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier2",
+        "anime_web"
+      ]
+    ],
+    "anime|zerotwo": [
+      [
+        "trash.locale.german.group.tier2",
+        "anime_bd"
+      ],
+      [
+        "trash.locale.german.group.tier2",
+        "anime_web"
+      ]
+    ],
     "movie|1xbet": [
       [
         "trash.locale.german.lq",
@@ -222,12 +614,6 @@ trash_detection_tables := {
         "any"
       ]
     ],
-    "movie|4baka": [
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
-      ]
-    ],
     "movie|4kconnection": [
       [
         "trash.locale.german.scene",
@@ -243,10 +629,6 @@ trash_detection_tables := {
     "movie|abj": [
       [
         "trash.locale.german.group.tier2",
-        "anime"
-      ],
-      [
-        "trash.locale.german.group.tier2",
         "bluray"
       ],
       [
@@ -260,34 +642,6 @@ trash_detection_tables := {
         "any"
       ]
     ],
-    "movie|ainz": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ]
-    ],
-    "movie|ao": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
-      ]
-    ],
-    "movie|ast4u": [
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
-      ]
-    ],
-    "movie|atax": [
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
-      ]
-    ],
     "movie|avtomat": [
       [
         "trash.locale.german.lq",
@@ -298,12 +652,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.scene",
         "any"
-      ]
-    ],
-    "movie|baka": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
       ]
     ],
     "movie|balenciaga": [
@@ -332,10 +680,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.group.tier1",
         "web"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
       ]
     ],
     "movie|buttercup": [
@@ -346,10 +690,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.group.tier1",
         "web"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
       ]
     ],
     "movie|cancer58": [
@@ -365,10 +705,6 @@ trash_detection_tables := {
       ]
     ],
     "movie|cny": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ],
       [
         "trash.locale.german.group.tier1",
         "bluray"
@@ -410,16 +746,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.group.tier1",
         "web"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
-      ]
-    ],
-    "movie|dk": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
       ]
     ],
     "movie|dmpd": [
@@ -436,16 +762,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.group.tier1",
         "web"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
-      ]
-    ],
-    "movie|driftking": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
       ]
     ],
     "movie|emvy": [
@@ -496,22 +812,6 @@ trash_detection_tables := {
         "any"
       ]
     ],
-    "movie|fumofriday": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ]
-    ],
-    "movie|fuuko": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ],
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
-      ]
-    ],
     "movie|fwb": [
       [
         "trash.locale.german.scene",
@@ -544,12 +844,6 @@ trash_detection_tables := {
         "any"
       ]
     ],
-    "movie|gp": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ]
-    ],
     "movie|gsg9": [
       [
         "trash.locale.german.scene",
@@ -564,10 +858,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.group.tier1",
         "web"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
       ]
     ],
     "movie|haxe": [
@@ -580,12 +870,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.scene",
         "any"
-      ]
-    ],
-    "movie|hdc": [
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
       ]
     ],
     "movie|hdsource": [
@@ -606,12 +890,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.lq",
         "any"
-      ]
-    ],
-    "movie|hishiro": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
       ]
     ],
     "movie|inception": [
@@ -684,12 +962,6 @@ trash_detection_tables := {
         "any"
       ]
     ],
-    "movie|lynacchi": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ]
-    ],
     "movie|mama": [
       [
         "trash.locale.german.group.tier1",
@@ -718,22 +990,10 @@ trash_detection_tables := {
         "any"
       ]
     ],
-    "movie|meld": [
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
-      ]
-    ],
     "movie|mge": [
       [
         "trash.locale.german.scene",
         "any"
-      ]
-    ],
-    "movie|mindus": [
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
       ]
     ],
     "movie|misfits": [
@@ -834,12 +1094,6 @@ trash_detection_tables := {
         "any"
       ]
     ],
-    "movie|otaku": [
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
-      ]
-    ],
     "movie|p73": [
       [
         "trash.locale.german.lq",
@@ -866,12 +1120,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.lq",
         "any"
-      ]
-    ],
-    "movie|phm": [
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
       ]
     ],
     "movie|pikachu": [
@@ -916,10 +1164,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.group.tier1",
         "web"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
       ]
     ],
     "movie|ps": [
@@ -932,18 +1176,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.lq",
         "any"
-      ]
-    ],
-    "movie|pudding-sama": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ]
-    ],
-    "movie|puddingsama": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
       ]
     ],
     "movie|pxl": [
@@ -1030,12 +1262,6 @@ trash_detection_tables := {
         "any"
       ]
     ],
-    "movie|rtemp": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ]
-    ],
     "movie|rubbish": [
       [
         "trash.locale.german.scene",
@@ -1078,17 +1304,7 @@ trash_detection_tables := {
         "any"
       ]
     ],
-    "movie|shw": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ]
-    ],
     "movie|sixtynine": [
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
-      ],
       [
         "trash.locale.german.group.tier2",
         "bluray"
@@ -1102,12 +1318,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.group.tier1",
         "web"
-      ]
-    ],
-    "movie|snk": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
       ]
     ],
     "movie|sow": [
@@ -1128,22 +1338,10 @@ trash_detection_tables := {
         "any"
       ]
     ],
-    "movie|subaru": [
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
-      ]
-    ],
     "movie|sundry": [
       [
         "trash.locale.german.lq",
         "any"
-      ]
-    ],
-    "movie|tanuki": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
       ]
     ],
     "movie|tfarc": [
@@ -1205,10 +1403,6 @@ trash_detection_tables := {
     "movie|tvr": [
       [
         "trash.locale.german.group.tier1",
-        "anime"
-      ],
-      [
-        "trash.locale.german.group.tier1",
         "bluray"
       ],
       [
@@ -1257,10 +1451,6 @@ trash_detection_tables := {
     "movie|vector": [
       [
         "trash.locale.german.group.tier2",
-        "anime"
-      ],
-      [
-        "trash.locale.german.group.tier2",
         "bluray"
       ],
       [
@@ -1274,26 +1464,10 @@ trash_detection_tables := {
         "any"
       ]
     ],
-    "movie|w33bshit": [
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
-      ]
-    ],
     "movie|w4k": [
       [
         "trash.locale.german.scene",
         "any"
-      ]
-    ],
-    "movie|waechter": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ],
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
       ]
     ],
     "movie|walterbishop": [
@@ -1314,10 +1488,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.group.tier1",
         "web"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
       ]
     ],
     "movie|watchable": [
@@ -1333,10 +1503,6 @@ trash_detection_tables := {
       ]
     ],
     "movie|weebpinn": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ],
       [
         "trash.locale.german.group.tier1",
         "bluray"
@@ -1382,10 +1548,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.group.tier1",
         "web"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
       ]
     ],
     "movie|zaidanulled": [
@@ -1402,10 +1564,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.group.tier1",
         "web"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
       ]
     ],
     "series|1xbet": [
@@ -1424,12 +1582,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.scene",
         "any"
-      ]
-    ],
-    "series|4baka": [
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
       ]
     ],
     "series|4kconnection": [
@@ -1453,10 +1605,6 @@ trash_detection_tables := {
     "series|abj": [
       [
         "trash.locale.german.group.tier2",
-        "anime"
-      ],
-      [
-        "trash.locale.german.group.tier2",
         "bluray"
       ],
       [
@@ -1476,34 +1624,6 @@ trash_detection_tables := {
         "any"
       ]
     ],
-    "series|ainz": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ]
-    ],
-    "series|ao": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
-      ]
-    ],
-    "series|ast4u": [
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
-      ]
-    ],
-    "series|atax": [
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
-      ]
-    ],
     "series|avtomat": [
       [
         "trash.locale.german.lq",
@@ -1514,12 +1634,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.scene",
         "any"
-      ]
-    ],
-    "series|baka": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
       ]
     ],
     "series|balenciaga": [
@@ -1548,10 +1662,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.group.tier1",
         "web"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
       ]
     ],
     "series|buttercup": [
@@ -1562,10 +1672,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.group.tier1",
         "web"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
       ]
     ],
     "series|cancer58": [
@@ -1587,10 +1693,6 @@ trash_detection_tables := {
       ]
     ],
     "series|cny": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ],
       [
         "trash.locale.german.group.tier1",
         "bluray"
@@ -1636,16 +1738,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.group.tier1",
         "web"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
-      ]
-    ],
-    "series|dk": [
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
       ]
     ],
     "series|dmpd": [
@@ -1662,16 +1754,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.group.tier1",
         "web"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
-      ]
-    ],
-    "series|driftking": [
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
       ]
     ],
     "series|emvy": [
@@ -1740,22 +1822,6 @@ trash_detection_tables := {
         "any"
       ]
     ],
-    "series|fumofriday": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ]
-    ],
-    "series|fuuko": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ],
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
-      ]
-    ],
     "series|fwb": [
       [
         "trash.locale.german.scene",
@@ -1766,12 +1832,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.lq",
         "any"
-      ]
-    ],
-    "series|gp": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
       ]
     ],
     "series|gtvg": [
@@ -1788,10 +1848,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.group.tier1",
         "web"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
       ]
     ],
     "series|haxe": [
@@ -1804,12 +1860,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.scene",
         "any"
-      ]
-    ],
-    "series|hdc": [
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
       ]
     ],
     "series|hdsource": [
@@ -1830,12 +1880,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.lq",
         "any"
-      ]
-    ],
-    "series|hishiro": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
       ]
     ],
     "series|hqc": [
@@ -1912,12 +1956,6 @@ trash_detection_tables := {
         "any"
       ]
     ],
-    "series|lynacchi": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ]
-    ],
     "series|mba": [
       [
         "trash.locale.german.lq",
@@ -1936,22 +1974,10 @@ trash_detection_tables := {
         "any"
       ]
     ],
-    "series|meld": [
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
-      ]
-    ],
     "series|mge": [
       [
         "trash.locale.german.scene",
         "any"
-      ]
-    ],
-    "series|mindus": [
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
       ]
     ],
     "series|misfits": [
@@ -2052,12 +2078,6 @@ trash_detection_tables := {
         "any"
       ]
     ],
-    "series|otaku": [
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
-      ]
-    ],
     "series|p73": [
       [
         "trash.locale.german.lq",
@@ -2074,12 +2094,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.lq",
         "any"
-      ]
-    ],
-    "series|phm": [
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
       ]
     ],
     "series|pl": [
@@ -2114,10 +2128,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.group.tier1",
         "web"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
       ]
     ],
     "series|ps": [
@@ -2130,18 +2140,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.lq",
         "any"
-      ]
-    ],
-    "series|pudding-sama": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ]
-    ],
-    "series|puddingsama": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
       ]
     ],
     "series|pxl": [
@@ -2208,12 +2206,6 @@ trash_detection_tables := {
         "any"
       ]
     ],
-    "series|rtemp": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ]
-    ],
     "series|rubbish": [
       [
         "trash.locale.german.scene",
@@ -2250,17 +2242,7 @@ trash_detection_tables := {
         "any"
       ]
     ],
-    "series|shw": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ]
-    ],
     "series|sixtynine": [
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
-      ],
       [
         "trash.locale.german.group.tier2",
         "bluray"
@@ -2276,34 +2258,16 @@ trash_detection_tables := {
         "web"
       ]
     ],
-    "series|snk": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ]
-    ],
     "series|stars": [
       [
         "trash.locale.german.scene",
         "any"
       ]
     ],
-    "series|subaru": [
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
-      ]
-    ],
     "series|sundry": [
       [
         "trash.locale.german.lq",
         "any"
-      ]
-    ],
-    "series|tanuki": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
       ]
     ],
     "series|tfarc": [
@@ -2365,10 +2329,6 @@ trash_detection_tables := {
     "series|tvr": [
       [
         "trash.locale.german.group.tier1",
-        "anime"
-      ],
-      [
-        "trash.locale.german.group.tier1",
         "bluray"
       ],
       [
@@ -2405,10 +2365,6 @@ trash_detection_tables := {
     "series|vector": [
       [
         "trash.locale.german.group.tier2",
-        "anime"
-      ],
-      [
-        "trash.locale.german.group.tier2",
         "bluray"
       ],
       [
@@ -2416,26 +2372,10 @@ trash_detection_tables := {
         "web"
       ]
     ],
-    "series|w33bshit": [
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
-      ]
-    ],
     "series|w4k": [
       [
         "trash.locale.german.scene",
         "any"
-      ]
-    ],
-    "series|waechter": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ],
-      [
-        "trash.locale.german.group.tier3",
-        "anime"
       ]
     ],
     "series|walterbishop": [
@@ -2456,10 +2396,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.group.tier1",
         "web"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
       ]
     ],
     "series|watchable": [
@@ -2475,10 +2411,6 @@ trash_detection_tables := {
       ]
     ],
     "series|weebpinn": [
-      [
-        "trash.locale.german.group.tier1",
-        "anime"
-      ],
       [
         "trash.locale.german.group.tier1",
         "bluray"
@@ -2520,10 +2452,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.group.tier1",
         "web"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
       ]
     ],
     "series|zaidanulled": [
@@ -2540,10 +2468,6 @@ trash_detection_tables := {
       [
         "trash.locale.german.group.tier1",
         "web"
-      ],
-      [
-        "trash.locale.german.group.tier2",
-        "anime"
       ]
     ]
   },
@@ -2644,7 +2568,9 @@ german_subbed if {
 }
 
 locale_context_matches(context) if { context == "any" }
-locale_context_matches(context) if { context == "anime" }
+locale_context_matches(context) if { context == "anime"; detection_facet == "anime" }
+locale_context_matches(context) if { context == "anime_bd"; detection_facet == "anime"; trash_detection_ascii_fold(release_source) in {"bluray", "br-disk", "brdisk"} }
+locale_context_matches(context) if { context == "anime_web"; detection_facet == "anime"; trash_detection_ascii_fold(release_source) in {"web-dl", "webrip"} }
 release_source := value if { value := object.get(input.release, "source", ""); is_string(value) }
 release_group_value := value if { value := object.get(input.release, "release_group", ""); is_string(value) }
 release_quality := value if { value := object.get(input.release, "quality", ""); is_string(value) }
@@ -2652,7 +2578,7 @@ release_group_folded := trash_detection_ascii_fold(release_group_value) if { rel
 locale_context_matches(context) if { context == "web"; trash_detection_ascii_fold(release_source) in {"web-dl", "webrip"} }
 locale_context_matches(context) if { context == "remux"; input.release.is_remux }
 locale_context_matches(context) if { context == "bluray"; trash_detection_ascii_fold(release_source) == "bluray"; not input.release.is_remux; not contains(release_quality, "2160") }
-locale_context_matches(context) if { context == "uhd_bluray"; trash_detection_ascii_fold(release_source) == "bluray"; contains(release_quality, "2160") }
+locale_context_matches(context) if { context == "uhd_bluray"; trash_detection_ascii_fold(release_source) == "bluray"; not input.release.is_remux; contains(release_quality, "2160") }
 detected_facts[code] if {
   normalized_tokens
   some token in normalized_tokens
@@ -2718,7 +2644,7 @@ detected_facts[code] if {
 }
 detected_facts["trash.no_release_group"] if {
   normalized_tokens
-  not release_group_value
+  object.get(input.release, "release_group", null) in {null, ""}
   some facet in trash_detection_tables.no_release_group_fact_facets
   facet == detection_facet
 }
