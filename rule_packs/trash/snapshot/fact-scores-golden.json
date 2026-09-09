@@ -1,0 +1,1544 @@
+[
+  {
+    "code": "trash.ai_enhanced",
+    "app": "radarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.ai_enhanced",
+    "app": "radarr",
+    "score_set": "german",
+    "score": -35000
+  },
+  {
+    "code": "trash.ai_enhanced",
+    "app": "radarr",
+    "score_set": "german-anime",
+    "score": -35000
+  },
+  {
+    "code": "trash.ai_enhanced",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.ai_enhanced",
+    "app": "sonarr",
+    "score_set": "german",
+    "score": -35000
+  },
+  {
+    "code": "trash.ai_enhanced",
+    "app": "sonarr",
+    "score_set": "german-anime",
+    "score": -35000
+  },
+  {
+    "code": "trash.dubs_only",
+    "app": "radarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.dubs_only",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.fastsub",
+    "app": "radarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.fastsub",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.hardcoded_subs",
+    "app": "radarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.hardcoded_subs",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.lang.german_and_original",
+    "app": "guide-only",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.lang.not_dutch",
+    "app": "guide-only",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.lang.not_english",
+    "app": "radarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.lang.not_english",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.lang.not_french",
+    "app": "radarr",
+    "score_set": "french-anime-multi",
+    "score": 0
+  },
+  {
+    "code": "trash.lang.not_french",
+    "app": "radarr",
+    "score_set": "french-anime-vostfr",
+    "score": 0
+  },
+  {
+    "code": "trash.lang.not_french",
+    "app": "radarr",
+    "score_set": "french-multi-vf",
+    "score": -10000
+  },
+  {
+    "code": "trash.lang.not_french",
+    "app": "radarr",
+    "score_set": "french-multi-vo",
+    "score": 0
+  },
+  {
+    "code": "trash.lang.not_french",
+    "app": "radarr",
+    "score_set": "french-vostfr",
+    "score": 0
+  },
+  {
+    "code": "trash.lang.not_french",
+    "app": "sonarr",
+    "score_set": "french-anime-multi",
+    "score": 0
+  },
+  {
+    "code": "trash.lang.not_french",
+    "app": "sonarr",
+    "score_set": "french-anime-vostfr",
+    "score": 0
+  },
+  {
+    "code": "trash.lang.not_french",
+    "app": "sonarr",
+    "score_set": "french-multi-vf",
+    "score": -10000
+  },
+  {
+    "code": "trash.lang.not_french",
+    "app": "sonarr",
+    "score_set": "french-multi-vo",
+    "score": 0
+  },
+  {
+    "code": "trash.lang.not_french",
+    "app": "sonarr",
+    "score_set": "french-vostfr",
+    "score": 0
+  },
+  {
+    "code": "trash.lang.not_german_japanese_korean_chinese_or_english",
+    "app": "radarr",
+    "score_set": "default",
+    "score": -35000
+  },
+  {
+    "code": "trash.lang.not_german_japanese_korean_chinese_or_english",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": -35000
+  },
+  {
+    "code": "trash.lang.not_german_japanese_or_english",
+    "app": "radarr",
+    "score_set": "default",
+    "score": -35000
+  },
+  {
+    "code": "trash.lang.not_german_japanese_or_english",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": -35000
+  },
+  {
+    "code": "trash.lang.not_german_or_english",
+    "app": "radarr",
+    "score_set": "default",
+    "score": -35000
+  },
+  {
+    "code": "trash.lang.not_german_or_english",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": -35000
+  },
+  {
+    "code": "trash.lang.not_original",
+    "app": "radarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.lang.not_original",
+    "app": "radarr",
+    "score_set": "french-anime-multi",
+    "score": -10000
+  },
+  {
+    "code": "trash.lang.not_original",
+    "app": "radarr",
+    "score_set": "french-anime-vostfr",
+    "score": -10000
+  },
+  {
+    "code": "trash.lang.not_original",
+    "app": "radarr",
+    "score_set": "french-multi-vf",
+    "score": 0
+  },
+  {
+    "code": "trash.lang.not_original",
+    "app": "radarr",
+    "score_set": "french-multi-vo",
+    "score": -10000
+  },
+  {
+    "code": "trash.lang.not_original",
+    "app": "radarr",
+    "score_set": "french-vostfr",
+    "score": -10000
+  },
+  {
+    "code": "trash.lang.not_original",
+    "app": "radarr",
+    "score_set": "german",
+    "score": 0
+  },
+  {
+    "code": "trash.lang.not_original",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.lang.not_original",
+    "app": "sonarr",
+    "score_set": "french-anime-multi",
+    "score": -10000
+  },
+  {
+    "code": "trash.lang.not_original",
+    "app": "sonarr",
+    "score_set": "french-anime-vostfr",
+    "score": -10000
+  },
+  {
+    "code": "trash.lang.not_original",
+    "app": "sonarr",
+    "score_set": "french-multi-vf",
+    "score": 0
+  },
+  {
+    "code": "trash.lang.not_original",
+    "app": "sonarr",
+    "score_set": "french-multi-vo",
+    "score": -10000
+  },
+  {
+    "code": "trash.lang.not_original",
+    "app": "sonarr",
+    "score_set": "french-vostfr",
+    "score": -10000
+  },
+  {
+    "code": "trash.lang.not_original_or_german",
+    "app": "guide-only",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.lang.prefer_dutch",
+    "app": "guide-only",
+    "score_set": "default",
+    "score": 10
+  },
+  {
+    "code": "trash.lang.prefer_german",
+    "app": "guide-only",
+    "score_set": "default",
+    "score": 10
+  },
+  {
+    "code": "trash.locale.asian.group.tier1",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 1650
+  },
+  {
+    "code": "trash.locale.asian.group.tier1",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 1650
+  },
+  {
+    "code": "trash.locale.asian.group.tier2",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 1600
+  },
+  {
+    "code": "trash.locale.asian.group.tier2",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 1600
+  },
+  {
+    "code": "trash.locale.asian.group.tier3",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 100
+  },
+  {
+    "code": "trash.locale.asian.group.tier3",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 100
+  },
+  {
+    "code": "trash.locale.asian.lq",
+    "app": "radarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.locale.asian.lq",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 1650
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 1700
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 1800
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 1950
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "radarr",
+    "score_set": "french-anime-multi",
+    "score": 1150
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "radarr",
+    "score_set": "french-anime-multi",
+    "score": 1250
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "radarr",
+    "score_set": "french-anime-multi",
+    "score": 1650
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "radarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1150
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "radarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1250
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "radarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1650
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "radarr",
+    "score_set": "french-multi-vf",
+    "score": 1700
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "radarr",
+    "score_set": "french-multi-vf",
+    "score": 1800
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "radarr",
+    "score_set": "french-multi-vf",
+    "score": 1950
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "radarr",
+    "score_set": "french-multi-vo",
+    "score": 1700
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "radarr",
+    "score_set": "french-multi-vo",
+    "score": 1800
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "radarr",
+    "score_set": "french-multi-vo",
+    "score": 1950
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "radarr",
+    "score_set": "french-vostfr",
+    "score": 0
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 1650
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 1700
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 1800
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 1900
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "sonarr",
+    "score_set": "french-anime-multi",
+    "score": 1200
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "sonarr",
+    "score_set": "french-anime-multi",
+    "score": 1250
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "sonarr",
+    "score_set": "french-anime-multi",
+    "score": 1300
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "sonarr",
+    "score_set": "french-anime-multi",
+    "score": 1650
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "sonarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1200
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "sonarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1250
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "sonarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1300
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "sonarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1650
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "sonarr",
+    "score_set": "french-multi-vf",
+    "score": 1700
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "sonarr",
+    "score_set": "french-multi-vf",
+    "score": 1800
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "sonarr",
+    "score_set": "french-multi-vf",
+    "score": 1900
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "sonarr",
+    "score_set": "french-multi-vo",
+    "score": 1700
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "sonarr",
+    "score_set": "french-multi-vo",
+    "score": 1800
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "sonarr",
+    "score_set": "french-multi-vo",
+    "score": 1900
+  },
+  {
+    "code": "trash.locale.french.group.tier1",
+    "app": "sonarr",
+    "score_set": "french-vostfr",
+    "score": 0
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 1600
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 1650
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 1750
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 1900
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "radarr",
+    "score_set": "french-anime-multi",
+    "score": 1100
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "radarr",
+    "score_set": "french-anime-multi",
+    "score": 1200
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "radarr",
+    "score_set": "french-anime-multi",
+    "score": 1600
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "radarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1100
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "radarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1200
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "radarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1600
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "radarr",
+    "score_set": "french-multi-vf",
+    "score": 1650
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "radarr",
+    "score_set": "french-multi-vf",
+    "score": 1750
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "radarr",
+    "score_set": "french-multi-vf",
+    "score": 1900
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "radarr",
+    "score_set": "french-multi-vo",
+    "score": 1650
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "radarr",
+    "score_set": "french-multi-vo",
+    "score": 1750
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "radarr",
+    "score_set": "french-multi-vo",
+    "score": 1900
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "radarr",
+    "score_set": "french-vostfr",
+    "score": 0
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 1600
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 1650
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "sonarr",
+    "score_set": "french-anime-multi",
+    "score": 1150
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "sonarr",
+    "score_set": "french-anime-multi",
+    "score": 1600
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "sonarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1150
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "sonarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1600
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "sonarr",
+    "score_set": "french-multi-vf",
+    "score": 1650
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "sonarr",
+    "score_set": "french-multi-vo",
+    "score": 1650
+  },
+  {
+    "code": "trash.locale.french.group.tier2",
+    "app": "sonarr",
+    "score_set": "french-vostfr",
+    "score": 0
+  },
+  {
+    "code": "trash.locale.french.group.tier3",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 1550
+  },
+  {
+    "code": "trash.locale.french.group.tier3",
+    "app": "radarr",
+    "score_set": "french-anime-multi",
+    "score": 1550
+  },
+  {
+    "code": "trash.locale.french.group.tier3",
+    "app": "radarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1550
+  },
+  {
+    "code": "trash.locale.french.group.tier3",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 1550
+  },
+  {
+    "code": "trash.locale.french.group.tier3",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 1600
+  },
+  {
+    "code": "trash.locale.french.group.tier3",
+    "app": "sonarr",
+    "score_set": "french-anime-multi",
+    "score": 1100
+  },
+  {
+    "code": "trash.locale.french.group.tier3",
+    "app": "sonarr",
+    "score_set": "french-anime-multi",
+    "score": 1550
+  },
+  {
+    "code": "trash.locale.french.group.tier3",
+    "app": "sonarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1100
+  },
+  {
+    "code": "trash.locale.french.group.tier3",
+    "app": "sonarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1550
+  },
+  {
+    "code": "trash.locale.french.group.tier3",
+    "app": "sonarr",
+    "score_set": "french-multi-vf",
+    "score": 1600
+  },
+  {
+    "code": "trash.locale.french.group.tier3",
+    "app": "sonarr",
+    "score_set": "french-multi-vo",
+    "score": 1600
+  },
+  {
+    "code": "trash.locale.french.group.tier3",
+    "app": "sonarr",
+    "score_set": "french-vostfr",
+    "score": 0
+  },
+  {
+    "code": "trash.locale.french.lq",
+    "app": "radarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.locale.french.lq",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.locale.french.marker.adn",
+    "app": "sonarr",
+    "score_set": "anime-sonarr",
+    "score": 1
+  },
+  {
+    "code": "trash.locale.french.marker.adn",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 7
+  },
+  {
+    "code": "trash.locale.french.marker.adn",
+    "app": "sonarr",
+    "score_set": "french-anime-multi",
+    "score": 7
+  },
+  {
+    "code": "trash.locale.french.marker.adn",
+    "app": "sonarr",
+    "score_set": "french-anime-vostfr",
+    "score": 7
+  },
+  {
+    "code": "trash.locale.french.marker.adn",
+    "app": "sonarr",
+    "score_set": "german-anime",
+    "score": 0
+  },
+  {
+    "code": "trash.locale.french.marker.anime_fansub",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 1450
+  },
+  {
+    "code": "trash.locale.french.marker.anime_fansub",
+    "app": "radarr",
+    "score_set": "french-anime-multi",
+    "score": 1450
+  },
+  {
+    "code": "trash.locale.french.marker.anime_fansub",
+    "app": "radarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1450
+  },
+  {
+    "code": "trash.locale.french.marker.anime_fansub",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 1450
+  },
+  {
+    "code": "trash.locale.french.marker.anime_fansub",
+    "app": "sonarr",
+    "score_set": "french-anime-multi",
+    "score": 1450
+  },
+  {
+    "code": "trash.locale.french.marker.anime_fansub",
+    "app": "sonarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1450
+  },
+  {
+    "code": "trash.locale.french.marker.vostfr",
+    "app": "radarr",
+    "score_set": "anime-radarr",
+    "score": -10000
+  },
+  {
+    "code": "trash.locale.french.marker.vostfr",
+    "app": "radarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.locale.french.marker.vostfr",
+    "app": "radarr",
+    "score_set": "french-anime-multi",
+    "score": 0
+  },
+  {
+    "code": "trash.locale.french.marker.vostfr",
+    "app": "radarr",
+    "score_set": "french-anime-vostfr",
+    "score": 101
+  },
+  {
+    "code": "trash.locale.french.marker.vostfr",
+    "app": "radarr",
+    "score_set": "french-multi-vf",
+    "score": 0
+  },
+  {
+    "code": "trash.locale.french.marker.vostfr",
+    "app": "radarr",
+    "score_set": "french-multi-vo",
+    "score": 0
+  },
+  {
+    "code": "trash.locale.french.marker.vostfr",
+    "app": "radarr",
+    "score_set": "french-vostfr",
+    "score": 1000
+  },
+  {
+    "code": "trash.locale.french.marker.vostfr",
+    "app": "radarr",
+    "score_set": "german-anime",
+    "score": -35000
+  },
+  {
+    "code": "trash.locale.french.marker.vostfr",
+    "app": "sonarr",
+    "score_set": "anime-sonarr",
+    "score": -10000
+  },
+  {
+    "code": "trash.locale.french.marker.vostfr",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.locale.french.marker.vostfr",
+    "app": "sonarr",
+    "score_set": "french-anime-multi",
+    "score": 0
+  },
+  {
+    "code": "trash.locale.french.marker.vostfr",
+    "app": "sonarr",
+    "score_set": "french-anime-vostfr",
+    "score": 101
+  },
+  {
+    "code": "trash.locale.french.marker.vostfr",
+    "app": "sonarr",
+    "score_set": "french-multi-vf",
+    "score": 0
+  },
+  {
+    "code": "trash.locale.french.marker.vostfr",
+    "app": "sonarr",
+    "score_set": "french-multi-vo",
+    "score": 0
+  },
+  {
+    "code": "trash.locale.french.marker.vostfr",
+    "app": "sonarr",
+    "score_set": "french-vostfr",
+    "score": 1000
+  },
+  {
+    "code": "trash.locale.french.marker.vostfr",
+    "app": "sonarr",
+    "score_set": "german-anime",
+    "score": -35000
+  },
+  {
+    "code": "trash.locale.french.scene",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 1500
+  },
+  {
+    "code": "trash.locale.french.scene",
+    "app": "radarr",
+    "score_set": "french-anime-multi",
+    "score": 1500
+  },
+  {
+    "code": "trash.locale.french.scene",
+    "app": "radarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1500
+  },
+  {
+    "code": "trash.locale.french.scene",
+    "app": "radarr",
+    "score_set": "french-multi-vf",
+    "score": 1500
+  },
+  {
+    "code": "trash.locale.french.scene",
+    "app": "radarr",
+    "score_set": "french-multi-vo",
+    "score": 1500
+  },
+  {
+    "code": "trash.locale.french.scene",
+    "app": "radarr",
+    "score_set": "french-vostfr",
+    "score": 0
+  },
+  {
+    "code": "trash.locale.french.scene",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 1500
+  },
+  {
+    "code": "trash.locale.french.scene",
+    "app": "sonarr",
+    "score_set": "french-anime-multi",
+    "score": 1500
+  },
+  {
+    "code": "trash.locale.french.scene",
+    "app": "sonarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1500
+  },
+  {
+    "code": "trash.locale.french.scene",
+    "app": "sonarr",
+    "score_set": "french-multi-vf",
+    "score": 1500
+  },
+  {
+    "code": "trash.locale.french.scene",
+    "app": "sonarr",
+    "score_set": "french-multi-vo",
+    "score": 1500
+  },
+  {
+    "code": "trash.locale.french.scene",
+    "app": "sonarr",
+    "score_set": "french-vostfr",
+    "score": 0
+  },
+  {
+    "code": "trash.locale.german.group.tier1",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 2100
+  },
+  {
+    "code": "trash.locale.german.group.tier1",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 2900
+  },
+  {
+    "code": "trash.locale.german.group.tier1",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 4000
+  },
+  {
+    "code": "trash.locale.german.group.tier1",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 2100
+  },
+  {
+    "code": "trash.locale.german.group.tier1",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 2900
+  },
+  {
+    "code": "trash.locale.german.group.tier1",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 4000
+  },
+  {
+    "code": "trash.locale.german.group.tier2",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 1900
+  },
+  {
+    "code": "trash.locale.german.group.tier2",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 2650
+  },
+  {
+    "code": "trash.locale.german.group.tier2",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 3900
+  },
+  {
+    "code": "trash.locale.german.group.tier2",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 1900
+  },
+  {
+    "code": "trash.locale.german.group.tier2",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 2650
+  },
+  {
+    "code": "trash.locale.german.group.tier2",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 3900
+  },
+  {
+    "code": "trash.locale.german.group.tier3",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 1800
+  },
+  {
+    "code": "trash.locale.german.group.tier3",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 2300
+  },
+  {
+    "code": "trash.locale.german.group.tier3",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 1800
+  },
+  {
+    "code": "trash.locale.german.group.tier3",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 2300
+  },
+  {
+    "code": "trash.locale.german.lq",
+    "app": "radarr",
+    "score_set": "default",
+    "score": -35000
+  },
+  {
+    "code": "trash.locale.german.lq",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": -35000
+  },
+  {
+    "code": "trash.locale.german.marker.subbed",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 9000
+  },
+  {
+    "code": "trash.locale.german.marker.subbed",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 9000
+  },
+  {
+    "code": "trash.locale.german.scene",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 1700
+  },
+  {
+    "code": "trash.locale.german.scene",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 1700
+  },
+  {
+    "code": "trash.obfuscated",
+    "app": "radarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.obfuscated",
+    "app": "radarr",
+    "score_set": "german",
+    "score": -35000
+  },
+  {
+    "code": "trash.obfuscated",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.obfuscated",
+    "app": "sonarr",
+    "score_set": "german",
+    "score": -35000
+  },
+  {
+    "code": "trash.proper",
+    "app": "radarr",
+    "score_set": "anime-radarr",
+    "score": 1
+  },
+  {
+    "code": "trash.proper",
+    "app": "radarr",
+    "score_set": "anime-radarr",
+    "score": 2
+  },
+  {
+    "code": "trash.proper",
+    "app": "radarr",
+    "score_set": "anime-radarr",
+    "score": 3
+  },
+  {
+    "code": "trash.proper",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 5
+  },
+  {
+    "code": "trash.proper",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 6
+  },
+  {
+    "code": "trash.proper",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 7
+  },
+  {
+    "code": "trash.proper",
+    "app": "radarr",
+    "score_set": "french-anime-multi",
+    "score": 1
+  },
+  {
+    "code": "trash.proper",
+    "app": "radarr",
+    "score_set": "french-anime-multi",
+    "score": 2
+  },
+  {
+    "code": "trash.proper",
+    "app": "radarr",
+    "score_set": "french-anime-multi",
+    "score": 3
+  },
+  {
+    "code": "trash.proper",
+    "app": "radarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1
+  },
+  {
+    "code": "trash.proper",
+    "app": "radarr",
+    "score_set": "french-anime-vostfr",
+    "score": 2
+  },
+  {
+    "code": "trash.proper",
+    "app": "radarr",
+    "score_set": "french-anime-vostfr",
+    "score": 3
+  },
+  {
+    "code": "trash.proper",
+    "app": "radarr",
+    "score_set": "sqp-4-ma-hybrid",
+    "score": 1
+  },
+  {
+    "code": "trash.proper",
+    "app": "radarr",
+    "score_set": "sqp-4-ma-hybrid",
+    "score": 2
+  },
+  {
+    "code": "trash.proper",
+    "app": "radarr",
+    "score_set": "sqp-4-ma-hybrid",
+    "score": 3
+  },
+  {
+    "code": "trash.proper",
+    "app": "sonarr",
+    "score_set": "anime-sonarr",
+    "score": 1
+  },
+  {
+    "code": "trash.proper",
+    "app": "sonarr",
+    "score_set": "anime-sonarr",
+    "score": 2
+  },
+  {
+    "code": "trash.proper",
+    "app": "sonarr",
+    "score_set": "anime-sonarr",
+    "score": 3
+  },
+  {
+    "code": "trash.proper",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 5
+  },
+  {
+    "code": "trash.proper",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 6
+  },
+  {
+    "code": "trash.proper",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 7
+  },
+  {
+    "code": "trash.proper",
+    "app": "sonarr",
+    "score_set": "french-anime-multi",
+    "score": 1
+  },
+  {
+    "code": "trash.proper",
+    "app": "sonarr",
+    "score_set": "french-anime-multi",
+    "score": 2
+  },
+  {
+    "code": "trash.proper",
+    "app": "sonarr",
+    "score_set": "french-anime-multi",
+    "score": 3
+  },
+  {
+    "code": "trash.proper",
+    "app": "sonarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1
+  },
+  {
+    "code": "trash.proper",
+    "app": "sonarr",
+    "score_set": "french-anime-vostfr",
+    "score": 2
+  },
+  {
+    "code": "trash.proper",
+    "app": "sonarr",
+    "score_set": "french-anime-vostfr",
+    "score": 3
+  },
+  {
+    "code": "trash.repack",
+    "app": "radarr",
+    "score_set": "anime-radarr",
+    "score": 1
+  },
+  {
+    "code": "trash.repack",
+    "app": "radarr",
+    "score_set": "anime-radarr",
+    "score": 2
+  },
+  {
+    "code": "trash.repack",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 5
+  },
+  {
+    "code": "trash.repack",
+    "app": "radarr",
+    "score_set": "default",
+    "score": 6
+  },
+  {
+    "code": "trash.repack",
+    "app": "radarr",
+    "score_set": "french-anime-multi",
+    "score": 1
+  },
+  {
+    "code": "trash.repack",
+    "app": "radarr",
+    "score_set": "french-anime-multi",
+    "score": 2
+  },
+  {
+    "code": "trash.repack",
+    "app": "radarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1
+  },
+  {
+    "code": "trash.repack",
+    "app": "radarr",
+    "score_set": "french-anime-vostfr",
+    "score": 2
+  },
+  {
+    "code": "trash.repack",
+    "app": "radarr",
+    "score_set": "sqp-4-ma-hybrid",
+    "score": 1
+  },
+  {
+    "code": "trash.repack",
+    "app": "radarr",
+    "score_set": "sqp-4-ma-hybrid",
+    "score": 2
+  },
+  {
+    "code": "trash.repack",
+    "app": "sonarr",
+    "score_set": "anime-sonarr",
+    "score": 1
+  },
+  {
+    "code": "trash.repack",
+    "app": "sonarr",
+    "score_set": "anime-sonarr",
+    "score": 2
+  },
+  {
+    "code": "trash.repack",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 5
+  },
+  {
+    "code": "trash.repack",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": 6
+  },
+  {
+    "code": "trash.repack",
+    "app": "sonarr",
+    "score_set": "french-anime-multi",
+    "score": 1
+  },
+  {
+    "code": "trash.repack",
+    "app": "sonarr",
+    "score_set": "french-anime-multi",
+    "score": 2
+  },
+  {
+    "code": "trash.repack",
+    "app": "sonarr",
+    "score_set": "french-anime-vostfr",
+    "score": 1
+  },
+  {
+    "code": "trash.repack",
+    "app": "sonarr",
+    "score_set": "french-anime-vostfr",
+    "score": 2
+  },
+  {
+    "code": "trash.retagged",
+    "app": "radarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.retagged",
+    "app": "radarr",
+    "score_set": "german",
+    "score": -35000
+  },
+  {
+    "code": "trash.retagged",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.retagged",
+    "app": "sonarr",
+    "score_set": "german",
+    "score": -35000
+  },
+  {
+    "code": "trash.scene",
+    "app": "radarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.scene",
+    "app": "radarr",
+    "score_set": "french-multi-vf",
+    "score": 0
+  },
+  {
+    "code": "trash.scene",
+    "app": "radarr",
+    "score_set": "french-multi-vo",
+    "score": 0
+  },
+  {
+    "code": "trash.scene",
+    "app": "radarr",
+    "score_set": "french-vostfr",
+    "score": 0
+  },
+  {
+    "code": "trash.scene",
+    "app": "radarr",
+    "score_set": "german",
+    "score": 0
+  },
+  {
+    "code": "trash.scene",
+    "app": "radarr",
+    "score_set": "german-anime",
+    "score": 0
+  },
+  {
+    "code": "trash.scene",
+    "app": "sonarr",
+    "score_set": "default",
+    "score": -10000
+  },
+  {
+    "code": "trash.scene",
+    "app": "sonarr",
+    "score_set": "french-multi-vf",
+    "score": 0
+  },
+  {
+    "code": "trash.scene",
+    "app": "sonarr",
+    "score_set": "french-multi-vo",
+    "score": 0
+  },
+  {
+    "code": "trash.scene",
+    "app": "sonarr",
+    "score_set": "german",
+    "score": 0
+  },
+  {
+    "code": "trash.scene",
+    "app": "sonarr",
+    "score_set": "german-anime",
+    "score": 0
+  }
+]

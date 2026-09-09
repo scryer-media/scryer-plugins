@@ -13,6 +13,12 @@
       "min_scryer_version": "0.20.0"
     },
     {
+      "id": "trash-guides-scoring-pack",
+      "asset": "trash-scoring.json",
+      "distribution_base_url": "https://cdn.scryer.media/scryer/rule-packs/trash-guides-scoring-pack",
+      "min_scryer_version": "0.20.0"
+    },
+    {
       "id": "torrent-optimization-pack",
       "asset": "torrent-optimization.json",
       "distribution_base_url": "https://cdn.scryer.media/scryer/rule-packs/torrent-optimization-pack",

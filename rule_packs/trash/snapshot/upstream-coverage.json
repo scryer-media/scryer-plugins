@@ -1,0 +1,2378 @@
+{
+  "schema_version": 1,
+  "source_revision": "31a2716d03a3f554a5a2a6bd76456109d900af05",
+  "input_files": [
+    {
+      "path": "docs/json/guide-only/language-german-and-original.json",
+      "sha256": "337ce08b688ca9d1e94e8ec64923d31c931d3752e143ae1e04e2c0af8349563b"
+    },
+    {
+      "path": "docs/json/guide-only/language-not-dutch.json",
+      "sha256": "684a1aeb1d0310cbc273a3967f2b32322b2a1d2b0e4578ae23fe3d516d2e9265"
+    },
+    {
+      "path": "docs/json/guide-only/language-not-original-or-german.json",
+      "sha256": "c056cc695753d4f13ff9190edfe97fdcd574fda44f3836539b46b8b7520fdc28"
+    },
+    {
+      "path": "docs/json/guide-only/language-prefer-dutch.json",
+      "sha256": "701cb8e68d3fa660aa575cf0dc0fbbe8a6c0cbd4d54db552682050de4dbd8314"
+    },
+    {
+      "path": "docs/json/guide-only/language-prefer-german.json",
+      "sha256": "90e10c36b432fb26c0a957141830f56228f9ddfc202b3b480168e341b4b44c45"
+    },
+    {
+      "path": "docs/json/radarr/cf/10-mono.json",
+      "sha256": "2c3945ac4200d4c635724bc343701a543b4c07d45f27cbf7495cd6bbab9b1609"
+    },
+    {
+      "path": "docs/json/radarr/cf/1080p.json",
+      "sha256": "22f6d5d74dbb644b23c3edd71739cbe28da0490d9d4b6d7d10724f4d39068f85"
+    },
+    {
+      "path": "docs/json/radarr/cf/10bit.json",
+      "sha256": "291a3bd7bc5d0c3bc6c64f6e3d2ac4fb90b54095ea8a9a65207aba9fc1b38b5e"
+    },
+    {
+      "path": "docs/json/radarr/cf/126811.json",
+      "sha256": "e3853e470d8eaf4f2e4400cb2b7a1f02cb696a26eb80a7c67c91ef91ba3c82ab"
+    },
+    {
+      "path": "docs/json/radarr/cf/20-stereo.json",
+      "sha256": "a0e99782cc9ab3160ce567fd1864b5e6fcbad9f0da4b19f550853ac7ec627079"
+    },
+    {
+      "path": "docs/json/radarr/cf/2160p.json",
+      "sha256": "a0b2e0d8bece87308e843ba339d3d72146f287cfa43ade1b5c8cb77e34dcf699"
+    },
+    {
+      "path": "docs/json/radarr/cf/30-sound.json",
+      "sha256": "f6a505ffed8785c5e8d72a0ae0085465c2655723a3723112b9c88d94385dcf09"
+    },
+    {
+      "path": "docs/json/radarr/cf/3d.json",
+      "sha256": "2c99a76ab35b56ae46a082da312a1b3d1a22fbaf4201a7405bf6170edf3117ae"
+    },
+    {
+      "path": "docs/json/radarr/cf/40-sound.json",
+      "sha256": "8e85c7728a7a20a4a1dfa37e150057e0a7334036695a8b9495a5284bba829b34"
+    },
+    {
+      "path": "docs/json/radarr/cf/4k-remaster.json",
+      "sha256": "dc0de056439a4381ca9f1cf38b1ba9d0aeb095ab64a09cd88f34b09565ffd32c"
+    },
+    {
+      "path": "docs/json/radarr/cf/51-surround.json",
+      "sha256": "39267ef1d052ed34746e1b20645de27c709af7d375be7ddfbb43f04a24465b7b"
+    },
+    {
+      "path": "docs/json/radarr/cf/61-surround.json",
+      "sha256": "4d50f8de7039678f8d2b69dffa2aafe7daf49dc715a45dbcde391d71932e5380"
+    },
+    {
+      "path": "docs/json/radarr/cf/71-surround.json",
+      "sha256": "ca62f1ea9e4fb43461ba6b3143fc3a7ca443e0c26383d77ba4431ada851cf6ba"
+    },
+    {
+      "path": "docs/json/radarr/cf/720p.json",
+      "sha256": "f323d3054229c581914419643d9a71f9cea62447a108d147ec75c4e5ade50648"
+    },
+    {
+      "path": "docs/json/radarr/cf/aac.json",
+      "sha256": "49eaaf1f1ce10caecd6d205845297b9378c8646395b9e3d99856f9317ef9c1d4"
+    },
+    {
+      "path": "docs/json/radarr/cf/amzn.json",
+      "sha256": "ed9ca25f18870d1511233daa9b049cde58b4d70f0c82367cfc14659b1d19baec"
+    },
+    {
+      "path": "docs/json/radarr/cf/anime-bd-tier-01.json",
+      "sha256": "4178ca6b5ecb0844d188f79b4b428af44f011c7b810865adfac4984492763552"
+    },
+    {
+      "path": "docs/json/radarr/cf/anime-bd-tier-02.json",
+      "sha256": "942c21de115c58fd306dafd931571501b377e7e0f6b89ded8cdc228e9cc87e82"
+    },
+    {
+      "path": "docs/json/radarr/cf/anime-bd-tier-03.json",
+      "sha256": "44b48e8765db466ec1df41e897596f3e0cb6bf3352037907fb43017a3a82ca36"
+    },
+    {
+      "path": "docs/json/radarr/cf/anime-bd-tier-04.json",
+      "sha256": "f58d37f3b5bfc7ccd8ba8d22780441b522a0e744c4cc1cf7886be8347e050b87"
+    },
+    {
+      "path": "docs/json/radarr/cf/anime-bd-tier-05.json",
+      "sha256": "8aa66d1c6c8a7b40cf8421a2b75a727d3e1cec60eb5d827ac5083301c36da27a"
+    },
+    {
+      "path": "docs/json/radarr/cf/anime-bd-tier-06.json",
+      "sha256": "3c99a098b82af2c42a62d8f688f0acbc20b2e2b2ed59b62689ae2a5d28b209c1"
+    },
+    {
+      "path": "docs/json/radarr/cf/anime-bd-tier-07.json",
+      "sha256": "d39653227f9d77539de0c7b6a3b0b38f683f26aaa5761ec9e303711b9cfa6f7f"
+    },
+    {
+      "path": "docs/json/radarr/cf/anime-bd-tier-08.json",
+      "sha256": "69d596a7f4d7304f3545fdeab5c91107afeee534263297a4c1a51723ddd35a2e"
+    },
+    {
+      "path": "docs/json/radarr/cf/anime-dual-audio.json",
+      "sha256": "c325a13345ab102412f4040f777696b56dde2bddd807665511af006d1c0fa515"
+    },
+    {
+      "path": "docs/json/radarr/cf/anime-lq-groups.json",
+      "sha256": "b5fbf50ffe5c1a039e279f2788ca63b8fc46fc5562aa2deddc114292ae485987"
+    },
+    {
+      "path": "docs/json/radarr/cf/anime-raws.json",
+      "sha256": "9121d1b59166b06b7c837d8f26588588abf75a7b3217339f2d1e879e034e9070"
+    },
+    {
+      "path": "docs/json/radarr/cf/anime-web-tier-01.json",
+      "sha256": "d292ad0c26a2abed3988858ed130abf7e46dfd2ee3b3f1be0d774fb27b066d0f"
+    },
+    {
+      "path": "docs/json/radarr/cf/anime-web-tier-02.json",
+      "sha256": "e1c1702a2677bbf5d8cba7122109115e9fbb175f5389df24bd8ef1ca296d0ba7"
+    },
+    {
+      "path": "docs/json/radarr/cf/anime-web-tier-03.json",
+      "sha256": "6c1955665013a649d21d12b9feea93f721800dd8f8e6ff0dce2f2965d578dfbb"
+    },
+    {
+      "path": "docs/json/radarr/cf/anime-web-tier-04.json",
+      "sha256": "375dcf9576721b8970a7305d9a525feb9fdb7e69ace59f0b3b0124eae4894e5e"
+    },
+    {
+      "path": "docs/json/radarr/cf/anime-web-tier-05.json",
+      "sha256": "c22ee7479d916f2d3322b21aded99240fa8ca7e21973d8f98224d810e0ce961b"
+    },
+    {
+      "path": "docs/json/radarr/cf/anime-web-tier-06.json",
+      "sha256": "7b16a71adc4279d8729527b201b6ef74275683ae8084fabaf863192dfa2d18bf"
+    },
+    {
+      "path": "docs/json/radarr/cf/asian-lq.json",
+      "sha256": "b6fb5f029a3e5337171dec570293c1bcc73623d45cd16ec7ba7c38177f60a732"
+    },
+    {
+      "path": "docs/json/radarr/cf/asian-tier-01.json",
+      "sha256": "03d548a0962bc27655773a83fc614623deb81c503169214ef46ec384aab4e72b"
+    },
+    {
+      "path": "docs/json/radarr/cf/asian-tier-02.json",
+      "sha256": "4ba021a9193fb053a2651aab8ebc528e9e1bb1fbbd4bb712076c850f193f8f67"
+    },
+    {
+      "path": "docs/json/radarr/cf/asian-tier-03.json",
+      "sha256": "c94e5aa9071f3e119aa1940341f7f214180273275029a273f7447b40c2393f07"
+    },
+    {
+      "path": "docs/json/radarr/cf/atmos-undefined.json",
+      "sha256": "00a1ef67f8be3fdd8211c80b41d9a6a5025156084b53828915a340c1859106cb"
+    },
+    {
+      "path": "docs/json/radarr/cf/atv.json",
+      "sha256": "ebe3254db81774fe19adb7c344ffd96a4f5a071a92ad03fea2cc1d037ad17ff0"
+    },
+    {
+      "path": "docs/json/radarr/cf/atvp.json",
+      "sha256": "ec4620d30f39ea734d381a888a083ab2d49ec61130aadc4d82b427e895cb737f"
+    },
+    {
+      "path": "docs/json/radarr/cf/aubc.json",
+      "sha256": "1bf452f89aa52008293f6f986c79d3b983fb9082ebde641af0a3748a478600d5"
+    },
+    {
+      "path": "docs/json/radarr/cf/av1.json",
+      "sha256": "8e531908820fe282a6021d0e73b299e4388a9fb55fe10aed267951347793bcda"
+    },
+    {
+      "path": "docs/json/radarr/cf/bad-dual-groups.json",
+      "sha256": "838683e0a09bc71b8854ffe02f8225066641dd647a4483b588f9c4837fc1a2be"
+    },
+    {
+      "path": "docs/json/radarr/cf/bcore.json",
+      "sha256": "28c3fca500fcb440679e08a7ec5f982264785f13ccc8e2c5f7aa5efca1143656"
+    },
+    {
+      "path": "docs/json/radarr/cf/bhdstudio.json",
+      "sha256": "9ce3097f2860f60083224fb84a174db65dab962d3e5d64adf5c13230464ab6cc"
+    },
+    {
+      "path": "docs/json/radarr/cf/black-and-white-editions.json",
+      "sha256": "e5c8aef5375155c6c07d9439a9514730b20c56089104eac8d820d529357a8c20"
+    },
+    {
+      "path": "docs/json/radarr/cf/br-disk.json",
+      "sha256": "bd946256749a3162f570d6e401f4cb234211d11b2c61f2e4843ba3de6fdc1494"
+    },
+    {
+      "path": "docs/json/radarr/cf/cbc.json",
+      "sha256": "049e0f66d41f0a5098e719b377bf83554c6d0575e1063fa9491ff2249d5a3cc7"
+    },
+    {
+      "path": "docs/json/radarr/cf/cnlp.json",
+      "sha256": "d7d955a8da58d47daa820a303412e31270895a25cafd460d838892fd8856dca0"
+    },
+    {
+      "path": "docs/json/radarr/cf/cpng.json",
+      "sha256": "4a64b2ee930307286c0d8078b0ca307f16cf791b1c59a3a6e27bef18da3c3a49"
+    },
+    {
+      "path": "docs/json/radarr/cf/crav.json",
+      "sha256": "ee69a6fda9183e3bf1442a7f41acabc8cc1d3457bbb96a3d15f2ad60678aa2db"
+    },
+    {
+      "path": "docs/json/radarr/cf/crit.json",
+      "sha256": "8528fcb2f0ac1d531ed014128990c4176319379524aa5d88caccfd7c36021f3c"
+    },
+    {
+      "path": "docs/json/radarr/cf/criterion-collection.json",
+      "sha256": "7313e6e1f99024d4c4d3e0ecebc2a48df8ebcba799f4ae3398087343fda75705"
+    },
+    {
+      "path": "docs/json/radarr/cf/dd.json",
+      "sha256": "9e1f14f1cfdbbb900279210c8993ee980d64b046ec910422c9cd8ddef5b6d4c4"
+    },
+    {
+      "path": "docs/json/radarr/cf/ddplus-atmos.json",
+      "sha256": "53d68c02d5a5f55f5ea6b5b49c61308fa809464a06e4e9a1bef8cf8227c6e641"
+    },
+    {
+      "path": "docs/json/radarr/cf/ddplus.json",
+      "sha256": "5f93fdbf74b8144595f7cbd49d3afb6252267ecf109c233b3b77135be11afb50"
+    },
+    {
+      "path": "docs/json/radarr/cf/dsnp.json",
+      "sha256": "82db6a20fd148e97b84a2ddad7e1d9253569741ea495577a3f7a77be0215347b"
+    },
+    {
+      "path": "docs/json/radarr/cf/dts-es.json",
+      "sha256": "bb7fff600e9637aead51094f19b7f6f90771315b7dbb66bc8c9a1c85b0c803d4"
+    },
+    {
+      "path": "docs/json/radarr/cf/dts-hd-hra.json",
+      "sha256": "649d389a8d6931af9b1287b6c8f3c30164384a2d517c45fc78072619047969e3"
+    },
+    {
+      "path": "docs/json/radarr/cf/dts-hd-ma.json",
+      "sha256": "e027b7a66ff83abe8075e62413957b8ad693f81a9c3f78ca46019836af57e790"
+    },
+    {
+      "path": "docs/json/radarr/cf/dts-x.json",
+      "sha256": "1ecd4fcd28453f31d1d1ad7a21bf843632577f92687dddb9827e8b47d1c51d5c"
+    },
+    {
+      "path": "docs/json/radarr/cf/dts.json",
+      "sha256": "4c8415a82dcf0a7f2f2dfa284d364ba08662cbbb14505c83048e9fe8943803a0"
+    },
+    {
+      "path": "docs/json/radarr/cf/dual-audio-asian.json",
+      "sha256": "0dcf71381f02da131c7753435f7669f9c3ea01265b84cd834d708ddac39acebf"
+    },
+    {
+      "path": "docs/json/radarr/cf/dubs-only.json",
+      "sha256": "1b0e05115cd763bc2c70432d7074551bdb23f6225392fd02a3858cecde15fc17"
+    },
+    {
+      "path": "docs/json/radarr/cf/dv-boost.json",
+      "sha256": "c9bee628549793296cabbd210ff20101c82a797b745782ba6119b0b4ba6c370a"
+    },
+    {
+      "path": "docs/json/radarr/cf/dv-disk.json",
+      "sha256": "d48dbc59e6e1382f99f97df7e2d24a1c66c9653b4aecd363d812f781fc75077a"
+    },
+    {
+      "path": "docs/json/radarr/cf/dv-wo-hdr-fallback.json",
+      "sha256": "4240cf5b18dde40d5e4fd180953b75308030cc37e258a57472fa8e2205ecb35e"
+    },
+    {
+      "path": "docs/json/radarr/cf/extras.json",
+      "sha256": "3e9f15066048f859138d16c7cc33509558d3b3ff6bb21c123dc5a3a7824f8528"
+    },
+    {
+      "path": "docs/json/radarr/cf/fand.json",
+      "sha256": "00d31436dda9394ae8d50bbb33a907c539ba2cb6f9142c955b4f4076ce0a72f3"
+    },
+    {
+      "path": "docs/json/radarr/cf/fansub.json",
+      "sha256": "b8bf011ab425f71ad74d064495165dd4ebff14386943f46934d1a8b3264fd598"
+    },
+    {
+      "path": "docs/json/radarr/cf/fastsub.json",
+      "sha256": "044c0438ce4281a997db29578fb3f72c128bf701319134733174fe90c57bd8f0"
+    },
+    {
+      "path": "docs/json/radarr/cf/flac.json",
+      "sha256": "afecb883e58d619920346e1b5953ea5e55c47c25a05407856e49afd9bceda8d4"
+    },
+    {
+      "path": "docs/json/radarr/cf/flux.json",
+      "sha256": "48ff919d1c47e04737f737ec84e25ed830f31a7abdd515c806c32850f98ee388"
+    },
+    {
+      "path": "docs/json/radarr/cf/fod.json",
+      "sha256": "1273482ec8622c997bc6cf1f8dc3d587a411214fa42ef95bf44d1ba56a7abb0f"
+    },
+    {
+      "path": "docs/json/radarr/cf/framestor.json",
+      "sha256": "495f2694e9b2121485dd092aebd4cbf59f5e2ae6feed171e909ebdf54550fde6"
+    },
+    {
+      "path": "docs/json/radarr/cf/freeleech.json",
+      "sha256": "40af909dd005252268997324646208d8349c2a5e31275eea01875dda95104b2d"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-anime-fansub.json",
+      "sha256": "7f323516caa78e64f4669b9ba1bc845abbb758c9e4280059406f93b3191c75b1"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-anime-tier-01.json",
+      "sha256": "6e457860f6b8df39dd882c5d87f29e8c78a7a7319700901c742f94462529edcf"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-anime-tier-02.json",
+      "sha256": "f362998257deaf54271a7956693c046e4b8e8d7f7379b4b041301270d1ac020c"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-anime-tier-03.json",
+      "sha256": "59b34a1f4e85e2f967661d264ad35e3af00445778fa4ed8897ac16ca7dd87558"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-hd-bluray-tier-01.json",
+      "sha256": "a8d81833e61f4fd47eed96222970f62cb945997a8be0cf34545c26df2b4090c8"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-hd-bluray-tier-02.json",
+      "sha256": "f90a9fb014bf82149fed04f3c9d157aad03f32d5afd2ae49e549b6d34ec2b241"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-lq.json",
+      "sha256": "00fc9313edb7ba786c611e92e19ec8699f5f632f1cb68441e4757cbabd070ebb"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-remux-tier-01.json",
+      "sha256": "85a7716ec040ee9cbf74728234ac3b5e7ec4deeb007db734413e2fca79bd9a27"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-remux-tier-02.json",
+      "sha256": "0dffc5425851262b093b0f745ead826a21d571961841990a148e2f28063cb100"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-scene.json",
+      "sha256": "244e57e9dc19d9c7bdb9ba95fabcfb132908a3e280cfd71f7e3f31efda5fae8c"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-uhd-bluray-tier-01.json",
+      "sha256": "e0a86d2a5796bb11a293d15de30febdf53cf62b201a321537de90c0cf90965a9"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-uhd-bluray-tier-02.json",
+      "sha256": "ed3865adcc86044ebbc3156eda6fb1e1e55f0cc7361970c2cd87500bfa7c6d39"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-vf2.json",
+      "sha256": "7d17f0a87f91ffdfef84d6c2b688c517dc179f64e15da4ee4277b33255706500"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-vfb.json",
+      "sha256": "25785bc91d213285e6874bdde63f8ed85fd80edd69b0463828a75933bb8d9c73"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-vff.json",
+      "sha256": "8622b8ec87475bc265d79d845b5209e79873112a08418ac6b446e31dee753f18"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-vfi.json",
+      "sha256": "56a610d4c256dd74a9d86dcf93acdaa831aacb6ad6c4dcbf965eecbf8288cbd0"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-vfq.json",
+      "sha256": "ff5a9568365ef63336abd9a963e4d84261dcb7fe6002bcdc98733dd37541f60f"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-vof.json",
+      "sha256": "216a5edfa069e1dfb4afdca59f828fdca805eaaeb9617892b2a8c35bd8994439"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-voq.json",
+      "sha256": "810a5ba574a41ae983b6dfe2d2a50feb0ff9f77a1d2095ff96032f045e918e27"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-vostfr.json",
+      "sha256": "58876086d52483160656bff24598385ba48a20f1d2aa42c730a1f49c5139f3ea"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-vq.json",
+      "sha256": "e1b202b2de9e7607bcbee63d0db1502b628a117e0e721c1ebe5866b7418bab7f"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-web-tier-01.json",
+      "sha256": "0480f57f13d0dacdaa6d870e49d8007e0875c21e7fd6ec6d7b3715302a37cd4d"
+    },
+    {
+      "path": "docs/json/radarr/cf/french-web-tier-02.json",
+      "sha256": "35789ccdeb90d7ff663b3e3578fea7928512a4223d0d4c5723085e86b4991c2b"
+    },
+    {
+      "path": "docs/json/radarr/cf/friday.json",
+      "sha256": "ef359201878639b80706cc303055c2678a58b5f8bb8fa815cfb73ccef88941e3"
+    },
+    {
+      "path": "docs/json/radarr/cf/funi.json",
+      "sha256": "917cbd5261038e563e28566b507b2c2339ab60727a7b5df91e89c8384a740f16"
+    },
+    {
+      "path": "docs/json/radarr/cf/generated-dynamic-hdr.json",
+      "sha256": "2b8ff51146568116f16ef31ee5f614bfb0dfd52f6b663a123b7af9b76cf2417d"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-1080p-booster.json",
+      "sha256": "d761ddcecaae5f0e3ac95d07d1665f4f860587e87e79c93b06ae4f6eb8ee96ba"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-2160p-booster.json",
+      "sha256": "5edee20cac656b83f818406870d7a5950b088d9d20adfef509403cfae4221ad9"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-anime-bluray-tier-01.json",
+      "sha256": "62f85e29213628ac09adfe180ede3b5cb9047161e3f33f8b65deb48ae63d42cc"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-anime-bluray-tier-02.json",
+      "sha256": "78fff1ef4bcc3f264c6b25a9ceb6d37c572fdf44dc4c8ecbc411417f738b9295"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-anime-bluray-tier-03.json",
+      "sha256": "633e03958bd16f496e5f9bc6bede87fd033549a7d9fe1f79b732d3eeb6cc7a18"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-anime-scene.json",
+      "sha256": "2947289dc545edf36f7c7194ae9bfb9bca220ca7749fae254aa8b8233cc62902"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-anime-web-tier-01.json",
+      "sha256": "aeca0d45c2914ef3ab23635d0ae79dd36611897ab98bd83d8b0ca7da7548f5f0"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-anime-web-tier-02.json",
+      "sha256": "1e0bb5272dabda98f81d152ef6ab7763e9b47b15ce5483e229293a1bf6044632"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-anime-web-tier-03.json",
+      "sha256": "5e76366133e51f7ba9dfacfc5d6970f0ce2d5976ccb80929f0f00a9cda043e08"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-bluray-tier-01.json",
+      "sha256": "dea0abbd549324520c839ef83ec247113dd88e7e1b81028bf0970b3279769b7f"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-bluray-tier-02.json",
+      "sha256": "181d91c86c02e528ebe32e8ec3e18374451c5b74aef72b7d7a7eac1a47f406d7"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-bluray-tier-03.json",
+      "sha256": "e6bffa552c51ff3408cc7d605d7c647cedf616185368eb35a32a275baef72406"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-dl-undefined.json",
+      "sha256": "134a62e8af45914b46c19f1acfc318a82d203f90ad036b30eb11c9ee3726b864"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-dl.json",
+      "sha256": "139dafb2ceb0759bd6285d3e7ec3e2c0be99321b39b0fbfc9dc1019a8b1fad7f"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-lq-release-title.json",
+      "sha256": "c1616ea8ac3b145cede9b62e837e34f13d85156c84bfd9124b5354838aa2794a"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-lq.json",
+      "sha256": "24db46b96bdb396418cff342afadc1514534c5cc2be585da40265a0a8fb10229"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-microsized.json",
+      "sha256": "8491ed568977f4f0a7ebde41c41f2c087886eca5883a993b308fc2feef26ec84"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-remux-tier-01.json",
+      "sha256": "a31ac880a5341c4f28ce8ad01d2e9265d611488b079d54976ea6e0069480fc89"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-remux-tier-02.json",
+      "sha256": "134da6effac055e6e9d3c6873c3c6c68303dff191b9e9a535c39edf338b7a155"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-scene.json",
+      "sha256": "707def07b50c89db41601483e8fbcf556e23555cf921a80450dcd7253ed52983"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-subbed.json",
+      "sha256": "6e372868711f9c9408d6c81db24526754c2017aa6f45f62c6be63edaaadc67c3"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-web-tier-01.json",
+      "sha256": "60ee2ab85a20059456daf7c540a2de7901b5b94c90561223055f6d110d1ff3f9"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-web-tier-02.json",
+      "sha256": "78ebdb1ae67bfac4db2bfbd33fdcfd4ef34ac35da2278b8760c7f3f9372502e1"
+    },
+    {
+      "path": "docs/json/radarr/cf/german-web-tier-03.json",
+      "sha256": "a61d3874cb25447f27bdfc0d694bc472fd4561a42e48ba05dce4955a1cf2fa6f"
+    },
+    {
+      "path": "docs/json/radarr/cf/german.json",
+      "sha256": "d29672edb67209cf30ab4aaf54d916a8db62a33330feebeb00b0b472ddd0dbb1"
+    },
+    {
+      "path": "docs/json/radarr/cf/hallowed.json",
+      "sha256": "721afc1ec9ed851878aeb601421fe5ee69e58795f5d2671b2fc50ccaaaa644bb"
+    },
+    {
+      "path": "docs/json/radarr/cf/hami.json",
+      "sha256": "41efd018198d4d21aacd1655aab87298c7ce27202bf62ec4ce5a5dd98bb9c8b6"
+    },
+    {
+      "path": "docs/json/radarr/cf/hbo.json",
+      "sha256": "b84ce4c49d44821ab384054236be26a5194d9f97f72dbb7e83b179022ec7a2e6"
+    },
+    {
+      "path": "docs/json/radarr/cf/hd-bluray-tier-01.json",
+      "sha256": "26de4a9ba8e730f4eb1f59635d64e26eb64537024d039bf342950518a30f0ad3"
+    },
+    {
+      "path": "docs/json/radarr/cf/hd-bluray-tier-02.json",
+      "sha256": "e1b701f088e3eaab9d46d3de26a4d0a6e544e1f2d6e9bf388d326a2fd10dd48d"
+    },
+    {
+      "path": "docs/json/radarr/cf/hd-bluray-tier-03.json",
+      "sha256": "84722f1816602d5a5290c89d1edd463cb707731e634c9dbb804fb6e92100d8a3"
+    },
+    {
+      "path": "docs/json/radarr/cf/hdr.json",
+      "sha256": "81bcbf1312b0d61b637d668480dc8e57289b4f638c699646e139eb0740509333"
+    },
+    {
+      "path": "docs/json/radarr/cf/hdr10plus-boost.json",
+      "sha256": "504fb92337603cbd877ef35aece956a0282c1361847093a81d4187ef4bda0aa9"
+    },
+    {
+      "path": "docs/json/radarr/cf/hfr.json",
+      "sha256": "e22daae7eec96054fa6a033a6366dba606702b4376f609f1ee88c3fc44209c46"
+    },
+    {
+      "path": "docs/json/radarr/cf/hlg.json",
+      "sha256": "def1d5bc9843ac712fe3eed3c9bd0e3be50719e1ff22fda5f3473e36b88d1e40"
+    },
+    {
+      "path": "docs/json/radarr/cf/hmax.json",
+      "sha256": "3d8f6855192bca64ff21fc1230cc5f79ec4e31dd43fe42e7e1d3dabbc489c680"
+    },
+    {
+      "path": "docs/json/radarr/cf/htsr.json",
+      "sha256": "0fce6fe4f86451dc794995feb965c6e0efbfb092eee119fc035d4c9f24ea190a"
+    },
+    {
+      "path": "docs/json/radarr/cf/hulu.json",
+      "sha256": "1d8b6aa0f254e6299db264b7850716866a57647d9cfd08e32489d0d5eed1311d"
+    },
+    {
+      "path": "docs/json/radarr/cf/hybrid.json",
+      "sha256": "d8b99d1732d2b200016f17e02ea9f0cd024e36f2ab573050b261ce8c2d419e71"
+    },
+    {
+      "path": "docs/json/radarr/cf/imax-enhanced.json",
+      "sha256": "16596fbadad3adb20ac26c035db974fc2b65fea92b0a942c041f53433959cf44"
+    },
+    {
+      "path": "docs/json/radarr/cf/imax.json",
+      "sha256": "cdd8792ef9101d79e925729839991140dc8bcfc59126fb0bd8325a514c3ac1a6"
+    },
+    {
+      "path": "docs/json/radarr/cf/internal.json",
+      "sha256": "95c37002fe965e8b8c57c83794699b7eb5f0756cb722829f7278da897914d448"
+    },
+    {
+      "path": "docs/json/radarr/cf/ip.json",
+      "sha256": "9fc4f73a40751b56193347937a47d22ac2444718749cf7a8f41421ea16a99c6d"
+    },
+    {
+      "path": "docs/json/radarr/cf/iqiy.json",
+      "sha256": "cfa1920658a1347088493879dc2075f74444ff42953388ed98fbb9ea24575838"
+    },
+    {
+      "path": "docs/json/radarr/cf/it.json",
+      "sha256": "ffaf84264373fe94198be9e06ebd9c00ae89090c69e21dd9ade5eecf20b85603"
+    },
+    {
+      "path": "docs/json/radarr/cf/itvx.json",
+      "sha256": "73965f461e955af52dbc8b30092962776b17dbd36a18accb7eb4d63e963dfe86"
+    },
+    {
+      "path": "docs/json/radarr/cf/kcw.json",
+      "sha256": "1159044a2c54977cb7d06abb50e8c16c45673abb91ab65f3da8ae3a7c4c2b881"
+    },
+    {
+      "path": "docs/json/radarr/cf/kktv.json",
+      "sha256": "59155091a4b2b7c47e681853ecfa43d06eef0a7f9d1fe5ba09bd57e4cceeded2"
+    },
+    {
+      "path": "docs/json/radarr/cf/language-not-english.json",
+      "sha256": "7150cd0aecec2c92e42cb83467a9af50800c9eca62d97a8c34585fd7956c4bfc"
+    },
+    {
+      "path": "docs/json/radarr/cf/language-not-french.json",
+      "sha256": "722be90615de751cb34509f7eff07ed91bfa21b3b3f3dd5a392c1c28c7d0da67"
+    },
+    {
+      "path": "docs/json/radarr/cf/language-not-original.json",
+      "sha256": "acc5b5c1a0d668d5fbcd6f7380023a7a5cde6eb4d5067b4d754c05dd05e36ff0"
+    },
+    {
+      "path": "docs/json/radarr/cf/language-original-plus-french.json",
+      "sha256": "d66d4ed9aa0a5b42633c918c8683581d19a19bf108e34de76b20c3debe5e4563"
+    },
+    {
+      "path": "docs/json/radarr/cf/line-mic-dubbed.json",
+      "sha256": "904b47899699c33d3b861afdf020345e00d1af8ffcc548ac5dd8361ca1a27c7d"
+    },
+    {
+      "path": "docs/json/radarr/cf/linetv.json",
+      "sha256": "22de037a05f8c86d21550285ccbf36bc8a3180f3a7b5789bea597694cd23710f"
+    },
+    {
+      "path": "docs/json/radarr/cf/lq-release-title.json",
+      "sha256": "254a3693f0929fc8af59b7badcfaadc02be517fe0b14b878c4a9b8f16c011423"
+    },
+    {
+      "path": "docs/json/radarr/cf/lq.json",
+      "sha256": "6ad28680aa2a77cc97c3b684ea552fe78a42fc6ea95effbba98c153c32987acb"
+    },
+    {
+      "path": "docs/json/radarr/cf/ma.json",
+      "sha256": "5bcf8d23f75c6148ba08d1566d67f96264177b266cdb265be4f9c641bd9f8b9e"
+    },
+    {
+      "path": "docs/json/radarr/cf/mainframe.json",
+      "sha256": "bc3f40ef5fbe03495976a153d881a1664f4974cf5a16596e91a7265b88dc0d50"
+    },
+    {
+      "path": "docs/json/radarr/cf/masters-of-cinema.json",
+      "sha256": "190a32e5311cd7bce124e0b8bae37d7745937e1d5bc1b60fcc9f18530cbe4e77"
+    },
+    {
+      "path": "docs/json/radarr/cf/max.json",
+      "sha256": "630ee04e53f7579ef334c31a76cc0644b96853dc4f1db8a6ad9c7cd342d1760a"
+    },
+    {
+      "path": "docs/json/radarr/cf/mp3.json",
+      "sha256": "d664b60323178a6b7e9139e2c7f08dabbaccdb03a4cd0b29c2b794163b8c0ad8"
+    },
+    {
+      "path": "docs/json/radarr/cf/mpeg2.json",
+      "sha256": "7dce4eb3698f1bd6be486daa797481a92a65f232d435793e00e458ed4a7d0505"
+    },
+    {
+      "path": "docs/json/radarr/cf/multi.json",
+      "sha256": "705f277155257877ab645834473d1d22010c3e0c33a0824f141341b674b0271b"
+    },
+    {
+      "path": "docs/json/radarr/cf/my5.json",
+      "sha256": "0a1237444a96485e0f364ae0bb12c81678c13054e386c50e6e96d30a4bf86e1e"
+    },
+    {
+      "path": "docs/json/radarr/cf/mytvsuper.json",
+      "sha256": "6cce0cf2b19a57f6c519d7e1396cf385777360a18b63d1548dd057c9b5511cd2"
+    },
+    {
+      "path": "docs/json/radarr/cf/nf.json",
+      "sha256": "d878424cac67195c42cba1f23f8cb38dd432c3782bf9a2fa2d5f07c6df792f6b"
+    },
+    {
+      "path": "docs/json/radarr/cf/no-rlsgroup.json",
+      "sha256": "f6295fcfc6b0de4ac6eefc075ac90fc5b09ac85fea69443bc39e45eafe9eaacd"
+    },
+    {
+      "path": "docs/json/radarr/cf/not-german-japanese-korean-chinese-or-english.json",
+      "sha256": "479753b4da03ffa09d00cca3616cd13c960fc1e3059be8451d90614dba7da37b"
+    },
+    {
+      "path": "docs/json/radarr/cf/not-german-japanese-or-english.json",
+      "sha256": "0d273a6ed8aadbdcdbb1850132b9bbf72c2c811fd4917b103ddaab1d72efc1d6"
+    },
+    {
+      "path": "docs/json/radarr/cf/not-german-or-english.json",
+      "sha256": "c1bd3ab85517591dab1cbae5b96c4d5c74a02091ef93880d560253a492f5f6f0"
+    },
+    {
+      "path": "docs/json/radarr/cf/now.json",
+      "sha256": "5bc897b9e16f625604cfc221ad445e8cab8305f105f16ef686d754b0c7f8657f"
+    },
+    {
+      "path": "docs/json/radarr/cf/obfuscated.json",
+      "sha256": "1878aa9f1272295d4c534bf26eecb5188dfd9e97fa22b78c95cf3b29eab9b336"
+    },
+    {
+      "path": "docs/json/radarr/cf/open-matte.json",
+      "sha256": "6b44e5c78320941064b737c2be306eb9feade2666336aed57159af4b1c152ed1"
+    },
+    {
+      "path": "docs/json/radarr/cf/opus.json",
+      "sha256": "c248cf963b82f748b9543fe09d6969eb2060aa4255064d5c70d43914e205d5e2"
+    },
+    {
+      "path": "docs/json/radarr/cf/ovid.json",
+      "sha256": "aa4968f61eef7a21d3aacb39100df9a5cde603142e52fa1c2d241e7763eaf6fe"
+    },
+    {
+      "path": "docs/json/radarr/cf/p2p-internal.json",
+      "sha256": "3e5939d524bdcd28c612f8a4fbd45dd2f32be40cbec8298b84a957f2ea799ac6"
+    },
+    {
+      "path": "docs/json/radarr/cf/pathe.json",
+      "sha256": "c5a8e2f0aafca1cd62e7e3476a37e809e466dc9f907aa260fc581daf360c4309"
+    },
+    {
+      "path": "docs/json/radarr/cf/pcm.json",
+      "sha256": "11ee5381567be9ec4b334d124aca0c7ed1b46f6254c0d4b261302c2e9eaa2cb2"
+    },
+    {
+      "path": "docs/json/radarr/cf/pcok.json",
+      "sha256": "cce2b8a6c3a60ca0f85643c0ef3f84c75775d6d308d33f6af3f1a2921f7a4e1a"
+    },
+    {
+      "path": "docs/json/radarr/cf/play.json",
+      "sha256": "b03b6d2b07a52e79d861f949996d8fa8adfa39f2ba0762110aeca8ba6aacb024"
+    },
+    {
+      "path": "docs/json/radarr/cf/pmtp.json",
+      "sha256": "4848fc9796838462c8a30e1ffb6c2e16ba59efb7e3cbafdc572a97c1142c13cf"
+    },
+    {
+      "path": "docs/json/radarr/cf/remaster.json",
+      "sha256": "eb755a26dc9837b7e7fc52e0ad0f5cd372c3d7670f1f362cfc25586d96c20386"
+    },
+    {
+      "path": "docs/json/radarr/cf/remux-tier-01.json",
+      "sha256": "9018d888cade2a50623a54c2224c918280310123b33c6a54edbd2e63d409ef87"
+    },
+    {
+      "path": "docs/json/radarr/cf/remux-tier-02.json",
+      "sha256": "c75c83d2527338b415a2023a7882c09d1e133d432e520b5a8468a2e30e430e4c"
+    },
+    {
+      "path": "docs/json/radarr/cf/remux-tier-03.json",
+      "sha256": "ba0d4f5ddcb9d20a64a36d5ec02caec67325737ee747b499bcef69167c234abe"
+    },
+    {
+      "path": "docs/json/radarr/cf/repack-proper.json",
+      "sha256": "fd83fb80c118b984d0b63fb3b4bbaabe2725f935a205b67451f2fe4ee2a1bda3"
+    },
+    {
+      "path": "docs/json/radarr/cf/repack2.json",
+      "sha256": "b8ecdc37eb89909c298724fc97b7986d721a01bb7a598368b1da08375a724e5e"
+    },
+    {
+      "path": "docs/json/radarr/cf/repack3.json",
+      "sha256": "bf49b6323cf5a2cff7fea6a1f7d8d39a0824040851e5b511ef5abf9b0dbff960"
+    },
+    {
+      "path": "docs/json/radarr/cf/retags.json",
+      "sha256": "20c90d2defdfdd03bf5df4399889aa50415bac3f244b2220f4ddc462fcf34c76"
+    },
+    {
+      "path": "docs/json/radarr/cf/roku.json",
+      "sha256": "e3afcb88c82f7ceb3a1b760317f0d092068df8a59ee5c0f8da686bcb8b4f5bee"
+    },
+    {
+      "path": "docs/json/radarr/cf/scene.json",
+      "sha256": "300395328535dbd84cefae3ebbb0b656637eab711e26a48b599f8be52b7df162"
+    },
+    {
+      "path": "docs/json/radarr/cf/sdr-no-webdl.json",
+      "sha256": "75b7261df9542c3623c09191f944435299c88549616addb7717b077be1f34d4d"
+    },
+    {
+      "path": "docs/json/radarr/cf/sdr.json",
+      "sha256": "8b0d3e24cd35c2380e590d2e9dff17a6e170e6ea508d5d732fc98eadd94e0d9b"
+    },
+    {
+      "path": "docs/json/radarr/cf/sic.json",
+      "sha256": "d7cc779cc8d9f86b970b04bc27483c98f533d29c26eb05c43be7db4fa3976424"
+    },
+    {
+      "path": "docs/json/radarr/cf/sing-along-versions.json",
+      "sha256": "1f51d0e124ff42ca99b6959bc227992030eb523d08828c3c06a3d71168fe6278"
+    },
+    {
+      "path": "docs/json/radarr/cf/special-edition.json",
+      "sha256": "7f6759622b447eaaa2982e7b98f62cb3fceed596c53f7f34db33e9cc5ad5f9fe"
+    },
+    {
+      "path": "docs/json/radarr/cf/stan.json",
+      "sha256": "091199aa4130444baf871ef5e6b79b51a4d7c692890463c3ad06acf3eea19199"
+    },
+    {
+      "path": "docs/json/radarr/cf/strp.json",
+      "sha256": "1cc0b4d77c720a962f6b7b3521c1220f4a7b499492123543ad34284fb08b492d"
+    },
+    {
+      "path": "docs/json/radarr/cf/theatrical-cut.json",
+      "sha256": "cce0d641719b4b393a701ea35d5c577df9413a902f01bcc09186f9b7d80a9e30"
+    },
+    {
+      "path": "docs/json/radarr/cf/thefarm.json",
+      "sha256": "4da4fd85b426c9e98428d48ff6665ec90d3e4a713d142dadaac2b395ce20e1f2"
+    },
+    {
+      "path": "docs/json/radarr/cf/truehd-atmos.json",
+      "sha256": "1c8022472c8009693cd9a716cee6743829a8bc220ea1931f9afebaf33f9eccc1"
+    },
+    {
+      "path": "docs/json/radarr/cf/truehd.json",
+      "sha256": "19c35ff149f5e9f1ac4f1e4b32fdc1c2ff1752809f1006df3047cd31276c1ffe"
+    },
+    {
+      "path": "docs/json/radarr/cf/tver.json",
+      "sha256": "2189b2b8c9ad2ef56486cf7d79d20adebb87b022d2dc5e3870b0f40383fa9033"
+    },
+    {
+      "path": "docs/json/radarr/cf/tving.json",
+      "sha256": "d2e49206275e45fb0cbe0e80e20bed06a27208ace4ea5a769b1c52f41727845d"
+    },
+    {
+      "path": "docs/json/radarr/cf/u-next.json",
+      "sha256": "1e9d49cd936f5a85b05f0ed8142c5f98d057608eccf3f94db30fac394acc7fc3"
+    },
+    {
+      "path": "docs/json/radarr/cf/uhd-bluray-rlsgrp-sqp-4-ma.json",
+      "sha256": "abb1e77a765fba00bd6f9dfc76d08ed49764f7d5f9984a33539de30b87d28884"
+    },
+    {
+      "path": "docs/json/radarr/cf/uhd-bluray-tier-01.json",
+      "sha256": "95b62d6c9ae90f3a53294cc53227e78b1534e6a42e433e3f4c3d42bbde1b6183"
+    },
+    {
+      "path": "docs/json/radarr/cf/uhd-bluray-tier-02.json",
+      "sha256": "4474d539d5a3d94e9b8b18380e207084d180177e981c7be434af2e3012f445e9"
+    },
+    {
+      "path": "docs/json/radarr/cf/uhd-bluray-tier-03.json",
+      "sha256": "9479b97634fd971140378bc9edce8875f3371fb6696b5021c07f48060e4b5084"
+    },
+    {
+      "path": "docs/json/radarr/cf/uncensored.json",
+      "sha256": "cefa0e45674e18359fbd2c45f7619ffcb2324bb1b29df33c84ffa226b46a7ec3"
+    },
+    {
+      "path": "docs/json/radarr/cf/upscaled.json",
+      "sha256": "8569c6345bd299f3e71f8a46befbb67225984a2f5837f8878de310bcae33b8e9"
+    },
+    {
+      "path": "docs/json/radarr/cf/v0.json",
+      "sha256": "6adfa3acc7ceab822e3fa8bdef2815ef9bad605644a1fdafce6aa6eb7ddfae9b"
+    },
+    {
+      "path": "docs/json/radarr/cf/v1.json",
+      "sha256": "3ebb1940bd532cc044522bfbe6dcb785881e983e0e3aae8b5713981299099d44"
+    },
+    {
+      "path": "docs/json/radarr/cf/v2.json",
+      "sha256": "c720bae2d2a2d4cea95d50c5757cd90830765f1646515f6ebf84691ed4ad9b68"
+    },
+    {
+      "path": "docs/json/radarr/cf/v3.json",
+      "sha256": "e8e7aa82a00ea1ba041de7630fba637c59e095d2c35ce881c0ece555814ad2a0"
+    },
+    {
+      "path": "docs/json/radarr/cf/v4.json",
+      "sha256": "7afc52e02fef41f370cb9cd9d46e69cdf4bd5cb4c7cc4ea25e3fcd1002b44adf"
+    },
+    {
+      "path": "docs/json/radarr/cf/vc-1.json",
+      "sha256": "e18ec5e0eff39691a76cd0f504372c7f0d6e06a2ad13f39ac41c2134b2cb2cc9"
+    },
+    {
+      "path": "docs/json/radarr/cf/vdl.json",
+      "sha256": "17560db89058056c6b788a1807fadae2e921c0b07948b41d335121c9453d3756"
+    },
+    {
+      "path": "docs/json/radarr/cf/viki.json",
+      "sha256": "5625290864c21cc0b5cf0c69a07190c5ed96cee63a42a5d7e4233ba0e74ec9d0"
+    },
+    {
+      "path": "docs/json/radarr/cf/vinegar-syndrome.json",
+      "sha256": "a250591bfd3509e8b758795b134960acae292494396ba6fc50ee065bfefb50b0"
+    },
+    {
+      "path": "docs/json/radarr/cf/viu.json",
+      "sha256": "d4adb1221ab876bec39fde50c7444d334eddf9e59e5395c225794009cfe0a7d0"
+    },
+    {
+      "path": "docs/json/radarr/cf/vp9.json",
+      "sha256": "041f0a192a13d650071f763ed84b8d8db6d37dbffa9eb97cfd9ac19b7eb21270"
+    },
+    {
+      "path": "docs/json/radarr/cf/vrv.json",
+      "sha256": "4b96892ce105d5308449b3b5f7394d6b86db248cc9f16bf24689ac74cef4ff06"
+    },
+    {
+      "path": "docs/json/radarr/cf/wavve.json",
+      "sha256": "c301cf67f93e65662abb7aeaaa3901f5c777e282cd9018de614797ad8d9b89f0"
+    },
+    {
+      "path": "docs/json/radarr/cf/web-tier-01.json",
+      "sha256": "f0ad922eddf23e8062952025b479328419e8a551d94673adaa87328c7945b358"
+    },
+    {
+      "path": "docs/json/radarr/cf/web-tier-02.json",
+      "sha256": "fa5e026f83e03fd6983af25fd5277008d71b076ebe8b112362a75bc5ccecebf1"
+    },
+    {
+      "path": "docs/json/radarr/cf/web-tier-03.json",
+      "sha256": "a525920fe1bf79e4b58c874f9f5210560ed2d3515beac0a5b31a1ae55f4a033a"
+    },
+    {
+      "path": "docs/json/radarr/cf/webdl-boost.json",
+      "sha256": "aa7afb04f527f85e9f146b0adaa63cf79b3077cf0b190f05445d219f665acd36"
+    },
+    {
+      "path": "docs/json/radarr/cf/wetv.json",
+      "sha256": "92cc626704f9672bfd7eeb9b59a70398cb3902f7f12de5162936d3464fcd019d"
+    },
+    {
+      "path": "docs/json/radarr/cf/with-ad.json",
+      "sha256": "09c0abc6fec9e2b19e6cf2012dd96d926cad092e41720f72c52e863ecd3c4b15"
+    },
+    {
+      "path": "docs/json/radarr/cf/with-asl.json",
+      "sha256": "aecd139d88a7737a5ca3bd18cb9b88108e6aec05a25b4d001ed790c878962b80"
+    },
+    {
+      "path": "docs/json/radarr/cf/with-basl.json",
+      "sha256": "8516ec0866ac7599f50af306135e1f522a9eff0a92ae250a7608a2730764ffa2"
+    },
+    {
+      "path": "docs/json/radarr/cf/with-bsl.json",
+      "sha256": "52eed4bffbcba9f93320c5eb04b4ca11daf61875292f5eec2ce958ba60f6e776"
+    },
+    {
+      "path": "docs/json/radarr/cf/wrong-language.json",
+      "sha256": "428cb8a5aa0d5b4f74ac025316b50fa5858c41ab35d0486da2770b78a6ccbd0b"
+    },
+    {
+      "path": "docs/json/radarr/cf/x264.json",
+      "sha256": "5451cab435f679087178be7656279edf370139678103bd203e5dba163ae4021c"
+    },
+    {
+      "path": "docs/json/radarr/cf/x265-hd.json",
+      "sha256": "7d9c11724c929abab4b65e5e0abf7434d80e15df4b007e4a156a5f199be4f748"
+    },
+    {
+      "path": "docs/json/radarr/cf/x265-no-hdrdv.json",
+      "sha256": "8d7e14ae4599246e50fbb6786de4abcd9ca9ee5103640e7deda36d76bee3b37f"
+    },
+    {
+      "path": "docs/json/radarr/cf/x265.json",
+      "sha256": "a1e6e849f0787e2d7e94a101b223002862dbfe5fae9a1416b1a8843720e28277"
+    },
+    {
+      "path": "docs/json/radarr/cf/x266.json",
+      "sha256": "c5d8c539262f48aee248c44149f92c03d190faec49da69c50100a3d5175dae79"
+    },
+    {
+      "path": "docs/json/radarr/cf/youku.json",
+      "sha256": "25312a349f114a3c0e6327b4c4d70ea8ba18afd98572251605d4e03c08d7e03c"
+    },
+    {
+      "path": "docs/json/sonarr/cf/10-mono.json",
+      "sha256": "f9ce3416bd7d71d2e54660c7dfa884c8e6e7ecce5be8e94b2b9d9695f0184f2b"
+    },
+    {
+      "path": "docs/json/sonarr/cf/1080p.json",
+      "sha256": "04696fcb0c89bca92a51af5129fa9d86a857cbde5adfb4b5ad9c89343aa4fe8e"
+    },
+    {
+      "path": "docs/json/sonarr/cf/10bit.json",
+      "sha256": "37b23a801b6d48b328a6bc189c29330a5d6f3eb196b373df86f6907e732c2e13"
+    },
+    {
+      "path": "docs/json/sonarr/cf/20-stereo.json",
+      "sha256": "d3d7c97c97ecf1b433219abea4c79ded88a5c5ae6f5da2756ad2e703dfe75ddd"
+    },
+    {
+      "path": "docs/json/sonarr/cf/2160p.json",
+      "sha256": "7e612ee20dd4ed149f333f70f5f03c0787b2ea62e9773be9db957b1eac59a4af"
+    },
+    {
+      "path": "docs/json/sonarr/cf/30-sound.json",
+      "sha256": "7cd062257c67556623d6259097ffa1f7d9da35a314c4b1e828f152cf0593a941"
+    },
+    {
+      "path": "docs/json/sonarr/cf/40-sound.json",
+      "sha256": "ebfc77b62500080ba28ef6cd5e946f18902a6afb8314c75f15834622004a0976"
+    },
+    {
+      "path": "docs/json/sonarr/cf/4od.json",
+      "sha256": "4dc9f457c9140714fb228eabf29cc258b312b99a2fb96239f2efdad420928d29"
+    },
+    {
+      "path": "docs/json/sonarr/cf/51-surround.json",
+      "sha256": "7c2d4b997904aa98fc424e74dae5d744ee58ca6354d4c4b0e1ce568e2fc720a4"
+    },
+    {
+      "path": "docs/json/sonarr/cf/61-surround.json",
+      "sha256": "ae80290c9497621b86322755c77c0073e5a3854b219ca05b6a6555cc9b2ea9b3"
+    },
+    {
+      "path": "docs/json/sonarr/cf/71-surround.json",
+      "sha256": "c948dab38e8d147fe2b2d36d5459a623d67db8691b7964b26ca22f4eb0f3f233"
+    },
+    {
+      "path": "docs/json/sonarr/cf/720p.json",
+      "sha256": "910fdd1e1f156adeeb58df794fdac1c6dc2b082b16acc5e9afddbf353a4af002"
+    },
+    {
+      "path": "docs/json/sonarr/cf/aac.json",
+      "sha256": "d23af5c270d4f8d5055f02c700c23921d7d3c73e45810320a2c59fd5fb2549ef"
+    },
+    {
+      "path": "docs/json/sonarr/cf/abema.json",
+      "sha256": "b1321c61802defe72ba5f49c13a3d8fbce8da3d7b65b7f9d59cb6b98add70b93"
+    },
+    {
+      "path": "docs/json/sonarr/cf/all4.json",
+      "sha256": "f833623da53a08da1f78480b886cf57470806faaef38d228bdc5e15e6f667f67"
+    },
+    {
+      "path": "docs/json/sonarr/cf/amzn.json",
+      "sha256": "732f0b811dd912a71c0a574fe575753fe3a950bfdff73d0f0f1e76f203e41843"
+    },
+    {
+      "path": "docs/json/sonarr/cf/anime-bd-tier-01.json",
+      "sha256": "a7d5a60f2ab895110b049ea86e14d8412d6e3b50a4d0b8d672fed987add6f4c2"
+    },
+    {
+      "path": "docs/json/sonarr/cf/anime-bd-tier-02.json",
+      "sha256": "5a7c64033e05d0cf114fd7e2b102c15a83c9988fc643ef0aed3cf00a76f45d55"
+    },
+    {
+      "path": "docs/json/sonarr/cf/anime-bd-tier-03.json",
+      "sha256": "11f6fba0e851de9e02daf164d8f9b7b68df6f944c9e38f5af3e04bd9bc9edf21"
+    },
+    {
+      "path": "docs/json/sonarr/cf/anime-bd-tier-04.json",
+      "sha256": "d9d11c81da132e91d7171b49a446c86b62da9d1f37c4f2ce4473bbe33bb405a1"
+    },
+    {
+      "path": "docs/json/sonarr/cf/anime-bd-tier-05.json",
+      "sha256": "012732d1269c8e9a1a3bcdd94324605c26b2feb28db89d59abcbe296bf993466"
+    },
+    {
+      "path": "docs/json/sonarr/cf/anime-bd-tier-06.json",
+      "sha256": "8d13d26f740a80bdd3c9a131bdda605ac39c36a20b0163e6994c302a5a718943"
+    },
+    {
+      "path": "docs/json/sonarr/cf/anime-bd-tier-07.json",
+      "sha256": "361c052e5b1f2562141e9acb503b0b9d34b0b4d677a2b156407552c40ecad3a8"
+    },
+    {
+      "path": "docs/json/sonarr/cf/anime-bd-tier-08.json",
+      "sha256": "bb03e394245d045eb404e834cbbbb37cc5a77e655d3ab885118fdc01096e6f3d"
+    },
+    {
+      "path": "docs/json/sonarr/cf/anime-dual-audio.json",
+      "sha256": "ffbf14f90b25efaa4c7833513aa437f97af020525d219f53935604ca5e3d6c52"
+    },
+    {
+      "path": "docs/json/sonarr/cf/anime-lq-groups.json",
+      "sha256": "3289932b846ba40ef68bd71219a1f99d9d9941f6ee12a286ae61d6e3c120a227"
+    },
+    {
+      "path": "docs/json/sonarr/cf/anime-raws.json",
+      "sha256": "1febb6423e499a8e29380ec0c86b33ba9f336dc40bd266982bd6f28812fc929c"
+    },
+    {
+      "path": "docs/json/sonarr/cf/anime-web-tier-01.json",
+      "sha256": "1c646c8ed643c584e099562798b0a9646023238d8120ea76723473e60008ec20"
+    },
+    {
+      "path": "docs/json/sonarr/cf/anime-web-tier-02.json",
+      "sha256": "8b23e1f26132a0950f7eda7e444c68a3777604b8d21caa9ce171ca24120d1adb"
+    },
+    {
+      "path": "docs/json/sonarr/cf/anime-web-tier-03.json",
+      "sha256": "128d6104a499433bb827cd8f649e2cb3ede6db6a8d4d086021fc324875eb763b"
+    },
+    {
+      "path": "docs/json/sonarr/cf/anime-web-tier-04.json",
+      "sha256": "d576f129a00cd651a8b7a588f580ae63c10b7f133150d31f21c67ecb4af527b2"
+    },
+    {
+      "path": "docs/json/sonarr/cf/anime-web-tier-05.json",
+      "sha256": "b89bd4baf3af1c1e4d2bbddb8e7108c28a131bbb5a2b14984e599a06f0b52369"
+    },
+    {
+      "path": "docs/json/sonarr/cf/anime-web-tier-06.json",
+      "sha256": "e8a45c7f7ecad6f0be303f537f6447f34d55f15eae7cf386a2b4dbbd3818cc82"
+    },
+    {
+      "path": "docs/json/sonarr/cf/asian-lq.json",
+      "sha256": "f4d9030088dc1ad88f8c4c0a8d6fdfd8f0bbca3102a7a68c4f5478b02dee24be"
+    },
+    {
+      "path": "docs/json/sonarr/cf/asian-tier-01.json",
+      "sha256": "e9078c652856f7bbf2782e9555101d4b306aa2ad625b53f15ad8253d6aa40c40"
+    },
+    {
+      "path": "docs/json/sonarr/cf/asian-tier-02.json",
+      "sha256": "154f9190ce830b2f590ce5d9747ff3de9da3c251fcb0f03d0790f63ecb708f72"
+    },
+    {
+      "path": "docs/json/sonarr/cf/asian-tier-03.json",
+      "sha256": "c7e34add235fb318404c9ef175232b87192024d98e3cebac56146ca9ea0884f8"
+    },
+    {
+      "path": "docs/json/sonarr/cf/atmos-undefined.json",
+      "sha256": "b3cbecab91d3c26a40cd13e72a8d83514d9a42741c462c3bb43629ea2045bbd7"
+    },
+    {
+      "path": "docs/json/sonarr/cf/atv.json",
+      "sha256": "ba472cca6a8b0366a0e1f1ed41adee10d08405b897a6c0d325bf4d6d7487cf58"
+    },
+    {
+      "path": "docs/json/sonarr/cf/atvp.json",
+      "sha256": "c425e360fb3f71a6c255eeaf4c99c5117a1b0c64bcbdec02b4d2bd51cf4f568f"
+    },
+    {
+      "path": "docs/json/sonarr/cf/aubc.json",
+      "sha256": "407b935e94de194dfe6ce538817ff35318b897d356a61758988bf602597b252b"
+    },
+    {
+      "path": "docs/json/sonarr/cf/av1.json",
+      "sha256": "8880b1db6f5fe7d9c689989309a3dafa8c1c2aec8483e7340f8d4d79497817b9"
+    },
+    {
+      "path": "docs/json/sonarr/cf/bad-dual-groups.json",
+      "sha256": "26ac3e8f4342bfa8465cdef963a24c9baaccbb4a971e42e4987137b084192b9a"
+    },
+    {
+      "path": "docs/json/sonarr/cf/bglobal.json",
+      "sha256": "89ef6dc3a4f0df5aa01a4aed8e96714860bcb6bf4e5c8ddf8f4fc173e1b094cf"
+    },
+    {
+      "path": "docs/json/sonarr/cf/bilibili.json",
+      "sha256": "041e06807ef678b405ba0ee42076f9276b99bfe494ff82c6feb7b670345efe96"
+    },
+    {
+      "path": "docs/json/sonarr/cf/br-disk-btn.json",
+      "sha256": "acf64f71ef49d972ba2619daa2a746103c445435c4d44c833aacfc7213e583d1"
+    },
+    {
+      "path": "docs/json/sonarr/cf/br-disk.json",
+      "sha256": "4191a7427648d2c1ac944ab73f0f2f9ae892b1dda482f507bc74fc1cd293f680"
+    },
+    {
+      "path": "docs/json/sonarr/cf/bw.json",
+      "sha256": "430c8a97c8b5d57a74d3d94e5af3f8e5d63cc7abcca50b75322ee1d07dd6cf1a"
+    },
+    {
+      "path": "docs/json/sonarr/cf/cbc.json",
+      "sha256": "711ca47e4b7f6ff5860f91ba58904e13fb6afced9d3999245629e82a42b2b1e4"
+    },
+    {
+      "path": "docs/json/sonarr/cf/cc.json",
+      "sha256": "eaebbed5dd6f6323036f2668ed87429b614a4543e835fdf40175fd428f138140"
+    },
+    {
+      "path": "docs/json/sonarr/cf/cnlp.json",
+      "sha256": "7b43c9c511daf811fe50b1f6e1d90f4428d7e4c40ba89b6419eb4d4276cde4be"
+    },
+    {
+      "path": "docs/json/sonarr/cf/cpng.json",
+      "sha256": "1c3b09f5c12138015b407312122da93a421020e9e1980468d7a31dd5a2f30c20"
+    },
+    {
+      "path": "docs/json/sonarr/cf/cr.json",
+      "sha256": "62ae8f917f5c95be86e7e153a3b412f1f8d524c561fea9d189a205f0f484490c"
+    },
+    {
+      "path": "docs/json/sonarr/cf/crav.json",
+      "sha256": "9ffaf013a7d2ac8386c6587b31eb3c81f5c3167f3f4cb9ef89df5b9764a3f3d7"
+    },
+    {
+      "path": "docs/json/sonarr/cf/dcu.json",
+      "sha256": "078dfb6847dd8753446ec6ebcf30922ebe123cb55c99209f853b336c4297e81e"
+    },
+    {
+      "path": "docs/json/sonarr/cf/dd.json",
+      "sha256": "c0f13a6ed946091267050439ec83364e4789bba60123214c46891eb558cc438e"
+    },
+    {
+      "path": "docs/json/sonarr/cf/ddplus-atmos.json",
+      "sha256": "692a76e5f1c74c01930d9ac4e6f5c337090bb4dbf669a72df78e8266a2506e13"
+    },
+    {
+      "path": "docs/json/sonarr/cf/ddplus.json",
+      "sha256": "aaac02f570dd726a712e482dbe3da4f7d4bc62bd064aeb7b5fb36fafef7bb172"
+    },
+    {
+      "path": "docs/json/sonarr/cf/dmm-tv.json",
+      "sha256": "8dd49462e92392e9ba699b775028a930308813049d23d0e81e5f49f8683c5c1b"
+    },
+    {
+      "path": "docs/json/sonarr/cf/dscp.json",
+      "sha256": "74130c2b2b0e41fc620d9a997d4b46772ea087edd6d69f3f6b788c7540337716"
+    },
+    {
+      "path": "docs/json/sonarr/cf/dsnp.json",
+      "sha256": "0396fde6d2c91978cb5d23a6b92e7cbb14d5bbe57b2be147871447e66b272c82"
+    },
+    {
+      "path": "docs/json/sonarr/cf/dts-es.json",
+      "sha256": "9e0cfa28d4c7baa0b31e418a14cd6255a1fe2562d1d18fa6613954227e0574d6"
+    },
+    {
+      "path": "docs/json/sonarr/cf/dts-hd-hra.json",
+      "sha256": "50ae18bfc947457342bdda93d015ff6b5a28656acb4334785b5c171e4db5857f"
+    },
+    {
+      "path": "docs/json/sonarr/cf/dts-hd-ma.json",
+      "sha256": "eb4f40a9fc759bdcc0a2e170c573e2ec7ef5557dd436c59ce3cf2d6b2177a970"
+    },
+    {
+      "path": "docs/json/sonarr/cf/dts-x.json",
+      "sha256": "fbf23d4fdedb2a51bd7d34755d76f99171241e8043cd6a9c1de4ee42270b76c5"
+    },
+    {
+      "path": "docs/json/sonarr/cf/dts.json",
+      "sha256": "3471619a3e446047e4f5e5123ed09e4ddc41ffee38e0ef9d6be907d9f560ef20"
+    },
+    {
+      "path": "docs/json/sonarr/cf/dual-audio-asian.json",
+      "sha256": "a1ede2deab5ad1dfb4397af81eaccf1f84e84c8a94379be8118e58621712b3c2"
+    },
+    {
+      "path": "docs/json/sonarr/cf/dubs-only.json",
+      "sha256": "ad70bbb5381b3a03e884bfe0d758f18d952900c2e5d42584ec15b4d80f0baf08"
+    },
+    {
+      "path": "docs/json/sonarr/cf/dv-boost.json",
+      "sha256": "79bafbc23708db6fde6ab0e5c4bac46962534ca8cddea1c3d6cf6a62700261e4"
+    },
+    {
+      "path": "docs/json/sonarr/cf/dv-disk.json",
+      "sha256": "700c5e891c7cdd72428be29afa39ab62e2a2a9bbe0f09eee69eb7d1d60d12ed9"
+    },
+    {
+      "path": "docs/json/sonarr/cf/dv-wo-hdr-fallback.json",
+      "sha256": "bbf47600fff4e7067bb0b1ddb0c8725d01643c8d87202c6d587924cfec8e3201"
+    },
+    {
+      "path": "docs/json/sonarr/cf/extras.json",
+      "sha256": "d58291c6cff7eb074ffdacccd615663edbcb5fca87c03371d6a67a707685c3a2"
+    },
+    {
+      "path": "docs/json/sonarr/cf/fand.json",
+      "sha256": "ecec2780074c8a6173da142dc41e7ea84fc157a670ad4bba0acc50e7eb8d9d2c"
+    },
+    {
+      "path": "docs/json/sonarr/cf/fansub.json",
+      "sha256": "229bc226716af4ef08cc6ab79df4f5eef24d51b6fbf4c88fb03e7b89c80cb5b6"
+    },
+    {
+      "path": "docs/json/sonarr/cf/fastsub.json",
+      "sha256": "65bd304e91467f082a887eb0757f77835ef85d7582dbcfde2ac6925ae80bc5ef"
+    },
+    {
+      "path": "docs/json/sonarr/cf/flac.json",
+      "sha256": "6a79fb6bbf1b2775b05899cadb69a3a379a63b323c4b6563e84219c86c3a09c4"
+    },
+    {
+      "path": "docs/json/sonarr/cf/flux.json",
+      "sha256": "b3f591945685943d4cece8f3b810952cccec97cd88ea31333c2e8e373d4bb980"
+    },
+    {
+      "path": "docs/json/sonarr/cf/fod.json",
+      "sha256": "7b308fc6317f798ef1795e5dcf1465a1ce962eeb6862f3e1809017c5d778e534"
+    },
+    {
+      "path": "docs/json/sonarr/cf/freeleech.json",
+      "sha256": "3c58c566297ccef4715e17668289d92d5c482673f9ddbff2b026aba4e3b78348"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-adn.json",
+      "sha256": "86dcf533fddd1b036b49d08bc02187c004436b4b55acc5090c4922912b1ab718"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-anime-fansub.json",
+      "sha256": "bf894a8e3ed061a19a7bd1c5cb9f3c6a635c3523c39bb2b6f76df44c0c0b824d"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-anime-tier-01.json",
+      "sha256": "24d4c9aa03842f607747e719d22bdf21db6b5e5af77bae6dfbd160b7222651cc"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-anime-tier-02.json",
+      "sha256": "0e83b6b1938a3673befa836a56ce1c12f6d0e0a60988b83c2edf58d1bd3ad67c"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-anime-tier-03.json",
+      "sha256": "f8058e9916253e37e4a5d43deb22da73ec7f9c250970f6b19fd71a68a61573a9"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-auvio.json",
+      "sha256": "12d62f1df15fa639be5dc9e86a0dbcfae087b3f1dfa15238dcaea7de98b0b9d9"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-hd-bluray-tier-01.json",
+      "sha256": "466d43b4254feecc595db448308ea51c01afb83edb3bf6a1a6dfe4a30cdd590f"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-lq.json",
+      "sha256": "4fc7b1c7923be4af226e4d167e956cd2cc16649590664955353f8b2d2e942a04"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-mycanal.json",
+      "sha256": "f85c2147992e4a44380abdd257e21c955fdad42cd011754491ab5ed81e0e0c38"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-remux-tier-01.json",
+      "sha256": "a39b22951e6060f58229d41f4393c9ea9928a135c070c65eb0987d8a98f7a344"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-salto.json",
+      "sha256": "234f258b58b3c5a2811e2bcfb4b325aeaca1cbffeacc7c999e46d45e1f235d95"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-scene.json",
+      "sha256": "7eebd8f16b13e06d6d7770febf03e9480b813572e5fe7f04103e4d2f8a5733f7"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-vf2.json",
+      "sha256": "34b03a6e9456311e32cf2e8f71fc93ec90c3daa11165157ecfc0b71a2361cb35"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-vfb.json",
+      "sha256": "4a113b5660b4a528e6fa78b55cf387121acc18e15b56ace4d6af00d097f0fec1"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-vff.json",
+      "sha256": "63b2391927b2e80bb6f8eb18daa4794fcf9f4dc9fc21ba99689fc4b4caf049a7"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-vfi.json",
+      "sha256": "28116f3871b7017d3b3d692f2c84e2cf7f7d7cb773e09de6e8ba5ccbf7c034ec"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-vfq.json",
+      "sha256": "8af3c926b837b892247f03b467d9c4976297c4421880e63a4ed6eb905ee6619a"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-vof.json",
+      "sha256": "90c3098ad1db2f3fc7c70ebdc199e099027db39e5bfe454026eb2080dc4fa58c"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-voq.json",
+      "sha256": "0de080ded1a41c9a6ed7dc765a780487b9275a2c85ef309913e519be2d49d006"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-vostfr.json",
+      "sha256": "d07c1032106e86315416d50cceeba604b8ffa6593fd02851c657d74f2fa31427"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-vq.json",
+      "sha256": "4e4b7006e0c340c7cef1db04498f421ecccac3f131a3c484787aec7c3d89f586"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-web-tier-01.json",
+      "sha256": "587124b9c6b6e780839d4d6345d6771e1c4f109bfb31cbf8ec372acd6184b1e8"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-web-tier-02.json",
+      "sha256": "314b14a0fe4a146b67bf9c3459c2f80c69bcc58a1969b7a1e2ae813c89feca03"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-web-tier-03.json",
+      "sha256": "c5b793f1c45c3a23bc16e0edf1738df7d631cd29eb0f42d2596630cc2e0657ba"
+    },
+    {
+      "path": "docs/json/sonarr/cf/french-wkn.json",
+      "sha256": "1d2095353b2d3d4f17c34c5815f2f321685e55a35b0b3a77f5fbb3925d6e3975"
+    },
+    {
+      "path": "docs/json/sonarr/cf/friday.json",
+      "sha256": "b20b02fdcb4621ecc6c4466497a98984f3af93023914129bd8efdbc54c042212"
+    },
+    {
+      "path": "docs/json/sonarr/cf/funi.json",
+      "sha256": "af6c56fd3000ce9212ea6eafac9b299440fd03d39ff24ac81facb3564c291403"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-1080p-booster.json",
+      "sha256": "56e3843f2d020adae47a13a43ff2cbe3f0567f968aa1ddc0bc1b8e47019290aa"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-2160p-booster.json",
+      "sha256": "7c95388810f9c2668c47682c84979b1a06c0ef709c7096f8d984975fa5e32d03"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-anime-bluray-tier-01.json",
+      "sha256": "be32ff583bd2e75f7c0bbe0dd3318a41322e4da03c3edd83ac2c1ad707e71d95"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-anime-bluray-tier-02.json",
+      "sha256": "c163f65b03e67f7e0c4f839c8dab32b6126b546504ef029fa38ff0a4f286d079"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-anime-bluray-tier-03.json",
+      "sha256": "df987f043f7f38e5c903a1c21c83cd2d2404cc6abe3a2f0af82dad0b7927d566"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-anime-scene.json",
+      "sha256": "b4022aca71f558eb74eea2d3908d92b2b6b1c24068921d3e316d2d885683e788"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-anime-web-tier-01.json",
+      "sha256": "85b29d0a734350e5700980a751971b7259629324c09faacb22584d730424a198"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-anime-web-tier-02.json",
+      "sha256": "e4dcc3b934fd7ea9571fa1cecd8be75890eaaae935717a1f57461527e0d62cb7"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-anime-web-tier-03.json",
+      "sha256": "052237b656de525b715302a2d16a5bc95a2eeefee9f32ec93f5f16eb82be6b91"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-bluray-tier-01.json",
+      "sha256": "1ca98e460e72b81eba412efcfc3c53ecbe5a3a30af3c8b9039780d57badbedbd"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-bluray-tier-02.json",
+      "sha256": "e1bf4f665fa55ea8346453aee22e402ba2e147045590b15ebc1a5489bcb0a542"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-bluray-tier-03.json",
+      "sha256": "f40944744ecfd157f5dadb42b59ca4fb3a9c720327600becf60bebe7b8088a6a"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-dl-undefined.json",
+      "sha256": "cbdaf8262afcc3559a70e3f09d25eabfa58de4ca6488e39fe34b5faf167ceed5"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-dl.json",
+      "sha256": "f6ad7aeaff8000ca931b51602731f5a7de0a3fa3842613a5dee2146d7cbc25bf"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-lq-release-title.json",
+      "sha256": "25b189fec958873084f84a90cf233378466a00609be3ee14eab939f0a81c6749"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-lq.json",
+      "sha256": "531f89f2468b937d5a464a92cda5b035d918779602910cd572257b6d98eb2999"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-microsized.json",
+      "sha256": "4d53f2dd57890e04b5cdb3176b92a8607bddccbd6d06ed04745d5b90e7c9366f"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-remux-tier-01.json",
+      "sha256": "31ecb666b2114523ae6fc7de14fc1dfe0973b86c43bc6aafaa6bdfb846736be8"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-remux-tier-02.json",
+      "sha256": "44ef87e9d04bd30e5428c54b0ed3656a2f4064fc5d4b6a21ac3f83909bd28337"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-scene.json",
+      "sha256": "eaf79c8d69bed765a142f3706e66008f9974d701ab440b45c1aa0c41260fa296"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-subbed.json",
+      "sha256": "528c5bd470f8ae14d81cf940f40e4b8b21093d44226d03cae35b8dd3f847b5b8"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-web-tier-01.json",
+      "sha256": "4467a96fdd883be771a0a3a86379ddbdfb2f82a48e8cc8438112de0854350bdc"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-web-tier-02.json",
+      "sha256": "62163477f0307ef79d33594f58af051c985eabcb501bc50594de72c8331d9067"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german-web-tier-03.json",
+      "sha256": "76c02620ac7f1a2ebeae0efff850969f0d16f1da96342ae46f49a3784a2babe6"
+    },
+    {
+      "path": "docs/json/sonarr/cf/german.json",
+      "sha256": "52b80a1423e8db648eeb0b3ebd10d617ae5d62d31c916fd40b7f6bcba58b2037"
+    },
+    {
+      "path": "docs/json/sonarr/cf/hami.json",
+      "sha256": "1e3a32a3c37896d9e06a35d9158710fb1fdeda8857e00c8bd0813c62bd856f93"
+    },
+    {
+      "path": "docs/json/sonarr/cf/hbo.json",
+      "sha256": "f603a43b1c379d1c7f83ac1646b951f0c9c080e2ad368db3a2af277c8cc89b8d"
+    },
+    {
+      "path": "docs/json/sonarr/cf/hd-bluray-tier-01.json",
+      "sha256": "05459aadcf70031b6da4312fd3db20851fa332e5bf1dc18b0413fa6a97adfd98"
+    },
+    {
+      "path": "docs/json/sonarr/cf/hd-bluray-tier-02.json",
+      "sha256": "de41e29481e921457bdeec6caa6d981c702d5a408f8f445bf749ef0e551d27b2"
+    },
+    {
+      "path": "docs/json/sonarr/cf/hd-streaming-boost.json",
+      "sha256": "4e314f6e445f0046fa33b6684adbf04823f26b13a1e8d14ec844560fc89db9ad"
+    },
+    {
+      "path": "docs/json/sonarr/cf/hdr.json",
+      "sha256": "1b42f004a60b46f8ddb16cdb8a7818bdef3559f942996f30f5b836631ababe34"
+    },
+    {
+      "path": "docs/json/sonarr/cf/hdr10plus-boost.json",
+      "sha256": "07edd87e9bc2f28e75a87717e7e8dfa431c24d1ca44791ae8879bbcc226d0c37"
+    },
+    {
+      "path": "docs/json/sonarr/cf/hfr.json",
+      "sha256": "97a58df304244ee515c72cb7299648c7fa9e57d65808816bb62dc20837f56298"
+    },
+    {
+      "path": "docs/json/sonarr/cf/hidive.json",
+      "sha256": "76f65a39335238f559ae2c8355c75f2ef4d6ff4df0a89ecbd21adf5f63a3af53"
+    },
+    {
+      "path": "docs/json/sonarr/cf/hlg.json",
+      "sha256": "8787250edb606fa0f53ad52787b286edade3a81cbb9b5d4d03ecc6b2d93a8c27"
+    },
+    {
+      "path": "docs/json/sonarr/cf/hmax.json",
+      "sha256": "c1b2be817c0ae367444c0098e5767b01bac6d2eb64014e80c1eafb87766ef79a"
+    },
+    {
+      "path": "docs/json/sonarr/cf/htsr.json",
+      "sha256": "f9d96f90944d816ea8c634c003f65dc914e48eeedc5369a8acebb093ea70dc80"
+    },
+    {
+      "path": "docs/json/sonarr/cf/hulu.json",
+      "sha256": "0f0c331431026beda5fb868617d80c5ed0fa75441b206d30af6087d99babe6d4"
+    },
+    {
+      "path": "docs/json/sonarr/cf/hybrid.json",
+      "sha256": "33a083ea90c4d6fe37b95b8404228d39aaf2ca77f7d893afed367aed17d91795"
+    },
+    {
+      "path": "docs/json/sonarr/cf/internal.json",
+      "sha256": "b830c8c6a604224ae18c581172c2c0c2064f52ba6881ff28e1a653c091b71f21"
+    },
+    {
+      "path": "docs/json/sonarr/cf/ip.json",
+      "sha256": "2a8662ec0ba115f8208d7f5fede720e2e13868f73a1ced476258e43c3b898a43"
+    },
+    {
+      "path": "docs/json/sonarr/cf/iqiy.json",
+      "sha256": "29e045d9b50f98154e7784f75ad6d93cf9eee991c5380e8e4e2f9fa00b1c638c"
+    },
+    {
+      "path": "docs/json/sonarr/cf/it.json",
+      "sha256": "8860b0e3e7a3ea757b76e282d0bb31b64b587ca1c77331245bdbebe32c9a755c"
+    },
+    {
+      "path": "docs/json/sonarr/cf/itvx.json",
+      "sha256": "1312a070b0e88c7d8fc761e420c4f44a967ec3b3438db0cd61f69b68477ed6fd"
+    },
+    {
+      "path": "docs/json/sonarr/cf/kcw.json",
+      "sha256": "156f5a10daa308f5c7d82728cd8997736eeb730f0d432b54948020ac8eae0f44"
+    },
+    {
+      "path": "docs/json/sonarr/cf/kktv.json",
+      "sha256": "56c75668fc64e64df608c58042fe47955c4801dfc01694d752d0319ca2d37d67"
+    },
+    {
+      "path": "docs/json/sonarr/cf/language-not-english.json",
+      "sha256": "4c2129c700944a3bc32a5917a6ff8b0edb561d63e0de5a1783b019232561497a"
+    },
+    {
+      "path": "docs/json/sonarr/cf/language-not-french.json",
+      "sha256": "0cd15808ae7c6acf4a3782259650df13f9ffe4b6819f88941f3b5fbd3dd971ec"
+    },
+    {
+      "path": "docs/json/sonarr/cf/language-not-original.json",
+      "sha256": "5b5bf0f8879521b3158e24310317de81cd61f0106490d9d8450e8e1f65a98311"
+    },
+    {
+      "path": "docs/json/sonarr/cf/language-original-plus-french.json",
+      "sha256": "542862f684ff743aa475e3909cd52d51da658727dda94454c00e616f65e25b31"
+    },
+    {
+      "path": "docs/json/sonarr/cf/linetv.json",
+      "sha256": "cff5ce8928b0880781d3155909fcd77316ac00920b0ee3cee3a1f11811cfbdb4"
+    },
+    {
+      "path": "docs/json/sonarr/cf/lq-release-title.json",
+      "sha256": "89c61a63ec38ca35ae3114d41269c52d0322640d78a50f4e9dccb8932bdc56dc"
+    },
+    {
+      "path": "docs/json/sonarr/cf/lq.json",
+      "sha256": "5badd6b6ed996252136a99c2609efee335acb337234819c8da27cb248e7c5a50"
+    },
+    {
+      "path": "docs/json/sonarr/cf/max.json",
+      "sha256": "3ded65314c2e4303e8f710cd2927c76b783885deb205548eefab98f38cd674fe"
+    },
+    {
+      "path": "docs/json/sonarr/cf/mp3.json",
+      "sha256": "005f8e0094886e59659eed4a5a76d4121acb65cc5562301057148dee66694d96"
+    },
+    {
+      "path": "docs/json/sonarr/cf/mpeg2.json",
+      "sha256": "1b2fa92ad3d3eb655f8e54ea969992436a78c4e798bbad3bb4aeed079b226d7b"
+    },
+    {
+      "path": "docs/json/sonarr/cf/multi-episode.json",
+      "sha256": "3e29b4428c762ed45ec31e306c3c7b9ea550811b18556cb3116b993ea915ce11"
+    },
+    {
+      "path": "docs/json/sonarr/cf/multi.json",
+      "sha256": "ccaa8b1b6d53e59669022bb5272d8724a5eaf015c93143d964525d2713d7c734"
+    },
+    {
+      "path": "docs/json/sonarr/cf/my5.json",
+      "sha256": "d0e278554f7880140916985ae9f6a1bf1a699ca45be992cb83e02c0d8a14755f"
+    },
+    {
+      "path": "docs/json/sonarr/cf/mytvsuper.json",
+      "sha256": "50ae534772ea32807db62e5a67b28478fcb615ab4a2f5188c95e4929bb7c9bf2"
+    },
+    {
+      "path": "docs/json/sonarr/cf/nf.json",
+      "sha256": "1246b559de364dfd422cabb0154da31370c427728f6fdc2fb2de690c3dd7c330"
+    },
+    {
+      "path": "docs/json/sonarr/cf/nlz.json",
+      "sha256": "5af1199f82ffce6b5297fd96be5f18fa142195d341aa7a49a4eeac2f4cc6c13a"
+    },
+    {
+      "path": "docs/json/sonarr/cf/no-rlsgroup.json",
+      "sha256": "5da818b45881315a43ebea44466c189c7950f2607bbc947c209ca770158d9405"
+    },
+    {
+      "path": "docs/json/sonarr/cf/not-german-japanese-korean-chinese-or-english.json",
+      "sha256": "18bc7d5a7bd1a4e7640894c4fb1a91ba3054a9f486a1fbef53e6528e5002b33b"
+    },
+    {
+      "path": "docs/json/sonarr/cf/not-german-japanese-or-english.json",
+      "sha256": "05273e1937dfa661f231bd2722bccc977a02a1081609591045ad178e39bff973"
+    },
+    {
+      "path": "docs/json/sonarr/cf/not-german-or-english.json",
+      "sha256": "af161a97a1c34e77bc9296613c5921c7a7de9856b9848c68850a2ed0c6705c13"
+    },
+    {
+      "path": "docs/json/sonarr/cf/now.json",
+      "sha256": "9497e837c192f3417742434b25ee52c520c346a1e16d49810b89e15791c69d88"
+    },
+    {
+      "path": "docs/json/sonarr/cf/obfuscated.json",
+      "sha256": "aca607173d6f1231c9a8c95a1c728705200d7d9da27f27bab7af9539bec953f9"
+    },
+    {
+      "path": "docs/json/sonarr/cf/opus.json",
+      "sha256": "ff89412edc2eabef61c3f12ee0b620b5398547bc7cf5d117063e2f2cdf80ef45"
+    },
+    {
+      "path": "docs/json/sonarr/cf/ovid.json",
+      "sha256": "3cd6d837c44677f0f5c04d85b7f55dc081e3f1620278d63cbb83c620f1d16682"
+    },
+    {
+      "path": "docs/json/sonarr/cf/p2p-internal.json",
+      "sha256": "48f4648d947a9eaf0975b10637bad7a1593d8014537cb51682a7a0aa4a27da11"
+    },
+    {
+      "path": "docs/json/sonarr/cf/pcm.json",
+      "sha256": "97bed665316b8730aad4c66f6435eccffe346c622f449e5577ad1a31d3425ad7"
+    },
+    {
+      "path": "docs/json/sonarr/cf/pcok.json",
+      "sha256": "0d6effc6d00ecca52a67398fdfcf30e6ef6e8a0486ddce694eb3ceeb175e2177"
+    },
+    {
+      "path": "docs/json/sonarr/cf/play.json",
+      "sha256": "d18094f4719edba1371bd1c3945774a04ccd121626b45f1f127b3fdc61dd70bd"
+    },
+    {
+      "path": "docs/json/sonarr/cf/pmtp.json",
+      "sha256": "14d586d7437128c848f759fff9960ef78ed9d4ddebd7bfe6537c600bc974e110"
+    },
+    {
+      "path": "docs/json/sonarr/cf/qibi.json",
+      "sha256": "8c2e6701455462ab7d48a9967cad8ca6ade95e548bb383ece513cf73aa4a61b8"
+    },
+    {
+      "path": "docs/json/sonarr/cf/red.json",
+      "sha256": "11994663733a3cde725ea297802fb6b678317afa14fc072f369d92943986ca49"
+    },
+    {
+      "path": "docs/json/sonarr/cf/remaster.json",
+      "sha256": "6d4b37104c7e9d945597e58b71fdf8c16e9dee2fa00b17a05bf411ce3d0e4163"
+    },
+    {
+      "path": "docs/json/sonarr/cf/remux-tier-01.json",
+      "sha256": "2fc839a680dff414dd43fc1c00c7105defc8d82db9d88df3e0a52ab373e207af"
+    },
+    {
+      "path": "docs/json/sonarr/cf/remux-tier-02.json",
+      "sha256": "57e8ec06fc2f639e425196c0398bd48286658695240198b1d4699020d1be56ce"
+    },
+    {
+      "path": "docs/json/sonarr/cf/repack-proper.json",
+      "sha256": "8ed02eda6d28cf417717a64aebdd35e8963123a471e598bea4241f68521d72e7"
+    },
+    {
+      "path": "docs/json/sonarr/cf/repack2.json",
+      "sha256": "5960d3cc0bb10942a23ce10ddbbb68ba7a16a0f3b2852ff270e65e33edf78794"
+    },
+    {
+      "path": "docs/json/sonarr/cf/repack3.json",
+      "sha256": "ae3d82c47172944f61a7939bf6db873358d7bdce70662f4f2f5a969d2c81259f"
+    },
+    {
+      "path": "docs/json/sonarr/cf/retags.json",
+      "sha256": "37b66e612ea731b719e09a43e56b0dc4c4a1fd2dcebbfb0edda2b01aa2b0a58d"
+    },
+    {
+      "path": "docs/json/sonarr/cf/roku.json",
+      "sha256": "09ba8ed6299782d7dc57836da0719f95ca09b761e333bacdf43447d2f0478163"
+    },
+    {
+      "path": "docs/json/sonarr/cf/scene.json",
+      "sha256": "5b810235ef6655b83ff03ec0dafe17afc080f0ed9f4f2e9ed4991bb0b6b2a908"
+    },
+    {
+      "path": "docs/json/sonarr/cf/sdr-no-webdl.json",
+      "sha256": "034e382ea91cd6dc3f7f68093ea34fa7c95477cab33b030eb92ee31fed9e7838"
+    },
+    {
+      "path": "docs/json/sonarr/cf/sdr.json",
+      "sha256": "726c77ff4c15390f0a5daa0a65c7dee49de4718234b934e4677e33e2f9e97397"
+    },
+    {
+      "path": "docs/json/sonarr/cf/season-pack.json",
+      "sha256": "d84c5b6edb40081cd6dcd23fa2bd67c7303545cdba882ede139c90ce99462f3c"
+    },
+    {
+      "path": "docs/json/sonarr/cf/sho.json",
+      "sha256": "9e0a0adc09aeefe4a432140df04ccc595dcc4694824e3840f92a4f0662de9781"
+    },
+    {
+      "path": "docs/json/sonarr/cf/single-episode.json",
+      "sha256": "fe15ccc45485d168276a7a91af953e647ad5228d9a6c6071b875bce2f83c580b"
+    },
+    {
+      "path": "docs/json/sonarr/cf/stan.json",
+      "sha256": "a6a43f427c902eb35d84bd5817cc0a0f96fb93be5520b0a2ebf6d785e2e8458f"
+    },
+    {
+      "path": "docs/json/sonarr/cf/strp.json",
+      "sha256": "b365641c38a716f1e1490eb1d17cdc0772094151b1465d85264a835c8816dff6"
+    },
+    {
+      "path": "docs/json/sonarr/cf/syfy.json",
+      "sha256": "bde3232490b2952ad4db8c1e6abc9f70a06fd43b140bd96d66a0c9a22b92b9bd"
+    },
+    {
+      "path": "docs/json/sonarr/cf/truehd-atmos.json",
+      "sha256": "b2f05f17bc840cb76689aecbddc35fc805c4ba90678730a35eb4d588868e8303"
+    },
+    {
+      "path": "docs/json/sonarr/cf/truehd.json",
+      "sha256": "c32772e8dafcbd41ccc20f117a0849073daa4015ebd38848f408368942db189e"
+    },
+    {
+      "path": "docs/json/sonarr/cf/tver.json",
+      "sha256": "7f97db995bead02691d77dba0c397fcd3eb2f92d94a90f88a0b60d6d9ef35dc3"
+    },
+    {
+      "path": "docs/json/sonarr/cf/tving.json",
+      "sha256": "b97b50ae621e14d34930bdade9c4c4e9f7c76c2b1b49cfc534b9e35d45210931"
+    },
+    {
+      "path": "docs/json/sonarr/cf/u-next.json",
+      "sha256": "e5f07bbf78a98c39539a0653b13172a648a831c1b8354b5263ed9aef2410cb24"
+    },
+    {
+      "path": "docs/json/sonarr/cf/uhd-streaming-boost.json",
+      "sha256": "4d9ed930a6b55029e4e567323566b9c51a65e4aeb3baa9d24bee43df32ddf8e5"
+    },
+    {
+      "path": "docs/json/sonarr/cf/uncensored.json",
+      "sha256": "dce26c4f75bf120a26ad73339760d41ef57e90bc3f424e3db8efe7f11ce0fe66"
+    },
+    {
+      "path": "docs/json/sonarr/cf/upscaled.json",
+      "sha256": "5891681c467d6f57dd4975f32aad21567779ba910d5e3bdeb1004ddb581151a5"
+    },
+    {
+      "path": "docs/json/sonarr/cf/v0.json",
+      "sha256": "dd614ee334f0e8b9e1f8151ca309070271c6b64c6532a3c9ea621b88666d2854"
+    },
+    {
+      "path": "docs/json/sonarr/cf/v1.json",
+      "sha256": "78d7ec95668e59da2aed3f5fc379f83f238909961b46baa9f47af954ba8e27c5"
+    },
+    {
+      "path": "docs/json/sonarr/cf/v2.json",
+      "sha256": "f313eba2bf1732151f5f0060372503066a0b3404dee08a1fd23df3689d6bcdc8"
+    },
+    {
+      "path": "docs/json/sonarr/cf/v3.json",
+      "sha256": "83c6e345a947836f11fe2755966bd198cbdb62a5742f9683093a89a649ed15b3"
+    },
+    {
+      "path": "docs/json/sonarr/cf/v4.json",
+      "sha256": "ee98ebd75699508022043038ec3d362e55da1fcdb77d8deaf33fefb1ed87353f"
+    },
+    {
+      "path": "docs/json/sonarr/cf/vc-1.json",
+      "sha256": "c174e858beda535b13cb6115cda18fcf0d3d7a47324f7450fa5161ceeca34192"
+    },
+    {
+      "path": "docs/json/sonarr/cf/vdl.json",
+      "sha256": "d70ffdd19cf47ad013c25ba5a14454d70ba8cb034df436f5224d91e6e9003582"
+    },
+    {
+      "path": "docs/json/sonarr/cf/viki.json",
+      "sha256": "68b6f22d89f6e345c1c2a0c744bb54109cfa21e41af50b5a6e9c7a18c392213a"
+    },
+    {
+      "path": "docs/json/sonarr/cf/viu.json",
+      "sha256": "a37dafe5946158f86fffa6e89a931ed6782cd1ea5f9694316c8194f3bc4ebac4"
+    },
+    {
+      "path": "docs/json/sonarr/cf/vp9.json",
+      "sha256": "b372a5fa13460b3f6f8b3c9b3a6b780a0f2c79fa9ed4437c2e6705c8b61e81b8"
+    },
+    {
+      "path": "docs/json/sonarr/cf/vrv.json",
+      "sha256": "4df0083876826868cd6ac2a817147de3959ec702a19b1302fd7a89cd341b282a"
+    },
+    {
+      "path": "docs/json/sonarr/cf/wavve.json",
+      "sha256": "71a36d324bcea7a7a71812f166b093f988bb42ce48f7e38f774c8d25e3702381"
+    },
+    {
+      "path": "docs/json/sonarr/cf/web-scene.json",
+      "sha256": "7832077bac6599cd4b64d8667e9fd45a621f24214d3cc02f53a61ee0564b6527"
+    },
+    {
+      "path": "docs/json/sonarr/cf/web-tier-01.json",
+      "sha256": "c7c30cb6d676869cc26ffa34c7862d6ae808f2d3bc5f4539872ec2a143003ad9"
+    },
+    {
+      "path": "docs/json/sonarr/cf/web-tier-02.json",
+      "sha256": "7bbb08e5d7523cd13816206e24e9235cfa24dcb68f4258a6e06ee8ea5ef621fc"
+    },
+    {
+      "path": "docs/json/sonarr/cf/web-tier-03.json",
+      "sha256": "389a42d68c761aacd81b16beddb03c79319b058cba54cf68f87f259de9350d09"
+    },
+    {
+      "path": "docs/json/sonarr/cf/wetv.json",
+      "sha256": "e3dad94da3bef474bfe5c008ed985d486406a522a52afcbca00f22eff8534540"
+    },
+    {
+      "path": "docs/json/sonarr/cf/with-ad.json",
+      "sha256": "ad909d671b0a2cf038013bdf24635ee228ac18edd572217ec076523171687174"
+    },
+    {
+      "path": "docs/json/sonarr/cf/with-asl.json",
+      "sha256": "fd1d1c6da93a1e2c1fd7131182b2848cc0e93a841a97a31030d1fb16c0ba244b"
+    },
+    {
+      "path": "docs/json/sonarr/cf/with-basl.json",
+      "sha256": "88745f02b59b54e164fe3c2b433963259d74cfc37d91c538db4efd7582c8ff50"
+    },
+    {
+      "path": "docs/json/sonarr/cf/with-bsl.json",
+      "sha256": "13ca5ded055f6717871b67c96a9cd6d0f5db7f411219ce5f476558fa3ba3f8d9"
+    },
+    {
+      "path": "docs/json/sonarr/cf/wrong-language.json",
+      "sha256": "f65cac1665fd14191ed58ea47fcc8c76265ebe235b46c2d1672480646c32057a"
+    },
+    {
+      "path": "docs/json/sonarr/cf/x264.json",
+      "sha256": "f5ecfe4d9e25cad773ddf7ef6b989f7e222224b99b3cb432221511db72b7f44f"
+    },
+    {
+      "path": "docs/json/sonarr/cf/x265-hd.json",
+      "sha256": "4a934ffa53dd86ef2fa632efc0c1a1c21aa6e2a8d26d43e484c8cadcf4cfe15f"
+    },
+    {
+      "path": "docs/json/sonarr/cf/x265-no-hdrdv.json",
+      "sha256": "ea206d411ffc95561479ca569314acaf5db5dbda941800e76430503a916af0fd"
+    },
+    {
+      "path": "docs/json/sonarr/cf/x265.json",
+      "sha256": "902c128d132447fd3aa36a49f20c010a8ae135b4e52de289c12c8f681839c31d"
+    },
+    {
+      "path": "docs/json/sonarr/cf/x266.json",
+      "sha256": "8153a31b1b87f110c0967e23270c30809665270e32962e1351207a8626301e56"
+    },
+    {
+      "path": "docs/json/sonarr/cf/youku.json",
+      "sha256": "b8a3a36968d51f36392df2dd21e019e7298daab4ad179ef29d15ee19fa72f6d0"
+    }
+  ],
+  "table_counts": {
+    "blocked_title_rules": 55,
+    "fact_rules": 132,
+    "locale_group_fact_rules": 1317,
+    "no_release_group_fact_facets": 2,
+    "service_alias_rules": 106,
+    "token_signal_rules": 49
+  },
+  "core_sha256": "ec24a5f9ded2c86281981f4f28674918aabdcd1d6739e65399c83f8472939243",
+  "detection_sha256": "d4c0ff4f489147673de7cf08c747ce9cfe0ce67e14a7c7a66a6ffe8932a071a2",
+  "ignored_records": [
+    "docs/json/radarr/cf/amzn.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/amzn.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/anime-bd-tier-01.json:Bluray:unsupported_implementation",
+    "docs/json/radarr/cf/anime-bd-tier-01.json:DVD:unsupported_implementation",
+    "docs/json/radarr/cf/anime-bd-tier-02.json:Bluray:unsupported_implementation",
+    "docs/json/radarr/cf/anime-bd-tier-02.json:DVD:unsupported_implementation",
+    "docs/json/radarr/cf/anime-bd-tier-03.json:Bluray:unsupported_implementation",
+    "docs/json/radarr/cf/anime-bd-tier-03.json:DVD:unsupported_implementation",
+    "docs/json/radarr/cf/anime-bd-tier-03.json:NAN0:non_lossless_title_regex",
+    "docs/json/radarr/cf/anime-bd-tier-03.json:PMR:non_lossless_title_regex",
+    "docs/json/radarr/cf/anime-bd-tier-04.json:Bluray:unsupported_implementation",
+    "docs/json/radarr/cf/anime-bd-tier-04.json:DVD:unsupported_implementation",
+    "docs/json/radarr/cf/anime-bd-tier-04.json:Iznjie Biznjie:non_lossless_title_regex",
+    "docs/json/radarr/cf/anime-bd-tier-05.json:Baws:non_lossless_title_regex",
+    "docs/json/radarr/cf/anime-bd-tier-05.json:Bluray:unsupported_implementation",
+    "docs/json/radarr/cf/anime-bd-tier-05.json:DVD:unsupported_implementation",
+    "docs/json/radarr/cf/anime-bd-tier-05.json:Judgement:non_lossless_title_regex",
+    "docs/json/radarr/cf/anime-bd-tier-06.json:Bluray:unsupported_implementation",
+    "docs/json/radarr/cf/anime-bd-tier-06.json:DVD:unsupported_implementation",
+    "docs/json/radarr/cf/anime-bd-tier-06.json:GSK_kun:non_lossless_title_regex",
+    "docs/json/radarr/cf/anime-bd-tier-07.json:Bluray:unsupported_implementation",
+    "docs/json/radarr/cf/anime-bd-tier-07.json:DVD:unsupported_implementation",
+    "docs/json/radarr/cf/anime-bd-tier-07.json:Exiled-Destiny:non_lossless_title_regex",
+    "docs/json/radarr/cf/anime-bd-tier-07.json:Koten_Gars:non_lossless_title_regex",
+    "docs/json/radarr/cf/anime-bd-tier-08.json:Bluray:unsupported_implementation",
+    "docs/json/radarr/cf/anime-bd-tier-08.json:DVD:unsupported_implementation",
+    "docs/json/radarr/cf/anime-bd-tier-08.json:Nep_Blanc:non_lossless_title_regex",
+    "docs/json/radarr/cf/anime-lq-groups.json:DaddySubs:non_lossless_title_regex",
+    "docs/json/radarr/cf/anime-lq-groups.json:Fish:non_lossless_title_regex",
+    "docs/json/radarr/cf/anime-lq-groups.json:NoobSubs:non_lossless_title_regex",
+    "docs/json/radarr/cf/anime-lq-groups.json:Raw Files:non_lossless_title_regex",
+    "docs/json/radarr/cf/anime-lq-groups.json:WtF Anime:non_lossless_title_regex",
+    "docs/json/radarr/cf/anime-lq-groups.json:mal lu zen:non_lossless_title_regex",
+    "docs/json/radarr/cf/anime-web-tier-01.json:WEBDL:unsupported_implementation",
+    "docs/json/radarr/cf/anime-web-tier-01.json:WEBRIP:unsupported_implementation",
+    "docs/json/radarr/cf/anime-web-tier-02.json:GSK_kun:non_lossless_title_regex",
+    "docs/json/radarr/cf/anime-web-tier-02.json:WEBDL:unsupported_implementation",
+    "docs/json/radarr/cf/anime-web-tier-02.json:WEBRIP:unsupported_implementation",
+    "docs/json/radarr/cf/anime-web-tier-03.json:SubsPlus+:non_lossless_title_regex",
+    "docs/json/radarr/cf/anime-web-tier-03.json:WEBDL:unsupported_implementation",
+    "docs/json/radarr/cf/anime-web-tier-03.json:WEBRIP:unsupported_implementation",
+    "docs/json/radarr/cf/anime-web-tier-04.json:WEBDL:unsupported_implementation",
+    "docs/json/radarr/cf/anime-web-tier-04.json:WEBRIP:unsupported_implementation",
+    "docs/json/radarr/cf/anime-web-tier-05.json:KiyoshiStar:non_lossless_title_regex",
+    "docs/json/radarr/cf/anime-web-tier-05.json:WEBDL:unsupported_implementation",
+    "docs/json/radarr/cf/anime-web-tier-05.json:WEBRIP:unsupported_implementation",
+    "docs/json/radarr/cf/anime-web-tier-06.json:WEBDL:unsupported_implementation",
+    "docs/json/radarr/cf/anime-web-tier-06.json:WEBRIP:unsupported_implementation",
+    "docs/json/radarr/cf/atv.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/atv.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/atvp.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/atvp.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/aubc.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/aubc.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/bcore.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/bcore.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/cbc.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/cbc.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/cnlp.json:CNLP:nonlossless",
+    "docs/json/radarr/cf/cnlp.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/cnlp.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/cpng.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/cpng.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/crav.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/crav.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/dsnp.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/dsnp.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/fod.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/fod.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/french-anime-tier-01.json:Good Job! Alexis:non_lossless_title_regex",
+    "docs/json/radarr/cf/french-anime-tier-03.json:kazuizui:non_lossless_title_regex",
+    "docs/json/radarr/cf/french-hd-bluray-tier-01.json:Not 2160p:negated",
+    "docs/json/radarr/cf/french-hd-bluray-tier-01.json:Not Remux:negated",
+    "docs/json/radarr/cf/french-hd-bluray-tier-02.json:Not 2160p:negated",
+    "docs/json/radarr/cf/french-hd-bluray-tier-02.json:Not Remux:negated",
+    "docs/json/radarr/cf/french-uhd-bluray-tier-01.json:Not REMUX:negated",
+    "docs/json/radarr/cf/french-uhd-bluray-tier-01.json:Not SDR:negated",
+    "docs/json/radarr/cf/french-uhd-bluray-tier-01.json:Not WEBDL:negated",
+    "docs/json/radarr/cf/french-uhd-bluray-tier-01.json:Not WEBRIP:negated",
+    "docs/json/radarr/cf/french-uhd-bluray-tier-02.json:Not REMUX:negated",
+    "docs/json/radarr/cf/french-uhd-bluray-tier-02.json:Not SDR:negated",
+    "docs/json/radarr/cf/french-uhd-bluray-tier-02.json:Not WEBDL:negated",
+    "docs/json/radarr/cf/french-uhd-bluray-tier-02.json:Not WEBRIP:negated",
+    "docs/json/radarr/cf/friday.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/friday.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/friday.json:friDay:nonlossless",
+    "docs/json/radarr/cf/funi.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/funi.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/german-anime-bluray-tier-01.json:Not Remux:negated",
+    "docs/json/radarr/cf/german-anime-bluray-tier-02.json:Not Remux:negated",
+    "docs/json/radarr/cf/german-anime-bluray-tier-03.json:Not Remux:negated",
+    "docs/json/radarr/cf/german-bluray-tier-01.json:Not Remux:negated",
+    "docs/json/radarr/cf/german-bluray-tier-02.json:Not Remux:negated",
+    "docs/json/radarr/cf/german-bluray-tier-03.json:Not Remux:negated",
+    "docs/json/radarr/cf/hami.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/hami.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/hbo.json:HBO:negative_lookaround",
+    "docs/json/radarr/cf/hbo.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/hbo.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/hd-bluray-tier-01.json:BLURAY:unsupported_implementation",
+    "docs/json/radarr/cf/hd-bluray-tier-01.json:Not 2160p:negated_group",
+    "docs/json/radarr/cf/hd-bluray-tier-01.json:Not REMUX:negated_group",
+    "docs/json/radarr/cf/hd-bluray-tier-02.json:BLURAY:unsupported_implementation",
+    "docs/json/radarr/cf/hd-bluray-tier-02.json:Not 2160p:negated_group",
+    "docs/json/radarr/cf/hd-bluray-tier-02.json:Not REMUX:negated_group",
+    "docs/json/radarr/cf/hd-bluray-tier-03.json:BLURAY:unsupported_implementation",
+    "docs/json/radarr/cf/hd-bluray-tier-03.json:Not 2160p:negated_group",
+    "docs/json/radarr/cf/hd-bluray-tier-03.json:Not REMUX:negated_group",
+    "docs/json/radarr/cf/hmax.json:HBO Max:nonlossless",
+    "docs/json/radarr/cf/hmax.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/hmax.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/htsr.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/htsr.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/hulu.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/hulu.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/ip.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/ip.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/iqiy.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/iqiy.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/iqiy.json:iQIY:nonlossless",
+    "docs/json/radarr/cf/it.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/it.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/it.json:iT Rename:negative_lookaround",
+    "docs/json/radarr/cf/it.json:iTunes:nonlossless",
+    "docs/json/radarr/cf/itvx.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/itvx.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/kcw.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/kcw.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/kktv.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/kktv.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/linetv.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/linetv.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/max.json:Max:negative_lookaround",
+    "docs/json/radarr/cf/max.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/max.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/my5.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/my5.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/mytvsuper.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/mytvsuper.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/nf.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/nf.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/now.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/now.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/ovid.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/ovid.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/pathe.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/pathe.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/pcok.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/pcok.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/play.json:PLAY:nonlossless",
+    "docs/json/radarr/cf/play.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/play.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/pmtp.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/pmtp.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/remux-tier-01.json:Remux:unsupported_implementation",
+    "docs/json/radarr/cf/remux-tier-02.json:Remux:unsupported_implementation",
+    "docs/json/radarr/cf/remux-tier-03.json:Remux:unsupported_implementation",
+    "docs/json/radarr/cf/roku.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/roku.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/stan.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/stan.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/strp.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/strp.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/tver.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/tver.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/tving.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/tving.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/uhd-bluray-tier-01.json:2160p:unsupported_implementation",
+    "docs/json/radarr/cf/uhd-bluray-tier-01.json:Not REMUX:negated_group",
+    "docs/json/radarr/cf/uhd-bluray-tier-01.json:Not WEBDL:negated_group",
+    "docs/json/radarr/cf/uhd-bluray-tier-01.json:Not WEBRIP:negated_group",
+    "docs/json/radarr/cf/uhd-bluray-tier-02.json:2160p:unsupported_implementation",
+    "docs/json/radarr/cf/uhd-bluray-tier-02.json:Not REMUX:negated_group",
+    "docs/json/radarr/cf/uhd-bluray-tier-02.json:Not WEBDL:negated_group",
+    "docs/json/radarr/cf/uhd-bluray-tier-02.json:Not WEBRIP:negated_group",
+    "docs/json/radarr/cf/uhd-bluray-tier-03.json:2160p:unsupported_implementation",
+    "docs/json/radarr/cf/uhd-bluray-tier-03.json:Not REMUX:negated_group",
+    "docs/json/radarr/cf/uhd-bluray-tier-03.json:Not WEBDL:negated_group",
+    "docs/json/radarr/cf/uhd-bluray-tier-03.json:Not WEBRIP:negated_group",
+    "docs/json/radarr/cf/vdl.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/vdl.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/viki.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/viki.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/viu.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/viu.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/vrv.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/vrv.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/wavve.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/wavve.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/web-tier-01.json:WEBDL:unsupported_implementation",
+    "docs/json/radarr/cf/web-tier-01.json:WEBRIP:unsupported_implementation",
+    "docs/json/radarr/cf/web-tier-02.json:WEBDL:unsupported_implementation",
+    "docs/json/radarr/cf/web-tier-02.json:WEBRIP:unsupported_implementation",
+    "docs/json/radarr/cf/web-tier-03.json:WEBDL:unsupported_implementation",
+    "docs/json/radarr/cf/web-tier-03.json:WEBRIP:unsupported_implementation",
+    "docs/json/radarr/cf/wetv.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/wetv.json:WEBRIP:requires_positive_title",
+    "docs/json/radarr/cf/youku.json:WEBDL:requires_positive_title",
+    "docs/json/radarr/cf/youku.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/4od.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/4od.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/abema.json:WEB:requires_positive_title",
+    "docs/json/sonarr/cf/abema.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/abema.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/all4.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/all4.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/amzn.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/amzn.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/anime-bd-tier-01.json:Bluray Remux:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-01.json:Bluray:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-01.json:DVD:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-02.json:Bluray Remux:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-02.json:Bluray:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-02.json:DVD:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-03.json:Bluray Remux:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-03.json:Bluray:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-03.json:DVD:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-03.json:NAN0:non_lossless_title_regex",
+    "docs/json/sonarr/cf/anime-bd-tier-03.json:PMR:non_lossless_title_regex",
+    "docs/json/sonarr/cf/anime-bd-tier-04.json:Bluray Remux:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-04.json:Bluray:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-04.json:DVD:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-04.json:Iznjie Biznjie:non_lossless_title_regex",
+    "docs/json/sonarr/cf/anime-bd-tier-05.json:Baws:non_lossless_title_regex",
+    "docs/json/sonarr/cf/anime-bd-tier-05.json:Bluray Remux:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-05.json:Bluray:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-05.json:DVD:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-05.json:Judgement:non_lossless_title_regex",
+    "docs/json/sonarr/cf/anime-bd-tier-06.json:Bluray Remux:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-06.json:Bluray:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-06.json:DVD:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-06.json:GSK_kun:non_lossless_title_regex",
+    "docs/json/sonarr/cf/anime-bd-tier-07.json:Bluray Remux:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-07.json:Bluray:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-07.json:DVD:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-07.json:Exiled-Destiny:non_lossless_title_regex",
+    "docs/json/sonarr/cf/anime-bd-tier-07.json:Koten_Gars:non_lossless_title_regex",
+    "docs/json/sonarr/cf/anime-bd-tier-08.json:Bluray Remux:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-08.json:Bluray:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-08.json:DVD:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-bd-tier-08.json:Nep_Blanc:non_lossless_title_regex",
+    "docs/json/sonarr/cf/anime-lq-groups.json:DaddySubs:non_lossless_title_regex",
+    "docs/json/sonarr/cf/anime-lq-groups.json:Fish:non_lossless_title_regex",
+    "docs/json/sonarr/cf/anime-lq-groups.json:NoobSubs:non_lossless_title_regex",
+    "docs/json/sonarr/cf/anime-lq-groups.json:Raw Files:non_lossless_title_regex",
+    "docs/json/sonarr/cf/anime-lq-groups.json:WtF Anime:non_lossless_title_regex",
+    "docs/json/sonarr/cf/anime-lq-groups.json:mal lu zen:non_lossless_title_regex",
+    "docs/json/sonarr/cf/anime-web-tier-01.json:WEB:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-web-tier-01.json:WEBDL:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-web-tier-01.json:WEBRIP:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-web-tier-02.json:GSK_kun:non_lossless_title_regex",
+    "docs/json/sonarr/cf/anime-web-tier-02.json:WEB:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-web-tier-02.json:WEBDL:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-web-tier-02.json:WEBRIP:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-web-tier-03.json:SubsPlus+:non_lossless_title_regex",
+    "docs/json/sonarr/cf/anime-web-tier-03.json:WEB:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-web-tier-03.json:WEBDL:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-web-tier-03.json:WEBRIP:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-web-tier-04.json:WEB:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-web-tier-04.json:WEBDL:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-web-tier-04.json:WEBRIP:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-web-tier-05.json:KiyoshiStar:non_lossless_title_regex",
+    "docs/json/sonarr/cf/anime-web-tier-05.json:WEB:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-web-tier-05.json:WEBDL:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-web-tier-05.json:WEBRIP:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-web-tier-06.json:WEB:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-web-tier-06.json:WEBDL:unsupported_implementation",
+    "docs/json/sonarr/cf/anime-web-tier-06.json:WEBRIP:unsupported_implementation",
+    "docs/json/sonarr/cf/atv.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/atv.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/atvp.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/atvp.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/aubc.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/aubc.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/bglobal.json:WEB:requires_positive_title",
+    "docs/json/sonarr/cf/bglobal.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/bglobal.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/bilibili.json:WEB:requires_positive_title",
+    "docs/json/sonarr/cf/bilibili.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/bilibili.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/cbc.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/cbc.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/cnlp.json:CNLP:nonlossless",
+    "docs/json/sonarr/cf/cnlp.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/cnlp.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/cpng.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/cpng.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/cr.json:WEB:requires_positive_title",
+    "docs/json/sonarr/cf/cr.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/cr.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/crav.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/crav.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/dcu.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/dcu.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/dmm-tv.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/dmm-tv.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/dscp.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/dscp.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/dsnp.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/dsnp.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/fod.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/fod.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/french-adn.json:WEB:requires_positive_title",
+    "docs/json/sonarr/cf/french-adn.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/french-adn.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/french-anime-tier-01.json:Good Job! Alexis:non_lossless_title_regex",
+    "docs/json/sonarr/cf/french-anime-tier-03.json:kazuizui:non_lossless_title_regex",
+    "docs/json/sonarr/cf/french-hd-bluray-tier-01.json:Not 2160p:negated",
+    "docs/json/sonarr/cf/french-hd-bluray-tier-01.json:Not REMUX:negated",
+    "docs/json/sonarr/cf/french-salto.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/french-salto.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/french-wkn.json:WEB:requires_positive_title",
+    "docs/json/sonarr/cf/french-wkn.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/french-wkn.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/friday.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/friday.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/friday.json:friDay:nonlossless",
+    "docs/json/sonarr/cf/funi.json:WEB:requires_positive_title",
+    "docs/json/sonarr/cf/funi.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/funi.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/german-anime-bluray-tier-01.json:Not REMUX:negated",
+    "docs/json/sonarr/cf/german-anime-bluray-tier-02.json:Not REMUX:negated",
+    "docs/json/sonarr/cf/german-anime-bluray-tier-03.json:Not REMUX:negated",
+    "docs/json/sonarr/cf/german-bluray-tier-01.json:Not REMUX:negated",
+    "docs/json/sonarr/cf/german-bluray-tier-02.json:Not REMUX:negated",
+    "docs/json/sonarr/cf/german-bluray-tier-03.json:Not REMUX:negated",
+    "docs/json/sonarr/cf/hami.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/hami.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/hbo.json:HBO:negative_lookaround",
+    "docs/json/sonarr/cf/hbo.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/hbo.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/hd-bluray-tier-01.json:BLURAY:unsupported_implementation",
+    "docs/json/sonarr/cf/hd-bluray-tier-01.json:Not 2160p:negated_group",
+    "docs/json/sonarr/cf/hd-bluray-tier-01.json:Not REMUX:negated_group",
+    "docs/json/sonarr/cf/hd-bluray-tier-02.json:BLURAY:unsupported_implementation",
+    "docs/json/sonarr/cf/hd-bluray-tier-02.json:Not 2160p:negated_group",
+    "docs/json/sonarr/cf/hd-bluray-tier-02.json:Not REMUX:negated_group",
+    "docs/json/sonarr/cf/hidive.json:WEB:requires_positive_title",
+    "docs/json/sonarr/cf/hidive.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/hidive.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/hmax.json:HBO Max:nonlossless",
+    "docs/json/sonarr/cf/hmax.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/hmax.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/htsr.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/htsr.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/hulu.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/hulu.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/ip.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/ip.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/iqiy.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/iqiy.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/iqiy.json:iQIY:nonlossless",
+    "docs/json/sonarr/cf/it.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/it.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/it.json:iT Rename:negative_lookaround",
+    "docs/json/sonarr/cf/it.json:iTunes:nonlossless",
+    "docs/json/sonarr/cf/itvx.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/itvx.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/kcw.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/kcw.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/kktv.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/kktv.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/linetv.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/linetv.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/max.json:Max:negative_lookaround",
+    "docs/json/sonarr/cf/max.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/max.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/my5.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/my5.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/mytvsuper.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/mytvsuper.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/nf.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/nf.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/nlz.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/nlz.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/now.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/now.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/ovid.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/ovid.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/pcok.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/pcok.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/play.json:PLAY:nonlossless",
+    "docs/json/sonarr/cf/play.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/play.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/pmtp.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/pmtp.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/qibi.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/qibi.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/red.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/red.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/remux-tier-01.json:Remux:unsupported_implementation",
+    "docs/json/sonarr/cf/remux-tier-02.json:Remux:unsupported_implementation",
+    "docs/json/sonarr/cf/roku.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/roku.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/sho.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/sho.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/stan.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/stan.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/strp.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/strp.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/syfy.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/syfy.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/tver.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/tver.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/tving.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/tving.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/vdl.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/vdl.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/viki.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/viki.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/viu.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/viu.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/vrv.json:WEB:requires_positive_title",
+    "docs/json/sonarr/cf/vrv.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/vrv.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/wavve.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/wavve.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/web-tier-01.json:WEBDL:unsupported_implementation",
+    "docs/json/sonarr/cf/web-tier-01.json:WEBRIP:unsupported_implementation",
+    "docs/json/sonarr/cf/web-tier-02.json:WEBDL:unsupported_implementation",
+    "docs/json/sonarr/cf/web-tier-02.json:WEBRIP:unsupported_implementation",
+    "docs/json/sonarr/cf/web-tier-03.json:WEBDL:unsupported_implementation",
+    "docs/json/sonarr/cf/web-tier-03.json:WEBRIP:unsupported_implementation",
+    "docs/json/sonarr/cf/wetv.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/wetv.json:WEBRIP:requires_positive_title",
+    "docs/json/sonarr/cf/youku.json:WEBDL:requires_positive_title",
+    "docs/json/sonarr/cf/youku.json:WEBRIP:requires_positive_title"
+  ],
+  "stale_memberships": null
+}

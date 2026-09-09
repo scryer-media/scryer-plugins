@@ -1,0 +1,234 @@
+name: trash-daily-refresh
+
+on:
+  schedule:
+    - cron: "23 4 * * *"
+  workflow_dispatch:
+    inputs:
+      upstream_revision:
+        description: "TRaSH revision or branch to resolve to an immutable SHA"
+        required: false
+        default: "master"
+        type: string
+  pull_request:
+    types: [closed]
+
+permissions: read-all
+
+concurrency:
+  group: trash-daily-refresh
+  cancel-in-progress: false
+
+env:
+  TRASH_REFRESH_BRANCH: feature/trash-daily-refresh
+  TRASH_UPSTREAM_REVISION: ${{ inputs.upstream_revision || 'master' }}
+  RULE_PACK_ID: trash-guides-scoring-pack
+
+jobs:
+  refresh:
+    if: ${{ vars.TRASH_REFRESH_ENABLED == 'true' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ secrets.TRASH_REFRESH_TOKEN }}
+      TRASH_REFRESH_TOKEN: ${{ secrets.TRASH_REFRESH_TOKEN }}
+      TRASH_REFRESH_SIGNING_KEY: ${{ secrets.TRASH_REFRESH_SIGNING_KEY }}
+      TRASH_REFRESH_ALLOWED_SIGNERS: ${{ vars.TRASH_REFRESH_ALLOWED_SIGNERS }}
+      TRASH_HOST_VALIDATION_SHA: ${{ vars.TRASH_HOST_VALIDATION_SHA }}
+    steps:
+      - name: Require configured refresh credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$TRASH_REFRESH_TOKEN" || { echo "TRASH_REFRESH_TOKEN is required" >&2; exit 1; }
+          test -n "$TRASH_REFRESH_SIGNING_KEY" || { echo "TRASH_REFRESH_SIGNING_KEY is required for signed commits" >&2; exit 1; }
+          test -n "$TRASH_REFRESH_ALLOWED_SIGNERS" || { echo "TRASH_REFRESH_ALLOWED_SIGNERS is required" >&2; exit 1; }
+          [[ "$TRASH_HOST_VALIDATION_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "TRASH_HOST_VALIDATION_SHA must be an immutable 40-hex commit" >&2; exit 1; }
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: main
+          token: ${{ secrets.TRASH_REFRESH_TOKEN }}
+
+      - name: Capture the integration base
+        id: base
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --prune origin main
+          git checkout --detach origin/main
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Run helper unit tests
+        working-directory: rule_packs/trash-refresh
+        run: go test ./...
+
+      - name: Run converter regression tests
+        working-directory: rule_packs/trash
+        run: go test ./...
+
+      - name: Refresh and generate from the resolved upstream revision
+        working-directory: rule_packs/trash
+        run: |
+          set -euo pipefail
+          previous="$RUNNER_TEMP/trash-core-previous.json"
+          cp snapshot/core-snapshot.json "$previous"
+          go run . fetch --revision "$TRASH_UPSTREAM_REVISION" --output snapshot/upstream-raw.json
+          go run . distill --snapshot snapshot/upstream-raw.json --output-dir snapshot
+          current="$RUNNER_TEMP/trash-scoring-current.json"
+          cp ../trash-scoring.json "$current"
+          version="$(cd ../trash-refresh && go run . next-version --pack ../trash-scoring.json)"
+          go run . generate --snapshot snapshot/core-snapshot.json --previous-snapshot "$previous" --output-dir .. --pack-version "$version"
+          before="$(cd ../trash-refresh && go run . fingerprint --pack "$current")"
+          after="$(cd ../trash-refresh && go run . fingerprint --pack ../trash-scoring.json)"
+          if [ "$before" = "$after" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          go run . check --snapshot snapshot/core-snapshot.json --previous-snapshot "$previous" --output-dir .. --pack-version "$version"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "fingerprint=$after" >> "$GITHUB_OUTPUT"
+        id: refresh
+
+      - name: Check out the pinned production Rego runtime
+        if: ${{ steps.refresh.outputs.changed == 'true' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: scryer-media/scryer
+          ref: ${{ vars.TRASH_HOST_VALIDATION_SHA }}
+          path: .trash-host-validation
+          persist-credentials: false
+
+      - name: Keep validation checkout outside generated content
+        if: ${{ steps.refresh.outputs.changed == 'true' }}
+        run: mv .trash-host-validation "$RUNNER_TEMP/trash-host-validation"
+
+      - uses: taiki-e/install-action@cb33e69fad06166ca28a42b2575e4dadabf62ee8 # v2
+        if: ${{ steps.refresh.outputs.changed == 'true' }}
+        with:
+          tool: nextest
+
+      - name: Validate generated Rego on the production runtime
+        if: ${{ steps.refresh.outputs.changed == 'true' }}
+        env:
+          SCRYER_TRASH_PACK: ${{ github.workspace }}/rule_packs/trash-scoring.json
+        run: |
+          set -euo pipefail
+          test -f "$RUNNER_TEMP/trash-host-validation/crates/scryer-rules/src/trash_pack_validation.rs" || { echo "pinned host checkout lacks the required validation harness" >&2; exit 1; }
+          cd "$RUNNER_TEMP/trash-host-validation"
+          cargo nextest run --locked -p scryer-rules --lib -E 'test(trash_pack_sources_evaluate_on_production_runtime)' --run-ignored only --no-fail-fast
+
+      - name: Enforce generated-only diff
+        if: ${{ steps.refresh.outputs.changed == 'true' }}
+        working-directory: rule_packs/trash-refresh
+        run: |
+          set -euo pipefail
+          go run . verify-diff --base "${{ steps.base.outputs.sha }}"
+
+      - name: Commit and open the signed refresh pull request
+        if: ${{ steps.refresh.outputs.changed == 'true' }}
+        env:
+          VERSION: ${{ steps.refresh.outputs.version }}
+          FINGERPRINT: ${{ steps.refresh.outputs.fingerprint }}
+          ALLOWED_SIGNERS: ${{ vars.TRASH_REFRESH_ALLOWED_SIGNERS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          signing_key="$RUNNER_TEMP/trash-refresh-signing-key"
+          umask 077
+          printf '%s\n' "$TRASH_REFRESH_SIGNING_KEY" > "$signing_key"
+          test -n "$ALLOWED_SIGNERS" || { echo "TRASH_REFRESH_ALLOWED_SIGNERS is required" >&2; exit 1; }
+          printf '%s\n' "$ALLOWED_SIGNERS" > "$RUNNER_TEMP/trash-refresh-allowed-signers"
+          git config user.name "TRaSH Refresh Bot"
+          git config user.email "trash-refresh-bot@users.noreply.github.com"
+          git config gpg.format ssh
+          git config user.signingkey "$signing_key"
+          git config gpg.ssh.allowedSignersFile "$RUNNER_TEMP/trash-refresh-allowed-signers"
+          git config commit.gpgsign true
+          git switch -C "$TRASH_REFRESH_BRANCH"
+          git add rule_packs/trash-scoring.json rule_packs/trash-scoring-coverage.json rule_packs/trash/snapshot rule_packs/trash/generated
+          git commit -S -m "chore: refresh TRaSH scoring pack to $VERSION"
+          git verify-commit HEAD
+          git push --force-with-lease --set-upstream origin "$TRASH_REFRESH_BRANCH"
+          body="$RUNNER_TEMP/trash-refresh-pr.md"
+          printf 'Generated-only refresh from immutable upstream input.\n\n- Version: `%s`\n- Semantic fingerprint: `%s`\n' "$VERSION" "$FINGERPRINT" > "$body"
+          pr="$(gh pr list --head "$TRASH_REFRESH_BRANCH" --state open --json number --jq '.[0].number // empty')"
+          if [ -z "$pr" ]; then
+            pr="$(gh pr create --base main --head "$TRASH_REFRESH_BRANCH" --title "chore: refresh TRaSH scoring pack ($VERSION)" --body-file "$body")"
+          else
+            gh pr edit "$pr" --title "chore: refresh TRaSH scoring pack ($VERSION)" --body-file "$body"
+          fi
+          gh pr merge "$pr" --auto --squash
+
+      - name: Remove temporary signing material
+        if: ${{ always() }}
+        run: rm -f "$RUNNER_TEMP/trash-refresh-signing-key" "$RUNNER_TEMP/trash-refresh-allowed-signers"
+
+  publish:
+    if: >-
+      ${{ vars.TRASH_REFRESH_ENABLED == 'true' && github.event_name == 'pull_request' &&
+          github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' &&
+          github.event.pull_request.head.repo.full_name == github.repository &&
+          github.event.pull_request.user.login == vars.TRASH_REFRESH_BOT_LOGIN &&
+          github.event.pull_request.head.ref == 'feature/trash-daily-refresh' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.TRASH_REFRESH_TOKEN }}
+      TRASH_REFRESH_TOKEN: ${{ secrets.TRASH_REFRESH_TOKEN }}
+      TRASH_REFRESH_SIGNING_KEY: ${{ secrets.TRASH_REFRESH_SIGNING_KEY }}
+      TRASH_REFRESH_ALLOWED_SIGNERS: ${{ vars.TRASH_REFRESH_ALLOWED_SIGNERS }}
+    steps:
+      - name: Require configured publication credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$TRASH_REFRESH_TOKEN" || { echo "TRASH_REFRESH_TOKEN is required" >&2; exit 1; }
+          test -n "$TRASH_REFRESH_SIGNING_KEY" || { echo "TRASH_REFRESH_SIGNING_KEY is required for signed publication" >&2; exit 1; }
+          test -n "$TRASH_REFRESH_ALLOWED_SIGNERS" || { echo "TRASH_REFRESH_ALLOWED_SIGNERS is required" >&2; exit 1; }
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          token: ${{ secrets.TRASH_REFRESH_TOKEN }}
+
+      - name: Verify the merged diff remains generated-only
+        working-directory: rule_packs/trash-refresh
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="${{ github.event.pull_request.base.sha }}"
+          go run . verify-diff --base "$base"
+
+      - name: Configure SSH signing for publication tags
+        shell: bash
+        run: |
+          set -euo pipefail
+          signing_key="$RUNNER_TEMP/trash-refresh-signing-key"
+          umask 077
+          printf '%s\n' "$TRASH_REFRESH_SIGNING_KEY" > "$signing_key"
+          printf '%s\n' "$TRASH_REFRESH_ALLOWED_SIGNERS" > "$RUNNER_TEMP/trash-refresh-allowed-signers"
+          git config user.name "TRaSH Refresh Bot"
+          git config user.email "trash-refresh-bot@users.noreply.github.com"
+          git config gpg.format ssh
+          git config user.signingkey "$signing_key"
+          git config gpg.ssh.allowedSignersFile "$RUNNER_TEMP/trash-refresh-allowed-signers"
+          git config tag.gpgSign true
+
+      - name: Publish through the normal signed release path
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo xtask release-publish-tags --resume --pr "${{ github.event.pull_request.number }}" --rule-pack-id "$RULE_PACK_ID"
+
+      - name: Remove temporary signing material
+        if: ${{ always() }}
+        run: rm -f "$RUNNER_TEMP/trash-refresh-signing-key" "$RUNNER_TEMP/trash-refresh-allowed-signers"

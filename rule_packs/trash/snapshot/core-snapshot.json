@@ -1,0 +1,8684 @@
+{
+  "schema_version": 1,
+  "source_revision": "31a2716d03a3f554a5a2a6bd76456109d900af05",
+  "group_rules": [
+    {
+      "index": 0,
+      "matcher": "$tore-Chill",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 1,
+      "matcher": "0neshot",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 2,
+      "matcher": "224",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 3,
+      "matcher": "A-Destiny",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 4,
+      "matcher": "AREY",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 5,
+      "matcher": "ASW",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 6,
+      "matcher": "AceAres",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 7,
+      "matcher": "AhmadDev",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 8,
+      "matcher": "AniVoid",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 9,
+      "matcher": "Anime Chap",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 10,
+      "matcher": "Anime Land",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 11,
+      "matcher": "Anime Time",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 12,
+      "matcher": "AnimeDynastyEN",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 13,
+      "matcher": "AnimeKuro",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 14,
+      "matcher": "AnimeRG",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 15,
+      "matcher": "AnimeTR",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 16,
+      "matcher": "Animesubs",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 17,
+      "matcher": "Anitsu",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 18,
+      "matcher": "ArataEnc",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 19,
+      "matcher": "Ari",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 20,
+      "matcher": "BDMV",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 21,
+      "matcher": "BDVD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 22,
+      "matcher": "BJX",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 23,
+      "matcher": "BakedFish",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 24,
+      "matcher": "BlackLuster",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 25,
+      "matcher": "CBB",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 26,
+      "matcher": "CameEsp",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 27,
+      "matcher": "Cat66",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 28,
+      "matcher": "Cerberus",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 29,
+      "matcher": "Cleo",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 30,
+      "matcher": "CuaP",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 31,
+      "matcher": "DARKFLiX",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 32,
+      "matcher": "DB",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 33,
+      "matcher": "DBArabic",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 34,
+      "matcher": "DKB",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 35,
+      "matcher": "DP",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 36,
+      "matcher": "DaddySubs",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 37,
+      "matcher": "DeadFish",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 38,
+      "matcher": "Deadmau RAWS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 39,
+      "matcher": "Deadmau- RAWS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 40,
+      "matcher": "DsunS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 41,
+      "matcher": "Emmid",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 42,
+      "matcher": "ExREN",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 43,
+      "matcher": "FAV",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 44,
+      "matcher": "FunArts",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 45,
+      "matcher": "GERMini",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 46,
+      "matcher": "HAV1T",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 47,
+      "matcher": "HENiL",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 48,
+      "matcher": "HR",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 49,
+      "matcher": "Hakata Ramen",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 50,
+      "matcher": "Hall_of_C",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 51,
+      "matcher": "Hatsuyuki",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 52,
+      "matcher": "Hitoku",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 53,
+      "matcher": "HollowRoxas",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 54,
+      "matcher": "ICEBLUE",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 55,
+      "matcher": "JacobSwaggedUp",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 56,
+      "matcher": "Johnny-englishsubs",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 57,
+      "matcher": "KEKMASTERS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 58,
+      "matcher": "KQRM",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 59,
+      "matcher": "KRP",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 60,
+      "matcher": "Kallango",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 61,
+      "matcher": "Kanjouteki",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 62,
+      "matcher": "Kirion",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 63,
+      "matcher": "LoliHouse",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 64,
+      "matcher": "M2TS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 65,
+      "matcher": "M@nI",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 66,
+      "matcher": "MD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 67,
+      "matcher": "MGD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 68,
+      "matcher": "Man.K",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 69,
+      "matcher": "Maximus",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 70,
+      "matcher": "Metaljerk",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 71,
+      "matcher": "MiniFreeza",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 72,
+      "matcher": "MiniMTBB",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 73,
+      "matcher": "MiniTheatre",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 74,
+      "matcher": "MinisCuba",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 75,
+      "matcher": "Mites",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 76,
+      "matcher": "Modders Bay",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 77,
+      "matcher": "Mr. Deadpool",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 78,
+      "matcher": "Mr.Deadpool",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 79,
+      "matcher": "NS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 80,
+      "matcher": "NemDiggers",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 81,
+      "matcher": "Nokou",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 82,
+      "matcher": "NoobSubs",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 83,
+      "matcher": "Nyanpasu",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 84,
+      "matcher": "OldCastle",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 85,
+      "matcher": "Pantsu",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 86,
+      "matcher": "Pao",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 87,
+      "matcher": "Pixel",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 88,
+      "matcher": "Plex Friendly",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 89,
+      "matcher": "PnPSubs",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 90,
+      "matcher": "Polarwindz",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 91,
+      "matcher": "Project-gxs",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 92,
+      "matcher": "PuyaSubs",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 93,
+      "matcher": "QAS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 94,
+      "matcher": "QCE",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 95,
+      "matcher": "QaS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 96,
+      "matcher": "Rando235",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 97,
+      "matcher": "Ranger",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 98,
+      "matcher": "Rapta",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 99,
+      "matcher": "Raze",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 100,
+      "matcher": "Reaktor",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 101,
+      "matcher": "RightShiftBy2",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 102,
+      "matcher": "Rip Time",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 103,
+      "matcher": "SAD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 104,
+      "matcher": "SEiN",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 105,
+      "matcher": "SHFS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 106,
+      "matcher": "SLAX",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 107,
+      "matcher": "SRW",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 108,
+      "matcher": "SSA",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 109,
+      "matcher": "Salieri",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 110,
+      "matcher": "Samir755",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 111,
+      "matcher": "SanKyuu",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 112,
+      "matcher": "Sokudo",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 113,
+      "matcher": "SpaceFish",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 114,
+      "matcher": "StrayGods",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 115,
+      "matcher": "Suki Desu",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 116,
+      "matcher": "TOPKEK",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 117,
+      "matcher": "TeamTurquoize",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 118,
+      "matcher": "Tenrai Sensei",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 119,
+      "matcher": "TnF",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 120,
+      "matcher": "Trix",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 121,
+      "matcher": "U3-Web",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 122,
+      "matcher": "UNBIASED",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 123,
+      "matcher": "USD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 124,
+      "matcher": "Valenciano",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 125,
+      "matcher": "VipapkStudios",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 126,
+      "matcher": "Wardevil",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 127,
+      "matcher": "WtF Anime",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 128,
+      "matcher": "Yabai_Desu_NeRandomRemux",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 129,
+      "matcher": "YakuboEncodes",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 130,
+      "matcher": "YuiSubs",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 131,
+      "matcher": "Yun",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 132,
+      "matcher": "bonkai77",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 133,
+      "matcher": "iPUNISHER",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 134,
+      "matcher": "mal lu zen",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 135,
+      "matcher": "mdcx",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 136,
+      "matcher": "neoHEVC",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 137,
+      "matcher": "phazer11",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 138,
+      "matcher": "sekkusu\u0026ok",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 139,
+      "matcher": "shincaps",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 140,
+      "matcher": "uP",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 141,
+      "matcher": "xiao-av1",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 142,
+      "matcher": "youshikibi",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 143,
+      "matcher": "zza",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 144,
+      "matcher": "9volt",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 145,
+      "matcher": "ABdex",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 146,
+      "matcher": "AC",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 147,
+      "matcher": "ANE",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 148,
+      "matcher": "AOmundson",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 149,
+      "matcher": "ARC",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 150,
+      "matcher": "ASC",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 151,
+      "matcher": "Afro",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 152,
+      "matcher": "AkihitoSubs",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 153,
+      "matcher": "Almighty",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 154,
+      "matcher": "Animorphs",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 155,
+      "matcher": "AnoZu",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 156,
+      "matcher": "Arukoru",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 157,
+      "matcher": "Asenshi",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 158,
+      "matcher": "B00BA",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 159,
+      "matcher": "BBT-RMX",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 160,
+      "matcher": "BKC",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 161,
+      "matcher": "Beatrice",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 162,
+      "matcher": "BiRJU",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 163,
+      "matcher": "BlueLobster",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 164,
+      "matcher": "BlurayDesuYo",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 165,
+      "matcher": "Bolshevik",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 166,
+      "matcher": "Brrrrrrr",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 167,
+      "matcher": "Bunny-Apocalypse",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 168,
+      "matcher": "CBT",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 169,
+      "matcher": "CRUCiBLE",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 170,
+      "matcher": "CTR",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 171,
+      "matcher": "CUNNY",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 172,
+      "matcher": "Cait-Sidhe",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 173,
+      "matcher": "Chihiro",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 174,
+      "matcher": "Chimera",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 175,
+      "matcher": "ChucksMux",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 176,
+      "matcher": "Commie",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 177,
+      "matcher": "Crow",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 178,
+      "matcher": "CsS",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 179,
+      "matcher": "Cunnysseur",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 180,
+      "matcher": "CyC",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 181,
+      "matcher": "D4C",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 182,
+      "matcher": "DIY",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 183,
+      "matcher": "DameDesuYo",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 184,
+      "matcher": "Datte13",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 185,
+      "matcher": "Dekinai",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 186,
+      "matcher": "Doc",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 187,
+      "matcher": "Doki",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 188,
+      "matcher": "Dooky",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 189,
+      "matcher": "Drag",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 190,
+      "matcher": "Dragon-Releases",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 191,
+      "matcher": "DragsterPS",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 192,
+      "matcher": "EDGE",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 193,
+      "matcher": "EJF",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 194,
+      "matcher": "EMBER",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 195,
+      "matcher": "EXP",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 196,
+      "matcher": "Erai-Raws",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 197,
+      "matcher": "Erai-raws",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 198,
+      "matcher": "FFF",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 199,
+      "matcher": "Final8",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 200,
+      "matcher": "Freehold",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 201,
+      "matcher": "GHOST",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 202,
+      "matcher": "GHS",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 203,
+      "matcher": "GJM",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 204,
+      "matcher": "GST",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 205,
+      "matcher": "Geonope",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 206,
+      "matcher": "GetItTwisted",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 207,
+      "matcher": "Hark0N",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 208,
+      "matcher": "Headpatter",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 209,
+      "matcher": "Holomux",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 210,
+      "matcher": "HorribleRips",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 211,
+      "matcher": "HorribleSubs",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 212,
+      "matcher": "IK",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 213,
+      "matcher": "Inka-Subs",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 214,
+      "matcher": "Judas",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 215,
+      "matcher": "Judgment",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 216,
+      "matcher": "KAN3D2M",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 217,
+      "matcher": "KH",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 218,
+      "matcher": "Kaleido",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 219,
+      "matcher": "Kaleido-subs",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 220,
+      "matcher": "Kametsu",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 221,
+      "matcher": "Kantai",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 222,
+      "matcher": "KawaSubs",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 223,
+      "matcher": "Kawatare",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 224,
+      "matcher": "Kitsune",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 225,
+      "matcher": "LCE",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 226,
+      "matcher": "LaCroiX",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 227,
+      "matcher": "LazyRemux",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 228,
+      "matcher": "Legion",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 229,
+      "matcher": "Lia",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 230,
+      "matcher": "MC",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 231,
+      "matcher": "MK",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 232,
+      "matcher": "Mehul",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 233,
+      "matcher": "Metal",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 234,
+      "matcher": "Mysteria",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 235,
+      "matcher": "NH",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 236,
+      "matcher": "NTRM",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 237,
+      "matcher": "NTRX",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 238,
+      "matcher": "NTW",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 239,
+      "matcher": "NanDesuKa",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 240,
+      "matcher": "Netaro",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 241,
+      "matcher": "Noiy",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 242,
+      "matcher": "OZR",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 243,
+      "matcher": "P9",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 244,
+      "matcher": "PlayWeb",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 245,
+      "matcher": "Pookie",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 246,
+      "matcher": "Prof",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 247,
+      "matcher": "QM",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 248,
+      "matcher": "Quetzal",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 249,
+      "matcher": "RAI",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 250,
+      "matcher": "RASETSU",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 251,
+      "matcher": "REVO",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 252,
+      "matcher": "RMX",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 253,
+      "matcher": "RUDY",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 254,
+      "matcher": "RaiN",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 255,
+      "matcher": "SCP-2223",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 256,
+      "matcher": "SEV",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 257,
+      "matcher": "Sekkon",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 258,
+      "matcher": "Senjou",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 259,
+      "matcher": "Serendipity",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 260,
+      "matcher": "Shimatta",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 261,
+      "matcher": "Shirσ",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 262,
+      "matcher": "Smoke",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 263,
+      "matcher": "SobsPlease",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 264,
+      "matcher": "Some-Stuffs",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 265,
+      "matcher": "Spirale",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 266,
+      "matcher": "Starbez",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 267,
+      "matcher": "SubsMix",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 268,
+      "matcher": "SubsPlease",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 269,
+      "matcher": "Sylvar",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 270,
+      "matcher": "THORA",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 271,
+      "matcher": "TTGA",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 272,
+      "matcher": "Thighs",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 273,
+      "matcher": "ToonsHub",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 274,
+      "matcher": "Tsundere",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 275,
+      "matcher": "UDF",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 276,
+      "matcher": "UQW",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 277,
+      "matcher": "URANIME",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 278,
+      "matcher": "UltraRemux",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 279,
+      "matcher": "VARYG",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 280,
+      "matcher": "VULCAN",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 281,
+      "matcher": "Vanilla",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 282,
+      "matcher": "Virtuality",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 283,
+      "matcher": "Vivid",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 284,
+      "matcher": "WBDP",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 285,
+      "matcher": "WSE",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 286,
+      "matcher": "YURASUKA",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 287,
+      "matcher": "Yoghurt",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 288,
+      "matcher": "Yuki",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 289,
+      "matcher": "ZR",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 290,
+      "matcher": "ZigZag",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 291,
+      "matcher": "aRMX",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 292,
+      "matcher": "cappybara",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 293,
+      "matcher": "deanzel",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 294,
+      "matcher": "derp",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 295,
+      "matcher": "eldon",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 296,
+      "matcher": "fig",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 297,
+      "matcher": "grimf",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 298,
+      "matcher": "iAHD",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 299,
+      "matcher": "iKaos",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 300,
+      "matcher": "inid4c",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 301,
+      "matcher": "karios",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 302,
+      "matcher": "kuchikirukia",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 303,
+      "matcher": "mottoj",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 304,
+      "matcher": "naiyas",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 305,
+      "matcher": "neko-kBaraka",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 306,
+      "matcher": "nekotan",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 307,
+      "matcher": "npz",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 308,
+      "matcher": "o7",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 309,
+      "matcher": "orz",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 310,
+      "matcher": "pog42",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 311,
+      "matcher": "sgt",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 312,
+      "matcher": "uba",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 313,
+      "matcher": "Arg0",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 314,
+      "matcher": "Arid",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 315,
+      "matcher": "Baws",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 316,
+      "matcher": "DemiHuman",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 317,
+      "matcher": "FLE",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 318,
+      "matcher": "Flugel",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 319,
+      "matcher": "LYS1TH3A",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 320,
+      "matcher": "LostYears",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 321,
+      "matcher": "McBalls",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 322,
+      "matcher": "Moxie",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 323,
+      "matcher": "NAN0",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 324,
+      "matcher": "PMR",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 325,
+      "matcher": "SCY",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 326,
+      "matcher": "Setsugen",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 327,
+      "matcher": "SoM",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 328,
+      "matcher": "Vodes",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 329,
+      "matcher": "Z4ST1N",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 330,
+      "matcher": "ZeroBuild",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 331,
+      "matcher": "sam",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 332,
+      "matcher": "smol",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 333,
+      "matcher": "0x539",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 334,
+      "matcher": "Aergia",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 335,
+      "matcher": "Asakura",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 336,
+      "matcher": "BlackRose",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 337,
+      "matcher": "Cyan",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 338,
+      "matcher": "Cytox",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 339,
+      "matcher": "Dae",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 340,
+      "matcher": "FateSucks",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 341,
+      "matcher": "Foxtrot",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 342,
+      "matcher": "GSK_kun",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 343,
+      "matcher": "Gao",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 344,
+      "matcher": "Half-Baked",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 345,
+      "matcher": "HatSubs",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 346,
+      "matcher": "Iznjie Biznjie",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 347,
+      "matcher": "JOHNTiTOR",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 348,
+      "matcher": "JySzE",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 349,
+      "matcher": "Kulot",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 350,
+      "matcher": "Lulu",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 351,
+      "matcher": "MALD",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 352,
+      "matcher": "MTBB",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 353,
+      "matcher": "Meakes",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 354,
+      "matcher": "Not-Vodes",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 355,
+      "matcher": "Okay-Subs",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 356,
+      "matcher": "Orphan",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 357,
+      "matcher": "Pizza",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 358,
+      "matcher": "Reza",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 359,
+      "matcher": "Slyfox",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 360,
+      "matcher": "SoLCE",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 361,
+      "matcher": "SubsPlus+",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 362,
+      "matcher": "Tenshi",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 363,
+      "matcher": "WAP",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 364,
+      "matcher": "YURI",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 365,
+      "matcher": "hchcsen",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 366,
+      "matcher": "hydes",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 367,
+      "matcher": "koala",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 368,
+      "matcher": "tenshi",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "anime",
+      "source_context": "anime"
+    },
+    {
+      "index": 369,
+      "matcher": "D3US",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "any"
+    },
+    {
+      "index": 370,
+      "matcher": "NoGrop",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "any"
+    },
+    {
+      "index": 371,
+      "matcher": "PiRaTeS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "any"
+    },
+    {
+      "index": 372,
+      "matcher": "VISIONPLUSHDR-X",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "any"
+    },
+    {
+      "index": 373,
+      "matcher": "VISIONPLUSHDR1000",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "any"
+    },
+    {
+      "index": 374,
+      "matcher": "YTS.AG",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "any"
+    },
+    {
+      "index": 375,
+      "matcher": "YTS.LT",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "any"
+    },
+    {
+      "index": 376,
+      "matcher": "YTS.MX",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "any"
+    },
+    {
+      "index": 377,
+      "matcher": "jennaortega",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "anime",
+      "source_context": "any"
+    },
+    {
+      "index": 378,
+      "matcher": "24xHD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 379,
+      "matcher": "41RGB",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 380,
+      "matcher": "4K4U",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 381,
+      "matcher": "AOC",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 382,
+      "matcher": "AROMA",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 383,
+      "matcher": "AZAZE",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 384,
+      "matcher": "BARC0DE",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 385,
+      "matcher": "BAT",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 386,
+      "matcher": "BAUCKLEY",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 387,
+      "matcher": "BNd",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 388,
+      "matcher": "BTM",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 389,
+      "matcher": "BdC",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 390,
+      "matcher": "BlackBit",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 391,
+      "matcher": "C.A.A",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 392,
+      "matcher": "C1NEM4",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 393,
+      "matcher": "C4K",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 394,
+      "matcher": "C76",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 395,
+      "matcher": "CDDHD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 396,
+      "matcher": "CHAOS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 397,
+      "matcher": "CHD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 398,
+      "matcher": "CLEANUP",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 399,
+      "matcher": "COLLECTiVE",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 400,
+      "matcher": "CREATiVE24",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 401,
+      "matcher": "CTFOH",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 402,
+      "matcher": "CYPHER",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 403,
+      "matcher": "CiNE",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 404,
+      "matcher": "Cory",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 405,
+      "matcher": "CrEwSaDe",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 406,
+      "matcher": "D3US",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 407,
+      "matcher": "DDR",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 408,
+      "matcher": "DNL",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 409,
+      "matcher": "DRX",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 410,
+      "matcher": "E",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 411,
+      "matcher": "EPiC",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 412,
+      "matcher": "EXTREME",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 413,
+      "matcher": "EniaHD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 414,
+      "matcher": "EuReKA",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 415,
+      "matcher": "FF",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 416,
+      "matcher": "FGT",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 417,
+      "matcher": "FMD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 418,
+      "matcher": "FOXX",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 419,
+      "matcher": "FRDS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 420,
+      "matcher": "FS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 421,
+      "matcher": "FZHD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 422,
+      "matcher": "FaNGDiNG0",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 423,
+      "matcher": "Feranki1980",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 424,
+      "matcher": "G4RiS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 425,
+      "matcher": "GHD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 426,
+      "matcher": "GPTHD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 427,
+      "matcher": "GUEIRA",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 428,
+      "matcher": "GalaxyRG",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 429,
+      "matcher": "HDHUB4U",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 430,
+      "matcher": "HDS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 431,
+      "matcher": "HDT",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 432,
+      "matcher": "HDTime",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 433,
+      "matcher": "HDWinG",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 434,
+      "matcher": "JFF",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 435,
+      "matcher": "KC",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 436,
+      "matcher": "KIRA",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 437,
+      "matcher": "KiNGDOM",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 438,
+      "matcher": "L0SERNIGHT",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 439,
+      "matcher": "LAMA",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 440,
+      "matcher": "LCD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 441,
+      "matcher": "LUCY",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 442,
+      "matcher": "Leffe",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 443,
+      "matcher": "LiGaS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 444,
+      "matcher": "Liber8",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 445,
+      "matcher": "MGE",
+      "match_kind": "prefix",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 446,
+      "matcher": "MLH",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 447,
+      "matcher": "MT",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 448,
+      "matcher": "MTeam",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 449,
+      "matcher": "MarkII",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 450,
+      "matcher": "MeGusta",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 451,
+      "matcher": "Mesc",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 452,
+      "matcher": "MySiLU",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 453,
+      "matcher": "N3G4N",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 454,
+      "matcher": "NhaNc3",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 455,
+      "matcher": "NoGrop",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 456,
+      "matcher": "NoGroup",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 457,
+      "matcher": "NoGrp",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 458,
+      "matcher": "OFT",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 459,
+      "matcher": "ONLYMOViE",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 460,
+      "matcher": "OldT",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 461,
+      "matcher": "PATOMiEL",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 462,
+      "matcher": "PD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 463,
+      "matcher": "PRODJi",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 464,
+      "matcher": "PSA",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 465,
+      "matcher": "PTHome",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 466,
+      "matcher": "PTNK",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 467,
+      "matcher": "Pahe",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 468,
+      "matcher": "Pahe.in",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 469,
+      "matcher": "Pahe.ph",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 470,
+      "matcher": "PiRaTeS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 471,
+      "matcher": "RARBG",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 472,
+      "matcher": "RBB",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 473,
+      "matcher": "RDN",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 474,
+      "matcher": "RK",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 475,
+      "matcher": "RU4HD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 476,
+      "matcher": "RiPER",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 477,
+      "matcher": "Rifftrax",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 478,
+      "matcher": "SANTi",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 479,
+      "matcher": "SHD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 480,
+      "matcher": "STUTTERSHIT",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 481,
+      "matcher": "SUNSCREEN",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 482,
+      "matcher": "Scene",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 483,
+      "matcher": "ShieldBearer",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 484,
+      "matcher": "SiGLA",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 485,
+      "matcher": "SyncUP",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 486,
+      "matcher": "TBS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 487,
+      "matcher": "TEKNO3D",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 488,
+      "matcher": "TIKO",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 489,
+      "matcher": "TM",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 490,
+      "matcher": "TURG",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 491,
+      "matcher": "Tars",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 492,
+      "matcher": "Tigole",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 493,
+      "matcher": "TvR",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 494,
+      "matcher": "VISIONPLUSHDR",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 495,
+      "matcher": "VISIONPLUSHDR-X",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 496,
+      "matcher": "VISIONPLUSHDR1000",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 497,
+      "matcher": "WAF",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 498,
+      "matcher": "WTV",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 499,
+      "matcher": "WiKi",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 500,
+      "matcher": "XiQUEXiQUE",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 501,
+      "matcher": "YIFY",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 502,
+      "matcher": "YTS.AG",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 503,
+      "matcher": "YTS.LT",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 504,
+      "matcher": "YTS.MX",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 505,
+      "matcher": "YTS.MX|LT|AG",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 506,
+      "matcher": "Yatogam1",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 507,
+      "matcher": "YusukeFLA",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 508,
+      "matcher": "ZNM",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 509,
+      "matcher": "Zeus",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 510,
+      "matcher": "ZigZag",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 511,
+      "matcher": "aXXo",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 512,
+      "matcher": "alfaHD",
+      "match_kind": "prefix",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 513,
+      "matcher": "beAst",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 514,
+      "matcher": "d3g",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 515,
+      "matcher": "iNTENSO",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 516,
+      "matcher": "iPlanet",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 517,
+      "matcher": "iVy",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 518,
+      "matcher": "jennaortega",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 519,
+      "matcher": "jennaortegaUHD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 520,
+      "matcher": "mHD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 521,
+      "matcher": "mSD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 522,
+      "matcher": "nHD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 523,
+      "matcher": "nSD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 524,
+      "matcher": "nikt0",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 525,
+      "matcher": "tokar86a",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 526,
+      "matcher": "vnlls",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 527,
+      "matcher": "x0r",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "movie",
+      "source_context": "any"
+    },
+    {
+      "index": 528,
+      "matcher": "BHDStudio",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 529,
+      "matcher": "HONE",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 530,
+      "matcher": "HiFi",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 531,
+      "matcher": "LoRD",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 532,
+      "matcher": "SPHD",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 533,
+      "matcher": "W4NK3R",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 534,
+      "matcher": "hallowed",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 535,
+      "matcher": "playHD",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 536,
+      "matcher": "ATELiER",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 537,
+      "matcher": "BBQ",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 538,
+      "matcher": "BMF",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 539,
+      "matcher": "CRiSC",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 540,
+      "matcher": "Chotab",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 541,
+      "matcher": "CtrlHD",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 542,
+      "matcher": "D-Z0N3",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 543,
+      "matcher": "DON",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 544,
+      "matcher": "Dariush",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 545,
+      "matcher": "EDPH",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 546,
+      "matcher": "EbP",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 547,
+      "matcher": "Geek",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 548,
+      "matcher": "LolHD",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 549,
+      "matcher": "NCmt",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 550,
+      "matcher": "PTer",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 551,
+      "matcher": "TDD",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 552,
+      "matcher": "TayTO",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 553,
+      "matcher": "TnP",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 554,
+      "matcher": "VietHD",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 555,
+      "matcher": "ZQ",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 556,
+      "matcher": "ZoroSenpai",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 557,
+      "matcher": "c0kE",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 558,
+      "matcher": "decibeL",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 559,
+      "matcher": "EA",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 560,
+      "matcher": "HiDt",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 561,
+      "matcher": "HiSD",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 562,
+      "matcher": "NTb",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 563,
+      "matcher": "QOQ",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 564,
+      "matcher": "SA89",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 565,
+      "matcher": "iFT",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 566,
+      "matcher": "sbR",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "bluray"
+    },
+    {
+      "index": 567,
+      "matcher": "12GaugeShotgun",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 568,
+      "matcher": "EPSiLON",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 569,
+      "matcher": "HiFi",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 570,
+      "matcher": "KRaLiMaRKo",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 571,
+      "matcher": "NTb",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 572,
+      "matcher": "PTP",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 573,
+      "matcher": "SumVision",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 574,
+      "matcher": "TOA",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 575,
+      "matcher": "TRiToN",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 576,
+      "matcher": "decibeL",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 577,
+      "matcher": "iFT",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 578,
+      "matcher": "3L",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 579,
+      "matcher": "ATELiER",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 580,
+      "matcher": "BLURANiUM",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 581,
+      "matcher": "BMF",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 582,
+      "matcher": "BiZKiT",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 583,
+      "matcher": "CiNEPHiLES",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 584,
+      "matcher": "FraMeSToR",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 585,
+      "matcher": "PiRAMiDHEAD",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 586,
+      "matcher": "PmP",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 587,
+      "matcher": "WiLDCAT",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 588,
+      "matcher": "ZQ",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 589,
+      "matcher": "NCmt",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 590,
+      "matcher": "SURFINBIRD",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 591,
+      "matcher": "SiCFoI",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 592,
+      "matcher": "TEPES",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 593,
+      "matcher": "playBD",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "remux"
+    },
+    {
+      "index": 594,
+      "matcher": "BHDStudio",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "uhd_bluray"
+    },
+    {
+      "index": 595,
+      "matcher": "HONE",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "uhd_bluray"
+    },
+    {
+      "index": 596,
+      "matcher": "PTer",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "uhd_bluray"
+    },
+    {
+      "index": 597,
+      "matcher": "SPHD",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "uhd_bluray"
+    },
+    {
+      "index": 598,
+      "matcher": "WEBDV",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "uhd_bluray"
+    },
+    {
+      "index": 599,
+      "matcher": "hallowed",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "uhd_bluray"
+    },
+    {
+      "index": 600,
+      "matcher": "CtrlHD",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "uhd_bluray"
+    },
+    {
+      "index": 601,
+      "matcher": "DON",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "uhd_bluray"
+    },
+    {
+      "index": 602,
+      "matcher": "MainFrame",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "uhd_bluray"
+    },
+    {
+      "index": 603,
+      "matcher": "W4NK3R",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "uhd_bluray"
+    },
+    {
+      "index": 604,
+      "matcher": "HQMUX",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "uhd_bluray"
+    },
+    {
+      "index": 605,
+      "matcher": "HiDt",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "uhd_bluray"
+    },
+    {
+      "index": 606,
+      "matcher": "RandomBytes",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "uhd_bluray"
+    },
+    {
+      "index": 607,
+      "matcher": "BLOOM",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 608,
+      "matcher": "Dooky",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 609,
+      "matcher": "GNOMiSSiON",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 610,
+      "matcher": "HHWEB",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 611,
+      "matcher": "NINJACENTRAL",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 612,
+      "matcher": "NPMS",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 613,
+      "matcher": "ROCCaT",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 614,
+      "matcher": "SLiGNOME",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 615,
+      "matcher": "SiGMA",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 616,
+      "matcher": "SwAgLaNdEr",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 617,
+      "matcher": "ABBIE",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 618,
+      "matcher": "AJP69",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 619,
+      "matcher": "APEX",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 620,
+      "matcher": "BLUTONiUM",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 621,
+      "matcher": "BYNDR",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 622,
+      "matcher": "CMRG",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 623,
+      "matcher": "CRFW",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 624,
+      "matcher": "CRUD",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 625,
+      "matcher": "FLUX",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 626,
+      "matcher": "GNOME",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 627,
+      "matcher": "HONE",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 628,
+      "matcher": "KiNGS",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 629,
+      "matcher": "Kitsune",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 630,
+      "matcher": "MADSKY",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 631,
+      "matcher": "NOSiViD",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 632,
+      "matcher": "NTG",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 633,
+      "matcher": "NTb",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 634,
+      "matcher": "PAXA",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 635,
+      "matcher": "PEXA",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 636,
+      "matcher": "RAWR",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 637,
+      "matcher": "SiC",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 638,
+      "matcher": "TEPES",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 639,
+      "matcher": "TheFarm",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 640,
+      "matcher": "XEPA",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 641,
+      "matcher": "ZoroSenpai",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 642,
+      "matcher": "4KBEC",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 643,
+      "matcher": "CEBEX",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 644,
+      "matcher": "Flights",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 645,
+      "matcher": "MZABI",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 646,
+      "matcher": "MiU",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 647,
+      "matcher": "PHOENiX",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 648,
+      "matcher": "SMURF",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 649,
+      "matcher": "SbR",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 650,
+      "matcher": "TOMMY",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 651,
+      "matcher": "XEBEC",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 652,
+      "matcher": "dB",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 653,
+      "matcher": "monkee",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 654,
+      "matcher": "playWEB",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "movie",
+      "source_context": "web"
+    },
+    {
+      "index": 655,
+      "matcher": "BAT",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 656,
+      "matcher": "BNd",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 657,
+      "matcher": "BRiNK",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 658,
+      "matcher": "BTM",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 659,
+      "matcher": "BiOMA",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 660,
+      "matcher": "BlackBit",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 661,
+      "matcher": "C.A.A",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 662,
+      "matcher": "C76",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 663,
+      "matcher": "CHX",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 664,
+      "matcher": "CTFOH",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 665,
+      "matcher": "CYPHER",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 666,
+      "matcher": "Cory",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 667,
+      "matcher": "D3US",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 668,
+      "matcher": "DepraveD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 669,
+      "matcher": "EVO",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 670,
+      "matcher": "EXTREME",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 671,
+      "matcher": "EniaHD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 672,
+      "matcher": "FF",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 673,
+      "matcher": "FGT",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 674,
+      "matcher": "FMD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 675,
+      "matcher": "FOXX",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 676,
+      "matcher": "Feranki1980",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 677,
+      "matcher": "G4RiS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 678,
+      "matcher": "GHOSTS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 679,
+      "matcher": "GUEIRA",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 680,
+      "matcher": "HiQVE",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 681,
+      "matcher": "JFF",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 682,
+      "matcher": "KC",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 683,
+      "matcher": "LCD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 684,
+      "matcher": "MLH",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 685,
+      "matcher": "MeGusta",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 686,
+      "matcher": "N3G4N",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 687,
+      "matcher": "NoGrop",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 688,
+      "matcher": "OFT",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 689,
+      "matcher": "OldT",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 690,
+      "matcher": "PD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 691,
+      "matcher": "PSA",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 692,
+      "matcher": "PTHome",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 693,
+      "matcher": "Pahe",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 694,
+      "matcher": "Pahe.in",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 695,
+      "matcher": "Pahe.ph",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 696,
+      "matcher": "PiRaTeS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 697,
+      "matcher": "RK",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 698,
+      "matcher": "RiPER",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 699,
+      "matcher": "SHD",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 700,
+      "matcher": "SasukeducK",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 701,
+      "matcher": "ShieldBearer",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 702,
+      "matcher": "SiGLA",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 703,
+      "matcher": "TBS",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 704,
+      "matcher": "TG",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 705,
+      "matcher": "TURG",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 706,
+      "matcher": "Tars",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 707,
+      "matcher": "VIDEOHOLE",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 708,
+      "matcher": "VISIONPLUSHDR-X",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 709,
+      "matcher": "VISIONPLUSHDR1000",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 710,
+      "matcher": "WTV",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 711,
+      "matcher": "XLF",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 712,
+      "matcher": "XiQUEXiQUE",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 713,
+      "matcher": "YTS.AG",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 714,
+      "matcher": "YTS.LT",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 715,
+      "matcher": "YTS.MX",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 716,
+      "matcher": "Yatogam1",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 717,
+      "matcher": "YusukeFLA",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 718,
+      "matcher": "ZNM",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 719,
+      "matcher": "Zero00",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 720,
+      "matcher": "ZigZag",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 721,
+      "matcher": "alfaHD",
+      "match_kind": "prefix",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 722,
+      "matcher": "d3g",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 723,
+      "matcher": "iNTENSO",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 724,
+      "matcher": "iVy",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 725,
+      "matcher": "jennaortega",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 726,
+      "matcher": "nhanc3",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 727,
+      "matcher": "tokar86a",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 728,
+      "matcher": "vnlls",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 729,
+      "matcher": "worldmkv",
+      "match_kind": "exact",
+      "tier": "banned",
+      "facet": "series",
+      "source_context": "any"
+    },
+    {
+      "index": 730,
+      "matcher": "Chotab",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "bluray"
+    },
+    {
+      "index": 731,
+      "matcher": "CtrlHD",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "bluray"
+    },
+    {
+      "index": 732,
+      "matcher": "DON",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "bluray"
+    },
+    {
+      "index": 733,
+      "matcher": "EbP",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "bluray"
+    },
+    {
+      "index": 734,
+      "matcher": "NTb",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "bluray"
+    },
+    {
+      "index": 735,
+      "matcher": "PTer",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "bluray"
+    },
+    {
+      "index": 736,
+      "matcher": "SA89",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "bluray"
+    },
+    {
+      "index": 737,
+      "matcher": "sbR",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "bluray"
+    },
+    {
+      "index": 738,
+      "matcher": "BLURANiUM",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "remux"
+    },
+    {
+      "index": 739,
+      "matcher": "BMF",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "remux"
+    },
+    {
+      "index": 740,
+      "matcher": "FraMeSToR",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "remux"
+    },
+    {
+      "index": 741,
+      "matcher": "PmP",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "remux"
+    },
+    {
+      "index": 742,
+      "matcher": "12GaugeShotgun",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "remux"
+    },
+    {
+      "index": 743,
+      "matcher": "EPSiLON",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "remux"
+    },
+    {
+      "index": 744,
+      "matcher": "HiFi",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "remux"
+    },
+    {
+      "index": 745,
+      "matcher": "KRaLiMaRKo",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "remux"
+    },
+    {
+      "index": 746,
+      "matcher": "PTer",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "remux"
+    },
+    {
+      "index": 747,
+      "matcher": "SiCFoI",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "remux"
+    },
+    {
+      "index": 748,
+      "matcher": "TRiToN",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "remux"
+    },
+    {
+      "index": 749,
+      "matcher": "decibeL",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "remux"
+    },
+    {
+      "index": 750,
+      "matcher": "playBD",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "remux"
+    },
+    {
+      "index": 751,
+      "matcher": "BLOOM",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 752,
+      "matcher": "DRACULA",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 753,
+      "matcher": "Dooky",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 754,
+      "matcher": "HHWEB",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 755,
+      "matcher": "NINJACENTRAL",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 756,
+      "matcher": "SLiGNOME",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 757,
+      "matcher": "SwAgLaNdEr",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 758,
+      "matcher": "T4H",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 759,
+      "matcher": "ViSiON",
+      "match_kind": "exact",
+      "tier": "bronze",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 760,
+      "matcher": "ABBiE",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 761,
+      "matcher": "AJP69",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 762,
+      "matcher": "APEX",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 763,
+      "matcher": "CRFW",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 764,
+      "matcher": "CasStudio",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 765,
+      "matcher": "CtrlHD",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 766,
+      "matcher": "FLUX",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 767,
+      "matcher": "HONE",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 768,
+      "matcher": "KiNGS",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 769,
+      "matcher": "Kitsune",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 770,
+      "matcher": "MADSKY",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 771,
+      "matcher": "NOSiViD",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 772,
+      "matcher": "NTG",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 773,
+      "matcher": "NTb",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 774,
+      "matcher": "PAXA",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 775,
+      "matcher": "PEXA",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 776,
+      "matcher": "QOQ",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 777,
+      "matcher": "RAWR",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 778,
+      "matcher": "RTN",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 779,
+      "matcher": "SiC",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 780,
+      "matcher": "T6D",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 781,
+      "matcher": "TOMMY",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 782,
+      "matcher": "ViSUM",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 783,
+      "matcher": "XEPA",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 784,
+      "matcher": "monkee",
+      "match_kind": "exact",
+      "tier": "gold",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 785,
+      "matcher": "3cTWeB",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 786,
+      "matcher": "4KBEC",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 787,
+      "matcher": "BLUTONiUM",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 788,
+      "matcher": "BTW",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 789,
+      "matcher": "BYNDR",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 790,
+      "matcher": "CEBEX",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 791,
+      "matcher": "CMRG",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 792,
+      "matcher": "Chotab",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 793,
+      "matcher": "CiT",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 794,
+      "matcher": "Cinefeel",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 795,
+      "matcher": "Coo7",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 796,
+      "matcher": "DEEP",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 797,
+      "matcher": "END",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 798,
+      "matcher": "ETHiCS",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 799,
+      "matcher": "FC",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 800,
+      "matcher": "Flights",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 801,
+      "matcher": "GNOME",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 802,
+      "matcher": "JETIX",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 803,
+      "matcher": "KHN",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 804,
+      "matcher": "KiMCHI",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 805,
+      "matcher": "LAZY",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 806,
+      "matcher": "MZABI",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 807,
+      "matcher": "MiU",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 808,
+      "matcher": "NPMS",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 809,
+      "matcher": "NYH",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 810,
+      "matcher": "PHOENiX",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 811,
+      "matcher": "PSiG",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 812,
+      "matcher": "ROCCaT",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 813,
+      "matcher": "RTFM",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 814,
+      "matcher": "SA89",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 815,
+      "matcher": "SDCC",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 816,
+      "matcher": "SIGMA",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 817,
+      "matcher": "SMURF",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 818,
+      "matcher": "SPiRiT",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 819,
+      "matcher": "SbR",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 820,
+      "matcher": "TEPES",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 821,
+      "matcher": "TVSmash",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 822,
+      "matcher": "WELP",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 823,
+      "matcher": "XEBEC",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 824,
+      "matcher": "dB",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 825,
+      "matcher": "iJP",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 826,
+      "matcher": "iKA",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 827,
+      "matcher": "iT00NZ",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 828,
+      "matcher": "orbitron",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    },
+    {
+      "index": 829,
+      "matcher": "playWEB",
+      "match_kind": "exact",
+      "tier": "silver",
+      "facet": "series",
+      "source_context": "web"
+    }
+  ],
+  "language_rules": [
+    {
+      "code": "trash.lang.german_and_original",
+      "app": "guide-only",
+      "stem": "language-german-and-original",
+      "conditions": [
+        {
+          "language": {
+            "named": "deu"
+          },
+          "negate": false,
+          "required": true
+        }
+      ]
+    },
+    {
+      "code": "trash.lang.not_dutch",
+      "app": "guide-only",
+      "stem": "language-not-dutch",
+      "conditions": [
+        {
+          "language": {
+            "named": "nld"
+          },
+          "negate": true,
+          "required": true
+        }
+      ]
+    },
+    {
+      "code": "trash.lang.not_english",
+      "app": "radarr",
+      "stem": "language-not-english",
+      "conditions": [
+        {
+          "language": {
+            "named": "eng"
+          },
+          "negate": true,
+          "required": false
+        }
+      ]
+    },
+    {
+      "code": "trash.lang.not_english",
+      "app": "sonarr",
+      "stem": "language-not-english",
+      "conditions": [
+        {
+          "language": {
+            "named": "eng"
+          },
+          "negate": true,
+          "required": false
+        }
+      ]
+    },
+    {
+      "code": "trash.lang.not_french",
+      "app": "radarr",
+      "stem": "language-not-french",
+      "conditions": [
+        {
+          "language": {
+            "named": "fra"
+          },
+          "negate": true,
+          "required": false
+        }
+      ]
+    },
+    {
+      "code": "trash.lang.not_french",
+      "app": "sonarr",
+      "stem": "language-not-french",
+      "conditions": [
+        {
+          "language": {
+            "named": "fra"
+          },
+          "negate": true,
+          "required": false
+        }
+      ]
+    },
+    {
+      "code": "trash.lang.not_german_japanese_korean_chinese_or_english",
+      "app": "radarr",
+      "stem": "not-german-japanese-korean-chinese-or-english",
+      "conditions": [
+        {
+          "language": {
+            "named": "deu"
+          },
+          "negate": true,
+          "required": true
+        },
+        {
+          "language": {
+            "named": "eng"
+          },
+          "negate": true,
+          "required": true
+        },
+        {
+          "language": {
+            "named": "jpn"
+          },
+          "negate": true,
+          "required": true
+        },
+        {
+          "language": {
+            "named": "kor"
+          },
+          "negate": true,
+          "required": true
+        },
+        {
+          "language": {
+            "named": "zho"
+          },
+          "negate": true,
+          "required": true
+        }
+      ]
+    },
+    {
+      "code": "trash.lang.not_german_japanese_korean_chinese_or_english",
+      "app": "sonarr",
+      "stem": "not-german-japanese-korean-chinese-or-english",
+      "conditions": [
+        {
+          "language": {
+            "named": "deu"
+          },
+          "negate": true,
+          "required": true
+        },
+        {
+          "language": {
+            "named": "eng"
+          },
+          "negate": true,
+          "required": true
+        },
+        {
+          "language": {
+            "named": "jpn"
+          },
+          "negate": true,
+          "required": true
+        },
+        {
+          "language": {
+            "named": "kor"
+          },
+          "negate": true,
+          "required": true
+        },
+        {
+          "language": {
+            "named": "zho"
+          },
+          "negate": true,
+          "required": true
+        }
+      ]
+    },
+    {
+      "code": "trash.lang.not_german_japanese_or_english",
+      "app": "radarr",
+      "stem": "not-german-japanese-or-english",
+      "conditions": [
+        {
+          "language": {
+            "named": "deu"
+          },
+          "negate": true,
+          "required": true
+        },
+        {
+          "language": {
+            "named": "eng"
+          },
+          "negate": true,
+          "required": true
+        },
+        {
+          "language": {
+            "named": "jpn"
+          },
+          "negate": true,
+          "required": true
+        }
+      ]
+    },
+    {
+      "code": "trash.lang.not_german_japanese_or_english",
+      "app": "sonarr",
+      "stem": "not-german-japanese-or-english",
+      "conditions": [
+        {
+          "language": {
+            "named": "deu"
+          },
+          "negate": true,
+          "required": true
+        },
+        {
+          "language": {
+            "named": "eng"
+          },
+          "negate": true,
+          "required": true
+        },
+        {
+          "language": {
+            "named": "jpn"
+          },
+          "negate": true,
+          "required": true
+        }
+      ]
+    },
+    {
+      "code": "trash.lang.not_german_or_english",
+      "app": "radarr",
+      "stem": "not-german-or-english",
+      "conditions": [
+        {
+          "language": {
+            "named": "deu"
+          },
+          "negate": true,
+          "required": true
+        },
+        {
+          "language": {
+            "named": "eng"
+          },
+          "negate": true,
+          "required": true
+        }
+      ]
+    },
+    {
+      "code": "trash.lang.not_german_or_english",
+      "app": "sonarr",
+      "stem": "not-german-or-english",
+      "conditions": [
+        {
+          "language": {
+            "named": "deu"
+          },
+          "negate": true,
+          "required": true
+        },
+        {
+          "language": {
+            "named": "eng"
+          },
+          "negate": true,
+          "required": true
+        }
+      ]
+    },
+    {
+      "code": "trash.lang.not_original_or_german",
+      "app": "guide-only",
+      "stem": "language-not-original-or-german",
+      "conditions": [
+        {
+          "language": "original",
+          "negate": true,
+          "required": true
+        },
+        {
+          "language": {
+            "named": "deu"
+          },
+          "negate": true,
+          "required": true
+        }
+      ]
+    },
+    {
+      "code": "trash.lang.not_original",
+      "app": "radarr",
+      "stem": "language-not-original",
+      "conditions": [
+        {
+          "language": "original",
+          "negate": true,
+          "required": false
+        }
+      ]
+    },
+    {
+      "code": "trash.lang.not_original",
+      "app": "sonarr",
+      "stem": "language-not-original",
+      "conditions": [
+        {
+          "language": "original",
+          "negate": true,
+          "required": false
+        }
+      ]
+    },
+    {
+      "code": "trash.lang.prefer_dutch",
+      "app": "guide-only",
+      "stem": "language-prefer-dutch",
+      "conditions": [
+        {
+          "language": {
+            "named": "nld"
+          },
+          "negate": false,
+          "required": false
+        }
+      ]
+    },
+    {
+      "code": "trash.lang.prefer_german",
+      "app": "guide-only",
+      "stem": "language-prefer-german",
+      "conditions": [
+        {
+          "language": {
+            "named": "deu"
+          },
+          "negate": false,
+          "required": false
+        }
+      ]
+    }
+  ],
+  "fact_scores": [
+    {
+      "code": "trash.ai_enhanced",
+      "app": "radarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.ai_enhanced",
+      "app": "radarr",
+      "score_set": "german",
+      "score": -35000
+    },
+    {
+      "code": "trash.ai_enhanced",
+      "app": "radarr",
+      "score_set": "german-anime",
+      "score": -35000
+    },
+    {
+      "code": "trash.ai_enhanced",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.ai_enhanced",
+      "app": "sonarr",
+      "score_set": "german",
+      "score": -35000
+    },
+    {
+      "code": "trash.ai_enhanced",
+      "app": "sonarr",
+      "score_set": "german-anime",
+      "score": -35000
+    },
+    {
+      "code": "trash.dubs_only",
+      "app": "radarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.dubs_only",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.fastsub",
+      "app": "radarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.fastsub",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.hardcoded_subs",
+      "app": "radarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.hardcoded_subs",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.lang.german_and_original",
+      "app": "guide-only",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.lang.not_dutch",
+      "app": "guide-only",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.lang.not_english",
+      "app": "radarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.lang.not_english",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.lang.not_french",
+      "app": "radarr",
+      "score_set": "french-anime-multi",
+      "score": 0
+    },
+    {
+      "code": "trash.lang.not_french",
+      "app": "radarr",
+      "score_set": "french-anime-vostfr",
+      "score": 0
+    },
+    {
+      "code": "trash.lang.not_french",
+      "app": "radarr",
+      "score_set": "french-multi-vf",
+      "score": -10000
+    },
+    {
+      "code": "trash.lang.not_french",
+      "app": "radarr",
+      "score_set": "french-multi-vo",
+      "score": 0
+    },
+    {
+      "code": "trash.lang.not_french",
+      "app": "radarr",
+      "score_set": "french-vostfr",
+      "score": 0
+    },
+    {
+      "code": "trash.lang.not_french",
+      "app": "sonarr",
+      "score_set": "french-anime-multi",
+      "score": 0
+    },
+    {
+      "code": "trash.lang.not_french",
+      "app": "sonarr",
+      "score_set": "french-anime-vostfr",
+      "score": 0
+    },
+    {
+      "code": "trash.lang.not_french",
+      "app": "sonarr",
+      "score_set": "french-multi-vf",
+      "score": -10000
+    },
+    {
+      "code": "trash.lang.not_french",
+      "app": "sonarr",
+      "score_set": "french-multi-vo",
+      "score": 0
+    },
+    {
+      "code": "trash.lang.not_french",
+      "app": "sonarr",
+      "score_set": "french-vostfr",
+      "score": 0
+    },
+    {
+      "code": "trash.lang.not_german_japanese_korean_chinese_or_english",
+      "app": "radarr",
+      "score_set": "default",
+      "score": -35000
+    },
+    {
+      "code": "trash.lang.not_german_japanese_korean_chinese_or_english",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": -35000
+    },
+    {
+      "code": "trash.lang.not_german_japanese_or_english",
+      "app": "radarr",
+      "score_set": "default",
+      "score": -35000
+    },
+    {
+      "code": "trash.lang.not_german_japanese_or_english",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": -35000
+    },
+    {
+      "code": "trash.lang.not_german_or_english",
+      "app": "radarr",
+      "score_set": "default",
+      "score": -35000
+    },
+    {
+      "code": "trash.lang.not_german_or_english",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": -35000
+    },
+    {
+      "code": "trash.lang.not_original_or_german",
+      "app": "guide-only",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.lang.not_original",
+      "app": "radarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.lang.not_original",
+      "app": "radarr",
+      "score_set": "french-anime-multi",
+      "score": -10000
+    },
+    {
+      "code": "trash.lang.not_original",
+      "app": "radarr",
+      "score_set": "french-anime-vostfr",
+      "score": -10000
+    },
+    {
+      "code": "trash.lang.not_original",
+      "app": "radarr",
+      "score_set": "french-multi-vf",
+      "score": 0
+    },
+    {
+      "code": "trash.lang.not_original",
+      "app": "radarr",
+      "score_set": "french-multi-vo",
+      "score": -10000
+    },
+    {
+      "code": "trash.lang.not_original",
+      "app": "radarr",
+      "score_set": "french-vostfr",
+      "score": -10000
+    },
+    {
+      "code": "trash.lang.not_original",
+      "app": "radarr",
+      "score_set": "german",
+      "score": 0
+    },
+    {
+      "code": "trash.lang.not_original",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.lang.not_original",
+      "app": "sonarr",
+      "score_set": "french-anime-multi",
+      "score": -10000
+    },
+    {
+      "code": "trash.lang.not_original",
+      "app": "sonarr",
+      "score_set": "french-anime-vostfr",
+      "score": -10000
+    },
+    {
+      "code": "trash.lang.not_original",
+      "app": "sonarr",
+      "score_set": "french-multi-vf",
+      "score": 0
+    },
+    {
+      "code": "trash.lang.not_original",
+      "app": "sonarr",
+      "score_set": "french-multi-vo",
+      "score": -10000
+    },
+    {
+      "code": "trash.lang.not_original",
+      "app": "sonarr",
+      "score_set": "french-vostfr",
+      "score": -10000
+    },
+    {
+      "code": "trash.lang.prefer_dutch",
+      "app": "guide-only",
+      "score_set": "default",
+      "score": 10
+    },
+    {
+      "code": "trash.lang.prefer_german",
+      "app": "guide-only",
+      "score_set": "default",
+      "score": 10
+    },
+    {
+      "code": "trash.locale.asian.group.tier1",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 1650
+    },
+    {
+      "code": "trash.locale.asian.group.tier1",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 1650
+    },
+    {
+      "code": "trash.locale.asian.group.tier2",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 1600
+    },
+    {
+      "code": "trash.locale.asian.group.tier2",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 1600
+    },
+    {
+      "code": "trash.locale.asian.group.tier3",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 100
+    },
+    {
+      "code": "trash.locale.asian.group.tier3",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 100
+    },
+    {
+      "code": "trash.locale.asian.lq",
+      "app": "radarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.locale.asian.lq",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 1650
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 1700
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 1800
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 1950
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "radarr",
+      "score_set": "french-anime-multi",
+      "score": 1150
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "radarr",
+      "score_set": "french-anime-multi",
+      "score": 1250
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "radarr",
+      "score_set": "french-anime-multi",
+      "score": 1650
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "radarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1150
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "radarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1250
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "radarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1650
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "radarr",
+      "score_set": "french-multi-vf",
+      "score": 1700
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "radarr",
+      "score_set": "french-multi-vf",
+      "score": 1800
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "radarr",
+      "score_set": "french-multi-vf",
+      "score": 1950
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "radarr",
+      "score_set": "french-multi-vo",
+      "score": 1700
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "radarr",
+      "score_set": "french-multi-vo",
+      "score": 1800
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "radarr",
+      "score_set": "french-multi-vo",
+      "score": 1950
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "radarr",
+      "score_set": "french-vostfr",
+      "score": 0
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 1650
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 1700
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 1800
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 1900
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "sonarr",
+      "score_set": "french-anime-multi",
+      "score": 1200
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "sonarr",
+      "score_set": "french-anime-multi",
+      "score": 1250
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "sonarr",
+      "score_set": "french-anime-multi",
+      "score": 1300
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "sonarr",
+      "score_set": "french-anime-multi",
+      "score": 1650
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "sonarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1200
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "sonarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1250
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "sonarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1300
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "sonarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1650
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "sonarr",
+      "score_set": "french-multi-vf",
+      "score": 1700
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "sonarr",
+      "score_set": "french-multi-vf",
+      "score": 1800
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "sonarr",
+      "score_set": "french-multi-vf",
+      "score": 1900
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "sonarr",
+      "score_set": "french-multi-vo",
+      "score": 1700
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "sonarr",
+      "score_set": "french-multi-vo",
+      "score": 1800
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "sonarr",
+      "score_set": "french-multi-vo",
+      "score": 1900
+    },
+    {
+      "code": "trash.locale.french.group.tier1",
+      "app": "sonarr",
+      "score_set": "french-vostfr",
+      "score": 0
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 1600
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 1650
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 1750
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 1900
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "radarr",
+      "score_set": "french-anime-multi",
+      "score": 1100
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "radarr",
+      "score_set": "french-anime-multi",
+      "score": 1200
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "radarr",
+      "score_set": "french-anime-multi",
+      "score": 1600
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "radarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1100
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "radarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1200
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "radarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1600
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "radarr",
+      "score_set": "french-multi-vf",
+      "score": 1650
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "radarr",
+      "score_set": "french-multi-vf",
+      "score": 1750
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "radarr",
+      "score_set": "french-multi-vf",
+      "score": 1900
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "radarr",
+      "score_set": "french-multi-vo",
+      "score": 1650
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "radarr",
+      "score_set": "french-multi-vo",
+      "score": 1750
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "radarr",
+      "score_set": "french-multi-vo",
+      "score": 1900
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "radarr",
+      "score_set": "french-vostfr",
+      "score": 0
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 1600
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 1650
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "sonarr",
+      "score_set": "french-anime-multi",
+      "score": 1150
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "sonarr",
+      "score_set": "french-anime-multi",
+      "score": 1600
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "sonarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1150
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "sonarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1600
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "sonarr",
+      "score_set": "french-multi-vf",
+      "score": 1650
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "sonarr",
+      "score_set": "french-multi-vo",
+      "score": 1650
+    },
+    {
+      "code": "trash.locale.french.group.tier2",
+      "app": "sonarr",
+      "score_set": "french-vostfr",
+      "score": 0
+    },
+    {
+      "code": "trash.locale.french.group.tier3",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 1550
+    },
+    {
+      "code": "trash.locale.french.group.tier3",
+      "app": "radarr",
+      "score_set": "french-anime-multi",
+      "score": 1550
+    },
+    {
+      "code": "trash.locale.french.group.tier3",
+      "app": "radarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1550
+    },
+    {
+      "code": "trash.locale.french.group.tier3",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 1550
+    },
+    {
+      "code": "trash.locale.french.group.tier3",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 1600
+    },
+    {
+      "code": "trash.locale.french.group.tier3",
+      "app": "sonarr",
+      "score_set": "french-anime-multi",
+      "score": 1100
+    },
+    {
+      "code": "trash.locale.french.group.tier3",
+      "app": "sonarr",
+      "score_set": "french-anime-multi",
+      "score": 1550
+    },
+    {
+      "code": "trash.locale.french.group.tier3",
+      "app": "sonarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1100
+    },
+    {
+      "code": "trash.locale.french.group.tier3",
+      "app": "sonarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1550
+    },
+    {
+      "code": "trash.locale.french.group.tier3",
+      "app": "sonarr",
+      "score_set": "french-multi-vf",
+      "score": 1600
+    },
+    {
+      "code": "trash.locale.french.group.tier3",
+      "app": "sonarr",
+      "score_set": "french-multi-vo",
+      "score": 1600
+    },
+    {
+      "code": "trash.locale.french.group.tier3",
+      "app": "sonarr",
+      "score_set": "french-vostfr",
+      "score": 0
+    },
+    {
+      "code": "trash.locale.french.lq",
+      "app": "radarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.locale.french.lq",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.locale.french.marker.adn",
+      "app": "sonarr",
+      "score_set": "anime-sonarr",
+      "score": 1
+    },
+    {
+      "code": "trash.locale.french.marker.adn",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 7
+    },
+    {
+      "code": "trash.locale.french.marker.adn",
+      "app": "sonarr",
+      "score_set": "french-anime-multi",
+      "score": 7
+    },
+    {
+      "code": "trash.locale.french.marker.adn",
+      "app": "sonarr",
+      "score_set": "french-anime-vostfr",
+      "score": 7
+    },
+    {
+      "code": "trash.locale.french.marker.adn",
+      "app": "sonarr",
+      "score_set": "german-anime",
+      "score": 0
+    },
+    {
+      "code": "trash.locale.french.marker.anime_fansub",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 1450
+    },
+    {
+      "code": "trash.locale.french.marker.anime_fansub",
+      "app": "radarr",
+      "score_set": "french-anime-multi",
+      "score": 1450
+    },
+    {
+      "code": "trash.locale.french.marker.anime_fansub",
+      "app": "radarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1450
+    },
+    {
+      "code": "trash.locale.french.marker.anime_fansub",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 1450
+    },
+    {
+      "code": "trash.locale.french.marker.anime_fansub",
+      "app": "sonarr",
+      "score_set": "french-anime-multi",
+      "score": 1450
+    },
+    {
+      "code": "trash.locale.french.marker.anime_fansub",
+      "app": "sonarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1450
+    },
+    {
+      "code": "trash.locale.french.marker.vostfr",
+      "app": "radarr",
+      "score_set": "anime-radarr",
+      "score": -10000
+    },
+    {
+      "code": "trash.locale.french.marker.vostfr",
+      "app": "radarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.locale.french.marker.vostfr",
+      "app": "radarr",
+      "score_set": "french-anime-multi",
+      "score": 0
+    },
+    {
+      "code": "trash.locale.french.marker.vostfr",
+      "app": "radarr",
+      "score_set": "french-anime-vostfr",
+      "score": 101
+    },
+    {
+      "code": "trash.locale.french.marker.vostfr",
+      "app": "radarr",
+      "score_set": "french-multi-vf",
+      "score": 0
+    },
+    {
+      "code": "trash.locale.french.marker.vostfr",
+      "app": "radarr",
+      "score_set": "french-multi-vo",
+      "score": 0
+    },
+    {
+      "code": "trash.locale.french.marker.vostfr",
+      "app": "radarr",
+      "score_set": "french-vostfr",
+      "score": 1000
+    },
+    {
+      "code": "trash.locale.french.marker.vostfr",
+      "app": "radarr",
+      "score_set": "german-anime",
+      "score": -35000
+    },
+    {
+      "code": "trash.locale.french.marker.vostfr",
+      "app": "sonarr",
+      "score_set": "anime-sonarr",
+      "score": -10000
+    },
+    {
+      "code": "trash.locale.french.marker.vostfr",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.locale.french.marker.vostfr",
+      "app": "sonarr",
+      "score_set": "french-anime-multi",
+      "score": 0
+    },
+    {
+      "code": "trash.locale.french.marker.vostfr",
+      "app": "sonarr",
+      "score_set": "french-anime-vostfr",
+      "score": 101
+    },
+    {
+      "code": "trash.locale.french.marker.vostfr",
+      "app": "sonarr",
+      "score_set": "french-multi-vf",
+      "score": 0
+    },
+    {
+      "code": "trash.locale.french.marker.vostfr",
+      "app": "sonarr",
+      "score_set": "french-multi-vo",
+      "score": 0
+    },
+    {
+      "code": "trash.locale.french.marker.vostfr",
+      "app": "sonarr",
+      "score_set": "french-vostfr",
+      "score": 1000
+    },
+    {
+      "code": "trash.locale.french.marker.vostfr",
+      "app": "sonarr",
+      "score_set": "german-anime",
+      "score": -35000
+    },
+    {
+      "code": "trash.locale.french.scene",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 1500
+    },
+    {
+      "code": "trash.locale.french.scene",
+      "app": "radarr",
+      "score_set": "french-anime-multi",
+      "score": 1500
+    },
+    {
+      "code": "trash.locale.french.scene",
+      "app": "radarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1500
+    },
+    {
+      "code": "trash.locale.french.scene",
+      "app": "radarr",
+      "score_set": "french-multi-vf",
+      "score": 1500
+    },
+    {
+      "code": "trash.locale.french.scene",
+      "app": "radarr",
+      "score_set": "french-multi-vo",
+      "score": 1500
+    },
+    {
+      "code": "trash.locale.french.scene",
+      "app": "radarr",
+      "score_set": "french-vostfr",
+      "score": 0
+    },
+    {
+      "code": "trash.locale.french.scene",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 1500
+    },
+    {
+      "code": "trash.locale.french.scene",
+      "app": "sonarr",
+      "score_set": "french-anime-multi",
+      "score": 1500
+    },
+    {
+      "code": "trash.locale.french.scene",
+      "app": "sonarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1500
+    },
+    {
+      "code": "trash.locale.french.scene",
+      "app": "sonarr",
+      "score_set": "french-multi-vf",
+      "score": 1500
+    },
+    {
+      "code": "trash.locale.french.scene",
+      "app": "sonarr",
+      "score_set": "french-multi-vo",
+      "score": 1500
+    },
+    {
+      "code": "trash.locale.french.scene",
+      "app": "sonarr",
+      "score_set": "french-vostfr",
+      "score": 0
+    },
+    {
+      "code": "trash.locale.german.group.tier1",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 2100
+    },
+    {
+      "code": "trash.locale.german.group.tier1",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 2900
+    },
+    {
+      "code": "trash.locale.german.group.tier1",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 4000
+    },
+    {
+      "code": "trash.locale.german.group.tier1",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 2100
+    },
+    {
+      "code": "trash.locale.german.group.tier1",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 2900
+    },
+    {
+      "code": "trash.locale.german.group.tier1",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 4000
+    },
+    {
+      "code": "trash.locale.german.group.tier2",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 1900
+    },
+    {
+      "code": "trash.locale.german.group.tier2",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 2650
+    },
+    {
+      "code": "trash.locale.german.group.tier2",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 3900
+    },
+    {
+      "code": "trash.locale.german.group.tier2",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 1900
+    },
+    {
+      "code": "trash.locale.german.group.tier2",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 2650
+    },
+    {
+      "code": "trash.locale.german.group.tier2",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 3900
+    },
+    {
+      "code": "trash.locale.german.group.tier3",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 1800
+    },
+    {
+      "code": "trash.locale.german.group.tier3",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 2300
+    },
+    {
+      "code": "trash.locale.german.group.tier3",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 1800
+    },
+    {
+      "code": "trash.locale.german.group.tier3",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 2300
+    },
+    {
+      "code": "trash.locale.german.lq",
+      "app": "radarr",
+      "score_set": "default",
+      "score": -35000
+    },
+    {
+      "code": "trash.locale.german.lq",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": -35000
+    },
+    {
+      "code": "trash.locale.german.marker.subbed",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 9000
+    },
+    {
+      "code": "trash.locale.german.marker.subbed",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 9000
+    },
+    {
+      "code": "trash.locale.german.scene",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 1700
+    },
+    {
+      "code": "trash.locale.german.scene",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 1700
+    },
+    {
+      "code": "trash.obfuscated",
+      "app": "radarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.obfuscated",
+      "app": "radarr",
+      "score_set": "german",
+      "score": -35000
+    },
+    {
+      "code": "trash.obfuscated",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.obfuscated",
+      "app": "sonarr",
+      "score_set": "german",
+      "score": -35000
+    },
+    {
+      "code": "trash.proper",
+      "app": "radarr",
+      "score_set": "anime-radarr",
+      "score": 1
+    },
+    {
+      "code": "trash.proper",
+      "app": "radarr",
+      "score_set": "anime-radarr",
+      "score": 2
+    },
+    {
+      "code": "trash.proper",
+      "app": "radarr",
+      "score_set": "anime-radarr",
+      "score": 3
+    },
+    {
+      "code": "trash.proper",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 5
+    },
+    {
+      "code": "trash.proper",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 6
+    },
+    {
+      "code": "trash.proper",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 7
+    },
+    {
+      "code": "trash.proper",
+      "app": "radarr",
+      "score_set": "french-anime-multi",
+      "score": 1
+    },
+    {
+      "code": "trash.proper",
+      "app": "radarr",
+      "score_set": "french-anime-multi",
+      "score": 2
+    },
+    {
+      "code": "trash.proper",
+      "app": "radarr",
+      "score_set": "french-anime-multi",
+      "score": 3
+    },
+    {
+      "code": "trash.proper",
+      "app": "radarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1
+    },
+    {
+      "code": "trash.proper",
+      "app": "radarr",
+      "score_set": "french-anime-vostfr",
+      "score": 2
+    },
+    {
+      "code": "trash.proper",
+      "app": "radarr",
+      "score_set": "french-anime-vostfr",
+      "score": 3
+    },
+    {
+      "code": "trash.proper",
+      "app": "radarr",
+      "score_set": "sqp-4-ma-hybrid",
+      "score": 1
+    },
+    {
+      "code": "trash.proper",
+      "app": "radarr",
+      "score_set": "sqp-4-ma-hybrid",
+      "score": 2
+    },
+    {
+      "code": "trash.proper",
+      "app": "radarr",
+      "score_set": "sqp-4-ma-hybrid",
+      "score": 3
+    },
+    {
+      "code": "trash.proper",
+      "app": "sonarr",
+      "score_set": "anime-sonarr",
+      "score": 1
+    },
+    {
+      "code": "trash.proper",
+      "app": "sonarr",
+      "score_set": "anime-sonarr",
+      "score": 2
+    },
+    {
+      "code": "trash.proper",
+      "app": "sonarr",
+      "score_set": "anime-sonarr",
+      "score": 3
+    },
+    {
+      "code": "trash.proper",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 5
+    },
+    {
+      "code": "trash.proper",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 6
+    },
+    {
+      "code": "trash.proper",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 7
+    },
+    {
+      "code": "trash.proper",
+      "app": "sonarr",
+      "score_set": "french-anime-multi",
+      "score": 1
+    },
+    {
+      "code": "trash.proper",
+      "app": "sonarr",
+      "score_set": "french-anime-multi",
+      "score": 2
+    },
+    {
+      "code": "trash.proper",
+      "app": "sonarr",
+      "score_set": "french-anime-multi",
+      "score": 3
+    },
+    {
+      "code": "trash.proper",
+      "app": "sonarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1
+    },
+    {
+      "code": "trash.proper",
+      "app": "sonarr",
+      "score_set": "french-anime-vostfr",
+      "score": 2
+    },
+    {
+      "code": "trash.proper",
+      "app": "sonarr",
+      "score_set": "french-anime-vostfr",
+      "score": 3
+    },
+    {
+      "code": "trash.repack",
+      "app": "radarr",
+      "score_set": "anime-radarr",
+      "score": 1
+    },
+    {
+      "code": "trash.repack",
+      "app": "radarr",
+      "score_set": "anime-radarr",
+      "score": 2
+    },
+    {
+      "code": "trash.repack",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 5
+    },
+    {
+      "code": "trash.repack",
+      "app": "radarr",
+      "score_set": "default",
+      "score": 6
+    },
+    {
+      "code": "trash.repack",
+      "app": "radarr",
+      "score_set": "french-anime-multi",
+      "score": 1
+    },
+    {
+      "code": "trash.repack",
+      "app": "radarr",
+      "score_set": "french-anime-multi",
+      "score": 2
+    },
+    {
+      "code": "trash.repack",
+      "app": "radarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1
+    },
+    {
+      "code": "trash.repack",
+      "app": "radarr",
+      "score_set": "french-anime-vostfr",
+      "score": 2
+    },
+    {
+      "code": "trash.repack",
+      "app": "radarr",
+      "score_set": "sqp-4-ma-hybrid",
+      "score": 1
+    },
+    {
+      "code": "trash.repack",
+      "app": "radarr",
+      "score_set": "sqp-4-ma-hybrid",
+      "score": 2
+    },
+    {
+      "code": "trash.repack",
+      "app": "sonarr",
+      "score_set": "anime-sonarr",
+      "score": 1
+    },
+    {
+      "code": "trash.repack",
+      "app": "sonarr",
+      "score_set": "anime-sonarr",
+      "score": 2
+    },
+    {
+      "code": "trash.repack",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 5
+    },
+    {
+      "code": "trash.repack",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": 6
+    },
+    {
+      "code": "trash.repack",
+      "app": "sonarr",
+      "score_set": "french-anime-multi",
+      "score": 1
+    },
+    {
+      "code": "trash.repack",
+      "app": "sonarr",
+      "score_set": "french-anime-multi",
+      "score": 2
+    },
+    {
+      "code": "trash.repack",
+      "app": "sonarr",
+      "score_set": "french-anime-vostfr",
+      "score": 1
+    },
+    {
+      "code": "trash.repack",
+      "app": "sonarr",
+      "score_set": "french-anime-vostfr",
+      "score": 2
+    },
+    {
+      "code": "trash.retagged",
+      "app": "radarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.retagged",
+      "app": "radarr",
+      "score_set": "german",
+      "score": -35000
+    },
+    {
+      "code": "trash.retagged",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.retagged",
+      "app": "sonarr",
+      "score_set": "german",
+      "score": -35000
+    },
+    {
+      "code": "trash.scene",
+      "app": "radarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.scene",
+      "app": "radarr",
+      "score_set": "french-multi-vf",
+      "score": 0
+    },
+    {
+      "code": "trash.scene",
+      "app": "radarr",
+      "score_set": "french-multi-vo",
+      "score": 0
+    },
+    {
+      "code": "trash.scene",
+      "app": "radarr",
+      "score_set": "french-vostfr",
+      "score": 0
+    },
+    {
+      "code": "trash.scene",
+      "app": "radarr",
+      "score_set": "german-anime",
+      "score": 0
+    },
+    {
+      "code": "trash.scene",
+      "app": "radarr",
+      "score_set": "german",
+      "score": 0
+    },
+    {
+      "code": "trash.scene",
+      "app": "sonarr",
+      "score_set": "default",
+      "score": -10000
+    },
+    {
+      "code": "trash.scene",
+      "app": "sonarr",
+      "score_set": "french-multi-vf",
+      "score": 0
+    },
+    {
+      "code": "trash.scene",
+      "app": "sonarr",
+      "score_set": "french-multi-vo",
+      "score": 0
+    },
+    {
+      "code": "trash.scene",
+      "app": "sonarr",
+      "score_set": "german-anime",
+      "score": 0
+    },
+    {
+      "code": "trash.scene",
+      "app": "sonarr",
+      "score_set": "german",
+      "score": 0
+    }
+  ],
+  "score_set_envelopes": [
+    {
+      "score_set": "anime-radarr",
+      "min": -10000,
+      "max": 975,
+      "vetoes": [
+        -10000
+      ]
+    },
+    {
+      "score_set": "anime-sonarr",
+      "min": -10000,
+      "max": 975,
+      "vetoes": [
+        -10000
+      ]
+    },
+    {
+      "score_set": "default",
+      "min": -35000,
+      "max": 11000,
+      "vetoes": [
+        -35000,
+        -10000
+      ]
+    },
+    {
+      "score_set": "french-anime-multi",
+      "min": -10000,
+      "max": 1650,
+      "vetoes": [
+        -10000
+      ]
+    },
+    {
+      "score_set": "french-anime-vostfr",
+      "min": -10000,
+      "max": 1650,
+      "vetoes": [
+        -10000
+      ]
+    },
+    {
+      "score_set": "french-multi-vf",
+      "min": -10000,
+      "max": 1950,
+      "vetoes": [
+        -10000
+      ]
+    },
+    {
+      "score_set": "french-multi-vo",
+      "min": -10000,
+      "max": 1950,
+      "vetoes": [
+        -10000
+      ]
+    },
+    {
+      "score_set": "french-vostfr",
+      "min": -10000,
+      "max": 1000,
+      "vetoes": [
+        -10000
+      ]
+    },
+    {
+      "score_set": "german",
+      "min": -35000,
+      "max": 11000,
+      "vetoes": [
+        -35000
+      ]
+    },
+    {
+      "score_set": "german-anime",
+      "min": -35000,
+      "max": 11000,
+      "vetoes": [
+        -35000
+      ]
+    },
+    {
+      "score_set": "sqp-1-1080p",
+      "min": -10000,
+      "max": 1100,
+      "vetoes": [
+        -10000
+      ]
+    },
+    {
+      "score_set": "sqp-1-2160p",
+      "min": -10000,
+      "max": 1100,
+      "vetoes": [
+        -10000
+      ]
+    },
+    {
+      "score_set": "sqp-1-web-1080p",
+      "min": -10000,
+      "max": 1100,
+      "vetoes": [
+        -10000
+      ]
+    },
+    {
+      "score_set": "sqp-1-web-2160p",
+      "min": -10000,
+      "max": 1100,
+      "vetoes": [
+        -10000
+      ]
+    },
+    {
+      "score_set": "sqp-2",
+      "min": -10000,
+      "max": 2300,
+      "vetoes": [
+        -10000
+      ]
+    },
+    {
+      "score_set": "sqp-3",
+      "min": -10000,
+      "max": 151,
+      "vetoes": [
+        -10000
+      ]
+    },
+    {
+      "score_set": "sqp-4",
+      "min": -10000,
+      "max": 151,
+      "vetoes": [
+        -10000
+      ]
+    },
+    {
+      "score_set": "sqp-4-ma-hybrid",
+      "min": -10000,
+      "max": 3970,
+      "vetoes": [
+        -10000
+      ]
+    },
+    {
+      "score_set": "sqp-5",
+      "min": -10000,
+      "max": 2300,
+      "vetoes": [
+        -10000
+      ]
+    }
+  ]
+}
