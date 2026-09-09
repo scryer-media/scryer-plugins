@@ -1,0 +1,40 @@
+{
+  "description": "Focused native numeric scoring vectors transcribed from scoring_weights.rs and quality/profile.rs. Mandatory rejections and final minimum-score gating are host-owned.",
+  "cases": [
+    {
+      "name": "balanced-source-video",
+      "input": {"release": {"quality": "1080p", "source": "BluRay", "video_codec": "H.265"}, "profile": {"scoring_persona": "balanced", "source_allowlist": [], "source_blocklist": [], "video_codec_allowlist": [], "video_codec_blocklist": []}},
+      "entries": {"source_bluray": 150, "video_codec_quality_high": 60}
+    },
+    {
+      "name": "audiophile-lossless-atmos",
+      "input": {"release": {"audio_codecs": ["TRUEHD"], "audio_channels": "7.1", "is_atmos": true}, "profile": {"scoring_persona": "audiophile", "audio_codec_allowlist": [], "audio_codec_blocklist": []}, "context": {"category": "movie"}},
+      "entries": {"audio_codec_lossless": 400, "audio_channels": 60, "atmos_preferred_match": 150}
+    },
+    {
+      "name": "audiophile-lossless-disabled-uses-balanced-subset",
+      "input": {"release": {"audio_codecs": ["TRUEHD"], "audio_channels": null, "is_atmos": false}, "profile": {"scoring_persona": "audiophile", "scoring_overrides": {"prefer_lossless_audio": false}, "audio_codec_allowlist": [], "audio_codec_blocklist": []}, "context": {"category": "movie"}},
+      "entries": {"audio_codec_lossless": 60, "atmos_preferred_missing": -30}
+    },
+    {
+      "name": "video-allowlist-index-is-numeric-preference",
+      "input": {"release": {"video_codec": "H.264"}, "profile": {"scoring_persona": "balanced", "video_codec_allowlist": ["H.265", "H.264"], "video_codec_blocklist": []}},
+      "entries": {"video_codec_preferred_1": 60}
+    },
+    {
+      "name": "compatible-dolby-vision-is-bounded-negative",
+      "input": {"release": {"quality": "2160p", "is_dolby_vision": true, "detected_hdr": true}, "profile": {"scoring_persona": "compatible", "dolby_vision_allowed": true, "detected_hdr_allowed": true}},
+      "entries": {"dolby_vision_bonus": -50, "hdr_bonus": 40}
+    },
+    {
+      "name": "managed-dual-audio-is-the-only-active-dual-term",
+      "input": {"release": {"is_dual_audio": true}, "profile": {"scoring_persona": "balanced", "prefer_dual_audio": true}},
+      "entries": {"managed_dual_audio_preferred": 200}
+    },
+    {
+      "name": "size-pack-member-reading-cannot-earn-a-bonus",
+      "input": {"release": {"quality": "1080p", "source": "WEB-DL", "video_codec": "H.265", "is_remux": false, "is_bd_disk": false, "size_bytes": 4294967296}, "profile": {"scoring_persona": "balanced", "prefer_remux": false}, "context": {"category": "series", "coverage_total_runtime_minutes": 900, "coverage_member_runtime_minutes": 45, "coverage_member_count": 20}},
+      "invariants": ["emits size_pack_member_basis", "selected size delta is <= 0", "no hard-rejection score is emitted"]
+    }
+  ]
+}

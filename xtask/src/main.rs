@@ -222,6 +222,11 @@ struct ReleasePublishTagsArgs {
     #[arg(long)]
     pr: u64,
     #[arg(
+        long,
+        help = "Resume signed tags for exactly one rule pack at the same merged commit"
+    )]
+    resume: bool,
+    #[arg(
         long = "plugin-id",
         help = "Publish only this plugin id; repeat for multiple plugins"
     )]
@@ -3094,6 +3099,9 @@ fn create_and_verify_signed_tag(ctx: &TaskContext, tag: &str, message: &str) -> 
 }
 
 fn run_release_publish_tags(ctx: &TaskContext, args: ReleasePublishTagsArgs) -> Result<()> {
+    if args.resume && (!args.plugin_ids.is_empty() || args.rule_pack_ids.len() != 1) {
+        bail!("--resume requires exactly one --rule-pack-id and no --plugin-id");
+    }
     step("Checking merged release PR");
     require_clean_worktree(ctx)?;
     fetch_origin_main_and_tags(ctx)?;
@@ -3131,6 +3139,9 @@ fn run_release_publish_tags(ctx: &TaskContext, args: ReleasePublishTagsArgs) -> 
         .map(|target| target.tag_name.clone())
         .collect::<Vec<_>>();
     component_tags.extend(rule_pack_tags);
+    if args.resume {
+        return resume_rule_pack_tags(ctx, &component_tags[0], &merge_commit);
+    }
     for tag in &component_tags {
         println!("   {tag}");
         verify_tag_absent_locally_and_remotely(ctx, tag)?;
@@ -3166,6 +3177,108 @@ fn run_release_publish_tags(ctx: &TaskContext, args: ReleasePublishTagsArgs) -> 
         component_tags.len()
     ));
     Ok(())
+}
+
+/// Resume the same signed objects after an interrupted automated pack update.
+/// Existing refs must retain both their verified signature and target commit.
+fn resume_rule_pack_tags(ctx: &TaskContext, component_tag: &str, commit: &str) -> Result<()> {
+    let mut tags_to_push = Vec::new();
+    if ensure_resumable_signed_tag(ctx, component_tag, commit)? {
+        tags_to_push.push(component_tag.to_string());
+    }
+
+    let trigger_tag = existing_release_trigger_for_commit(ctx, commit)?
+        .unwrap_or(resumable_release_trigger(ctx, component_tag, commit)?);
+    if ensure_resumable_signed_tag(ctx, &trigger_tag, commit)? {
+        tags_to_push.push(trigger_tag.clone());
+    }
+    if !tags_to_push.is_empty() {
+        let mut push = ctx.command_in("git", &ctx.repo_root);
+        push.args(["push", "--atomic", "origin"]);
+        for tag in &tags_to_push {
+            push.arg(tag);
+        }
+        run_checked(&mut push)?;
+    }
+    ok(format!(
+        "Signed pack tags are present for {component_tag} at {commit}"
+    ));
+    Ok(())
+}
+
+/// Stable resume-only trigger name. Normal publication continues to use the
+/// timestamped `repo_release_tag_name`; retries must instead converge on the
+/// same tag for the selected pack version and merged commit.
+fn resumable_release_trigger(
+    ctx: &TaskContext,
+    component_tag: &str,
+    commit: &str,
+) -> Result<String> {
+    let resolved = git_capture(ctx, &["rev-parse", &format!("{commit}^{{commit}}")])?;
+    let short = resolved.trim().chars().take(12).collect::<String>();
+    // The release workflow accepts one path segment after its tag prefix.
+    let component = component_tag.replace('/', "_");
+    Ok(format!(
+        "{}resume-{component}-{short}",
+        repo_release_tag_prefix()
+    ))
+}
+
+/// Returns true when a verified local tag still has to be pushed. A remote-only
+/// tag is refused: the preceding tag fetch must have made its signed object
+/// available locally before an idempotent retry can trust it.
+fn ensure_resumable_signed_tag(ctx: &TaskContext, tag: &str, commit: &str) -> Result<bool> {
+    let head = git_capture(ctx, &["rev-parse", "HEAD"])?;
+    if head.trim() != commit {
+        bail!("cannot resume {tag}: requested commit is not HEAD");
+    }
+    let reference = format!("refs/tags/{tag}");
+    let mut exists = ctx.command_in("git", &ctx.repo_root);
+    exists.args(["show-ref", "--verify", "--quiet", &reference]);
+    if !run_status(&mut exists)?.success() {
+        if remote_tag_exists(ctx, tag)? {
+            bail!("cannot resume {tag}: remote tag was not fetched locally");
+        }
+        create_and_verify_signed_tag(ctx, tag, &format!("Release {tag}"))?;
+        return Ok(true);
+    }
+
+    let target = git_capture(ctx, &["rev-parse", &format!("{reference}^{{commit}}")])?;
+    if target.trim() != commit {
+        bail!("cannot resume {tag}: existing tag targets a different commit");
+    }
+    let mut verify = ctx.command_in("git", &ctx.repo_root);
+    verify.args(["verify-tag", tag]);
+    run_checked(&mut verify).with_context(|| format!("cannot resume unverified tag {tag}"))?;
+    let local = git_capture(ctx, &["rev-parse", &reference])?;
+    let remote = git_capture(ctx, &["ls-remote", "--tags", "origin", &reference])?;
+    match remote.split_whitespace().next() {
+        Some(remote_object) if remote_object != local.trim() => {
+            bail!("cannot resume {tag}: local and remote tag objects differ");
+        }
+        Some(_) => Ok(false),
+        None => Ok(true),
+    }
+}
+
+fn existing_release_trigger_for_commit(ctx: &TaskContext, commit: &str) -> Result<Option<String>> {
+    let pattern = format!("{}*", repo_release_tag_prefix());
+    let candidates = git_capture(ctx, &["tag", "--list", &pattern])?;
+    let mut matching = Vec::new();
+    for tag in candidates.lines().filter(|tag| !tag.trim().is_empty()) {
+        let target = git_capture(ctx, &["rev-parse", &format!("refs/tags/{tag}^{{commit}}")])?;
+        if target.trim() == commit {
+            let mut verify = ctx.command_in("git", &ctx.repo_root);
+            verify.args(["verify-tag", tag]);
+            run_checked(&mut verify)
+                .with_context(|| format!("cannot resume unverified release trigger {tag}"))?;
+            matching.push(tag.to_string());
+        }
+    }
+    if matching.len() > 1 {
+        bail!("cannot resume: multiple signed release triggers target {commit}");
+    }
+    Ok(matching.pop())
 }
 
 fn run_release_targets(
@@ -8541,6 +8654,24 @@ mod tests {
             _ => panic!("expected release-publish-tags command"),
         }
 
+        let resume = Cli::try_parse_from([
+            "xtask",
+            "release-publish-tags",
+            "--resume",
+            "--pr",
+            "42",
+            "--rule-pack-id",
+            "trash-guides-scoring-pack",
+        ])
+        .expect("parse resumable rule-pack publication");
+        match resume.command {
+            Commands::ReleasePublishTags(args) => {
+                assert!(args.resume);
+                assert_eq!(args.rule_pack_ids, ["trash-guides-scoring-pack"]);
+            }
+            _ => panic!("expected release-publish-tags command"),
+        }
+
         assert!(require_prepare_mode(&ReleaseOptions::default()).is_err());
     }
 
@@ -8861,6 +8992,151 @@ mod tests {
             repo_root: dir.path().to_path_buf(),
         };
         (dir, ctx)
+    }
+
+    fn git_in(dir: &Path, args: &[&str]) -> String {
+        let output = std::process::Command::new("git")
+            .arg("-C")
+            .arg(dir)
+            .args(args)
+            .output()
+            .expect("run git");
+        assert!(
+            output.status.success(),
+            "fixture git {:?} exited with {}",
+            args,
+            output.status
+        );
+        String::from_utf8(output.stdout).expect("git stdout")
+    }
+
+    fn signed_resume_repo() -> (tempfile::TempDir, TaskContext, String) {
+        let temp = tempfile::tempdir().expect("temp repository");
+        let repo = temp.path().join("repo");
+        let origin = temp.path().join("origin.git");
+        std::process::Command::new("git")
+            .args(["init", repo.to_str().expect("repo path")])
+            .status()
+            .expect("init git");
+        git_in(&repo, &["config", "user.name", "resume test"]);
+        git_in(&repo, &["config", "user.email", "resume@example.test"]);
+        let key = temp.path().join("signing-key");
+        let status = std::process::Command::new("ssh-keygen")
+            .args([
+                "-q",
+                "-t",
+                "ed25519",
+                "-N",
+                "",
+                "-f",
+                key.to_str().expect("key path"),
+            ])
+            .status()
+            .expect("generate signing key");
+        assert!(status.success(), "generate ephemeral SSH signing key");
+        let public = fs::read_to_string(key.with_extension("pub")).expect("read public key");
+        let allowed = temp.path().join("allowed-signers");
+        fs::write(&allowed, format!("resume@example.test {}", public.trim()))
+            .expect("write allowed signers");
+        git_in(&repo, &["config", "gpg.format", "ssh"]);
+        // The temporary key is owned by this fixture, not the operator's agent.
+        git_in(&repo, &["config", "gpg.ssh.program", "ssh-keygen"]);
+        git_in(
+            &repo,
+            &["config", "user.signingkey", key.to_str().expect("key path")],
+        );
+        git_in(
+            &repo,
+            &[
+                "config",
+                "gpg.ssh.allowedSignersFile",
+                allowed.to_str().expect("allowed path"),
+            ],
+        );
+        git_in(&repo, &["config", "commit.gpgsign", "true"]);
+        fs::write(repo.join("fixture"), "fixture").expect("write fixture");
+        git_in(&repo, &["add", "fixture"]);
+        git_in(&repo, &["commit", "-S", "-m", "fixture"]);
+        std::process::Command::new("git")
+            .args(["init", "--bare", origin.to_str().expect("origin path")])
+            .status()
+            .expect("init origin");
+        git_in(
+            &repo,
+            &[
+                "remote",
+                "add",
+                "origin",
+                origin.to_str().expect("origin path"),
+            ],
+        );
+        git_in(&repo, &["push", "-u", "origin", "HEAD"]);
+        let commit = git_in(&repo, &["rev-parse", "HEAD"]).trim().to_string();
+        (temp, TaskContext { repo_root: repo }, commit)
+    }
+
+    #[test]
+    fn resumable_signed_tag_accepts_the_same_verified_object_without_overwrite() {
+        let (_temp, ctx, commit) = signed_resume_repo();
+        let tag = "trash-guides-scoring-pack-v1.0.0";
+        create_and_verify_signed_tag(&ctx, tag, "fixture").expect("sign tag");
+        let object =
+            git_capture(&ctx, &["rev-parse", &format!("refs/tags/{tag}")]).expect("tag object");
+        assert!(ensure_resumable_signed_tag(&ctx, tag, &commit).expect("resume tag"));
+        assert_eq!(
+            git_capture(&ctx, &["rev-parse", &format!("refs/tags/{tag}")]).expect("tag object"),
+            object
+        );
+        git_in(&ctx.repo_root, &["push", "origin", tag]);
+        assert!(!ensure_resumable_signed_tag(&ctx, tag, &commit).expect("already pushed tag"));
+        assert_eq!(
+            git_capture(&ctx, &["rev-parse", &format!("refs/tags/{tag}")]).expect("tag object"),
+            object
+        );
+    }
+
+    #[test]
+    fn resumable_tag_rejects_wrong_target_and_untrusted_signers() {
+        let (_temp, ctx, commit) = signed_resume_repo();
+        create_and_verify_signed_tag(&ctx, "wrong-target", "fixture").expect("sign tag");
+        fs::write(ctx.repo_root.join("second"), "second").expect("write second");
+        git_in(&ctx.repo_root, &["add", "second"]);
+        git_in(&ctx.repo_root, &["commit", "-S", "-m", "second"]);
+        let new_commit = git_in(&ctx.repo_root, &["rev-parse", "HEAD"]);
+        assert!(ensure_resumable_signed_tag(&ctx, "wrong-target", new_commit.trim()).is_err());
+        assert!(ensure_resumable_signed_tag(&ctx, "must-not-create", commit.as_str()).is_err());
+        assert!(
+            git_in(&ctx.repo_root, &["tag", "--list", "must-not-create"])
+                .trim()
+                .is_empty()
+        );
+        create_and_verify_signed_tag(&ctx, "untrusted", "fixture").expect("sign tag");
+        let allowed = git_in(&ctx.repo_root, &["config", "gpg.ssh.allowedSignersFile"]);
+        fs::write(allowed.trim(), "").expect("remove fixture signer from trust store");
+        let head = git_in(&ctx.repo_root, &["rev-parse", "HEAD"]);
+        assert!(ensure_resumable_signed_tag(&ctx, "untrusted", head.trim()).is_err());
+    }
+
+    #[test]
+    fn resumable_trigger_is_stable_and_accepts_its_existing_signed_target() {
+        let (_temp, ctx, commit) = signed_resume_repo();
+        let component = "rule-packs/trash-guides-scoring-pack/v1.2.3";
+        let first = resumable_release_trigger(&ctx, component, &commit).expect("first trigger");
+        let second = resumable_release_trigger(&ctx, component, &commit).expect("second trigger");
+        assert_eq!(first, second);
+        assert!(first.starts_with(&repo_release_tag_prefix()));
+        assert!(first.contains(&component.replace('/', "_")));
+        assert!(
+            !first
+                .strip_prefix(&repo_release_tag_prefix())
+                .unwrap()
+                .contains('/')
+        );
+        create_and_verify_signed_tag(&ctx, &first, "fixture trigger").expect("sign trigger");
+        assert_eq!(
+            existing_release_trigger_for_commit(&ctx, &commit).expect("find trigger"),
+            Some(first)
+        );
     }
 
     fn write_community_v3_manifest(ctx: &TaskContext, contents: &str) {

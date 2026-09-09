@@ -1,0 +1,339 @@
+[
+  {
+    "app": "guide-only",
+    "code": "trash.lang.german_and_original",
+    "conditions": [
+      {
+        "language": {
+          "named": "deu"
+        },
+        "negate": false,
+        "required": true
+      }
+    ],
+    "stem": "language-german-and-original"
+  },
+  {
+    "app": "guide-only",
+    "code": "trash.lang.not_dutch",
+    "conditions": [
+      {
+        "language": {
+          "named": "nld"
+        },
+        "negate": true,
+        "required": true
+      }
+    ],
+    "stem": "language-not-dutch"
+  },
+  {
+    "app": "radarr",
+    "code": "trash.lang.not_english",
+    "conditions": [
+      {
+        "language": {
+          "named": "eng"
+        },
+        "negate": true,
+        "required": false
+      }
+    ],
+    "stem": "language-not-english"
+  },
+  {
+    "app": "sonarr",
+    "code": "trash.lang.not_english",
+    "conditions": [
+      {
+        "language": {
+          "named": "eng"
+        },
+        "negate": true,
+        "required": false
+      }
+    ],
+    "stem": "language-not-english"
+  },
+  {
+    "app": "radarr",
+    "code": "trash.lang.not_french",
+    "conditions": [
+      {
+        "language": {
+          "named": "fra"
+        },
+        "negate": true,
+        "required": false
+      }
+    ],
+    "stem": "language-not-french"
+  },
+  {
+    "app": "sonarr",
+    "code": "trash.lang.not_french",
+    "conditions": [
+      {
+        "language": {
+          "named": "fra"
+        },
+        "negate": true,
+        "required": false
+      }
+    ],
+    "stem": "language-not-french"
+  },
+  {
+    "app": "radarr",
+    "code": "trash.lang.not_german_japanese_korean_chinese_or_english",
+    "conditions": [
+      {
+        "language": {
+          "named": "deu"
+        },
+        "negate": true,
+        "required": true
+      },
+      {
+        "language": {
+          "named": "eng"
+        },
+        "negate": true,
+        "required": true
+      },
+      {
+        "language": {
+          "named": "jpn"
+        },
+        "negate": true,
+        "required": true
+      },
+      {
+        "language": {
+          "named": "kor"
+        },
+        "negate": true,
+        "required": true
+      },
+      {
+        "language": {
+          "named": "zho"
+        },
+        "negate": true,
+        "required": true
+      }
+    ],
+    "stem": "not-german-japanese-korean-chinese-or-english"
+  },
+  {
+    "app": "sonarr",
+    "code": "trash.lang.not_german_japanese_korean_chinese_or_english",
+    "conditions": [
+      {
+        "language": {
+          "named": "deu"
+        },
+        "negate": true,
+        "required": true
+      },
+      {
+        "language": {
+          "named": "eng"
+        },
+        "negate": true,
+        "required": true
+      },
+      {
+        "language": {
+          "named": "jpn"
+        },
+        "negate": true,
+        "required": true
+      },
+      {
+        "language": {
+          "named": "kor"
+        },
+        "negate": true,
+        "required": true
+      },
+      {
+        "language": {
+          "named": "zho"
+        },
+        "negate": true,
+        "required": true
+      }
+    ],
+    "stem": "not-german-japanese-korean-chinese-or-english"
+  },
+  {
+    "app": "radarr",
+    "code": "trash.lang.not_german_japanese_or_english",
+    "conditions": [
+      {
+        "language": {
+          "named": "deu"
+        },
+        "negate": true,
+        "required": true
+      },
+      {
+        "language": {
+          "named": "eng"
+        },
+        "negate": true,
+        "required": true
+      },
+      {
+        "language": {
+          "named": "jpn"
+        },
+        "negate": true,
+        "required": true
+      }
+    ],
+    "stem": "not-german-japanese-or-english"
+  },
+  {
+    "app": "sonarr",
+    "code": "trash.lang.not_german_japanese_or_english",
+    "conditions": [
+      {
+        "language": {
+          "named": "deu"
+        },
+        "negate": true,
+        "required": true
+      },
+      {
+        "language": {
+          "named": "eng"
+        },
+        "negate": true,
+        "required": true
+      },
+      {
+        "language": {
+          "named": "jpn"
+        },
+        "negate": true,
+        "required": true
+      }
+    ],
+    "stem": "not-german-japanese-or-english"
+  },
+  {
+    "app": "radarr",
+    "code": "trash.lang.not_german_or_english",
+    "conditions": [
+      {
+        "language": {
+          "named": "deu"
+        },
+        "negate": true,
+        "required": true
+      },
+      {
+        "language": {
+          "named": "eng"
+        },
+        "negate": true,
+        "required": true
+      }
+    ],
+    "stem": "not-german-or-english"
+  },
+  {
+    "app": "sonarr",
+    "code": "trash.lang.not_german_or_english",
+    "conditions": [
+      {
+        "language": {
+          "named": "deu"
+        },
+        "negate": true,
+        "required": true
+      },
+      {
+        "language": {
+          "named": "eng"
+        },
+        "negate": true,
+        "required": true
+      }
+    ],
+    "stem": "not-german-or-english"
+  },
+  {
+    "app": "radarr",
+    "code": "trash.lang.not_original",
+    "conditions": [
+      {
+        "language": "original",
+        "negate": true,
+        "required": false
+      }
+    ],
+    "stem": "language-not-original"
+  },
+  {
+    "app": "sonarr",
+    "code": "trash.lang.not_original",
+    "conditions": [
+      {
+        "language": "original",
+        "negate": true,
+        "required": false
+      }
+    ],
+    "stem": "language-not-original"
+  },
+  {
+    "app": "guide-only",
+    "code": "trash.lang.not_original_or_german",
+    "conditions": [
+      {
+        "language": {
+          "named": "deu"
+        },
+        "negate": true,
+        "required": true
+      },
+      {
+        "language": "original",
+        "negate": true,
+        "required": true
+      }
+    ],
+    "stem": "language-not-original-or-german"
+  },
+  {
+    "app": "guide-only",
+    "code": "trash.lang.prefer_dutch",
+    "conditions": [
+      {
+        "language": {
+          "named": "nld"
+        },
+        "negate": false,
+        "required": false
+      }
+    ],
+    "stem": "language-prefer-dutch"
+  },
+  {
+    "app": "guide-only",
+    "code": "trash.lang.prefer_german",
+    "conditions": [
+      {
+        "language": {
+          "named": "deu"
+        },
+        "negate": false,
+        "required": false
+      }
+    ],
+    "stem": "language-prefer-german"
+  }
+]
