@@ -73,7 +73,7 @@ checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 
 [[package]]
 name = "cardigann-engine"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "base64 0.23.1",
  "chrono",
@@ -851,7 +851,7 @@ dependencies = [
 [[package]]
 name = "scryer-plugin-sdk"
 version = "3.10.0"
-source = "git+https://github.com/scryer-media/scryer.git?branch=release-NEXT#fae8f346685503811c76e763662649456add9809"
+source = "git+https://github.com/scryer-media/scryer.git?branch=release-NEXT#1832d35a096414adde8ff78c8d31733d6ebca49c"
 dependencies = [
  "base64 0.22.1",
  "schemars",

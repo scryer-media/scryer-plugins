@@ -174,6 +174,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             help_text: Some(
                 "Direct RSS feed URL for the torrent tracker or aggregator".to_string(),
             ),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "download_preference".to_string(),
@@ -215,6 +216,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
                 "Which RSS field should be used as the download URL when multiple candidates exist"
                     .to_string(),
             ),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "username".to_string(),
@@ -227,6 +229,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             host_binding: None,
             options: vec![],
             help_text: Some("Optional username for HTTP basic auth".to_string()),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "password".to_string(),
@@ -239,6 +242,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             host_binding: None,
             options: vec![],
             help_text: Some("Optional password for HTTP basic auth".to_string()),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "cookie".to_string(),
@@ -254,6 +258,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
                 "Optional raw Cookie header for private trackers that gate RSS with session cookies"
                     .to_string(),
             ),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "user_agent".to_string(),
@@ -266,11 +271,14 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             host_binding: None,
             options: vec![],
             help_text: Some("Optional custom User-Agent header".to_string()),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "additional_headers".to_string(),
             label: "Additional Headers".to_string(),
-            field_type: ConfigFieldType::String,
+            // The help text has always said one header per line; the field type
+            // said otherwise, so the form only ever offered a single line.
+            field_type: ConfigFieldType::Multiline,
             required: false,
             default_value: None,
             value_source: Default::default(),
@@ -280,6 +288,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             help_text: Some(
                 "Optional extra headers, one per line, formatted as Header-Name: value".to_string(),
             ),
+            ..Default::default()
         },
     ]
 }

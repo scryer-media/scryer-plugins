@@ -20,13 +20,13 @@ use scryer_plugin_pdk::log::LogLevel;
 use scryer_plugin_pdk::*;
 pub use scryer_plugin_sdk::command::{PluginActionRequest, PluginActionResponse};
 pub use scryer_plugin_sdk::{
-    ConfigFieldDef, ConfigFieldRole, ConfigFieldType, IndexerCapabilities as Capabilities,
-    IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode,
-    IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures,
-    IndexerSearchIncompleteReason, IndexerSearchInput, IndexerSearchInvalidResponseKind,
-    IndexerSearchPluginError, IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor,
-    PluginError, PluginErrorCode, PluginErrorDetails, PluginResult,
-    PluginScoringPolicy as ScoringPolicy, PluginSearchRequest as SearchRequest,
+    ConditionOp, ConfigFieldDef, ConfigFieldRole, ConfigFieldType, FieldCondition,
+    IndexerCapabilities as Capabilities, IndexerCategoryModel, IndexerCategoryValueKind,
+    IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol,
+    IndexerResponseFeatures, IndexerSearchIncompleteReason, IndexerSearchInput,
+    IndexerSearchInvalidResponseKind, IndexerSearchPluginError, IndexerSourceKind,
+    IndexerTorrentCapabilities, PluginDescriptor, PluginError, PluginErrorCode, PluginErrorDetails,
+    PluginResult, PluginScoringPolicy as ScoringPolicy, PluginSearchRequest as SearchRequest,
     PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult,
     PluginSearchSubjectKind, ProviderDescriptor, SDK_VERSION, current_sdk_constraint,
 };
@@ -339,18 +339,29 @@ pub fn standard_config_fields(default_base_url: Option<&str>) -> Vec<ConfigField
             host_binding: None,
             options: vec![],
             help_text: Some("Indexer site URL, for example https://indexer.example".to_string()),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "api_key".to_string(),
             label: "API Key".to_string(),
             field_type: ConfigFieldType::Password,
+            // Every bundled profile authenticates by API key, so the field is
+            // required the moment one is chosen. It stays optional before a
+            // choice is made, and for Custom, where the operator may be wiring
+            // up a service we know nothing about.
             required: false,
+            required_when: Some(FieldCondition {
+                key: "profile_id".to_string(),
+                op: ConditionOp::NotIn,
+                values: vec![String::new(), "custom".to_string()],
+            }),
             default_value: None,
             value_source: Default::default(),
             role: None,
             host_binding: None,
             options: vec![],
             help_text: Some("Indexer API key".to_string()),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "api_path".to_string(),
@@ -363,6 +374,8 @@ pub fn standard_config_fields(default_base_url: Option<&str>) -> Vec<ConfigField
             host_binding: None,
             options: vec![],
             help_text: Some("API endpoint path (e.g. /api, /api/v1/api, /nabapi)".to_string()),
+            advanced: true,
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "additional_params".to_string(),
@@ -378,6 +391,8 @@ pub fn standard_config_fields(default_base_url: Option<&str>) -> Vec<ConfigField
                 "Extra query parameters appended to every request (e.g. &dl=1&attrs=poster)"
                     .to_string(),
             ),
+            advanced: true,
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "request_interval_ms".to_string(),
@@ -392,6 +407,8 @@ pub fn standard_config_fields(default_base_url: Option<&str>) -> Vec<ConfigField
             help_text: Some(
                 "Minimum delay between upstream request starts; defaults to 2000 ms.".to_string(),
             ),
+            advanced: true,
+            ..Default::default()
         },
     ]
 }
@@ -5485,6 +5502,52 @@ mod tests {
         assert_eq!(fields[3].key, "additional_params");
         assert_eq!(fields[4].key, "request_interval_ms");
         assert_eq!(fields[4].default_value.as_deref(), Some("500"));
+
+        // Connecting needs a URL and a key; the rest is tuning and sits behind
+        // the advanced disclosure. Shared with Torznab, which uses these fields
+        // too.
+        assert!(!fields[0].advanced, "base_url is what you connect with");
+        assert!(!fields[1].advanced, "api_key is what you connect with");
+        for index in [2, 3, 4] {
+            assert!(
+                fields[index].advanced,
+                "{} is tuning",
+                fields[index].key
+            );
+        }
+    }
+
+    /// The API key is not required outright, because Custom may point at a
+    /// service we know nothing about — but every bundled profile authenticates
+    /// by key, so choosing one makes it required. This is the nzbgeek case.
+    #[test]
+    fn api_key_is_required_once_a_known_provider_is_chosen() {
+        let fields = standard_config_fields(None);
+        let api_key = fields
+            .iter()
+            .find(|field| field.key == "api_key")
+            .expect("api_key is declared");
+        assert!(!api_key.required);
+
+        let condition = api_key
+            .required_when
+            .as_ref()
+            .expect("api_key raises on the chosen profile");
+        assert_eq!(condition.key, "profile_id");
+        assert_eq!(condition.op, ConditionOp::NotIn);
+
+        let holds = |value: &str| {
+            !condition
+                .values
+                .iter()
+                .any(|candidate| candidate == value.trim())
+        };
+        assert!(holds("nzbgeek"), "a known provider needs its key");
+        assert!(!holds("custom"), "Custom may be keyless");
+        assert!(
+            !holds(""),
+            "nothing is demanded before a provider is chosen"
+        );
     }
 
     #[test]

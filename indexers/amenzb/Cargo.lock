@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "amenzb-indexer"
-version = "2.2.0"
+version = "2.2.1"
 dependencies = [
  "newznab-common",
  "scryer-plugin-pdk",
@@ -513,7 +513,7 @@ dependencies = [
 [[package]]
 name = "scryer-plugin-sdk"
 version = "3.10.0"
-source = "git+https://github.com/scryer-media/scryer.git?branch=release-NEXT#fae8f346685503811c76e763662649456add9809"
+source = "git+https://github.com/scryer-media/scryer.git?branch=release-NEXT#1832d35a096414adde8ff78c8d31733d6ebca49c"
 dependencies = [
  "base64",
  "schemars",

@@ -149,29 +149,32 @@ fn config_fields() -> Vec<sdk::ConfigFieldDef> {
             Some(sdk::ConfigFieldRole::ConnectionUrl),
             Some("The tracker URL selected from the definition's links."),
         ),
-        // Not required in general: selecting a bundled definition supplies the
-        // YAML. `load_definition_source` is what enforces it for Custom, so the
-        // operator gets one clear message instead of a field-level demand the
-        // bundled path would never satisfy.
-        field(
-            "definition_yaml",
-            "Cardigann Definition",
-            sdk::ConfigFieldType::Multiline,
-            false,
-            None,
-            Some(
-                "A Prowlarr Cardigann v11 YAML definition. Required only when Tracker Definition \
-                 is Custom; a bundled definition supersedes anything pasted here.",
-            ),
-        ),
-        field(
-            "extra_field_data_json",
-            "Definition Settings JSON",
-            sdk::ConfigFieldType::Multiline,
-            false,
-            None,
-            Some("JSON object for definition-specific Cardigann settings."),
-        ),
+        // Only meaningful for Custom, and required there. This used to be
+        // unconditionally optional with the rule explained in prose and
+        // enforced later by `load_definition_source`; the form can state it now.
+        sdk::ConfigFieldDef {
+            visible_when: Some(custom_definition_selected()),
+            required_when: Some(custom_definition_selected()),
+            ..field(
+                "definition_yaml",
+                "Cardigann Definition",
+                sdk::ConfigFieldType::Multiline,
+                false,
+                None,
+                Some("A Prowlarr Cardigann v11 YAML definition."),
+            )
+        },
+        sdk::ConfigFieldDef {
+            advanced: true,
+            ..field(
+                "extra_field_data_json",
+                "Definition Settings JSON",
+                sdk::ConfigFieldType::Multiline,
+                false,
+                None,
+                Some("JSON object for definition-specific Cardigann settings."),
+            )
+        },
         field(
             "username",
             "Username",
@@ -188,23 +191,39 @@ fn config_fields() -> Vec<sdk::ConfigFieldDef> {
             None,
             None,
         ),
-        field(
-            "cookie",
-            "Cookie",
-            sdk::ConfigFieldType::Password,
-            false,
-            None,
-            Some("Optional initial tracker cookie."),
-        ),
-        field(
-            "cardigannCaptcha",
-            "CAPTCHA Answer",
-            sdk::ConfigFieldType::String,
-            false,
-            None,
-            Some("Answer returned for a Cardigann image CAPTCHA."),
-        ),
+        sdk::ConfigFieldDef {
+            advanced: true,
+            ..field(
+                "cookie",
+                "Cookie",
+                sdk::ConfigFieldType::Password,
+                false,
+                None,
+                Some("Optional initial tracker cookie."),
+            )
+        },
+        sdk::ConfigFieldDef {
+            advanced: true,
+            ..field(
+                "cardigannCaptcha",
+                "CAPTCHA Answer",
+                sdk::ConfigFieldType::String,
+                false,
+                None,
+                Some("Answer returned for a Cardigann image CAPTCHA."),
+            )
+        },
     ]
+}
+
+/// The Tracker Definition sitting on Custom, which is when a pasted definition
+/// is both the only source and a required one.
+fn custom_definition_selected() -> sdk::FieldCondition {
+    sdk::FieldCondition {
+        key: "definition".to_string(),
+        op: sdk::ConditionOp::Eq,
+        values: vec![baked::CUSTOM_DEFINITION_ID.to_string()],
+    }
 }
 
 fn field(
@@ -226,6 +245,7 @@ fn field(
         host_binding: None,
         options: vec![],
         help_text: help_text.map(str::to_string),
+        ..Default::default()
     }
 }
 
@@ -547,21 +567,89 @@ search:
     fn configuration_leads_with_the_definition_selector_and_demotes_pasted_yaml() {
         let fields = config_fields();
         assert_eq!(fields[0].key, "definition");
-        assert_eq!(fields[0].field_type, sdk::ConfigFieldType::Select);
+        assert_eq!(fields[0].field_type, sdk::ConfigFieldType::FilteredSelect);
         let pasted = fields
             .iter()
             .find(|field| field.key == "definition_yaml")
             .expect("the paste-in escape hatch stays available");
         assert!(
             !pasted.required,
-            "a bundled definition supplies the YAML, so the field cannot be required"
+            "a bundled definition supplies the YAML, so the field is not required outright"
         );
+
+        // It is required, and only shown, when the selector sits on Custom.
+        let custom = |key: &str| (key == "definition").then_some("custom");
+        let bundled = |key: &str| (key == "definition").then_some("0magnet");
+        assert!(scryer_plugin_sdk_visible(pasted, custom));
+        assert!(scryer_plugin_sdk_required(pasted, custom));
+        assert!(!scryer_plugin_sdk_visible(pasted, bundled));
+        assert!(!scryer_plugin_sdk_required(pasted, bundled));
+
         assert!(
             fields
                 .iter()
                 .find(|field| field.key == "base_url")
                 .is_some_and(|field| field.required)
         );
+    }
+
+    /// The host evaluates conditions; these mirror its rules so a declaration
+    /// change that would read differently there fails here first.
+    fn scryer_plugin_sdk_visible<'a>(
+        field: &sdk::ConfigFieldDef,
+        value_of: impl Fn(&str) -> Option<&'a str>,
+    ) -> bool {
+        field
+            .visible_when
+            .as_ref()
+            .is_none_or(|condition| condition_holds(condition, value_of(&condition.key)))
+    }
+
+    fn scryer_plugin_sdk_required<'a>(
+        field: &sdk::ConfigFieldDef,
+        value_of: impl Fn(&str) -> Option<&'a str> + Copy,
+    ) -> bool {
+        scryer_plugin_sdk_visible(field, value_of)
+            && (field.required
+                || field
+                    .required_when
+                    .as_ref()
+                    .is_some_and(|condition| condition_holds(condition, value_of(&condition.key))))
+    }
+
+    fn condition_holds(condition: &sdk::FieldCondition, value: Option<&str>) -> bool {
+        let value = value.map(str::trim).unwrap_or("");
+        match condition.op {
+            sdk::ConditionOp::Eq => condition.values.first().is_some_and(|f| f == value),
+            sdk::ConditionOp::Ne => !condition.values.first().is_some_and(|f| f == value),
+            sdk::ConditionOp::In => condition.values.iter().any(|c| c == value),
+            sdk::ConditionOp::NotIn => !condition.values.iter().any(|c| c == value),
+            sdk::ConditionOp::NonEmpty => !value.is_empty(),
+        }
+    }
+
+    #[test]
+    fn secondary_configuration_sits_behind_the_advanced_disclosure() {
+        let fields = config_fields();
+        let advanced: Vec<&str> = fields
+            .iter()
+            .filter(|field| field.advanced)
+            .map(|field| field.key.as_str())
+            .collect();
+        assert_eq!(
+            advanced,
+            vec!["extra_field_data_json", "cookie", "cardigannCaptcha"]
+        );
+        // The things an operator needs to connect at all stay up front.
+        for key in ["definition", "base_url", "username", "password"] {
+            assert!(
+                fields
+                    .iter()
+                    .find(|field| field.key == key)
+                    .is_some_and(|field| !field.advanced),
+                "{key} belongs in the standard set"
+            );
+        }
     }
 
     #[test]
