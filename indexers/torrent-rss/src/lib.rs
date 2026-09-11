@@ -3,6 +3,7 @@ use std::collections::{BTreeMap, HashMap};
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
+use regex::Regex;
 use scryer_plugin_pdk::component::{self, LogLevel, StartRateGate};
 use scryer_plugin_pdk::*;
 use scryer_plugin_sdk::current_sdk_constraint;
@@ -42,6 +43,68 @@ enum DownloadPreference {
     Magnet,
     Link,
     Guid,
+}
+
+/// One operator-supplied title rewrite, applied before Scryer parses the item.
+///
+/// Some release groups name episodes in a form Scryer's parser cannot read:
+/// a group that numbers a long-running series by its TVDB season while the
+/// title carries only a bare number, or a token that the parser mistakes for
+/// metadata. A rule maps such a title onto a form the parser handles, and the
+/// original title is kept in the result's provider metadata so the change is
+/// visible in every decision record.
+struct TitleRewriteRule {
+    pattern: Regex,
+    replacement: String,
+}
+
+/// Parse `title_rewrite_rules`: one `regex => replacement` per line, applied in
+/// order. Blank lines and lines starting with `#` are ignored. A rule that does
+/// not parse is a configuration error and fails the search loudly rather than
+/// silently passing titles through unchanged.
+fn parse_title_rewrite_rules(text: &str) -> Result<Vec<TitleRewriteRule>, Error> {
+    let mut rules = Vec::new();
+    for (index, line) in text.lines().enumerate() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let Some((pattern, replacement)) = line.split_once("=>") else {
+            return Err(Error::msg(format!(
+                "title_rewrite_rules line {}: expected `<regex> => <replacement>`",
+                index + 1
+            )));
+        };
+        let pattern = Regex::new(pattern.trim()).map_err(|error| {
+            Error::msg(format!(
+                "title_rewrite_rules line {}: invalid regex: {error}",
+                index + 1
+            ))
+        })?;
+        rules.push(TitleRewriteRule {
+            pattern,
+            replacement: replacement.trim().to_string(),
+        });
+    }
+    Ok(rules)
+}
+
+/// Apply every rule in order. Returns the rewritten title and whether any rule
+/// matched, so the caller can record the original title only when it changed.
+fn apply_title_rewrites(rules: &[TitleRewriteRule], title: &str) -> (String, bool) {
+    let mut current = title.to_string();
+    let mut changed = false;
+    for rule in rules {
+        let next = rule
+            .pattern
+            .replace_all(&current, rule.replacement.as_str())
+            .into_owned();
+        if next != current {
+            changed = true;
+            current = next;
+        }
+    }
+    (current, changed)
 }
 
 fn build_descriptor() -> PluginDescriptor {
@@ -138,6 +201,8 @@ async fn search(req: SearchRequest) -> Result<SearchResponse, Error> {
         .unwrap_or_else(|| "Scryer Torrent RSS Indexer/0.1".to_string());
     let additional_headers = optional_config("additional_headers").unwrap_or_default();
     let preference = download_preference(optional_config("download_preference"));
+    let rewrite_rules =
+        parse_title_rewrite_rules(&optional_config("title_rewrite_rules").unwrap_or_default())?;
 
     let body = fetch_feed(
         feed_url.trim(),
@@ -150,7 +215,7 @@ async fn search(req: SearchRequest) -> Result<SearchResponse, Error> {
     .await?;
 
     let limit = req.limit.clamp(1, 200);
-    let mut results = parse_rss_feed(&body, preference);
+    let mut results = parse_rss_feed(&body, preference, &rewrite_rules);
     results = filter_results(results, &req, limit);
 
     Ok(SearchResponse {
@@ -288,6 +353,28 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             help_text: Some(
                 "Optional extra headers, one per line, formatted as Header-Name: value".to_string(),
             ),
+            ..Default::default()
+        },
+        ConfigFieldDef {
+            key: "title_rewrite_rules".to_string(),
+            label: "Title Rewrite Rules".to_string(),
+            field_type: ConfigFieldType::Multiline,
+            required: false,
+            default_value: None,
+            value_source: Default::default(),
+            role: None,
+            host_binding: None,
+            options: vec![],
+            help_text: Some(
+                "Optional, one rule per line: <regex> => <replacement>, applied in order to each \
+                 item title before Scryer parses it. Use $1, $2 for capture groups. For a group \
+                 whose numbering Scryer cannot read, e.g. \
+                 ^\\[FSP\\] Battle Through The Heavens NF - (\\d{3}) \\[4K\\]( V2)?$ => \
+                 [FSP] Battle Through The Heavens - S05E$1 [2160p]$2 . The original title is \
+                 kept as original_title in the result's provider metadata."
+                    .to_string(),
+            ),
+            advanced: true,
             ..Default::default()
         },
     ]
@@ -428,7 +515,11 @@ fn redact_url_for_log(url: &str) -> String {
     format!("{base}?{redacted_query}")
 }
 
-fn parse_rss_feed(body: &str, preference: DownloadPreference) -> Vec<SearchResult> {
+fn parse_rss_feed(
+    body: &str,
+    preference: DownloadPreference,
+    rewrite_rules: &[TitleRewriteRule],
+) -> Vec<SearchResult> {
     let mut reader = Reader::from_str(body);
     reader.config_mut().trim_text(true);
 
@@ -488,7 +579,7 @@ fn parse_rss_feed(body: &str, preference: DownloadPreference) -> Vec<SearchResul
                 if name == "item" {
                     in_item = false;
                     current_tag = None;
-                    if let Some(result) = build_result(item, preference) {
+                    if let Some(result) = build_result(item, preference, rewrite_rules) {
                         results.push(result);
                     }
                     item = ParsedItem::default();
@@ -569,13 +660,33 @@ fn parse_attr_pair(event: &BytesStart<'_>) -> Option<(String, String)> {
     Some((name?, value?))
 }
 
-fn build_result(item: ParsedItem, preference: DownloadPreference) -> Option<SearchResult> {
-    let title = item.title.clone()?.trim().to_string();
-    if title.is_empty() {
+fn build_result(
+    item: ParsedItem,
+    preference: DownloadPreference,
+    rewrite_rules: &[TitleRewriteRule],
+) -> Option<SearchResult> {
+    let original_title = item.title.clone()?.trim().to_string();
+    if original_title.is_empty() {
         return None;
+    }
+    let (title, rewritten) = apply_title_rewrites(rewrite_rules, &original_title);
+    // The host log import only exists inside the component; native unit tests
+    // exercise the rewrite without a host, so the log stays wasm-only.
+    #[cfg(target_arch = "wasm32")]
+    if rewritten {
+        log!(
+            LogLevel::Debug,
+            "title rewritten by title_rewrite_rules: {original_title:?} -> {title:?}"
+        );
     }
 
     let mut extra = HashMap::new();
+    if rewritten {
+        extra.insert(
+            "original_title".to_string(),
+            serde_json::Value::from(original_title.clone()),
+        );
+    }
     let mut languages = Vec::new();
     let mut grabs = None;
     let mut info_hash = None;
@@ -1037,7 +1148,7 @@ mod tests {
     use super::*;
 
     fn parse(body: &str, preference: DownloadPreference) -> Vec<SearchResult> {
-        parse_rss_feed(body, preference)
+        parse_rss_feed(body, preference, &[])
     }
 
     #[test]
@@ -1208,5 +1319,54 @@ mod tests {
 
         assert_eq!(filtered.len(), 1);
         assert_eq!(filtered[0].title, "Show.S01E02.1080p.WEB");
+    }
+
+    #[test]
+    fn title_rewrite_rules_parse_in_order_and_ignore_comments_and_blanks() {
+        let rules = parse_title_rewrite_rules(
+            "# donghua numbering\n\n^Foo NF - (\\d{3}) => Foo - S05E$1\n\\[4K\\] => [2160p]\n",
+        )
+        .expect("rules parse");
+        assert_eq!(rules.len(), 2);
+        let (title, changed) = apply_title_rewrites(&rules, "Foo NF - 210 [4K]");
+        assert!(changed);
+        assert_eq!(title, "Foo - S05E210 [2160p]");
+    }
+
+    #[test]
+    fn title_rewrite_leaves_non_matching_titles_alone() {
+        let rules = parse_title_rewrite_rules("^Foo NF - (\\d{3}) => Foo - S05E$1").unwrap();
+        let (title, changed) = apply_title_rewrites(&rules, "Bar.S01E02.1080p.WEB");
+        assert!(!changed);
+        assert_eq!(title, "Bar.S01E02.1080p.WEB");
+    }
+
+    #[test]
+    fn title_rewrite_rule_without_separator_or_with_bad_regex_is_an_error() {
+        assert!(parse_title_rewrite_rules("no separator here").is_err());
+        assert!(parse_title_rewrite_rules("([unclosed => x").is_err());
+        assert!(parse_title_rewrite_rules("").unwrap().is_empty());
+    }
+
+    #[test]
+    fn rewritten_feed_item_keeps_the_original_title_in_provider_extra() {
+        let body = r#"<?xml version="1.0"?><rss><channel><item>
+            <title>[FSP] Battle Through The Heavens NF - 210 [4K]</title>
+            <link>https://example.invalid/download/1.torrent</link>
+        </item></channel></rss>"#;
+        let rules = parse_title_rewrite_rules(
+            "^\\[FSP\\] Battle Through The Heavens NF - (\\d{3}) \\[4K\\]( V2)?$ => [FSP] Battle Through The Heavens - S05E$1 [2160p]$2",
+        )
+        .unwrap();
+        let results = parse_rss_feed(body, DownloadPreference::Auto, &rules);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].title, "[FSP] Battle Through The Heavens - S05E210 [2160p]");
+        assert_eq!(
+            results[0].provider_extra.get("original_title").and_then(|v| v.as_str()),
+            Some("[FSP] Battle Through The Heavens NF - 210 [4K]")
+        );
+        let untouched = parse_rss_feed(body, DownloadPreference::Auto, &[]);
+        assert_eq!(untouched[0].title, "[FSP] Battle Through The Heavens NF - 210 [4K]");
+        assert!(untouched[0].provider_extra.get("original_title").is_none());
     }
 }
