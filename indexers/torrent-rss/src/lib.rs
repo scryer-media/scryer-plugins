@@ -1360,13 +1360,22 @@ mod tests {
         .unwrap();
         let results = parse_rss_feed(body, DownloadPreference::Auto, &rules);
         assert_eq!(results.len(), 1);
-        assert_eq!(results[0].title, "[FSP] Battle Through The Heavens - S05E210 [2160p]");
         assert_eq!(
-            results[0].provider_extra.get("original_title").and_then(|v| v.as_str()),
+            results[0].title,
+            "[FSP] Battle Through The Heavens - S05E210 [2160p]"
+        );
+        assert_eq!(
+            results[0]
+                .provider_extra
+                .get("original_title")
+                .and_then(|v| v.as_str()),
             Some("[FSP] Battle Through The Heavens NF - 210 [4K]")
         );
         let untouched = parse_rss_feed(body, DownloadPreference::Auto, &[]);
-        assert_eq!(untouched[0].title, "[FSP] Battle Through The Heavens NF - 210 [4K]");
+        assert_eq!(
+            untouched[0].title,
+            "[FSP] Battle Through The Heavens NF - 210 [4K]"
+        );
         assert!(untouched[0].provider_extra.get("original_title").is_none());
     }
 }
