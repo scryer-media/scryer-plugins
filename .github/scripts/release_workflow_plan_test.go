@@ -165,3 +165,33 @@ func TestCentralAssetsIncludeOnlyStagedVersionsAndFailMissingNewFiles(t *testing
 		t.Fatal("newline filename accepted")
 	}
 }
+
+func TestCatalogOnlyGateAllowsOnlyUnbuiltPluginRepublication(t *testing.T) {
+	ref := catalogOnlyTriggerPrefix + "1788221093-b379212825fe-from-b379212825fe"
+	if !isCatalogOnlyRelease("push", ref) {
+		t.Fatal("catalog-only trigger not detected")
+	}
+	if isCatalogOnlyRelease("push", releaseTriggerPrefix+"1788221093-b379212825fe") {
+		t.Fatal("ordinary release trigger treated as catalog-only")
+	}
+	if isCatalogOnlyRelease("workflow_dispatch", ref) {
+		t.Fatal("dispatch treated as catalog-only")
+	}
+	if !centralPublishAllowed("push", ref, true, false, "skipped", "skipped", "skipped") {
+		t.Fatal("catalog-only republication rejected")
+	}
+	for _, state := range []string{"success", "failure", "cancelled", ""} {
+		if centralPublishAllowed("push", ref, true, false, state, "skipped", "skipped") {
+			t.Errorf("accepted plugin build state %q under a catalog-only trigger", state)
+		}
+		if centralPublishAllowed("push", ref, true, false, "skipped", "skipped", state) {
+			t.Errorf("accepted provenance state %q under a catalog-only trigger", state)
+		}
+	}
+	if centralPublishAllowed("push", ref, true, true, "skipped", "skipped", "skipped") {
+		t.Fatal("catalog-only trigger accepted rule packs")
+	}
+	if centralPublishAllowed("push", ref, false, false, "skipped", "skipped", "skipped") {
+		t.Fatal("catalog-only trigger accepted an empty plan")
+	}
+}

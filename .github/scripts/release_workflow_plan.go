@@ -17,6 +17,11 @@ import (
 
 const releaseTriggerPrefix = "refs/tags/plugins-v3/release/"
 
+// catalogOnlyTriggerPrefix marks a trigger that republishes the central catalog
+// from component releases that already exist. Nothing is rebuilt or re-signed, so
+// the build, rule-pack, and provenance jobs are gated off and report "skipped".
+const catalogOnlyTriggerPrefix = releaseTriggerPrefix + "catalog-"
+
 type releaseComponent struct {
 	ID      string
 	Version string
@@ -168,9 +173,21 @@ func successfulOrSkipped(status string) bool {
 	return status == "success" || status == "skipped"
 }
 
+func isCatalogOnlyRelease(eventName, ref string) bool {
+	return isReleasePush(eventName, ref) && strings.HasPrefix(ref, catalogOnlyTriggerPrefix) && len(ref) > len(catalogOnlyTriggerPrefix)
+}
+
 func centralPublishAllowed(eventName, ref string, hasPlugins, hasRulePacks bool, pluginBuild, rulePackBuild, provenance string) bool {
 	if !isReleasePush(eventName, ref) || (!hasPlugins && !hasRulePacks) {
 		return false
+	}
+	if isCatalogOnlyRelease(eventName, ref) {
+		// A catalog-only republication must have rebuilt nothing: any non-skipped
+		// build or provenance result means the gating drifted and the run is not
+		// the republication it claims to be. Rule packs cannot be republished this
+		// way because their assets are staged by the build jobs.
+		return hasPlugins && !hasRulePacks &&
+			pluginBuild == "skipped" && rulePackBuild == "skipped" && provenance == "skipped"
 	}
 	if hasPlugins && (pluginBuild != "success" || provenance != "success") {
 		return false
