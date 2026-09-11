@@ -1376,6 +1376,6 @@ mod tests {
             untouched[0].title,
             "[FSP] Battle Through The Heavens NF - 210 [4K]"
         );
-        assert!(untouched[0].provider_extra.get("original_title").is_none());
+        assert!(!untouched[0].provider_extra.contains_key("original_title"));
     }
 }
