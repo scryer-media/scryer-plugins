@@ -1484,9 +1484,10 @@ mod tests {
     #[test]
     fn a_magnets_btih_identifies_the_item_without_a_release_hash() {
         let mut request = add_request("magnet_uri");
-        request.source.magnet_uri =
-            Some("magnet:?xt=urn:btih:ABCDEF0123456789ABCDEF0123456789ABCDEF01&dn=placeholder"
-                .to_string());
+        request.source.magnet_uri = Some(
+            "magnet:?xt=urn:btih:ABCDEF0123456789ABCDEF0123456789ABCDEF01&dn=placeholder"
+                .to_string(),
+        );
         assert_eq!(
             derive_info_hash(&request).as_deref(),
             Some("abcdef0123456789abcdef0123456789abcdef01")
