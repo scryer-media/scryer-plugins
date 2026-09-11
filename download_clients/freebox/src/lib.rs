@@ -526,6 +526,7 @@ fn priority_field(key: &str, label: &str) -> ConfigFieldDef {
             },
         ],
         help_text: None,
+        ..Default::default()
     }
 }
 
@@ -2017,6 +2018,7 @@ fn field(
         role: None,
         options: vec![],
         help_text: help_text.map(str::to_string),
+        ..Default::default()
     }
 }
 

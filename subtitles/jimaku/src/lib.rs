@@ -356,6 +356,7 @@ fn config_field(
         role: None,
         options: vec![],
         help_text: None,
+        ..Default::default()
     }
 }
 
