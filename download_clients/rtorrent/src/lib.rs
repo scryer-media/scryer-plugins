@@ -15,6 +15,7 @@ use scryer_plugin_sdk::{
     PluginTorrentItem, ProviderDescriptor, SDK_VERSION,
 };
 use serde::{Deserialize, Serialize};
+use sha1::{Digest, Sha1};
 
 const IMPORTED_VIEW: &str = "scryer_imported";
 const ROUTING_CATEGORY_CUSTOM_KEY: &str = "scryer.routing_category";
@@ -214,14 +215,12 @@ pub fn scryer_download_add(input: String) -> FnResult<String> {
     if int_response(&response)? != 0 {
         return Err(Error::msg("rTorrent did not accept the torrent"));
     }
-    let hash = request
-        .release
-        .info_hash_v1
-        .as_deref()
-        .or(request.release.info_hash_hint.as_deref())
-        .map(normalize_hash)
-        .filter(|value| !value.is_empty())
-        .ok_or_else(|| Error::msg("rTorrent add requires an info hash from the release"))?;
+    // rTorrent has already taken the torrent by this point, so refusing here
+    // would leave the daemon downloading something Scryer has no handle on.
+    // Fall back to the magnet's btih and then to the torrent itself before
+    // giving up.
+    let hash = derive_info_hash(&request)
+        .ok_or_else(|| Error::msg("rTorrent add could not determine the torrent's info hash"))?;
     store_seed_config(&hash, &request)?;
     Ok(serde_json::to_string(&PluginResult::Ok(
         PluginDownloadClientAddResponse {
@@ -1106,6 +1105,218 @@ fn decode_category(value: &str) -> String {
         .unwrap_or_else(|_| value.to_string())
 }
 
+/// The release's hash first, then the magnet's `btih` (hex or base32), then
+/// SHA-1 of the bencoded `info` dictionary. The same three sources, in the same
+/// order, that the aria2, flood, and qBittorrent plugins resolve.
+fn derive_info_hash(request: &PluginDownloadClientAddRequest) -> Option<String> {
+    request
+        .release
+        .info_hash_v1
+        .clone()
+        .or_else(|| request.release.info_hash_hint.clone())
+        .map(|value| normalize_hash(&value))
+        .filter(|value| value.len() == 40)
+        .or_else(|| {
+            [
+                request.source.magnet_uri.as_deref(),
+                request.source.download_url.as_deref(),
+                request.source.torrent_url.as_deref(),
+            ]
+            .into_iter()
+            .flatten()
+            .find_map(parse_magnet_info_hash)
+        })
+        .or_else(|| {
+            request
+                .source
+                .torrent_bytes_base64
+                .as_deref()
+                .and_then(|value| STANDARD.decode(value).ok())
+                .and_then(|bytes| compute_torrent_info_hash(&bytes))
+        })
+}
+
+fn parse_magnet_info_hash(uri: &str) -> Option<String> {
+    let trimmed = uri.trim();
+    if !trimmed
+        .as_bytes()
+        .get(..8)
+        .is_some_and(|prefix| prefix.eq_ignore_ascii_case(b"magnet:?"))
+    {
+        return None;
+    }
+    for part in trimmed[8..].split('&') {
+        let Some((key, value)) = part.split_once('=') else {
+            continue;
+        };
+        if !key.eq_ignore_ascii_case("xt") && !key.eq_ignore_ascii_case("xt.1") {
+            continue;
+        }
+        let decoded = percent_decode(value);
+        if !decoded
+            .as_bytes()
+            .get(..9)
+            .is_some_and(|prefix| prefix.eq_ignore_ascii_case(b"urn:btih:"))
+        {
+            continue;
+        }
+        if let Some(hash) = normalize_btih(&decoded[9..]) {
+            return Some(hash);
+        }
+    }
+    None
+}
+
+fn normalize_btih(value: &str) -> Option<String> {
+    let value = value.trim();
+    if value.len() == 40 && value.chars().all(|ch| ch.is_ascii_hexdigit()) {
+        return Some(value.to_ascii_lowercase());
+    }
+    if value.len() == 32 {
+        let decoded = decode_base32(value)?;
+        if decoded.len() == 20 {
+            return Some(to_lower_hex(&decoded));
+        }
+    }
+    None
+}
+
+/// RFC 4648 base32 without padding, the second `btih` encoding a magnet may
+/// carry.
+fn decode_base32(value: &str) -> Option<Vec<u8>> {
+    let mut bits = 0u32;
+    let mut pending = 0u32;
+    let mut out = Vec::with_capacity(value.len() * 5 / 8);
+    for ch in value.chars() {
+        if ch == '=' {
+            break;
+        }
+        let index = match ch {
+            'A'..='Z' => ch as u32 - 'A' as u32,
+            'a'..='z' => ch as u32 - 'a' as u32,
+            '2'..='7' => ch as u32 - '2' as u32 + 26,
+            _ => return None,
+        };
+        bits = (bits << 5) | index;
+        pending += 5;
+        if pending >= 8 {
+            pending -= 8;
+            out.push((bits >> pending) as u8);
+        }
+    }
+    Some(out)
+}
+
+fn percent_decode(value: &str) -> String {
+    let bytes = value.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut idx = 0usize;
+    while idx < bytes.len() {
+        if bytes[idx] == b'%'
+            && idx + 2 < bytes.len()
+            && let Ok(hex) = std::str::from_utf8(&bytes[idx + 1..idx + 3])
+            && let Ok(byte) = u8::from_str_radix(hex, 16)
+        {
+            out.push(byte);
+            idx += 3;
+            continue;
+        }
+        out.push(bytes[idx]);
+        idx += 1;
+    }
+    String::from_utf8_lossy(&out).to_string()
+}
+
+/// SHA-1 over the raw bencoded `info` value, byte for byte as it appeared in
+/// the file.
+fn compute_torrent_info_hash(bytes: &[u8]) -> Option<String> {
+    let (start, end) = find_info_dict_range(bytes)?;
+    let mut hasher = Sha1::new();
+    hasher.update(&bytes[start..end]);
+    Some(to_lower_hex(&hasher.finalize()))
+}
+
+fn find_info_dict_range(bytes: &[u8]) -> Option<(usize, usize)> {
+    if bytes.first().copied() != Some(b'd') {
+        return None;
+    }
+    let mut idx = 1usize;
+    while idx < bytes.len() && bytes[idx] != b'e' {
+        let (key, value_start) = parse_bencoded_string(bytes, idx)?;
+        let value_end = parse_bencoded_value(bytes, value_start)?;
+        if key == b"info" {
+            return Some((value_start, value_end));
+        }
+        idx = value_end;
+    }
+    None
+}
+
+fn parse_bencoded_string(bytes: &[u8], start: usize) -> Option<(&[u8], usize)> {
+    let mut idx = start;
+    while idx < bytes.len() && bytes[idx] != b':' {
+        if !bytes[idx].is_ascii_digit() {
+            return None;
+        }
+        idx += 1;
+    }
+    if idx >= bytes.len() || idx == start {
+        return None;
+    }
+    let len = std::str::from_utf8(&bytes[start..idx])
+        .ok()?
+        .parse::<usize>()
+        .ok()?;
+    let data_start = idx + 1;
+    let data_end = data_start.checked_add(len)?;
+    if data_end > bytes.len() {
+        return None;
+    }
+    Some((&bytes[data_start..data_end], data_end))
+}
+
+fn parse_bencoded_value(bytes: &[u8], start: usize) -> Option<usize> {
+    match bytes.get(start)? {
+        b'i' => {
+            let mut idx = start + 1;
+            while idx < bytes.len() && bytes[idx] != b'e' {
+                idx += 1;
+            }
+            (idx < bytes.len()).then_some(idx + 1)
+        }
+        b'l' => {
+            let mut idx = start + 1;
+            while idx < bytes.len() && bytes[idx] != b'e' {
+                idx = parse_bencoded_value(bytes, idx)?;
+            }
+            (idx < bytes.len()).then_some(idx + 1)
+        }
+        b'd' => {
+            let mut idx = start + 1;
+            while idx < bytes.len() && bytes[idx] != b'e' {
+                let (_, next) = parse_bencoded_string(bytes, idx)?;
+                idx = parse_bencoded_value(bytes, next)?;
+            }
+            (idx < bytes.len()).then_some(idx + 1)
+        }
+        b'0'..=b'9' => parse_bencoded_string(bytes, start).map(|(_, end)| end),
+        _ => None,
+    }
+}
+
+fn to_lower_hex(bytes: &[u8]) -> String {
+    let mut out = String::with_capacity(bytes.len() * 2);
+    for byte in bytes {
+        out.push(nibble_to_hex(byte >> 4));
+        out.push(nibble_to_hex(byte & 0x0f));
+    }
+    out
+}
+
+fn nibble_to_hex(nibble: u8) -> char {
+    char::from_digit(u32::from(nibble), 16).unwrap_or('0')
+}
+
 fn normalize_hash(value: &str) -> String {
     value
         .trim()
@@ -1244,6 +1455,75 @@ mod tests {
             download_client.capabilities.mark_imported_non_destructive,
             "post-import category and view updates do not delete the rTorrent payload"
         );
+    }
+
+    fn add_request(kind: &str) -> PluginDownloadClientAddRequest {
+        serde_json::from_str(&format!(
+            r#"{{"source":{{"kind":"{kind}"}},"release":{{}},
+                "title":{{"title_name":"Placeholder Title","media_facet":"tv"}},"routing":{{}}}}"#
+        ))
+        .expect("a minimal add request")
+    }
+
+    // -----------------------------------------------------------------------
+    // Info-hash derivation
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn the_release_hash_still_wins_when_scryer_supplies_one() {
+        let mut request = add_request("magnet_uri");
+        request.release.info_hash_v1 = Some("ABCDEF0123456789ABCDEF0123456789ABCDEF01".to_string());
+        request.source.magnet_uri =
+            Some("magnet:?xt=urn:btih:1111111111111111111111111111111111111111".to_string());
+        assert_eq!(
+            derive_info_hash(&request).as_deref(),
+            Some("abcdef0123456789abcdef0123456789abcdef01")
+        );
+    }
+
+    #[test]
+    fn a_magnets_btih_identifies_the_item_without_a_release_hash() {
+        let mut request = add_request("magnet_uri");
+        request.source.magnet_uri =
+            Some("magnet:?xt=urn:btih:ABCDEF0123456789ABCDEF0123456789ABCDEF01&dn=placeholder"
+                .to_string());
+        assert_eq!(
+            derive_info_hash(&request).as_deref(),
+            Some("abcdef0123456789abcdef0123456789abcdef01")
+        );
+    }
+
+    #[test]
+    fn a_percent_encoded_base32_btih_is_decoded_to_hex() {
+        // The base32 form of d8f95f33... below, as a magnet may spell it.
+        let mut request = add_request("magnet_uri");
+        request.source.magnet_uri =
+            Some("magnet:?xt=urn%3Abtih%3A3D4V6M7RB4YS5E6FIACUC6RJOPXIWKJW".to_string());
+        assert_eq!(
+            derive_info_hash(&request).as_deref(),
+            Some("d8f95f33f10f312e93c54005417a2973ee8b2936")
+        );
+    }
+
+    #[test]
+    fn uploaded_torrent_bytes_are_hashed_over_the_bencoded_info_value() {
+        // A synthetic single-file torrent. Its `info` value is
+        // `d6:lengthi12345e4:name14:synthetic.file12:piece lengthi16384e6:pieces20:01234567890123456789e`
+        // and `shasum -a 1` over exactly those 93 bytes gives the hash below.
+        let torrent = b"d8:announce22:http://tracker.invalid4:infod6:lengthi12345e4:name14:synthetic.file12:piece lengthi16384e6:pieces20:01234567890123456789ee";
+        let mut request = add_request("torrent_bytes");
+        request.source.torrent_bytes_base64 = Some(STANDARD.encode(torrent));
+        assert_eq!(
+            derive_info_hash(&request).as_deref(),
+            Some("d8f95f33f10f312e93c54005417a2973ee8b2936")
+        );
+    }
+
+    #[test]
+    fn a_url_only_source_derives_no_hash() {
+        let mut request = add_request("torrent_url");
+        request.source.torrent_url = Some("http://tracker.invalid/file.torrent".to_string());
+        assert_eq!(derive_info_hash(&request), None);
     }
 
     fn finished_torrent(ratio_per_mille: i64) -> RTorrentTorrent {
