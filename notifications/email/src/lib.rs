@@ -145,6 +145,7 @@ fn descriptor() -> PluginDescriptor {
                     help_text: Some(
                         "SMTP transport security: plain, STARTTLS, or implicit TLS.".to_string(),
                     ),
+                    ..Default::default()
                 },
                 field(
                     "from_address",
@@ -234,6 +235,7 @@ fn field(
         role: None,
         options: vec![],
         help_text: None,
+        ..Default::default()
     }
 }
 

@@ -120,6 +120,7 @@ type pack struct {
 	Description   string     `json:"description"`
 	Author        string     `json:"author"`
 	Version       string     `json:"version"`
+	Customizable  bool       `json:"customizable"`
 	Rules         []packRule `json:"rules"`
 }
 
@@ -158,9 +159,11 @@ func main() {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return errors.New("expected fetch, generate, or check")
+		return errors.New("expected fetch, generate, check, or refresh")
 	}
 	switch args[0] {
+	case "refresh":
+		return runRefresh(args[1:])
 	case "fetch":
 		flags := flag.NewFlagSet("fetch", flag.ContinueOnError)
 		flags.SetOutput(io.Discard)
@@ -940,7 +943,7 @@ func buildArtifacts(snapshot Snapshot, overrides Overrides, previous *Snapshot, 
 	if err := json.Unmarshal(reportBytes, &reportMap); err != nil {
 		return nil, err
 	}
-	packBytes, err := json.MarshalIndent(pack{SchemaVersion: schemaVersion, ID: packID, Name: "SeaDex Scoring Pack", Description: "Prefer exact SeaDex-recommended anime releases.", Author: "community", Version: version, Rules: []packRule{{ID: ruleID, Title: "Prefer SeaDex recommendations", Description: "Boost listed SeaDex releases, with higher priority for best releases.", Category: "Anime", AppliedFacets: []string{"anime"}, RegoSource: policy}}}, "", "  ")
+	packBytes, err := json.MarshalIndent(pack{SchemaVersion: schemaVersion, ID: packID, Name: "SeaDex Scoring Pack", Description: "Prefer exact SeaDex-recommended anime releases.", Author: "community", Version: version, Customizable: false, Rules: []packRule{{ID: ruleID, Title: "Prefer SeaDex recommendations", Description: "Boost listed SeaDex releases, with higher priority for best releases.", Category: "Anime", AppliedFacets: []string{"anime"}, RegoSource: policy}}}, "", "  ")
 	if err != nil {
 		return nil, err
 	}

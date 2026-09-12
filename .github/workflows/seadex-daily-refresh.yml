@@ -1,0 +1,119 @@
+name: seadex-daily-refresh
+
+on:
+  schedule:
+    - cron: "53 4 * * *"
+  workflow_dispatch:
+
+permissions: read-all
+
+concurrency:
+  group: seadex-daily-refresh
+  cancel-in-progress: false
+
+env:
+  REFRESH_BRANCH: feature/seadex-daily-refresh
+
+jobs:
+  refresh:
+    if: ${{ vars.RULE_PACK_REFRESH_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      RULE_PACK_REFRESH_TOKEN: ${{ secrets.RULE_PACK_REFRESH_TOKEN }}
+      RULE_PACK_REFRESH_SIGNING_KEY: ${{ secrets.RULE_PACK_REFRESH_SIGNING_KEY }}
+      RULE_PACK_REFRESH_ALLOWED_SIGNERS: ${{ vars.RULE_PACK_REFRESH_ALLOWED_SIGNERS }}
+      RULE_PACK_HOST_VALIDATION_SHA: ${{ vars.RULE_PACK_HOST_VALIDATION_SHA }}
+    steps:
+      - name: Require configured refresh credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$RULE_PACK_REFRESH_TOKEN" || { echo "RULE_PACK_REFRESH_TOKEN is required" >&2; exit 1; }
+          test -n "$RULE_PACK_REFRESH_SIGNING_KEY" || { echo "RULE_PACK_REFRESH_SIGNING_KEY is required for signed commits" >&2; exit 1; }
+          test -n "$RULE_PACK_REFRESH_ALLOWED_SIGNERS" || { echo "RULE_PACK_REFRESH_ALLOWED_SIGNERS is required" >&2; exit 1; }
+          [[ "$RULE_PACK_HOST_VALIDATION_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "RULE_PACK_HOST_VALIDATION_SHA must be an immutable 40-hex commit" >&2; exit 1; }
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: main
+          token: ${{ secrets.RULE_PACK_REFRESH_TOKEN }}
+
+      - name: Capture the integration base
+        id: base
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --prune origin main
+          git checkout --detach origin/main
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Run helper unit tests
+        working-directory: rule_packs/refresh
+        run: go test ./...
+
+      - name: Run converter regression tests
+        working-directory: rule_packs/seadex
+        run: go test ./...
+
+      - name: Fetch the current SeaDex snapshot
+        working-directory: rule_packs/seadex
+        run: go run . fetch --output "$RUNNER_TEMP/seadex-incoming.json.gz"
+
+      - name: Stage a refresh only when the scoring policy changes
+        id: refresh
+        working-directory: rule_packs/seadex
+        shell: bash
+        run: |
+          set -euo pipefail
+          previous="$RUNNER_TEMP/seadex-previous.json.gz"
+          cp snapshot.json.gz "$previous"
+          staged="$RUNNER_TEMP/seadex-staged"
+          go run . refresh \
+            --snapshot "$RUNNER_TEMP/seadex-incoming.json.gz" \
+            --previous-snapshot "$previous" \
+            --current-pack ../seadex-scoring.json \
+            --output-dir "$staged" \
+            --github-output "$GITHUB_OUTPUT"
+          if [ ! -d "$staged" ]; then
+            echo "SeaDex scoring policy is unchanged; no refresh needed"
+            exit 0
+          fi
+          cp "$staged/seadex-scoring.json" "$staged/seadex-scoring.rego" "$staged/seadex-coverage.json" ..
+          cp "$staged/snapshot.json.gz" snapshot.json.gz
+          version="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' ../seadex-scoring.json)"
+          go run . check --snapshot snapshot.json.gz --previous-snapshot "$previous" --output-dir .. --pack-version "$version"
+
+      - name: Validate the generated pack on the pinned production runtime
+        if: ${{ steps.refresh.outputs.changed == 'true' }}
+        uses: ./.github/actions/rule-pack-host-validation
+        with:
+          pack-path: ${{ github.workspace }}/rule_packs/seadex-scoring.json
+          host-sha: ${{ vars.RULE_PACK_HOST_VALIDATION_SHA }}
+
+      - name: Enforce generated-only diff
+        if: ${{ steps.refresh.outputs.changed == 'true' }}
+        working-directory: rule_packs/refresh
+        run: go run . verify-diff --profile seadex --base "${{ steps.base.outputs.sha }}"
+
+      - name: Commit and open the signed refresh pull request
+        if: ${{ steps.refresh.outputs.changed == 'true' }}
+        uses: ./.github/actions/rule-pack-refresh-pr
+        with:
+          branch: ${{ env.REFRESH_BRANCH }}
+          pack-label: SeaDex
+          version: ${{ steps.refresh.outputs.version }}
+          fingerprint: ${{ steps.refresh.outputs.snapshot_sha256 }}
+          paths: |
+            rule_packs/seadex-scoring.json
+            rule_packs/seadex-scoring.rego
+            rule_packs/seadex-coverage.json
+            rule_packs/seadex/snapshot.json.gz
+          token: ${{ secrets.RULE_PACK_REFRESH_TOKEN }}
+          signing-key: ${{ secrets.RULE_PACK_REFRESH_SIGNING_KEY }}
+          allowed-signers: ${{ vars.RULE_PACK_REFRESH_ALLOWED_SIGNERS }}
+          bot-email: ${{ vars.RULE_PACK_REFRESH_BOT_EMAIL }}

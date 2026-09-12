@@ -2042,6 +2042,7 @@ fn additional_tags_field() -> ConfigFieldDef {
             },
         ],
         help_text: Some("Metadata-derived tags added to new torrents".to_string()),
+        ..Default::default()
     }
 }
 
@@ -2064,6 +2065,7 @@ fn field(
         role: None,
         options: vec![],
         help_text: help_text.map(str::to_string),
+        ..Default::default()
     }
 }
 

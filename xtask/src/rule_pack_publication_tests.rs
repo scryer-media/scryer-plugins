@@ -42,6 +42,7 @@ fn historical_rule_pack(id: &str, version: &str) -> CatalogV3RulePackEntry {
             min_scryer_version: Some("0.20.0".to_string()),
             rule_pack_digests: vec![DIGEST.to_string()],
             rule_pack_bytes: Some(12),
+            customizable: true,
             artifacts: vec![rule_pack_artifact(id, version)],
         }],
     }
@@ -226,4 +227,86 @@ fn pack_only_prepare_requires_baseline_before_writing() {
         !out.exists(),
         "baseline failure must happen before writing rule-pack or catalog artifacts"
     );
+}
+
+#[test]
+fn rule_pack_customizable_defaults_to_true_and_is_omitted_from_catalog_output() {
+    let (_directory, ctx) = temp_context();
+    write_rule_pack_fixture(&ctx);
+
+    let manifest = load_rule_pack_manifest(&ctx.path("rule_packs/selected-pack.json"))
+        .expect("load legacy rule-pack manifest");
+    assert!(manifest.customizable);
+
+    let release = CatalogV3RulePackRelease {
+        version: "1.0.0".to_string(),
+        min_scryer_version: None,
+        rule_pack_digests: vec![DIGEST.to_string()],
+        rule_pack_bytes: Some(1),
+        customizable: true,
+        artifacts: vec![rule_pack_artifact("selected-pack", "1.0.0")],
+    };
+    let serialized = serde_json::to_value(release).expect("serialize catalog release");
+    assert!(serialized.get("customizable").is_none());
+}
+
+#[test]
+fn rule_pack_customizable_false_propagates_to_catalog_release() {
+    let (_directory, ctx) = temp_context();
+    write_rule_pack_fixture(&ctx);
+    write_file(
+        &ctx.path("rule_packs/selected-pack.json"),
+        r#"{
+  "schema_version": 1,
+  "id": "selected-pack",
+  "name": "Selected pack",
+  "description": "A tiny selected fixture pack.",
+  "author": "fixture",
+  "version": "1.1.0",
+  "customizable": false,
+  "rules": [{"id": "fixture"}]
+}
+"#,
+    );
+    let baseline = write_existing_catalog(&ctx);
+    let out = ctx.path("out");
+
+    run_catalog_prepare_v3(&ctx, pack_only_args(out.clone(), Some(baseline)))
+        .expect("prepare catalog with non-customizable pack");
+
+    let catalog = read_catalog_v3_from_path(&ctx, &out.join(CATALOG_V3_SNIPPET_JSON))
+        .expect("read prepared catalog");
+    let release = catalog
+        .rule_packs
+        .iter()
+        .find(|pack| pack.id == "selected-pack")
+        .expect("selected pack")
+        .releases
+        .iter()
+        .find(|release| release.version == "1.1.0")
+        .expect("selected pack release");
+    assert!(!release.customizable);
+}
+
+#[test]
+fn rule_pack_customizable_rejects_non_boolean_values() {
+    let (_directory, ctx) = temp_context();
+    write_file(
+        &ctx.path("rule_packs/invalid.json"),
+        r#"{
+  "schema_version": 1,
+  "id": "invalid",
+  "name": "Invalid pack",
+  "description": "Fixture",
+  "author": "fixture",
+  "version": "1.0.0",
+  "customizable": "false",
+  "rules": [{"id": "fixture"}]
+}
+"#,
+    );
+
+    let error = load_rule_pack_manifest(&ctx.path("rule_packs/invalid.json"))
+        .expect_err("string customizable value must be rejected");
+    assert!(format!("{error:#}").contains("invalid type"), "{error:#}");
 }

@@ -2645,6 +2645,7 @@ fn field(
         role: None,
         options: vec![],
         help_text: help_text.map(str::to_string),
+        ..Default::default()
     }
 }
 

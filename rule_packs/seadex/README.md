@@ -18,8 +18,8 @@ Run commands from this directory:
 
 ```sh
 go run . fetch --output snapshot.json.gz
-go run . generate --snapshot snapshot.json.gz --output-dir .. --pack-version 1.0.0
-go run . check --snapshot snapshot.json.gz --output-dir .. --pack-version 1.0.0
+go run . generate --snapshot snapshot.json.gz --output-dir .. --pack-version 1.0.1
+go run . check --snapshot snapshot.json.gz --output-dir .. --pack-version 1.0.1
 ```
 
 `fetch` retrieves every SeaDex page and writes a normalized snapshot. It
@@ -42,8 +42,39 @@ exclusions. No overrides file is committed; the default is an empty override
 set. `check` regenerates in memory and exits nonzero when any artifact is
 missing or differs; it does not write artifacts.
 
+`refresh` stages the next stable patch version from an already-fetched snapshot:
+
+```sh
+go run . refresh \
+  --snapshot /tmp/seadex-incoming.json.gz \
+  --previous-snapshot snapshot.json.gz \
+  --current-pack ../seadex-scoring.json \
+  --output-dir /tmp/seadex-staged
+```
+
+The output directory must not exist. When the generated scoring policy changes,
+it receives all three artifacts and `snapshot.json.gz`, with additions and
+removals measured against the previous snapshot. Identical policy output,
+including changes only to notes or timestamps, produces no files and keeps the
+current version. The command prints JSON containing `changed`, `version`, and
+the fetched `snapshot_sha256`; `--github-output "$GITHUB_OUTPUT"` also appends
+these three workflow outputs. On an unchanged result, the checksum describes
+the fetched snapshot, while the committed snapshot remains untouched.
+
+This command performs no network requests, source-checkout edits, commits, or
+publication. It rejects empty snapshots, malformed inputs, stale overrides,
+prerelease versions, and existing staging destinations before replacing any
+valid output. Pass the same `--overrides` file used by the current pack.
+
+The scheduled `seadex-daily-refresh` workflow runs `fetch` and `refresh`, copies
+a staged result into place, reruns `check` with the previous snapshot, validates
+the generated policy on the pinned Scryer runtime, and opens a signed
+generated-only pull request that publishes after it merges. See the
+[refresh helper README](../refresh/README.md) for the shared activation steps.
+
 `--pack-version` sets the immutable SemVer version written to both the pack
-and coverage report. It defaults to `1.0.0` for this initial pack. Supply the
+and coverage report. It defaults to `1.0.0`; the committed pack is `1.0.1`,
+which marks the pack non-customizable (`customizable: false`). Supply the
 same explicit version to `generate` and `check`; a different version makes
 `check` report the existing artifacts as outdated.
 

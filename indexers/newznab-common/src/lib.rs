@@ -825,6 +825,7 @@ pub async fn execute_full_search(
     let newznab_cat = build_category_param(&req.categories);
 
     let endpoint = build_endpoint(&config.base_url, &config.api_path)?;
+    let search_caps = resolve_search_caps_for_search(config, &endpoint).await?;
 
     // Paginated search: fetch up to DEFAULT_MAX_SEARCH_PAGES pages.
     // Stop early if a page returns fewer results than the page size.
@@ -849,6 +850,7 @@ pub async fn execute_full_search(
         let search_result = if search_shape == NabSearchShape::AnimeExact {
             execute_exact_anime_search(
                 &endpoint,
+                search_caps.as_ref(),
                 &query_variants,
                 &config.api_key,
                 tmdb_id.as_deref(),
@@ -867,6 +869,7 @@ pub async fn execute_full_search(
         } else {
             execute_tiered_search(
                 &endpoint,
+                search_caps.as_ref(),
                 search_type,
                 &query_variants,
                 &config.api_key,
@@ -1215,8 +1218,9 @@ async fn execute_rss_search(
         }
     };
 
-    // Determine which search types to use based on categories and facet
-    let search_types = rss_search_types(req);
+    // Determine which search types to use based on categories, facet and caps
+    let search_caps = resolve_search_caps_for_search(config, &endpoint).await?;
+    let search_types = rss_search_types(req, search_caps.as_ref());
 
     log!(
         LogLevel::Info,
@@ -1381,7 +1385,7 @@ async fn execute_rss_search(
     })
 }
 
-fn rss_search_types(req: &SearchRequest) -> Vec<&'static str> {
+fn rss_search_types(req: &SearchRequest, caps: Option<&NewznabSearchCaps>) -> Vec<&'static str> {
     let has_movie_cats = req.categories.iter().any(|c| c.starts_with('2'));
     let has_tv_cats = req.categories.iter().any(|c| c.starts_with('5'));
     let facet_movie = matches!(req.facet.as_deref(), Some("movie"));
@@ -1399,7 +1403,232 @@ fn rss_search_types(req: &SearchRequest) -> Vec<&'static str> {
         search_types.push("tvsearch");
         search_types.push("movie");
     }
+
+    // A server that does not advertise a mode gets the plain `t=search` feed
+    // instead of a request it documented as unsupported.
+    if let Some(caps) = caps {
+        let mut gated: Vec<&'static str> = Vec::new();
+        for search_type in search_types {
+            let effective = if caps.mode(search_type).available {
+                search_type
+            } else {
+                "search"
+            };
+            if !gated.contains(&effective) {
+                gated.push(effective);
+            }
+        }
+        return gated;
+    }
     search_types
+}
+
+// ---------------------------------------------------------------------------
+// Capability-driven search parameter gating
+// ---------------------------------------------------------------------------
+
+/// One mode of a Newznab `t=caps` `<searching>` block.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct NewznabSearchMode {
+    pub available: bool,
+    /// Lower-cased `supportedParams` entries. A listed mode without the
+    /// attribute defaults to `q`, matching Prowlarr and Sonarr.
+    pub params: Vec<String>,
+}
+
+impl NewznabSearchMode {
+    fn supports(&self, param: &str) -> bool {
+        self.available && self.params.iter().any(|value| value == param)
+    }
+}
+
+/// The `<searching>` block of a caps document. Modes the server did not list
+/// are unavailable, mirroring Prowlarr's reading of the document.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct NewznabSearchCaps {
+    pub search: NewznabSearchMode,
+    pub tv_search: NewznabSearchMode,
+    pub movie_search: NewznabSearchMode,
+    pub audio_search: NewznabSearchMode,
+    pub book_search: NewznabSearchMode,
+}
+
+impl NewznabSearchCaps {
+    fn mode(&self, search_type: &str) -> &NewznabSearchMode {
+        match search_type {
+            "tvsearch" => &self.tv_search,
+            "movie" => &self.movie_search,
+            "music" => &self.audio_search,
+            "book" => &self.book_search,
+            _ => &self.search,
+        }
+    }
+
+    fn summary(&self) -> String {
+        let describe = |name: &str, mode: &NewznabSearchMode| {
+            if mode.available {
+                format!("{name}=[{}]", mode.params.join(","))
+            } else {
+                format!("{name}=unavailable")
+            }
+        };
+        format!(
+            "{} {} {}",
+            describe("search", &self.search),
+            describe("tv-search", &self.tv_search),
+            describe("movie-search", &self.movie_search)
+        )
+    }
+}
+
+/// The external ids a request can hand to a nab endpoint.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+struct NabSearchIds<'a> {
+    imdb: Option<&'a str>,
+    tmdb: Option<&'a str>,
+    tvdb: Option<&'a str>,
+    tvrage: Option<&'a str>,
+    tvmaze: Option<&'a str>,
+}
+
+impl<'a> NabSearchIds<'a> {
+    fn any(&self) -> bool {
+        self.imdb.is_some()
+            || self.tmdb.is_some()
+            || self.tvdb.is_some()
+            || self.tvrage.is_some()
+            || self.tvmaze.is_some()
+    }
+
+    /// The ids a mode can carry regardless of caps: `t=movie` only takes the
+    /// movie ids, the tv and generic modes take every id.
+    fn for_mode(self, search_type: &str) -> Self {
+        if search_type == "movie" {
+            Self {
+                imdb: self.imdb,
+                tmdb: self.tmdb,
+                ..Self::default()
+            }
+        } else {
+            self
+        }
+    }
+
+    fn supported_by(self, mode: &NewznabSearchMode) -> Self {
+        Self {
+            imdb: self.imdb.filter(|_| mode.supports("imdbid")),
+            tmdb: self.tmdb.filter(|_| mode.supports("tmdbid")),
+            tvdb: self.tvdb.filter(|_| mode.supports("tvdbid")),
+            tvrage: self.tvrage.filter(|_| mode.supports("rid")),
+            tvmaze: self.tvmaze.filter(|_| mode.supports("tvmazeid")),
+        }
+    }
+}
+
+/// The request shape the engine settles on after consulting caps.
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct NabSearchPlan<'a> {
+    search_type: &'static str,
+    ids: NabSearchIds<'a>,
+    season: Option<u32>,
+    episode: Option<u32>,
+    /// The chosen mode accepts `q`; when false the text tier is skipped.
+    supports_query: bool,
+    /// Episode context folded into the text query because the mode rejects
+    /// the `season`/`ep` parameters.
+    query_suffix: Option<String>,
+}
+
+impl NabSearchPlan<'_> {
+    fn text_query(&self, query: &str) -> String {
+        match &self.query_suffix {
+            Some(suffix) => format!("{query} {suffix}"),
+            None => query.to_string(),
+        }
+    }
+}
+
+fn episode_query_suffix(season: Option<u32>, episode: Option<u32>) -> Option<String> {
+    match (season, episode) {
+        (Some(season), Some(episode)) => Some(format!("S{season:02}E{episode:02}")),
+        (Some(season), None) => Some(format!("S{season:02}")),
+        (None, Some(episode)) => Some(format!("{episode:02}")),
+        (None, None) => None,
+    }
+}
+
+/// Decide which `t=` mode and which parameters to send.
+///
+/// Without caps the historical permissive behaviour stands. With caps the
+/// requested mode is used when the server lists it and it accepts either `q`
+/// or one of the ids on hand; otherwise the generic `t=search` mode is tried
+/// under the same rule. Ids and `season`/`ep` the mode does not list are
+/// dropped, and dropped episode context is folded into the text query instead.
+/// A caps document that advertises nothing usable falls back to a text-only
+/// request so an odd server never blanks an indexer.
+fn plan_nab_search<'a>(
+    caps: Option<&NewznabSearchCaps>,
+    requested: &'static str,
+    ids: NabSearchIds<'a>,
+    season: Option<u32>,
+    episode: Option<u32>,
+) -> NabSearchPlan<'a> {
+    let Some(caps) = caps else {
+        return NabSearchPlan {
+            search_type: requested,
+            ids: ids.for_mode(requested),
+            season,
+            episode,
+            supports_query: true,
+            query_suffix: None,
+        };
+    };
+
+    let mut candidates = vec![requested];
+    if requested != "search" {
+        candidates.push("search");
+    }
+    for candidate in candidates {
+        let mode = caps.mode(candidate);
+        if !mode.available {
+            continue;
+        }
+        let filtered = ids.for_mode(candidate).supported_by(mode);
+        let supports_query = mode.supports("q");
+        if !filtered.any() && !supports_query {
+            continue;
+        }
+        let season_supported = mode.supports("season");
+        let episode_supported = mode.supports("ep");
+        let dropped_context =
+            (season.is_some() && !season_supported) || (episode.is_some() && !episode_supported);
+        return NabSearchPlan {
+            search_type: candidate,
+            ids: filtered,
+            season: season.filter(|_| season_supported),
+            episode: episode.filter(|_| episode_supported),
+            supports_query,
+            query_suffix: if dropped_context {
+                episode_query_suffix(season, episode)
+            } else {
+                None
+            },
+        };
+    }
+
+    let search_type = if caps.mode(requested).available {
+        requested
+    } else {
+        "search"
+    };
+    NabSearchPlan {
+        search_type,
+        ids: NabSearchIds::default(),
+        season: None,
+        episode: None,
+        supports_query: true,
+        query_suffix: episode_query_suffix(season, episode),
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1634,6 +1863,7 @@ fn strip_query_context(query: &str) -> &str {
 #[allow(clippy::too_many_arguments)]
 async fn execute_exact_anime_search(
     endpoint: &str,
+    caps: Option<&NewznabSearchCaps>,
     query_variants: &[String],
     api_key: &str,
     tmdb_id: Option<&str>,
@@ -1648,41 +1878,73 @@ async fn execute_exact_anime_search(
     additional_params: &str,
     behavior: &NewznabHttpBehavior,
 ) -> Result<(u16, String), Error> {
-    if tvdb_id.is_some() || tmdb_id.is_some() || tvrage_id.is_some() || tvmaze_id.is_some() {
+    let ids = NabSearchIds {
+        imdb: None,
+        tmdb: tmdb_id,
+        tvdb: tvdb_id,
+        tvrage: tvrage_id,
+        tvmaze: tvmaze_id,
+    };
+    let id_plan = plan_nab_search(
+        caps,
+        "tvsearch",
+        ids,
+        if absolute_episode.is_some() {
+            None
+        } else {
+            season
+        },
+        absolute_episode.or(episode),
+    );
+    if id_plan.ids.any() {
         return execute_search(
             endpoint,
-            "tvsearch",
+            id_plan.search_type,
             None,
             api_key,
-            None,
-            tmdb_id,
-            tvdb_id,
-            tvrage_id,
-            tvmaze_id,
+            id_plan.ids.imdb,
+            id_plan.ids.tmdb,
+            id_plan.ids.tvdb,
+            id_plan.ids.tvrage,
+            id_plan.ids.tvmaze,
             cat,
             limit,
-            if absolute_episode.is_some() {
-                None
-            } else {
-                season
-            },
-            absolute_episode.or(episode),
+            id_plan.season,
+            id_plan.episode,
             additional_params,
             behavior,
         )
         .await;
     }
 
+    let mut text_plan = plan_nab_search(caps, "tvsearch", NabSearchIds::default(), season, episode);
+    if text_plan.query_suffix.is_some() {
+        if let Some(absolute) = absolute_episode {
+            // Anime text searches carry the absolute number, the way Sonarr
+            // queries `Title 02` when the mode rejects `ep`.
+            text_plan.query_suffix = Some(format!("{absolute:02}"));
+        }
+    }
+
     let mut last_response = (200, r#"{"channel":{}}"#.to_string());
+    if !text_plan.supports_query {
+        log!(
+            LogLevel::Debug,
+            "anime_search: {} mode accepts no q parameter and no usable id; skipping text tier",
+            text_plan.search_type
+        );
+        return Ok(last_response);
+    }
     for query_text in query_variants
         .iter()
         .map(String::as_str)
         .filter(|query| !query.is_empty())
     {
+        let query_text = text_plan.text_query(query_text);
         let (status, body) = execute_search(
             endpoint,
-            "tvsearch",
-            Some(query_text),
+            text_plan.search_type,
+            Some(&query_text),
             api_key,
             None,
             None,
@@ -1691,8 +1953,8 @@ async fn execute_exact_anime_search(
             None,
             cat,
             limit,
-            season,
-            episode,
+            text_plan.season,
+            text_plan.episode,
             additional_params,
             behavior,
         )
@@ -1714,7 +1976,8 @@ async fn execute_exact_anime_search(
 #[allow(clippy::too_many_arguments)]
 async fn execute_tiered_search(
     endpoint: &str,
-    search_type: &str,
+    caps: Option<&NewznabSearchCaps>,
+    search_type: &'static str,
     query_variants: &[String],
     api_key: &str,
     imdb_id: Option<&str>,
@@ -1729,60 +1992,53 @@ async fn execute_tiered_search(
     additional_params: &str,
     behavior: &NewznabHttpBehavior,
 ) -> Result<(u16, String), Error> {
-    // Determine effective IDs for the search type.
-    let effective_imdb =
-        if search_type == "movie" || search_type == "tvsearch" || search_type == "search" {
-            imdb_id
-        } else {
-            None
-        };
-    let effective_tmdb =
-        if search_type == "movie" || search_type == "tvsearch" || search_type == "search" {
-            tmdb_id
-        } else {
-            None
-        };
-    let effective_tvdb = if search_type == "tvsearch" || search_type == "search" {
-        tvdb_id
-    } else {
-        None
+    let requested_ids = NabSearchIds {
+        imdb: imdb_id,
+        tmdb: tmdb_id,
+        tvdb: tvdb_id,
+        tvrage: tvrage_id,
+        tvmaze: tvmaze_id,
     };
-    let effective_tvrage = if search_type == "tvsearch" || search_type == "search" {
-        tvrage_id
-    } else {
-        None
-    };
-    let effective_tvmaze = if search_type == "tvsearch" || search_type == "search" {
-        tvmaze_id
-    } else {
-        None
-    };
+    let plan = plan_nab_search(caps, search_type, requested_ids, season, episode);
+    if plan.search_type != search_type
+        || plan.ids != requested_ids.for_mode(search_type)
+        || plan.season != season
+        || plan.episode != episode
+        || !plan.supports_query
+    {
+        log!(
+            LogLevel::Debug,
+            "search: caps gated request requested={} effective={} ids={} season={:?} ep={:?} q={} suffix={:?}",
+            search_type,
+            plan.search_type,
+            plan.ids.any(),
+            plan.season,
+            plan.episode,
+            plan.supports_query,
+            plan.query_suffix
+        );
+    }
 
-    let has_id = effective_imdb.is_some()
-        || effective_tmdb.is_some()
-        || effective_tvdb.is_some()
-        || effective_tvrage.is_some()
-        || effective_tvmaze.is_some();
     let mut last_response: Option<(u16, String)> = None;
 
     // Tier 1: ID-only search when we have authoritative IDs. Do not mix q with
     // IDs; some nab providers treat that as a narrower text search and return
     // stale/low-quality matches before the authoritative ID lane is tried.
-    if has_id {
+    if plan.ids.any() {
         let (status, body) = execute_search(
             endpoint,
-            search_type,
+            plan.search_type,
             None,
             api_key,
-            effective_imdb,
-            effective_tmdb,
-            effective_tvdb,
-            effective_tvrage,
-            effective_tvmaze,
+            plan.ids.imdb,
+            plan.ids.tmdb,
+            plan.ids.tvdb,
+            plan.ids.tvrage,
+            plan.ids.tvmaze,
             cat,
             limit,
-            season,
-            episode,
+            plan.season,
+            plan.episode,
             additional_params,
             behavior,
         )
@@ -1795,35 +2051,38 @@ async fn execute_tiered_search(
         }
     }
 
-    // Tier 2: focused text fallback without IDs.
-    for query_text in query_variants
-        .iter()
-        .map(String::as_str)
-        .filter(|query| !query.is_empty())
-    {
-        let (status, body) = execute_search(
-            endpoint,
-            search_type,
-            Some(query_text),
-            api_key,
-            None,
-            None,
-            None,
-            None,
-            None,
-            cat,
-            limit,
-            season,
-            episode,
-            additional_params,
-            behavior,
-        )
-        .await?;
+    // Tier 2: focused text fallback without IDs, only where the mode takes `q`.
+    if plan.supports_query {
+        for query_text in query_variants
+            .iter()
+            .map(String::as_str)
+            .filter(|query| !query.is_empty())
+        {
+            let query_text = plan.text_query(query_text);
+            let (status, body) = execute_search(
+                endpoint,
+                plan.search_type,
+                Some(&query_text),
+                api_key,
+                None,
+                None,
+                None,
+                None,
+                None,
+                cat,
+                limit,
+                plan.season,
+                plan.episode,
+                additional_params,
+                behavior,
+            )
+            .await?;
 
-        let looks_empty = is_empty_response(body.trim_start());
-        last_response = Some((status, body.clone()));
-        if is_success_status(status) && !looks_empty {
-            return Ok((status, body));
+            let looks_empty = is_empty_response(body.trim_start());
+            last_response = Some((status, body.clone()));
+            if is_success_status(status) && !looks_empty {
+                return Ok((status, body));
+            }
         }
     }
 
@@ -2575,72 +2834,186 @@ fn apply_standard_attrs(
     usenet_date: &mut Option<String>,
 ) {
     for (name, value) in pairs {
-        let normalized: String = name
-            .chars()
-            .filter(|ch| ch.is_ascii_alphanumeric())
-            .collect::<String>()
-            .to_ascii_lowercase();
+        let normalized = normalize_attribute_name(name);
+        let trimmed = value.trim();
+        let is_zero_or_empty = trimmed.is_empty() || trimmed == "0";
 
         match normalized.as_str() {
             "usenetdate" => {
                 *usenet_date = Some(value.clone());
             }
-            "tvdbid" if !value.is_empty() && value != "0" => {
+            // Response ids. Every spelling Prowlarr, Sonarr and Radarr accept
+            // lands in the SDK-typed `external_ids` map under its canonical
+            // key; the legacy `response_*` keys stay for tvdb/tmdb/imdb so
+            // the host's id disambiguator keeps its existing read path.
+            "tvdbid" | "tvdb" if !is_zero_or_empty => {
+                set_external_id(result, "tvdb_id", trimmed);
                 result.provider_extra.insert(
                     "response_tvdbid".to_string(),
-                    serde_json::Value::from(value.as_str()),
+                    serde_json::Value::from(trimmed),
                 );
             }
-            "tmdbid" if !value.is_empty() && value != "0" => {
+            "tmdbid" | "tmdb" if !is_zero_or_empty => {
+                set_external_id(result, "tmdb_id", trimmed);
                 result.provider_extra.insert(
                     "response_tmdbid".to_string(),
-                    serde_json::Value::from(value.as_str()),
+                    serde_json::Value::from(trimmed),
                 );
+            }
+            "imdb" | "imdbid" if !is_zero_or_empty => {
+                set_external_id(result, "imdb_id", trimmed);
+                result.provider_extra.insert(
+                    "response_imdbid".to_string(),
+                    serde_json::Value::from(trimmed),
+                );
+            }
+            "rageid" | "tvrageid" | "tvrage" | "rid" if !is_zero_or_empty => {
+                set_external_id(result, "tvrage_id", trimmed);
+            }
+            "tvmazeid" | "tvmaze" if !is_zero_or_empty => {
+                set_external_id(result, "tvmaze_id", trimmed);
+            }
+            "traktid" | "trakt" if !is_zero_or_empty => {
+                set_external_id(result, "trakt_id", trimmed);
+            }
+            "doubanid" | "douban" if !is_zero_or_empty => {
+                set_external_id(result, "douban_id", trimmed);
+            }
+            "anidbid" | "anidb" if !is_zero_or_empty => {
+                set_external_id(result, "anidb_id", trimmed);
             }
             // Newznab items repeat `attr name="category"` once per category id
             // (e.g. 5000 + 5070 for a dual-categorized item). Scryer's plugin
             // adapter reads `provider_categories` as the indexer-asserted
             // category set for the identity veto lane, so every value is kept
             // in indexer order, deduped.
-            "category" if !value.is_empty() => {
-                let categories = result
-                    .provider_extra
-                    .entry("provider_categories".to_string())
-                    .or_insert_with(|| serde_json::Value::Array(vec![]));
-                if let serde_json::Value::Array(ref mut arr) = categories {
-                    let candidate = serde_json::Value::from(value.as_str());
-                    if !arr.contains(&candidate) {
-                        arr.push(candidate);
-                    }
-                }
-            }
-            "imdb" | "imdbid" if !value.is_empty() && value != "0" => {
-                result.provider_extra.insert(
-                    "response_imdbid".to_string(),
-                    serde_json::Value::from(value.as_str()),
-                );
+            "category" if !trimmed.is_empty() => {
+                push_extra_list_value(result, "provider_categories", trimmed);
             }
             "prematch" | "haspretime" if value != "0" => {
-                let flags = result
-                    .provider_extra
-                    .entry("indexer_flags".to_string())
-                    .or_insert_with(|| serde_json::Value::Array(vec![]));
-                if let serde_json::Value::Array(ref mut arr) = flags {
-                    arr.push(serde_json::Value::from("scene"));
-                }
+                push_extra_list_value(result, "indexer_flags", "scene");
             }
             "nuked" if value != "0" => {
-                let flags = result
-                    .provider_extra
-                    .entry("indexer_flags".to_string())
-                    .or_insert_with(|| serde_json::Value::Array(vec![]));
-                if let serde_json::Value::Array(ref mut arr) = flags {
-                    arr.push(serde_json::Value::from("nuked"));
+                push_extra_list_value(result, "indexer_flags", "nuked");
+            }
+            // Generic fallbacks for attributes a provider profile or the
+            // plugin's own extractor may not have claimed. They never override
+            // a value that is already set.
+            "grabs" if result.grabs.is_none() => {
+                result.grabs = parse_attr_i64(trimmed);
+            }
+            "language" if result.languages.is_empty() && !trimmed.is_empty() => {
+                result.languages = split_attr_list(trimmed);
+            }
+            "subs" | "subtitles" if result.subtitles.is_empty() && !trimmed.is_empty() => {
+                result.subtitles = split_attr_list(trimmed);
+            }
+            "genre" | "genres" if !trimmed.is_empty() => {
+                for genre in split_attr_list(trimmed) {
+                    push_extra_list_value(result, "genres", &genre);
                 }
+            }
+            "tag" | "tags" if !trimmed.is_empty() => {
+                for tag in split_attr_list(trimmed) {
+                    push_extra_list_value(result, "tags", &tag);
+                }
+            }
+            "year" | "imdbyear" if !is_zero_or_empty => {
+                if let Some(year) = parse_attr_i64(trimmed) {
+                    insert_extra_if_absent(result, "year", serde_json::Value::from(year));
+                }
+            }
+            "imdbtitle" if !trimmed.is_empty() => {
+                insert_extra_if_absent(result, "imdb_title", serde_json::Value::from(trimmed));
+            }
+            "coverurl" | "poster" | "posterurl" if !trimmed.is_empty() => {
+                insert_extra_if_absent(result, "poster_url", serde_json::Value::from(trimmed));
+            }
+            "files" => {
+                if let Some(files) = parse_attr_i64(trimmed) {
+                    insert_extra_if_absent(result, "files", serde_json::Value::from(files));
+                }
+            }
+            "seeders" | "peers" | "leechers" | "minimumseedtime" => {
+                if let Some(parsed) = parse_attr_i64(trimmed) {
+                    insert_extra_if_absent(result, &normalized, serde_json::Value::from(parsed));
+                }
+            }
+            "downloadvolumefactor" | "uploadvolumefactor" | "minimumratio" => {
+                if let Some(parsed) = parse_attr_f64(trimmed) {
+                    insert_extra_if_absent(result, &normalized, serde_json::Value::from(parsed));
+                }
+            }
+            "infohash" => {
+                if let Some(hash) = scryer_plugin_sdk::indexer::normalize_info_hash(Some(trimmed)) {
+                    insert_extra_if_absent(result, "info_hash", serde_json::Value::from(hash));
+                }
+            }
+            "magneturl" | "magnet" if trimmed.starts_with("magnet:") => {
+                insert_extra_if_absent(result, "magnet_uri", serde_json::Value::from(trimmed));
+            }
+            // Book and music attributes Prowlarr forwards verbatim. Kept as
+            // plain strings so a future consumer does not need a parser change.
+            "author" | "booktitle" | "publisher" | "artist" | "album" | "label" | "track"
+                if !trimmed.is_empty() =>
+            {
+                let key = match normalized.as_str() {
+                    "booktitle" => "book_title",
+                    other => other,
+                };
+                insert_extra_if_absent(result, key, serde_json::Value::from(trimmed));
             }
             _ => {}
         }
     }
+}
+
+fn set_external_id(result: &mut SearchResult, key: &str, value: &str) {
+    result
+        .external_ids
+        .entry(key.to_string())
+        .or_insert_with(|| value.to_string());
+}
+
+fn insert_extra_if_absent(result: &mut SearchResult, key: &str, value: serde_json::Value) {
+    result
+        .provider_extra
+        .entry(key.to_string())
+        .or_insert(value);
+}
+
+fn push_extra_list_value(result: &mut SearchResult, key: &str, value: &str) {
+    let list = result
+        .provider_extra
+        .entry(key.to_string())
+        .or_insert_with(|| serde_json::Value::Array(vec![]));
+    if let serde_json::Value::Array(ref mut arr) = list {
+        let candidate = serde_json::Value::from(value);
+        if !arr.contains(&candidate) {
+            arr.push(candidate);
+        }
+    }
+}
+
+/// Multi-valued Newznab attributes arrive either repeated (one `attr` per
+/// value), dash-joined (`English - French`), or comma-joined (`Drama, Crime`).
+fn split_attr_list(value: &str) -> Vec<String> {
+    let mut values = Vec::new();
+    for part in value.split(',').flat_map(|part| part.split(" - ")) {
+        let part = part.trim();
+        if !part.is_empty() && !values.iter().any(|existing| existing == part) {
+            values.push(part.to_string());
+        }
+    }
+    values
+}
+
+fn parse_attr_i64(value: &str) -> Option<i64> {
+    value.trim().replace(',', "").parse::<i64>().ok()
+}
+
+fn parse_attr_f64(value: &str) -> Option<f64> {
+    value.trim().parse::<f64>().ok()
 }
 
 // ---------------------------------------------------------------------------
@@ -2651,7 +3024,7 @@ fn apply_standard_attrs(
 struct NewznabJsonResponse {
     channel: Option<NewznabJsonChannel>,
     error: Option<NewznabJsonErrorNode>,
-    #[serde(default)]
+    #[serde(default, alias = "apilimits")]
     limits: Option<NewznabJsonLimitsNode>,
 }
 
@@ -2663,13 +3036,13 @@ struct NewznabJsonLimitsNode {
 
 #[derive(Deserialize, Default)]
 struct NewznabJsonLimitsAttrs {
-    #[serde(default)]
+    #[serde(default, alias = "apicurrent")]
     api_current: Option<String>,
-    #[serde(default)]
+    #[serde(default, alias = "apimax")]
     api_max: Option<String>,
-    #[serde(default)]
+    #[serde(default, alias = "grabcurrent")]
     grab_current: Option<String>,
-    #[serde(default)]
+    #[serde(default, alias = "grabmax")]
     grab_max: Option<String>,
 }
 
@@ -2716,6 +3089,24 @@ struct NewznabJsonItem {
     pub_date: Option<String>,
     enclosure: Option<NewznabJsonEnclosure>,
     attr: Option<NewznabJsonAttributes>,
+    #[serde(default)]
+    category: Option<NewznabJsonCategories>,
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum NewznabJsonCategories {
+    One(String),
+    Many(Vec<String>),
+}
+
+impl NewznabJsonCategories {
+    fn into_vec(self) -> Vec<String> {
+        match self {
+            NewznabJsonCategories::One(value) => vec![value],
+            NewznabJsonCategories::Many(values) => values,
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -2855,7 +3246,7 @@ fn parse_newznab_json(
             let enclosure_type = enclosure_attrs.as_ref().and_then(|a| a.mime_type.clone());
 
             // Extract attr pairs
-            let pairs: Vec<(String, String)> = item
+            let mut pairs: Vec<(String, String)> = item
                 .attr
                 .map(|a| {
                     a.into_vec()
@@ -2867,6 +3258,13 @@ fn parse_newznab_json(
                         .collect()
                 })
                 .unwrap_or_default();
+            for category in item
+                .category
+                .map(NewznabJsonCategories::into_vec)
+                .unwrap_or_default()
+            {
+                push_category_element(&category, &mut pairs);
+            }
 
             // Run provider-specific extractor
             let (languages, grabs, extra) = extract_fn(&pairs);
@@ -3054,15 +3452,30 @@ fn apply_provider_extra_fields(result: &mut SearchResult) {
         push_flag(&mut flags, "doubleupload");
     }
 
+    // Prowlarr's shared IndexerFlag vocabulary, as forwarded through its
+    // `tag` attrs. Anything else stays in `tags` without becoming a flag.
     for tag in extra_string_array(&result.provider_extra, "tags") {
-        match tag.trim().to_ascii_lowercase().as_str() {
-            "internal" => push_flag(&mut flags, "internal"),
-            "scene" => push_flag(&mut flags, "scene"),
-            _ => {}
+        let tag = tag.trim().to_ascii_lowercase();
+        if is_prowlarr_flag_tag(&tag) {
+            push_flag(&mut flags, &tag);
         }
     }
 
     result.indexer_flags = flags;
+}
+
+fn is_prowlarr_flag_tag(tag: &str) -> bool {
+    matches!(
+        tag,
+        "internal"
+            | "scene"
+            | "freeleech"
+            | "neutralleech"
+            | "halfleech"
+            | "exclusive"
+            | "doubleupload"
+            | "nuked"
+    )
 }
 
 fn extra_i64(extra: &HashMap<String, serde_json::Value>, key: &str) -> Option<i64> {
@@ -3172,7 +3585,7 @@ fn parse_newznab_xml(
                     current_tag = None;
                 } else if in_item {
                     match tag_name.as_str() {
-                        "title" | "guid" | "link" | "comments" | "pubDate" => {
+                        "title" | "guid" | "link" | "comments" | "pubDate" | "category" => {
                             current_tag = Some(tag_name);
                         }
                         "enclosure" => {
@@ -3194,25 +3607,11 @@ fn parse_newznab_xml(
                 }
             }
             Ok(Event::Empty(ref e)) if !in_item => {
-                // Parse <limits> or <newznab:limits> at channel level
-                let local_name = e.name().as_ref().to_string();
-                if local_name == "limits" || local_name.ends_with(":limits") {
+                // Channel-level <limits>/<newznab:limits> (Newznab's own
+                // spelling) or <newznab:apilimits> (NNTmux's).
+                if is_api_limits_element(e.name().as_ref()) {
                     for a in e.attributes().flatten() {
-                        match a.key.as_ref() {
-                            "api_current" => {
-                                api_limits.api_current = a.value.parse().ok();
-                            }
-                            "api_max" => {
-                                api_limits.api_max = a.value.parse().ok();
-                            }
-                            "grab_current" => {
-                                api_limits.grab_current = a.value.parse().ok();
-                            }
-                            "grab_max" => {
-                                api_limits.grab_max = a.value.parse().ok();
-                            }
-                            _ => {}
-                        }
+                        apply_api_limit_attribute(&mut api_limits, a.key.as_ref(), &a.value);
                     }
                 }
             }
@@ -3240,6 +3639,7 @@ fn parse_newznab_xml(
                         "link" => link = Some(text),
                         "comments" => comments = Some(text),
                         "pubDate" => pub_date = Some(text),
+                        "category" => push_category_element(&text, &mut attrs),
                         _ => {}
                     }
                 }
@@ -3350,6 +3750,44 @@ fn parse_newznab_xml(
 /// has no content, but a feed is free to write it as `<attr … />` or as an
 /// open/close pair — XML makes no distinction, and Go's `encoding/xml` (and
 /// some indexers) only ever write the pair. Collect it from either shape.
+/// Newznab's reference implementation emits `<newznab:limits api_max=…
+/// grab_max=…/>`; NNTmux emits `<newznab:apilimits apimax=… grabmax=…/>` per
+/// its own published spec. Both name the same channel-level element, so both
+/// are accepted, with or without a namespace prefix.
+fn is_api_limits_element(qualified_name: &str) -> bool {
+    matches!(
+        qualified_name.rsplit(':').next().unwrap_or(qualified_name),
+        "limits" | "apilimits"
+    )
+}
+
+/// Accepts either spelling of each limits attribute. A value that does not
+/// parse leaves the field alone rather than clearing a value an earlier
+/// attribute already supplied.
+fn apply_api_limit_attribute(limits: &mut ApiLimits, key: &str, value: &str) {
+    let field = match key {
+        "api_current" | "apicurrent" => &mut limits.api_current,
+        "api_max" | "apimax" => &mut limits.api_max,
+        "grab_current" | "grabcurrent" => &mut limits.grab_current,
+        "grab_max" | "grabmax" => &mut limits.grab_max,
+        _ => return,
+    };
+    if let Ok(parsed) = value.trim().parse() {
+        *field = Some(parsed);
+    }
+}
+
+/// A plain `<category>` element (Prowlarr emits one per category id next to
+/// the `attr` form; some indexers emit only the element) joins the attribute
+/// pairs when it carries a numeric Newznab id. Human-readable names such as
+/// `TV > HD` are not ids and are left out.
+fn push_category_element(text: &str, attrs: &mut Vec<(String, String)>) {
+    let trimmed = text.trim();
+    if !trimmed.is_empty() && trimmed.chars().all(|ch| ch.is_ascii_digit()) {
+        attrs.push(("category".to_string(), trimmed.to_string()));
+    }
+}
+
 fn push_attr_element(e: &quick_xml::events::BytesStart<'_>, attrs: &mut Vec<(String, String)>) {
     let mut attr_name = None;
     let mut attr_value = None;
@@ -3449,11 +3887,36 @@ async fn newznab_categories() -> serde_json::Value {
 
 async fn fetch_categories(config: &NewznabConfig) -> Result<Vec<NewznabCategoryOption>, Error> {
     let endpoint = build_endpoint(&config.base_url, &config.api_path)?;
+    let caps = fetch_capabilities(config, &endpoint).await?;
+    // The settings probe already paid for the document; keep its search modes
+    // warm so the next search does not spend a hit on the same answer.
+    remember_search_caps(
+        &config.http_behavior,
+        &endpoint,
+        caps.searching.clone(),
+        SEARCH_CAPS_TTL_SECS,
+    );
+    Ok(caps.categories)
+}
+
+/// Everything the engine reads out of a `t=caps` document.
+#[derive(Clone, Debug, Default)]
+struct NewznabCapabilities {
+    categories: Vec<NewznabCategoryOption>,
+    /// `None` when the document carries no `<searching>` block; the engine then
+    /// keeps its permissive request shape.
+    searching: Option<NewznabSearchCaps>,
+}
+
+async fn fetch_capabilities(
+    config: &NewznabConfig,
+    endpoint: &str,
+) -> Result<NewznabCapabilities, Error> {
     let mut params = vec![("t".to_string(), "caps".to_string())];
     if !config.api_key.is_empty() {
         params.push(("apikey".to_string(), config.api_key.clone()));
     }
-    let url = append_query_pairs(endpoint.as_str(), &params);
+    let url = append_query_pairs(endpoint, &params);
     let (status, body) = polite_http_get(
         &url,
         "application/rss+xml, application/xml, text/xml",
@@ -3466,7 +3929,168 @@ async fn fetch_categories(config: &NewznabConfig) -> Result<Vec<NewznabCategoryO
         )));
     }
 
-    Ok(parse_categories(body.as_bytes()))
+    Ok(parse_capabilities(body.as_bytes()))
+}
+
+/// How long a parsed `<searching>` block stays authoritative (Prowlarr keeps
+/// caps for seven days as well).
+const SEARCH_CAPS_TTL_SECS: u64 = 7 * 86_400;
+/// How long a failed caps fetch is remembered before the next search retries it.
+const SEARCH_CAPS_RETRY_SECS: u64 = 3_600;
+
+#[derive(Debug, Serialize, Deserialize)]
+struct StoredSearchCaps {
+    endpoint: String,
+    fetched_at: u64,
+    expires_at: u64,
+    searching: Option<NewznabSearchCaps>,
+}
+
+fn fnv1a64(value: &str) -> u64 {
+    value.bytes().fold(0xcbf2_9ce4_8422_2325_u64, |hash, byte| {
+        (hash ^ u64::from(byte)).wrapping_mul(0x0000_0100_0000_01b3)
+    })
+}
+
+fn search_caps_state_key(behavior: &NewznabHttpBehavior, endpoint: &str) -> String {
+    format!(
+        "newznab:{}:search-caps:{:016x}",
+        behavior.plugin_id,
+        fnv1a64(endpoint)
+    )
+}
+
+/// `Some(caps)` when the stored record is for this endpoint and still fresh;
+/// the inner `None` is a remembered "no searching block / fetch failed".
+fn cached_search_caps(
+    raw: Option<&[u8]>,
+    endpoint: &str,
+    now: u64,
+) -> Option<Option<NewznabSearchCaps>> {
+    let stored: StoredSearchCaps = serde_json::from_slice(raw?).ok()?;
+    if stored.endpoint != endpoint || now >= stored.expires_at || stored.fetched_at > now {
+        return None;
+    }
+    Some(stored.searching)
+}
+
+fn remember_search_caps(
+    behavior: &NewznabHttpBehavior,
+    endpoint: &str,
+    searching: Option<NewznabSearchCaps>,
+    ttl_seconds: u64,
+) {
+    let key = search_caps_state_key(behavior, endpoint);
+    let now = current_epoch_seconds();
+    let record = StoredSearchCaps {
+        endpoint: endpoint.to_string(),
+        fetched_at: now,
+        expires_at: now.saturating_add(ttl_seconds),
+        searching,
+    };
+    let Ok(encoded) = serde_json::to_vec(&record) else {
+        return;
+    };
+    // One attempt is enough: a concurrent search that won the swap stored the
+    // same answer for the same endpoint.
+    let expected = component::state_get(&key);
+    let _ = component::state_cas(&key, expected, Some(encoded));
+}
+
+/// The search modes to plan against, fetched at most once per TTL per
+/// endpoint. Only deadline and hit-budget failures propagate; any other
+/// problem leaves the engine on its permissive request shape for an hour.
+async fn resolve_search_caps(
+    config: &NewznabConfig,
+    endpoint: &str,
+) -> Result<Option<NewznabSearchCaps>, Error> {
+    let endpoint_str = endpoint;
+    let key = search_caps_state_key(&config.http_behavior, endpoint_str);
+    let raw = component::state_get(&key);
+    if let Some(cached) = cached_search_caps(raw.as_deref(), endpoint_str, current_epoch_seconds())
+    {
+        return Ok(cached);
+    }
+
+    match fetch_capabilities(config, endpoint).await {
+        Ok(caps) => {
+            match &caps.searching {
+                Some(searching) => log!(
+                    LogLevel::Info,
+                    "caps: {} advertises {}",
+                    config.http_behavior.plugin_id,
+                    searching.summary()
+                ),
+                None => log!(
+                    LogLevel::Info,
+                    "caps: {} advertises no <searching> block; keeping permissive request shape",
+                    config.http_behavior.plugin_id
+                ),
+            }
+            remember_search_caps(
+                &config.http_behavior,
+                endpoint_str,
+                caps.searching.clone(),
+                SEARCH_CAPS_TTL_SECS,
+            );
+            Ok(caps.searching)
+        }
+        Err(error)
+            if error.downcast_ref::<StructuredPluginError>().is_some()
+                || is_hit_budget_exhausted_error(&error) =>
+        {
+            Err(error)
+        }
+        Err(error) => {
+            log!(
+                LogLevel::Warn,
+                "caps: {} capabilities fetch failed; keeping permissive request shape for {}s: {}",
+                config.http_behavior.plugin_id,
+                SEARCH_CAPS_RETRY_SECS,
+                error
+            );
+            remember_search_caps(
+                &config.http_behavior,
+                endpoint_str,
+                None,
+                SEARCH_CAPS_RETRY_SECS,
+            );
+            Ok(None)
+        }
+    }
+}
+
+/// `resolve_search_caps` for the search entry points: a hit-budget refusal or
+/// deadline while fetching caps is reported the way the search request itself
+/// would report it.
+async fn resolve_search_caps_for_search(
+    config: &NewznabConfig,
+    endpoint: &str,
+) -> Result<Option<NewznabSearchCaps>, Error> {
+    match resolve_search_caps(config, endpoint).await {
+        Ok(caps) => Ok(caps),
+        Err(error) if error.downcast_ref::<StructuredPluginError>().is_some() => Err(error),
+        Err(error) => {
+            let rate_limited = is_hit_budget_exhausted_error(&error);
+            let retry_after_seconds = if rate_limited {
+                hit_budget_retry_after_seconds(&config.http_behavior, 1)?
+            } else {
+                None
+            };
+            Err(incomplete_newznab_search_error(
+                newznab_search_response(Vec::new(), &ApiLimits::default()),
+                if rate_limited {
+                    IndexerSearchIncompleteReason::RateLimited
+                } else {
+                    IndexerSearchIncompleteReason::UpstreamFailure
+                },
+                retry_after_seconds,
+                false,
+                None,
+                error.to_string(),
+            ))
+        }
+    }
 }
 
 fn append_query_pairs(base_url: &str, params: &[(String, String)]) -> String {
@@ -3482,16 +4106,33 @@ fn append_query_pairs(base_url: &str, params: &[(String, String)]) -> String {
     url.to_string()
 }
 
-fn parse_categories(body: &[u8]) -> Vec<NewznabCategoryOption> {
+fn parse_capabilities(body: &[u8]) -> NewznabCapabilities {
     let mut reader = Reader::from_reader(body);
     reader.config_mut().trim_text(true);
     let mut categories = Vec::new();
     let mut current_category: Option<NewznabCategoryOption> = None;
     let mut in_categories = false;
+    let mut searching: Option<NewznabSearchCaps> = None;
+    let mut in_searching = false;
     let mut buf = Vec::new();
 
     loop {
         match reader.read_event_into(&mut buf) {
+            Ok(Event::Start(event)) if event.name().as_ref() == "searching" => {
+                in_searching = true;
+                searching.get_or_insert_with(NewznabSearchCaps::default);
+            }
+            Ok(Event::Empty(event)) if event.name().as_ref() == "searching" => {
+                searching.get_or_insert_with(NewznabSearchCaps::default);
+            }
+            Ok(Event::End(event)) if event.name().as_ref() == "searching" => {
+                in_searching = false;
+            }
+            Ok(Event::Start(event)) | Ok(Event::Empty(event)) if in_searching => {
+                if let Some(caps) = searching.as_mut() {
+                    apply_search_mode(caps, &event);
+                }
+            }
             Ok(Event::Start(event)) if event.name().as_ref() == "categories" => {
                 in_categories = true;
             }
@@ -3499,7 +4140,7 @@ fn parse_categories(body: &[u8]) -> Vec<NewznabCategoryOption> {
                 if let Some(category) = current_category.take() {
                     categories.push(category);
                 }
-                break;
+                in_categories = false;
             }
             Ok(Event::Start(event)) if in_categories && event.name().as_ref() == "category" => {
                 if let Some(category) = current_category.take() {
@@ -3508,6 +4149,9 @@ fn parse_categories(body: &[u8]) -> Vec<NewznabCategoryOption> {
                 current_category = category_from_attrs(&event);
             }
             Ok(Event::Empty(event)) if in_categories && event.name().as_ref() == "category" => {
+                if let Some(category) = current_category.take() {
+                    categories.push(category);
+                }
                 if let Some(category) = category_from_attrs(&event) {
                     categories.push(category);
                 }
@@ -3538,7 +4182,45 @@ fn parse_categories(body: &[u8]) -> Vec<NewznabCategoryOption> {
         buf.clear();
     }
 
-    categories
+    NewznabCapabilities {
+        categories,
+        searching,
+    }
+}
+
+/// Fill one `<searching>` child. A listed element without `available` counts
+/// as available (its presence is the advertisement); a missing
+/// `supportedParams` defaults to `q` the way Prowlarr and Sonarr read it.
+fn apply_search_mode(caps: &mut NewznabSearchCaps, event: &quick_xml::events::BytesStart<'_>) {
+    let name = event.name();
+    let slot = match name.as_ref() {
+        "search" => &mut caps.search,
+        "tv-search" => &mut caps.tv_search,
+        "movie-search" => &mut caps.movie_search,
+        "audio-search" => &mut caps.audio_search,
+        "book-search" => &mut caps.book_search,
+        _ => return,
+    };
+    let available = attr_value(event, "available")
+        .map(|value| value.eq_ignore_ascii_case("yes"))
+        .unwrap_or(true);
+    let params = match attr_value(event, "supportedParams") {
+        Some(raw) => {
+            let mut params: Vec<String> = Vec::new();
+            for param in raw
+                .split(',')
+                .map(|value| value.trim().to_ascii_lowercase())
+                .filter(|value| !value.is_empty())
+            {
+                if !params.contains(&param) {
+                    params.push(param);
+                }
+            }
+            params
+        }
+        None => vec!["q".to_string()],
+    };
+    *slot = NewznabSearchMode { available, params };
 }
 
 fn category_from_attrs(event: &quick_xml::events::BytesStart<'_>) -> Option<NewznabCategoryOption> {
@@ -3754,7 +4436,7 @@ mod tests {
             ..SearchRequest::default()
         };
 
-        assert_eq!(rss_search_types(&request), vec!["tvsearch"]);
+        assert_eq!(rss_search_types(&request, None), vec!["tvsearch"]);
     }
 
     #[test]
@@ -4878,6 +5560,300 @@ mod tests {
         );
     }
 
+    #[test]
+    fn attrs_external_ids_accept_every_arr_spelling() {
+        let pairs: Vec<(String, String)> = [
+            ("tvdb", "393199"),
+            ("tmdbid", "1396"),
+            ("imdb", "0903747"),
+            ("rageid", "18164"),
+            ("tvmaze", "169"),
+            ("traktid", "1388"),
+            ("doubanid", "3016187"),
+            ("anidbid", "69"),
+        ]
+        .into_iter()
+        .map(|(name, value)| (name.to_string(), value.to_string()))
+        .collect();
+        let mut result = make_result();
+        let mut usenet_date = None;
+        apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
+        let id = |key: &str| result.external_ids.get(key).map(String::as_str);
+        assert_eq!(id("tvdb_id"), Some("393199"));
+        assert_eq!(id("tmdb_id"), Some("1396"));
+        assert_eq!(id("imdb_id"), Some("0903747"));
+        assert_eq!(id("tvrage_id"), Some("18164"));
+        assert_eq!(id("tvmaze_id"), Some("169"));
+        assert_eq!(id("trakt_id"), Some("1388"));
+        assert_eq!(id("douban_id"), Some("3016187"));
+        assert_eq!(id("anidb_id"), Some("69"));
+        // Legacy read path stays populated for the host's id disambiguator.
+        assert_eq!(
+            result.provider_extra.get("response_tvdbid"),
+            Some(&serde_json::Value::from("393199"))
+        );
+        assert_eq!(
+            result.provider_extra.get("response_imdbid"),
+            Some(&serde_json::Value::from("0903747"))
+        );
+    }
+
+    #[test]
+    fn attrs_first_external_id_spelling_wins() {
+        let pairs = vec![
+            ("tvdbid".to_string(), "1".to_string()),
+            ("tvdb".to_string(), "2".to_string()),
+        ];
+        let mut result = make_result();
+        let mut usenet_date = None;
+        apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
+        assert_eq!(
+            result.external_ids.get("tvdb_id").map(String::as_str),
+            Some("1")
+        );
+    }
+
+    #[test]
+    fn attrs_generic_fallbacks_fill_only_empty_fields() {
+        let pairs: Vec<(String, String)> = [
+            ("grabs", "1,234"),
+            ("language", "English - French, German"),
+            ("subs", "English, Spanish"),
+            ("genre", "Drama, Crime"),
+            ("year", "2019"),
+            ("imdbtitle", "Some Title"),
+            ("coverurl", "https://images.example/cover.jpg"),
+            ("files", "12"),
+            ("booktitle", "A Book"),
+            ("artist", "An Artist"),
+        ]
+        .into_iter()
+        .map(|(name, value)| (name.to_string(), value.to_string()))
+        .collect();
+        let mut result = make_result();
+        let mut usenet_date = None;
+        apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
+        assert_eq!(result.grabs, Some(1234));
+        assert_eq!(result.languages, vec!["English", "French", "German"]);
+        assert_eq!(result.subtitles, vec!["English", "Spanish"]);
+        assert_eq!(
+            result.provider_extra.get("genres"),
+            Some(&serde_json::json!(["Drama", "Crime"]))
+        );
+        assert_eq!(
+            result.provider_extra.get("year"),
+            Some(&serde_json::json!(2019))
+        );
+        assert_eq!(
+            result.provider_extra.get("imdb_title"),
+            Some(&serde_json::json!("Some Title"))
+        );
+        assert_eq!(
+            result.provider_extra.get("poster_url"),
+            Some(&serde_json::json!("https://images.example/cover.jpg"))
+        );
+        assert_eq!(
+            result.provider_extra.get("files"),
+            Some(&serde_json::json!(12))
+        );
+        assert_eq!(
+            result.provider_extra.get("book_title"),
+            Some(&serde_json::json!("A Book"))
+        );
+        assert_eq!(
+            result.provider_extra.get("artist"),
+            Some(&serde_json::json!("An Artist"))
+        );
+
+        // A profile or plugin extractor that already claimed the field wins.
+        let mut claimed = make_result();
+        claimed.grabs = Some(7);
+        claimed.languages = vec!["Japanese".to_string()];
+        claimed.subtitles = vec!["Dutch".to_string()];
+        apply_standard_attrs(&pairs, &mut claimed, &mut usenet_date);
+        assert_eq!(claimed.grabs, Some(7));
+        assert_eq!(claimed.languages, vec!["Japanese"]);
+        assert_eq!(claimed.subtitles, vec!["Dutch"]);
+    }
+
+    #[test]
+    fn attrs_torrent_fields_reach_typed_result_without_a_plugin_extractor() {
+        let pairs: Vec<(String, String)> = [
+            ("seeders", "42"),
+            ("leechers", "9"),
+            ("downloadvolumefactor", "0"),
+            ("uploadvolumefactor", "2"),
+            ("minimumratio", "1.5"),
+            ("minimumseedtime", "60"),
+            ("infohash", "ABCDEF1234567890ABCDEF1234567890ABCDEF12"),
+            (
+                "magneturl",
+                "magnet:?xt=urn:btih:abcdef1234567890abcdef1234567890abcdef12",
+            ),
+            ("tag", "internal, exclusive, whatever"),
+        ]
+        .into_iter()
+        .map(|(name, value)| (name.to_string(), value.to_string()))
+        .collect();
+        let mut result = make_result();
+        let mut usenet_date = None;
+        apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
+        apply_provider_extra_fields(&mut result);
+        assert_eq!(result.seeders, Some(42));
+        assert_eq!(result.leechers, Some(9));
+        assert_eq!(result.peers, Some(51));
+        assert_eq!(result.download_volume_factor, Some(0.0));
+        assert_eq!(result.upload_volume_factor, Some(2.0));
+        assert_eq!(result.minimum_seed_ratio, Some(1.5));
+        assert_eq!(result.minimum_seed_time_minutes, Some(60));
+        assert_eq!(
+            result.info_hash_v1.as_deref(),
+            Some("abcdef1234567890abcdef1234567890abcdef12")
+        );
+        assert!(
+            result
+                .magnet_url
+                .as_deref()
+                .unwrap()
+                .starts_with("magnet:?xt=")
+        );
+        for flag in ["freeleech", "doubleupload", "internal", "exclusive"] {
+            assert!(
+                result.indexer_flags.iter().any(|f| f == flag),
+                "missing {flag} in {:?}",
+                result.indexer_flags
+            );
+        }
+        assert!(!result.indexer_flags.iter().any(|f| f == "whatever"));
+        assert_eq!(
+            result.provider_extra.get("tags"),
+            Some(&serde_json::json!(["internal", "exclusive", "whatever"]))
+        );
+    }
+
+    #[test]
+    fn attrs_reject_non_magnet_and_malformed_hash() {
+        let pairs = vec![
+            (
+                "magneturl".to_string(),
+                "https://example/not-a-magnet".to_string(),
+            ),
+            ("infohash".to_string(), "not-hex".to_string()),
+        ];
+        let mut result = make_result();
+        let mut usenet_date = None;
+        apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
+        assert!(
+            result.provider_extra.is_empty(),
+            "got {:?}",
+            result.provider_extra
+        );
+    }
+
+    #[test]
+    fn category_elements_join_provider_categories_when_numeric() {
+        let mut attrs = Vec::new();
+        push_category_element("5000", &mut attrs);
+        push_category_element(" 5040 ", &mut attrs);
+        push_category_element("TV > HD", &mut attrs);
+        push_category_element("", &mut attrs);
+        assert_eq!(
+            attrs,
+            vec![
+                ("category".to_string(), "5000".to_string()),
+                ("category".to_string(), "5040".to_string())
+            ]
+        );
+    }
+
+    #[test]
+    fn xml_plain_category_elements_and_prowlarr_attrs_parsed() {
+        let body = r#"<?xml version="1.0"?>
+<rss xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attributes/">
+<channel>
+  <item>
+    <title>Example.Show.S01E01.1080p.WEB</title>
+    <guid>https://prowlarr.example/1</guid>
+    <link>https://prowlarr.example/dl/1</link>
+    <category>5000</category>
+    <category>5040</category>
+    <category>TV &gt; HD</category>
+    <enclosure url="https://prowlarr.example/dl/1" length="1000" type="application/x-nzb"/>
+    <newznab:attr name="tvdbid" value="393199"/>
+    <newznab:attr name="tvmazeid" value="169"/>
+    <newznab:attr name="subs" value="English"/>
+    <newznab:attr name="genre" value="Drama"/>
+    <newznab:attr name="year" value="2019"/>
+    <newznab:attr name="coverurl" value="https://prowlarr.example/poster.jpg"/>
+    <newznab:attr name="tag" value="internal"/>
+  </item>
+</channel>
+</rss>"#;
+        let (results, _, _) = parse_newznab_xml(body, 100, extract_base_metadata).unwrap();
+        assert_eq!(results.len(), 1);
+        let result = &results[0];
+        assert_eq!(
+            result.provider_extra.get("provider_categories"),
+            Some(&serde_json::json!(["5000", "5040"]))
+        );
+        assert_eq!(
+            result.external_ids.get("tvdb_id").map(String::as_str),
+            Some("393199")
+        );
+        assert_eq!(
+            result.external_ids.get("tvmaze_id").map(String::as_str),
+            Some("169")
+        );
+        assert_eq!(result.subtitles, vec!["English"]);
+        assert_eq!(
+            result.provider_extra.get("genres"),
+            Some(&serde_json::json!(["Drama"]))
+        );
+        assert_eq!(
+            result.provider_extra.get("year"),
+            Some(&serde_json::json!(2019))
+        );
+        assert_eq!(
+            result.provider_extra.get("poster_url"),
+            Some(&serde_json::json!("https://prowlarr.example/poster.jpg"))
+        );
+        assert!(result.indexer_flags.iter().any(|f| f == "internal"));
+    }
+
+    #[test]
+    fn json_plain_category_and_id_attrs_parsed() {
+        let body = r#"{
+            "channel": {
+                "item": [{
+                    "title": "Example.Movie.2019.1080p",
+                    "guid": "abc",
+                    "category": ["2000", "2040"],
+                    "enclosure": {"@attributes": {"url": "https://x/dl", "length": "10", "type": "application/x-nzb"}},
+                    "attr": [
+                        {"@attributes": {"name": "tmdb", "value": "1396"}},
+                        {"@attributes": {"name": "imdb", "value": "0903747"}},
+                        {"@attributes": {"name": "category", "value": "2000"}}
+                    ]
+                }]
+            }
+        }"#;
+        let (results, _, _) = parse_newznab_json(body, 100, extract_base_metadata).unwrap();
+        assert_eq!(results.len(), 1);
+        let result = &results[0];
+        assert_eq!(
+            result.external_ids.get("tmdb_id").map(String::as_str),
+            Some("1396")
+        );
+        assert_eq!(
+            result.external_ids.get("imdb_id").map(String::as_str),
+            Some("0903747")
+        );
+        assert_eq!(
+            result.provider_extra.get("provider_categories"),
+            Some(&serde_json::json!(["2000", "2040"]))
+        );
+    }
+
     // ── parse_error_json ─────────────────────────────────────────────────
 
     #[test]
@@ -5409,6 +6385,49 @@ mod tests {
         assert_eq!(limits.grab_max, Some(500));
     }
 
+    #[test]
+    fn xml_nntmux_apilimits_parsed() {
+        // NNTmux spells the element `apilimits` and the attributes without
+        // underscores, and adds `apioldesttime`, which has no field here.
+        let body = r#"<?xml version="1.0"?>
+<rss xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attributes/">
+<channel>
+  <newznab:apilimits apicurrent="7" apimax="250" grabcurrent="3" grabmax="75" apioldesttime="2020-01-01 00:00:00"/>
+</channel>
+</rss>"#;
+        let (results, limits, _) = parse_newznab_xml(body, 100, extract_base_metadata).unwrap();
+        assert!(results.is_empty());
+        assert_eq!(limits.api_current, Some(7));
+        assert_eq!(limits.api_max, Some(250));
+        assert_eq!(limits.grab_current, Some(3));
+        assert_eq!(limits.grab_max, Some(75));
+    }
+
+    #[test]
+    fn xml_unprefixed_apilimits_parsed() {
+        let body = r#"<?xml version="1.0"?>
+<rss>
+<channel>
+  <apilimits apicurrent="1" apimax="10" grabcurrent="2" grabmax="20"/>
+</channel>
+</rss>"#;
+        let (_, limits, _) = parse_newznab_xml(body, 100, extract_base_metadata).unwrap();
+        assert_eq!(limits.api_current, Some(1));
+        assert_eq!(limits.api_max, Some(10));
+        assert_eq!(limits.grab_current, Some(2));
+        assert_eq!(limits.grab_max, Some(20));
+    }
+
+    #[test]
+    fn api_limits_element_names_are_recognised_by_local_name() {
+        assert!(is_api_limits_element("limits"));
+        assert!(is_api_limits_element("newznab:limits"));
+        assert!(is_api_limits_element("apilimits"));
+        assert!(is_api_limits_element("newznab:apilimits"));
+        assert!(!is_api_limits_element("newznab:attr"));
+        assert!(!is_api_limits_element("apilimitsextra"));
+    }
+
     // ── extract_base_metadata ────────────────────────────────────────────
 
     #[test]
@@ -5509,11 +6528,7 @@ mod tests {
         assert!(!fields[0].advanced, "base_url is what you connect with");
         assert!(!fields[1].advanced, "api_key is what you connect with");
         for index in [2, 3, 4] {
-            assert!(
-                fields[index].advanced,
-                "{} is tuning",
-                fields[index].key
-            );
+            assert!(fields[index].advanced, "{} is tuning", fields[index].key);
         }
     }
 
@@ -5666,6 +6681,337 @@ mod tests {
         assert_eq!(
             rate_limit_pause_from_headers(&headers, std::time::Duration::from_secs(10)),
             Some(std::time::Duration::from_secs(10))
+        );
+    }
+
+    fn caps_document(searching: &str) -> String {
+        format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<caps>
+  <server title="Synthetic Nab"/>
+  <limits max="100" default="100"/>
+  {searching}
+  <categories>
+    <category id="2000" name="Movies">
+      <subcat id="2040" name="Movies/HD"/>
+    </category>
+    <category id="5000" name="TV"/>
+  </categories>
+</caps>"#
+        )
+    }
+
+    fn mode(available: bool, params: &[&str]) -> NewznabSearchMode {
+        NewznabSearchMode {
+            available,
+            params: params.iter().map(|value| value.to_string()).collect(),
+        }
+    }
+
+    fn sample_caps() -> NewznabSearchCaps {
+        NewznabSearchCaps {
+            search: mode(true, &["q"]),
+            tv_search: mode(true, &["q", "tvdbid", "season", "ep"]),
+            movie_search: mode(true, &["q", "imdbid"]),
+            ..NewznabSearchCaps::default()
+        }
+    }
+
+    const IDS: NabSearchIds<'static> = NabSearchIds {
+        imdb: Some("tt0000001"),
+        tmdb: Some("11"),
+        tvdb: Some("22"),
+        tvrage: Some("33"),
+        tvmaze: Some("44"),
+    };
+
+    #[test]
+    fn parse_capabilities_reads_searching_block_and_categories() {
+        let body = caps_document(
+            r#"<searching>
+    <search available="yes" supportedParams="q"/>
+    <tv-search available="yes" supportedParams="Q, TVDBID,season ,ep,,tvdbid"/>
+    <movie-search available="no" supportedParams="q,imdbid"/>
+    <audio-search available="yes"></audio-search>
+  </searching>"#,
+        );
+        let caps = parse_capabilities(body.as_bytes());
+
+        assert_eq!(caps.categories.len(), 2);
+        assert_eq!(caps.categories[0].id, 2000);
+        assert_eq!(caps.categories[0].subcategories.len(), 1);
+        assert_eq!(caps.categories[1].id, 5000);
+
+        let searching = caps.searching.expect("searching block parsed");
+        assert_eq!(searching.search, mode(true, &["q"]));
+        assert_eq!(
+            searching.tv_search,
+            mode(true, &["q", "tvdbid", "season", "ep"]),
+            "params are lower-cased, trimmed and deduped"
+        );
+        assert_eq!(
+            searching.movie_search,
+            mode(false, &["q", "imdbid"]),
+            "available=no keeps the params but marks the mode unavailable"
+        );
+        assert_eq!(
+            searching.audio_search,
+            mode(true, &["q"]),
+            "a listed mode without supportedParams defaults to q"
+        );
+        assert_eq!(
+            searching.book_search,
+            NewznabSearchMode::default(),
+            "a mode the server never listed is unavailable"
+        );
+        assert!(!searching.book_search.supports("q"));
+        assert!(!searching.movie_search.supports("imdbid"));
+        assert!(searching.tv_search.supports("tvdbid"));
+    }
+
+    #[test]
+    fn parse_capabilities_without_searching_block_is_unknown() {
+        let body = caps_document("");
+        let caps = parse_capabilities(body.as_bytes());
+        assert_eq!(caps.categories.len(), 2);
+        assert!(caps.searching.is_none());
+
+        let empty = caps_document("<searching/>");
+        let caps = parse_capabilities(empty.as_bytes());
+        let searching = caps
+            .searching
+            .expect("an empty searching block still counts");
+        assert_eq!(searching, NewznabSearchCaps::default());
+    }
+
+    #[test]
+    fn plan_without_caps_keeps_permissive_request_shape() {
+        let plan = plan_nab_search(None, "tvsearch", IDS, Some(2), Some(5));
+        assert_eq!(plan.search_type, "tvsearch");
+        assert_eq!(plan.ids, IDS);
+        assert_eq!((plan.season, plan.episode), (Some(2), Some(5)));
+        assert!(plan.supports_query);
+        assert_eq!(plan.query_suffix, None);
+
+        let movie = plan_nab_search(None, "movie", IDS, None, None);
+        assert_eq!(
+            movie.ids,
+            NabSearchIds {
+                imdb: Some("tt0000001"),
+                tmdb: Some("11"),
+                ..NabSearchIds::default()
+            },
+            "t=movie only ever carries the movie ids"
+        );
+    }
+
+    #[test]
+    fn plan_filters_ids_and_episode_params_to_the_advertised_set() {
+        let caps = sample_caps();
+        let plan = plan_nab_search(Some(&caps), "tvsearch", IDS, Some(2), Some(5));
+        assert_eq!(plan.search_type, "tvsearch");
+        assert_eq!(
+            plan.ids,
+            NabSearchIds {
+                tvdb: Some("22"),
+                ..NabSearchIds::default()
+            }
+        );
+        assert_eq!((plan.season, plan.episode), (Some(2), Some(5)));
+        assert!(plan.supports_query);
+        assert_eq!(plan.query_suffix, None);
+
+        let movie = plan_nab_search(Some(&caps), "movie", IDS, None, None);
+        assert_eq!(movie.search_type, "movie");
+        assert_eq!(
+            movie.ids,
+            NabSearchIds {
+                imdb: Some("tt0000001"),
+                ..NabSearchIds::default()
+            }
+        );
+    }
+
+    #[test]
+    fn plan_folds_dropped_episode_context_into_the_text_query() {
+        let caps = NewznabSearchCaps {
+            tv_search: mode(true, &["q", "tvdbid"]),
+            ..sample_caps()
+        };
+        let plan = plan_nab_search(Some(&caps), "tvsearch", IDS, Some(2), Some(5));
+        assert_eq!((plan.season, plan.episode), (None, None));
+        assert_eq!(plan.query_suffix.as_deref(), Some("S02E05"));
+        assert_eq!(plan.text_query("Synthetic Show"), "Synthetic Show S02E05");
+
+        let season_only = plan_nab_search(Some(&caps), "tvsearch", IDS, Some(2), None);
+        assert_eq!(season_only.query_suffix.as_deref(), Some("S02"));
+
+        let absolute = plan_nab_search(Some(&caps), "tvsearch", IDS, None, Some(7));
+        assert_eq!(absolute.query_suffix.as_deref(), Some("07"));
+
+        let no_context = plan_nab_search(Some(&caps), "tvsearch", IDS, None, None);
+        assert_eq!(no_context.query_suffix, None);
+        assert_eq!(no_context.text_query("Synthetic Show"), "Synthetic Show");
+    }
+
+    #[test]
+    fn plan_downgrades_to_generic_search_when_the_mode_is_unavailable() {
+        let caps = NewznabSearchCaps {
+            movie_search: mode(false, &["q", "imdbid"]),
+            ..sample_caps()
+        };
+        let plan = plan_nab_search(Some(&caps), "movie", IDS, None, None);
+        assert_eq!(plan.search_type, "search");
+        assert_eq!(plan.ids, NabSearchIds::default(), "t=search only lists q");
+        assert!(plan.supports_query);
+
+        let generic_with_ids = NewznabSearchCaps {
+            search: mode(true, &["q", "imdbid"]),
+            tv_search: NewznabSearchMode::default(),
+            ..sample_caps()
+        };
+        let plan = plan_nab_search(Some(&generic_with_ids), "tvsearch", IDS, Some(1), Some(2));
+        assert_eq!(plan.search_type, "search");
+        assert_eq!(
+            plan.ids,
+            NabSearchIds {
+                imdb: Some("tt0000001"),
+                ..NabSearchIds::default()
+            },
+            "the fallback mode's own supportedParams decide the ids"
+        );
+        assert_eq!(plan.query_suffix.as_deref(), Some("S01E02"));
+    }
+
+    #[test]
+    fn plan_downgrades_when_the_mode_accepts_neither_q_nor_a_held_id() {
+        let caps = NewznabSearchCaps {
+            tv_search: mode(true, &["rid", "season", "ep"]),
+            ..sample_caps()
+        };
+        let only_tvdb = NabSearchIds {
+            tvdb: Some("22"),
+            ..NabSearchIds::default()
+        };
+        let plan = plan_nab_search(Some(&caps), "tvsearch", only_tvdb, Some(1), Some(2));
+        assert_eq!(plan.search_type, "search");
+        assert!(plan.supports_query);
+        assert_eq!(plan.ids, NabSearchIds::default());
+        assert_eq!(plan.query_suffix.as_deref(), Some("S01E02"));
+
+        let held_rid = NabSearchIds {
+            tvrage: Some("33"),
+            ..NabSearchIds::default()
+        };
+        let plan = plan_nab_search(Some(&caps), "tvsearch", held_rid, Some(1), Some(2));
+        assert_eq!(plan.search_type, "tvsearch");
+        assert_eq!(plan.ids, held_rid);
+        assert!(!plan.supports_query, "an id-only mode skips the text tier");
+        assert_eq!((plan.season, plan.episode), (Some(1), Some(2)));
+    }
+
+    #[test]
+    fn plan_falls_back_to_text_only_when_caps_advertise_nothing_usable() {
+        let caps = NewznabSearchCaps {
+            search: mode(false, &["q"]),
+            tv_search: mode(true, &["rid"]),
+            ..NewznabSearchCaps::default()
+        };
+        let only_tvdb = NabSearchIds {
+            tvdb: Some("22"),
+            ..NabSearchIds::default()
+        };
+        let plan = plan_nab_search(Some(&caps), "tvsearch", only_tvdb, Some(3), Some(4));
+        assert_eq!(plan.search_type, "tvsearch");
+        assert_eq!(plan.ids, NabSearchIds::default());
+        assert!(plan.supports_query);
+        assert_eq!((plan.season, plan.episode), (None, None));
+        assert_eq!(plan.query_suffix.as_deref(), Some("S03E04"));
+
+        let nothing = NewznabSearchCaps::default();
+        let plan = plan_nab_search(Some(&nothing), "movie", IDS, None, None);
+        assert_eq!(plan.search_type, "search");
+        assert!(plan.supports_query);
+        assert_eq!(plan.ids, NabSearchIds::default());
+    }
+
+    #[test]
+    fn rss_search_types_respect_caps() {
+        let request = SearchRequest {
+            categories: vec!["2000".to_string(), "5000".to_string()],
+            ..SearchRequest::default()
+        };
+        assert_eq!(rss_search_types(&request, None), vec!["movie", "tvsearch"]);
+
+        let caps = NewznabSearchCaps {
+            movie_search: mode(false, &["q"]),
+            ..sample_caps()
+        };
+        assert_eq!(
+            rss_search_types(&request, Some(&caps)),
+            vec!["search", "tvsearch"]
+        );
+
+        let none_listed = NewznabSearchCaps::default();
+        assert_eq!(
+            rss_search_types(&request, Some(&none_listed)),
+            vec!["search"],
+            "both modes collapse into one generic feed"
+        );
+    }
+
+    #[test]
+    fn cached_search_caps_honours_endpoint_and_expiry() {
+        let behavior = NewznabHttpBehavior::default();
+        let endpoint = "https://nab.example.invalid/api";
+        let key = search_caps_state_key(&behavior, endpoint);
+        assert!(key.starts_with("newznab:newznab:search-caps:"));
+        assert_ne!(
+            key,
+            search_caps_state_key(&behavior, "https://other.example.invalid/api")
+        );
+
+        let record = StoredSearchCaps {
+            endpoint: endpoint.to_string(),
+            fetched_at: 1_000,
+            expires_at: 1_000 + SEARCH_CAPS_TTL_SECS,
+            searching: Some(sample_caps()),
+        };
+        let raw = serde_json::to_vec(&record).unwrap();
+
+        assert_eq!(
+            cached_search_caps(Some(&raw), endpoint, 2_000),
+            Some(Some(sample_caps()))
+        );
+        assert_eq!(
+            cached_search_caps(Some(&raw), endpoint, 1_000 + SEARCH_CAPS_TTL_SECS),
+            None,
+            "expired records are refetched"
+        );
+        assert_eq!(
+            cached_search_caps(Some(&raw), "https://other.example.invalid/api", 2_000),
+            None,
+            "a record for another endpoint never applies"
+        );
+        assert_eq!(
+            cached_search_caps(Some(&raw), endpoint, 500),
+            None,
+            "a record from the future is distrusted"
+        );
+        assert_eq!(cached_search_caps(None, endpoint, 2_000), None);
+        assert_eq!(cached_search_caps(Some(b"not json"), endpoint, 2_000), None);
+
+        let failed = StoredSearchCaps {
+            endpoint: endpoint.to_string(),
+            fetched_at: 1_000,
+            expires_at: 1_000 + SEARCH_CAPS_RETRY_SECS,
+            searching: None,
+        };
+        let raw = serde_json::to_vec(&failed).unwrap();
+        assert_eq!(
+            cached_search_caps(Some(&raw), endpoint, 1_500),
+            Some(None),
+            "a remembered failure keeps the permissive shape until it expires"
         );
     }
 }

@@ -385,6 +385,7 @@ fn descriptor() -> PluginDescriptor {
                 host_binding: None,
                 options: vec![],
                 help_text: Some("API key from your Subdl account.".to_string()),
+                ..Default::default()
             }],
             default_base_url: Some(API_BASE.to_string()),
             allowed_hosts: vec![

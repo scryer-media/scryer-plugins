@@ -1,0 +1,124 @@
+# Publishes a merged automated rule-pack refresh through the normal signed
+# release path. Only pull requests opened by the refresh bot from the two
+# refresh branches qualify; everything else is ignored.
+
+name: rule-pack-publish
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions: read-all
+
+concurrency:
+  group: rule-pack-publish-${{ github.event.pull_request.head.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: >-
+      ${{ vars.RULE_PACK_REFRESH_ENABLED == 'true' &&
+          github.event.pull_request.merged == true &&
+          github.event.pull_request.head.repo.full_name == github.repository &&
+          github.event.pull_request.user.login == vars.RULE_PACK_REFRESH_BOT_LOGIN &&
+          (github.event.pull_request.head.ref == 'feature/trash-daily-refresh' ||
+           github.event.pull_request.head.ref == 'feature/seadex-daily-refresh') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.RULE_PACK_REFRESH_TOKEN }}
+      RULE_PACK_REFRESH_TOKEN: ${{ secrets.RULE_PACK_REFRESH_TOKEN }}
+      RULE_PACK_REFRESH_SIGNING_KEY: ${{ secrets.RULE_PACK_REFRESH_SIGNING_KEY }}
+      RULE_PACK_REFRESH_ALLOWED_SIGNERS: ${{ vars.RULE_PACK_REFRESH_ALLOWED_SIGNERS }}
+      RULE_PACK_REFRESH_BOT_EMAIL: ${{ vars.RULE_PACK_REFRESH_BOT_EMAIL }}
+      CARGO_TERM_COLOR: always
+    steps:
+      - name: Require configured publication credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$RULE_PACK_REFRESH_TOKEN" || { echo "RULE_PACK_REFRESH_TOKEN is required" >&2; exit 1; }
+          test -n "$RULE_PACK_REFRESH_SIGNING_KEY" || { echo "RULE_PACK_REFRESH_SIGNING_KEY is required for signed publication" >&2; exit 1; }
+          test -n "$RULE_PACK_REFRESH_ALLOWED_SIGNERS" || { echo "RULE_PACK_REFRESH_ALLOWED_SIGNERS is required" >&2; exit 1; }
+          test -n "$RULE_PACK_REFRESH_BOT_EMAIL" || { echo "RULE_PACK_REFRESH_BOT_EMAIL is required" >&2; exit 1; }
+
+      - name: Resolve the refresh profile from the merged branch
+        id: profile
+        shell: bash
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          case "$HEAD_REF" in
+            feature/trash-daily-refresh)
+              echo "profile=trash" >> "$GITHUB_OUTPUT"
+              echo "rule_pack_id=trash-guides-scoring-pack" >> "$GITHUB_OUTPUT"
+              ;;
+            feature/seadex-daily-refresh)
+              echo "profile=seadex" >> "$GITHUB_OUTPUT"
+              echo "rule_pack_id=seadex-scoring-pack" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "unexpected refresh branch $HEAD_REF" >&2
+              exit 1
+              ;;
+          esac
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          token: ${{ secrets.RULE_PACK_REFRESH_TOKEN }}
+
+      - name: Verify the merged diff remains generated-only
+        working-directory: rule_packs/refresh
+        shell: bash
+        env:
+          PROFILE: ${{ steps.profile.outputs.profile }}
+        run: |
+          set -euo pipefail
+          # The merge commit's first parent is the main tip the refresh landed
+          # on; the PR base SHA can be stale after other merges.
+          go run . verify-diff --profile "$PROFILE" --base "$(git rev-parse HEAD^)"
+
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: gha-rust-cache-linux-rule-pack-publish-xtask
+          workspaces: |
+            xtask -> xtask/target
+          cache-targets: "false"
+          cache-workspace-crates: "false"
+          key: xtask-release
+
+      - name: Configure SSH signing for publication tags
+        shell: bash
+        run: |
+          set -euo pipefail
+          signing_key="$RUNNER_TEMP/rule-pack-refresh-signing-key"
+          umask 077
+          printf '%s\n' "$RULE_PACK_REFRESH_SIGNING_KEY" > "$signing_key"
+          printf '%s\n' "$RULE_PACK_REFRESH_ALLOWED_SIGNERS" > "$RUNNER_TEMP/rule-pack-refresh-allowed-signers"
+          git config user.name "Rule Pack Refresh Bot"
+          git config user.email "$RULE_PACK_REFRESH_BOT_EMAIL"
+          git config gpg.format ssh
+          git config user.signingkey "$signing_key"
+          git config gpg.ssh.allowedSignersFile "$RUNNER_TEMP/rule-pack-refresh-allowed-signers"
+          git config tag.gpgSign true
+
+      - name: Publish through the normal signed release path
+        shell: bash
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RULE_PACK_ID: ${{ steps.profile.outputs.rule_pack_id }}
+        run: |
+          set -euo pipefail
+          cargo xtask release-publish-tags --resume --pr "$PR_NUMBER" --rule-pack-id "$RULE_PACK_ID"
+
+      - name: Remove temporary signing material
+        if: ${{ always() }}
+        run: rm -f "$RUNNER_TEMP/rule-pack-refresh-signing-key" "$RUNNER_TEMP/rule-pack-refresh-allowed-signers"

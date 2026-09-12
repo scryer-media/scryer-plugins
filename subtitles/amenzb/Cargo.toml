@@ -36,7 +36,7 @@ base64 = "0.23"
 # reaches ameNZB with everything else.
 newznab-common = { path = "../../indexers/newznab-common" }
 scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
-scryer-plugin-sdk = { git = "https://github.com/scryer-media/scryer.git", branch = "release-NEXT", version = "3.10.0" }
+scryer-plugin-sdk = "3.11.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 url = "2"
