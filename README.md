@@ -15,6 +15,9 @@ whether they may offer user customization for that pack. The field defaults to
 `true` when omitted.
 For generated packs, update the saved source data, review the coverage changes,
 and regenerate with a new pack version. See the [SeaDex update instructions](rule_packs/seadex/README.md).
+The TRaSH and SeaDex packs also refresh on a daily schedule once an operator
+activates the [rule-pack refresh workflows](rule_packs/refresh/README.md); a
+refresh only lands when the generated scoring policy actually changes.
 Published versions are immutable; changes to pack content or the minimum Scryer
 version require a new pack version. The catalog retains previous releases.
 

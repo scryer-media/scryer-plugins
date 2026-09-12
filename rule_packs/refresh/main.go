@@ -1,6 +1,6 @@
-// Command trash-refresh validates the bounded changes made by the scheduled
-// TRaSH pack refresh workflow. It deliberately has no network client: upstream
-// acquisition remains the reviewed trash converter's responsibility.
+// Command refresh validates the bounded changes made by the scheduled rule-pack
+// refresh workflows. It deliberately has no network client: upstream
+// acquisition remains the responsibility of each reviewed pack converter.
 package main
 
 import (
@@ -18,29 +18,68 @@ import (
 	"strings"
 )
 
-const packID = "trash-guides-scoring-pack"
+// packProfile pins one automated refresh: the rule-pack id the generated
+// manifest must carry and the exact committed paths a refresh may rewrite.
+type packProfile struct {
+	ID      string
+	Allowed map[string]struct{}
+}
 
-var allowedChanges = map[string]struct{}{
-	"rule_packs/trash-scoring.json":                     {},
-	"rule_packs/trash-scoring-coverage.json":            {},
-	"rule_packs/trash/snapshot/core-snapshot.json":      {},
-	"rule_packs/trash/snapshot/detection-snapshot.json": {},
-	"rule_packs/trash/snapshot/upstream-coverage.json":  {},
-	"rule_packs/trash/snapshot/upstream-raw.json":       {},
-	"rule_packs/trash/generated/asian.rego":             {},
-	"rule_packs/trash/generated/audio.rego":             {},
-	"rule_packs/trash/generated/editions-anime.rego":    {},
-	"rule_packs/trash/generated/features.rego":          {},
-	"rule_packs/trash/generated/french-vf.rego":         {},
-	"rule_packs/trash/generated/french-vo.rego":         {},
-	"rule_packs/trash/generated/french-vostfr.rego":     {},
-	"rule_packs/trash/generated/german.rego":            {},
-	"rule_packs/trash/generated/groups.rego":            {},
-	"rule_packs/trash/generated/hdr.rego":               {},
-	"rule_packs/trash/generated/size.rego":              {},
-	"rule_packs/trash/generated/source-video.rego":      {},
-	"rule_packs/trash/generated/streaming.rego":         {},
-	"rule_packs/trash/generated/unwanted.rego":          {},
+var profiles = map[string]packProfile{
+	"trash": {
+		ID: "trash-guides-scoring-pack",
+		Allowed: pathSet(
+			"rule_packs/trash-scoring.json",
+			"rule_packs/trash-scoring-coverage.json",
+			"rule_packs/trash/snapshot/core-snapshot.json",
+			"rule_packs/trash/snapshot/detection-snapshot.json",
+			"rule_packs/trash/snapshot/upstream-coverage.json",
+			"rule_packs/trash/snapshot/upstream-raw.json",
+			"rule_packs/trash/generated/asian.rego",
+			"rule_packs/trash/generated/audio.rego",
+			"rule_packs/trash/generated/editions-anime.rego",
+			"rule_packs/trash/generated/features.rego",
+			"rule_packs/trash/generated/french-vf.rego",
+			"rule_packs/trash/generated/french-vo.rego",
+			"rule_packs/trash/generated/french-vostfr.rego",
+			"rule_packs/trash/generated/german.rego",
+			"rule_packs/trash/generated/groups.rego",
+			"rule_packs/trash/generated/hdr.rego",
+			"rule_packs/trash/generated/size.rego",
+			"rule_packs/trash/generated/source-video.rego",
+			"rule_packs/trash/generated/streaming.rego",
+			"rule_packs/trash/generated/unwanted.rego",
+		),
+	},
+	"seadex": {
+		ID: "seadex-scoring-pack",
+		Allowed: pathSet(
+			"rule_packs/seadex-scoring.json",
+			"rule_packs/seadex-scoring.rego",
+			"rule_packs/seadex-coverage.json",
+			"rule_packs/seadex/snapshot.json.gz",
+		),
+	},
+}
+
+func pathSet(paths ...string) map[string]struct{} {
+	set := make(map[string]struct{}, len(paths))
+	for _, path := range paths {
+		set[path] = struct{}{}
+	}
+	return set
+}
+
+func profileFlag(fs *flag.FlagSet) *string {
+	return fs.String("profile", "", "refresh profile: trash or seadex")
+}
+
+func lookupProfile(name string) (packProfile, error) {
+	profile, ok := profiles[name]
+	if !ok {
+		return packProfile{}, fmt.Errorf("unknown refresh profile %q; expected trash or seadex", name)
+	}
+	return profile, nil
 }
 
 type pack struct {
@@ -71,7 +110,7 @@ type semanticRule struct {
 
 func main() {
 	if len(os.Args) < 2 {
-		fatal("usage: trash-refresh fingerprint|next-version|verify-diff")
+		fatal("usage: refresh fingerprint|next-version|verify-diff --profile trash|seadex")
 	}
 	var err error
 	switch os.Args[1] {
@@ -113,7 +152,12 @@ func nextPatch(version string) (string, error) {
 func nextVersionCommand(args []string) error {
 	fs := flag.NewFlagSet("next-version", flag.ContinueOnError)
 	path := fs.String("pack", "", "generated rule-pack JSON")
+	profileName := profileFlag(fs)
 	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	profile, err := lookupProfile(*profileName)
+	if err != nil {
 		return err
 	}
 	data, err := os.ReadFile(*path)
@@ -124,8 +168,8 @@ func nextVersionCommand(args []string) error {
 	if err := json.Unmarshal(data, &current); err != nil {
 		return err
 	}
-	if current.ID != packID {
-		return fmt.Errorf("unexpected rule-pack id %q", current.ID)
+	if current.ID != profile.ID {
+		return fmt.Errorf("unexpected rule-pack id %q, want %q", current.ID, profile.ID)
 	}
 	version, err := nextPatch(current.Version)
 	if err != nil {
@@ -138,13 +182,18 @@ func nextVersionCommand(args []string) error {
 func fingerprintCommand(args []string) error {
 	fs := flag.NewFlagSet("fingerprint", flag.ContinueOnError)
 	path := fs.String("pack", "", "generated rule-pack JSON")
+	profileName := profileFlag(fs)
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 	if *path == "" {
 		return errors.New("fingerprint requires --pack")
 	}
-	fingerprint, err := semanticFingerprintFile(*path)
+	profile, err := lookupProfile(*profileName)
+	if err != nil {
+		return err
+	}
+	fingerprint, err := semanticFingerprintFile(profile, *path)
 	if err != nil {
 		return err
 	}
@@ -155,11 +204,16 @@ func fingerprintCommand(args []string) error {
 func verifyDiffCommand(args []string) error {
 	fs := flag.NewFlagSet("verify-diff", flag.ContinueOnError)
 	base := fs.String("base", "", "Git revision to compare with HEAD")
+	profileName := profileFlag(fs)
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 	if *base == "" {
 		return errors.New("verify-diff requires --base")
+	}
+	profile, err := lookupProfile(*profileName)
+	if err != nil {
+		return err
 	}
 	changed, err := gitNULPaths("diff", "--name-only", "-z", *base, "--")
 	if err != nil {
@@ -169,7 +223,7 @@ func verifyDiffCommand(args []string) error {
 		return errors.New("refresh produced no committed changes")
 	}
 	for _, path := range changed {
-		if _, ok := allowedChanges[path]; !ok {
+		if _, ok := profile.Allowed[path]; !ok {
 			return fmt.Errorf("refresh changed non-generated path %q", path)
 		}
 	}
@@ -185,21 +239,21 @@ func verifyDiffCommand(args []string) error {
 	return nil
 }
 
-func semanticFingerprintFile(path string) (string, error) {
+func semanticFingerprintFile(profile packProfile, path string) (string, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
-	return semanticFingerprint(data)
+	return semanticFingerprint(profile, data)
 }
 
-func semanticFingerprint(data []byte) (string, error) {
+func semanticFingerprint(profile packProfile, data []byte) (string, error) {
 	var decoded pack
 	if err := json.Unmarshal(data, &decoded); err != nil {
 		return "", err
 	}
-	if decoded.ID != packID {
-		return "", fmt.Errorf("unexpected rule-pack id %q", decoded.ID)
+	if decoded.ID != profile.ID {
+		return "", fmt.Errorf("unexpected rule-pack id %q, want %q", decoded.ID, profile.ID)
 	}
 	rules := make([]semanticRule, 0, len(decoded.Rules))
 	for _, item := range decoded.Rules {

@@ -1,0 +1,84 @@
+name: rule-pack-refresh-pr
+description: >-
+  Commit generated rule-pack artifacts with an SSH-signed commit, push the
+  refresh branch, and open or update the auto-merging pull request. Signing
+  material lives only in RUNNER_TEMP for the duration of the job.
+
+inputs:
+  branch:
+    description: Refresh branch name (force-pushed with lease)
+    required: true
+  pack-label:
+    description: Human-readable pack name for commit and PR titles
+    required: true
+  version:
+    description: New pack version being committed
+    required: true
+  fingerprint:
+    description: Semantic fingerprint or snapshot checksum recorded in the PR body
+    required: true
+  paths:
+    description: Newline-separated repository paths to stage (generated artifacts only)
+    required: true
+  token:
+    description: Bot token with contents and pull-request write access
+    required: true
+  signing-key:
+    description: SSH private key used to sign the refresh commit
+    required: true
+  allowed-signers:
+    description: allowed_signers line(s) for verifying the signing key
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Commit and open the signed refresh pull request
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REFRESH_BRANCH: ${{ inputs.branch }}
+        PACK_LABEL: ${{ inputs.pack-label }}
+        VERSION: ${{ inputs.version }}
+        FINGERPRINT: ${{ inputs.fingerprint }}
+        REFRESH_PATHS: ${{ inputs.paths }}
+        SIGNING_KEY: ${{ inputs.signing-key }}
+        ALLOWED_SIGNERS: ${{ inputs.allowed-signers }}
+      run: |
+        set -euo pipefail
+        test -n "$SIGNING_KEY" || { echo "a signing key is required for signed commits" >&2; exit 1; }
+        test -n "$ALLOWED_SIGNERS" || { echo "allowed signers are required" >&2; exit 1; }
+        signing_key="$RUNNER_TEMP/rule-pack-refresh-signing-key"
+        allowed="$RUNNER_TEMP/rule-pack-refresh-allowed-signers"
+        umask 077
+        printf '%s\n' "$SIGNING_KEY" > "$signing_key"
+        printf '%s\n' "$ALLOWED_SIGNERS" > "$allowed"
+        git config user.name "Rule Pack Refresh Bot"
+        git config user.email "rule-pack-refresh-bot@users.noreply.github.com"
+        git config gpg.format ssh
+        git config user.signingkey "$signing_key"
+        git config gpg.ssh.allowedSignersFile "$allowed"
+        git config commit.gpgsign true
+        git switch -C "$REFRESH_BRANCH"
+        while IFS= read -r path; do
+          [ -n "$path" ] || continue
+          git add -- "$path"
+        done <<< "$REFRESH_PATHS"
+        git commit -S -m "chore: refresh $PACK_LABEL scoring pack to $VERSION"
+        git verify-commit HEAD
+        git push --force-with-lease --set-upstream origin "$REFRESH_BRANCH"
+        body="$RUNNER_TEMP/rule-pack-refresh-pr.md"
+        printf 'Generated-only refresh from immutable upstream input.\n\n- Version: `%s`\n- Fingerprint: `%s`\n\nMerging publishes this version through the rule-pack-publish workflow.\n' "$VERSION" "$FINGERPRINT" > "$body"
+        title="chore: refresh $PACK_LABEL scoring pack ($VERSION)"
+        pr="$(gh pr list --head "$REFRESH_BRANCH" --state open --json number --jq '.[0].number // empty')"
+        if [ -z "$pr" ]; then
+          pr="$(gh pr create --base main --head "$REFRESH_BRANCH" --title "$title" --body-file "$body")"
+        else
+          gh pr edit "$pr" --title "$title" --body-file "$body"
+        fi
+        gh pr merge "$pr" --auto --squash
+
+    - name: Remove temporary signing material
+      if: ${{ always() }}
+      shell: bash
+      run: rm -f "$RUNNER_TEMP/rule-pack-refresh-signing-key" "$RUNNER_TEMP/rule-pack-refresh-allowed-signers"

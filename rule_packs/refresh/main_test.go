@@ -3,17 +3,18 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
 func TestSemanticFingerprintIgnoresVersionAndRuleOrder(t *testing.T) {
 	first := []byte(`{"id":"trash-guides-scoring-pack","version":"1.0.0","rules":[{"id":"b","regoSource":"b","appliedFacets":["series","movie"]},{"id":"a","regoSource":"a"}]}`)
 	second := []byte(`{"id":"trash-guides-scoring-pack","version":"1.0.1","rules":[{"id":"a","regoSource":"a"},{"id":"b","regoSource":"b","appliedFacets":["movie","series"]}]}`)
-	one, err := semanticFingerprint(first)
+	one, err := semanticFingerprint(profiles["trash"], first)
 	if err != nil {
 		t.Fatal(err)
 	}
-	two, err := semanticFingerprint(second)
+	two, err := semanticFingerprint(profiles["trash"], second)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -23,11 +24,11 @@ func TestSemanticFingerprintIgnoresVersionAndRuleOrder(t *testing.T) {
 }
 
 func TestSemanticFingerprintIncludesRego(t *testing.T) {
-	one, err := semanticFingerprint([]byte(`{"id":"trash-guides-scoring-pack","rules":[{"id":"a","regoSource":"score_entry[\"a\"] := 1"}]}`))
+	one, err := semanticFingerprint(profiles["trash"], []byte(`{"id":"trash-guides-scoring-pack","rules":[{"id":"a","regoSource":"score_entry[\"a\"] := 1"}]}`))
 	if err != nil {
 		t.Fatal(err)
 	}
-	two, err := semanticFingerprint([]byte(`{"id":"trash-guides-scoring-pack","rules":[{"id":"a","regoSource":"score_entry[\"a\"] := 2"}]}`))
+	two, err := semanticFingerprint(profiles["trash"], []byte(`{"id":"trash-guides-scoring-pack","rules":[{"id":"a","regoSource":"score_entry[\"a\"] := 2"}]}`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,8 +38,14 @@ func TestSemanticFingerprintIncludesRego(t *testing.T) {
 }
 
 func TestSemanticFingerprintRejectsWrongPack(t *testing.T) {
-	if _, err := semanticFingerprint([]byte(`{"id":"other","rules":[]}`)); err == nil {
+	if _, err := semanticFingerprint(profiles["trash"], []byte(`{"id":"other","rules":[]}`)); err == nil {
 		t.Fatal("accepted wrong pack")
+	}
+	if _, err := semanticFingerprint(profiles["seadex"], []byte(`{"id":"trash-guides-scoring-pack","rules":[]}`)); err == nil {
+		t.Fatal("seadex profile accepted the TRaSH pack")
+	}
+	if _, err := lookupProfile("other"); err == nil {
+		t.Fatal("accepted unknown profile")
 	}
 }
 
@@ -51,12 +58,32 @@ func TestAllowedChangesContainsOnlyGeneratedRefreshOutputs(t *testing.T) {
 		"rule_packs/trash/generated/source-video.rego",
 		"rule_packs/trash/generated/editions-anime.rego",
 	} {
-		if _, ok := allowedChanges[path]; !ok {
+		if _, ok := profiles["trash"].Allowed[path]; !ok {
 			t.Fatalf("missing allowlisted output %s", path)
 		}
 	}
-	if _, ok := allowedChanges["rule_packs/trash/render.go"]; ok {
+	if _, ok := profiles["trash"].Allowed["rule_packs/trash/render.go"]; ok {
 		t.Fatal("converter source is allowlisted")
+	}
+	for _, path := range []string{
+		"rule_packs/seadex-scoring.json", "rule_packs/seadex-scoring.rego",
+		"rule_packs/seadex-coverage.json", "rule_packs/seadex/snapshot.json.gz",
+	} {
+		if _, ok := profiles["seadex"].Allowed[path]; !ok {
+			t.Fatalf("missing allowlisted SeaDex output %s", path)
+		}
+	}
+	for _, path := range []string{"rule_packs/seadex/main.go", "rule_packs/seadex/refresh.go", "rule_packs/trash-scoring.json"} {
+		if _, ok := profiles["seadex"].Allowed[path]; ok {
+			t.Fatalf("SeaDex profile allowlists %s", path)
+		}
+	}
+	for name, profile := range profiles {
+		for path := range profile.Allowed {
+			if strings.HasSuffix(path, ".go") || strings.HasPrefix(path, ".github/") {
+				t.Fatalf("%s profile allowlists source path %s", name, path)
+			}
+		}
 	}
 }
 
@@ -72,7 +99,7 @@ func TestSemanticFingerprintFile(t *testing.T) {
 	if err := os.WriteFile(path, []byte(`{"id":"trash-guides-scoring-pack","rules":[]}`), 0600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := semanticFingerprintFile(path); err != nil {
+	if _, err := semanticFingerprintFile(profiles["trash"], path); err != nil {
 		t.Fatal(err)
 	}
 }

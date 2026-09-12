@@ -159,9 +159,11 @@ func main() {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return errors.New("expected fetch, generate, or check")
+		return errors.New("expected fetch, generate, check, or refresh")
 	}
 	switch args[0] {
+	case "refresh":
+		return runRefresh(args[1:])
 	case "fetch":
 		flags := flag.NewFlagSet("fetch", flag.ContinueOnError)
 		flags.SetOutput(io.Discard)

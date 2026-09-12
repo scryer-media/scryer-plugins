@@ -1,25 +1,18 @@
-name: trash-daily-refresh
+name: seadex-daily-refresh
 
 on:
   schedule:
-    - cron: "23 4 * * *"
+    - cron: "53 4 * * *"
   workflow_dispatch:
-    inputs:
-      upstream_revision:
-        description: "TRaSH revision or branch to resolve to an immutable SHA"
-        required: false
-        default: "master"
-        type: string
 
 permissions: read-all
 
 concurrency:
-  group: trash-daily-refresh
+  group: seadex-daily-refresh
   cancel-in-progress: false
 
 env:
-  REFRESH_BRANCH: feature/trash-daily-refresh
-  TRASH_UPSTREAM_REVISION: ${{ inputs.upstream_revision || 'master' }}
+  REFRESH_BRANCH: feature/seadex-daily-refresh
 
 jobs:
   refresh:
@@ -64,62 +57,62 @@ jobs:
         run: go test ./...
 
       - name: Run converter regression tests
-        working-directory: rule_packs/trash
+        working-directory: rule_packs/seadex
         run: go test ./...
 
-      - name: Refresh and generate from the resolved upstream revision
+      - name: Fetch the current SeaDex snapshot
+        working-directory: rule_packs/seadex
+        run: go run . fetch --output "$RUNNER_TEMP/seadex-incoming.json.gz"
+
+      - name: Stage a refresh only when the scoring policy changes
         id: refresh
-        working-directory: rule_packs/trash
+        working-directory: rule_packs/seadex
         shell: bash
         run: |
           set -euo pipefail
-          previous="$RUNNER_TEMP/trash-core-previous.json"
-          cp snapshot/core-snapshot.json "$previous"
-          go run . fetch --revision "$TRASH_UPSTREAM_REVISION" --output snapshot/upstream-raw.json
-          go run . distill --snapshot snapshot/upstream-raw.json --output-dir snapshot
-          current="$RUNNER_TEMP/trash-scoring-current.json"
-          cp ../trash-scoring.json "$current"
-          version="$(cd ../refresh && go run . next-version --profile trash --pack ../trash-scoring.json)"
-          go run . generate --snapshot snapshot/core-snapshot.json --previous-snapshot "$previous" --output-dir .. --pack-version "$version"
-          before="$(cd ../refresh && go run . fingerprint --profile trash --pack "$current")"
-          after="$(cd ../refresh && go run . fingerprint --profile trash --pack ../trash-scoring.json)"
-          if [ "$before" = "$after" ]; then
-            echo "TRaSH scoring policy is unchanged; no refresh needed"
-            echo "changed=false" >> "$GITHUB_OUTPUT"
+          previous="$RUNNER_TEMP/seadex-previous.json.gz"
+          cp snapshot.json.gz "$previous"
+          staged="$RUNNER_TEMP/seadex-staged"
+          go run . refresh \
+            --snapshot "$RUNNER_TEMP/seadex-incoming.json.gz" \
+            --previous-snapshot "$previous" \
+            --current-pack ../seadex-scoring.json \
+            --output-dir "$staged" \
+            --github-output "$GITHUB_OUTPUT"
+          if [ ! -d "$staged" ]; then
+            echo "SeaDex scoring policy is unchanged; no refresh needed"
             exit 0
           fi
-          go run . check --snapshot snapshot/core-snapshot.json --previous-snapshot "$previous" --output-dir .. --pack-version "$version"
-          {
-            echo "changed=true"
-            echo "version=$version"
-            echo "fingerprint=$after"
-          } >> "$GITHUB_OUTPUT"
+          cp "$staged/seadex-scoring.json" "$staged/seadex-scoring.rego" "$staged/seadex-coverage.json" ..
+          cp "$staged/snapshot.json.gz" snapshot.json.gz
+          version="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' ../seadex-scoring.json)"
+          go run . check --snapshot snapshot.json.gz --previous-snapshot "$previous" --output-dir .. --pack-version "$version"
 
       - name: Validate the generated pack on the pinned production runtime
         if: ${{ steps.refresh.outputs.changed == 'true' }}
         uses: ./.github/actions/rule-pack-host-validation
         with:
-          pack-path: ${{ github.workspace }}/rule_packs/trash-scoring.json
+          pack-path: ${{ github.workspace }}/rule_packs/seadex-scoring.json
           host-sha: ${{ vars.RULE_PACK_HOST_VALIDATION_SHA }}
 
       - name: Enforce generated-only diff
         if: ${{ steps.refresh.outputs.changed == 'true' }}
         working-directory: rule_packs/refresh
-        run: go run . verify-diff --profile trash --base "${{ steps.base.outputs.sha }}"
+        run: go run . verify-diff --profile seadex --base "${{ steps.base.outputs.sha }}"
 
       - name: Commit and open the signed refresh pull request
         if: ${{ steps.refresh.outputs.changed == 'true' }}
         uses: ./.github/actions/rule-pack-refresh-pr
         with:
           branch: ${{ env.REFRESH_BRANCH }}
-          pack-label: TRaSH
+          pack-label: SeaDex
           version: ${{ steps.refresh.outputs.version }}
-          fingerprint: ${{ steps.refresh.outputs.fingerprint }}
+          fingerprint: ${{ steps.refresh.outputs.snapshot_sha256 }}
           paths: |
-            rule_packs/trash-scoring.json
-            rule_packs/trash-scoring-coverage.json
-            rule_packs/trash/snapshot
-            rule_packs/trash/generated
+            rule_packs/seadex-scoring.json
+            rule_packs/seadex-scoring.rego
+            rule_packs/seadex-coverage.json
+            rule_packs/seadex/snapshot.json.gz
           token: ${{ secrets.RULE_PACK_REFRESH_TOKEN }}
           signing-key: ${{ secrets.RULE_PACK_REFRESH_SIGNING_KEY }}
           allowed-signers: ${{ vars.RULE_PACK_REFRESH_ALLOWED_SIGNERS }}
