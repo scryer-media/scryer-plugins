@@ -4,7 +4,8 @@
   "name": "SeaDex Scoring Pack",
   "description": "Prefer exact SeaDex-recommended anime releases.",
   "author": "community",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "customizable": false,
   "rules": [
     {
       "id": "seadex-preferences",

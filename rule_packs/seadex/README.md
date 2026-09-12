@@ -18,8 +18,8 @@ Run commands from this directory:
 
 ```sh
 go run . fetch --output snapshot.json.gz
-go run . generate --snapshot snapshot.json.gz --output-dir .. --pack-version 1.0.0
-go run . check --snapshot snapshot.json.gz --output-dir .. --pack-version 1.0.0
+go run . generate --snapshot snapshot.json.gz --output-dir .. --pack-version 1.0.1
+go run . check --snapshot snapshot.json.gz --output-dir .. --pack-version 1.0.1
 ```
 
 `fetch` retrieves every SeaDex page and writes a normalized snapshot. It
@@ -43,7 +43,8 @@ set. `check` regenerates in memory and exits nonzero when any artifact is
 missing or differs; it does not write artifacts.
 
 `--pack-version` sets the immutable SemVer version written to both the pack
-and coverage report. It defaults to `1.0.0` for this initial pack. Supply the
+and coverage report. It defaults to `1.0.0`; the committed pack is `1.0.1`,
+which marks the pack non-customizable (`customizable: false`). Supply the
 same explicit version to `generate` and `check`; a different version makes
 `check` report the existing artifacts as outdated.
 

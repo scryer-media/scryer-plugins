@@ -31,6 +31,7 @@ fn fixture(dir: &Path) -> CatalogV3 {
                 min_scryer_version: Some("0.20.0".into()),
                 rule_pack_digests: Vec::new(),
                 rule_pack_bytes: None,
+                customizable: true,
                 artifacts: vec![artifact],
             }],
         }],

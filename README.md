@@ -10,6 +10,9 @@ Plugins are grouped by capability, with common guest-runtime support in the PDK 
 
 Rule packs are JSON manifests under `rule_packs/`, registered in
 `rule_packs/manifest.json`. They can be updated independently of WASM plugins.
+A pack manifest may set `customizable` to a JSON boolean, which tells hosts
+whether they may offer user customization for that pack. The field defaults to
+`true` when omitted.
 For generated packs, update the saved source data, review the coverage changes,
 and regenerate with a new pack version. See the [SeaDex update instructions](rule_packs/seadex/README.md).
 Published versions are immutable; changes to pack content or the minimum Scryer

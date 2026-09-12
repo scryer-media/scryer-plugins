@@ -192,7 +192,7 @@ func TestArtifactsDeterministicAndReportChanges(t *testing.T) {
 	if err := json.Unmarshal(first["seadex-scoring.json"], &generated); err != nil {
 		t.Fatal(err)
 	}
-	if generated.ID != packID || len(generated.Rules) != 1 || generated.Rules[0].AppliedFacets[0] != "anime" {
+	if generated.ID != packID || generated.Customizable || len(generated.Rules) != 1 || generated.Rules[0].AppliedFacets[0] != "anime" {
 		t.Fatalf("unexpected pack %#v", generated)
 	}
 }
