@@ -5,26 +5,32 @@
 # Usage:
 #   RULE_PACK_REFRESH_TOKEN=<fine-grained PAT> \
 #     .github/scripts/provision-rule-pack-refresh.sh \
-#       --host-sha <40-hex scryer commit> [--repo scryer-media/scryer-plugins]
+#       --host-sha <40-hex scryer commit> [--signing-key <private key file>] \
+#       [--repo scryer-media/scryer-plugins]
 #
 # The token must belong to the account that will author refresh pull requests
 # and push release tags. Fine-grained permissions on the plugins repository:
 # Contents: read and write, Pull requests: read and write, Metadata: read.
-# The script generates a fresh ed25519 signing key, stores it as a secret with
-# the token, records the matching allowed-signers line, the bot login, and the
-# host validation commit as variables, enables auto-merge on the repository,
-# and finally flips RULE_PACK_REFRESH_ENABLED to true. It never prints the
-# token or the private key.
+# With --signing-key the given ed25519 private key becomes the bot's signing
+# key (register its public half on the bot account as an SSH *signing* key so
+# GitHub shows the commits as Verified); without it a fresh key is generated.
+# The script stores the key as a secret with the token, records the matching
+# allowed-signers line, the bot login and noreply email, and the host
+# validation commit as variables, enables auto-merge on the repository, and
+# finally flips RULE_PACK_REFRESH_ENABLED to true. It never prints the token
+# or the private key.
 
 set -euo pipefail
 
 repo="scryer-media/scryer-plugins"
 host_sha=""
+signing_key_file=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --repo) repo="$2"; shift 2 ;;
     --host-sha) host_sha="$2"; shift 2 ;;
-    -h|--help) sed -n '2,17p' "$0"; exit 0 ;;
+    --signing-key) signing_key_file="$2"; shift 2 ;;
+    -h|--help) sed -n '2,21p' "$0"; exit 0 ;;
     *) echo "unknown argument $1" >&2; exit 2 ;;
   esac
 done
@@ -37,6 +43,14 @@ command -v ssh-keygen >/dev/null || { echo "ssh-keygen is required" >&2; exit 2;
 
 bot_login="$(GH_TOKEN="$token" gh api user --jq .login)"
 test -n "$bot_login" || { echo "the token does not resolve to a GitHub user" >&2; exit 1; }
+bot_id="$(GH_TOKEN="$token" gh api user --jq .id)"
+test -n "$bot_id" || { echo "the token does not resolve to a GitHub user id" >&2; exit 1; }
+# GitHub only marks a commit Verified when the committer email belongs to the
+# account that registered the signing key, so sign as the bot's noreply address.
+bot_email="${bot_id}+${bot_login}@users.noreply.github.com"
+if [ -n "$signing_key_file" ]; then
+  test -r "$signing_key_file" || { echo "cannot read signing key $signing_key_file" >&2; exit 2; }
+fi
 GH_TOKEN="$token" gh api "repos/$repo" --jq .full_name >/dev/null || { echo "the token cannot read $repo" >&2; exit 1; }
 gh api "repos/scryer-media/scryer/commits/$host_sha" --jq .sha >/dev/null || { echo "$host_sha is not a commit on scryer-media/scryer" >&2; exit 1; }
 if ! gh api "repos/scryer-media/scryer/contents/crates/scryer-rules/src/trash_pack_validation.rs?ref=$host_sha" --jq .path >/dev/null 2>&1; then
@@ -46,15 +60,27 @@ fi
 
 workdir="$(mktemp -d)"
 trap 'rm -rf "$workdir"' EXIT
-ssh-keygen -q -t ed25519 -N "" -C "rule-pack-refresh-bot" -f "$workdir/signing-key"
-public_key="$(cat "$workdir/signing-key.pub")"
-allowed_signers="rule-pack-refresh-bot@users.noreply.github.com namespaces=\"git\" $public_key"
+if [ -n "$signing_key_file" ]; then
+  install -m 600 "$signing_key_file" "$workdir/signing-key"
+  public_key="$(ssh-keygen -y -f "$workdir/signing-key")" || { echo "$signing_key_file is not a usable private key" >&2; exit 1; }
+  case "$public_key" in
+    ssh-ed25519\ *) ;;
+    *) echo "the signing key must be ed25519" >&2; exit 1 ;;
+  esac
+else
+  ssh-keygen -q -t ed25519 -N "" -C "rule-pack-refresh-bot" -f "$workdir/signing-key"
+  public_key="$(cat "$workdir/signing-key.pub")"
+fi
+# A trailing comment would become part of the allowed-signers key material.
+public_key="$(printf '%s' "$public_key" | awk '{print $1" "$2}')"
+allowed_signers="$bot_email namespaces=\"git\" $public_key"
 
-echo "Provisioning $repo for refresh bot @$bot_login"
+echo "Provisioning $repo for refresh bot @$bot_login <$bot_email>"
 gh secret set RULE_PACK_REFRESH_TOKEN --repo "$repo" --body "$token"
 gh secret set RULE_PACK_REFRESH_SIGNING_KEY --repo "$repo" < "$workdir/signing-key"
 gh variable set RULE_PACK_REFRESH_ALLOWED_SIGNERS --repo "$repo" --body "$allowed_signers"
 gh variable set RULE_PACK_REFRESH_BOT_LOGIN --repo "$repo" --body "$bot_login"
+gh variable set RULE_PACK_REFRESH_BOT_EMAIL --repo "$repo" --body "$bot_email"
 gh variable set RULE_PACK_HOST_VALIDATION_SHA --repo "$repo" --body "$host_sha"
 gh api -X PATCH "repos/$repo" -F allow_auto_merge=true --jq .allow_auto_merge >/dev/null
 gh variable set RULE_PACK_REFRESH_ENABLED --repo "$repo" --body "true"
@@ -63,9 +89,10 @@ cat <<MSG
 
 Done. Refresh workflows are enabled on $repo.
 
-Optional: add this public key to @$bot_login as an SSH *signing* key so GitHub
-shows refresh commits as Verified (the workflows verify signatures themselves
-against RULE_PACK_REFRESH_ALLOWED_SIGNERS regardless):
+Make sure this public key is registered on @$bot_login as an SSH *signing* key
+(https://github.com/settings/ssh/new, key type "Signing Key") so GitHub shows
+refresh commits as Verified; the workflows verify signatures themselves against
+RULE_PACK_REFRESH_ALLOWED_SIGNERS regardless:
 
   $public_key
 

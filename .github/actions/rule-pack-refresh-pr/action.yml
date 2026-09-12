@@ -29,6 +29,9 @@ inputs:
   allowed-signers:
     description: allowed_signers line(s) for verifying the signing key
     required: true
+  bot-email:
+    description: Committer email of the bot account that owns the signing key
+    required: true
 
 runs:
   using: composite
@@ -44,17 +47,19 @@ runs:
         REFRESH_PATHS: ${{ inputs.paths }}
         SIGNING_KEY: ${{ inputs.signing-key }}
         ALLOWED_SIGNERS: ${{ inputs.allowed-signers }}
+        BOT_EMAIL: ${{ inputs.bot-email }}
       run: |
         set -euo pipefail
         test -n "$SIGNING_KEY" || { echo "a signing key is required for signed commits" >&2; exit 1; }
         test -n "$ALLOWED_SIGNERS" || { echo "allowed signers are required" >&2; exit 1; }
+        test -n "$BOT_EMAIL" || { echo "the bot committer email is required" >&2; exit 1; }
         signing_key="$RUNNER_TEMP/rule-pack-refresh-signing-key"
         allowed="$RUNNER_TEMP/rule-pack-refresh-allowed-signers"
         umask 077
         printf '%s\n' "$SIGNING_KEY" > "$signing_key"
         printf '%s\n' "$ALLOWED_SIGNERS" > "$allowed"
         git config user.name "Rule Pack Refresh Bot"
-        git config user.email "rule-pack-refresh-bot@users.noreply.github.com"
+        git config user.email "$BOT_EMAIL"
         git config gpg.format ssh
         git config user.signingkey "$signing_key"
         git config gpg.ssh.allowedSignersFile "$allowed"

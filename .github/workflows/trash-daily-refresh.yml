@@ -123,3 +123,4 @@ jobs:
           token: ${{ secrets.RULE_PACK_REFRESH_TOKEN }}
           signing-key: ${{ secrets.RULE_PACK_REFRESH_SIGNING_KEY }}
           allowed-signers: ${{ vars.RULE_PACK_REFRESH_ALLOWED_SIGNERS }}
+          bot-email: ${{ vars.RULE_PACK_REFRESH_BOT_EMAIL }}

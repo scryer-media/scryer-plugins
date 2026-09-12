@@ -33,6 +33,7 @@ jobs:
       RULE_PACK_REFRESH_TOKEN: ${{ secrets.RULE_PACK_REFRESH_TOKEN }}
       RULE_PACK_REFRESH_SIGNING_KEY: ${{ secrets.RULE_PACK_REFRESH_SIGNING_KEY }}
       RULE_PACK_REFRESH_ALLOWED_SIGNERS: ${{ vars.RULE_PACK_REFRESH_ALLOWED_SIGNERS }}
+      RULE_PACK_REFRESH_BOT_EMAIL: ${{ vars.RULE_PACK_REFRESH_BOT_EMAIL }}
       CARGO_TERM_COLOR: always
     steps:
       - name: Require configured publication credentials
@@ -42,6 +43,7 @@ jobs:
           test -n "$RULE_PACK_REFRESH_TOKEN" || { echo "RULE_PACK_REFRESH_TOKEN is required" >&2; exit 1; }
           test -n "$RULE_PACK_REFRESH_SIGNING_KEY" || { echo "RULE_PACK_REFRESH_SIGNING_KEY is required for signed publication" >&2; exit 1; }
           test -n "$RULE_PACK_REFRESH_ALLOWED_SIGNERS" || { echo "RULE_PACK_REFRESH_ALLOWED_SIGNERS is required" >&2; exit 1; }
+          test -n "$RULE_PACK_REFRESH_BOT_EMAIL" || { echo "RULE_PACK_REFRESH_BOT_EMAIL is required" >&2; exit 1; }
 
       - name: Resolve the refresh profile from the merged branch
         id: profile
@@ -102,7 +104,7 @@ jobs:
           printf '%s\n' "$RULE_PACK_REFRESH_SIGNING_KEY" > "$signing_key"
           printf '%s\n' "$RULE_PACK_REFRESH_ALLOWED_SIGNERS" > "$RUNNER_TEMP/rule-pack-refresh-allowed-signers"
           git config user.name "Rule Pack Refresh Bot"
-          git config user.email "rule-pack-refresh-bot@users.noreply.github.com"
+          git config user.email "$RULE_PACK_REFRESH_BOT_EMAIL"
           git config gpg.format ssh
           git config user.signingkey "$signing_key"
           git config gpg.ssh.allowedSignersFile "$RUNNER_TEMP/rule-pack-refresh-allowed-signers"
