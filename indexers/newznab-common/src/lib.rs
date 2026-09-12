@@ -2651,7 +2651,7 @@ fn apply_standard_attrs(
 struct NewznabJsonResponse {
     channel: Option<NewznabJsonChannel>,
     error: Option<NewznabJsonErrorNode>,
-    #[serde(default)]
+    #[serde(default, alias = "apilimits")]
     limits: Option<NewznabJsonLimitsNode>,
 }
 
@@ -2663,13 +2663,13 @@ struct NewznabJsonLimitsNode {
 
 #[derive(Deserialize, Default)]
 struct NewznabJsonLimitsAttrs {
-    #[serde(default)]
+    #[serde(default, alias = "apicurrent")]
     api_current: Option<String>,
-    #[serde(default)]
+    #[serde(default, alias = "apimax")]
     api_max: Option<String>,
-    #[serde(default)]
+    #[serde(default, alias = "grabcurrent")]
     grab_current: Option<String>,
-    #[serde(default)]
+    #[serde(default, alias = "grabmax")]
     grab_max: Option<String>,
 }
 
@@ -3194,25 +3194,11 @@ fn parse_newznab_xml(
                 }
             }
             Ok(Event::Empty(ref e)) if !in_item => {
-                // Parse <limits> or <newznab:limits> at channel level
-                let local_name = e.name().as_ref().to_string();
-                if local_name == "limits" || local_name.ends_with(":limits") {
+                // Channel-level <limits>/<newznab:limits> (Newznab's own
+                // spelling) or <newznab:apilimits> (NNTmux's).
+                if is_api_limits_element(e.name().as_ref()) {
                     for a in e.attributes().flatten() {
-                        match a.key.as_ref() {
-                            "api_current" => {
-                                api_limits.api_current = a.value.parse().ok();
-                            }
-                            "api_max" => {
-                                api_limits.api_max = a.value.parse().ok();
-                            }
-                            "grab_current" => {
-                                api_limits.grab_current = a.value.parse().ok();
-                            }
-                            "grab_max" => {
-                                api_limits.grab_max = a.value.parse().ok();
-                            }
-                            _ => {}
-                        }
+                        apply_api_limit_attribute(&mut api_limits, a.key.as_ref(), &a.value);
                     }
                 }
             }
@@ -3350,6 +3336,33 @@ fn parse_newznab_xml(
 /// has no content, but a feed is free to write it as `<attr … />` or as an
 /// open/close pair — XML makes no distinction, and Go's `encoding/xml` (and
 /// some indexers) only ever write the pair. Collect it from either shape.
+/// Newznab's reference implementation emits `<newznab:limits api_max=…
+/// grab_max=…/>`; NNTmux emits `<newznab:apilimits apimax=… grabmax=…/>` per
+/// its own published spec. Both name the same channel-level element, so both
+/// are accepted, with or without a namespace prefix.
+fn is_api_limits_element(qualified_name: &str) -> bool {
+    matches!(
+        qualified_name.rsplit(':').next().unwrap_or(qualified_name),
+        "limits" | "apilimits"
+    )
+}
+
+/// Accepts either spelling of each limits attribute. A value that does not
+/// parse leaves the field alone rather than clearing a value an earlier
+/// attribute already supplied.
+fn apply_api_limit_attribute(limits: &mut ApiLimits, key: &str, value: &str) {
+    let field = match key {
+        "api_current" | "apicurrent" => &mut limits.api_current,
+        "api_max" | "apimax" => &mut limits.api_max,
+        "grab_current" | "grabcurrent" => &mut limits.grab_current,
+        "grab_max" | "grabmax" => &mut limits.grab_max,
+        _ => return,
+    };
+    if let Ok(parsed) = value.trim().parse() {
+        *field = Some(parsed);
+    }
+}
+
 fn push_attr_element(e: &quick_xml::events::BytesStart<'_>, attrs: &mut Vec<(String, String)>) {
     let mut attr_name = None;
     let mut attr_value = None;
@@ -5407,6 +5420,49 @@ mod tests {
         assert_eq!(limits.api_max, Some(100));
         assert_eq!(limits.grab_current, Some(10));
         assert_eq!(limits.grab_max, Some(500));
+    }
+
+    #[test]
+    fn xml_nntmux_apilimits_parsed() {
+        // NNTmux spells the element `apilimits` and the attributes without
+        // underscores, and adds `apioldesttime`, which has no field here.
+        let body = r#"<?xml version="1.0"?>
+<rss xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attributes/">
+<channel>
+  <newznab:apilimits apicurrent="7" apimax="250" grabcurrent="3" grabmax="75" apioldesttime="2020-01-01 00:00:00"/>
+</channel>
+</rss>"#;
+        let (results, limits, _) = parse_newznab_xml(body, 100, extract_base_metadata).unwrap();
+        assert!(results.is_empty());
+        assert_eq!(limits.api_current, Some(7));
+        assert_eq!(limits.api_max, Some(250));
+        assert_eq!(limits.grab_current, Some(3));
+        assert_eq!(limits.grab_max, Some(75));
+    }
+
+    #[test]
+    fn xml_unprefixed_apilimits_parsed() {
+        let body = r#"<?xml version="1.0"?>
+<rss>
+<channel>
+  <apilimits apicurrent="1" apimax="10" grabcurrent="2" grabmax="20"/>
+</channel>
+</rss>"#;
+        let (_, limits, _) = parse_newznab_xml(body, 100, extract_base_metadata).unwrap();
+        assert_eq!(limits.api_current, Some(1));
+        assert_eq!(limits.api_max, Some(10));
+        assert_eq!(limits.grab_current, Some(2));
+        assert_eq!(limits.grab_max, Some(20));
+    }
+
+    #[test]
+    fn api_limits_element_names_are_recognised_by_local_name() {
+        assert!(is_api_limits_element("limits"));
+        assert!(is_api_limits_element("newznab:limits"));
+        assert!(is_api_limits_element("apilimits"));
+        assert!(is_api_limits_element("newznab:apilimits"));
+        assert!(!is_api_limits_element("newznab:attr"));
+        assert!(!is_api_limits_element("apilimitsextra"));
     }
 
     // ── extract_base_metadata ────────────────────────────────────────────

@@ -1809,6 +1809,7 @@ fn queue_placement_field(key: &str, label: &str, help_text: &str) -> ConfigField
             },
         ],
         help_text: Some(help_text.to_string()),
+        ..Default::default()
     }
 }
 
@@ -1831,6 +1832,7 @@ fn field(
         role: None,
         options: vec![],
         help_text: help_text.map(str::to_string),
+        ..Default::default()
     }
 }
 

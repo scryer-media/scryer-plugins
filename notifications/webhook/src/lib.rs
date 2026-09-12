@@ -128,6 +128,7 @@ fn build_descriptor() -> PluginDescriptor {
                     role: None,
                     options: vec![],
                     help_text: Some("The URL to POST notification payloads to.".to_string()),
+                    ..Default::default()
                 },
                 ConfigFieldDef {
                     key: "method".to_string(),
@@ -157,6 +158,7 @@ fn build_descriptor() -> PluginDescriptor {
                         },
                     ],
                     help_text: None,
+                    ..Default::default()
                 },
                 ConfigFieldDef {
                     key: "content_type".to_string(),
@@ -186,6 +188,7 @@ fn build_descriptor() -> PluginDescriptor {
                         },
                     ],
                     help_text: None,
+                    ..Default::default()
                 },
             ],
         }),

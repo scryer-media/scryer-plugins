@@ -1018,6 +1018,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
                 "Optional qBittorrent 5.2+ API key. When set, Scryer uses Bearer authentication instead of username and password; clear it to return to credential authentication."
                     .to_string(),
             ),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "username".to_string(),
@@ -1033,6 +1034,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
                 "Optional qBittorrent WebUI username used when no API key is configured; leave blank only when auth bypass is enabled"
                     .to_string(),
             ),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "password".to_string(),
@@ -1048,6 +1050,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
                 "Optional qBittorrent WebUI password used when no API key is configured; leave blank only when auth bypass is enabled"
                     .to_string(),
             ),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "routing_mode".to_string(),
@@ -1073,6 +1076,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             help_text: Some(
                 "Apply Scryer isolation values as qBittorrent categories or tags".to_string(),
             ),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "static_tags".to_string(),
@@ -1085,6 +1089,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             role: None,
             options: vec![],
             help_text: Some("Comma-separated tags added to every torrent".to_string()),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "auto_tmm".to_string(),
@@ -1100,6 +1105,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
                 "Enable qBittorrent automatic torrent management unless Scryer provided an explicit download directory"
                     .to_string(),
             ),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "start_paused".to_string(),
@@ -1112,6 +1118,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             role: None,
             options: vec![],
             help_text: Some("Add torrents in a paused state".to_string()),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "force_start".to_string(),
@@ -1124,6 +1131,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             role: None,
             options: vec![],
             help_text: Some("Force-start torrents after adding them".to_string()),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "skip_checking".to_string(),
@@ -1136,6 +1144,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             role: None,
             options: vec![],
             help_text: Some("Skip piece recheck when adding local torrent payloads".to_string()),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "tag_after_import".to_string(),
@@ -1150,6 +1159,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             help_text: Some(
                 "Apply the imported tag after Scryer verifies a successful import".to_string(),
             ),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "imported_tag".to_string(),
@@ -1162,6 +1172,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             role: None,
             options: vec![],
             help_text: Some("Tag applied after a verified import".to_string()),
+            ..Default::default()
         },
     ]
 }

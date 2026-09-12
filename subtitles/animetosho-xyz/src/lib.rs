@@ -345,6 +345,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             host_binding: None,
             options: vec![],
             help_text: Some("AnimeTosho.xyz JSON API base URL".to_string()),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "site_url".to_string(),
@@ -357,6 +358,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             host_binding: None,
             options: vec![],
             help_text: Some("AnimeTosho.xyz web site URL used for subtitle links".to_string()),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "api_key".to_string(),
@@ -369,6 +371,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             host_binding: None,
             options: vec![],
             help_text: Some("AnimeTosho.xyz API key".to_string()),
+            ..Default::default()
         },
         ConfigFieldDef {
             key: "search_threshold".to_string(),
@@ -381,6 +384,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             host_binding: None,
             options: vec![],
             help_text: Some("Maximum AnimeTosho releases to inspect, from 1 to 15".to_string()),
+            ..Default::default()
         },
     ]
 }
