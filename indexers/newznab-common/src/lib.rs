@@ -2575,72 +2575,186 @@ fn apply_standard_attrs(
     usenet_date: &mut Option<String>,
 ) {
     for (name, value) in pairs {
-        let normalized: String = name
-            .chars()
-            .filter(|ch| ch.is_ascii_alphanumeric())
-            .collect::<String>()
-            .to_ascii_lowercase();
+        let normalized = normalize_attribute_name(name);
+        let trimmed = value.trim();
+        let is_zero_or_empty = trimmed.is_empty() || trimmed == "0";
 
         match normalized.as_str() {
             "usenetdate" => {
                 *usenet_date = Some(value.clone());
             }
-            "tvdbid" if !value.is_empty() && value != "0" => {
+            // Response ids. Every spelling Prowlarr, Sonarr and Radarr accept
+            // lands in the SDK-typed `external_ids` map under its canonical
+            // key; the legacy `response_*` keys stay for tvdb/tmdb/imdb so
+            // the host's id disambiguator keeps its existing read path.
+            "tvdbid" | "tvdb" if !is_zero_or_empty => {
+                set_external_id(result, "tvdb_id", trimmed);
                 result.provider_extra.insert(
                     "response_tvdbid".to_string(),
-                    serde_json::Value::from(value.as_str()),
+                    serde_json::Value::from(trimmed),
                 );
             }
-            "tmdbid" if !value.is_empty() && value != "0" => {
+            "tmdbid" | "tmdb" if !is_zero_or_empty => {
+                set_external_id(result, "tmdb_id", trimmed);
                 result.provider_extra.insert(
                     "response_tmdbid".to_string(),
-                    serde_json::Value::from(value.as_str()),
+                    serde_json::Value::from(trimmed),
                 );
+            }
+            "imdb" | "imdbid" if !is_zero_or_empty => {
+                set_external_id(result, "imdb_id", trimmed);
+                result.provider_extra.insert(
+                    "response_imdbid".to_string(),
+                    serde_json::Value::from(trimmed),
+                );
+            }
+            "rageid" | "tvrageid" | "tvrage" | "rid" if !is_zero_or_empty => {
+                set_external_id(result, "tvrage_id", trimmed);
+            }
+            "tvmazeid" | "tvmaze" if !is_zero_or_empty => {
+                set_external_id(result, "tvmaze_id", trimmed);
+            }
+            "traktid" | "trakt" if !is_zero_or_empty => {
+                set_external_id(result, "trakt_id", trimmed);
+            }
+            "doubanid" | "douban" if !is_zero_or_empty => {
+                set_external_id(result, "douban_id", trimmed);
+            }
+            "anidbid" | "anidb" if !is_zero_or_empty => {
+                set_external_id(result, "anidb_id", trimmed);
             }
             // Newznab items repeat `attr name="category"` once per category id
             // (e.g. 5000 + 5070 for a dual-categorized item). Scryer's plugin
             // adapter reads `provider_categories` as the indexer-asserted
             // category set for the identity veto lane, so every value is kept
             // in indexer order, deduped.
-            "category" if !value.is_empty() => {
-                let categories = result
-                    .provider_extra
-                    .entry("provider_categories".to_string())
-                    .or_insert_with(|| serde_json::Value::Array(vec![]));
-                if let serde_json::Value::Array(ref mut arr) = categories {
-                    let candidate = serde_json::Value::from(value.as_str());
-                    if !arr.contains(&candidate) {
-                        arr.push(candidate);
-                    }
-                }
-            }
-            "imdb" | "imdbid" if !value.is_empty() && value != "0" => {
-                result.provider_extra.insert(
-                    "response_imdbid".to_string(),
-                    serde_json::Value::from(value.as_str()),
-                );
+            "category" if !trimmed.is_empty() => {
+                push_extra_list_value(result, "provider_categories", trimmed);
             }
             "prematch" | "haspretime" if value != "0" => {
-                let flags = result
-                    .provider_extra
-                    .entry("indexer_flags".to_string())
-                    .or_insert_with(|| serde_json::Value::Array(vec![]));
-                if let serde_json::Value::Array(ref mut arr) = flags {
-                    arr.push(serde_json::Value::from("scene"));
-                }
+                push_extra_list_value(result, "indexer_flags", "scene");
             }
             "nuked" if value != "0" => {
-                let flags = result
-                    .provider_extra
-                    .entry("indexer_flags".to_string())
-                    .or_insert_with(|| serde_json::Value::Array(vec![]));
-                if let serde_json::Value::Array(ref mut arr) = flags {
-                    arr.push(serde_json::Value::from("nuked"));
+                push_extra_list_value(result, "indexer_flags", "nuked");
+            }
+            // Generic fallbacks for attributes a provider profile or the
+            // plugin's own extractor may not have claimed. They never override
+            // a value that is already set.
+            "grabs" if result.grabs.is_none() => {
+                result.grabs = parse_attr_i64(trimmed);
+            }
+            "language" if result.languages.is_empty() && !trimmed.is_empty() => {
+                result.languages = split_attr_list(trimmed);
+            }
+            "subs" | "subtitles" if result.subtitles.is_empty() && !trimmed.is_empty() => {
+                result.subtitles = split_attr_list(trimmed);
+            }
+            "genre" | "genres" if !trimmed.is_empty() => {
+                for genre in split_attr_list(trimmed) {
+                    push_extra_list_value(result, "genres", &genre);
                 }
+            }
+            "tag" | "tags" if !trimmed.is_empty() => {
+                for tag in split_attr_list(trimmed) {
+                    push_extra_list_value(result, "tags", &tag);
+                }
+            }
+            "year" | "imdbyear" if !is_zero_or_empty => {
+                if let Some(year) = parse_attr_i64(trimmed) {
+                    insert_extra_if_absent(result, "year", serde_json::Value::from(year));
+                }
+            }
+            "imdbtitle" if !trimmed.is_empty() => {
+                insert_extra_if_absent(result, "imdb_title", serde_json::Value::from(trimmed));
+            }
+            "coverurl" | "poster" | "posterurl" if !trimmed.is_empty() => {
+                insert_extra_if_absent(result, "poster_url", serde_json::Value::from(trimmed));
+            }
+            "files" => {
+                if let Some(files) = parse_attr_i64(trimmed) {
+                    insert_extra_if_absent(result, "files", serde_json::Value::from(files));
+                }
+            }
+            "seeders" | "peers" | "leechers" | "minimumseedtime" => {
+                if let Some(parsed) = parse_attr_i64(trimmed) {
+                    insert_extra_if_absent(result, &normalized, serde_json::Value::from(parsed));
+                }
+            }
+            "downloadvolumefactor" | "uploadvolumefactor" | "minimumratio" => {
+                if let Some(parsed) = parse_attr_f64(trimmed) {
+                    insert_extra_if_absent(result, &normalized, serde_json::Value::from(parsed));
+                }
+            }
+            "infohash" => {
+                if let Some(hash) = scryer_plugin_sdk::indexer::normalize_info_hash(Some(trimmed)) {
+                    insert_extra_if_absent(result, "info_hash", serde_json::Value::from(hash));
+                }
+            }
+            "magneturl" | "magnet" if trimmed.starts_with("magnet:") => {
+                insert_extra_if_absent(result, "magnet_uri", serde_json::Value::from(trimmed));
+            }
+            // Book and music attributes Prowlarr forwards verbatim. Kept as
+            // plain strings so a future consumer does not need a parser change.
+            "author" | "booktitle" | "publisher" | "artist" | "album" | "label" | "track"
+                if !trimmed.is_empty() =>
+            {
+                let key = match normalized.as_str() {
+                    "booktitle" => "book_title",
+                    other => other,
+                };
+                insert_extra_if_absent(result, key, serde_json::Value::from(trimmed));
             }
             _ => {}
         }
     }
+}
+
+fn set_external_id(result: &mut SearchResult, key: &str, value: &str) {
+    result
+        .external_ids
+        .entry(key.to_string())
+        .or_insert_with(|| value.to_string());
+}
+
+fn insert_extra_if_absent(result: &mut SearchResult, key: &str, value: serde_json::Value) {
+    result
+        .provider_extra
+        .entry(key.to_string())
+        .or_insert(value);
+}
+
+fn push_extra_list_value(result: &mut SearchResult, key: &str, value: &str) {
+    let list = result
+        .provider_extra
+        .entry(key.to_string())
+        .or_insert_with(|| serde_json::Value::Array(vec![]));
+    if let serde_json::Value::Array(ref mut arr) = list {
+        let candidate = serde_json::Value::from(value);
+        if !arr.contains(&candidate) {
+            arr.push(candidate);
+        }
+    }
+}
+
+/// Multi-valued Newznab attributes arrive either repeated (one `attr` per
+/// value), dash-joined (`English - French`), or comma-joined (`Drama, Crime`).
+fn split_attr_list(value: &str) -> Vec<String> {
+    let mut values = Vec::new();
+    for part in value.split(',').flat_map(|part| part.split(" - ")) {
+        let part = part.trim();
+        if !part.is_empty() && !values.iter().any(|existing| existing == part) {
+            values.push(part.to_string());
+        }
+    }
+    values
+}
+
+fn parse_attr_i64(value: &str) -> Option<i64> {
+    value.trim().replace(',', "").parse::<i64>().ok()
+}
+
+fn parse_attr_f64(value: &str) -> Option<f64> {
+    value.trim().parse::<f64>().ok()
 }
 
 // ---------------------------------------------------------------------------
@@ -2716,6 +2830,24 @@ struct NewznabJsonItem {
     pub_date: Option<String>,
     enclosure: Option<NewznabJsonEnclosure>,
     attr: Option<NewznabJsonAttributes>,
+    #[serde(default)]
+    category: Option<NewznabJsonCategories>,
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum NewznabJsonCategories {
+    One(String),
+    Many(Vec<String>),
+}
+
+impl NewznabJsonCategories {
+    fn into_vec(self) -> Vec<String> {
+        match self {
+            NewznabJsonCategories::One(value) => vec![value],
+            NewznabJsonCategories::Many(values) => values,
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -2855,7 +2987,7 @@ fn parse_newznab_json(
             let enclosure_type = enclosure_attrs.as_ref().and_then(|a| a.mime_type.clone());
 
             // Extract attr pairs
-            let pairs: Vec<(String, String)> = item
+            let mut pairs: Vec<(String, String)> = item
                 .attr
                 .map(|a| {
                     a.into_vec()
@@ -2867,6 +2999,13 @@ fn parse_newznab_json(
                         .collect()
                 })
                 .unwrap_or_default();
+            for category in item
+                .category
+                .map(NewznabJsonCategories::into_vec)
+                .unwrap_or_default()
+            {
+                push_category_element(&category, &mut pairs);
+            }
 
             // Run provider-specific extractor
             let (languages, grabs, extra) = extract_fn(&pairs);
@@ -3054,15 +3193,30 @@ fn apply_provider_extra_fields(result: &mut SearchResult) {
         push_flag(&mut flags, "doubleupload");
     }
 
+    // Prowlarr's shared IndexerFlag vocabulary, as forwarded through its
+    // `tag` attrs. Anything else stays in `tags` without becoming a flag.
     for tag in extra_string_array(&result.provider_extra, "tags") {
-        match tag.trim().to_ascii_lowercase().as_str() {
-            "internal" => push_flag(&mut flags, "internal"),
-            "scene" => push_flag(&mut flags, "scene"),
-            _ => {}
+        let tag = tag.trim().to_ascii_lowercase();
+        if is_prowlarr_flag_tag(&tag) {
+            push_flag(&mut flags, &tag);
         }
     }
 
     result.indexer_flags = flags;
+}
+
+fn is_prowlarr_flag_tag(tag: &str) -> bool {
+    matches!(
+        tag,
+        "internal"
+            | "scene"
+            | "freeleech"
+            | "neutralleech"
+            | "halfleech"
+            | "exclusive"
+            | "doubleupload"
+            | "nuked"
+    )
 }
 
 fn extra_i64(extra: &HashMap<String, serde_json::Value>, key: &str) -> Option<i64> {
@@ -3172,7 +3326,7 @@ fn parse_newznab_xml(
                     current_tag = None;
                 } else if in_item {
                     match tag_name.as_str() {
-                        "title" | "guid" | "link" | "comments" | "pubDate" => {
+                        "title" | "guid" | "link" | "comments" | "pubDate" | "category" => {
                             current_tag = Some(tag_name);
                         }
                         "enclosure" => {
@@ -3226,6 +3380,7 @@ fn parse_newznab_xml(
                         "link" => link = Some(text),
                         "comments" => comments = Some(text),
                         "pubDate" => pub_date = Some(text),
+                        "category" => push_category_element(&text, &mut attrs),
                         _ => {}
                     }
                 }
@@ -3360,6 +3515,17 @@ fn apply_api_limit_attribute(limits: &mut ApiLimits, key: &str, value: &str) {
     };
     if let Ok(parsed) = value.trim().parse() {
         *field = Some(parsed);
+    }
+}
+
+/// A plain `<category>` element (Prowlarr emits one per category id next to
+/// the `attr` form; some indexers emit only the element) joins the attribute
+/// pairs when it carries a numeric Newznab id. Human-readable names such as
+/// `TV > HD` are not ids and are left out.
+fn push_category_element(text: &str, attrs: &mut Vec<(String, String)>) {
+    let trimmed = text.trim();
+    if !trimmed.is_empty() && trimmed.chars().all(|ch| ch.is_ascii_digit()) {
+        attrs.push(("category".to_string(), trimmed.to_string()));
     }
 }
 
@@ -4891,6 +5057,300 @@ mod tests {
         );
     }
 
+    #[test]
+    fn attrs_external_ids_accept_every_arr_spelling() {
+        let pairs: Vec<(String, String)> = [
+            ("tvdb", "393199"),
+            ("tmdbid", "1396"),
+            ("imdb", "0903747"),
+            ("rageid", "18164"),
+            ("tvmaze", "169"),
+            ("traktid", "1388"),
+            ("doubanid", "3016187"),
+            ("anidbid", "69"),
+        ]
+        .into_iter()
+        .map(|(name, value)| (name.to_string(), value.to_string()))
+        .collect();
+        let mut result = make_result();
+        let mut usenet_date = None;
+        apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
+        let id = |key: &str| result.external_ids.get(key).map(String::as_str);
+        assert_eq!(id("tvdb_id"), Some("393199"));
+        assert_eq!(id("tmdb_id"), Some("1396"));
+        assert_eq!(id("imdb_id"), Some("0903747"));
+        assert_eq!(id("tvrage_id"), Some("18164"));
+        assert_eq!(id("tvmaze_id"), Some("169"));
+        assert_eq!(id("trakt_id"), Some("1388"));
+        assert_eq!(id("douban_id"), Some("3016187"));
+        assert_eq!(id("anidb_id"), Some("69"));
+        // Legacy read path stays populated for the host's id disambiguator.
+        assert_eq!(
+            result.provider_extra.get("response_tvdbid"),
+            Some(&serde_json::Value::from("393199"))
+        );
+        assert_eq!(
+            result.provider_extra.get("response_imdbid"),
+            Some(&serde_json::Value::from("0903747"))
+        );
+    }
+
+    #[test]
+    fn attrs_first_external_id_spelling_wins() {
+        let pairs = vec![
+            ("tvdbid".to_string(), "1".to_string()),
+            ("tvdb".to_string(), "2".to_string()),
+        ];
+        let mut result = make_result();
+        let mut usenet_date = None;
+        apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
+        assert_eq!(
+            result.external_ids.get("tvdb_id").map(String::as_str),
+            Some("1")
+        );
+    }
+
+    #[test]
+    fn attrs_generic_fallbacks_fill_only_empty_fields() {
+        let pairs: Vec<(String, String)> = [
+            ("grabs", "1,234"),
+            ("language", "English - French, German"),
+            ("subs", "English, Spanish"),
+            ("genre", "Drama, Crime"),
+            ("year", "2019"),
+            ("imdbtitle", "Some Title"),
+            ("coverurl", "https://images.example/cover.jpg"),
+            ("files", "12"),
+            ("booktitle", "A Book"),
+            ("artist", "An Artist"),
+        ]
+        .into_iter()
+        .map(|(name, value)| (name.to_string(), value.to_string()))
+        .collect();
+        let mut result = make_result();
+        let mut usenet_date = None;
+        apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
+        assert_eq!(result.grabs, Some(1234));
+        assert_eq!(result.languages, vec!["English", "French", "German"]);
+        assert_eq!(result.subtitles, vec!["English", "Spanish"]);
+        assert_eq!(
+            result.provider_extra.get("genres"),
+            Some(&serde_json::json!(["Drama", "Crime"]))
+        );
+        assert_eq!(
+            result.provider_extra.get("year"),
+            Some(&serde_json::json!(2019))
+        );
+        assert_eq!(
+            result.provider_extra.get("imdb_title"),
+            Some(&serde_json::json!("Some Title"))
+        );
+        assert_eq!(
+            result.provider_extra.get("poster_url"),
+            Some(&serde_json::json!("https://images.example/cover.jpg"))
+        );
+        assert_eq!(
+            result.provider_extra.get("files"),
+            Some(&serde_json::json!(12))
+        );
+        assert_eq!(
+            result.provider_extra.get("book_title"),
+            Some(&serde_json::json!("A Book"))
+        );
+        assert_eq!(
+            result.provider_extra.get("artist"),
+            Some(&serde_json::json!("An Artist"))
+        );
+
+        // A profile or plugin extractor that already claimed the field wins.
+        let mut claimed = make_result();
+        claimed.grabs = Some(7);
+        claimed.languages = vec!["Japanese".to_string()];
+        claimed.subtitles = vec!["Dutch".to_string()];
+        apply_standard_attrs(&pairs, &mut claimed, &mut usenet_date);
+        assert_eq!(claimed.grabs, Some(7));
+        assert_eq!(claimed.languages, vec!["Japanese"]);
+        assert_eq!(claimed.subtitles, vec!["Dutch"]);
+    }
+
+    #[test]
+    fn attrs_torrent_fields_reach_typed_result_without_a_plugin_extractor() {
+        let pairs: Vec<(String, String)> = [
+            ("seeders", "42"),
+            ("leechers", "9"),
+            ("downloadvolumefactor", "0"),
+            ("uploadvolumefactor", "2"),
+            ("minimumratio", "1.5"),
+            ("minimumseedtime", "60"),
+            ("infohash", "ABCDEF1234567890ABCDEF1234567890ABCDEF12"),
+            (
+                "magneturl",
+                "magnet:?xt=urn:btih:abcdef1234567890abcdef1234567890abcdef12",
+            ),
+            ("tag", "internal, exclusive, whatever"),
+        ]
+        .into_iter()
+        .map(|(name, value)| (name.to_string(), value.to_string()))
+        .collect();
+        let mut result = make_result();
+        let mut usenet_date = None;
+        apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
+        apply_provider_extra_fields(&mut result);
+        assert_eq!(result.seeders, Some(42));
+        assert_eq!(result.leechers, Some(9));
+        assert_eq!(result.peers, Some(51));
+        assert_eq!(result.download_volume_factor, Some(0.0));
+        assert_eq!(result.upload_volume_factor, Some(2.0));
+        assert_eq!(result.minimum_seed_ratio, Some(1.5));
+        assert_eq!(result.minimum_seed_time_minutes, Some(60));
+        assert_eq!(
+            result.info_hash_v1.as_deref(),
+            Some("abcdef1234567890abcdef1234567890abcdef12")
+        );
+        assert!(
+            result
+                .magnet_url
+                .as_deref()
+                .unwrap()
+                .starts_with("magnet:?xt=")
+        );
+        for flag in ["freeleech", "doubleupload", "internal", "exclusive"] {
+            assert!(
+                result.indexer_flags.iter().any(|f| f == flag),
+                "missing {flag} in {:?}",
+                result.indexer_flags
+            );
+        }
+        assert!(!result.indexer_flags.iter().any(|f| f == "whatever"));
+        assert_eq!(
+            result.provider_extra.get("tags"),
+            Some(&serde_json::json!(["internal", "exclusive", "whatever"]))
+        );
+    }
+
+    #[test]
+    fn attrs_reject_non_magnet_and_malformed_hash() {
+        let pairs = vec![
+            (
+                "magneturl".to_string(),
+                "https://example/not-a-magnet".to_string(),
+            ),
+            ("infohash".to_string(), "not-hex".to_string()),
+        ];
+        let mut result = make_result();
+        let mut usenet_date = None;
+        apply_standard_attrs(&pairs, &mut result, &mut usenet_date);
+        assert!(
+            result.provider_extra.is_empty(),
+            "got {:?}",
+            result.provider_extra
+        );
+    }
+
+    #[test]
+    fn category_elements_join_provider_categories_when_numeric() {
+        let mut attrs = Vec::new();
+        push_category_element("5000", &mut attrs);
+        push_category_element(" 5040 ", &mut attrs);
+        push_category_element("TV > HD", &mut attrs);
+        push_category_element("", &mut attrs);
+        assert_eq!(
+            attrs,
+            vec![
+                ("category".to_string(), "5000".to_string()),
+                ("category".to_string(), "5040".to_string())
+            ]
+        );
+    }
+
+    #[test]
+    fn xml_plain_category_elements_and_prowlarr_attrs_parsed() {
+        let body = r#"<?xml version="1.0"?>
+<rss xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attributes/">
+<channel>
+  <item>
+    <title>Example.Show.S01E01.1080p.WEB</title>
+    <guid>https://prowlarr.example/1</guid>
+    <link>https://prowlarr.example/dl/1</link>
+    <category>5000</category>
+    <category>5040</category>
+    <category>TV &gt; HD</category>
+    <enclosure url="https://prowlarr.example/dl/1" length="1000" type="application/x-nzb"/>
+    <newznab:attr name="tvdbid" value="393199"/>
+    <newznab:attr name="tvmazeid" value="169"/>
+    <newznab:attr name="subs" value="English"/>
+    <newznab:attr name="genre" value="Drama"/>
+    <newznab:attr name="year" value="2019"/>
+    <newznab:attr name="coverurl" value="https://prowlarr.example/poster.jpg"/>
+    <newznab:attr name="tag" value="internal"/>
+  </item>
+</channel>
+</rss>"#;
+        let (results, _, _) = parse_newznab_xml(body, 100, extract_base_metadata).unwrap();
+        assert_eq!(results.len(), 1);
+        let result = &results[0];
+        assert_eq!(
+            result.provider_extra.get("provider_categories"),
+            Some(&serde_json::json!(["5000", "5040"]))
+        );
+        assert_eq!(
+            result.external_ids.get("tvdb_id").map(String::as_str),
+            Some("393199")
+        );
+        assert_eq!(
+            result.external_ids.get("tvmaze_id").map(String::as_str),
+            Some("169")
+        );
+        assert_eq!(result.subtitles, vec!["English"]);
+        assert_eq!(
+            result.provider_extra.get("genres"),
+            Some(&serde_json::json!(["Drama"]))
+        );
+        assert_eq!(
+            result.provider_extra.get("year"),
+            Some(&serde_json::json!(2019))
+        );
+        assert_eq!(
+            result.provider_extra.get("poster_url"),
+            Some(&serde_json::json!("https://prowlarr.example/poster.jpg"))
+        );
+        assert!(result.indexer_flags.iter().any(|f| f == "internal"));
+    }
+
+    #[test]
+    fn json_plain_category_and_id_attrs_parsed() {
+        let body = r#"{
+            "channel": {
+                "item": [{
+                    "title": "Example.Movie.2019.1080p",
+                    "guid": "abc",
+                    "category": ["2000", "2040"],
+                    "enclosure": {"@attributes": {"url": "https://x/dl", "length": "10", "type": "application/x-nzb"}},
+                    "attr": [
+                        {"@attributes": {"name": "tmdb", "value": "1396"}},
+                        {"@attributes": {"name": "imdb", "value": "0903747"}},
+                        {"@attributes": {"name": "category", "value": "2000"}}
+                    ]
+                }]
+            }
+        }"#;
+        let (results, _, _) = parse_newznab_json(body, 100, extract_base_metadata).unwrap();
+        assert_eq!(results.len(), 1);
+        let result = &results[0];
+        assert_eq!(
+            result.external_ids.get("tmdb_id").map(String::as_str),
+            Some("1396")
+        );
+        assert_eq!(
+            result.external_ids.get("imdb_id").map(String::as_str),
+            Some("0903747")
+        );
+        assert_eq!(
+            result.provider_extra.get("provider_categories"),
+            Some(&serde_json::json!(["2000", "2040"]))
+        );
+    }
+
     // ── parse_error_json ─────────────────────────────────────────────────
 
     #[test]
@@ -5565,11 +6025,7 @@ mod tests {
         assert!(!fields[0].advanced, "base_url is what you connect with");
         assert!(!fields[1].advanced, "api_key is what you connect with");
         for index in [2, 3, 4] {
-            assert!(
-                fields[index].advanced,
-                "{} is tuning",
-                fields[index].key
-            );
+            assert!(fields[index].advanced, "{} is tuning", fields[index].key);
         }
     }
 
