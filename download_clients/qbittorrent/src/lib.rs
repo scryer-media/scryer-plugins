@@ -396,16 +396,18 @@ fn handle_download_add(
         .map(|torrent| normalize_hash(&torrent.hash))
         .collect();
 
-    match prepared_request {
-        PreparedAddRequest::Multipart(body) => {
-            post_multipart(&config, "/torrents/add", &body.content_type, body.body)?;
+    let add_response = post_add(&config, prepared_request)?;
+    let hash = match add_disposition(
+        add_response.status_code(),
+        &String::from_utf8_lossy(&add_response.body()),
+        expected_hash.as_deref(),
+        |hash| Ok(before_hashes.contains(hash) || torrent_by_hash(&config, hash)?.is_some()),
+    )? {
+        AddDisposition::Accepted => {
+            resolve_added_hash(&config, &request, &before_hashes, expected_hash)?
         }
-        PreparedAddRequest::Form(form_fields) => {
-            post_form(&config, "/torrents/add", &form_fields)?;
-        }
-    }
-
-    let hash = resolve_added_hash(&config, &request, &before_hashes, expected_hash)?;
+        AddDisposition::AlreadyPresent(hash) => hash,
+    };
     let response = PluginDownloadClientAddResponse {
         client_item_id: hash.clone(),
         info_hash: Some(hash),
@@ -1361,25 +1363,82 @@ fn post_form(
     ensure_success(path, &response)
 }
 
-fn post_multipart(
+const TORRENTS_ADD_PATH: &str = "/torrents/add";
+
+/// Posts a prepared add and hands back the raw answer, because what a refusal
+/// means depends on whether qBittorrent already holds the torrent.
+fn post_add(
     config: &QbittorrentConfig,
-    path: &str,
-    content_type: &str,
-    body: Vec<u8>,
-) -> Result<(), Error> {
-    let response = request_with_auth(config, "POST", path, Some(body), Some(content_type))?;
-    ensure_success(path, &response)
+    prepared_request: PreparedAddRequest,
+) -> Result<HttpResponse, Error> {
+    match prepared_request {
+        PreparedAddRequest::Multipart(body) => request_with_auth(
+            config,
+            "POST",
+            TORRENTS_ADD_PATH,
+            Some(body.body),
+            Some(&body.content_type),
+        ),
+        PreparedAddRequest::Form(form_fields) => request_with_auth(
+            config,
+            "POST",
+            TORRENTS_ADD_PATH,
+            Some(form_encode(&form_fields).into_bytes()),
+            Some("application/x-www-form-urlencoded"),
+        ),
+    }
+}
+
+/// What a `/torrents/add` answer means for the grab.
+#[derive(Debug, PartialEq, Eq)]
+enum AddDisposition {
+    /// qBittorrent took the add; the new torrent's hash still has to be found.
+    Accepted,
+    /// qBittorrent already holds this exact torrent, identified by its hash.
+    AlreadyPresent(String),
+}
+
+/// qBittorrent 5.x answers an add that added nothing with 409 Conflict, which
+/// covers both a torrent it already holds and a source it could not use; 4.x
+/// answered the same case with 200 "Fails.". A conflict is adopted only when
+/// the grab's own info hash is confirmed present, the way the Transmission
+/// plugin treats `torrent-duplicate` (Transmission then re-applies seed limits
+/// and queue placement; qBittorrent sets those only inside the add request, so
+/// the held torrent is left exactly as it is).
+fn add_disposition(
+    status_code: u16,
+    body: &str,
+    expected_hash: Option<&str>,
+    holds_torrent: impl FnOnce(&str) -> Result<bool, Error>,
+) -> Result<AddDisposition, Error> {
+    if status_code < 400 {
+        return Ok(AddDisposition::Accepted);
+    }
+    if status_code == 409
+        && let Some(hash) = expected_hash.filter(|hash| !hash.is_empty())
+        && holds_torrent(hash)?
+    {
+        return Ok(AddDisposition::AlreadyPresent(hash.to_string()));
+    }
+    Err(http_failure(TORRENTS_ADD_PATH, status_code, body))
+}
+
+fn http_failure(path: &str, status_code: u16, body: &str) -> Error {
+    Error::msg(format!(
+        "qBittorrent {} failed with HTTP {}: {}",
+        path,
+        status_code,
+        body.trim()
+    ))
 }
 
 fn ensure_success(path: &str, response: &HttpResponse) -> Result<(), Error> {
     if response.status_code() >= 400 {
-        let body = String::from_utf8_lossy(&response.body()).trim().to_string();
-        return Err(Error::msg(format!(
-            "qBittorrent {} failed with HTTP {}: {}",
+        return Err(http_failure(
             path,
             response.status_code(),
-            body
-        )));
+            &String::from_utf8_lossy(&response.body()),
+        ));
     }
     Ok(())
 }
@@ -3396,6 +3455,70 @@ mod tests {
             }
             PluginResult::Ok(_) => panic!("expected structured error"),
         }
+    }
+
+    const HELD_HASH: &str = "4e212a97c1f0d3b2a5968e7f0c1d2e3f4a5b6c7d";
+
+    #[test]
+    fn add_conflict_adopts_the_torrent_qbittorrent_already_holds() {
+        // qBittorrent 5.x refuses a duplicate add with 409 where 4.6 answered
+        // 200 "Fails."; either way the torrent the grab asked for is there.
+        let mut probed = None;
+        let disposition = add_disposition(409, "Fails.", Some(HELD_HASH), |hash| {
+            probed = Some(hash.to_string());
+            Ok(true)
+        })
+        .expect("a duplicate of a held torrent is not a failure");
+
+        assert_eq!(
+            disposition,
+            AddDisposition::AlreadyPresent(HELD_HASH.to_string())
+        );
+        assert_eq!(probed.as_deref(), Some(HELD_HASH));
+    }
+
+    #[test]
+    fn add_conflict_for_a_torrent_qbittorrent_does_not_hold_stays_an_error() {
+        // 409 also covers an add whose every source was invalid.
+        let error = add_disposition(409, "Fails.", Some(HELD_HASH), |_| Ok(false))
+            .expect_err("nothing was added and nothing is held");
+
+        assert!(error.to_string().contains("HTTP 409"), "{error}");
+    }
+
+    #[test]
+    fn add_conflict_without_a_known_hash_stays_an_error() {
+        let error = add_disposition(409, "Fails.", None, |_| {
+            panic!("there is no hash to look up")
+        })
+        .expect_err("an unidentified conflict cannot be adopted");
+
+        assert!(error.to_string().contains("HTTP 409"), "{error}");
+    }
+
+    #[test]
+    fn non_conflict_add_failures_never_adopt() {
+        for status in [400, 403, 415, 500] {
+            let error = add_disposition(status, "nope", Some(HELD_HASH), |_| {
+                panic!("only a conflict can mean the torrent is already held")
+            })
+            .expect_err("a rejected add is a failure");
+
+            assert!(
+                error.to_string().contains(&format!("HTTP {status}")),
+                "{error}"
+            );
+        }
+    }
+
+    #[test]
+    fn successful_add_leaves_hash_resolution_to_the_listing() {
+        let disposition = add_disposition(200, "Ok.", Some(HELD_HASH), |_| {
+            panic!("an accepted add does not probe for an existing torrent")
+        })
+        .expect("accepted");
+
+        assert_eq!(disposition, AddDisposition::Accepted);
     }
 
     fn seeding_torrent(state: &str) -> QbTorrent {
