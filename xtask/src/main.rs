@@ -1239,13 +1239,11 @@ struct CatalogV3RulePackRelease {
     rule_pack_digests: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     rule_pack_bytes: Option<u64>,
-    #[serde(default = "default_customizable", skip_serializing_if = "is_true")]
+    // Legacy v3 readers reject unknown fields before filtering compatible releases.
+    // Keep this policy in the signed pack manifest, never in the shared catalog.
+    #[serde(default = "default_customizable", skip_serializing)]
     customizable: bool,
     artifacts: Vec<CatalogV3Artifact>,
-}
-
-fn is_true(value: &bool) -> bool {
-    *value
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
