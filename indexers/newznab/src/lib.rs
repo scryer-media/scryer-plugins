@@ -113,6 +113,12 @@ async fn search(req: SearchRequest) -> Result<SearchResponse, Error> {
 }
 
 async fn action(request: PluginActionRequest) -> Result<PluginActionResponse, Error> {
+    if request.action.trim() == "newznabConnectionTest" {
+        let config = NewznabConfig::from_host()?;
+        return Ok(PluginActionResponse {
+            payload: newznab_common::newznab_connection_test(&config).await?,
+        });
+    }
     newznab_common::execute_provider_action(request).await
 }
 

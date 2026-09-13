@@ -3868,15 +3868,15 @@ pub async fn execute_provider_action(
 ) -> Result<PluginActionResponse, Error> {
     let payload = match request.action.trim() {
         "newznabCategories" => newznab_categories().await,
-        "newznabConnectionTest" => newznab_connection_test().await?,
         _ => serde_json::json!({}),
     };
 
     Ok(PluginActionResponse { payload })
 }
 
-async fn newznab_connection_test() -> Result<serde_json::Value, Error> {
-    let config = NewznabConfig::from_host()?;
+/// Validate a connection using configuration selected by the owning plugin.
+/// The Newznab plugin exposes this probe; shared provider actions do not.
+pub async fn newznab_connection_test(config: &NewznabConfig) -> Result<serde_json::Value, Error> {
     let endpoint = build_endpoint(&config.base_url, &config.api_path)?;
     let (status, body) = execute_search(
         &endpoint,
@@ -5947,6 +5947,25 @@ mod tests {
     #[test]
     fn json_malformed() {
         assert_eq!(parse_error_json("not json"), None);
+    }
+
+    #[test]
+    fn shared_actions_do_not_expose_newznab_connection_test() {
+        use std::future::Future;
+        use std::task::{Context, Poll, Waker};
+
+        let mut action = Box::pin(execute_provider_action(PluginActionRequest {
+            action: "newznabConnectionTest".to_string(),
+            payload: serde_json::json!({}),
+        }));
+        let mut context = Context::from_waker(Waker::noop());
+        let Poll::Ready(result) = action.as_mut().poll(&mut context) else {
+            panic!("an unsupported shared action must not perform host I/O");
+        };
+        assert_eq!(
+            result.expect("legacy unsupported response").payload,
+            serde_json::json!({})
+        );
     }
 
     #[test]
