@@ -1401,8 +1401,10 @@ enum AddDisposition {
 /// qBittorrent 5.x answers an add that added nothing with 409 Conflict, which
 /// covers both a torrent it already holds and a source it could not use; 4.x
 /// answered the same case with 200 "Fails.". A conflict is adopted only when
-/// the grab's own info hash is confirmed present, the way the other torrent
-/// clients treat a duplicate add. The held torrent is left exactly as it is.
+/// the grab's own info hash is confirmed present, the way the Transmission
+/// plugin treats `torrent-duplicate` (Transmission then re-applies seed limits
+/// and queue placement; qBittorrent sets those only inside the add request, so
+/// the held torrent is left exactly as it is).
 fn add_disposition(
     status_code: u16,
     body: &str,
