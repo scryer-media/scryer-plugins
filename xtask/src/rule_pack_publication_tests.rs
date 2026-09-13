@@ -42,7 +42,7 @@ fn historical_rule_pack(id: &str, version: &str) -> CatalogV3RulePackEntry {
             min_scryer_version: Some("0.20.0".to_string()),
             rule_pack_digests: vec![DIGEST.to_string()],
             rule_pack_bytes: Some(12),
-            customizable: true,
+            _customizable: true,
             artifacts: vec![rule_pack_artifact(id, version)],
         }],
     }
@@ -243,15 +243,46 @@ fn rule_pack_customizable_defaults_to_true_and_is_omitted_from_catalog_output() 
         min_scryer_version: None,
         rule_pack_digests: vec![DIGEST.to_string()],
         rule_pack_bytes: Some(1),
-        customizable: true,
+        _customizable: true,
         artifacts: vec![rule_pack_artifact("selected-pack", "1.0.0")],
     };
-    let serialized = serde_json::to_value(release).expect("serialize catalog release");
-    assert!(serialized.get("customizable").is_none());
+    for customizable in [true, false] {
+        let mut release = release.clone();
+        release._customizable = customizable;
+        let serialized = serde_json::to_value(&release).expect("serialize catalog release");
+        assert!(serialized.get("customizable").is_none());
+
+        // A republish must also clean releases read from an already broken catalog.
+        let mut previous = serialized.clone();
+        previous["customizable"] = serde_json::json!(customizable);
+        let restored: CatalogV3RulePackRelease =
+            serde_json::from_value(previous).expect("read previous catalog release");
+        assert_eq!(restored._customizable, customizable);
+        assert_eq!(
+            serde_json::to_value(restored).expect("republish previous release"),
+            serialized
+        );
+        let mut keys = serialized
+            .as_object()
+            .expect("release object")
+            .keys()
+            .map(String::as_str)
+            .collect::<Vec<_>>();
+        keys.sort_unstable();
+        assert_eq!(
+            keys,
+            [
+                "artifacts",
+                "rule_pack_bytes",
+                "rule_pack_digests",
+                "version"
+            ]
+        );
+    }
 }
 
 #[test]
-fn rule_pack_customizable_false_propagates_to_catalog_release() {
+fn rule_pack_customizable_false_stays_in_manifest_and_is_omitted_from_catalog() {
     let (_directory, ctx) = temp_context();
     write_rule_pack_fixture(&ctx);
     write_file(
@@ -268,6 +299,9 @@ fn rule_pack_customizable_false_propagates_to_catalog_release() {
 }
 "#,
     );
+    let manifest = load_rule_pack_manifest(&ctx.path("rule_packs/selected-pack.json"))
+        .expect("read non-customizable signed-pack source");
+    assert!(!manifest.customizable);
     let baseline = write_existing_catalog(&ctx);
     let out = ctx.path("out");
 
@@ -285,7 +319,16 @@ fn rule_pack_customizable_false_propagates_to_catalog_release() {
         .iter()
         .find(|release| release.version == "1.1.0")
         .expect("selected pack release");
-    assert!(!release.customizable);
+    assert!(release._customizable);
+    let raw: serde_json::Value = serde_json::from_slice(
+        &fs::read(out.join(CATALOG_V3_SNIPPET_JSON)).expect("read catalog JSON"),
+    )
+    .expect("decode catalog JSON");
+    for pack in raw["rule_packs"].as_array().expect("rule packs") {
+        for release in pack["releases"].as_array().expect("releases") {
+            assert!(release.get("customizable").is_none());
+        }
+    }
 }
 
 #[test]

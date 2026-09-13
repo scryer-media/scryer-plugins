@@ -1239,13 +1239,15 @@ struct CatalogV3RulePackRelease {
     rule_pack_digests: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     rule_pack_bytes: Option<u64>,
-    #[serde(default = "default_customizable", skip_serializing_if = "is_true")]
-    customizable: bool,
+    // Legacy v3 readers reject unknown fields before filtering compatible releases.
+    // Keep this policy in the signed pack manifest, never in the shared catalog.
+    #[serde(
+        rename = "customizable",
+        default = "default_customizable",
+        skip_serializing
+    )]
+    _customizable: bool,
     artifacts: Vec<CatalogV3Artifact>,
-}
-
-fn is_true(value: &bool) -> bool {
-    *value
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -6324,7 +6326,7 @@ fn prepare_rule_pack_v3_entries(
                     min_scryer_version: rule_pack.min_scryer_version,
                     rule_pack_digests: file_digests(&minified_json_path)?,
                     rule_pack_bytes: Some(fs::metadata(&minified_json_path)?.len()),
-                    customizable: manifest.customizable,
+                    _customizable: manifest.customizable,
                     artifacts: vec![
                         CatalogV3Artifact {
                             url: versioned_distribution_url(&primary_base, &version, &zst_name),
@@ -10515,7 +10517,7 @@ distribution_base_url = "https://cdn.scryer.media/scryer/plugins-v3/email"
             min_scryer_version: min.map(str::to_string),
             rule_pack_digests: vec![digest.to_string()],
             rule_pack_bytes: Some(1),
-            customizable: true,
+            _customizable: true,
             artifacts: Vec::new(),
         }
     }
