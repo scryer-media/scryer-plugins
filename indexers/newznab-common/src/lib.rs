@@ -3868,10 +3868,72 @@ pub async fn execute_provider_action(
 ) -> Result<PluginActionResponse, Error> {
     let payload = match request.action.trim() {
         "newznabCategories" => newznab_categories().await,
+        "newznabConnectionTest" => newznab_connection_test().await?,
         _ => serde_json::json!({}),
     };
 
     Ok(PluginActionResponse { payload })
+}
+
+async fn newznab_connection_test() -> Result<serde_json::Value, Error> {
+    let config = NewznabConfig::from_host()?;
+    let endpoint = build_endpoint(&config.base_url, &config.api_path)?;
+    let (status, body) = execute_search(
+        &endpoint,
+        "search",
+        None,
+        &config.api_key,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        config.page_size,
+        None,
+        None,
+        &config.additional_params,
+        &config.http_behavior,
+    )
+    .await?;
+    validate_newznab_connection_feed(status, &body, config.page_size)?;
+
+    Ok(serde_json::json!({
+        "version": 1,
+        "validated": true,
+    }))
+}
+
+fn validate_newznab_connection_feed(
+    status: u16,
+    body: &str,
+    page_size: usize,
+) -> Result<(), Error> {
+    let trimmed = body.trim_start();
+    let is_xml = trimmed.starts_with("<?xml")
+        || trimmed.starts_with("<rss")
+        || trimmed.starts_with("<error");
+    if is_xml {
+        if let Some((code, description)) = parse_error_xml(body) {
+            return Err(classify_and_format_error(&code, &description));
+        }
+    } else if let Some((code, description)) = parse_error_json(body) {
+        return Err(classify_and_format_error(&code, &description));
+    }
+    if status >= 400 {
+        return Err(Error::msg(format!(
+            "Newznab connection feed returned HTTP {status}"
+        )));
+    }
+
+    let (results, _, _) = parse_newznab_feed(body, is_xml, page_size, extract_base_metadata)
+        .map_err(|failure| Error::msg(failure.message))?;
+    if results.is_empty() {
+        return Err(Error::msg(
+            "Newznab connection feed was valid but returned no results",
+        ));
+    }
+    Ok(())
 }
 
 async fn newznab_categories() -> serde_json::Value {
@@ -5885,6 +5947,40 @@ mod tests {
     #[test]
     fn json_malformed() {
         assert_eq!(parse_error_json("not json"), None);
+    }
+
+    #[test]
+    fn connection_test_requires_a_parseable_nonempty_feed() {
+        let valid = r#"{
+          "channel": {
+            "item": [{
+              "title": "Test.Release.1080p",
+              "guid": "test-guid",
+              "enclosure": {"@attributes": {
+                "url": "https://indexer.example/get/test-guid",
+                "length": "123",
+                "type": "application/x-nzb"
+              }}
+            }]
+          }
+        }"#;
+        assert!(validate_newznab_connection_feed(200, valid, 100).is_ok());
+        assert!(
+            validate_newznab_connection_feed(200, r#"{"channel":{}}"#, 100)
+                .unwrap_err()
+                .to_string()
+                .contains("returned no results")
+        );
+        assert!(
+            validate_newznab_connection_feed(
+                200,
+                r#"{"error":{"@attributes":{"code":"100","description":"Invalid API Key"}}}"#,
+                100,
+            )
+            .unwrap_err()
+            .to_string()
+            .contains("API key")
+        );
     }
 
     // ── parse_error_xml ──────────────────────────────────────────────────
