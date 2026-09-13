@@ -262,12 +262,13 @@ fn rule_pack_customizable_defaults_to_true_and_is_omitted_from_catalog_output() 
             serde_json::to_value(restored).expect("republish previous release"),
             serialized
         );
-        let keys = serialized
+        let mut keys = serialized
             .as_object()
             .expect("release object")
             .keys()
             .map(String::as_str)
             .collect::<Vec<_>>();
+        keys.sort_unstable();
         assert_eq!(
             keys,
             [
