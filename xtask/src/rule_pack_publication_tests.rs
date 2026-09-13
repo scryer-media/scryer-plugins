@@ -42,7 +42,7 @@ fn historical_rule_pack(id: &str, version: &str) -> CatalogV3RulePackEntry {
             min_scryer_version: Some("0.20.0".to_string()),
             rule_pack_digests: vec![DIGEST.to_string()],
             rule_pack_bytes: Some(12),
-            customizable: true,
+            _customizable: true,
             artifacts: vec![rule_pack_artifact(id, version)],
         }],
     }
@@ -243,12 +243,12 @@ fn rule_pack_customizable_defaults_to_true_and_is_omitted_from_catalog_output() 
         min_scryer_version: None,
         rule_pack_digests: vec![DIGEST.to_string()],
         rule_pack_bytes: Some(1),
-        customizable: true,
+        _customizable: true,
         artifacts: vec![rule_pack_artifact("selected-pack", "1.0.0")],
     };
     for customizable in [true, false] {
         let mut release = release.clone();
-        release.customizable = customizable;
+        release._customizable = customizable;
         let serialized = serde_json::to_value(&release).expect("serialize catalog release");
         assert!(serialized.get("customizable").is_none());
 
@@ -257,7 +257,7 @@ fn rule_pack_customizable_defaults_to_true_and_is_omitted_from_catalog_output() 
         previous["customizable"] = serde_json::json!(customizable);
         let restored: CatalogV3RulePackRelease =
             serde_json::from_value(previous).expect("read previous catalog release");
-        assert_eq!(restored.customizable, customizable);
+        assert_eq!(restored._customizable, customizable);
         assert_eq!(
             serde_json::to_value(restored).expect("republish previous release"),
             serialized
@@ -319,7 +319,7 @@ fn rule_pack_customizable_false_stays_in_manifest_and_is_omitted_from_catalog() 
         .iter()
         .find(|release| release.version == "1.1.0")
         .expect("selected pack release");
-    assert!(release.customizable);
+    assert!(release._customizable);
     let raw: serde_json::Value = serde_json::from_slice(
         &fs::read(out.join(CATALOG_V3_SNIPPET_JSON)).expect("read catalog JSON"),
     )
