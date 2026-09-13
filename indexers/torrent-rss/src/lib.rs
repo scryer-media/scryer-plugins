@@ -670,6 +670,9 @@ fn build_result(
         return None;
     }
     let (title, rewritten) = apply_title_rewrites(rewrite_rules, &original_title);
+    if title.trim().is_empty() {
+        return None;
+    }
     // The host log import only exists inside the component; native unit tests
     // exercise the rewrite without a host, so the log stays wasm-only.
     #[cfg(target_arch = "wasm32")]
@@ -1377,5 +1380,23 @@ mod tests {
             "[FSP] Battle Through The Heavens NF - 210 [4K]"
         );
         assert!(!untouched[0].provider_extra.contains_key("original_title"));
+    }
+
+    #[test]
+    fn title_rewrites_do_not_emit_blank_feed_items() {
+        let body = r#"<rss><channel>
+            <item><title>Remove.Me</title><link>https://example.invalid/1.torrent</link></item>
+            <item><title>Keep.Me</title><link>https://example.invalid/2.torrent</link></item>
+        </channel></rss>"#;
+        for rule in [
+            "^Remove\\.Me$ =>",
+            "^Remove(\\.)Me$ => $missing",
+            "^Remove\\.Me$ => ${1}",
+        ] {
+            let rules = parse_title_rewrite_rules(rule).unwrap();
+            let results = parse_rss_feed(body, DownloadPreference::Auto, &rules);
+            assert_eq!(results.len(), 1);
+            assert_eq!(results[0].title, "Keep.Me");
+        }
     }
 }
