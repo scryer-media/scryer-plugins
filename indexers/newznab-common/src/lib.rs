@@ -3874,6 +3874,68 @@ pub async fn execute_provider_action(
     Ok(PluginActionResponse { payload })
 }
 
+/// Validate a connection using configuration selected by the owning plugin.
+/// The Newznab plugin exposes this probe; shared provider actions do not.
+pub async fn newznab_connection_test(config: &NewznabConfig) -> Result<serde_json::Value, Error> {
+    let endpoint = build_endpoint(&config.base_url, &config.api_path)?;
+    let (status, body) = execute_search(
+        &endpoint,
+        "search",
+        None,
+        &config.api_key,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        config.page_size,
+        None,
+        None,
+        &config.additional_params,
+        &config.http_behavior,
+    )
+    .await?;
+    validate_newznab_connection_feed(status, &body, config.page_size)?;
+
+    Ok(serde_json::json!({
+        "version": 1,
+        "validated": true,
+    }))
+}
+
+fn validate_newznab_connection_feed(
+    status: u16,
+    body: &str,
+    page_size: usize,
+) -> Result<(), Error> {
+    let trimmed = body.trim_start();
+    let is_xml = trimmed.starts_with("<?xml")
+        || trimmed.starts_with("<rss")
+        || trimmed.starts_with("<error");
+    if is_xml {
+        if let Some((code, description)) = parse_error_xml(body) {
+            return Err(classify_and_format_error(&code, &description));
+        }
+    } else if let Some((code, description)) = parse_error_json(body) {
+        return Err(classify_and_format_error(&code, &description));
+    }
+    if status >= 400 {
+        return Err(Error::msg(format!(
+            "Newznab connection feed returned HTTP {status}"
+        )));
+    }
+
+    let (results, _, _) = parse_newznab_feed(body, is_xml, page_size, extract_base_metadata)
+        .map_err(|failure| Error::msg(failure.message))?;
+    if results.is_empty() {
+        return Err(Error::msg(
+            "Newznab connection feed was valid but returned no results",
+        ));
+    }
+    Ok(())
+}
+
 async fn newznab_categories() -> serde_json::Value {
     let categories = match NewznabConfig::from_host() {
         Ok(config) => fetch_categories(&config).await.ok(),
@@ -5885,6 +5947,59 @@ mod tests {
     #[test]
     fn json_malformed() {
         assert_eq!(parse_error_json("not json"), None);
+    }
+
+    #[test]
+    fn shared_actions_do_not_expose_newznab_connection_test() {
+        use std::future::Future;
+        use std::task::{Context, Poll, Waker};
+
+        let mut action = Box::pin(execute_provider_action(PluginActionRequest {
+            action: "newznabConnectionTest".to_string(),
+            payload: serde_json::json!({}),
+        }));
+        let mut context = Context::from_waker(Waker::noop());
+        let Poll::Ready(result) = action.as_mut().poll(&mut context) else {
+            panic!("an unsupported shared action must not perform host I/O");
+        };
+        assert_eq!(
+            result.expect("legacy unsupported response").payload,
+            serde_json::json!({})
+        );
+    }
+
+    #[test]
+    fn connection_test_requires_a_parseable_nonempty_feed() {
+        let valid = r#"{
+          "channel": {
+            "item": [{
+              "title": "Test.Release.1080p",
+              "guid": "test-guid",
+              "enclosure": {"@attributes": {
+                "url": "https://indexer.example/get/test-guid",
+                "length": "123",
+                "type": "application/x-nzb"
+              }}
+            }]
+          }
+        }"#;
+        assert!(validate_newznab_connection_feed(200, valid, 100).is_ok());
+        assert!(
+            validate_newznab_connection_feed(200, r#"{"channel":{}}"#, 100)
+                .unwrap_err()
+                .to_string()
+                .contains("returned no results")
+        );
+        assert!(
+            validate_newznab_connection_feed(
+                200,
+                r#"{"error":{"@attributes":{"code":"100","description":"Invalid API Key"}}}"#,
+                100,
+            )
+            .unwrap_err()
+            .to_string()
+            .contains("API key")
+        );
     }
 
     // ── parse_error_xml ──────────────────────────────────────────────────
