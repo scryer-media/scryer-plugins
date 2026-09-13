@@ -1255,7 +1255,11 @@ async fn execute_rss_search(
         let (status, body) = match search_result {
             Ok(response) => response,
             Err(error) if error.downcast_ref::<StructuredPluginError>().is_some() => {
-                return Err(error);
+                return Err(rss_branch_structured_error(
+                    error,
+                    newznab_search_response(all_results, &last_limits),
+                    completed_page,
+                ));
             }
             Err(error) if is_hit_budget_exhausted_error(&error) => {
                 let retry_after_seconds = hit_budget_retry_after_seconds(&config.http_behavior, 1)?;
@@ -1383,6 +1387,58 @@ async fn execute_rss_search(
         grab_current: last_limits.grab_current,
         grab_max: last_limits.grab_max,
     })
+}
+
+/// Fold a structured error raised part-way through an RSS run into that run's
+/// own accounting.
+///
+/// An RSS run issues one request per search type. A branch that fails after an
+/// earlier branch of the same run already completed a page must not throw that
+/// page away: the run is *partial*, and the host counts a partial run as a run
+/// that happened, not as a failed one. Only a run that reached nothing is a
+/// failed run, so a rate-limited feed is recorded exactly once no matter which
+/// branch the provider chose to refuse. The rate-limit signal itself survives:
+/// the partial error keeps the reason and the provider's retry delay.
+///
+/// A failure before the first completed page keeps its own structured error.
+fn rss_branch_structured_error(
+    error: Error,
+    response: SearchResponse,
+    completed_page: bool,
+) -> Error {
+    if !completed_page {
+        return error;
+    }
+    let Some(structured) = error.downcast_ref::<StructuredPluginError>() else {
+        return error;
+    };
+    let plugin_error = structured.plugin_error();
+    let reason = match &plugin_error.details {
+        Some(PluginErrorDetails::IndexerSearch(IndexerSearchPluginError::Deferred {
+            reason,
+            ..
+        })) => *reason,
+        Some(PluginErrorDetails::IndexerSearch(IndexerSearchPluginError::PartialResults {
+            reason,
+            ..
+        })) => *reason,
+        _ if plugin_error.code == PluginErrorCode::RateLimited => {
+            IndexerSearchIncompleteReason::RateLimited
+        }
+        _ => IndexerSearchIncompleteReason::FanoutBranchFailed,
+    };
+    let debug_message = plugin_error
+        .debug_message
+        .clone()
+        .unwrap_or_else(|| plugin_error.public_message.clone());
+    incomplete_newznab_search_error(
+        response,
+        reason,
+        plugin_error.retry_after_seconds,
+        true,
+        None,
+        debug_message,
+    )
 }
 
 fn rss_search_types(req: &SearchRequest, caps: Option<&NewznabSearchCaps>) -> Vec<&'static str> {
@@ -6957,6 +7013,83 @@ mod tests {
             rss_search_types(&request, Some(&none_listed)),
             vec!["search"],
             "both modes collapse into one generic feed"
+        );
+    }
+
+    fn rate_limited_structured_error(retry_after_seconds: Option<i64>) -> Error {
+        structured_plugin_error(PluginError {
+            code: PluginErrorCode::RateLimited,
+            public_message: "indexer rate limited".to_string(),
+            debug_message: Some("HTTP 429 after 1 attempt(s)".to_string()),
+            retry_after_seconds,
+            details: Some(PluginErrorDetails::IndexerSearch(
+                IndexerSearchPluginError::Deferred {
+                    reason: IndexerSearchIncompleteReason::RateLimited,
+                    retry_after_seconds,
+                },
+            )),
+        })
+    }
+
+    fn indexer_search_details(error: &Error) -> IndexerSearchPluginError {
+        let structured = error
+            .downcast_ref::<StructuredPluginError>()
+            .expect("structured plugin error");
+        match structured.plugin_error().details.clone() {
+            Some(PluginErrorDetails::IndexerSearch(details)) => details,
+            other => panic!("expected indexer-search details, got {other:?}"),
+        }
+    }
+
+    /// An RSS run that already completed one branch must report the rate limit
+    /// as a partial run, not as a failed one: the host counts a failed run per
+    /// run that reached nothing, so keeping the completed page is what makes a
+    /// rate-limited feed cost exactly one failed run instead of two.
+    #[test]
+    fn a_rate_limited_rss_branch_after_a_completed_page_is_partial_not_failed() {
+        let response = newznab_search_response(vec![make_result()], &ApiLimits::default());
+        let folded =
+            rss_branch_structured_error(rate_limited_structured_error(Some(360)), response, true);
+
+        match indexer_search_details(&folded) {
+            IndexerSearchPluginError::PartialResults {
+                response,
+                reason,
+                retry_after_seconds,
+            } => {
+                assert_eq!(
+                    response.results.len(),
+                    1,
+                    "the completed branch's page must survive the aborted run"
+                );
+                assert_eq!(reason, IndexerSearchIncompleteReason::RateLimited);
+                assert_eq!(
+                    retry_after_seconds,
+                    Some(360),
+                    "the provider's retry delay must still reach the host"
+                );
+            }
+            other => panic!("expected partial results, got {other:?}"),
+        }
+    }
+
+    /// A run that reached nothing keeps its own structured error, and stays the
+    /// one failed run the host records.
+    #[test]
+    fn a_rate_limited_rss_branch_before_any_page_stays_a_failed_run() {
+        let response = newznab_search_response(vec![], &ApiLimits::default());
+        let folded =
+            rss_branch_structured_error(rate_limited_structured_error(Some(360)), response, false);
+
+        assert!(
+            matches!(
+                indexer_search_details(&folded),
+                IndexerSearchPluginError::Deferred {
+                    reason: IndexerSearchIncompleteReason::RateLimited,
+                    ..
+                }
+            ),
+            "a run with no completed page must stay deferred"
         );
     }
 
