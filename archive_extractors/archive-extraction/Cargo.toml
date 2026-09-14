@@ -31,7 +31,7 @@ wit-bindgen = "0.61"
 # behind `#![feature(wasip2)]` and therefore nightly-only. That makes the
 # wasm32-wasip2 build fail on the pinned stable toolchain. Lift the `=` once
 # typed-path no longer needs the unstable feature.
-zip = { version = "=7.1.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+zip = { version = "=8.6.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 
 [dev-dependencies]
 aws-lc-sys = "0.45"
