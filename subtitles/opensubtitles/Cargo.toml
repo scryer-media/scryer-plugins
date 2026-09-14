@@ -28,7 +28,7 @@ scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
 scryer-plugin-sdk = "3.11.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-wit-bindgen = { version = "0.61", features = ["async"] }
+wit-bindgen = { version = "0.62", features = ["async"] }
 
 [dev-dependencies]
 # The whole host-conformance suite: it links wasmtime and drives the release
