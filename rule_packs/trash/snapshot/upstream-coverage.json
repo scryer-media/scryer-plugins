@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_revision": "31a2716d03a3f554a5a2a6bd76456109d900af05",
+  "source_revision": "08fcf06b67122cfa813802f7931cded652ebfad8",
   "input_files": [
     {
       "path": "docs/json/guide-only/language-german-and-original.json",
@@ -36,7 +36,7 @@
     },
     {
       "path": "docs/json/radarr/cf/126811.json",
-      "sha256": "e3853e470d8eaf4f2e4400cb2b7a1f02cb696a26eb80a7c67c91ef91ba3c82ab"
+      "sha256": "02b9befa99f38afdfa76936d20355a276959164b3c2e222ece3b6575fc3fdf7f"
     },
     {
       "path": "docs/json/radarr/cf/20-stereo.json",
@@ -936,7 +936,7 @@
     },
     {
       "path": "docs/json/radarr/cf/web-tier-03.json",
-      "sha256": "a525920fe1bf79e4b58c874f9f5210560ed2d3515beac0a5b31a1ae55f4a033a"
+      "sha256": "531a3ca1f1282fb395c2a9a2890c775ef8fec724b62f72ed1af54e5aca862b37"
     },
     {
       "path": "docs/json/radarr/cf/webdl-boost.json",
@@ -1884,7 +1884,7 @@
     },
     {
       "path": "docs/json/sonarr/cf/web-tier-03.json",
-      "sha256": "389a42d68c761aacd81b16beddb03c79319b058cba54cf68f87f259de9350d09"
+      "sha256": "feed1e02986950a096096c452e5fe26d6ce600bb51320496d5ec101f7132a6a7"
     },
     {
       "path": "docs/json/sonarr/cf/wetv.json",
@@ -1943,8 +1943,8 @@
     "service_alias_rules": 106,
     "token_signal_rules": 49
   },
-  "core_sha256": "bc2310b394d0956c9e19a3196cd33a657909e2e46386f37e9392e8984d8f9d89",
-  "detection_sha256": "25f15da7d77a12282bd2c555192bed763debbe9823f448cb3fd76f3d7e0b72ed",
+  "core_sha256": "6f235654b977304056126f368d770dae3634188cb76389268bed9c488e58d93c",
+  "detection_sha256": "b07788e6629552c99bd509bd515203e8dbaa8d5eb2872898f376e8e9ad4122b9",
   "ignored_records": [
     "docs/json/radarr/cf/amzn.json:WEBDL:requires_positive_title",
     "docs/json/radarr/cf/amzn.json:WEBRIP:requires_positive_title",
