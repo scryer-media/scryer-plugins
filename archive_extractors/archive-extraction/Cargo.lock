@@ -1354,9 +1354,9 @@ checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 
 [[package]]
 name = "par2-rs"
-version = "0.9.1"
+version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b12ba7c7fe4afe720eeb9157b48cc14b0ae71eba0a2173524fafb54d21eb51bc"
+checksum = "f6b37a1deb44b18a5ae7dffc595d342e4558ffb395441540a1e14b0946b7b22f"
 dependencies = [
  "aws-lc-sys",
  "bytes",
@@ -2095,9 +2095,9 @@ checksum = "b4ac048d71ede7ee76d585517add45da530660ef4390e49b098733c6e897f254"
 
 [[package]]
 name = "unrar-rs"
-version = "0.8.0"
+version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e06f150ac0c457860a134e9e630a5b423a773c724408b9b4798f87fa8179b618"
+checksum = "fcf5a0ba5a6c1afdac0d595af74cdb31195b7a4aaed3de0352b519b3b5dc92bb"
 dependencies = [
  "aes",
  "blake2s_simd",
