@@ -41,7 +41,7 @@ use std::fs;
 use std::io::{self, Read, Write};
 use std::path::{Component, Path, PathBuf};
 use unrar_rs::hooks::{HostAesError, HostCryptoHooks, install_host_crypto_hooks};
-use unrar_rs::{ExtractOptions, RarArchive, RarError};
+use unrar_rs::{RarArchive, RarError};
 
 mod par2;
 
@@ -408,12 +408,9 @@ fn extract_open_rar_archive(
     let mut files = Vec::new();
     let mut expanded_bytes = 0_u64;
     let mut output_paths = HashSet::new();
-    let options = ExtractOptions {
-        password: password
-            .filter(|password| !password.is_empty())
-            .map(str::to_string),
-        ..ExtractOptions::default()
-    };
+    let password = password
+        .filter(|password| !password.is_empty())
+        .map(str::to_string);
 
     let members = archive.indexed_member_infos();
     if members.len() > MAX_ARCHIVE_ENTRIES {
@@ -484,18 +481,19 @@ fn extract_open_rar_archive(
             );
         }
 
-        let written =
-            match archive.extract_member_to_file(member.index, &options, None, &destination) {
-                Ok(written) => written,
-                Err(error) => {
-                    let _ = fs::remove_file(&destination);
-                    return rar_error_response(
-                        "extract_rar",
-                        "failed to extract RAR member",
-                        error,
-                    );
-                }
+        let written = match archive.by_index(member.index).and_then(|entry| {
+            let entry = match &password {
+                Some(password) => entry.with_password(password.clone()),
+                None => entry,
             };
+            entry.unpack_to(&destination)
+        }) {
+            Ok(written) => written,
+            Err(error) => {
+                let _ = fs::remove_file(&destination);
+                return rar_error_response("extract_rar", "failed to extract RAR member", error);
+            }
+        };
 
         if written > declared_size {
             expanded_bytes = expanded_bytes
