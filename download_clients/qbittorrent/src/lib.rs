@@ -496,6 +496,7 @@ fn completed_downloads(
 ) -> Result<Vec<PluginCompletedDownload>, Error> {
     let torrents = list_completed_torrents(config)?;
     let raw_count = torrents.len();
+    // Telemetry only: imported torrents are returned like any other, so this never narrows the feed.
     let imported_tag_count = torrents
         .iter()
         .filter(|torrent| torrent_has_tag(torrent, &config.imported_tag))
@@ -617,7 +618,7 @@ fn completed_history_items(config: &QbittorrentConfig) -> Result<Vec<PluginDownl
 fn list_completed_torrents(config: &QbittorrentConfig) -> Result<Vec<QbTorrent>, Error> {
     let mut torrents =
         collect_completed_torrents(|filter| list_completed_torrents_for_filter(config, filter))?;
-    sort_and_dedupe_completed_torrents(&mut torrents, &config.imported_tag);
+    sort_and_dedupe_completed_torrents(&mut torrents);
     Ok(torrents)
 }
 
@@ -628,11 +629,17 @@ fn torrent_has_tag(torrent: &QbTorrent, tag: &str) -> bool {
     })
 }
 
-fn sort_and_dedupe_completed_torrents(torrents: &mut Vec<QbTorrent>, imported_tag: &str) {
+/// Completion order only. The imported tag used to sort tagged torrents last, which — once a
+/// caller's limit truncated the feed — hid torrents qBittorrent still holds. Scryer's tracker
+/// treats the listing as authoritative and ends the binding of anything it stops seeing, so a
+/// demoted imported torrent was re-adopted as a foreign observation on the next pass. Sonarr never
+/// hides or demotes imported torrents either: the host's identity layer dedupes by hash and owns
+/// "already imported", so the marker stays data and never decides who is listed.
+fn sort_and_dedupe_completed_torrents(torrents: &mut Vec<QbTorrent>) {
     torrents.sort_by(|left, right| {
-        torrent_has_tag(left, imported_tag)
-            .cmp(&torrent_has_tag(right, imported_tag))
-            .then_with(|| right.completion_on.cmp(&left.completion_on))
+        right
+            .completion_on
+            .cmp(&left.completion_on)
             .then_with(|| left.hash.cmp(&right.hash))
     });
     let mut seen = HashSet::new();
@@ -2841,7 +2848,7 @@ mod tests {
     }
 
     #[test]
-    fn completed_order_prioritizes_untagged_and_deduplicates_hashes() {
+    fn completed_order_is_newest_first_and_deduplicates_hashes() {
         let mut tagged = feedback_torrent("aaaa", 100);
         tagged.tags = Some(IMPORTED_TAG_DEFAULT.to_string());
         let mut torrents = vec![
@@ -2858,14 +2865,15 @@ mod tests {
             },
         ];
 
-        sort_and_dedupe_completed_torrents(&mut torrents, IMPORTED_TAG_DEFAULT);
+        sort_and_dedupe_completed_torrents(&mut torrents);
 
+        // The imported-tagged torrent keeps its completion-time position instead of being demoted.
         assert_eq!(
             torrents
                 .iter()
                 .map(|torrent| normalize_hash(&torrent.hash))
                 .collect::<Vec<_>>(),
-            vec!["bbbb", "cccc", "aaaa"]
+            vec!["aaaa", "bbbb", "cccc"]
         );
     }
 
@@ -2880,7 +2888,7 @@ mod tests {
                 ..QbTorrent::default()
             },
         ];
-        sort_and_dedupe_completed_torrents(&mut torrents, IMPORTED_TAG_DEFAULT);
+        sort_and_dedupe_completed_torrents(&mut torrents);
 
         let (downloads, converted_count) = convert_completed_torrents(torrents, Some(1));
 
@@ -2890,42 +2898,109 @@ mod tests {
     }
 
     #[test]
-    fn imported_tag_priority_drains_a_500_torrent_backlog_in_batches() {
+    fn imported_tag_never_reorders_or_drops_a_500_torrent_backlog() {
         let mut torrents = (0..500)
             .map(|index| feedback_torrent(&format!("{index:040x}"), 10_000 - index))
             .collect::<Vec<_>>();
 
-        sort_and_dedupe_completed_torrents(&mut torrents, IMPORTED_TAG_DEFAULT);
-        let first_batch = torrents
+        sort_and_dedupe_completed_torrents(&mut torrents);
+        let baseline = torrents
             .iter()
-            .take(300)
-            .map(|torrent| torrent.hash.clone())
-            .collect::<HashSet<_>>();
+            .map(|torrent| normalize_hash(&torrent.hash))
+            .collect::<Vec<_>>();
+        let first_batch = baseline.iter().take(300).cloned().collect::<HashSet<_>>();
         assert_eq!(first_batch.len(), 300);
 
         for torrent in &mut torrents {
-            if first_batch.contains(&torrent.hash) {
+            if first_batch.contains(&normalize_hash(&torrent.hash)) {
                 torrent.tags = Some(IMPORTED_TAG_DEFAULT.to_string());
             }
         }
-        sort_and_dedupe_completed_torrents(&mut torrents, IMPORTED_TAG_DEFAULT);
+        sort_and_dedupe_completed_torrents(&mut torrents);
 
-        let next_unimported = torrents
-            .iter()
-            .take_while(|torrent| !torrent_has_tag(torrent, IMPORTED_TAG_DEFAULT))
-            .collect::<Vec<_>>();
-        assert_eq!(next_unimported.len(), 200);
-        assert!(
-            next_unimported
-                .iter()
-                .all(|torrent| !first_batch.contains(&torrent.hash))
-        );
-        assert!(
+        // Tagging 300 of the 500 as imported changes neither membership nor order: the client
+        // still holds every one of them, so the listing still reports every one of them.
+        assert_eq!(
             torrents
                 .iter()
-                .skip(200)
-                .all(|torrent| torrent_has_tag(torrent, IMPORTED_TAG_DEFAULT))
+                .map(|torrent| normalize_hash(&torrent.hash))
+                .collect::<Vec<_>>(),
+            baseline
         );
+        let (downloads, _) = convert_completed_torrents(torrents, None);
+        assert_eq!(downloads.len(), 500);
+    }
+
+    /// Regression for gate run 1789492238173591000 (`download-identity-lifecycle`): an imported
+    /// torrent vanished from the truncated completed feed while the queue listing still showed
+    /// it, so the tracker could not find it in client history and re-adopted the hash as a
+    /// foreign observation. Both listings must include it.
+    #[test]
+    fn imported_tagged_torrent_stays_in_the_queue_and_completed_listings() {
+        let imported_torrent = || {
+            let mut torrent = feedback_torrent("f00d", 500);
+            torrent.name = "Example.Synthetic.Series.S01E01.1080p-SYNTH".to_string();
+            torrent.state = "pausedUP".to_string();
+            torrent.category = Some("scryer-tv".to_string());
+            torrent.tags = Some(format!("scryer-origin,{IMPORTED_TAG_DEFAULT}"));
+            torrent
+        };
+
+        // Queue listing: `scryer_download_list_queue` only narrows by feedback scope, and the
+        // imported tag must not make the torrent fall out of the scope it was routed into.
+        let config = test_config();
+        let scope = PluginDownloadFeedbackScope {
+            categories: vec!["scryer-tv".to_string()],
+        };
+        assert!(torrent_matches_feedback_scope(
+            &config,
+            &scope,
+            &imported_torrent()
+        ));
+        let item = torrent_to_item_with_preferences(imported_torrent(), None);
+        assert_eq!(item.client_item_id, "f00d");
+        // The marker survives as data on the item rather than as a reason to omit it.
+        assert!(item.torrent.is_some_and(|torrent| {
+            torrent
+                .tags
+                .iter()
+                .any(|tag| tag.eq_ignore_ascii_case(IMPORTED_TAG_DEFAULT))
+        }));
+
+        // Completed listing, including the truncated `list_recent_completed` window.
+        let mut torrents = vec![imported_torrent(), feedback_torrent("beef", 400)];
+        sort_and_dedupe_completed_torrents(&mut torrents);
+        let (downloads, _) = convert_completed_torrents(torrents, Some(1));
+        assert_eq!(
+            downloads
+                .iter()
+                .map(|download| download.client_item_id.clone())
+                .collect::<Vec<_>>(),
+            vec!["f00d"]
+        );
+    }
+
+    /// The seeding hold reads the scoped QUEUE listing, and the tracker ends a binding the moment
+    /// that listing stops naming the torrent. Post-import isolation can move an imported torrent
+    /// into a different category, so the scope match must fall back to the `scryer-routing-*`
+    /// tag that `preserve_routing_category_tag` writes before the move.
+    #[test]
+    fn imported_torrent_moved_by_post_import_isolation_stays_in_the_scoped_queue_listing() {
+        let mut moved = feedback_torrent("cafe", 600);
+        moved.name = "Example.Synthetic.Series.S01E03.1080p-SYNTH".to_string();
+        moved.state = "uploading".to_string();
+        // Isolation moved it out of `scryer-tv`; the preserved routing tag is what is left.
+        moved.category = Some("scryer-done".to_string());
+        moved.tags = Some(format!(
+            "scryer-origin,{},{IMPORTED_TAG_DEFAULT}",
+            routing_category_tag("scryer-tv").expect("routing tag")
+        ));
+
+        let config = test_config();
+        let scope = PluginDownloadFeedbackScope {
+            categories: vec!["scryer-tv".to_string()],
+        };
+        assert!(torrent_matches_feedback_scope(&config, &scope, &moved));
     }
 
     #[test]

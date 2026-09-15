@@ -828,9 +828,27 @@ fn completed_feedback_torrents(
 }
 
 fn torrent_matches_scope(config: &RTorrentConfig, torrent: &RTorrentTorrent) -> bool {
-    category_allowed(&config.category, torrent.feedback_category())
+    (category_allowed(&config.category, torrent.feedback_category())
+        || is_post_import_label(config, torrent))
         && !torrent.path.trim().is_empty()
         && !torrent.path.trim_start().starts_with('.')
+}
+
+/// The post-import label is a marker, never a reason to drop a torrent from a listing.
+///
+/// `scryer_download_mark_imported` relabels `d.custom1` to the configured post-import category
+/// and pushes the torrent into the `scryer_imported` view. `feedback_category` normally papers
+/// over the relabel because the pre-import routing category was stashed in
+/// `d.custom.scryer.routing_category` at add time — but when that stash is missing (a torrent
+/// added before the stash existed, or added outside Scryer and adopted later) the only category
+/// left after import is the post-import label, which the configured allowlist rejects. The
+/// torrent then disappeared from every listing entry point while rTorrent still held it, and
+/// Scryer's tracker — which treats the listing as authoritative — ended its binding on the next
+/// tick. Recognising the post-import label keeps those torrents listed. The configured routing
+/// allowlist itself is untouched.
+fn is_post_import_label(config: &RTorrentConfig, torrent: &RTorrentTorrent) -> bool {
+    let post_import = config.post_import_category.trim();
+    !post_import.is_empty() && post_import.eq_ignore_ascii_case(torrent.feedback_category().trim())
 }
 
 /// `category` may list several labels, comma or newline separated.
@@ -1643,6 +1661,43 @@ mod tests {
             torrent_to_item(imported_anime).category.as_deref(),
             Some("scryer-imported")
         );
+    }
+
+    /// Regression for gate run 1789492238173591000: rTorrent still held the imported torrent, but
+    /// the post-import relabel pushed it outside the configured allowlist, so every listing
+    /// entry point dropped it and Scryer's tracker ended the binding on the next tick.
+    #[test]
+    fn post_import_relabel_without_a_routing_stash_stays_in_the_listings() {
+        let mut config = config_with_categories("movies, anime");
+        config.post_import_category = "scryer-done".to_string();
+        // Routing stash missing: the post-import label is the only category left.
+        let imported = RTorrentTorrent {
+            name: "Example.Synthetic.Series.S01E02.1080p-SYNTH".to_string(),
+            category: "scryer-done".to_string(),
+            routing_category: String::new(),
+            ..completed_torrent("f00dbabe", "scryer-done", NOW)
+        };
+
+        // Queue listing (unscoped): `scryer_download_list_queue` keeps it, which is what the
+        // seeding hold reads and what the tracker treats as authoritative.
+        assert!(torrent_matches_scope(&config, &imported));
+        assert!(torrent_matches_feedback_scope(&config, None, &imported));
+        // Completed listing: `completed_feedback_torrents` keeps finished torrents that pass the
+        // same scope check, so the completed/history feed keeps naming it too.
+        assert!(imported.is_finished);
+        assert_eq!(
+            torrent_to_completed(imported.clone()).client_item_id,
+            "f00dbabe"
+        );
+        // The marker survives as data on the returned item rather than as a reason to omit it.
+        assert_eq!(
+            torrent_to_item(imported).category.as_deref(),
+            Some("scryer-done")
+        );
+
+        // The pre-existing routing allowlist is untouched: a genuinely foreign label still filters.
+        let foreign = completed_torrent("beefcafe", "series", NOW);
+        assert!(!torrent_matches_scope(&config, &foreign));
     }
 
     #[test]
