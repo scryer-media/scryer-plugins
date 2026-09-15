@@ -797,13 +797,22 @@ fn feedback_torrents(
         .collect())
 }
 
+/// A per-scope listing admits the post-import label the same way the unscoped one does.
+///
+/// Without the routing stash the original scope is unknowable, so the relabelled torrent is
+/// offered to every scope rather than to none: the host dedupes by hash and owns "already
+/// imported", while a scope that stops naming the torrent would end its binding. A torrent whose
+/// stash survived still resolves to its original category and is scoped normally.
 fn torrent_matches_feedback_scope(
     config: &RTorrentConfig,
     scope: Option<&PluginDownloadFeedbackScope>,
     torrent: &RTorrentTorrent,
 ) -> bool {
     torrent_matches_scope(config, torrent)
-        && scope.is_none_or(|scope| feedback_scope_allows(scope, torrent.feedback_category()))
+        && scope.is_none_or(|scope| {
+            feedback_scope_allows(scope, torrent.feedback_category())
+                || is_post_import_label(config, torrent)
+        })
 }
 
 fn sort_torrents_by_completion(torrents: &mut [RTorrentTorrent]) {
@@ -1682,6 +1691,29 @@ mod tests {
         // seeding hold reads and what the tracker treats as authoritative.
         assert!(torrent_matches_scope(&config, &imported));
         assert!(torrent_matches_feedback_scope(&config, None, &imported));
+        // Scoped listings (queue, history, completed, recent-completed all use this predicate):
+        // the original scope is unknowable without the stash, so every scope keeps naming it
+        // rather than ending its binding.
+        let movies_only = PluginDownloadFeedbackScope {
+            categories: vec!["movies".to_string()],
+        };
+        assert!(torrent_matches_feedback_scope(
+            &config,
+            Some(&movies_only),
+            &imported
+        ));
+        // With the stash present the relabel resolves to its original category and scoping is
+        // unchanged: an anime torrent stays out of the movies scope.
+        let stashed = RTorrentTorrent {
+            category: "scryer-done".to_string(),
+            routing_category: "anime".to_string(),
+            ..completed_torrent("0ddba11", "scryer-done", NOW)
+        };
+        assert!(!torrent_matches_feedback_scope(
+            &config,
+            Some(&movies_only),
+            &stashed
+        ));
         // Completed listing: `completed_feedback_torrents` keeps finished torrents that pass the
         // same scope check, so the completed/history feed keeps naming it too.
         assert!(imported.is_finished);

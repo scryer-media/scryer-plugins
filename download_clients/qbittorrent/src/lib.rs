@@ -501,7 +501,8 @@ fn completed_downloads(
         .iter()
         .filter(|torrent| torrent_has_tag(torrent, &config.imported_tag))
         .count();
-    let (downloads, converted_count) = convert_completed_torrents(torrents, limit);
+    let (downloads, converted_count) =
+        convert_completed_torrents(torrents, &config.imported_tag, limit);
     eprintln!(
         "event=qbittorrent_completed_feedback_poll client=qbittorrent scope=unfiltered \
          raw_count={raw_count} imported_tag_count={imported_tag_count} returned_count={} \
@@ -584,25 +585,56 @@ fn scoped_completed_downloads(
         .into_iter()
         .filter(|torrent| torrent_matches_feedback_scope(config, scope, torrent))
         .collect::<Vec<_>>();
-    let (items, _) = convert_completed_torrents(torrents, limit);
+    let (items, _) = convert_completed_torrents(torrents, &config.imported_tag, limit);
     Ok(PluginDownloadScopedListResponse {
         items,
         failures: Vec::new(),
     })
 }
 
+/// The caller's `limit` is a budget for torrents Scryer has not imported yet; imported ones are
+/// always returned.
+///
+/// The two things this feed serves pull in opposite directions under a hard limit. The import
+/// path only needs the un-imported torrents, and needs each of them to reach the host
+/// eventually: a limit that always fills with the newest completions would let a few hundred
+/// already-imported torrents pin the window and starve an older un-imported backlog forever. The
+/// tracker, on the other hand, treats this listing as authoritative for every torrent Scryer
+/// started, imported ones included, and ends the binding of anything the feed stops naming. So
+/// the budget is spent on un-imported torrents only, newest first, and a torrent Scryer has
+/// tagged as imported never competes for it. The imported set is bounded by what Scryer itself
+/// imported and has not yet cleaned up, so the response stays bounded too.
 fn convert_completed_torrents(
     torrents: Vec<QbTorrent>,
+    imported_tag: &str,
     limit: Option<usize>,
 ) -> (Vec<PluginCompletedDownload>, usize) {
-    let mut downloads = torrents
+    let converted = torrents
         .into_iter()
-        .filter_map(torrent_to_completed_download)
+        .filter_map(|torrent| {
+            let imported = torrent_has_tag(&torrent, imported_tag);
+            torrent_to_completed_download(torrent).map(|download| (imported, download))
+        })
         .collect::<Vec<_>>();
-    let converted_count = downloads.len();
-    if let Some(limit) = limit {
-        downloads.truncate(limit);
-    }
+    let converted_count = converted.len();
+    let mut budget = limit;
+    let downloads = converted
+        .into_iter()
+        .filter(|(imported, _)| {
+            if *imported {
+                return true;
+            }
+            match budget.as_mut() {
+                None => true,
+                Some(0) => false,
+                Some(remaining) => {
+                    *remaining -= 1;
+                    true
+                }
+            }
+        })
+        .map(|(_, download)| download)
+        .collect::<Vec<_>>();
     (downloads, converted_count)
 }
 
@@ -630,7 +662,8 @@ fn torrent_has_tag(torrent: &QbTorrent, tag: &str) -> bool {
 }
 
 /// Completion order only. The imported tag used to sort tagged torrents last, which — once a
-/// caller's limit truncated the feed — hid torrents qBittorrent still holds. Scryer's tracker
+/// caller's limit truncated the feed — hid torrents qBittorrent still holds. (The limit itself is
+/// now spent on un-imported torrents only; see `convert_completed_torrents`.) Scryer's tracker
 /// treats the listing as authoritative and ends the binding of anything it stops seeing, so a
 /// demoted imported torrent was re-adopted as a foreign observation on the next pass. Sonarr never
 /// hides or demotes imported torrents either: the host's identity layer dedupes by hash and owns
@@ -2890,7 +2923,8 @@ mod tests {
         ];
         sort_and_dedupe_completed_torrents(&mut torrents);
 
-        let (downloads, converted_count) = convert_completed_torrents(torrents, Some(1));
+        let (downloads, converted_count) =
+            convert_completed_torrents(torrents, IMPORTED_TAG_DEFAULT, Some(1));
 
         assert_eq!(converted_count, 1);
         assert_eq!(downloads.len(), 1);
@@ -2899,36 +2933,64 @@ mod tests {
 
     #[test]
     fn imported_tag_never_reorders_or_drops_a_500_torrent_backlog() {
-        let mut torrents = (0..500)
-            .map(|index| feedback_torrent(&format!("{index:040x}"), 10_000 - index))
-            .collect::<Vec<_>>();
-
-        sort_and_dedupe_completed_torrents(&mut torrents);
-        let baseline = torrents
-            .iter()
-            .map(|torrent| normalize_hash(&torrent.hash))
-            .collect::<Vec<_>>();
-        let first_batch = baseline.iter().take(300).cloned().collect::<HashSet<_>>();
-        assert_eq!(first_batch.len(), 300);
-
-        for torrent in &mut torrents {
-            if first_batch.contains(&normalize_hash(&torrent.hash)) {
-                torrent.tags = Some(IMPORTED_TAG_DEFAULT.to_string());
-            }
-        }
-        sort_and_dedupe_completed_torrents(&mut torrents);
-
-        // Tagging 300 of the 500 as imported changes neither membership nor order: the client
-        // still holds every one of them, so the listing still reports every one of them.
-        assert_eq!(
+        let backlog = |imported: &HashSet<String>| {
+            let mut torrents = (0..500)
+                .map(|index| {
+                    let mut torrent = feedback_torrent(&format!("{index:040x}"), 10_000 - index);
+                    if imported.contains(&normalize_hash(&torrent.hash)) {
+                        torrent.tags = Some(IMPORTED_TAG_DEFAULT.to_string());
+                    }
+                    torrent
+                })
+                .collect::<Vec<_>>();
+            sort_and_dedupe_completed_torrents(&mut torrents);
+            torrents
+        };
+        let hashes = |torrents: &[QbTorrent]| {
             torrents
                 .iter()
                 .map(|torrent| normalize_hash(&torrent.hash))
-                .collect::<Vec<_>>(),
-            baseline
-        );
-        let (downloads, _) = convert_completed_torrents(torrents, None);
+                .collect::<Vec<_>>()
+        };
+
+        let baseline = hashes(&backlog(&HashSet::new()));
+        let first_batch = baseline.iter().take(300).cloned().collect::<HashSet<_>>();
+        assert_eq!(first_batch.len(), 300);
+
+        // Tagging 300 of the 500 as imported changes neither membership nor order: the client
+        // still holds every one of them, so the listing still reports every one of them.
+        let tagged = backlog(&first_batch);
+        assert_eq!(hashes(&tagged), baseline);
+        let (downloads, _) = convert_completed_torrents(tagged, IMPORTED_TAG_DEFAULT, None);
         assert_eq!(downloads.len(), 500);
+
+        // A limited window still drains the un-imported backlog in batches: the budget goes to
+        // the newest 100 un-imported torrents, and every imported torrent rides along outside
+        // it, so the tracker keeps seeing what it already owns.
+        let (window, _) =
+            convert_completed_torrents(backlog(&first_batch), IMPORTED_TAG_DEFAULT, Some(100));
+        let window = window
+            .into_iter()
+            .map(|download| download.client_item_id)
+            .collect::<Vec<_>>();
+        assert_eq!(window.len(), 400);
+        assert!(first_batch.iter().all(|hash| window.contains(hash)));
+        let expected_unimported = baseline[300..400].to_vec();
+        assert_eq!(
+            window
+                .iter()
+                .filter(|hash| !first_batch.contains(*hash))
+                .cloned()
+                .collect::<Vec<_>>(),
+            expected_unimported
+        );
+
+        // Once that batch is imported and tagged, the next window reaches the remaining 100.
+        let mut second_batch = first_batch.clone();
+        second_batch.extend(expected_unimported);
+        let (next_window, _) =
+            convert_completed_torrents(backlog(&second_batch), IMPORTED_TAG_DEFAULT, Some(100));
+        assert_eq!(next_window.len(), 500);
     }
 
     /// Regression for gate run 1789492238173591000 (`download-identity-lifecycle`): an imported
@@ -2970,13 +3032,15 @@ mod tests {
         // Completed listing, including the truncated `list_recent_completed` window.
         let mut torrents = vec![imported_torrent(), feedback_torrent("beef", 400)];
         sort_and_dedupe_completed_torrents(&mut torrents);
-        let (downloads, _) = convert_completed_torrents(torrents, Some(1));
+        // The imported torrent is listed outside the budget, and the budget still reaches the
+        // un-imported one, so neither the tracker nor the import path loses anything.
+        let (downloads, _) = convert_completed_torrents(torrents, IMPORTED_TAG_DEFAULT, Some(1));
         assert_eq!(
             downloads
                 .iter()
                 .map(|download| download.client_item_id.clone())
                 .collect::<Vec<_>>(),
-            vec!["f00d"]
+            vec!["f00d", "beef"]
         );
     }
 
