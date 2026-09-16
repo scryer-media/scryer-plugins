@@ -27,7 +27,7 @@
 //! verified, placed, and repaired before extraction starts.
 
 use liblzma::read::XzDecoder;
-use liblzma::stream::{CONCATENATED, Stream};
+use liblzma::stream::{CONCATENATED, Error as XzStreamError, Stream};
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ArchiveExtractorCapabilities, ArchiveExtractorDescriptor, ArchivePluginExtractedFile,
@@ -56,7 +56,18 @@ pub(crate) const MAX_ARCHIVE_ENTRIES: usize = 20_000;
 pub(crate) const MAX_ARCHIVE_EXPANDED_BYTES: u64 = 2 * 1024 * 1024 * 1024 * 1024;
 const MAX_XZ_COMPRESSED_BYTES: u64 = 64 * 1024 * 1024;
 const MAX_XZ_EXPANDED_BYTES: u64 = 128 * 1024 * 1024;
-const MAX_XZ_DECODER_MEMORY_BYTES: u64 = 64 * 1024 * 1024;
+/// liblzma decoder memory ceiling.
+///
+/// This is not a size budget — it is the dictionary the *producer* chose,
+/// recorded in the stream header. `xz -9` (and `-9e`) select a 64 MiB
+/// dictionary and liblzma then needs ~65 MiB to decode, so a ceiling set at
+/// exactly 64 MiB rejected every maximum-preset stream with
+/// `LZMA_MEMLIMIT_ERROR` regardless of how small the payload was: a 1.2 KiB
+/// subtitle failed the same way a gigabyte would. 192 MiB clears the largest
+/// preset xz(1) can emit with room for hand-tuned dictionaries, and stays far
+/// below `DEFAULT_ARCHIVE_MEMORY_CAP_BYTES` so an abusive header still fails as
+/// a diagnosable plugin error instead of a host OOM trap.
+const MAX_XZ_DECODER_MEMORY_BYTES: u64 = 192 * 1024 * 1024;
 
 /// This crate's implementation of `scryer:archive/archive-extractor@1.0.0`.
 struct ArchiveExtractorComponent;
@@ -290,13 +301,7 @@ fn extract_xz_with_limits(
         Ok(written) => written,
         Err(error) => {
             let _ = fs::remove_file(&destination);
-            let code = if error.kind() == io::ErrorKind::InvalidData
-                && error.to_string().contains("configured limit")
-            {
-                "expanded_too_large"
-            } else {
-                "extract_xz"
-            };
+            let code = xz_failure_code(&error);
             return failed_response(code, "failed to decompress XZ stream", error);
         }
     };
@@ -311,6 +316,27 @@ fn extract_xz_with_limits(
         expanded_bytes: Some(written),
         ..empty_response()
     }
+}
+
+/// Classify a decode failure so the operator sees which ceiling stopped it.
+///
+/// `memory limit reached` is the one that does not scale with the payload: it
+/// reports the dictionary the *producer* chose, so a kilobyte and a gigabyte
+/// fail identically. Folding it into the generic `extract_xz` code made that
+/// indistinguishable from a corrupt stream.
+fn xz_failure_code(error: &io::Error) -> &'static str {
+    let memlimit = error
+        .get_ref()
+        .and_then(|inner| inner.downcast_ref::<XzStreamError>())
+        .is_some_and(|inner| *inner == XzStreamError::MemLimit);
+    if memlimit {
+        return "decoder_memory_too_large";
+    }
+    if error.kind() == io::ErrorKind::InvalidData && error.to_string().contains("configured limit")
+    {
+        return "expanded_too_large";
+    }
+    "extract_xz"
 }
 
 fn xz_output_relative_path(
@@ -1107,6 +1133,67 @@ mod tests {
 
         assert_eq!(response.status, ArchivePluginStatus::Failed);
         assert_eq!(response.error_code.as_deref(), Some("expanded_too_large"));
+        assert!(!output.path().join("subtitle.srt").exists());
+    }
+
+    /// `xz -9` is the canonical "compress it as hard as you can" invocation and
+    /// selects a 64 MiB dictionary, which liblzma needs ~65 MiB to decode. The
+    /// ceiling used to sit at exactly 64 MiB, so every maximum-preset stream was
+    /// rejected no matter how small — a 1.2 KiB subtitle included.
+    ///
+    /// Encoding at preset 9 costs ~674 MiB in liblzma's match finder even for a
+    /// few bytes of input; that transient allocation is the price of producing a
+    /// genuine 64 MiB-dictionary header rather than asserting a number.
+    #[test]
+    fn xz_stream_at_the_largest_preset_extracts_under_shipped_limits() {
+        let source = tempfile::tempdir().unwrap();
+        let output = tempfile::tempdir().unwrap();
+        let input_path = source.path().join("subtitle.srt.xz");
+        let content = b"1\n00:00:01,000 --> 00:00:02,000\nmaximum preset\n";
+        let file = fs::File::create(&input_path).expect("create XZ fixture");
+        let mut encoder = XzEncoder::new(file, 9);
+        encoder.write_all(content).expect("compress XZ fixture");
+        encoder.finish().expect("finish XZ fixture");
+
+        let response = extract_xz(&input_path, output.path(), None);
+
+        assert_eq!(
+            response.status,
+            ArchivePluginStatus::Ok,
+            "preset-9 XZ must decode: {:?}",
+            response.message
+        );
+        assert_eq!(
+            fs::read(output.path().join("subtitle.srt")).unwrap(),
+            content
+        );
+    }
+
+    #[test]
+    fn xz_stream_over_the_decoder_memory_ceiling_reports_its_own_code() {
+        let source = tempfile::tempdir().unwrap();
+        let output = tempfile::tempdir().unwrap();
+        let input_path = source.path().join("subtitle.srt.xz");
+        write_xz_fixture(&input_path, b"subtitle");
+
+        // The fixture's own dictionary is 8 MiB (preset 6), so a 1 MiB ceiling
+        // is refused while liblzma is still reading the header.
+        let response = extract_xz_with_limits(
+            &input_path,
+            output.path(),
+            None,
+            MAX_XZ_COMPRESSED_BYTES,
+            MAX_XZ_EXPANDED_BYTES,
+            1024 * 1024,
+        );
+
+        assert_eq!(response.status, ArchivePluginStatus::Failed);
+        assert_eq!(
+            response.error_code.as_deref(),
+            Some("decoder_memory_too_large"),
+            "a dictionary the ceiling cannot admit must not read as a corrupt stream: {:?}",
+            response.message
+        );
         assert!(!output.path().join("subtitle.srt").exists());
     }
 
