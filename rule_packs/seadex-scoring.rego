@@ -8195,6 +8195,8 @@ L[cbm]_monster_-_22_-_lunge's_trap_[a9af762e]
 
 L[cbm]_monster_-_66_-_welcome_home_[f17fe94d]
 
+L[creditless ending] +tic nee-san [2011-2012]
+
 L[datte13] yuyushiki - s01e07 - 3rd semester!
 
 L[dekinai] uchuu kyoudai - ncop02a [82d98698]
@@ -8373,6 +8375,8 @@ L[cbm]_monster_-_53_-_determination_[60f7dd29]
 L[cbm]_monster_-_ec_-_the_beginning_[d636edb3]
 
 L[commie] kick-heart [bd 1080p aac] [281b3ee9]
+
+L[creditless opening] +tic nee-san [2011-2012]
 
 L[kh] assassins pride - 10 - labyrinth library
 
@@ -9228,6 +9232,8 @@ L[cbm]_monster_-_65_-_johan's_footprints_[a3c39c9c]
 
 L[cbm]_monster_-_69_-_the_peaceful_house_[9c111516]
 
+L[creditless full opening] +tic nee-san [2011-2012]
+
 L[creditless opening 02 - zero] kuroko's basketball
 
 L[datte13] yuyushiki - s01e11 - times like these v2
@@ -9376,6 +9382,8 @@ Bs01e01-romcom where the childhood friend won't lose
 Bs01e30-the results of training! align forward half!
 
 Bsand land [bdrip][1080p][avc][truehd 7.1][62918f7b]
+
+Bscum of the brave - s01e24 - a brave%60s lie (unholy)
 
 Bspace.brothers.s01ep76.olga.1080p.remux.avc.flac2.0
 
@@ -9568,6 +9576,10 @@ Bs01e34-don't give in! the words left by a loved one!
 
 Bs01e38-cute kitten! hand-to-hand battle among women!
 
+Bscum of the brave - s01e08 - a brave%60s sins (unholy)
+
+Bscum of the brave - s01e14 - a brave priest (unholy)
+
 Bspace.brothers.s01ep43.brian.1080p.remux.avc.flac2.0
 
 Bvenus wars v2 [bd.1080p] [iznjie biznjie] [0c80fb68]
@@ -9677,6 +9689,8 @@ B[orphan] lunn flies into the wind v2 (dvd) [ebc0af16]
 
 B[orphan] techno police 21c (bd 1080p flac) [f244be5e]
 
+B[polygon] sket dance oad (web 1080p e-ac3) [021cd423]
+
 B[sam] one punch man - nced [bd 1080p flac] [3437a2c5]
 
 B[sam] one punch man - ncop [bd 1080p flac] [53e48751]
@@ -9730,6 +9744,18 @@ Bs01e15-did mother, send these annoying puppet spiders
 Bs01e43-limiter! invitation to the world of bloodshed!
 
 Bs01e46-farewell! a determined niijima joins the fray!
+
+Bscum of the brave - s01e02 - a brave%60s magic (unholy)
+
+Bscum of the brave - s01e05 - a brave teacher (unholy)
+
+Bscum of the brave - s01e15 - a brave%60s melee (unholy)
+
+Bscum of the brave - s01e21 - a brave%60s pride (unholy)
+
+Bscum of the brave - s01e22 - a brave%60s ideal (unholy)
+
+Bscum of the brave - s01e23 - a brave%60s truth (unholy)
 
 Bspace.brothers.s01ep80.secret.1080p.remux.avc.flac2.0
 
@@ -9937,6 +9963,18 @@ Bs01e29-the fearsome siegfried! prelude to destruction!
 Bs02e06-peter grill and the enjoyment of the spa resort
 
 Bs02ed-tabidachi no kisetsu [pecorine, kokkoro & karyl]
+
+Bscum of the brave - s01e07 - death of a brave (unholy)
+
+Bscum of the brave - s01e09 - a brave%60s legacy (unholy)
+
+Bscum of the brave - s01e12 - a brave%60s secret (unholy)
+
+Bscum of the brave - s01e13 - a brave%60s doubts (unholy)
+
+Bscum of the brave - s01e18 - braves in danger (unholy)
+
+Bscum of the brave - s01e20 - a brave%60s rescue (unholy)
 
 Bspace.brothers.s01ep13.3-d ant.1080p.remux.avc.flac2.0
 
@@ -10162,6 +10200,8 @@ Bporco.rosso.1992.1080p.blu-ray.remux.avc.flac.2.0-koala
 Bs01e12-a guy who reincarnated as a fantasy knockout and
 
 Bs02e04-the budding detective ~mirror glaze on the mind~
+
+Bscum of the brave - s01e04 - a brave%60s errands (unholy)
 
 Bspace.brothers.s01ep75.my.hands.1080p.remux.avc.flac2.0
 
@@ -10400,6 +10440,8 @@ Bs01e36-miu vs. renka! the love triangle creates a storm!
 
 Bs02e02-peter grill and the goblin who returned the favor
 
+Bscum of the brave - s01e11 - a brave%60s teamwork (unholy)
+
 Bspace.brothers.s01ep71.rehearsal.1080p.remux.avc.flac2.0
 
 Btengoku.daimakyou.ncop.1080p.bluray.opus.2.0.x265-ignore
@@ -10530,6 +10572,8 @@ B[baws] flcl s01e06 - flclimax (720p hi10 flac) [a1e1d4ac]
 B[bkl] kiniro mosaic pretty days [bd 1080p remux flac 2.0]
 
 B[dagashi kashi 2][producer logo][bdrip][1080p][h264_flac]
+
+B[escanor] plastic nee-san [jpbd-remux 1080p avc flac 2.0]
 
 B[ik] high school dxd hero - nced (bd 1920x1080 hi10 flac)
 
@@ -10850,6 +10894,12 @@ Bs01e41-terror of the sphere of control! a dragon descends!
 
 Bs02e04-peter grill and the world’s strongest little sister
 
+Bscum of the brave - s01e03 - a teacher for braves (unholy)
+
+Bscum of the brave - s01e17 - return of the braves (unholy)
+
+Bscum of the brave - s01e19 - a brave%60s motivation (unholy)
+
 Bservamp.s01e04.sakuya.1080p.bluray.remux.avc.flac.2.0-nan0
 
 Bspace.brothers.s01ep07.dear.hibito.1080p.remux.avc.flac2.0
@@ -11119,6 +11169,10 @@ Bs01e49-the mightiest transformation! the ryozanpaku rhythm!
 
 Bs02e06-code name monika ~bouillabaisse is best enjoyed hot~
 
+Bscum of the brave - s01e01 - meeting of the braves (unholy)
+
+Bscum of the brave - s01e10 - a brave%60s instruction (unholy)
+
 Bservamp.s01e02.tsubaki.1080p.bluray.remux.avc.flac.2.0-nan0
 
 Bservamp.s01e10.lawless.1080p.bluray.remux.avc.flac.2.0-nan0
@@ -11368,6 +11422,8 @@ Bs01e07-woof advent of the demon king! give it to me straight
 Bs01e37-dangerous trap! let's have sumo chanko stew together!
 
 Bs02e02-a moody cat's hesitation ~antipasto in the moonlight~
+
+Bscum of the brave - s01e16 - the darkness of braves (unholy)
 
 Bspace.brothers.s01ep64.piece.of.cake.1080p.remux.avc.flac2.0
 
@@ -11667,6 +11723,8 @@ Bzenshu.s01e11.despair.1080p.bluray.remux.avc.flac2.0-valkyrie
 Bzetsuen no tempest - 1x08 - the hour to suppress the princess
 
 Bzetsuen no tempest - 1x15 - you seem to be plotting something
+
+L+tic nee-san [2011-2012] 1080p bdrip x265 flac 2.0 kira [sev]
 
 L[0x539] one punch man - oad v2 (dvd 480p x264 ac3) [735ad87b]
 
@@ -12520,6 +12578,8 @@ Bs01e04-science-types fell in love, so they tried going on a date
 Bs01e08-a guy who reincarnated as a fantasy knockout and a choice
 
 Bs02e05-la tierra prometida respondió que el mesiás no se quedará
+
+Bscum of the brave - s01e06 - a brave%60s special training (unholy)
 
 Bservamp.s01e07.because.i.am.1080p.bluray.remux.avc.flac.2.0-nan0
 
@@ -24771,10 +24831,11 @@ strict_template_routes := {
 ],"X\t[mtbb] kizumonogatari - § [§]":[["",""],["\n01,1aa860ba\n02,6370ae37\n03,f4f480cc\n"]],"X\t[mtbb] nisemonogatari - § [§]":[["",""],["\n05,f7f6da35\n08,485b192e\n09,b129bf29\n"]],"X\t[okay-subs] fate zero - § [§]":[["",""],["\n01,cb5ec3da\n02,621957c8\n03,191d1d0c\n04,73305118\n05,a6fbc17d\n06,403c47d3\n07,301ffcb6\n08,c2493325\n09,abc0a0ea\n10,d24e9a49\n11,f7743c74\n12,e89a6b79\n13,7f5cdaa2\n14,c7eab101\n15,6bee1f43\n16,e951d5eb\n17,59fab0e4\n18,23f0d7fe\n19,41705fbe\n20,550eab86\n21,24b1c7a9\n22,031f0dfa\n23,fc0f0bd2\n24,71ed3b1a\n25,e32adca0\n"]
 ],"X\tshinkon gattai godannar!! - §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n"]]}`,
   "32": `{"B\t[dekinai] bokurano - nced§ [§]":[["",""],["\n01,30519ddf\n02,48161127\n"]],"B\t[owo] zipang - § [dvd x§ §bit]":[["","264","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n"]],"B\t[pizza] tetsujin § (§) - § [§]":[["28","2004","",""],["\n01,591eb46d\n02,92765a4c\n03,35394f40\n04,f58180be\n05,216b4d9f\n06,9b198a80\n07,93baa39b\n08,2bb2dca3\n09,a8712e77\n10,f71e527c\n11,619ff454\n12,69d70d6c\n13,45049cb3\n14,2315658e\n15,6b13acb0\n16,db8aa9e3\n17,05aabf64\n18,a0fc9a17\n19,09e1663e\n20,e082bcfb\n21,57cf76fc\n22,0970ef89\n23,1f5e58b8\n24,cb9703de\n25,0b8727cd\n26,a2a2963f\n"]
-],"B\t§. creditless ed - § - nirvana":[["",""],["\n2,01\n4,02\n5,03\n"]],"L\t[-__-'] tari tari - menu § [§]":[["",""],["\n1,f2b1b54e\n2,6b48fa75\n3,74b70401\n4,ff3e1661\n5,e705ff5f\n6,56ff9546\n"]],"L\t[subsplease] cue! - § (§p) [§]":[["","1080",""],["\n14,c930fd44\n15,250164c8\n16,9037226b\n17,cb8fd814\n19,2ce1a730\n20,d8faa79e\n21,4a58aa78\n22,ae176e1d\n23,62a3be3a\n24,fdd6dfba\n"]],"L\t[uwu] gekidol - § (bd §p flac)":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
-],"L\tone piece - § (bd §p) [f-r][§]":[["","1080",""],["\n0517,1e47ce59\n0575,cd5f6eb4\n0576,087090f0\n0577,76e9051a\n0578,0107ebac\n0579,2156c89c\n0580,0f6ea75a\n0581,67d3267d\n0582,421f267f\n0583,2df2b13c\n0584,341fb22f\n0585,b358740e\n0586,3486395e\n0587,57ca5b61\n0588,4a3342dc\n0589,3bf819f2\n0591,ea999f2b\n0592,9254e663\n0593,920527e0\n0594,a09e937d\n0595,2984ac29\n0596,23d7e3d4\n0597,dc74c764\n0598,d7d7364d\n0599,b745f169\n0600,cc88f161\n0601,32bc3f49\n0602,90a8609b\n","\n0603,84a36cf8\n0604,28180030\n0605,be800466\n0606,b6087c6f\n0607,0df07381\n0608,f76ea876\n0609,be982acb\n0610,948e017e\n0611,ab155617\n0612,92b4414b\n0613,6577fcfb\n0614,610b0e8d\n0615,367ecbe4\n0616,15fa4ac0\n0617,9d492a0f\n0618,122ecf81\n0619,fb6ce9ae\n0620,61ce03cd\n0621,77af3100\n0622,8cfa14ea\n0623,81069812\n0624,87f20370\n0625,dce614cc\n0626,dadaf6ee\n0627,5e8836f9\n0628,65ad1423\n"]
-],"L\ts§e§-snow of london (case §.§)":[["01","","3",""],["\n11,1\n12,2\n13,3\n14,4\n"]],"X\t[geonope] bakuon!! oad - § [§]":[["",""],["\n01,f9ba33b2\n02,a27240bd\n"]],"X\t[grimf] ichigo mashimaro ova §":[[""],["\n01\n02\n03\n"]],"X\t[kh] baka and test s§ - sp - §":[["",""],["\n1,01\n1,02\n1,03\n1,04\n1,05\n1,06\n1,07\n2,01\n2,02\n2,03\n2,04\n2,05\n2,06\n2,07\n2,08\n2,09\n"]],"X\t[mtbb] tsukimonogatari - § [§]":[["",""],["\n01,ec319405\n02,d47fdcba\n03,864cf534\n"]],"X\tshoujo☆conte all starlight - §":
-[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n"]]}`,
+],"B\t§. creditless ed - § - nirvana":[["",""],["\n2,01\n4,02\n5,03\n"]],"L\t[-__-'] tari tari - menu § [§]":[["",""],["\n1,f2b1b54e\n2,6b48fa75\n3,74b70401\n4,ff3e1661\n5,e705ff5f\n6,56ff9546\n"]],"L\t[bd menu §] +tic nee-san [§-§]":[["","2011","2012"],["\n01\n02\n"]],"L\t[subsplease] cue! - § (§p) [§]":[["","1080",""],["\n14,c930fd44\n15,250164c8\n16,9037226b\n17,cb8fd814\n19,2ce1a730\n20,d8faa79e\n21,4a58aa78\n22,ae176e1d\n23,62a3be3a\n24,fdd6dfba\n"]],"L\t[uwu] gekidol - § (bd §p flac)":
+[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tone piece - § (bd §p) [f-r][§]":[["","1080",""],["\n0517,1e47ce59\n0575,cd5f6eb4\n0576,087090f0\n0577,76e9051a\n0578,0107ebac\n0579,2156c89c\n0580,0f6ea75a\n0581,67d3267d\n0582,421f267f\n0583,2df2b13c\n0584,341fb22f\n0585,b358740e\n0586,3486395e\n0587,57ca5b61\n0588,4a3342dc\n0589,3bf819f2\n0591,ea999f2b\n0592,9254e663\n0593,920527e0\n0594,a09e937d\n0595,2984ac29\n0596,23d7e3d4\n0597,dc74c764\n0598,d7d7364d\n0599,b745f169\n0600,cc88f161\n0601,32bc3f49\n0602,90a8609b\n",
+"\n0603,84a36cf8\n0604,28180030\n0605,be800466\n0606,b6087c6f\n0607,0df07381\n0608,f76ea876\n0609,be982acb\n0610,948e017e\n0611,ab155617\n0612,92b4414b\n0613,6577fcfb\n0614,610b0e8d\n0615,367ecbe4\n0616,15fa4ac0\n0617,9d492a0f\n0618,122ecf81\n0619,fb6ce9ae\n0620,61ce03cd\n0621,77af3100\n0622,8cfa14ea\n0623,81069812\n0624,87f20370\n0625,dce614cc\n0626,dadaf6ee\n0627,5e8836f9\n0628,65ad1423\n"]],"L\ts§e§-snow of london (case §.§)":[["01","","3",""],["\n11,1\n12,2\n13,3\n14,4\n"]],"X\t[geonope] bakuon!! oad - § [§]":
+[["",""],["\n01,f9ba33b2\n02,a27240bd\n"]],"X\t[grimf] ichigo mashimaro ova §":[[""],["\n01\n02\n03\n"]],"X\t[kh] baka and test s§ - sp - §":[["",""],["\n1,01\n1,02\n1,03\n1,04\n1,05\n1,06\n1,07\n2,01\n2,02\n2,03\n2,04\n2,05\n2,06\n2,07\n2,08\n2,09\n"]],"X\t[mtbb] tsukimonogatari - § [§]":[["",""],["\n01,ec319405\n02,d47fdcba\n03,864cf534\n"]],"X\tshoujo☆conte all starlight - §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n"]
+]}`,
   "33": `{"B\t[mtbb] baccano - § (dvd §p) [§]":[["","480",""],["\n01,11426994\n02,a86f4502\n03,e858e2b5\n04,06f5fe02\n05,64b17c00\n06,e07c9aae\n07,8b7f4db1\n08,f665a1ca\n09,d00f40a5\n10,647f0558\n11,985911dc\n12,b9e9a8cb\n13,79e6c8be\n"]],"B\t[orphan] amatsuki - § (dvd) [§]":[["",""],["\n01,36c8b672\n02,f8ce58a3\n03,5690a01f\n04,6123c9fc\n05,14790d83\n06,2084e4ff\n07,885a424c\n08,3b13cf88\n09,638c6bba\n10,14ddda24\n11,f2cb0ec6\n12,31f7adff\n13,58559aa7\n"]],"B\t[sam] arte - § [bd §p flac] [§]":[[
 "","1080",""],["\n01,cbe3c83e\n02,74074ccb\n03,408234d1\n04,1c0286e9\n05,b44915e4\n06,89f686a0\n07,e5fae9b4\n08,fc2063b0\n09,1f245b4c\n10,707cbd6c\n11,64d68324\n12,97a977c1\n"]],"B\t[sam] gate - § [bd §p flac] [§]":[["","1080",""],["\n01,e98d06d2\n02,30593f2f\n03,7390c353\n04,6f60c57e\n05,8669137e\n06,4d5c012d\n07,0373ced8\n08,8ea3f891\n09,432fe640\n10,709f50ed\n11,ab4fa29f\n12,67715402\n13,4088eb21\n14,92976c00\n15,7a70261f\n16,d1de8599\n17,2444caf9\n18,22171579\n19,5c3baa90\n20,64a36bc3\n21,9e3d697d\n22,3c379308\n23,b713d0e0\n24,f372cb15\n"]
 ],"B\t[scoot] lupin the third - § [§]":[["",""],["\n01,7aa4746d\n02,6fb1f141\n03,c56fae06\n04,8297aadc\n05,75f90dcf\n06,efdc5023\n08,d5b243a0\n09,3db4c245\n10,79bd3367\n11,538bba7e\n13,9d90df1b\n14,1cebb56c\n15,a3c92321\n16,ef3d73be\n17,b6752776\n18,977ea486\n19,6fac1210\n20,4154caa1\n21,2f56d40a\n22,0d7f608f\n23,68c5fad3\n24,0c87d141\n"]],"B\tdb § short nep + m§ cm [dougo§]":[["","1","13"],["\n040\n041\n"]],"L\t[coldhell]_vampire_knight_§_[§]":[["",""],["\n02,3ae04c3e\n03,d2f89ee2\n04,e24bf6b6\n05,6957cb1f\n07,a1fa7257\n08,a8fc00f7\n09,120e5f85\n10,6291451c\n12,837b5e40\n13,1dd0b640\n"]
@@ -30718,6 +30779,8 @@ Borphan|lunn flies into the wind v2 dvd
 
 Borphan|techno police 21c bd 1080p flac
 
+Bpolygon|sket dance oad web 1080p e ac3
+
 Bsam|isekai shokudou nced bd 1080p flac
 
 Bsam|isekai shokudou ncop bd 1080p flac
@@ -32489,6 +32552,8 @@ Bdrag|kino no tabi 2017 nced bd 1080p x265 10 bit flac
 
 Bdrag|kino no tabi 2017 ncop bd 1080p x265 10 bit flac
 
+Bescanor|plastic nee san jpbd remux 1080p avc flac 2 0
+
 Binkaorphan|maps densetsu no samayoeru seijin tachi ld
 
 Bkh|dragonar academy 02 ties that bind the astral flow
@@ -32925,6 +32990,8 @@ Lpasokon|rakudai majo fuuka to yami no majo bd 1080p flac
 Lraizel|blue exorcist 03v2 1080p dual audio flac 3df6ab93
 
 Lsalchow|medalist s02e01v2 web 1080p x264 eac3 dual audio
+
+Lsev|tic nee san 2011 2012 1080p bdrip x265 flac 2 0 kira
 
 Lsneed|bungou stray dogs 25 ova bd 1080p x264 10 bit flac
 
