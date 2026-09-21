@@ -275,7 +275,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             false,
             Some(DEFAULT_ADDITIONAL_PARAMS),
             Some(
-                "Extra query parameters appended to the Nyaa RSS request, each starting with '&'. \
+                "Extra query parameters appended to the Nyaa RSS request; a leading '&' or '?' is optional. \
                  Category: 'cats' (or 'c') with an id such as 1_0 (all anime), 1_2 \
                  (English-translated), 1_3 (non-English-translated), 1_4 (raw). Quality filter: \
                  'filter' (or 'f') 0 none, 1 no remakes, 2 trusted only, 3 completed only. Also \
@@ -743,8 +743,8 @@ fn classify_response(
             ));
         }
         400 => {
-            return Err(invalid_config_error(
-                "additional_params",
+            return Err(invalid_additional_params_error(
+                "RSS request rejected with HTTP 400; check the configured category and filter",
                 format!(
                     "Nyaa rejected the request with HTTP 400. It answers 400 for a category or \
                      quality filter it does not recognise: check 'additional_params' — the \
@@ -883,6 +883,16 @@ fn invalid_config_error(field: &str, detail: String) -> Error {
     typed_error(
         PluginErrorCode::InvalidConfig,
         format!("Nyaa setting '{field}' is not usable"),
+        detail,
+        None,
+        None,
+    )
+}
+
+fn invalid_additional_params_error(reason: &str, detail: String) -> Error {
+    typed_error(
+        PluginErrorCode::InvalidConfig,
+        format!("Nyaa additional_params: {reason}"),
         detail,
         None,
         None,
@@ -1740,38 +1750,19 @@ fn validate_base_url(raw: &str) -> Result<String, Error> {
     Ok(trimmed.to_string())
 }
 
-/// `NyaaSettingsValidator`'s
-/// `RuleFor(c => c.AdditionalParameters).Matches("(&[a-z]+=[a-z0-9_]+)*", IgnoreCase)`.
-///
-/// That rule is **vacuous** in Sonarr: FluentValidation's `Matches` is an
-/// unanchored `Regex.IsMatch`, and `(…)*` matches the empty string at position
-/// 0, so every value passes — including `cats=1_0` with no leading `&`, which
-/// then produces `…?page=rsscats=1_0` and a request for the unfiltered front
-/// page.
-///
-/// So the shape is enforced here rather than the character class: every member
-/// must start with `&` and carry a `[A-Za-z][A-Za-z0-9_]*` key, optionally with
-/// a value. The value is **not** restricted to `[a-z0-9_]`, because Sonarr's
-/// class would reject working parameters the site documents — `&u=Erai-raws`
-/// filters by uploader and contains a hyphen.
+/// Accept the descriptor's leading `&`, a query's leading `?`, or the host's
+/// normalized unprefixed form. Return one leading `&` for RSS URL appending,
+/// preserving values and their existing percent encoding.
 fn validate_additional_params(raw: &str) -> Result<String, Error> {
     let trimmed = raw.trim();
     if trimmed.is_empty() {
         return Ok(String::new());
     }
-    if !trimmed.starts_with('&') {
-        return Err(invalid_config_error(
-            "additional_params",
-            format!(
-                "'{trimmed}' must start with '&' — each parameter is appended to the RSS URL, so \
-                 the value looks like '{DEFAULT_ADDITIONAL_PARAMS}'"
-            ),
-        ));
-    }
-    for member in trimmed.split('&').skip(1) {
+    let members = trimmed.strip_prefix(['&', '?']).unwrap_or(trimmed);
+    for member in members.split('&') {
         if member.is_empty() {
-            return Err(invalid_config_error(
-                "additional_params",
+            return Err(invalid_additional_params_error(
+                "remove empty parameters and trailing ampersands",
                 format!("'{trimmed}' has an empty parameter (two '&' in a row, or a trailing '&')"),
             ));
         }
@@ -1784,8 +1775,8 @@ fn validate_additional_params(raw: &str) -> Result<String, Error> {
                 .bytes()
                 .all(|byte| byte.is_ascii_alphanumeric() || byte == b'_');
         if !key_is_valid {
-            return Err(invalid_config_error(
-                "additional_params",
+            return Err(invalid_additional_params_error(
+                "parameter names must start with a letter and contain only letters, digits, or underscores",
                 format!("'{member}' in 'additional_params' is not a 'name=value' parameter"),
             ));
         }
@@ -1794,8 +1785,8 @@ fn validate_additional_params(raw: &str) -> Result<String, Error> {
                 .chars()
                 .any(|c| c.is_whitespace() || matches!(c, '#' | '?' | '&'))
         {
-            return Err(invalid_config_error(
-                "additional_params",
+            return Err(invalid_additional_params_error(
+                "URL-encode spaces and reserved characters in parameter values",
                 format!(
                     "the value of '{key}' in 'additional_params' contains a character that cannot \
                      appear in a URL query ('{value}')"
@@ -1803,7 +1794,7 @@ fn validate_additional_params(raw: &str) -> Result<String, Error> {
             ));
         }
     }
-    Ok(trimmed.to_string())
+    Ok(format!("&{members}"))
 }
 
 fn config_value(key: &str) -> Option<String> {
@@ -3135,14 +3126,44 @@ mod tests {
         }
     }
 
-    /// Sonarr's `Matches("(&[a-z]+=[a-z0-9_]+)*")` is unanchored, so it accepts
-    /// everything — including a value with no leading `&`, which produces
-    /// `…?page=rsscats=1_0` and silently returns the unfiltered front page.
+    #[test]
+    fn host_normalized_parameters_preserve_default_and_encoded_requests() {
+        for prefix in ["", "&", "?"] {
+            for members in [
+                "cats=1_0&filter=1",
+                "c=1_2&f=0&u=Group%2BName",
+                "q=Some+Title&m",
+            ] {
+                let normalized =
+                    validate_additional_params(&format!(" {prefix}{members} ")).unwrap();
+                assert_eq!(normalized, format!("&{members}"));
+                let request = SearchRequest::default();
+                let urls = nyaa_urls(DEFAULT_BASE_URL, &normalized, &request, false);
+                assert_eq!(
+                    urls,
+                    vec![format!("{DEFAULT_BASE_URL}/?page=rss&{members}")]
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn invalid_parameters_explain_the_problem_without_exposing_values() {
+        let error = validate_additional_params("&u=private value").unwrap_err();
+        let error = structured(&error);
+        assert!(error.public_message.contains("URL-encode"));
+        assert!(!error.public_message.contains("private"));
+        let error = classify_response(400, &headers(&[]), b"private response").unwrap_err();
+        let error = structured(&error);
+        assert!(error.public_message.contains("HTTP 400"));
+        assert!(!error.public_message.contains("private"));
+    }
+
     #[test]
     fn a_malformed_additional_parameters_value_is_a_typed_config_error() {
         for value in [
-            "cats=1_0&filter=1",
-            "?cats=1_0",
+            "&&cats=1_0",
+            "?&cats=1_0",
             "&cats=1_0&&filter=1",
             "&=1_0",
             "&1cats=1_0",

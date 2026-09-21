@@ -3945,19 +3945,24 @@ pub async fn newznab_connection_test(config: &NewznabConfig) -> Result<serde_jso
         None,
         None,
         None,
-        config.page_size,
+        1,
         None,
         None,
-        &config.additional_params,
+        &connection_test_additional_params(&config.additional_params),
         &config.http_behavior,
     )
     .await?;
-    validate_newznab_connection_feed(status, &body, config.page_size)?;
+    validate_newznab_connection_feed(status, &body, 1)?;
 
     Ok(serde_json::json!({
         "version": 1,
         "validated": true,
     }))
+}
+
+fn connection_test_additional_params(additional_params: &str) -> String {
+    // The probe remains small even when the configured search extras set a limit.
+    format!("{additional_params}&limit=1")
 }
 
 fn validate_newznab_connection_feed(
@@ -6025,6 +6030,39 @@ mod tests {
     }
 
     #[test]
+    fn connection_test_requests_one_result_even_with_a_custom_limit() {
+        let url = build_search_url(
+            "https://indexer.example/api",
+            "search",
+            None,
+            "synthetic-key",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            1,
+            None,
+            None,
+            &connection_test_additional_params("?limit=200&custom=encoded%2Fvalue"),
+        )
+        .unwrap();
+        let url = Url::parse(&url).unwrap();
+        let pairs: BTreeMap<String, String> = url.query_pairs().into_owned().collect();
+        assert_eq!(pairs.get("limit").map(String::as_str), Some("1"));
+        assert_eq!(
+            pairs.get("custom").map(String::as_str),
+            Some("encoded/value")
+        );
+        assert_eq!(
+            pairs.get("apikey").map(String::as_str),
+            Some("synthetic-key")
+        );
+        assert_eq!(pairs.get("t").map(String::as_str), Some("search"));
+    }
+
+    #[test]
     fn connection_test_requires_a_parseable_nonempty_feed() {
         let valid = r#"{
           "channel": {
@@ -6039,9 +6077,9 @@ mod tests {
             }]
           }
         }"#;
-        assert!(validate_newznab_connection_feed(200, valid, 100).is_ok());
+        assert!(validate_newznab_connection_feed(200, valid, 1).is_ok());
         assert!(
-            validate_newznab_connection_feed(200, r#"{"channel":{}}"#, 100)
+            validate_newznab_connection_feed(200, r#"{"channel":{}}"#, 1)
                 .unwrap_err()
                 .to_string()
                 .contains("returned no results")
@@ -6050,7 +6088,7 @@ mod tests {
             validate_newznab_connection_feed(
                 200,
                 r#"{"error":{"@attributes":{"code":"100","description":"Invalid API Key"}}}"#,
-                100,
+                1,
             )
             .unwrap_err()
             .to_string()
