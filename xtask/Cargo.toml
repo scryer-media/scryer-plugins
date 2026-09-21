@@ -25,12 +25,12 @@ wasmtime = "48.0.1"
 # Preview 2 only: the Preview 1 (`p1`) tier pulled in `wiggle` to run
 # command-model modules, and there are no core-module plugin artifacts left.
 wasmtime-wasi = { version = "48.0.1", default-features = false, features = ["p2"] }
-zstd = "0.13"
+zstd = "0.14"
 
 [dev-dependencies]
 aws-lc-sys = "0.45"
 crc32fast = "1"
-sevenz-rust2 = { version = "0.22", default-features = false, features = ["compress"] }
+sevenz-rust2 = { version = "0.23", default-features = false, features = ["compress"] }
 zip = { version = "8.6.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 
 [profile.xtask-release]
