@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_revision": "08fcf06b67122cfa813802f7931cded652ebfad8",
+  "source_revision": "9b06d40e142fd9b9f6299d64f26be30ec34e54f3",
   "input_files": [
     {
       "path": "docs/json/guide-only/language-german-and-original.json",
@@ -36,7 +36,7 @@
     },
     {
       "path": "docs/json/radarr/cf/126811.json",
-      "sha256": "02b9befa99f38afdfa76936d20355a276959164b3c2e222ece3b6575fc3fdf7f"
+      "sha256": "547f59833ed9c3fdf61417f22067022072ea215ae235c508233aa46874baf591"
     },
     {
       "path": "docs/json/radarr/cf/20-stereo.json",
@@ -295,8 +295,8 @@
       "sha256": "3e9f15066048f859138d16c7cc33509558d3b3ff6bb21c123dc5a3a7824f8528"
     },
     {
-      "path": "docs/json/radarr/cf/fand.json",
-      "sha256": "00d31436dda9394ae8d50bbb33a907c539ba2cb6f9142c955b4f4076ce0a72f3"
+      "path": "docs/json/radarr/cf/fah.json",
+      "sha256": "6c26a51e6f6e7705e991e14c76172e43f2ac84d9124707246263fba1ae4edd06"
     },
     {
       "path": "docs/json/radarr/cf/fansub.json",
@@ -652,7 +652,7 @@
     },
     {
       "path": "docs/json/radarr/cf/lq.json",
-      "sha256": "6ad28680aa2a77cc97c3b684ea552fe78a42fc6ea95effbba98c153c32987acb"
+      "sha256": "6fa5f21d06cd25e1ccdb61e150ffd89f5db39fffc79aec918fe596b11d4bf4e7"
     },
     {
       "path": "docs/json/radarr/cf/ma.json",
@@ -1279,8 +1279,8 @@
       "sha256": "d58291c6cff7eb074ffdacccd615663edbcb5fca87c03371d6a67a707685c3a2"
     },
     {
-      "path": "docs/json/sonarr/cf/fand.json",
-      "sha256": "ecec2780074c8a6173da142dc41e7ea84fc157a670ad4bba0acc50e7eb8d9d2c"
+      "path": "docs/json/sonarr/cf/fah.json",
+      "sha256": "78b718216bee680298ffdb324619e4cfd7e2d6fe62e16a1dc85c8d518a800a86"
     },
     {
       "path": "docs/json/sonarr/cf/fansub.json",
@@ -1624,7 +1624,7 @@
     },
     {
       "path": "docs/json/sonarr/cf/lq.json",
-      "sha256": "5badd6b6ed996252136a99c2609efee335acb337234819c8da27cb248e7c5a50"
+      "sha256": "7d2dfebb0e4cf071f76463599abe5c6937527034d5c31f65ef658dbc6de38f59"
     },
     {
       "path": "docs/json/sonarr/cf/max.json",
@@ -1943,8 +1943,8 @@
     "service_alias_rules": 106,
     "token_signal_rules": 49
   },
-  "core_sha256": "6f235654b977304056126f368d770dae3634188cb76389268bed9c488e58d93c",
-  "detection_sha256": "b07788e6629552c99bd509bd515203e8dbaa8d5eb2872898f376e8e9ad4122b9",
+  "core_sha256": "5bf05a55975782c37f792817be0e7404cedf79e0a8dcf876d2b6c35377aab819",
+  "detection_sha256": "59ec8a55c84cf59953db58a5f42333b1dd70eca517bff15ecad4f4116d2251ed",
   "ignored_records": [
     "docs/json/radarr/cf/amzn.json:WEBDL:requires_positive_title",
     "docs/json/radarr/cf/amzn.json:WEBRIP:requires_positive_title",

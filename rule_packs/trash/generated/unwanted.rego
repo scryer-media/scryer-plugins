@@ -2,7 +2,7 @@ package scryer.user.trash_guides_unwanted
 import rego.v1
 
 
-# Generated from parser snapshot 08fcf06b67122cfa813802f7931cded652ebfad8.
+# Generated from parser snapshot 9b06d40e142fd9b9f6299d64f26be30ec34e54f3.
 trash_detection_tables := {
   "blocked_title_rules_by_anchor": {
     "1XBET": [

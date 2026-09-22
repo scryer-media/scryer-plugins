@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_revision": "08fcf06b67122cfa813802f7931cded652ebfad8",
+  "source_revision": "9b06d40e142fd9b9f6299d64f26be30ec34e54f3",
   "files": [
     {
       "path": "docs/json/guide-only/language-german-and-original.json",
@@ -289,15 +289,15 @@
     },
     {
       "path": "docs/json/radarr/cf/126811.json",
-      "sha256": "02b9befa99f38afdfa76936d20355a276959164b3c2e222ece3b6575fc3fdf7f",
-      "canonical_sha256": "4d95d0032929da3d1f95e6b43ac7a3659dfa9e2aea3917459be30a55dfe764be",
+      "sha256": "547f59833ed9c3fdf61417f22067022072ea215ae235c508233aa46874baf591",
+      "canonical_sha256": "e120288e6d2329d8387d3d9ce741c2c8c8a788a0adb77c5bb172a449592999f8",
       "records": [
         {
           "name": "126811",
           "trash_id": "9681750c690210f0936faed781bb7f06",
           "trash_scores": {
             "default": 51,
-            "sqp-4-ma-hybrid": 2
+            "sqp-4-ma-hybrid": 10002
           },
           "specifications": [
             {
@@ -7781,21 +7781,21 @@
       ]
     },
     {
-      "path": "docs/json/radarr/cf/fand.json",
-      "sha256": "00d31436dda9394ae8d50bbb33a907c539ba2cb6f9142c955b4f4076ce0a72f3",
-      "canonical_sha256": "3ee824b602082dbcd4ef010d72543bf7480776ada2bcf076c34a09498e00a07e",
+      "path": "docs/json/radarr/cf/fah.json",
+      "sha256": "6c26a51e6f6e7705e991e14c76172e43f2ac84d9124707246263fba1ae4edd06",
+      "canonical_sha256": "212034b4e51c02237288578255555f3ed8b1a92c0cdeff79ac3e89e424afe287",
       "records": [
         {
-          "name": "FAND",
+          "name": "FAH",
           "trash_id": "6c6af63910e3e4e8ff32a85102a94c11",
           "specifications": [
             {
-              "name": "FAND",
+              "name": "Fandango",
               "implementation": "ReleaseTitleSpecification",
               "required": false,
               "negate": false,
               "fields": {
-                "value": "\\b(FAND)\\b(?=[ ._-]web[ ._-]?(dl|rip)\\b)"
+                "value": "\\b(FAH|FAND|FDNG)\\b(?=[ ._-]web[ ._-]?(dl|rip)\\b)"
               }
             },
             {
@@ -14784,8 +14784,8 @@
     },
     {
       "path": "docs/json/radarr/cf/lq.json",
-      "sha256": "6ad28680aa2a77cc97c3b684ea552fe78a42fc6ea95effbba98c153c32987acb",
-      "canonical_sha256": "b47d7a18c13f7dd243977f0f736414d25e16cbc029834a801d900d83861448c7",
+      "sha256": "6fa5f21d06cd25e1ccdb61e150ffd89f5db39fffc79aec918fe596b11d4bf4e7",
+      "canonical_sha256": "405471fb29b29eb20de51bc9d464ee78849eac3d66ec161b2e8c42de65fd8098",
       "records": [
         {
           "name": "LQ",
@@ -14796,6 +14796,15 @@
             "german-anime": -35000
           },
           "specifications": [
+            {
+              "name": "126811",
+              "implementation": "ReleaseGroupSpecification",
+              "required": false,
+              "negate": false,
+              "fields": {
+                "value": "^(126811)$"
+              }
+            },
             {
               "name": "24xHD",
               "implementation": "ReleaseGroupSpecification",
@@ -27827,12 +27836,12 @@
       ]
     },
     {
-      "path": "docs/json/sonarr/cf/fand.json",
-      "sha256": "ecec2780074c8a6173da142dc41e7ea84fc157a670ad4bba0acc50e7eb8d9d2c",
-      "canonical_sha256": "4cfb52b54aed39dd5752f14575d457949a2e649caa5996b6de08cb1be73f552c",
+      "path": "docs/json/sonarr/cf/fah.json",
+      "sha256": "78b718216bee680298ffdb324619e4cfd7e2d6fe62e16a1dc85c8d518a800a86",
+      "canonical_sha256": "d2248b9ca3d2a590b3625d6b5c948d718846edad20993c7fbe84878a6ca14666",
       "records": [
         {
-          "name": "FAND",
+          "name": "FAH",
           "trash_id": "1f233ed024e7c35cf50fbd739a82de4b",
           "trash_scores": {
             "default": 75
@@ -27844,7 +27853,7 @@
               "required": false,
               "negate": false,
               "fields": {
-                "value": "\\b(fand)\\b(?=[ ._-]web[ ._-]?(dl|rip)\\b)"
+                "value": "\\b(FAH|FAND|FDNG)\\b(?=[ ._-]web[ ._-]?(dl|rip)\\b)"
               }
             },
             {
@@ -34011,8 +34020,8 @@
     },
     {
       "path": "docs/json/sonarr/cf/lq.json",
-      "sha256": "5badd6b6ed996252136a99c2609efee335acb337234819c8da27cb248e7c5a50",
-      "canonical_sha256": "33225fc01f759ea6d90a78cd9d85c290cdb71a05d00649d41e930ce8dd6bda4d",
+      "sha256": "7d2dfebb0e4cf071f76463599abe5c6937527034d5c31f65ef658dbc6de38f59",
+      "canonical_sha256": "f87eadb53f58f779aa3173c5a36f8e6ac3fb5f441be3bbbc208b66be467d293c",
       "records": [
         {
           "name": "LQ",
@@ -34023,6 +34032,15 @@
             "german-anime": -35000
           },
           "specifications": [
+            {
+              "name": "126811",
+              "implementation": "ReleaseGroupSpecification",
+              "required": false,
+              "negate": false,
+              "fields": {
+                "value": "^(126811)$"
+              }
+            },
             {
               "name": "BRiNK",
               "implementation": "ReleaseGroupSpecification",
