@@ -21,7 +21,7 @@ use std::process::Command;
 use std::sync::OnceLock;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use liblzma::write::XzEncoder;
+use lzma_turbo::{LzmaEncProps, XzWriter};
 use par2_rs::{BlockSizing, Par2Creator, Par2CreatorOptions, RecoveryAmount};
 use scryer_plugin_sdk::{
     ArchivePluginFormat, ArchivePluginOperation, ArchivePluginProcessRequest,
@@ -47,6 +47,7 @@ const GUEST_SOURCE_ROOT: &str = "/scryer/source";
 const GUEST_OUTPUT_ROOT: &str = "/scryer/output";
 const GUEST_SCRATCH_ROOT: &str = "/tmp";
 const RAR_PASSWORD: &str = "testpass123";
+const SEVENZ_PASSWORD: &str = "sevenz-pass-42";
 
 static AES_CALLS: AtomicUsize = AtomicUsize::new(0);
 static CRC_CALLS: AtomicUsize = AtomicUsize::new(0);
@@ -65,6 +66,7 @@ fn archive_extraction_release_wasm_conforms_to_host_contract() {
     assert_sevenz_extracts(&wasm_path);
     assert_sevenz_rejects_unsafe_paths(&wasm_path);
     assert_sevenz_rejects_duplicate_paths(&wasm_path);
+    assert_encrypted_sevenz_uses_the_crypto_import(&wasm_path);
     assert_xz_extracts(&wasm_path);
     assert_zip_extracts(&wasm_path);
     assert_zip_path_escape_is_rejected(&wasm_path);
@@ -368,6 +370,7 @@ fn assert_sevenz_extracts(wasm_path: &Path) {
         b"hello from 7z\n",
     );
 
+    let before = host_call_counts();
     let response = extract_archive(
         wasm_path,
         source.path(),
@@ -376,6 +379,7 @@ fn assert_sevenz_extracts(wasm_path: &Path) {
         ArchivePluginFormat::SevenZip,
         None,
     );
+    let after = host_call_counts();
 
     assert_eq!(
         response.status,
@@ -384,6 +388,12 @@ fn assert_sevenz_extracts(wasm_path: &Path) {
         response.message
     );
     assert_response_contains_file_bytes(&response, output.path(), b"hello from 7z\n", "7z");
+    // sevenz-turbo checksums through lzma-turbo, whose `crc-host` delegates
+    // the header and member CRC-32s to the import.
+    assert!(
+        after.crc > before.crc,
+        "7z extraction did not call the crypto crc32 import"
+    );
 }
 
 fn assert_sevenz_rejects_unsafe_paths(wasm_path: &Path) {
@@ -416,6 +426,77 @@ fn assert_sevenz_rejects_unsafe_paths(wasm_path: &Path) {
         );
         assert_eq!(response.error_code.as_deref(), Some("unsafe_path"));
     }
+}
+
+/// 7z AES goes through the same `crypto` import RAR does (sevenz-turbo's
+/// `crypto-host`), so the guest carries no block cipher of its own. As with
+/// RAR, the import count is the proof: an in-guest fallback would decrypt the
+/// same bytes and still be wrong.
+fn assert_encrypted_sevenz_uses_the_crypto_import(wasm_path: &Path) {
+    let archive = "encrypted.7z";
+    let payload = b"hello from encrypted 7z\n";
+    let source = tempfile::tempdir().expect("create encrypted 7z source dir");
+    create_encrypted_sevenz_fixture(
+        &source.path().join(archive),
+        "secret.txt",
+        payload,
+        SEVENZ_PASSWORD,
+    );
+
+    let missing_output = tempfile::tempdir().expect("create no-password 7z output dir");
+    let missing = extract_archive(
+        wasm_path,
+        source.path(),
+        missing_output.path(),
+        archive,
+        ArchivePluginFormat::SevenZip,
+        None,
+    );
+    assert_eq!(
+        missing.status,
+        ArchivePluginStatus::PasswordRequired,
+        "encrypted 7z without a password: {:?}",
+        missing.message
+    );
+
+    let wrong_output = tempfile::tempdir().expect("create wrong-password 7z output dir");
+    let wrong = extract_archive(
+        wasm_path,
+        source.path(),
+        wrong_output.path(),
+        archive,
+        ArchivePluginFormat::SevenZip,
+        Some("not-the-password"),
+    );
+    assert_ne!(
+        wrong.status,
+        ArchivePluginStatus::Ok,
+        "encrypted 7z extracted with the wrong password"
+    );
+
+    let before = host_call_counts();
+    let output = tempfile::tempdir().expect("create encrypted 7z output dir");
+    let correct = extract_archive(
+        wasm_path,
+        source.path(),
+        output.path(),
+        archive,
+        ArchivePluginFormat::SevenZip,
+        Some(SEVENZ_PASSWORD),
+    );
+    let after = host_call_counts();
+
+    assert_eq!(
+        correct.status,
+        ArchivePluginStatus::Ok,
+        "encrypted 7z: {:?}",
+        correct.message
+    );
+    assert_response_contains_file_bytes(&correct, output.path(), payload, "encrypted 7z");
+    assert!(
+        after.aes > before.aes,
+        "encrypted 7z did not call the crypto aes-cbc-decrypt import"
+    );
 }
 
 fn assert_sevenz_rejects_duplicate_paths(wasm_path: &Path) {
@@ -455,12 +536,16 @@ fn assert_xz_extracts(wasm_path: &Path) {
     let output = tempfile::tempdir().expect("create XZ output dir");
     let path = source.path().join("episode.ass.xz");
     let file = fs::File::create(&path).expect("create XZ fixture");
-    let mut encoder = XzEncoder::new(file, 6);
+    let props = LzmaEncProps::new()
+        .with_level(6)
+        .with_dict_size(8 * 1024 * 1024);
+    let mut encoder = XzWriter::new(file, &props).expect("configure XZ fixture encoder");
     encoder
         .write_all(b"[Script Info]\nTitle: XZ fixture\n")
         .expect("write XZ fixture");
     encoder.finish().expect("finish XZ fixture");
 
+    let before = host_call_counts();
     let response = extract_archive(
         wasm_path,
         source.path(),
@@ -468,6 +553,12 @@ fn assert_xz_extracts(wasm_path: &Path) {
         "episode.ass.xz",
         ArchivePluginFormat::Xz,
         None,
+    );
+    let after = host_call_counts();
+    // Every xz stream header, block header, index and footer carries a CRC-32.
+    assert!(
+        after.crc > before.crc,
+        "XZ extraction did not call the crypto crc32 import"
     );
 
     assert_eq!(
@@ -904,18 +995,36 @@ fn create_sevenz_fixture(path: &Path, entry_name: &str, payload: &[u8]) {
 
 fn create_sevenz_fixture_with_entries(path: &Path, entries: &[(&str, &[u8])]) {
     let temp = tempfile::tempdir().expect("create 7z fixture input dir");
-    let mut archive = sevenz_rust2::ArchiveWriter::create(path).expect("create 7z fixture");
+    let mut archive = sevenz_turbo::ArchiveWriter::create(path).expect("create 7z fixture");
     for (index, (entry_name, payload)) in entries.iter().enumerate() {
         let source_path = temp.path().join(format!("payload-{index}.txt"));
         fs::write(&source_path, payload).expect("write 7z fixture payload");
         archive
             .push_archive_entry(
-                sevenz_rust2::ArchiveEntry::from_path(&source_path, (*entry_name).to_string()),
+                sevenz_turbo::ArchiveEntry::from_path(&source_path, (*entry_name).to_string()),
                 Some(fs::File::open(&source_path).expect("open 7z fixture payload")),
             )
             .expect("write 7z fixture entry");
     }
     archive.finish().expect("finish 7z fixture");
+}
+
+/// An AES-256 + LZMA2 7z with an encrypted header, as `7z a -p -mhe=on` makes.
+fn create_encrypted_sevenz_fixture(path: &Path, entry_name: &str, payload: &[u8], password: &str) {
+    use sevenz_turbo::encoder_options::{AesEncoderOptions, Lzma2Options};
+
+    let mut archive = sevenz_turbo::ArchiveWriter::create(path).expect("create encrypted 7z");
+    archive.set_content_methods(vec![
+        AesEncoderOptions::new(sevenz_turbo::Password::new(password)).into(),
+        Lzma2Options::default().into(),
+    ]);
+    archive
+        .push_archive_entry(
+            sevenz_turbo::ArchiveEntry::new_file(entry_name),
+            Some(payload),
+        )
+        .expect("write encrypted 7z entry");
+    archive.finish().expect("finish encrypted 7z");
 }
 
 // ---------------------------------------------------------------------------

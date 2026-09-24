@@ -58,12 +58,13 @@ name = "archive-extraction-archive-extractor"
 version = "1.0.3"
 dependencies = [
  "aws-lc-sys",
+ "crc-fast",
  "crc32fast",
- "liblzma",
+ "lzma-turbo",
  "par2-rs",
  "scryer-plugin-sdk",
  "serde_json",
- "sevenz-rust2",
+ "sevenz-turbo",
  "tempfile",
  "unrar-rs",
  "wasmtime",
@@ -285,12 +286,6 @@ checksum = "0fa961b519f0b462e3a3b4a34b64d119eeaca1d59af726fe450bbba07a9fc0a1"
 dependencies = [
  "thiserror 2.0.20",
 ]
-
-[[package]]
-name = "const-oid"
-version = "0.10.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6ef517f0926dd24a1582492c791b6a4818a4d94e789a334894aa15b0d12f55c"
 
 [[package]]
 name = "constant_time_eq"
@@ -581,7 +576,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1dd6dbb5841937940781866fa1281a1ff7bd3bf827091440879f9994983d5c2"
 dependencies = [
  "block-buffer 0.12.1",
- "const-oid",
  "crypto-common 0.2.2",
  "ctutils",
 ]
@@ -1162,26 +1156,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
 
 [[package]]
-name = "liblzma"
-version = "0.4.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fe0a34ca854fd4f20c07f696fc8675aec78f87d88d29f5e10257a7490a1b2e1"
-dependencies = [
- "liblzma-sys",
-]
-
-[[package]]
-name = "liblzma-sys"
-version = "0.4.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c7e3581f367a78d7b7e7ae948d023310556f0cfc13156c2e4e00e25616492b9"
-dependencies = [
- "cc",
- "libc",
- "pkg-config",
-]
-
-[[package]]
 name = "libm"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1215,10 +1189,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6"
 
 [[package]]
-name = "lzma-rust2"
-version = "0.20.1"
+name = "lzma-turbo"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e2a88783b84d2d67ef2791778a9e76bfb68b8017aaf6c9d7d5f2626a478b16c"
+checksum = "9062c1b910139b10dc12eb1a78aa90919aafed4124012fc7828dd29a7fdcce40"
+dependencies = [
+ "crc-fast",
+ "sha2 0.11.0",
+]
 
 [[package]]
 name = "mach2"
@@ -1755,22 +1733,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "sevenz-rust2"
-version = "0.22.2"
+name = "sevenz-turbo"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb967eb8b29410e61e8c9005058fcfd5889d0b827856beb25529c73dfc86a98a"
+checksum = "b7ae28f29a0ae97f1684ed883efce22f5bed33f2c241e164ef0a26f15c76e732"
 dependencies = [
  "aes",
  "bzip2",
  "cbc",
- "crc32fast",
  "flate2",
  "getrandom 0.4.3",
  "js-sys",
- "lzma-rust2",
+ "lzma-turbo",
  "ppmd-rust",
- "sha2 0.11.0",
  "wasm-bindgen",
+ "zeroize",
 ]
 
 [[package]]

@@ -7,9 +7,9 @@ This plugin is the intended safety and license boundary for complex extraction. 
 Current support:
 
 - ZIP extraction for stored/deflated archives
-- 7z extraction for LZMA/LZMA2, AES, BZip2, Deflate, PPMD, and Copy methods
+- 7z extraction through `sevenz-turbo` for LZMA/LZMA2, AES, BZip2, Deflate, PPMD, and Copy methods, using the host's AES/CRC imports
 - RAR extraction through `unrar-rs` using the host's AES/CRC imports
-- XZ stream extraction through C liblzma, statically linked into the WebAssembly artifact
+- XZ stream extraction through `lzma-turbo`, using the host's CRC-32 import
 - PAR2 verification, placement normalization, and repair through `par2-rs`
 
 Zstandard-compressed 7z archives are not supported yet.
@@ -23,9 +23,11 @@ It exports `describe` and `process`, both carrying UTF-8 JSON, and imports one
 linker, which is how the guest sees its preopened directories: a read-only
 source, a writable output, and a private `TMPDIR` scratch.
 
-Build target: `wasm32-wasip2`. Compiling liblzma's C sources for that target
-needs a WASI SDK sysroot (`WASI_SYSROOT`, plus `CC_wasm32_wasip2` and
-`AR_wasm32_wasip2`); CI installs WASI SDK 33.
+Build target: `wasm32-wasip2`. Every codec is pure Rust, so the build needs no
+C toolchain or WASI SDK.
+
+The `crypto` import serves CRC-32 only. CRC-64/XZ (the default `xz` check) and
+the SHA-256 check are computed in the guest.
 
 The earlier `wasm32-wasip1` command artifact is gone. Scryer's archive host is
 component-only and rejects a core wasm module with an upgrade diagnostic, so

@@ -17,7 +17,8 @@
 //! both halves move onto the canonical ABI: payloads cross as `list<u8>`, and
 //! the crypto delegation inside unrar-rs is re-pointed at
 //! [`unrar_rs::hooks`] that this crate wires to the world's
-//! `crypto` import. Extraction behaviour itself — formats, limits, path safety,
+//! `crypto` import; sevenz-turbo's AES decrypt and lzma-turbo's CRC-32 (which
+//! sevenz-turbo checksums through too) go through the same import. Extraction behaviour itself — formats, limits, path safety,
 //! partial-output cleanup — is unchanged.
 //!
 //! ## PAR2 is internal
@@ -26,8 +27,8 @@
 //! handled data-driven inside [`par2`]: when the source directory has one it is
 //! verified, placed, and repaired before extraction starts.
 
-use liblzma::read::XzDecoder;
-use liblzma::stream::{CONCATENATED, Error as XzStreamError, Stream};
+use lzma_turbo::hooks::{HostHashHooks, HostSha256Handle, install_host_hash_hooks};
+use lzma_turbo::xz::{XzError, XzErrorKind, XzReader};
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ArchiveExtractorCapabilities, ArchiveExtractorDescriptor, ArchivePluginExtractedFile,
@@ -35,6 +36,7 @@ use scryer_plugin_sdk::{
     ArchivePluginProcessResponse, ArchivePluginStatus, PluginDescriptor, ProviderDescriptor,
     SDK_VERSION,
 };
+use sevenz_turbo::hooks as sevenz_hooks;
 use std::borrow::Cow;
 use std::collections::HashSet;
 use std::fs;
@@ -56,14 +58,13 @@ pub(crate) const MAX_ARCHIVE_ENTRIES: usize = 20_000;
 pub(crate) const MAX_ARCHIVE_EXPANDED_BYTES: u64 = 2 * 1024 * 1024 * 1024 * 1024;
 const MAX_XZ_COMPRESSED_BYTES: u64 = 64 * 1024 * 1024;
 const MAX_XZ_EXPANDED_BYTES: u64 = 128 * 1024 * 1024;
-/// liblzma decoder memory ceiling.
+/// XZ decoder memory ceiling.
 ///
 /// This is not a size budget — it is the dictionary the *producer* chose,
-/// recorded in the stream header. `xz -9` (and `-9e`) select a 64 MiB
-/// dictionary and liblzma then needs ~65 MiB to decode, so a ceiling set at
-/// exactly 64 MiB rejected every maximum-preset stream with
-/// `LZMA_MEMLIMIT_ERROR` regardless of how small the payload was: a 1.2 KiB
-/// subtitle failed the same way a gigabyte would. 192 MiB clears the largest
+/// recorded in each block header. `xz -9` (and `-9e`) select a 64 MiB
+/// dictionary, so a ceiling at or just under 64 MiB rejects every
+/// maximum-preset stream regardless of how small the payload is: a 1.2 KiB
+/// subtitle fails the same way a gigabyte would. 192 MiB clears the largest
 /// preset xz(1) can emit with room for hand-tuned dictionaries, and stays far
 /// below `DEFAULT_ARCHIVE_MEMORY_CAP_BYTES` so an abusive header still fails as
 /// a diagnosable plugin error instead of a host OOM trap.
@@ -101,24 +102,42 @@ impl Guest for ArchiveExtractorComponent {
 
 export!(ArchiveExtractorComponent);
 
-/// Point unrar-rs's bulk AES-CBC and CRC-32 delegation at the world's `crypto`
+/// Point unrar-rs's bulk AES-CBC and CRC-32 delegation, sevenz-turbo's bulk
+/// AES-CBC decrypt, and lzma-turbo's bulk CRC-32 at the world's `crypto`
 /// import.
 ///
-/// unrar-rs is transport-agnostic — it holds two `fn` pointers and knows nothing
-/// about WIT — so this adapter is the whole seam between that crate and the
+/// lzma-turbo's hook set also takes CRC-64/XZ, which the world does not
+/// import, so that one is computed in the guest by [`guest_crc64_xz`]. Its
+/// SHA-256 hooks are never called: `crypto-host` is off, and the xz SHA-256
+/// check stays on the in-guest RustCrypto backend.
+///
+/// All three crates are transport-agnostic — they hold plain `fn` pointers and know
+/// nothing about WIT — so this adapter is the whole seam between them and the
 /// component ABI. It runs at the top of every `process` because the host
 /// instantiates the component once per invocation.
 ///
 /// A length rejection from the host is a contract violation rather than a
 /// recoverable condition: this plugin only ever passes 16/32-byte keys, 16-byte
-/// IVs, and block-aligned buffers. The error is handed back to unrar-rs, which
-/// panics naming the offending status.
+/// IVs, and block-aligned buffers. The error is handed back to the calling
+/// crate, which panics naming the offending status.
 fn install_crypto_hooks() {
-    fn aes_cbc_decrypt(key: &[u8], iv: &[u8], data: &[u8]) -> Result<Vec<u8>, HostAesError> {
+    fn rar_aes_cbc_decrypt(key: &[u8], iv: &[u8], data: &[u8]) -> Result<Vec<u8>, HostAesError> {
         host_crypto::aes_cbc_decrypt(key, iv, data).map_err(|error| match error {
             host_crypto::AesError::BadKeyLength => HostAesError::BadKeyLength,
             host_crypto::AesError::BadBlockLength => HostAesError::BadBlockLength,
             host_crypto::AesError::BadIvLength => HostAesError::BadIvLength,
+        })
+    }
+
+    fn sevenz_aes_cbc_decrypt(
+        key: &[u8],
+        iv: &[u8],
+        data: &[u8],
+    ) -> Result<Vec<u8>, sevenz_hooks::HostAesError> {
+        host_crypto::aes_cbc_decrypt(key, iv, data).map_err(|error| match error {
+            host_crypto::AesError::BadKeyLength => sevenz_hooks::HostAesError::BadKeyLength,
+            host_crypto::AesError::BadBlockLength => sevenz_hooks::HostAesError::BadBlockLength,
+            host_crypto::AesError::BadIvLength => sevenz_hooks::HostAesError::BadIvLength,
         })
     }
 
@@ -127,9 +146,37 @@ fn install_crypto_hooks() {
     }
 
     install_host_crypto_hooks(HostCryptoHooks {
-        aes_cbc_decrypt,
+        aes_cbc_decrypt: rar_aes_cbc_decrypt,
         crc32,
     });
+    sevenz_hooks::install_host_crypto_hooks(sevenz_hooks::HostCryptoHooks {
+        aes_cbc_decrypt: sevenz_aes_cbc_decrypt,
+    });
+
+    fn sha256_not_delegated() -> ! {
+        unreachable!("lzma-turbo `crypto-host` is off; SHA-256 is computed in the guest")
+    }
+    install_host_hash_hooks(HostHashHooks::new(
+        crc32,
+        guest_crc64_xz,
+        || sha256_not_delegated(),
+        |_: HostSha256Handle| sha256_not_delegated(),
+        |_: HostSha256Handle, _: &[u8]| sha256_not_delegated(),
+        |_: HostSha256Handle| sha256_not_delegated(),
+        |_: HostSha256Handle| sha256_not_delegated(),
+    ));
+}
+
+/// CRC-64/XZ for lzma-turbo's `crc64_xz` hook, in the hook's convention: a
+/// resumable one-shot in the finalized domain, so `seed` 0 starts a stream and
+/// the result of one call seeds the next.
+///
+/// This goes to `crc-fast` directly rather than through `lzma_turbo::crc`,
+/// which with `crc-host` on routes straight back to this hook.
+fn guest_crc64_xz(seed: u64, data: &[u8]) -> u64 {
+    let mut digest = crc_fast::Digest::new_with_init_state(crc_fast::CrcAlgorithm::Crc64Xz, !seed);
+    digest.update(data);
+    digest.finalize()
 }
 
 fn build_descriptor() -> PluginDescriptor {
@@ -284,13 +331,7 @@ fn extract_xz_with_limits(
         Ok(file) => file,
         Err(error) => return failed_response("open_xz", "failed to open XZ stream", error),
     };
-    let stream = match Stream::new_stream_decoder(decoder_memory_limit, CONCATENATED) {
-        Ok(stream) => stream,
-        Err(error) => {
-            return failed_response("initialize_xz", "failed to initialize XZ decoder", error);
-        }
-    };
-    let mut decoder = XzDecoder::new_stream(input, stream);
+    let mut decoder = XzReader::new(input).with_memory_limit(decoder_memory_limit);
     let mut output = match fs::File::create(&destination) {
         Ok(file) => file,
         Err(error) => {
@@ -320,15 +361,15 @@ fn extract_xz_with_limits(
 
 /// Classify a decode failure so the operator sees which ceiling stopped it.
 ///
-/// `memory limit reached` is the one that does not scale with the payload: it
+/// The memory limit is the one that does not scale with the payload: it
 /// reports the dictionary the *producer* chose, so a kilobyte and a gigabyte
 /// fail identically. Folding it into the generic `extract_xz` code made that
 /// indistinguishable from a corrupt stream.
 fn xz_failure_code(error: &io::Error) -> &'static str {
     let memlimit = error
         .get_ref()
-        .and_then(|inner| inner.downcast_ref::<XzStreamError>())
-        .is_some_and(|inner| *inner == XzStreamError::MemLimit);
+        .and_then(|inner| inner.downcast_ref::<XzError>())
+        .is_some_and(|inner| matches!(inner.kind, XzErrorKind::MemoryLimit { .. }));
     if memlimit {
         return "decoder_memory_too_large";
     }
@@ -699,10 +740,10 @@ fn extract_sevenz(
         Err(error) => return failed_response("open_7z", "failed to open 7z archive", error),
     };
     let password_value = match password.filter(|password| !password.is_empty()) {
-        Some(password) => sevenz_rust2::Password::from(password),
-        None => sevenz_rust2::Password::empty(),
+        Some(password) => sevenz_turbo::Password::from(password),
+        None => sevenz_turbo::Password::empty(),
     };
-    let mut archive = match sevenz_rust2::ArchiveReader::new(archive_file, password_value) {
+    let mut archive = match sevenz_turbo::ArchiveReader::new(archive_file, password_value) {
         Ok(archive) => archive,
         Err(error) => return sevenz_error_response("read_7z", error, password),
     };
@@ -1008,12 +1049,34 @@ fn rar_error_response(
 
 fn sevenz_error_response(
     error_code: &str,
-    error: sevenz_rust2::Error,
+    error: sevenz_turbo::Error,
     password: Option<&str>,
 ) -> ArchivePluginProcessResponse {
+    use sevenz_turbo::{BlockErrorKind, Error as SevenzError};
+
+    let unsupported_method = matches!(
+        error,
+        SevenzError::UnsupportedCompressionMethod(_)
+            | SevenzError::Unsupported(_)
+            | SevenzError::ExternalUnsupported
+            | SevenzError::BlockDecode {
+                kind: BlockErrorKind::UnsupportedMethod,
+                ..
+            }
+    );
+    let password_error = matches!(
+        error,
+        SevenzError::PasswordRequired
+            | SevenzError::MaybeBadPassword(_)
+            | SevenzError::BlockDecode {
+                kind: BlockErrorKind::Password,
+                ..
+            }
+    );
     let message = error.to_string();
     let lower = message.to_ascii_lowercase();
-    let (status, code, public_message) = if lower.contains("unsupported")
+    let (status, code, public_message) = if unsupported_method
+        || lower.contains("unsupported")
         || lower.contains("zstd")
         || lower.contains("method")
     {
@@ -1022,7 +1085,7 @@ fn sevenz_error_response(
                 "unsupported_7z_method",
                 "This 7z archive uses a compression method the Archive Extraction plugin does not support yet.".to_string(),
             )
-    } else if lower.contains("password") || lower.contains("encrypted") {
+    } else if password_error || lower.contains("password") || lower.contains("encrypted") {
         let status = if password.is_some_and(|password| !password.is_empty()) {
             ArchivePluginStatus::PasswordInvalid
         } else {
@@ -1049,8 +1112,8 @@ fn sevenz_error_response(
     }
 }
 
-fn sevenz_error_from_message(message: Option<&str>) -> sevenz_rust2::Error {
-    sevenz_rust2::Error::Other(Cow::Owned(
+fn sevenz_error_from_message(message: Option<&str>) -> sevenz_turbo::Error {
+    sevenz_turbo::Error::Other(Cow::Owned(
         message
             .filter(|message| !message.is_empty())
             .unwrap_or("7z extraction failed")
@@ -1073,13 +1136,29 @@ pub(crate) fn empty_response() -> ArchivePluginProcessResponse {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use liblzma::write::XzEncoder;
+    use lzma_turbo::{LzmaEncProps, XzWriter};
 
-    fn write_xz_fixture(path: &Path, content: &[u8]) {
+    /// `xz -6` (the default preset) and `xz -9` dictionaries. Set explicitly
+    /// because the SDK encoder's own level table maps levels to different
+    /// dictionaries than xz(1)'s presets do.
+    const XZ_DEFAULT_PRESET_DICT: u32 = 8 * 1024 * 1024;
+    const XZ_MAX_PRESET_DICT: u32 = 64 * 1024 * 1024;
+
+    fn write_xz_fixture_with(path: &Path, content: &[u8], props: &LzmaEncProps) {
         let file = fs::File::create(path).expect("create XZ fixture");
-        let mut encoder = XzEncoder::new(file, 6);
+        let mut encoder = XzWriter::new(file, props).expect("configure XZ fixture encoder");
         encoder.write_all(content).expect("compress XZ fixture");
         encoder.finish().expect("finish XZ fixture");
+    }
+
+    fn write_xz_fixture(path: &Path, content: &[u8]) {
+        write_xz_fixture_with(
+            path,
+            content,
+            &LzmaEncProps::new()
+                .with_level(6)
+                .with_dict_size(XZ_DEFAULT_PRESET_DICT),
+        );
     }
 
     #[test]
@@ -1137,23 +1216,30 @@ mod tests {
     }
 
     /// `xz -9` is the canonical "compress it as hard as you can" invocation and
-    /// selects a 64 MiB dictionary, which liblzma needs ~65 MiB to decode. The
-    /// ceiling used to sit at exactly 64 MiB, so every maximum-preset stream was
-    /// rejected no matter how small — a 1.2 KiB subtitle included.
+    /// selects a 64 MiB dictionary. The ceiling used to sit at exactly 64 MiB,
+    /// so every maximum-preset stream was rejected no matter how small — a
+    /// 1.2 KiB subtitle included.
     ///
-    /// Encoding at preset 9 costs ~674 MiB in liblzma's match finder even for a
-    /// few bytes of input; that transient allocation is the price of producing a
-    /// genuine 64 MiB-dictionary header rather than asserting a number.
+    /// The fixture carries a genuine 64 MiB dictionary property. lzma-turbo's
+    /// writer also records the block's uncompressed size, which caps what the
+    /// decoder charges; a single-threaded `xz -9` omits it, and then the whole
+    /// 64 MiB is charged against [`MAX_XZ_DECODER_MEMORY_BYTES`]. A 64 MiB
+    /// dictionary costs hundreds of MiB in the encoder's match finder even for
+    /// a few bytes of input; that transient allocation is the price of a real
+    /// preset-9 stream rather than an asserted number.
     #[test]
     fn xz_stream_at_the_largest_preset_extracts_under_shipped_limits() {
         let source = tempfile::tempdir().unwrap();
         let output = tempfile::tempdir().unwrap();
         let input_path = source.path().join("subtitle.srt.xz");
         let content = b"1\n00:00:01,000 --> 00:00:02,000\nmaximum preset\n";
-        let file = fs::File::create(&input_path).expect("create XZ fixture");
-        let mut encoder = XzEncoder::new(file, 9);
-        encoder.write_all(content).expect("compress XZ fixture");
-        encoder.finish().expect("finish XZ fixture");
+        write_xz_fixture_with(
+            &input_path,
+            content,
+            &LzmaEncProps::new()
+                .with_level(9)
+                .with_dict_size(XZ_MAX_PRESET_DICT),
+        );
 
         let response = extract_xz(&input_path, output.path(), None);
 
@@ -1174,10 +1260,12 @@ mod tests {
         let source = tempfile::tempdir().unwrap();
         let output = tempfile::tempdir().unwrap();
         let input_path = source.path().join("subtitle.srt.xz");
-        write_xz_fixture(&input_path, b"subtitle");
+        // A block's dictionary is only charged up to its declared uncompressed
+        // size, so the payload has to outgrow the ceiling as well: 2 MiB under
+        // an 8 MiB (preset 6) dictionary needs 2 MiB, which a 1 MiB ceiling
+        // refuses at the block header, before any payload decodes.
+        write_xz_fixture(&input_path, &b"subtitle\n".repeat(2 * 1024 * 1024 / 9 + 1));
 
-        // The fixture's own dictionary is 8 MiB (preset 6), so a 1 MiB ceiling
-        // is refused while liblzma is still reading the header.
         let response = extract_xz_with_limits(
             &input_path,
             output.path(),
@@ -1218,11 +1306,34 @@ mod tests {
         assert!(!output.path().join("subtitle.srt").exists());
     }
 
+    /// The three properties lzma-turbo's hook contract requires, against the
+    /// checksum it would compute itself.
+    #[test]
+    fn guest_crc64_xz_meets_the_hook_contract() {
+        let data = b"The quick brown fox jumps over the lazy dog, twice over.";
+        let whole = crc_fast::checksum(crc_fast::CrcAlgorithm::Crc64Xz, data);
+
+        assert_eq!(guest_crc64_xz(0, data), whole);
+        assert_eq!(guest_crc64_xz(0, &[]), 0);
+        assert_eq!(
+            guest_crc64_xz(0x1234_5678_9ABC_DEF0, &[]),
+            0x1234_5678_9ABC_DEF0
+        );
+        for split in 0..=data.len() {
+            let (head, tail) = data.split_at(split);
+            assert_eq!(
+                guest_crc64_xz(guest_crc64_xz(0, head), tail),
+                whole,
+                "split {split}"
+            );
+        }
+    }
+
     #[test]
     fn sevenz_unsupported_method_maps_to_structured_error() {
         let response = sevenz_error_response(
             "extract_7z",
-            sevenz_rust2::Error::Other(Cow::Borrowed("unsupported compression method zstd")),
+            sevenz_turbo::Error::Other(Cow::Borrowed("unsupported compression method zstd")),
             None,
         );
 
