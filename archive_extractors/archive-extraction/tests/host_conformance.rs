@@ -4,8 +4,8 @@
 //! behave" but "this exact `.wasm` runs under Scryer's archive host". It
 //! therefore builds the shipping `wasm32-wasip2` component and drives it the
 //! way `crates/scryer-plugins/src/wasmtime_host/archive_component_host.rs`
-//! does: the world is linked as `scryer:archive/archive-extractor@1.0.0`, the
-//! `crypto` interface is served by the same AES-CBC and CRC-32 cores the host
+//! does: the world is linked as `scryer:archive/archive-extractor@1.1.0`, the
+//! `crypto` interface is served by the same AES-CBC and CRC cores the host
 //! uses, WASI Preview 2 comes from the linker, and the sandbox is exactly the
 //! host's — a read-only source preopen, a writable output preopen, and a
 //! private `TMPDIR` scratch dir.
@@ -33,13 +33,15 @@ use wasmtime_wasi::{FsPerms, WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
 
 mod archive_world {
     wasmtime::component::bindgen!({
-        world: "scryer:archive/archive-extractor@1.0.0",
+        world: "scryer:archive/archive-extractor@1.1.0",
         path: "wit",
     });
 }
 
 use archive_world::ArchiveExtractor;
-use archive_world::scryer::archive::crypto::{AesError, Host as CryptoHost};
+use archive_world::scryer::archive::crypto::{
+    AesError, CrcAlgorithm, CrcError, Host as CryptoHost,
+};
 
 /// The host's fixed guest paths (`crates/scryer-plugins/src/archive_adapter.rs`)
 /// and its scratch mount (`wasmtime_host/sandbox.rs`).
@@ -51,6 +53,7 @@ const SEVENZ_PASSWORD: &str = "sevenz-pass-42";
 
 static AES_CALLS: AtomicUsize = AtomicUsize::new(0);
 static CRC_CALLS: AtomicUsize = AtomicUsize::new(0);
+static CRC64_XZ_CALLS: AtomicUsize = AtomicUsize::new(0);
 static PLUGIN_WASM: OnceLock<PathBuf> = OnceLock::new();
 
 #[test]
@@ -95,7 +98,7 @@ fn assert_artifact_is_a_component(wasm_path: &Path) {
 /// The exact check `validate_archive_component` performs on install: the
 /// artifact compiles, every import the guest emits is satisfiable from WASI
 /// Preview 2 plus the world's `crypto` interface, and its exports match
-/// `scryer:archive/archive-extractor@1.0.0`.
+/// `scryer:archive/archive-extractor@1.1.0`.
 fn assert_world_conformance(wasm_path: &Path) {
     let engine = Engine::default();
     let component = Component::from_file(&engine, wasm_path).expect("compile archive component");
@@ -106,7 +109,7 @@ fn assert_world_conformance(wasm_path: &Path) {
     linker
         .instantiate_pre(&component)
         .and_then(archive_world::ArchiveExtractorPre::new)
-        .expect("the artifact must satisfy scryer:archive/archive-extractor@1.0.0");
+        .expect("the artifact must satisfy scryer:archive/archive-extractor@1.1.0");
 }
 
 /// `describe` is a world export now, not an argv-driven stdout dump: the host
@@ -560,6 +563,12 @@ fn assert_xz_extracts(wasm_path: &Path) {
         after.crc > before.crc,
         "XZ extraction did not call the crypto crc32 import"
     );
+    // The fixture's integrity check is xz's default CRC-64, which must reach
+    // the catalog `crc` import rather than a guest implementation.
+    assert!(
+        after.crc64_xz > before.crc64_xz,
+        "XZ extraction did not call the crypto crc import for CRC-64/XZ"
+    );
 
     assert_eq!(
         response.status,
@@ -774,6 +783,32 @@ impl CryptoHost for Ctx {
         let mut hasher = crc32fast::Hasher::new_with_initial(seed);
         hasher.update(&data);
         hasher.finalize()
+    }
+
+    /// The host's catalog CRC semantics (`crypto_host::crc`): `none` starts
+    /// from the algorithm's initial value, `some(previous)` resumes from a
+    /// finalized result. The plugin only asks for CRC-64/XZ; any other
+    /// algorithm here is a plugin change the harness should learn about.
+    fn crc(
+        &mut self,
+        algorithm: CrcAlgorithm,
+        seed: Option<u64>,
+        data: Vec<u8>,
+    ) -> Result<u64, CrcError> {
+        let CrcAlgorithm::Crc64Xz = algorithm else {
+            panic!("unexpected crc algorithm from the plugin: {algorithm:?}");
+        };
+        CRC64_XZ_CALLS.fetch_add(1, Ordering::SeqCst);
+        let algorithm = crc_fast::CrcAlgorithm::Crc64Xz;
+        let mut digest = match seed {
+            None => crc_fast::Digest::new(algorithm),
+            Some(previous) => {
+                let xorout = crc_fast::Digest::new_with_init_state(algorithm, 0).finalize();
+                crc_fast::Digest::new_with_init_state(algorithm, previous ^ xorout)
+            }
+        };
+        digest.update(&data);
+        Ok(digest.finalize())
     }
 }
 
@@ -1087,12 +1122,14 @@ fn assert_response_files_are_byte_correct(
 struct HostCallCounts {
     aes: usize,
     crc: usize,
+    crc64_xz: usize,
 }
 
 fn host_call_counts() -> HostCallCounts {
     HostCallCounts {
         aes: AES_CALLS.load(Ordering::SeqCst),
         crc: CRC_CALLS.load(Ordering::SeqCst),
+        crc64_xz: CRC64_XZ_CALLS.load(Ordering::SeqCst),
     }
 }
 

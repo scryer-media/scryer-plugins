@@ -1,6 +1,6 @@
 [package]
 name = "archive-extraction-archive-extractor"
-version = "1.0.4"
+version = "1.1.0"
 edition = "2024"
 autolib = false
 license-file = "LICENSE"
@@ -10,7 +10,7 @@ description = "Optional archive extraction plugin for RAR, ZIP, 7z, and XZ with 
 official = true
 plugin_id = "archive-extraction"
 catalog_versions = ["v3"]
-min_scryer_version = "0.20.0"
+min_scryer_version = "0.21.10"
 feature_sets = [{ required_features = [] }, { required_features = ["simd128", "relaxed-simd"] }]
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/archive_extractors/archive-extraction"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/archive_extractors/archive-extraction"
@@ -20,12 +20,9 @@ crate-type = ["cdylib"]
 path = "src/lib.rs"
 
 [dependencies]
-# CRC-64/XZ for lzma-turbo's `crc-host` hook, which the world's `crypto`
-# import (CRC-32 only) cannot serve. Already in the graph through lzma-turbo.
-crc-fast = { version = "1.10.0", default-features = false, features = ["std"] }
-# XZ decodes in pure Rust. `crc-host` hands CRC-32 to the world's `crypto`
-# import — and with it every CRC sevenz-turbo computes, since that crate
-# checksums through `lzma_turbo::crc`. The SHA-256 check (type 10) takes
+# XZ decodes in pure Rust. `crc-host` hands CRC-32 and CRC-64/XZ to the
+# world's `crypto` import — and with them every CRC sevenz-turbo computes,
+# since that crate checksums through `lzma_turbo::crc`. The SHA-256 check (type 10) takes
 # RustCrypto, because the default AWS-LC backend is C and wasm has no
 # toolchain for it.
 lzma-turbo = { version = "0.6.0", default-features = false, features = ["std", "asm", "crc", "crc-host", "native-crypto", "xz"] }
@@ -50,6 +47,9 @@ sevenz-turbo = { version = "0.26.0", default-features = false, features = ["nati
 
 [dev-dependencies]
 aws-lc-sys = "0.45"
+# The conformance harness serves the 1.1.0 catalog `crc` import with the same
+# backend the Scryer host uses.
+crc-fast = { version = "1.10.0", default-features = false, features = ["std"] }
 crc32fast = "1"
 par2-rs = "0.10.6"
 lzma-turbo = { version = "0.6.0", default-features = false, features = ["enc"] }

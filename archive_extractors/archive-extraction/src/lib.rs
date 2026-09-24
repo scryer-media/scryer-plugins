@@ -1,10 +1,10 @@
 //! Scryer's archive-extraction plugin, as a WASI Preview 2 component.
 //!
-//! The plugin implements `scryer:archive/archive-extractor@1.0.0`: two exports
+//! The plugin implements `scryer:archive/archive-extractor@1.1.0`: two exports
 //! carrying UTF-8 JSON (`describe` returns a `PluginDescriptor`, `process`
 //! exchanges an `ArchivePluginProcessRequest` for an
 //! `ArchivePluginProcessResponse`), plus one imported `crypto` interface for
-//! AES-CBC and CRC-32. WASI Preview 2 arrives from the linker, which is how the
+//! AES-CBC, CRC-32, and the catalog `crc` function (used here for CRC-64/XZ). WASI Preview 2 arrives from the linker, which is how the
 //! guest sees its read-only source preopen, its writable output preopen, and
 //! its private `TMPDIR` scratch dir.
 //!
@@ -70,7 +70,7 @@ const MAX_XZ_EXPANDED_BYTES: u64 = 128 * 1024 * 1024;
 /// a diagnosable plugin error instead of a host OOM trap.
 const MAX_XZ_DECODER_MEMORY_BYTES: u64 = 192 * 1024 * 1024;
 
-/// This crate's implementation of `scryer:archive/archive-extractor@1.0.0`.
+/// This crate's implementation of `scryer:archive/archive-extractor@1.1.0`.
 struct ArchiveExtractorComponent;
 
 impl Guest for ArchiveExtractorComponent {
@@ -103,13 +103,11 @@ impl Guest for ArchiveExtractorComponent {
 export!(ArchiveExtractorComponent);
 
 /// Point unrar-rs's bulk AES-CBC and CRC-32 delegation, sevenz-turbo's bulk
-/// AES-CBC decrypt, and lzma-turbo's bulk CRC-32 at the world's `crypto`
-/// import.
+/// AES-CBC decrypt, and lzma-turbo's bulk CRC-32 and CRC-64/XZ at the world's
+/// `crypto` import.
 ///
-/// lzma-turbo's hook set also takes CRC-64/XZ, which the world does not
-/// import, so that one is computed in the guest by [`guest_crc64_xz`]. Its
-/// SHA-256 hooks are never called: `crypto-host` is off, and the xz SHA-256
-/// check stays on the in-guest RustCrypto backend.
+/// lzma-turbo's SHA-256 hooks are never called: `crypto-host` is off, and the
+/// xz SHA-256 check stays on the in-guest RustCrypto backend.
 ///
 /// All three crates are transport-agnostic — they hold plain `fn` pointers and know
 /// nothing about WIT — so this adapter is the whole seam between them and the
@@ -145,6 +143,20 @@ fn install_crypto_hooks() {
         host_crypto::crc32(seed, data)
     }
 
+    /// lzma-turbo's hook resumes in the finalized domain with seed 0 starting
+    /// a stream. The host's `crc` resumes from `some(previous)` the same way,
+    /// and CRC-64/XZ's initial value equals its final XOR, so `some(0)` starts
+    /// a stream there too.
+    fn crc64_xz(seed: u64, data: &[u8]) -> u64 {
+        match host_crypto::crc(host_crypto::CrcAlgorithm::Crc64Xz, Some(seed), data) {
+            Ok(checksum) => checksum,
+            // A 64-bit algorithm has no out-of-range seed.
+            Err(host_crypto::CrcError::SeedOutOfRange) => {
+                unreachable!("host rejected a CRC-64/XZ seed as out of range")
+            }
+        }
+    }
+
     install_host_crypto_hooks(HostCryptoHooks {
         aes_cbc_decrypt: rar_aes_cbc_decrypt,
         crc32,
@@ -158,25 +170,13 @@ fn install_crypto_hooks() {
     }
     install_host_hash_hooks(HostHashHooks::new(
         crc32,
-        guest_crc64_xz,
+        crc64_xz,
         || sha256_not_delegated(),
         |_: HostSha256Handle| sha256_not_delegated(),
         |_: HostSha256Handle, _: &[u8]| sha256_not_delegated(),
         |_: HostSha256Handle| sha256_not_delegated(),
         |_: HostSha256Handle| sha256_not_delegated(),
     ));
-}
-
-/// CRC-64/XZ for lzma-turbo's `crc64_xz` hook, in the hook's convention: a
-/// resumable one-shot in the finalized domain, so `seed` 0 starts a stream and
-/// the result of one call seeds the next.
-///
-/// This goes to `crc-fast` directly rather than through `lzma_turbo::crc`,
-/// which with `crc-host` on routes straight back to this hook.
-fn guest_crc64_xz(seed: u64, data: &[u8]) -> u64 {
-    let mut digest = crc_fast::Digest::new_with_init_state(crc_fast::CrcAlgorithm::Crc64Xz, !seed);
-    digest.update(data);
-    digest.finalize()
 }
 
 fn build_descriptor() -> PluginDescriptor {
@@ -1304,29 +1304,6 @@ mod tests {
         assert_eq!(response.status, ArchivePluginStatus::Failed);
         assert_eq!(response.error_code.as_deref(), Some("compressed_too_large"));
         assert!(!output.path().join("subtitle.srt").exists());
-    }
-
-    /// The three properties lzma-turbo's hook contract requires, against the
-    /// checksum it would compute itself.
-    #[test]
-    fn guest_crc64_xz_meets_the_hook_contract() {
-        let data = b"The quick brown fox jumps over the lazy dog, twice over.";
-        let whole = crc_fast::checksum(crc_fast::CrcAlgorithm::Crc64Xz, data);
-
-        assert_eq!(guest_crc64_xz(0, data), whole);
-        assert_eq!(guest_crc64_xz(0, &[]), 0);
-        assert_eq!(
-            guest_crc64_xz(0x1234_5678_9ABC_DEF0, &[]),
-            0x1234_5678_9ABC_DEF0
-        );
-        for split in 0..=data.len() {
-            let (head, tail) = data.split_at(split);
-            assert_eq!(
-                guest_crc64_xz(guest_crc64_xz(0, head), tail),
-                whole,
-                "split {split}"
-            );
-        }
     }
 
     #[test]
