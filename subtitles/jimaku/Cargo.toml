@@ -1,6 +1,6 @@
 [package]
 name = "jimaku-subtitle-provider"
-version = "1.0.1"
+version = "1.1.0"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Anime-focused Jimaku subtitle provider using AniList IDs and optional name fallback"
@@ -36,6 +36,13 @@ wit-bindgen = { version = "0.61", features = ["async"] }
 scryer-plugin-conformance = { path = "../../pdk/scryer-plugin-conformance", features = [
     "subtitle",
 ] }
+
+# Unpublished SDK: `SubtitlePluginSearchRequest::community_entry` lands with
+# the next scryer-plugin-sdk release. Until it is on crates.io this resolves the
+# SDK from a sibling scryer checkout; replace it with the published version
+# before this plugin is released.
+[patch.crates-io]
+scryer-plugin-sdk = { path = "../../../../../scryer/.worktrees/subtitle-community-numbering/crates/scryer-plugin-sdk" }
 
 [profile.plugin-release]
 inherits = "release"
