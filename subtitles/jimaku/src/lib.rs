@@ -732,9 +732,12 @@ fn append_external_id_entries(
 /// Jimaku's `tmdb_id` lookup (`movie:<id>` / `tv:<id>`), for movies and for
 /// non-anime series.
 ///
+/// Jimaku keeps TMDB ids on its live-action entries; its anime entries are
+/// keyed by AniList and almost never carry one. The search also returns only
+/// anime entries unless told otherwise, so the lookup asks for `anime=false`.
 /// An anime series is left to its AniList ids: a TMDB show spans every cour,
-/// while the Jimaku entry carrying that TMDB id is one cour, so trusting it
-/// would pair a later season's episode number with the wrong cour's files.
+/// while any Jimaku entry carrying that TMDB id would be one cour, so trusting
+/// it would pair a later season's episode number with the wrong cour's files.
 fn tmdb_search_path(request: &SubtitlePluginSearchRequest) -> Option<String> {
     let kind = match request.media_kind {
         SubtitleQueryMediaKind::Movie => "movie",
@@ -749,7 +752,7 @@ fn tmdb_search_path(request: &SubtitlePluginSearchRequest) -> Option<String> {
         .map(|id| id.trim())
         .find(|id| !id.is_empty() && id.bytes().all(|byte| byte.is_ascii_digit()))?;
     Some(format!(
-        "entries/search?tmdb_id={}",
+        "entries/search?tmdb_id={}&anime=false",
         url_encode(&format!("{kind}:{id}"))
     ))
 }
@@ -1852,10 +1855,11 @@ mod tests {
     #[test]
     fn movie_request_is_matched_by_tmdb_id() {
         let mut request = movie_request();
+        request.facet = Some("movie".to_string());
         request.external_ids = BTreeMap::from([("tmdb".to_string(), vec!["4242".to_string()])]);
         let mut api = ScriptedApi::new(&[
             (
-                "entries/search?tmdb_id=movie%3A4242",
+                "entries/search?tmdb_id=movie%3A4242&anime=false",
                 r#"[{"id":88,"flags":{"movie":true}}]"#,
             ),
             ("entries/88/files", &files_body(&["Fixture Harbor.ja.srt"])),
@@ -1880,7 +1884,7 @@ mod tests {
         request.facet = Some("series".to_string());
         assert_eq!(
             tmdb_search_path(&request).as_deref(),
-            Some("entries/search?tmdb_id=tv%3A4242")
+            Some("entries/search?tmdb_id=tv%3A4242&anime=false")
         );
     }
 }
