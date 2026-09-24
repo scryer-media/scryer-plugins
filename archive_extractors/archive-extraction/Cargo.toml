@@ -29,19 +29,20 @@ crc-fast = { version = "1.10.0", default-features = false, features = ["std"] }
 # RustCrypto, because the default AWS-LC backend is C and wasm has no
 # toolchain for it.
 lzma-turbo = { version = "0.6.0", default-features = false, features = ["std", "asm", "crc", "crc-host", "native-crypto", "xz"] }
-par2-rs = { version = "0.10.2", default-features = false }
+par2-rs = { version = "0.10.6", default-features = false }
 scryer-plugin-sdk = "3.11.0"
 serde_json = "1"
 # `crypto-host` hands 7z's bulk AES-256-CBC decrypt to the world's `crypto`
 # import, the same seam unrar-rs uses. It is inert off wasm32, so native builds
 # take the RustCrypto backend below instead.
 sevenz-turbo = { version = "0.26.0", default-features = false, features = ["aes256", "bzip2", "crypto-host", "deflate", "ppmd"] }
-unrar-rs = { version = "0.10.5", default-features = false, features = ["crypto-host", "crc-host"] }
-wit-bindgen = "0.61"
+unrar-rs = { version = "0.10.8", default-features = false, features = ["crypto-host", "crc-host"] }
+wit-bindgen = "0.62"
 # Pinned exactly: zip 7.2.0 pulls in typed-path, whose wasip2 support is
 # behind `#![feature(wasip2)]` and therefore nightly-only. That makes the
-# wasm32-wasip2 build fail on the pinned stable toolchain. Lift the `=` once
-# typed-path no longer needs the unstable feature.
+# wasm32-wasip2 build fail on the pinned stable toolchain (still true of
+# zip 8.6.0 with typed-path 0.12.3). Lift the `=` once typed-path no longer
+# needs the unstable feature.
 zip = { version = "=7.1.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
@@ -50,12 +51,12 @@ sevenz-turbo = { version = "0.26.0", default-features = false, features = ["nati
 [dev-dependencies]
 aws-lc-sys = "0.45"
 crc32fast = "1"
-par2-rs = "0.10.2"
+par2-rs = "0.10.6"
 lzma-turbo = { version = "0.6.0", default-features = false, features = ["enc"] }
 sevenz-turbo = { version = "0.26.0", default-features = false, features = ["compress"] }
 tempfile = "3"
-wasmtime = "48.0.1"
-wasmtime-wasi = "48.0.1"
+wasmtime = "49.0.0"
+wasmtime-wasi = "49.0.0"
 
 [profile.plugin-release]
 inherits = "release"
