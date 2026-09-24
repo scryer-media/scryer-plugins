@@ -497,13 +497,50 @@ fn search_subtitles_impl(
         None
     };
 
-    let mut params: Vec<(&str, String)> = Vec::new();
+    let Some(search) = build_subtitle_search_params(
+        request,
+        &provider_languages,
+        feature_id,
+        config.enable_hash_lookup,
+    ) else {
+        return Ok(Vec::new());
+    };
+
+    execute_subtitle_search(
+        config,
+        request,
+        &requested_languages,
+        &search.params,
+        search.movie_identifier_match,
+        search.series_identifier_match,
+    )
+}
+
+struct SubtitleSearchParams {
+    params: Vec<(&'static str, String)>,
+    movie_identifier_match: bool,
+    series_identifier_match: bool,
+}
+
+/// Builds the `/subtitles` query, or `None` when an episode has no series
+/// identifier to search by.
+///
+/// The request year never becomes a `year` filter. For an episode it is the
+/// series premiere year, while OpenSubtitles filters on the episode's own air
+/// year, so every episode that aired after the premiere year came back empty.
+/// The identifiers already pin the feature; the year only ranks feature
+/// lookups in [`search_feature_id`]. Bazarr's provider omits it the same way.
+fn build_subtitle_search_params(
+    request: &SubtitlePluginSearchRequest,
+    provider_languages: &[String],
+    feature_id: Option<String>,
+    enable_hash_lookup: bool,
+) -> Option<SubtitleSearchParams> {
+    let mut params: Vec<(&'static str, String)> = Vec::new();
     let mut movie_identifier_match = false;
     let mut series_identifier_match = false;
 
-    if config.enable_hash_lookup
-        && let Some(hash) = request.file_hash.clone()
-    {
+    if enable_hash_lookup && let Some(hash) = request.file_hash.clone() {
         params.push(("moviehash", hash));
     }
 
@@ -512,7 +549,7 @@ fn search_subtitles_impl(
             if let Some(imdb) = request.imdb_id.as_deref().and_then(sanitize_imdb_id) {
                 params.push(("imdb_id", imdb));
                 movie_identifier_match = true;
-            } else if let Some(feature_id) = feature_id.clone() {
+            } else if let Some(feature_id) = feature_id {
                 params.push(("id", feature_id));
                 movie_identifier_match = true;
             } else {
@@ -535,18 +572,15 @@ fn search_subtitles_impl(
             {
                 params.push(("parent_imdb_id", imdb));
                 series_identifier_match = true;
-            } else if let Some(feature_id) = feature_id.clone() {
+            } else if let Some(feature_id) = feature_id {
                 params.push(("parent_feature_id", feature_id));
                 series_identifier_match = true;
             } else {
-                return Ok(Vec::new());
+                return None;
             }
         }
     }
 
-    if let Some(year) = request.year {
-        params.push(("year", year.to_string()));
-    }
     if !provider_languages.is_empty() {
         params.push(("languages", provider_languages.join(",")));
     }
@@ -558,14 +592,11 @@ fn search_subtitles_impl(
     );
     params.sort_by(|left, right| left.0.cmp(right.0));
 
-    execute_subtitle_search(
-        config,
-        request,
-        &requested_languages,
-        &params,
+    Some(SubtitleSearchParams {
+        params,
         movie_identifier_match,
         series_identifier_match,
-    )
+    })
 }
 
 fn execute_subtitle_search(
@@ -1511,10 +1542,14 @@ fn config_bool(key: &str, default: bool) -> bool {
 mod tests {
     use super::{
         ERROR_BODY_PREVIEW_LIMIT, FeatureDetails, FeatureLookupResponse, OpenSubtitlesConfig,
-        append_translation_filter_params, compact_error_body, config_auth_fingerprint, descriptor,
-        from_opensubtitles_language, is_real_forced, to_opensubtitles_language,
+        SubtitleSearchParams, append_translation_filter_params, build_subtitle_search_params,
+        compact_error_body, config_auth_fingerprint, descriptor, from_opensubtitles_language,
+        is_real_forced, to_opensubtitles_language,
     };
-    use scryer_plugin_sdk::{ConfigFieldValueSource, PluginHostBindingId, ProviderDescriptor};
+    use scryer_plugin_sdk::{
+        ConfigFieldValueSource, PluginHostBindingId, ProviderDescriptor,
+        SubtitlePluginSearchRequest,
+    };
 
     #[test]
     fn compact_error_body_truncates_ascii_body() {
@@ -1682,6 +1717,96 @@ mod tests {
 
         assert!(!params.iter().any(|(key, _)| *key == "ai_translated"));
         assert!(params.contains(&("machine_translated", "include".to_string())));
+    }
+
+    fn search_request(value: serde_json::Value) -> SubtitlePluginSearchRequest {
+        serde_json::from_value(value).expect("search request fixture should parse")
+    }
+
+    fn param_keys(search: &SubtitleSearchParams) -> Vec<&'static str> {
+        search.params.iter().map(|(key, _)| *key).collect()
+    }
+
+    #[test]
+    fn episode_search_scopes_by_series_without_premiere_year() {
+        let request = search_request(serde_json::json!({
+            "media_kind": "episode",
+            "title": "Synthetic Frontier",
+            "series_imdb_id": "tt0012345",
+            "year": 2022,
+            "season": 4,
+            "episode": 1,
+        }));
+
+        let search = build_subtitle_search_params(&request, &["en".to_string()], None, true)
+            .expect("an episode with a series id should be searchable");
+
+        assert_eq!(
+            search.params,
+            vec![
+                ("ai_translated", "exclude".to_string()),
+                ("episode_number", "1".to_string()),
+                ("languages", "en".to_string()),
+                ("parent_imdb_id", "12345".to_string()),
+                ("season_number", "4".to_string()),
+            ]
+        );
+        assert!(search.series_identifier_match);
+        assert!(!search.movie_identifier_match);
+    }
+
+    #[test]
+    fn episode_search_by_feature_id_omits_year() {
+        let request = search_request(serde_json::json!({
+            "media_kind": "episode",
+            "title": "Synthetic Frontier",
+            "year": 2022,
+            "season": 2,
+            "episode": 3,
+        }));
+
+        let search = build_subtitle_search_params(&request, &[], Some("98765".to_string()), true)
+            .expect("an episode with a feature id should be searchable");
+
+        assert!(
+            search
+                .params
+                .contains(&("parent_feature_id", "98765".to_string()))
+        );
+        assert!(!param_keys(&search).contains(&"year"));
+    }
+
+    #[test]
+    fn episode_search_without_series_identifier_is_skipped() {
+        let request = search_request(serde_json::json!({
+            "media_kind": "episode",
+            "title": "Synthetic Frontier",
+            "year": 2022,
+            "season": 1,
+            "episode": 1,
+        }));
+
+        assert!(build_subtitle_search_params(&request, &[], None, true).is_none());
+    }
+
+    #[test]
+    fn movie_search_scopes_by_imdb_id_without_year() {
+        let request = search_request(serde_json::json!({
+            "media_kind": "movie",
+            "title": "Synthetic Voyage",
+            "imdb_id": "tt0054321",
+            "year": 2024,
+            "file_hash": "0123456789abcdef",
+        }));
+
+        let search = build_subtitle_search_params(&request, &[], None, true)
+            .expect("a movie with an imdb id should be searchable");
+
+        assert_eq!(
+            param_keys(&search),
+            vec!["ai_translated", "imdb_id", "moviehash"]
+        );
+        assert!(search.movie_identifier_match);
     }
 
     #[test]
