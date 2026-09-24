@@ -179,6 +179,16 @@ struct FeatureDetails {
     season_number: Option<i32>,
     #[serde(default, deserialize_with = "deserialize_optional_provider_i32")]
     episode_number: Option<i32>,
+    #[serde(default)]
+    feature_type: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_optional_provider_i64")]
+    imdb_id: Option<i64>,
+    #[serde(default, deserialize_with = "deserialize_optional_provider_i64")]
+    tmdb_id: Option<i64>,
+    #[serde(default, deserialize_with = "deserialize_optional_provider_i64")]
+    parent_imdb_id: Option<i64>,
+    #[serde(default)]
+    parent_title: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -189,17 +199,41 @@ struct FeatureLookupResponse {
 #[derive(Deserialize)]
 struct FeatureLookupResult {
     id: String,
+    /// `movie`, `tvshow` or `episode` on title queries.
+    #[serde(default, rename = "type")]
+    kind: Option<String>,
     attributes: FeatureLookupAttributes,
 }
 
 #[derive(Deserialize)]
 struct FeatureLookupAttributes {
     title: Option<String>,
+    #[serde(default)]
+    original_title: Option<String>,
+    #[serde(default)]
+    title_aka: Vec<String>,
+    /// `Movie`, `Tvshow` or `Episode`; id lookups carry this instead of `type`.
+    #[serde(default)]
+    feature_type: Option<String>,
     #[serde(default, deserialize_with = "deserialize_optional_provider_i32")]
     year: Option<i32>,
+    #[serde(default, deserialize_with = "deserialize_optional_provider_i64")]
+    imdb_id: Option<i64>,
+    #[serde(default, deserialize_with = "deserialize_optional_provider_i64")]
+    tmdb_id: Option<i64>,
 }
 
 fn deserialize_optional_provider_i32<'de, D>(deserializer: D) -> Result<Option<i32>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    Ok(
+        deserialize_optional_provider_i64(deserializer)?
+            .and_then(|value| i32::try_from(value).ok()),
+    )
+}
+
+fn deserialize_optional_provider_i64<'de, D>(deserializer: D) -> Result<Option<i64>, D::Error>
 where
     D: serde::Deserializer<'de>,
 {
@@ -209,15 +243,13 @@ where
     };
 
     let parsed = match value {
-        serde_json::Value::Number(number) => {
-            number.as_i64().and_then(|value| i32::try_from(value).ok())
-        }
+        serde_json::Value::Number(number) => number.as_i64(),
         serde_json::Value::String(value) => {
             let trimmed = value.trim();
             if trimmed.is_empty() {
                 None
             } else {
-                trimmed.parse::<i32>().ok()
+                trimmed.parse::<i64>().ok()
             }
         }
         _ => None,
@@ -474,161 +506,513 @@ fn descriptor() -> PluginDescriptor {
     }
 }
 
+/// Most `/subtitles` and `/features` requests one search makes. Requests are
+/// spaced `MIN_API_REQUEST_INTERVAL_MILLIS` apart and the host gives a search
+/// call 30 seconds, so the fallbacks stop well inside that.
+const MAX_SEARCH_REQUESTS: usize = 8;
+/// Most title lookups (`/features?query=`) one search makes when it has no
+/// identifier. After an empty identifier search it makes one: the request
+/// title, matched against OpenSubtitles' alternate titles as well.
+const MAX_FEATURE_LOOKUPS: usize = 3;
+/// Most extra scoped IMDb ids (anime specials and movies mapped onto an
+/// episode) searched directly.
+const MAX_SCOPED_IMDB_SEARCHES: usize = 2;
+
 fn search_subtitles_impl(
     config: &OpenSubtitlesConfig,
     request: &SubtitlePluginSearchRequest,
 ) -> Result<Vec<SubtitlePluginCandidate>, String> {
-    let requested_languages: Vec<String> = request
-        .languages
-        .iter()
-        .filter_map(|language| normalize_subtitle_language_code(language))
-        .collect();
-    let provider_languages: Vec<String> = requested_languages
-        .iter()
-        .filter_map(|language| to_opensubtitles_language(language))
-        .collect::<BTreeSet<_>>()
-        .into_iter()
-        .collect();
-
-    let title_candidates = collect_title_candidates(request);
-    let feature_id = if request.imdb_id.is_none() && request.series_imdb_id.is_none() {
-        search_feature_id(config, &title_candidates, request.year)?
-    } else {
-        None
-    };
-
-    let Some(search) = build_subtitle_search_params(
-        request,
-        &provider_languages,
-        feature_id,
-        config.enable_hash_lookup,
-    ) else {
-        return Ok(Vec::new());
-    };
-
-    execute_subtitle_search(
-        config,
-        request,
-        &requested_languages,
-        &search.params,
-        search.movie_identifier_match,
-        search.series_identifier_match,
-    )
+    SubtitleSearch::new(ApiTransport { config }, request, config.enable_hash_lookup).run()
 }
 
-struct SubtitleSearchParams {
+/// The two OpenSubtitles endpoints a search reads, behind a seam so the
+/// fallback order is testable without the network.
+trait SearchTransport {
+    fn subtitles(
+        &mut self,
+        params: &[(&'static str, String)],
+    ) -> Result<Vec<SearchAttributes>, String>;
+    fn features(
+        &mut self,
+        params: &[(&'static str, String)],
+    ) -> Result<Vec<FeatureLookupResult>, String>;
+}
+
+struct ApiTransport<'a> {
+    config: &'a OpenSubtitlesConfig,
+}
+
+impl SearchTransport for ApiTransport<'_> {
+    fn subtitles(
+        &mut self,
+        params: &[(&'static str, String)],
+    ) -> Result<Vec<SearchAttributes>, String> {
+        let response = send_request_json(self.config, "GET", "subtitles", Some(params), None)?;
+        if response.status_code() >= 400 {
+            return Err(http_error(self.config, "search", &response));
+        }
+        let body: SearchResponse = serde_json::from_slice(&response.body())
+            .map_err(|error| format!("OpenSubtitles search parse error: {error}"))?;
+        Ok(body
+            .data
+            .into_iter()
+            .map(|result| result.attributes)
+            .collect())
+    }
+
+    fn features(
+        &mut self,
+        params: &[(&'static str, String)],
+    ) -> Result<Vec<FeatureLookupResult>, String> {
+        let response = send_request_json(self.config, "GET", "features", Some(params), None)?;
+        if response.status_code() >= 400 {
+            return Err(http_error(self.config, "feature lookup", &response));
+        }
+        let body: FeatureLookupResponse = serde_json::from_slice(&response.body())
+            .map_err(|error| format!("OpenSubtitles feature lookup parse error: {error}"))?;
+        Ok(body.data)
+    }
+}
+
+/// One `/subtitles` query and the checks its rows must pass.
+#[derive(Default)]
+struct SearchAttempt {
+    /// Identifying params; languages, translation filters and the file hash
+    /// are added when the query is sent.
     params: Vec<(&'static str, String)>,
     movie_identifier_match: bool,
     series_identifier_match: bool,
+    /// Rows must carry this episode number (the absolute-number fallback).
+    episode_number: Option<i32>,
+    /// Rows must be filed under the requested series. TMDB numbers TV shows
+    /// and movies separately, so a bare TMDB parent id can name another show.
+    verify_parent: bool,
+    /// Rows must be exactly this feature (a scoped IMDb id).
+    feature_imdb_id: Option<i64>,
+    /// Rows must be the movie with this TMDB id.
+    movie_tmdb_id: Option<i64>,
 }
 
-/// Builds the `/subtitles` query, or `None` when an episode has no series
-/// identifier to search by.
+/// A series identifier `/subtitles` can scope episodes by.
+struct SeriesAnchor {
+    key: &'static str,
+    id: String,
+    verify_parent: bool,
+}
+
+impl SeriesAnchor {
+    fn episode_attempt(&self, season: Option<i32>, episode: Option<i32>) -> SearchAttempt {
+        let mut params = vec![(self.key, self.id.clone())];
+        if let Some(season) = season {
+            params.push(("season_number", season.to_string()));
+        }
+        if let Some(episode) = episode {
+            params.push(("episode_number", episode.to_string()));
+        }
+        SearchAttempt {
+            params,
+            series_identifier_match: true,
+            verify_parent: self.verify_parent,
+            ..SearchAttempt::default()
+        }
+    }
+
+    /// No season: OpenSubtitles files some anime by absolute number, either
+    /// inside the season (S02E38) or all under season one (S01E892).
+    fn absolute_attempt(&self, absolute: i32) -> SearchAttempt {
+        SearchAttempt {
+            params: vec![
+                (self.key, self.id.clone()),
+                ("episode_number", absolute.to_string()),
+            ],
+            series_identifier_match: true,
+            verify_parent: self.verify_parent,
+            episode_number: Some(absolute),
+            ..SearchAttempt::default()
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+enum FeatureKind {
+    Movie,
+    Tvshow,
+}
+
+impl FeatureKind {
+    fn query_type(self) -> &'static str {
+        match self {
+            FeatureKind::Movie => "movie",
+            FeatureKind::Tvshow => "tvshow",
+        }
+    }
+
+    /// Title queries report the kind as `type`, id lookups as `feature_type`.
+    fn matches(self, result: &FeatureLookupResult) -> bool {
+        match result
+            .kind
+            .as_deref()
+            .or(result.attributes.feature_type.as_deref())
+        {
+            Some(kind) => kind.eq_ignore_ascii_case(self.query_type()),
+            None => true,
+        }
+    }
+}
+
+struct FeatureMatch {
+    id: String,
+    imdb_id: Option<i64>,
+    tmdb_id: Option<i64>,
+}
+
+impl FeatureMatch {
+    /// Whether an identifier search already covered this feature.
+    fn already_searched(&self, imdb_id: Option<&str>, tmdb_id: Option<i64>) -> bool {
+        let imdb_id = imdb_id.and_then(|id| id.parse::<i64>().ok());
+        (imdb_id.is_some() && self.imdb_id == imdb_id)
+            || (tmdb_id.is_some() && self.tmdb_id == tmdb_id)
+    }
+}
+
+/// One search: the identifier query first, then fallbacks while nothing has
+/// been found, within [`MAX_SEARCH_REQUESTS`].
 ///
 /// The request year never becomes a `year` filter. For an episode it is the
 /// series premiere year, while OpenSubtitles filters on the episode's own air
 /// year, so every episode that aired after the premiere year came back empty.
 /// The identifiers already pin the feature; the year only ranks feature
-/// lookups in [`search_feature_id`]. Bazarr's provider omits it the same way.
-fn build_subtitle_search_params(
-    request: &SubtitlePluginSearchRequest,
-    provider_languages: &[String],
-    feature_id: Option<String>,
-    enable_hash_lookup: bool,
-) -> Option<SubtitleSearchParams> {
-    let mut params: Vec<(&'static str, String)> = Vec::new();
-    let mut movie_identifier_match = false;
-    let mut series_identifier_match = false;
-
-    if enable_hash_lookup && let Some(hash) = request.file_hash.clone() {
-        params.push(("moviehash", hash));
-    }
-
-    match request.media_kind {
-        SubtitleQueryMediaKind::Movie => {
-            if let Some(imdb) = request.imdb_id.as_deref().and_then(sanitize_imdb_id) {
-                params.push(("imdb_id", imdb));
-                movie_identifier_match = true;
-            } else if let Some(feature_id) = feature_id {
-                params.push(("id", feature_id));
-                movie_identifier_match = true;
-            } else {
-                params.push(("query", request.title.clone()));
-            }
-        }
-        SubtitleQueryMediaKind::Episode => {
-            if let Some(season) = request.season {
-                params.push(("season_number", season.to_string()));
-            }
-            if let Some(episode) = request.episode {
-                params.push(("episode_number", episode.to_string()));
-            }
-
-            if let Some(imdb) = request
-                .series_imdb_id
-                .as_deref()
-                .or(request.imdb_id.as_deref())
-                .and_then(sanitize_imdb_id)
-            {
-                params.push(("parent_imdb_id", imdb));
-                series_identifier_match = true;
-            } else if let Some(feature_id) = feature_id {
-                params.push(("parent_feature_id", feature_id));
-                series_identifier_match = true;
-            } else {
-                return None;
-            }
-        }
-    }
-
-    if !provider_languages.is_empty() {
-        params.push(("languages", provider_languages.join(",")));
-    }
-
-    append_translation_filter_params(
-        &mut params,
-        request.include_ai_translated,
-        request.include_machine_translated,
-    );
-    params.sort_by(|left, right| left.0.cmp(right.0));
-
-    Some(SubtitleSearchParams {
-        params,
-        movie_identifier_match,
-        series_identifier_match,
-    })
+/// lookups in [`SubtitleSearch::find_feature`]. Bazarr's provider omits it the
+/// same way.
+struct SubtitleSearch<'a, T> {
+    transport: T,
+    request: &'a SubtitlePluginSearchRequest,
+    requested_languages: Vec<String>,
+    provider_languages: Vec<String>,
+    /// Sent with the first query only.
+    file_hash: Option<String>,
+    remaining_requests: usize,
 }
 
-fn execute_subtitle_search(
-    config: &OpenSubtitlesConfig,
-    request: &SubtitlePluginSearchRequest,
-    requested_languages: &[String],
-    params: &[(&str, String)],
-    movie_identifier_match: bool,
-    series_identifier_match: bool,
-) -> Result<Vec<SubtitlePluginCandidate>, String> {
-    let response = send_request_json(config, "GET", "subtitles", Some(params), None)?;
-    if response.status_code() >= 400 {
-        return Err(http_error(config, "search", &response));
+impl<'a, T: SearchTransport> SubtitleSearch<'a, T> {
+    fn new(
+        transport: T,
+        request: &'a SubtitlePluginSearchRequest,
+        enable_hash_lookup: bool,
+    ) -> Self {
+        let requested_languages: Vec<String> = request
+            .languages
+            .iter()
+            .filter_map(|language| normalize_subtitle_language_code(language))
+            .collect();
+        let provider_languages = requested_languages
+            .iter()
+            .filter_map(|language| to_opensubtitles_language(language))
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .collect();
+        Self {
+            transport,
+            request,
+            requested_languages,
+            provider_languages,
+            file_hash: request.file_hash.clone().filter(|_| enable_hash_lookup),
+            remaining_requests: MAX_SEARCH_REQUESTS,
+        }
     }
 
-    let search_response: SearchResponse = serde_json::from_slice(&response.body())
-        .map_err(|error| format!("OpenSubtitles search parse error: {error}"))?;
+    fn run(mut self) -> Result<Vec<SubtitlePluginCandidate>, String> {
+        match self.request.media_kind {
+            SubtitleQueryMediaKind::Movie => self.search_movie(),
+            SubtitleQueryMediaKind::Episode => self.search_episode(),
+        }
+    }
 
-    let mut results = Vec::new();
-    for result in search_response.data {
-        let attrs = result.attributes;
-        let Some(file) = attrs.files.first() else {
-            continue;
-        };
+    fn search_movie(&mut self) -> Result<Vec<SubtitlePluginCandidate>, String> {
+        let request = self.request;
+        let imdb = request.imdb_id.as_deref().and_then(sanitize_imdb_id);
+        let tmdb = first_numeric_external_id(request, "tmdb");
+
+        if let Some(imdb) = &imdb {
+            let found = self.attempt(SearchAttempt {
+                params: vec![("imdb_id", imdb.clone())],
+                movie_identifier_match: true,
+                ..SearchAttempt::default()
+            })?;
+            if !found.is_empty() {
+                return Ok(found);
+            }
+        }
+        if let Some(tmdb) = tmdb {
+            let found = self.attempt(SearchAttempt {
+                params: vec![("tmdb_id", tmdb.to_string())],
+                movie_identifier_match: true,
+                movie_tmdb_id: Some(tmdb),
+                ..SearchAttempt::default()
+            })?;
+            if !found.is_empty() {
+                return Ok(found);
+            }
+        }
+
+        let has_identifier = imdb.is_some() || tmdb.is_some();
+        match self.find_feature(FeatureKind::Movie, has_identifier)? {
+            Some(feature) if !feature.already_searched(imdb.as_deref(), tmdb) => {
+                self.attempt(SearchAttempt {
+                    params: vec![("id", feature.id)],
+                    movie_identifier_match: true,
+                    ..SearchAttempt::default()
+                })
+            }
+            Some(_) => Ok(Vec::new()),
+            None if !has_identifier => self.attempt(SearchAttempt {
+                params: vec![("query", request.title.clone())],
+                ..SearchAttempt::default()
+            }),
+            None => Ok(Vec::new()),
+        }
+    }
+
+    fn search_episode(&mut self) -> Result<Vec<SubtitlePluginCandidate>, String> {
+        let request = self.request;
+        let series_imdb = request
+            .series_imdb_id
+            .as_deref()
+            .or(request.imdb_id.as_deref())
+            .and_then(sanitize_imdb_id);
+        let series_tmdb = first_numeric_external_id(request, "tmdb");
+
+        let mut anchors = Vec::new();
+        if let Some(imdb) = &series_imdb {
+            anchors.push(SeriesAnchor {
+                key: "parent_imdb_id",
+                id: imdb.clone(),
+                verify_parent: false,
+            });
+        }
+        // OpenSubtitles sometimes files a show's episodes under a different
+        // IMDb parent than TMDB and Scryer carry; its TMDB parent still holds.
+        if let Some(tmdb) = series_tmdb {
+            anchors.push(SeriesAnchor {
+                key: "parent_tmdb_id",
+                id: tmdb.to_string(),
+                verify_parent: true,
+            });
+        }
+        for anchor in &anchors {
+            let found = self.attempt(anchor.episode_attempt(request.season, request.episode))?;
+            if !found.is_empty() {
+                return Ok(found);
+            }
+        }
+
+        if let Some(feature) = self.find_feature(FeatureKind::Tvshow, !anchors.is_empty())?
+            && !feature.already_searched(series_imdb.as_deref(), series_tmdb)
+        {
+            let anchor = SeriesAnchor {
+                key: "parent_feature_id",
+                id: feature.id,
+                verify_parent: false,
+            };
+            let found = self.attempt(anchor.episode_attempt(request.season, request.episode))?;
+            if !found.is_empty() {
+                return Ok(found);
+            }
+            anchors.push(anchor);
+        }
+
+        if let Some(absolute) = anime_absolute_fallback(request) {
+            for anchor in &anchors {
+                let found = self.attempt(anchor.absolute_attempt(absolute))?;
+                if !found.is_empty() {
+                    return Ok(found);
+                }
+            }
+        }
+
+        for imdb in scoped_imdb_ids(request, series_imdb.as_deref())
+            .into_iter()
+            .take(MAX_SCOPED_IMDB_SEARCHES)
+        {
+            let feature_imdb_id = imdb.parse::<i64>().ok();
+            let found = self.attempt(SearchAttempt {
+                params: vec![("imdb_id", imdb)],
+                movie_identifier_match: true,
+                feature_imdb_id,
+                ..SearchAttempt::default()
+            })?;
+            if !found.is_empty() {
+                return Ok(found);
+            }
+        }
+
+        Ok(Vec::new())
+    }
+
+    /// Looks the title up by name, the request title first and each title's
+    /// plain form before its variants, and matches OpenSubtitles' title,
+    /// original title and alternate titles. Once an identifier search has run,
+    /// only a feature from the requested year counts, so a same-name remake is
+    /// never used.
+    fn find_feature(
+        &mut self,
+        kind: FeatureKind,
+        require_year: bool,
+    ) -> Result<Option<FeatureMatch>, String> {
+        let year = self.request.year;
+        if require_year && year.is_none() {
+            return Ok(None);
+        }
+
+        let mut titles = collect_title_candidates(self.request);
+        let request_title = normalize_title_for_match(&self.request.title);
+        if let Some(position) = titles
+            .iter()
+            .position(|title| normalize_title_for_match(title) == request_title)
+        {
+            let title = titles.remove(position);
+            titles.insert(0, title);
+        }
+        let wanted: HashSet<String> = titles
+            .iter()
+            .flat_map(|title| normalized_title_match_variants(title))
+            .collect();
+        let per_title: Vec<Vec<String>> = titles
+            .iter()
+            .map(|title| feature_lookup_queries(title))
+            .collect();
+        let plain = per_title.iter().filter_map(|queries| queries.first());
+        let variants = per_title.iter().flat_map(|queries| queries.iter().skip(1));
+        let mut queried = HashSet::new();
+        let queries: Vec<String> = plain
+            .chain(variants)
+            .map(|query| query.to_lowercase())
+            .filter(|query| queried.insert(query.clone()))
+            .collect();
+
+        let lookups = if require_year { 1 } else { MAX_FEATURE_LOOKUPS };
+        for query in queries.into_iter().take(lookups) {
+            if self.remaining_requests == 0 {
+                break;
+            }
+            self.remaining_requests -= 1;
+            let results = self
+                .transport
+                .features(&[("query", query), ("type", kind.query_type().to_string())])?;
+
+            let mut fallback = None;
+            for result in results {
+                if !kind.matches(&result) || !feature_title_matches(&result.attributes, &wanted) {
+                    continue;
+                }
+                let exact_year = year.is_some() && result.attributes.year == year;
+                if !exact_year && (require_year || fallback.is_some()) {
+                    continue;
+                }
+                let found = FeatureMatch {
+                    id: result.id,
+                    imdb_id: result.attributes.imdb_id,
+                    tmdb_id: result.attributes.tmdb_id,
+                };
+                if exact_year {
+                    return Ok(Some(found));
+                }
+                fallback = Some(found);
+            }
+            if fallback.is_some() {
+                return Ok(fallback);
+            }
+        }
+
+        Ok(None)
+    }
+
+    fn attempt(&mut self, attempt: SearchAttempt) -> Result<Vec<SubtitlePluginCandidate>, String> {
+        if self.remaining_requests == 0 {
+            return Ok(Vec::new());
+        }
+        self.remaining_requests -= 1;
+
+        let mut params = attempt.params.clone();
+        if let Some(hash) = self.file_hash.take() {
+            params.push(("moviehash", hash));
+        }
+        if !self.provider_languages.is_empty() {
+            params.push(("languages", self.provider_languages.join(",")));
+        }
+        append_translation_filter_params(
+            &mut params,
+            self.request.include_ai_translated,
+            self.request.include_machine_translated,
+        );
+        params.sort_by(|left, right| left.0.cmp(right.0));
+
+        let rows = self.transport.subtitles(&params)?;
+        Ok(rows
+            .into_iter()
+            .filter(|attrs| self.row_passes(attrs, &attempt))
+            .filter_map(|attrs| self.candidate(attrs, &attempt))
+            .collect())
+    }
+
+    fn row_passes(&self, attrs: &SearchAttributes, attempt: &SearchAttempt) -> bool {
+        let details = attrs.feature_details.as_ref();
+        if attempt.episode_number.is_some()
+            && details.and_then(|details| details.episode_number) != attempt.episode_number
+        {
+            return false;
+        }
+        if attempt.feature_imdb_id.is_some()
+            && details.and_then(|details| details.imdb_id) != attempt.feature_imdb_id
+        {
+            return false;
+        }
+        if attempt.movie_tmdb_id.is_some()
+            && !details.is_some_and(|details| {
+                details.tmdb_id == attempt.movie_tmdb_id
+                    && details
+                        .feature_type
+                        .as_deref()
+                        .is_some_and(|kind| kind.eq_ignore_ascii_case("movie"))
+            })
+        {
+            return false;
+        }
+        if attempt.verify_parent
+            && !details.is_some_and(|details| self.is_requested_series(details))
+        {
+            return false;
+        }
+        true
+    }
+
+    fn is_requested_series(&self, details: &FeatureDetails) -> bool {
+        let series_imdb = self
+            .request
+            .series_imdb_id
+            .as_deref()
+            .or(self.request.imdb_id.as_deref())
+            .and_then(sanitize_imdb_id)
+            .and_then(|id| id.parse::<i64>().ok());
+        (series_imdb.is_some() && details.parent_imdb_id == series_imdb)
+            || title_matches_query(details.parent_title.as_deref(), self.request)
+    }
+
+    fn candidate(
+        &self,
+        attrs: SearchAttributes,
+        attempt: &SearchAttempt,
+    ) -> Option<SubtitlePluginCandidate> {
+        let request = self.request;
+        let file = attrs.files.first()?;
 
         let ai_translated = attrs.ai_translated.unwrap_or(false);
         let machine_translated = attrs.machine_translated.unwrap_or(false);
         if ai_translated && !request.include_ai_translated {
-            continue;
+            return None;
         }
         if machine_translated && !request.include_machine_translated {
-            continue;
+            return None;
         }
 
         let hearing_impaired = attrs.hearing_impaired.unwrap_or(false);
@@ -639,14 +1023,15 @@ fn execute_subtitle_search(
             .and_then(from_opensubtitles_language)
             .unwrap_or_default();
         if language.is_empty() {
-            continue;
+            return None;
         }
-        if !requested_languages.is_empty()
-            && !requested_languages
+        if !self.requested_languages.is_empty()
+            && !self
+                .requested_languages
                 .iter()
                 .any(|requested| same_subtitle_language(requested, &language))
         {
-            continue;
+            return None;
         }
 
         let mut match_hints = Vec::new();
@@ -656,13 +1041,13 @@ fn execute_subtitle_search(
                 value: None,
             });
         }
-        if movie_identifier_match {
+        if attempt.movie_identifier_match {
             match_hints.push(SubtitleMatchHint {
                 kind: SubtitleMatchHintKind::ImdbId,
                 value: None,
             });
         }
-        if series_identifier_match {
+        if attempt.series_identifier_match {
             match_hints.push(SubtitleMatchHint {
                 kind: SubtitleMatchHintKind::SeriesImdbId,
                 value: None,
@@ -675,11 +1060,14 @@ fn execute_subtitle_search(
                     value: None,
                 });
             }
-            if request.season.is_some()
-                && request.episode.is_some()
-                && details.season_number == request.season
-                && details.episode_number == request.episode
-            {
+            // An absolute-number row already passed the episode filter, so it
+            // is the requested episode under OpenSubtitles' numbering.
+            let same_episode = attempt.episode_number.is_some()
+                || (request.season.is_some()
+                    && request.episode.is_some()
+                    && details.season_number == request.season
+                    && details.episode_number == request.episode);
+            if same_episode {
                 match_hints.push(SubtitleMatchHint {
                     kind: SubtitleMatchHintKind::SeasonEpisode,
                     value: None,
@@ -687,7 +1075,7 @@ fn execute_subtitle_search(
             }
         }
 
-        results.push(SubtitlePluginCandidate {
+        Some(SubtitlePluginCandidate {
             provider_file_id: file.file_id.to_string(),
             language,
             release_info: attrs.release,
@@ -698,10 +1086,55 @@ fn execute_subtitle_search(
             uploader: attrs.uploader.and_then(|uploader| uploader.name),
             download_count: attrs.download_count,
             match_hints,
-        });
+        })
     }
+}
 
-    Ok(results)
+/// The absolute number to retry an anime episode under when it differs from
+/// the in-season number. Anime only: for other shows an absolute number can
+/// be a real in-season number of the same season and fetch the wrong episode.
+fn anime_absolute_fallback(request: &SubtitlePluginSearchRequest) -> Option<i32> {
+    let is_anime = request
+        .facet
+        .as_deref()
+        .is_some_and(|facet| facet.eq_ignore_ascii_case("anime"));
+    let absolute = request.absolute_episode.filter(|absolute| *absolute > 0)?;
+    (is_anime && request.episode != Some(absolute)).then_some(absolute)
+}
+
+fn first_numeric_external_id(request: &SubtitlePluginSearchRequest, source: &str) -> Option<i64> {
+    request.external_ids.get(source)?.iter().find_map(|value| {
+        let value = value.trim();
+        (!value.is_empty() && value.chars().all(|ch| ch.is_ascii_digit()))
+            .then(|| value.parse::<i64>().ok())
+            .flatten()
+    })
+}
+
+/// IMDb ids the host scoped to this episode beyond the series id, such as the
+/// movie or OVA an anime special maps to.
+fn scoped_imdb_ids(
+    request: &SubtitlePluginSearchRequest,
+    series_imdb: Option<&str>,
+) -> Vec<String> {
+    let mut seen = HashSet::new();
+    request
+        .external_ids
+        .get("imdb")
+        .into_iter()
+        .flatten()
+        .filter_map(|value| sanitize_imdb_id(value))
+        .filter(|id| Some(id.as_str()) != series_imdb && seen.insert(id.clone()))
+        .collect()
+}
+
+fn feature_title_matches(attributes: &FeatureLookupAttributes, wanted: &HashSet<String>) -> bool {
+    attributes
+        .title
+        .iter()
+        .chain(attributes.original_title.iter())
+        .chain(attributes.title_aka.iter())
+        .any(|title| wanted.contains(&normalize_title_for_match(title)))
 }
 
 fn is_real_forced(foreign_parts_only: bool, hearing_impaired: bool) -> bool {
@@ -768,50 +1201,6 @@ fn download_subtitle_impl(
         filename: None,
         content_type: Some("text/plain; charset=utf-8".to_string()),
     })
-}
-
-fn search_feature_id(
-    config: &OpenSubtitlesConfig,
-    titles: &[String],
-    year: Option<i32>,
-) -> Result<Option<String>, String> {
-    for title in titles {
-        let wanted_variants = normalized_title_match_variants(title);
-        for query_title in feature_lookup_queries(title) {
-            let params = vec![("query", query_title.to_ascii_lowercase())];
-            let response = send_request_json(config, "GET", "features", Some(&params), None)?;
-            if response.status_code() >= 400 {
-                return Err(http_error(config, "feature lookup", &response));
-            }
-
-            let body: FeatureLookupResponse = serde_json::from_slice(&response.body())
-                .map_err(|error| format!("OpenSubtitles feature lookup parse error: {error}"))?;
-
-            let mut exact_year_match = None;
-            let mut fallback = None;
-            for result in body.data {
-                let Some(candidate_title) = result.attributes.title.as_deref() else {
-                    continue;
-                };
-                let normalized_candidate = normalize_title_for_match(candidate_title);
-                if !wanted_variants.contains(&normalized_candidate) {
-                    continue;
-                }
-
-                if year.is_some() && result.attributes.year == year {
-                    exact_year_match = Some(result.id);
-                    break;
-                }
-                fallback = Some(result.id);
-            }
-
-            if let Some(id) = exact_year_match.or(fallback) {
-                return Ok(Some(id));
-            }
-        }
-    }
-
-    Ok(None)
 }
 
 fn send_request_json(
@@ -1483,6 +1872,8 @@ fn encode_query_value(value: &str) -> String {
             b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
                 encoded.push(byte as char)
             }
+            // OpenSubtitles 301-redirects `%20` to `+`, costing a round trip.
+            b' ' => encoded.push('+'),
             _ => encoded.push_str(&format!("%{byte:02X}")),
         }
     }
@@ -1541,15 +1932,18 @@ fn config_bool(key: &str, default: bool) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        ERROR_BODY_PREVIEW_LIMIT, FeatureDetails, FeatureLookupResponse, OpenSubtitlesConfig,
-        SubtitleSearchParams, append_translation_filter_params, build_subtitle_search_params,
-        compact_error_body, config_auth_fingerprint, descriptor, from_opensubtitles_language,
+        ERROR_BODY_PREVIEW_LIMIT, FeatureDetails, FeatureLookupResponse, FeatureLookupResult,
+        MAX_SEARCH_REQUESTS, OpenSubtitlesConfig, SearchAttributes, SearchResult, SearchTransport,
+        SubtitleSearch, append_translation_filter_params, compact_error_body,
+        config_auth_fingerprint, descriptor, encode_query, from_opensubtitles_language,
         is_real_forced, to_opensubtitles_language,
     };
     use scryer_plugin_sdk::{
-        ConfigFieldValueSource, PluginHostBindingId, ProviderDescriptor,
-        SubtitlePluginSearchRequest,
+        ConfigFieldValueSource, PluginHostBindingId, ProviderDescriptor, SubtitleMatchHintKind,
+        SubtitlePluginCandidate, SubtitlePluginSearchRequest,
     };
+    use std::cell::RefCell;
+    use std::rc::Rc;
 
     #[test]
     fn compact_error_body_truncates_ascii_body() {
@@ -1581,13 +1975,13 @@ mod tests {
     #[test]
     fn feature_lookup_accepts_numeric_and_string_years() {
         let numeric: FeatureLookupResponse = serde_json::from_str(
-            r#"{"data":[{"id":"feature-1","attributes":{"title":"10 Steps to Murder","year":2014}}]}"#,
+            r#"{"data":[{"id":"feature-1","attributes":{"title":"Synthetic Ledger","year":2014}}]}"#,
         )
         .expect("numeric feature lookup year should parse");
         assert_eq!(numeric.data[0].attributes.year, Some(2014));
 
         let quoted: FeatureLookupResponse = serde_json::from_str(
-            r#"{"data":[{"id":"feature-2","attributes":{"title":"10 Steps to Murder","year":"2014"}}]}"#,
+            r#"{"data":[{"id":"feature-2","attributes":{"title":"Synthetic Ledger","year":"2014"}}]}"#,
         )
         .expect("string feature lookup year should parse");
         assert_eq!(quoted.data[0].attributes.year, Some(2014));
@@ -1619,7 +2013,7 @@ mod tests {
     fn feature_details_accepts_numeric_strings_for_optional_indexes() {
         let details: FeatureDetails = serde_json::from_str(
             r#"{
-                "movie_name": "11.22.63",
+                "movie_name": "Synthetic Ledger",
                 "year": "2020",
                 "season_number": "1",
                 "episode_number": "2"
@@ -1723,8 +2117,78 @@ mod tests {
         serde_json::from_value(value).expect("search request fixture should parse")
     }
 
-    fn param_keys(search: &SubtitleSearchParams) -> Vec<&'static str> {
-        search.params.iter().map(|(key, _)| *key).collect()
+    type Params = Vec<(&'static str, String)>;
+
+    /// Answers `/subtitles` and `/features` from a closure over the endpoint
+    /// and params, and records every call.
+    struct FakeTransport<F> {
+        respond: F,
+        calls: Rc<RefCell<Vec<(&'static str, Params)>>>,
+    }
+
+    impl<F: FnMut(&str, &Params) -> serde_json::Value> SearchTransport for FakeTransport<F> {
+        fn subtitles(
+            &mut self,
+            params: &[(&'static str, String)],
+        ) -> Result<Vec<SearchAttributes>, String> {
+            self.calls.borrow_mut().push(("subtitles", params.to_vec()));
+            let data = (self.respond)("subtitles", &params.to_vec());
+            let rows: Vec<SearchResult> = serde_json::from_value(data).expect("subtitle rows");
+            Ok(rows.into_iter().map(|row| row.attributes).collect())
+        }
+
+        fn features(
+            &mut self,
+            params: &[(&'static str, String)],
+        ) -> Result<Vec<FeatureLookupResult>, String> {
+            self.calls.borrow_mut().push(("features", params.to_vec()));
+            let data = (self.respond)("features", &params.to_vec());
+            Ok(serde_json::from_value(data).expect("feature rows"))
+        }
+    }
+
+    fn run_search(
+        request: &SubtitlePluginSearchRequest,
+        respond: impl FnMut(&str, &Params) -> serde_json::Value,
+    ) -> (Vec<SubtitlePluginCandidate>, Vec<(&'static str, Params)>) {
+        let calls = Rc::new(RefCell::new(Vec::new()));
+        let transport = FakeTransport {
+            respond,
+            calls: Rc::clone(&calls),
+        };
+        let found = SubtitleSearch::new(transport, request, true)
+            .run()
+            .expect("search should succeed");
+        let calls = calls.borrow().clone();
+        (found, calls)
+    }
+
+    fn param<'a>(params: &'a Params, key: &str) -> Option<&'a str> {
+        params
+            .iter()
+            .find(|(name, _)| *name == key)
+            .map(|(_, value)| value.as_str())
+    }
+
+    fn row(file_id: i64, details: serde_json::Value) -> serde_json::Value {
+        serde_json::json!({
+            "attributes": {
+                "language": "en",
+                "files": [{ "file_id": file_id }],
+                "feature_details": details,
+            }
+        })
+    }
+
+    fn file_ids(found: &[SubtitlePluginCandidate]) -> Vec<&str> {
+        found
+            .iter()
+            .map(|candidate| candidate.provider_file_id.as_str())
+            .collect()
+    }
+
+    fn has_hint(candidate: &SubtitlePluginCandidate, kind: SubtitleMatchHintKind) -> bool {
+        candidate.match_hints.iter().any(|hint| hint.kind == kind)
     }
 
     #[test]
@@ -1736,48 +2200,105 @@ mod tests {
             "year": 2022,
             "season": 4,
             "episode": 1,
+            "languages": ["eng"],
         }));
 
-        let search = build_subtitle_search_params(&request, &["en".to_string()], None, true)
-            .expect("an episode with a series id should be searchable");
+        let (found, calls) = run_search(&request, |_, _| {
+            serde_json::json!([row(
+                1,
+                serde_json::json!({"season_number": 4, "episode_number": 1})
+            )])
+        });
 
         assert_eq!(
-            search.params,
-            vec![
-                ("ai_translated", "exclude".to_string()),
-                ("episode_number", "1".to_string()),
-                ("languages", "en".to_string()),
-                ("parent_imdb_id", "12345".to_string()),
-                ("season_number", "4".to_string()),
-            ]
+            calls,
+            vec![(
+                "subtitles",
+                vec![
+                    ("ai_translated", "exclude".to_string()),
+                    ("episode_number", "1".to_string()),
+                    ("languages", "en".to_string()),
+                    ("parent_imdb_id", "12345".to_string()),
+                    ("season_number", "4".to_string()),
+                ]
+            )]
         );
-        assert!(search.series_identifier_match);
-        assert!(!search.movie_identifier_match);
+        assert!(has_hint(&found[0], SubtitleMatchHintKind::SeriesImdbId));
+        assert!(has_hint(&found[0], SubtitleMatchHintKind::SeasonEpisode));
     }
 
     #[test]
-    fn episode_search_by_feature_id_omits_year() {
+    fn episode_falls_back_to_tmdb_parent_and_keeps_only_that_series() {
         let request = search_request(serde_json::json!({
             "media_kind": "episode",
             "title": "Synthetic Frontier",
+            "series_imdb_id": "tt0012345",
+            "year": 2019,
+            "season": 1,
+            "episode": 1,
+            "external_ids": { "tmdb": ["4242"], "imdb": ["tt0012345"] },
+        }));
+
+        let (found, calls) = run_search(&request, |_, params| {
+            if param(params, "parent_tmdb_id") == Some("4242") {
+                serde_json::json!([
+                    row(
+                        1,
+                        serde_json::json!({"parent_title": "Synthetic Frontier", "parent_imdb_id": 67890})
+                    ),
+                    row(
+                        2,
+                        serde_json::json!({"parent_title": "Unrelated Harbor", "parent_imdb_id": 11111})
+                    ),
+                ])
+            } else {
+                serde_json::json!([])
+            }
+        });
+
+        assert_eq!(file_ids(&found), vec!["1"]);
+        assert_eq!(calls.len(), 2);
+        assert_eq!(param(&calls[0].1, "parent_imdb_id"), Some("12345"));
+    }
+
+    #[test]
+    fn episode_without_identifiers_searches_the_title_feature() {
+        let request = search_request(serde_json::json!({
+            "media_kind": "episode",
+            "title": "Synthetic Frontier: The Series",
             "year": 2022,
             "season": 2,
             "episode": 3,
         }));
 
-        let search = build_subtitle_search_params(&request, &[], Some("98765".to_string()), true)
-            .expect("an episode with a feature id should be searchable");
+        let (found, calls) = run_search(&request, |endpoint, params| match endpoint {
+            "features" => {
+                assert_eq!(param(params, "type"), Some("tvshow"));
+                serde_json::json!([{
+                    "id": "98765",
+                    "type": "tvshow",
+                    "attributes": { "title": "synthetic frontier: the series", "year": "2022" },
+                }])
+            }
+            _ if param(params, "parent_feature_id") == Some("98765") => {
+                serde_json::json!([row(
+                    7,
+                    serde_json::json!({"season_number": 2, "episode_number": 3})
+                )])
+            }
+            _ => serde_json::json!([]),
+        });
 
+        assert_eq!(file_ids(&found), vec!["7"]);
         assert!(
-            search
-                .params
-                .contains(&("parent_feature_id", "98765".to_string()))
+            calls
+                .iter()
+                .all(|(_, params)| param(params, "year").is_none())
         );
-        assert!(!param_keys(&search).contains(&"year"));
     }
 
     #[test]
-    fn episode_search_without_series_identifier_is_skipped() {
+    fn episode_without_identifiers_or_feature_makes_no_subtitle_query() {
         let request = search_request(serde_json::json!({
             "media_kind": "episode",
             "title": "Synthetic Frontier",
@@ -1786,7 +2307,152 @@ mod tests {
             "episode": 1,
         }));
 
-        assert!(build_subtitle_search_params(&request, &[], None, true).is_none());
+        let (found, calls) = run_search(&request, |_, _| serde_json::json!([]));
+
+        assert!(found.is_empty());
+        assert!(calls.iter().all(|(endpoint, _)| *endpoint == "features"));
+    }
+
+    #[test]
+    fn alias_lookup_after_empty_id_search_needs_the_requested_year() {
+        let request = search_request(serde_json::json!({
+            "media_kind": "episode",
+            "title": "Synthetic Frontier",
+            "title_aliases": ["Kasou Furonteia"],
+            "series_imdb_id": "tt0012345",
+            "year": 2022,
+            "season": 1,
+            "episode": 2,
+        }));
+
+        let (found, calls) = run_search(&request, |endpoint, params| match endpoint {
+            "features" => serde_json::json!([
+                {
+                    "id": "111",
+                    "type": "tvshow",
+                    "attributes": { "title": "synthetic frontier", "year": "1985" },
+                },
+                {
+                    "id": "222",
+                    "type": "tvshow",
+                    "attributes": {
+                        "title": "the frontier project",
+                        "title_aka": ["Kasou Furonteia"],
+                        "year": "2022",
+                    },
+                },
+            ]),
+            _ if param(params, "parent_feature_id") == Some("222") => {
+                serde_json::json!([row(
+                    9,
+                    serde_json::json!({"season_number": 1, "episode_number": 2})
+                )])
+            }
+            _ => serde_json::json!([]),
+        });
+
+        assert_eq!(file_ids(&found), vec!["9"]);
+        assert_eq!(
+            calls
+                .iter()
+                .filter(|(endpoint, _)| *endpoint == "features")
+                .count(),
+            1
+        );
+        assert!(
+            !calls
+                .iter()
+                .any(|(_, params)| param(params, "parent_feature_id") == Some("111"))
+        );
+    }
+
+    #[test]
+    fn anime_retries_the_absolute_number_and_keeps_only_those_rows() {
+        let request = search_request(serde_json::json!({
+            "media_kind": "episode",
+            "facet": "anime",
+            "title": "Synthetic Blossom",
+            "series_imdb_id": "tt0012345",
+            "season": 2,
+            "episode": 10,
+            "absolute_episode": 38,
+        }));
+
+        let (found, calls) = run_search(&request, |endpoint, params| {
+            if endpoint == "subtitles" && param(params, "episode_number") == Some("38") {
+                assert_eq!(param(params, "season_number"), None);
+                serde_json::json!([
+                    row(
+                        38,
+                        serde_json::json!({"season_number": 2, "episode_number": 38})
+                    ),
+                    row(
+                        10,
+                        serde_json::json!({"season_number": 1, "episode_number": 10})
+                    ),
+                ])
+            } else {
+                serde_json::json!([])
+            }
+        });
+
+        assert_eq!(file_ids(&found), vec!["38"]);
+        assert!(has_hint(&found[0], SubtitleMatchHintKind::SeasonEpisode));
+        assert!(calls.len() <= MAX_SEARCH_REQUESTS);
+    }
+
+    #[test]
+    fn non_anime_never_retries_the_absolute_number() {
+        let request = search_request(serde_json::json!({
+            "media_kind": "episode",
+            "facet": "series",
+            "title": "Synthetic Frontier",
+            "series_imdb_id": "tt0012345",
+            "year": 2022,
+            "season": 2,
+            "episode": 1,
+            "absolute_episode": 11,
+        }));
+
+        let (_, calls) = run_search(&request, |_, _| serde_json::json!([]));
+
+        assert!(
+            !calls
+                .iter()
+                .any(|(_, params)| param(params, "episode_number") == Some("11"))
+        );
+    }
+
+    #[test]
+    fn special_searches_its_scoped_imdb_id_directly() {
+        let request = search_request(serde_json::json!({
+            "media_kind": "episode",
+            "facet": "anime",
+            "title": "Synthetic Blossom",
+            "series_imdb_id": "tt0012345",
+            "season": 0,
+            "episode": 3,
+            "external_ids": { "imdb": ["tt0012345", "tt0099999"] },
+        }));
+
+        let (found, _) = run_search(&request, |_, params| {
+            if param(params, "imdb_id") == Some("99999") {
+                serde_json::json!([
+                    row(
+                        5,
+                        serde_json::json!({"feature_type": "Movie", "imdb_id": 99999})
+                    ),
+                    row(
+                        6,
+                        serde_json::json!({"feature_type": "Movie", "imdb_id": 88888})
+                    ),
+                ])
+            } else {
+                serde_json::json!([])
+            }
+        });
+
+        assert_eq!(file_ids(&found), vec!["5"]);
     }
 
     #[test]
@@ -1799,14 +2465,81 @@ mod tests {
             "file_hash": "0123456789abcdef",
         }));
 
-        let search = build_subtitle_search_params(&request, &[], None, true)
-            .expect("a movie with an imdb id should be searchable");
+        let (_, calls) = run_search(&request, |_, _| {
+            serde_json::json!([row(1, serde_json::json!({}))])
+        });
 
+        let keys: Vec<&str> = calls[0].1.iter().map(|(key, _)| *key).collect();
+        assert_eq!(keys, vec!["ai_translated", "imdb_id", "moviehash"]);
+        assert_eq!(calls.len(), 1);
+    }
+
+    #[test]
+    fn movie_falls_back_to_tmdb_and_keeps_only_that_movie() {
+        let request = search_request(serde_json::json!({
+            "media_kind": "movie",
+            "title": "Synthetic Voyage",
+            "imdb_id": "tt0054321",
+            "year": 2024,
+            "file_hash": "0123456789abcdef",
+            "external_ids": { "tmdb": ["777"] },
+        }));
+
+        let (found, calls) = run_search(&request, |_, params| {
+            if param(params, "tmdb_id") == Some("777") {
+                serde_json::json!([
+                    row(
+                        1,
+                        serde_json::json!({"feature_type": "Movie", "tmdb_id": 777})
+                    ),
+                    row(
+                        2,
+                        serde_json::json!({"feature_type": "Episode", "tmdb_id": 777})
+                    ),
+                ])
+            } else {
+                serde_json::json!([])
+            }
+        });
+
+        assert_eq!(file_ids(&found), vec!["1"]);
+        assert_eq!(param(&calls[1].1, "moviehash"), None);
+    }
+
+    #[test]
+    fn fallbacks_stop_at_the_request_budget() {
+        let request = search_request(serde_json::json!({
+            "media_kind": "episode",
+            "facet": "anime",
+            "title": "Synthetic Blossom",
+            "title_aliases": ["Kasou Hana", "Gousei Hana", "Blossom Synth"],
+            "series_imdb_id": "tt0012345",
+            "year": 2020,
+            "season": 3,
+            "episode": 4,
+            "absolute_episode": 40,
+            "external_ids": { "tmdb": ["4242"], "imdb": ["tt0012345", "tt0099991", "tt0099992", "tt0099993"] },
+        }));
+
+        let (found, calls) = run_search(&request, |endpoint, _| match endpoint {
+            "features" => serde_json::json!([{
+                "id": "333",
+                "type": "tvshow",
+                "attributes": { "title": "synthetic blossom", "year": 2020 },
+            }]),
+            _ => serde_json::json!([]),
+        });
+
+        assert!(found.is_empty());
+        assert_eq!(calls.len(), MAX_SEARCH_REQUESTS);
+    }
+
+    #[test]
+    fn query_values_encode_spaces_as_plus() {
         assert_eq!(
-            param_keys(&search),
-            vec!["ai_translated", "imdb_id", "moviehash"]
+            encode_query(&[("query", "the frontier & co".to_string())]),
+            "query=the+frontier+%26+co"
         );
-        assert!(search.movie_identifier_match);
     }
 
     #[test]
