@@ -20,11 +20,22 @@ crate-type = ["cdylib"]
 path = "src/lib.rs"
 
 [dependencies]
-liblzma = { version = "=0.4.8", default-features = false, features = ["static", "wasm"] }
+# CRC-64/XZ for lzma-turbo's `crc-host` hook, which the world's `crypto`
+# import (CRC-32 only) cannot serve. Already in the graph through lzma-turbo.
+crc-fast = { version = "1.10.0", default-features = false, features = ["std"] }
+# XZ decodes in pure Rust. `crc-host` hands CRC-32 to the world's `crypto`
+# import — and with it every CRC sevenz-turbo computes, since that crate
+# checksums through `lzma_turbo::crc`. The SHA-256 check (type 10) takes
+# RustCrypto, because the default AWS-LC backend is C and wasm has no
+# toolchain for it.
+lzma-turbo = { version = "0.6.0", default-features = false, features = ["std", "asm", "crc", "crc-host", "native-crypto", "xz"] }
 par2-rs = { version = "0.10.2", default-features = false }
 scryer-plugin-sdk = "3.11.0"
 serde_json = "1"
-sevenz-rust2 = { version = "0.22", default-features = false, features = ["aes256", "bzip2", "deflate", "ppmd"] }
+# `crypto-host` hands 7z's bulk AES-256-CBC decrypt to the world's `crypto`
+# import, the same seam unrar-rs uses. It is inert off wasm32, so native builds
+# take the RustCrypto backend below instead.
+sevenz-turbo = { version = "0.26.0", default-features = false, features = ["aes256", "bzip2", "crypto-host", "deflate", "ppmd"] }
 unrar-rs = { version = "0.10.5", default-features = false, features = ["crypto-host", "crc-host"] }
 wit-bindgen = "0.61"
 # Pinned exactly: zip 7.2.0 pulls in typed-path, whose wasip2 support is
@@ -33,11 +44,15 @@ wit-bindgen = "0.61"
 # typed-path no longer needs the unstable feature.
 zip = { version = "=7.1.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+sevenz-turbo = { version = "0.26.0", default-features = false, features = ["native-crypto"] }
+
 [dev-dependencies]
 aws-lc-sys = "0.45"
 crc32fast = "1"
 par2-rs = "0.10.2"
-sevenz-rust2 = { version = "0.22", default-features = false, features = ["compress"] }
+lzma-turbo = { version = "0.6.0", default-features = false, features = ["enc"] }
+sevenz-turbo = { version = "0.26.0", default-features = false, features = ["compress"] }
 tempfile = "3"
 wasmtime = "48.0.1"
 wasmtime-wasi = "48.0.1"
