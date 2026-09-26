@@ -2017,13 +2017,14 @@ fn git_path_is_tracked(ctx: &TaskContext, path: &Path) -> Result<bool> {
     Ok(run_status(&mut command)?.success())
 }
 
-fn plugin_inventory_roots() -> [&'static str; 5] {
+fn plugin_inventory_roots() -> [&'static str; 6] {
     [
         "indexers",
         "download_clients",
         "notifications",
         "subtitles",
         "archive_extractors",
+        "lists",
     ]
 }
 
