@@ -1487,6 +1487,7 @@ mod tests {
     fn subtitle_request() -> SubtitlePluginSearchRequest {
         SubtitlePluginSearchRequest {
             media_kind: SubtitleQueryMediaKind::Episode,
+            community_entry: None,
             facet: Some("anime".to_string()),
             file_hash: None,
             imdb_id: None,
