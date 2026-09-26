@@ -900,7 +900,7 @@ dependencies = [
 
 [[package]]
 name = "jimaku-subtitle-provider"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "base64 0.23.1",
  "scryer-plugin-conformance",
