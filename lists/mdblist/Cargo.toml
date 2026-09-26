@@ -1,0 +1,38 @@
+[package]
+name = "mdblist-list-provider"
+version = "1.0.0"
+edition = "2024"
+license = "GPL-3.0-only"
+description = "MDBList list provider for public and API-key lists"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "mdblist-list"
+catalog_versions = ["v3"]
+# The first Scryer release whose host serves
+# `scryer:lists/list-provider@1.0.0`. An older host has no list family and
+# cannot bind this artifact at all.
+min_scryer_version = "0.22.0"
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/lists/mdblist"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/lists/mdblist"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+list-provider-common = { path = "../list-common" }
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
+scryer-plugin-sdk = "3.12.0"
+serde_json = "1"
+wit-bindgen = { version = "0.61", features = ["async"] }
+
+[dev-dependencies]
+list-provider-common = { path = "../list-common", features = ["testing"] }
+regex = "1"
+
+[profile.plugin-release]
+inherits = "release"
+opt-level = 3
+lto = "fat"
+strip = true
+panic = "abort"
