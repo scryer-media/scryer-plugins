@@ -1036,6 +1036,10 @@ fn bare_episode_number(name: &[u8]) -> Option<Option<ParsedEpisode>> {
         let Some((episode, end)) = digits_at(name, start) else {
             continue;
         };
+        // `Show 2024 [1080p]` names a year, not an episode.
+        if (1900..=2099).contains(&episode) {
+            continue;
+        }
         let tagged = name[end..]
             .iter()
             .find(|byte| **byte != b' ')
@@ -2233,6 +2237,8 @@ mod tests {
             ("Show EP 04 (1080p).mkv", Some(4)),
             ("Show Episode 9.mkv", Some(9)),
             ("[Group] Show 12 [1080p].mkv", Some(12)),
+            ("[Group] Show 2024 [1080p] [Batch].mkv", None),
+            ("[Group] Show (2024) 07 [1080p].mkv", Some(7)),
             ("[Group] Show Part 2 [1080p].mkv", None),
             ("[Group] Show Season 2 [1080p].mkv", None),
             ("[Group] Show - 01-12 [Batch].mkv", None),
