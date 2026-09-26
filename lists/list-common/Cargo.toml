@@ -1,0 +1,17 @@
+[package]
+name = "list-provider-common"
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-only"
+description = "Shared plumbing for Scryer list-provider plugins"
+
+[features]
+# In-memory HTTP double and a poll-to-completion executor for native unit
+# tests. Plugin crates enable it from their dev-dependencies only.
+testing = []
+
+[dependencies]
+quick-xml = "0.42"
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
+scryer-plugin-sdk = "3.12.0"
+serde_json = "1"
