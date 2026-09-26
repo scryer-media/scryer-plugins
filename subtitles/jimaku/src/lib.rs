@@ -47,9 +47,9 @@ use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor, PluginError,
     PluginErrorCode, PluginResult, ProviderDescriptor, SDK_VERSION, SubtitleCapabilities,
-    SubtitleDescriptor, SubtitleMatchHint, SubtitleMatchHintKind, SubtitlePluginCandidate,
-    SubtitlePluginDownloadRequest, SubtitlePluginDownloadResponse, SubtitlePluginSearchRequest,
-    SubtitlePluginSearchResponse, SubtitlePluginValidateConfigRequest,
+    SubtitleCommunityEntry, SubtitleDescriptor, SubtitleMatchHint, SubtitleMatchHintKind,
+    SubtitlePluginCandidate, SubtitlePluginDownloadRequest, SubtitlePluginDownloadResponse,
+    SubtitlePluginSearchRequest, SubtitlePluginSearchResponse, SubtitlePluginValidateConfigRequest,
     SubtitlePluginValidateConfigResponse, SubtitleProviderMode, SubtitleQueryMediaKind,
     SubtitleValidateConfigStatus,
 };
@@ -89,10 +89,17 @@ struct JimakuConfig {
     enable_name_search_fallback: bool,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 struct JimakuEntry {
     id: i64,
     anilist_id: Option<i64>,
+    /// Romaji name.
+    #[serde(default)]
+    name: Option<String>,
+    #[serde(default)]
+    english_name: Option<String>,
+    #[serde(default)]
+    japanese_name: Option<String>,
     #[serde(default)]
     flags: JimakuEntryFlags,
 }
@@ -105,17 +112,41 @@ struct JimakuMatchedEntry {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum JimakuEntryMatchKind {
+    /// The host's community entry for this episode; asked in its own numbering.
+    CommunityEntry,
     ExternalId,
     NameSearch,
 }
 
 impl JimakuEntryMatchKind {
     fn trusts_title_and_episode(self) -> bool {
-        matches!(self, Self::ExternalId)
+        matches!(self, Self::CommunityEntry | Self::ExternalId)
+    }
+
+    fn rank(self) -> u8 {
+        match self {
+            Self::CommunityEntry => 2,
+            Self::ExternalId => 1,
+            Self::NameSearch => 0,
+        }
     }
 
     fn outranks(self, other: Self) -> bool {
-        matches!((self, other), (Self::ExternalId, Self::NameSearch))
+        self.rank() > other.rank()
+    }
+}
+
+impl JimakuMatchedEntry {
+    /// The episode number to ask this entry for: the community entry's own
+    /// number for the community entry, TVDB numbering (or the absolute number
+    /// when TVDB has none) for any other entry.
+    fn episode(&self, request: &SubtitlePluginSearchRequest) -> Option<i32> {
+        match self.match_kind {
+            JimakuEntryMatchKind::CommunityEntry => community_entry(request)
+                .map(|entry| entry.episode)
+                .or(request.episode.or(request.absolute_episode)),
+            _ => request.episode.or(request.absolute_episode),
+        }
     }
 }
 
@@ -364,7 +395,8 @@ fn search_subtitles_impl(
     config: &JimakuConfig,
     request: &SubtitlePluginSearchRequest,
 ) -> Result<Vec<SubtitlePluginCandidate>, String> {
-    search_subtitles_impl_from_result(search_subtitles_inner(config, request))
+    let mut api = HostJimakuApi { config };
+    search_subtitles_impl_from_result(search_subtitles_inner(config, &mut api, request))
 }
 
 fn search_subtitles_impl_from_result(
@@ -376,48 +408,86 @@ fn search_subtitles_impl_from_result(
     }
 }
 
+/// The Jimaku API as the search flow sees it: one authenticated GET per API
+/// path, answering the response body.
+trait JimakuApi {
+    fn get(&mut self, path: &str) -> Result<Vec<u8>, String>;
+}
+
+struct HostJimakuApi<'a> {
+    config: &'a JimakuConfig,
+}
+
+impl JimakuApi for HostJimakuApi<'_> {
+    fn get(&mut self, path: &str) -> Result<Vec<u8>, String> {
+        jimaku_get_bytes(self.config, path)
+    }
+}
+
+fn get_json<T: for<'de> Deserialize<'de>>(
+    api: &mut dyn JimakuApi,
+    path: &str,
+) -> Result<T, String> {
+    let body = api.get(path)?;
+    serde_json::from_slice(&body).map_err(|error| format!("Jimaku JSON parse error: {error}"))
+}
+
 fn search_subtitles_inner(
     config: &JimakuConfig,
+    api: &mut dyn JimakuApi,
     request: &SubtitlePluginSearchRequest,
 ) -> Result<Vec<SubtitlePluginCandidate>, String> {
-    let entries = search_entries(config, request)?;
+    let entries = search_entries(config, api, request)?;
     let mut results = Vec::new();
     for matched_entry in entries.into_iter().take(MAX_SEARCH_ENTRY_CANDIDATES) {
-        let mut entry_results = search_entry_subtitles(
-            config,
-            request,
-            matched_entry.entry,
-            matched_entry.match_kind,
-        )?;
+        let mut entry_results = search_entry_subtitles(api, request, &matched_entry)?;
         results.append(&mut entry_results);
     }
 
     Ok(results)
 }
 
+/// The anime community entry the host resolved for an episode, if any.
+///
+/// Jimaku entries are AniList entries, and an AniList entry is usually one
+/// cour numbered from its own episode 1 — not the TVDB season Scryer files the
+/// episode under. The host reads the title's numbering bridge and names both
+/// the entry and the episode's number inside it.
+fn community_entry(request: &SubtitlePluginSearchRequest) -> Option<&SubtitleCommunityEntry> {
+    request
+        .community_entry
+        .as_ref()
+        .filter(|_| request.media_kind == SubtitleQueryMediaKind::Episode)
+}
+
 fn search_entry_subtitles(
-    config: &JimakuConfig,
+    api: &mut dyn JimakuApi,
     request: &SubtitlePluginSearchRequest,
-    entry: JimakuEntry,
-    match_kind: JimakuEntryMatchKind,
+    matched_entry: &JimakuMatchedEntry,
 ) -> Result<Vec<SubtitlePluginCandidate>, String> {
+    let entry = &matched_entry.entry;
+    let match_kind = matched_entry.match_kind;
+    let episode = matched_entry.episode(request);
+    // Whether the files came back filtered to the requested episode. Only
+    // then may a trusted entry claim an episode match: its unfiltered fallback
+    // is every episode's file.
+    let mut episode_filtered = false;
     let files = if request.media_kind == SubtitleQueryMediaKind::Episode && !entry.flags.movie {
-        if let Some(episode) = request.episode.or(request.absolute_episode) {
-            let files = entry_files(config, entry.id, Some(episode))?;
-            if files.is_empty() {
-                if match_kind.trusts_title_and_episode() {
-                    entry_files(config, entry.id, None)?
-                } else {
-                    files
-                }
+        if let Some(episode) = episode {
+            let files = entry_files(api, entry.id, Some(episode))?;
+            if !files.is_empty() {
+                episode_filtered = true;
+                files
+            } else if match_kind.trusts_title_and_episode() {
+                entry_files(api, entry.id, None)?
             } else {
                 files
             }
         } else {
-            entry_files(config, entry.id, None)?
+            entry_files(api, entry.id, None)?
         }
     } else {
-        entry_files(config, entry.id, None)?
+        entry_files(api, entry.id, None)?
     };
 
     let mut results = Vec::new();
@@ -435,11 +505,12 @@ fn search_entry_subtitles(
             url: file.url.clone(),
             filename: file.name.clone(),
             language: language.clone(),
-            episode: request.episode.or(request.absolute_episode),
+            episode,
         })
         .map_err(|error| format!("failed to encode Jimaku download ref: {error}"))?;
 
-        let match_hints = build_match_hints(request, &entry, match_kind, &language);
+        let match_hints =
+            build_match_hints(request, entry, match_kind, &language, episode_filtered);
 
         let ai_translated = looks_like_ai_subtitle(&file.name);
         results.push(SubtitlePluginCandidate {
@@ -464,6 +535,7 @@ fn build_match_hints(
     entry: &JimakuEntry,
     match_kind: JimakuEntryMatchKind,
     language: &str,
+    episode_filtered: bool,
 ) -> Vec<SubtitleMatchHint> {
     let mut match_hints = Vec::new();
     if match_kind.trusts_title_and_episode() {
@@ -471,7 +543,7 @@ fn build_match_hints(
             kind: SubtitleMatchHintKind::Title,
             value: None,
         });
-        if request.media_kind == SubtitleQueryMediaKind::Episode && request.episode.is_some() {
+        if request.media_kind == SubtitleQueryMediaKind::Episode && episode_filtered {
             match_hints.push(SubtitleMatchHint {
                 kind: SubtitleMatchHintKind::SeasonEpisode,
                 value: None,
@@ -493,17 +565,44 @@ fn build_match_hints(
 
 fn search_entries(
     config: &JimakuConfig,
+    api: &mut dyn JimakuApi,
+    request: &SubtitlePluginSearchRequest,
+) -> Result<Vec<JimakuMatchedEntry>, String> {
+    let mut entries = collect_entries(config, api, request)?;
+    if let Some(community) = community_entry(request) {
+        promote_community_entries(&mut entries, community);
+    }
+    Ok(entries)
+}
+
+fn collect_entries(
+    config: &JimakuConfig,
+    api: &mut dyn JimakuApi,
     request: &SubtitlePluginSearchRequest,
 ) -> Result<Vec<JimakuMatchedEntry>, String> {
     let mut entries = Vec::new();
     let mut seen_ids = HashSet::<i64>::new();
+
+    // The community entry names the exact AniList entry this episode belongs
+    // to, so it answers first, for every season.
+    if let Some(anilist_id) = community_entry(request).and_then(|entry| entry.anilist_id) {
+        append_entries(
+            get_json(api, &anilist_search_path(&anilist_id.to_string()))?,
+            JimakuEntryMatchKind::CommunityEntry,
+            &mut entries,
+            &mut seen_ids,
+        );
+        if !entries.is_empty() {
+            return Ok(entries);
+        }
+    }
 
     let season_number = request.season.unwrap_or(1);
     let should_prefer_season_name_search =
         request.media_kind == SubtitleQueryMediaKind::Episode && season_number > 1;
 
     if !should_prefer_season_name_search {
-        append_anilist_entries(config, request, &mut entries, &mut seen_ids)?;
+        append_external_id_entries(api, request, &mut entries, &mut seen_ids)?;
         if !entries.is_empty() {
             return Ok(entries);
         }
@@ -513,7 +612,7 @@ fn search_entries(
         let queries = search_query_candidates(request);
         let anime_filter = search_query_anime_filter(request);
         for query in &queries {
-            append_search_query_entries(config, query, anime_filter, &mut entries, &mut seen_ids)?;
+            append_search_query_entries(api, query, anime_filter, &mut entries, &mut seen_ids)?;
             if entries.len() >= MAX_SEARCH_ENTRY_CANDIDATES {
                 return Ok(entries);
             }
@@ -521,13 +620,7 @@ fn search_entries(
 
         if entries.is_empty() && anime_filter.is_none() {
             for query in &queries {
-                append_search_query_entries(
-                    config,
-                    query,
-                    Some(false),
-                    &mut entries,
-                    &mut seen_ids,
-                )?;
+                append_search_query_entries(api, query, Some(false), &mut entries, &mut seen_ids)?;
                 if entries.len() >= MAX_SEARCH_ENTRY_CANDIDATES {
                     return Ok(entries);
                 }
@@ -536,10 +629,54 @@ fn search_entries(
     }
 
     if should_prefer_season_name_search {
-        append_anilist_entries(config, request, &mut entries, &mut seen_ids)?;
+        append_external_id_entries(api, request, &mut entries, &mut seen_ids)?;
     }
 
     Ok(entries)
+}
+
+/// Mark the entries that are the host's community entry, and rank them first.
+///
+/// An entry is the community entry when its AniList id is the community
+/// entry's, or — only when either side has no AniList id to compare — when one
+/// of its names is one of the community entry's titles. A mismatched AniList id
+/// always wins over a matching name: a later cour's titles can carry the bare
+/// series name, and that must not pass the first cour off as this one.
+fn promote_community_entries(
+    entries: &mut [JimakuMatchedEntry],
+    community: &SubtitleCommunityEntry,
+) {
+    for matched in entries.iter_mut() {
+        if is_community_entry(&matched.entry, community) {
+            matched.match_kind = JimakuEntryMatchKind::CommunityEntry;
+        }
+    }
+    entries.sort_by_key(|matched| std::cmp::Reverse(matched.match_kind.rank()));
+}
+
+fn is_community_entry(entry: &JimakuEntry, community: &SubtitleCommunityEntry) -> bool {
+    if let (Some(entry_id), Some(community_id)) = (entry.anilist_id, community.anilist_id) {
+        return entry_id == community_id;
+    }
+    let titles = community
+        .titles
+        .iter()
+        .map(|title| title_key(title))
+        .filter(|key| !key.is_empty())
+        .collect::<HashSet<_>>();
+    [&entry.name, &entry.english_name, &entry.japanese_name]
+        .into_iter()
+        .flatten()
+        .any(|name| titles.contains(&title_key(name)))
+}
+
+/// Case-, space- and punctuation-blind form of a title, for exact comparison.
+fn title_key(value: &str) -> String {
+    value
+        .chars()
+        .filter(|ch| ch.is_alphanumeric())
+        .flat_map(char::to_lowercase)
+        .collect()
 }
 
 fn should_attempt_name_search(
@@ -549,12 +686,19 @@ fn should_attempt_name_search(
     config.enable_name_search_fallback || request.media_kind == SubtitleQueryMediaKind::Movie
 }
 
-fn append_anilist_entries(
-    config: &JimakuConfig,
+fn anilist_search_path(anilist_id: &str) -> String {
+    format!("entries/search?anilist_id={}", url_encode(anilist_id))
+}
+
+/// Entries named by the request's own ids: its AniList ids, then — only when
+/// none of those matched — its TMDB id.
+fn append_external_id_entries(
+    api: &mut dyn JimakuApi,
     request: &SubtitlePluginSearchRequest,
     entries: &mut Vec<JimakuMatchedEntry>,
     seen_ids: &mut HashSet<i64>,
 ) -> Result<(), String> {
+    let found_before = entries.len();
     for id in request
         .external_ids
         .get("anilist")
@@ -562,22 +706,59 @@ fn append_anilist_entries(
         .flatten()
         .filter(|id| !id.trim().is_empty())
     {
-        let path = format!("entries/search?anilist_id={}", url_encode(id.trim()));
         append_entries(
-            jimaku_get_json(config, &path)?,
+            get_json(api, &anilist_search_path(id.trim()))?,
             JimakuEntryMatchKind::ExternalId,
             entries,
             seen_ids,
         );
         if entries.len() >= MAX_SEARCH_ENTRY_CANDIDATES {
-            break;
+            return Ok(());
         }
+    }
+    if entries.len() == found_before
+        && let Some(path) = tmdb_search_path(request)
+    {
+        append_entries(
+            get_json(api, &path)?,
+            JimakuEntryMatchKind::ExternalId,
+            entries,
+            seen_ids,
+        );
     }
     Ok(())
 }
 
+/// Jimaku's `tmdb_id` lookup (`movie:<id>` / `tv:<id>`), for movies and for
+/// non-anime series.
+///
+/// Jimaku keeps TMDB ids on its live-action entries; its anime entries are
+/// keyed by AniList and almost never carry one. The search also returns only
+/// anime entries unless told otherwise, so the lookup asks for `anime=false`.
+/// An anime series is left to its AniList ids: a TMDB show spans every cour,
+/// while any Jimaku entry carrying that TMDB id would be one cour, so trusting
+/// it would pair a later season's episode number with the wrong cour's files.
+fn tmdb_search_path(request: &SubtitlePluginSearchRequest) -> Option<String> {
+    let kind = match request.media_kind {
+        SubtitleQueryMediaKind::Movie => "movie",
+        SubtitleQueryMediaKind::Episode if request.facet.as_deref() != Some("anime") => "tv",
+        SubtitleQueryMediaKind::Episode => return None,
+    };
+    // The host lists the title's own TMDB id first.
+    let id = request
+        .external_ids
+        .get("tmdb")?
+        .iter()
+        .map(|id| id.trim())
+        .find(|id| !id.is_empty() && id.bytes().all(|byte| byte.is_ascii_digit()))?;
+    Some(format!(
+        "entries/search?tmdb_id={}&anime=false",
+        url_encode(&format!("{kind}:{id}"))
+    ))
+}
+
 fn append_search_query_entries(
-    config: &JimakuConfig,
+    api: &mut dyn JimakuApi,
     query: &str,
     anime: Option<bool>,
     entries: &mut Vec<JimakuMatchedEntry>,
@@ -591,7 +772,7 @@ fn append_search_query_entries(
         None => format!("entries/search?query={}", url_encode(query.trim())),
     };
     append_entries(
-        jimaku_get_json(config, &path)?,
+        get_json(api, &path)?,
         JimakuEntryMatchKind::NameSearch,
         entries,
         seen_ids,
@@ -623,8 +804,23 @@ fn search_query_anime_filter(request: &SubtitlePluginSearchRequest) -> Option<bo
 }
 
 fn search_query_candidates(request: &SubtitlePluginSearchRequest) -> Vec<String> {
-    let mut bases = Vec::new();
+    let mut queries = Vec::new();
+    let mut seen_queries = HashSet::new();
     let mut seen_bases = HashSet::new();
+
+    // The community entry's own titles name this cour exactly, so they go
+    // first and bare: a season suffix would only blur them.
+    for title in community_entry(request)
+        .map(|entry| entry.titles.as_slice())
+        .unwrap_or_default()
+    {
+        let normalized = normalize_query(title);
+        if !normalized.is_empty() && seen_bases.insert(normalized.clone()) {
+            push_query_candidate(&mut queries, &mut seen_queries, normalized);
+        }
+    }
+
+    let mut bases = Vec::new();
     for candidate in request
         .title_candidates
         .iter()
@@ -637,10 +833,11 @@ fn search_query_candidates(request: &SubtitlePluginSearchRequest) -> Vec<String>
         }
     }
 
-    let mut queries = Vec::new();
-    let mut seen_queries = HashSet::new();
     let season = request.season.filter(|season| *season > 1);
     for base in &bases {
+        if queries.len() >= MAX_SEARCH_QUERIES {
+            break;
+        }
         if let Some(season) = season {
             push_query_candidate(&mut queries, &mut seen_queries, format!("{base} {season}"));
             push_query_candidate(
@@ -651,9 +848,6 @@ fn search_query_candidates(request: &SubtitlePluginSearchRequest) -> Vec<String>
             push_query_candidate(&mut queries, &mut seen_queries, format!("{base} s{season}"));
         }
         push_query_candidate(&mut queries, &mut seen_queries, base.clone());
-        if queries.len() >= MAX_SEARCH_QUERIES {
-            break;
-        }
     }
 
     queries
@@ -679,7 +873,7 @@ fn normalize_query(value: &str) -> String {
 }
 
 fn entry_files(
-    config: &JimakuConfig,
+    api: &mut dyn JimakuApi,
     entry_id: i64,
     episode: Option<i32>,
 ) -> Result<Vec<JimakuFile>, String> {
@@ -687,7 +881,7 @@ fn entry_files(
         Some(episode) => format!("entries/{entry_id}/files?episode={episode}"),
         None => format!("entries/{entry_id}/files"),
     };
-    jimaku_get_json(config, &path)
+    get_json(api, &path)
 }
 
 fn download_subtitle_impl(
@@ -718,6 +912,10 @@ fn jimaku_get_json<T: for<'de> Deserialize<'de>>(
     config: &JimakuConfig,
     path: &str,
 ) -> Result<T, String> {
+    get_json(&mut HostJimakuApi { config }, path)
+}
+
+fn jimaku_get_bytes(config: &JimakuConfig, path: &str) -> Result<Vec<u8>, String> {
     let url = format!(
         "{}/{}",
         API_BASE.trim_end_matches('/'),
@@ -727,8 +925,7 @@ fn jimaku_get_json<T: for<'de> Deserialize<'de>>(
     if response.status_code() >= 400 {
         return Err(http_error("Jimaku", &response));
     }
-    serde_json::from_slice(&response.body())
-        .map_err(|error| format!("Jimaku JSON parse error: {error}"))
+    Ok(response.body())
 }
 
 /// The provider's own owned copy of one response.
@@ -1027,13 +1224,14 @@ mod tests {
             file_hash: None,
             imdb_id: None,
             series_imdb_id: None,
-            title: "The Apothecary Diaries".to_string(),
-            title_aliases: vec!["Kusuriya no Hitorigoto".to_string()],
+            title: "Fixture Ledger".to_string(),
+            title_aliases: vec!["Fikusucha no Daichou".to_string()],
             title_candidates: vec![],
             year: None,
             season: Some(2),
             episode: Some(23),
             absolute_episode: None,
+            community_entry: None,
             external_ids: BTreeMap::new(),
             languages: vec!["eng".to_string()],
             release_group: None,
@@ -1054,13 +1252,14 @@ mod tests {
             file_hash: None,
             imdb_id: None,
             series_imdb_id: None,
-            title: "Blue Carbon".to_string(),
-            title_aliases: vec!["Aoi Carbon".to_string()],
+            title: "Fixture Harbor".to_string(),
+            title_aliases: vec!["Fikusucha Minato".to_string()],
             title_candidates: vec![],
             year: Some(2024),
             season: None,
             episode: None,
             absolute_episode: None,
+            community_entry: None,
             external_ids: BTreeMap::new(),
             languages: vec!["jpn".to_string()],
             release_group: None,
@@ -1097,7 +1296,7 @@ mod tests {
         let mut attempts = 0;
         let mut sleeps = Vec::new();
         let response = http_get_with(
-            "https://jimaku.cc/api/entries/search?query=naruto",
+            "https://jimaku.cc/api/entries/search?query=fixture",
             Some("token"),
             max_rate_limit_wait,
             |_request| {
@@ -1121,15 +1320,15 @@ mod tests {
         assert!(
             queries
                 .iter()
-                .any(|query| query == "kusuriya no hitorigoto 2")
+                .any(|query| query == "fikusucha no daichou 2")
         );
         let qualified = queries
             .iter()
-            .position(|query| query == "kusuriya no hitorigoto 2")
+            .position(|query| query == "fikusucha no daichou 2")
             .expect("qualified alias query should exist");
         let bare = queries
             .iter()
-            .position(|query| query == "kusuriya no hitorigoto")
+            .position(|query| query == "fikusucha no daichou")
             .expect("bare alias query should exist");
         assert!(qualified < bare);
     }
@@ -1137,7 +1336,7 @@ mod tests {
     #[test]
     fn unmarked_jimaku_file_uses_requested_language() {
         let language = detect_language(
-            "[NanakoRaws] Kusuriya no Hitorigoto S2 - 23 (NTV 1920x1080 x265 AAC).srt",
+            "[FixtureRaws] Fikusucha no Daichou S2 - 23 (NTV 1920x1080 x265 AAC).srt",
             &["eng".to_string()],
         );
 
@@ -1147,7 +1346,7 @@ mod tests {
     #[test]
     fn explicit_japanese_marker_wins_over_requested_english() {
         let language = detect_language(
-            "薬屋のひとりごと.S01E23.WEBRip.Netflix.ja[cc].srt",
+            "架空の帳簿.S01E23.WEBRip.Netflix.ja[cc].srt",
             &["eng".to_string()],
         );
 
@@ -1157,7 +1356,7 @@ mod tests {
     #[test]
     fn jpn_marker_wins_over_requested_english() {
         let language = detect_language(
-            "[VCB-Studio&Ylbud-Sub]Recently, my sister is unusual.[10][Hi10p_1080p][x264_flac][CHS, JPN].ass",
+            "[FixtureStudio&Fixture-Sub]Synthetic Sibling Notes.[10][Hi10p_1080p][x264_flac][CHS, JPN].ass",
             &["eng".to_string()],
         );
 
@@ -1167,7 +1366,7 @@ mod tests {
     #[test]
     fn chinese_marker_does_not_default_to_requested_english() {
         let language = detect_language(
-            "[VCB-Studio&Ylbud-Sub]Recently, my sister is unusual.[10][Hi10p_1080p][x264_flac][CHS].ass",
+            "[FixtureStudio&Fixture-Sub]Synthetic Sibling Notes.[10][Hi10p_1080p][x264_flac][CHS].ass",
             &["eng".to_string()],
         );
 
@@ -1180,10 +1379,16 @@ mod tests {
         let entry = JimakuEntry {
             id: 42,
             anilist_id: Some(123),
-            flags: JimakuEntryFlags::default(),
+            ..JimakuEntry::default()
         };
 
-        let hints = build_match_hints(&request, &entry, JimakuEntryMatchKind::NameSearch, "eng");
+        let hints = build_match_hints(
+            &request,
+            &entry,
+            JimakuEntryMatchKind::NameSearch,
+            "eng",
+            true,
+        );
 
         assert!(!has_hint_kind(&hints, SubtitleMatchHintKind::Title));
         assert!(!has_hint_kind(&hints, SubtitleMatchHintKind::SeasonEpisode));
@@ -1197,10 +1402,16 @@ mod tests {
         let entry = JimakuEntry {
             id: 42,
             anilist_id: Some(123),
-            flags: JimakuEntryFlags::default(),
+            ..JimakuEntry::default()
         };
 
-        let hints = build_match_hints(&request, &entry, JimakuEntryMatchKind::ExternalId, "eng");
+        let hints = build_match_hints(
+            &request,
+            &entry,
+            JimakuEntryMatchKind::ExternalId,
+            "eng",
+            true,
+        );
 
         assert!(has_hint_kind(&hints, SubtitleMatchHintKind::Title));
         assert!(has_hint_kind(&hints, SubtitleMatchHintKind::SeasonEpisode));
@@ -1222,7 +1433,7 @@ mod tests {
         let entry = JimakuEntry {
             id: 42,
             anilist_id: Some(123),
-            flags: JimakuEntryFlags::default(),
+            ..JimakuEntry::default()
         };
         let mut entries = Vec::new();
         let mut seen_ids = HashSet::new();
@@ -1417,5 +1628,263 @@ mod tests {
                 false,
             ));
         }
+    }
+
+    /// Scripted Jimaku API: answers each path from `routes` (`[]` otherwise)
+    /// and records every path asked.
+    struct ScriptedApi {
+        routes: BTreeMap<String, String>,
+        calls: Vec<String>,
+    }
+
+    impl ScriptedApi {
+        fn new(routes: &[(&str, &str)]) -> Self {
+            Self {
+                routes: routes
+                    .iter()
+                    .map(|(path, body)| (path.to_string(), body.to_string()))
+                    .collect(),
+                calls: Vec::new(),
+            }
+        }
+    }
+
+    impl JimakuApi for ScriptedApi {
+        fn get(&mut self, path: &str) -> Result<Vec<u8>, String> {
+            self.calls.push(path.to_string());
+            Ok(self
+                .routes
+                .get(path)
+                .map_or_else(|| b"[]".to_vec(), |body| body.as_bytes().to_vec()))
+        }
+    }
+
+    fn fallback_config() -> JimakuConfig {
+        JimakuConfig {
+            api_key: "token".to_string(),
+            enable_name_search_fallback: true,
+        }
+    }
+
+    const SUBTITLE_FILE_SIZE: usize = MIN_SUBTITLE_BYTES + 1;
+
+    fn files_body(names: &[&str]) -> String {
+        serde_json::to_string(
+            &names
+                .iter()
+                .map(|name| {
+                    serde_json::json!({
+                        "name": name,
+                        "url": format!("https://jimaku.cc/entry/{name}"),
+                        "size": SUBTITLE_FILE_SIZE,
+                    })
+                })
+                .collect::<Vec<_>>(),
+        )
+        .unwrap()
+    }
+
+    /// TVDB S01E13, which the community files as episode 1 of its second cour.
+    fn second_cour_request() -> SubtitlePluginSearchRequest {
+        SubtitlePluginSearchRequest {
+            season: Some(1),
+            episode: Some(13),
+            absolute_episode: Some(13),
+            community_entry: Some(SubtitleCommunityEntry {
+                season: 2,
+                episode: 1,
+                anilist_id: Some(9002),
+                anidb_id: None,
+                mal_id: None,
+                titles: vec!["Fixture Ledger Part 2".to_string()],
+            }),
+            external_ids: BTreeMap::from([("anilist".to_string(), vec!["9002".to_string()])]),
+            ..episode_request()
+        }
+    }
+
+    #[test]
+    fn community_entry_is_asked_for_its_own_episode_number() {
+        let request = second_cour_request();
+        let mut api = ScriptedApi::new(&[
+            (
+                "entries/search?anilist_id=9002",
+                r#"[{"id":77,"anilist_id":9002,"name":"Fikusucha no Daichou Part 2"}]"#,
+            ),
+            (
+                "entries/77/files?episode=1",
+                &files_body(&["Fixture Ledger Part 2 - 01.en.srt"]),
+            ),
+        ]);
+
+        let results = search_subtitles_inner(&fallback_config(), &mut api, &request).unwrap();
+
+        assert_eq!(
+            api.calls,
+            vec![
+                "entries/search?anilist_id=9002",
+                "entries/77/files?episode=1"
+            ]
+        );
+        assert_eq!(results.len(), 1);
+        assert!(has_hint_kind(
+            &results[0].match_hints,
+            SubtitleMatchHintKind::SeasonEpisode
+        ));
+        let reference: JimakuDownloadRef =
+            serde_json::from_str(&results[0].provider_file_id).unwrap();
+        assert_eq!(reference.episode, Some(1));
+    }
+
+    #[test]
+    fn community_entry_wins_over_season_two_name_search() {
+        // TVDB S02E05 of a show whose second season is its own community entry.
+        let mut request = second_cour_request();
+        request.season = Some(2);
+        request.episode = Some(5);
+        request.community_entry.as_mut().unwrap().episode = 5;
+        let mut api = ScriptedApi::new(&[
+            (
+                "entries/search?anilist_id=9002",
+                r#"[{"id":77,"anilist_id":9002}]"#,
+            ),
+            (
+                "entries/77/files?episode=5",
+                &files_body(&["Part 2 - 05.en.srt"]),
+            ),
+        ]);
+
+        let results = search_subtitles_inner(&fallback_config(), &mut api, &request).unwrap();
+
+        assert_eq!(results.len(), 1);
+        assert!(
+            api.calls.iter().all(|path| !path.contains("query=")),
+            "the community entry answered, so no name search should run: {:?}",
+            api.calls
+        );
+    }
+
+    #[test]
+    fn trusted_entry_without_episode_file_claims_no_episode_match() {
+        let request = second_cour_request();
+        let mut api = ScriptedApi::new(&[
+            (
+                "entries/search?anilist_id=9002",
+                r#"[{"id":77,"anilist_id":9002}]"#,
+            ),
+            (
+                "entries/77/files",
+                &files_body(&["Part 2 - 02.en.srt", "Part 2 - 03.en.srt"]),
+            ),
+        ]);
+
+        let results = search_subtitles_inner(&fallback_config(), &mut api, &request).unwrap();
+
+        assert_eq!(results.len(), 2);
+        for result in &results {
+            assert!(has_hint_kind(
+                &result.match_hints,
+                SubtitleMatchHintKind::Title
+            ));
+            assert!(!has_hint_kind(
+                &result.match_hints,
+                SubtitleMatchHintKind::SeasonEpisode
+            ));
+        }
+    }
+
+    #[test]
+    fn name_search_entry_matching_the_community_entry_is_promoted() {
+        let community = second_cour_request().community_entry.unwrap();
+        let mut entries = vec![
+            JimakuMatchedEntry {
+                entry: JimakuEntry {
+                    id: 1,
+                    anilist_id: Some(9001),
+                    ..JimakuEntry::default()
+                },
+                match_kind: JimakuEntryMatchKind::NameSearch,
+            },
+            JimakuMatchedEntry {
+                entry: JimakuEntry {
+                    id: 2,
+                    english_name: Some("Fixture Ledger: Part 2".to_string()),
+                    ..JimakuEntry::default()
+                },
+                match_kind: JimakuEntryMatchKind::NameSearch,
+            },
+        ];
+
+        promote_community_entries(&mut entries, &community);
+
+        assert_eq!(entries[0].entry.id, 2);
+        assert_eq!(entries[0].match_kind, JimakuEntryMatchKind::CommunityEntry);
+        assert_eq!(entries[1].match_kind, JimakuEntryMatchKind::NameSearch);
+    }
+
+    #[test]
+    fn mismatched_anilist_id_blocks_a_community_title_match() {
+        let mut community = second_cour_request().community_entry.unwrap();
+        community.titles.push("Fixture Ledger".to_string());
+        let first_cour = JimakuEntry {
+            id: 1,
+            anilist_id: Some(9001),
+            name: Some("Fixture Ledger".to_string()),
+            ..JimakuEntry::default()
+        };
+
+        assert!(!is_community_entry(&first_cour, &community));
+    }
+
+    #[test]
+    fn community_titles_lead_the_name_queries_unqualified() {
+        let mut request = second_cour_request();
+        request.season = Some(2);
+
+        let queries = search_query_candidates(&request);
+
+        assert_eq!(queries[0], "fixture ledger part 2");
+        assert!(
+            !queries
+                .iter()
+                .any(|query| query == "fixture ledger part 2 2")
+        );
+        assert!(queries.iter().any(|query| query == "fixture ledger 2"));
+    }
+
+    #[test]
+    fn movie_request_is_matched_by_tmdb_id() {
+        let mut request = movie_request();
+        request.facet = Some("movie".to_string());
+        request.external_ids = BTreeMap::from([("tmdb".to_string(), vec!["4242".to_string()])]);
+        let mut api = ScriptedApi::new(&[
+            (
+                "entries/search?tmdb_id=movie%3A4242&anime=false",
+                r#"[{"id":88,"flags":{"movie":true}}]"#,
+            ),
+            ("entries/88/files", &files_body(&["Fixture Harbor.ja.srt"])),
+        ]);
+
+        let results = search_subtitles_inner(&fallback_config(), &mut api, &request).unwrap();
+
+        assert_eq!(results.len(), 1);
+        assert!(has_hint_kind(
+            &results[0].match_hints,
+            SubtitleMatchHintKind::Title
+        ));
+        assert!(api.calls.iter().all(|path| !path.contains("query=")));
+    }
+
+    #[test]
+    fn anime_series_never_uses_tmdb_lookup() {
+        let mut request = episode_request();
+        request.external_ids = BTreeMap::from([("tmdb".to_string(), vec!["4242".to_string()])]);
+        assert_eq!(tmdb_search_path(&request), None);
+
+        request.facet = Some("series".to_string());
+        assert_eq!(
+            tmdb_search_path(&request).as_deref(),
+            Some("entries/search?tmdb_id=tv%3A4242&anime=false")
+        );
     }
 }

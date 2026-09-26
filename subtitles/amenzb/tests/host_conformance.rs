@@ -146,6 +146,7 @@ fn assert_search_drives_the_shared_newznab_engine(suite: &SubtitleConformance) {
 fn search_request() -> SubtitlePluginSearchRequest {
     SubtitlePluginSearchRequest {
         media_kind: SubtitleQueryMediaKind::Episode,
+        community_entry: None,
         facet: Some("anime".to_string()),
         file_hash: None,
         imdb_id: None,
