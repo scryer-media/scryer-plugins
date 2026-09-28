@@ -583,8 +583,6 @@ Bstar.driver.takuto.of.the.radiance.s01e05.the.meaning.of.mandrake.1080p.bluray.
 
 Bstar.driver.takuto.of.the.radiance.s01e10.and.marino's.first.love.1080p.bluray.remux.avc.flac.2.0-nan0
 
-Bstrike witches - s03e12 - i still want to protect - 1080p bluray remux avc lpcm 2.0 [japanese] - birju
-
 Bthe.demon.sword.master.of.excalibur.academy.s01e05.a.great.uproar.1080p.bluray.remux.avc.flac.2.0-nan0
 
 Bthe.testament.of.sister.new.devil.s01e06.bearing.growing.emotions.1080p.bluray.remux.avc.flac.2.0-nan0
@@ -958,8 +956,6 @@ Bshikimori's.not.just.a.cutie.s01e01.my.girlfriend.is.super.cute.1080p.bluray.re
 Bstar.driver.takuto.of.the.radiance.s01e11.personal.uses.of.cybodies.1080p.bluray.remux.avc.flac.2.0-nan0
 
 Bstar.driver.takuto.of.the.radiance.s01e18.keito%60s.morning.and.night.1080p.bluray.remux.avc.flac.2.0-nan0
-
-Bstrike witches - s03e03 - what the two of us can do - 1080p bluray remux avc lpcm 2.0 [japanese] - birju
 
 Btanaka-kun.is.always.listless.s01e11.tanaka-kun's.cultural.festival.1080p.bluray.remux.avc.flac.2.0-nan0
 
@@ -1509,8 +1505,6 @@ Bphi-brain.puzzle.of.god.s01e20.the.accelerating.challenger.repack.1080p.bluray.
 Bsentenced.to.be.a.hero.s01e07.sentence.feigned.day.off.at.port.city.ioff.1080p.bluray.flac2.0.x265-kawatare
 
 Bstar.driver.takuto.of.the.radiance.s01e20.the.rainbow.painted.that.day.1080p.bluray.remux.avc.flac.2.0-nan0
-
-Bstrike witches - s03e01 - the magical girl of the alps - 1080p bluray remux avc lpcm 2.0 [japanese] - birju
 
 Btada.never.falls.in.love.s01e01.i.can't.just.leave.you.1080p.bluray.remux.dual-audio.flac2.0.h.264-crucible
 
@@ -2213,8 +2207,6 @@ Bsleepy.princess.in.the.demon.castle.s01e06.the.princess'.unwavering.choice.1080
 
 Bspy.x.family.s01e17.carry.out.the.griffin.plan.fullmetal.lady.omelet.rice♥.1080p.bluray.remux.avc.flac.2.0-nan0
 
-Bstrike witches - s03e02 - the strike witches come together - 1080p bluray remux avc lpcm 2.0 [japanese] - birju
-
 Bsword.art.online.the.movie.ordinal.scale.2017.repack2.1080p.bluray.hybrid.remux.truehd.7.1.atmos.avc-lucasn0tch
 
 Btada.never.falls.in.love.s01e05.it's.okay.they.don't.exist.1080p.bluray.remux.dual-audio.flac2.0.h.264-crucible
@@ -2343,8 +2335,6 @@ Bsleepy.princess.in.the.demon.castle.s01e01.sleepless.princess.of.the.castle.108
 Bsleepy.princess.in.the.demon.castle.s01e05.the.princess.and.female.warriors.1080p.bluray.remux.avc.flac.2.0-nan0
 
 Bspy.x.family.s02e10.enjoy.the.resort.to.the.fullest.bragging.about.vacation.1080p.bluray.remux.avc.flac.2.0-nan0
-
-Bstrike witches - s03e04 - beyond two hundred miles per hour - 1080p bluray remux avc lpcm 2.0 [japanese] - birju
 
 Bstudio.apartment.good.lighting.angel.included.s01e12.we.went.way.up.high.1080p.bluray.remux.avc.flac2.0-crucible
 
@@ -20637,8 +20627,6 @@ Bstar.wars.visions.s01e02.tatooine.rhapsody.2160p.dsnp.web-dl.ddp.5.1.dovi.hdr.h
 
 Bstar.wars.visions.s01e04.the.village.bride.2160p.dsnp.web-dl.ddp.5.1.dovi.hdr.hevc-sic
 
-Bstrike witches - s03e08 - the fog - 1080p bluray remux avc lpcm 2.0 [japanese] - birju
-
 Bthe.dangers.in.my.heart.s01e12.i.wanted.to.be.seen.1080p.bluray.opus.2.0.x265-crucible
 
 Bthe.kingdoms.of.ruin.s01e04.the.nation.of.witches.1080p.bluray.remux.avc.flac.2.0-nan0
@@ -21671,8 +21659,6 @@ Bselector.infected.wixoss.s02e04.those.wild.delusions.1080p.bluray.remux.avc.fla
 Bspy.x.family.s01e18.uncle.the.private.tutor.daybreak.1080p.bluray.remux.avc.flac.2.0-nan0
 
 Bstar.driver.takuto.of.the.radiance.s01e03.adult.bank.1080p.bluray.remux.avc.flac.2.0-nan0
-
-Bstrike witches - s03e09 - mina's sky - 1080p bluray remux avc lpcm 2.0 [japanese] - birju
 
 Bthe.kingdoms.of.ruin.s01e01.and.so,.our.story.begins.1080p.bluray.remux.avc.flac.2.0-nan0
 
@@ -22935,8 +22921,6 @@ Bspy.x.family.s02e09.the.hand.that.connects.to.the.future.1080p.bluray.remux.avc
 
 Bstar.driver.takuto.of.the.radiance.s01e25.our.apprivoise.1080p.bluray.remux.avc.flac.2.0-nan0
 
-Bstrike witches - s03e11 - road to berlin - 1080p bluray remux avc lpcm 2.0 [japanese] - birju
-
 Btanaka-kun.is.always.listless.s01e06.the.sick.tanaka-kun.1080p.bluray.remux.avc.flac.2.0-nan0
 
 Btanaka-kun.is.always.listless.s01e10.tanaka-kun's.summer.1080p.bluray.remux.avc.flac.2.0-nan0
@@ -23720,8 +23704,6 @@ Bstar.driver.takuto.of.the.radiance.s01e07.the.faraway.world.1080p.bluray.remux.
 
 Bstar.driver.takuto.of.the.radiance.s01e19.the.trio%60s.sunday.1080p.bluray.remux.avc.flac.2.0-nan0
 
-Bstrike witches - s03e10 - shizuka, come in! - 1080p bluray remux avc lpcm 2.0 [japanese] - birju
-
 Btanaka-kun.is.always.listless.s01e04.shiraishi-san's.secret.1080p.bluray.remux.avc.flac.2.0-nan0
 
 Btanaka-kun.is.always.listless.s01e07.tanaka-kun's.valentine.1080p.bluray.remux.avc.flac.2.0-nan0
@@ -24043,8 +24025,6 @@ Bstar.driver.takuto.of.the.radiance.s01e21.the.age.for.libido.1080p.bluray.remux
 
 Bstar.driver.takuto.of.the.radiance.s01e24.the.eastern.maiden.1080p.bluray.remux.avc.flac.2.0-nan0
 
-Bstrike witches - s03e05 - queen of nederland - 1080p bluray remux avc lpcm 2.0 [japanese] - birju
-
 Btanaka-kun.is.always.listless.s01e01.tanaka-kun.and.ohta-kun.1080p.bluray.remux.avc.flac.2.0-nan0
 
 Bthe.vampire.dies.in.no.time.s02e02.from.tokyo.to.neo-bayside.1080p.bluray.remux.avc.flac.2.0-nan0
@@ -24311,10 +24291,6 @@ Bstar.driver.takuto.of.the.radiance.s01e01.galactic.pretty.boy.1080p.bluray.remu
 Bstar.driver.takuto.of.the.radiance.s01e09.mizuno's.first.love.1080p.bluray.remux.avc.flac.2.0-nan0
 
 Bstar.driver.takuto.of.the.radiance.s01e15.maidens.of.the.seal.1080p.bluray.remux.avc.flac.2.0-nan0
-
-Bstrike witches - s03e06 - hounds of vengeance - 1080p bluray remux avc lpcm 2.0 [japanese] - birju
-
-Bstrike witches - s03e07 - they go boing-boing - 1080p bluray remux avc lpcm 2.0 [japanese] - birju
 
 Btada.never.falls.in.love.s01e03.you.love.that.1080p.bluray.remux.dual-audio.flac2.0.h.264-crucible
 
@@ -26494,8 +26470,6 @@ Bb00ba|yotsuiro biyori 2018 s01e12 rokuhoudou yotsuiro biyori 1080p bluray remux
 
 Bbirju|inari kon kon 2014 s01e04 scarlet festival eve romance 1080p bluray remux avc lpcm 2 0 japanese
 
-Bbirju|strike witches s03e02 the strike witches come together 1080p bluray remux avc lpcm 2 0 japanese
-
 Bcrucible|a sign of affection s01e09 i don t want to leave 1080p bluray remux dual audio flac2 0 h 264
 
 Bcrucible|after school dice club s01e11 a game by everyone 1080p bluray remux dual audio flac2 0 h 264
@@ -26658,8 +26632,6 @@ Bb00ba|selection project 2021 s01e11 one little step at a time 1080p bluray remu
 Bb00ba|ultramarine magmell 2019 s01e08 roujin to coffee hatake 1080p bluray remux avc lpcm 2 0 japanese
 
 Bbirju|inari kon kon 2014 s01e01 inari first love first change 1080p bluray remux avc lpcm 2 0 japanese
-
-Bbirju|strike witches s03e04 beyond two hundred miles per hour 1080p bluray remux avc lpcm 2 0 japanese
 
 Bbirju|the ryuo s work is never done s01e05 artlessly flawless 1080p bluray remux avc lpcm 2 0 japanese
 
@@ -37190,8 +37162,6 @@ Bbeatrice|tezuka osamu monogatari boku wa son gokuu bdrip 1436x1080 x264 flac
 
 Bbirju|kinmoza s02e01 spring is here 1080p bluray remux avc lpcm 2 0 japanese
 
-Bbirju|strike witches s03e08 the fog 1080p bluray remux avc lpcm 2 0 japanese
-
 Bcrucible|big order s01e06 order merge souls 1080p bluray remux flac2 0 h 264
 
 Bcrucible|blue box s01e25 even so 1080p bluray remux dual audio flac2 0 h 264
@@ -38040,8 +38010,6 @@ Lzetarebel|mobile suit zeta gundam 37 the day of dakar bd x264 1080p 8 bit flac
 B727|shisha no teikoku 2015 the empire of corpses bd remux 1080p flac dual audio
 
 Bb00ba|idolish7 2017 s01e02 first stage 1080p bluray remux avc lpcm 2 0 japanese
-
-Bbirju|strike witches s03e09 mina s sky 1080p bluray remux avc lpcm 2 0 japanese
 
 Bcrash|future boy conan international ed 2160p sdr uhd bluray remux flac2 0 hevc
 
@@ -39151,8 +39119,6 @@ Bb00ba|idolish7 2017 s01e16 resolve at zero 1080p bluray remux avc lpcm 2 0 japa
 
 Bb00ba|kabukibu 2017 s01e05 hear ye hear ye 1080p bluray remux avc lpcm 2 0 japanese
 
-Bbirju|strike witches s03e11 road to berlin 1080p bluray remux avc lpcm 2 0 japanese
-
 Bcinephiles|scarlet 2025 hybrid 2160p uhd blu ray remux hdr10p hevc truehd atmos 7 1
 
 Bcrucible|91 days s01e11 all for nothing 1080p bluray remux dual audio flac2 0 h 264
@@ -39425,8 +39391,6 @@ Bb00ba|idolish7 2017 s01e17 making the dream 1080p bluray remux avc lpcm 2 0 jap
 Bb00ba|legendary idol eriko 1989 s01e12 trap 1080p bluray remux avc lpcm 2 0 japanese
 
 Bbirju|kinmoza s02e08 almost summer vacation 1080p bluray remux avc lpcm 2 0 japanese
-
-Bbirju|strike witches s03e10 shizuka come in 1080p bluray remux avc lpcm 2 0 japanese
 
 Bcrucible|arifureta s01e07 the great reisen labyrinth 1080p bluray remux avc flac 2 0
 
@@ -40169,8 +40133,6 @@ B12gaugeshotgun|my hero academia s08e11 my hero academia 1080p bluray remux avc 
 
 B12gaugeshotgun|wash it all away s01e05 i have a feeling 1080p bluray remux avc flac 2 0
 
-Bbirju|strike witches s03e05 queen of nederland 1080p bluray remux avc lpcm 2 0 japanese
-
 Bcrucible|91 days s01e01 night of the murder 1080p bluray remux dual audio flac2 0 h 264
 
 Bcrucible|91 days s01e10 proof of good faith 1080p bluray remux dual audio flac2 0 h 264
@@ -40409,10 +40371,6 @@ Lzurako|super robot taisen og the inspector 18 the inviting fires of demons bd 1
 `,
   "88": `
 Bb00ba|idolish7 2017 s01e14 that song once again 1080p bluray remux avc lpcm 2 0 japanese
-
-Bbirju|strike witches s03e06 hounds of vengeance 1080p bluray remux avc lpcm 2 0 japanese
-
-Bbirju|strike witches s03e07 they go boing boing 1080p bluray remux avc lpcm 2 0 japanese
 
 Bcrucible|91 days s01e02 phantom of falsehood 1080p bluray remux dual audio flac2 0 h 264
 
@@ -41233,8 +41191,6 @@ Bb00ba|yotsuiro biyori 2018 s01e11 life is a hamburg 1080p bluray remux avc lpcm
 
 Bbirju|kinmoza s02e05 come play with your big sister 1080p bluray remux avc lpcm 2 0 japanese
 
-Bbirju|strike witches s03e12 i still want to protect 1080p bluray remux avc lpcm 2 0 japanese
-
 Bcrucible|91 days s01e03 where the footfalls lead 1080p bluray remux dual audio flac2 0 h 264
 
 Bcrucible|a sign of affection s01e01 yuki s world 1080p bluray remux dual audio flac2 0 h 264
@@ -41624,8 +41580,6 @@ Bb00ba|tesla note 2021 s01e08 a consideration on truth 1080p bluray remux avc lp
 Bb00ba|yotsuiro biyori 2018 s01e08 expresso espressivo 1080p bluray remux avc lpcm 2 0 japanese
 
 Bbeatriceraws|omoi omoware furi furare blu ray dvd selling notice cm bdrip 1920x1080 hevc dtshd
-
-Bbirju|strike witches s03e03 what the two of us can do 1080p bluray remux avc lpcm 2 0 japanese
 
 Bcrucible|a sign of affection s01e08 one small step 1080p bluray remux dual audio flac2 0 h 264
 
@@ -42199,8 +42153,6 @@ Bb00ba|yotsuiro biyori 2018 s01e02 the teahouse s secrets 1080p bluray remux avc
 Bb00ba|yotsuiro biyori 2018 s01e03 sweets trap collection 1080p bluray remux avc lpcm 2 0 japanese
 
 Bb00ba|yotsuiro biyori 2018 s01e06 it begins with omurice 1080p bluray remux avc lpcm 2 0 japanese
-
-Bbirju|strike witches s03e01 the magical girl of the alps 1080p bluray remux avc lpcm 2 0 japanese
 
 Bchika|puella magi madoka magica the movie part ii eternal 2012 bd remux 1080p avc flac dual audio
 
