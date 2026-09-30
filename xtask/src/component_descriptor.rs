@@ -40,6 +40,15 @@ mod archive_v1_0 {
     });
 }
 
+/// The archive world's 1.1 revision: the same `describe`, plus the catalog
+/// `crc` import on `crypto`.
+mod archive_v1_1 {
+    wasmtime::component::bindgen!({
+        world: "scryer:archive/archive-extractor@1.1.0",
+        path: "wit/archive-v1.1.0",
+    });
+}
+
 /// The two doors every family component reaches Scryer through.
 ///
 /// Subtitles, download clients and notifications all import
@@ -337,6 +346,30 @@ impl archive_v1_0::scryer::archive::crypto::Host for DescriptorCtx {
     }
 }
 
+impl archive_v1_1::scryer::archive::crypto::Host for DescriptorCtx {
+    fn aes_cbc_decrypt(
+        &mut self,
+        _key: Vec<u8>,
+        _iv: Vec<u8>,
+        _data: Vec<u8>,
+    ) -> Result<Vec<u8>, archive_v1_1::scryer::archive::crypto::AesError> {
+        Err(archive_v1_1::scryer::archive::crypto::AesError::BadKeyLength)
+    }
+
+    fn crc32(&mut self, seed: u32, _data: Vec<u8>) -> u32 {
+        seed
+    }
+
+    fn crc(
+        &mut self,
+        _algorithm: archive_v1_1::scryer::archive::crypto::CrcAlgorithm,
+        seed: Option<u64>,
+        _data: Vec<u8>,
+    ) -> Result<u64, archive_v1_1::scryer::archive::crypto::CrcError> {
+        Ok(seed.unwrap_or_default())
+    }
+}
+
 impl contract_v1_1::scryer::indexer::host::HostWithStore<DescriptorCtx> for HasSelf<DescriptorCtx> {
     async fn http(
         _accessor: &wasmtime::component::Accessor<DescriptorCtx, Self>,
@@ -400,6 +433,11 @@ pub(crate) fn descriptor_from_component(wasm: &[u8]) -> Result<Option<PluginDesc
         |ctx| ctx,
     )
     .map_err(|error| anyhow!("register archive component descriptor host: {error:#}"))?;
+    archive_v1_1::ArchiveExtractor::add_to_linker::<DescriptorCtx, HasSelf<DescriptorCtx>>(
+        &mut linker,
+        |ctx| ctx,
+    )
+    .map_err(|error| anyhow!("register archive 1.1 component descriptor host: {error:#}"))?;
     // Bound per *interface*, not per world: subtitles, download clients and
     // notifications import the identical `scryer:host/services@1.0.0`, so
     // registering each family world in turn would be a duplicate definition

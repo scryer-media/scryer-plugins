@@ -68,6 +68,7 @@ produces a shorter embed.
 | File deleted / deleted for upgrade | Red, with `Reason` and `File name` fields |
 | Title added | "Series Added", green, links (plus poster/fanart) |
 | Title deleted | Red, the deletion summary as the description, links |
+| Title moved | "Series Moved" ("Moved" for a movie), standard colour, `From` and `To` fields, plus `Warning` when the move finished with warnings |
 | Health issue / restored | Health source as the heading, health message as the description; amber, or green once resolved |
 | Application update | `Previous Version` and `New Version` fields |
 | Manual interaction required | "Manual interaction needed", `manual_interaction_fields` |

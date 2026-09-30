@@ -38,8 +38,9 @@ all default to the previous behaviour.
   prefixed with the application name. Truncated to ntfy's 1024-byte title limit.
 * **Message** — the event summary followed by the facts the event carries:
   episode, quality, release, release group, indexer, size, download client,
-  destination or source path, health check detail, application versions,
-  subtitle languages, media-request status. Then the selected metadata links.
+  destination or source path, where a moved title came from and went to and any
+  warning from the move, health check detail, application versions, subtitle
+  languages, media-request status. Then the selected metadata links.
   Truncated to ntfy's 4096-byte message limit (past which ntfy would silently
   turn the message into a file attachment).
 * **Priority** — the configured priority, or **failure_priority** when the event

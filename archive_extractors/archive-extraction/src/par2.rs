@@ -429,9 +429,9 @@ fn resolve_target(
     let hint = canonical_hint(placement, hint);
     let resolved = match format {
         ArchivePluginFormat::Rar => rar_first_volume(placement, &hint),
-        ArchivePluginFormat::SevenZip => single_archive(placement, &hint, &["7z"]),
-        ArchivePluginFormat::Zip => single_archive(placement, &hint, &["zip"]),
-        ArchivePluginFormat::Xz => single_archive(placement, &hint, &["xz", "txz"]),
+        ArchivePluginFormat::SevenZip => single_archive(placement, &hint, &["7z"], true),
+        ArchivePluginFormat::Zip => single_archive(placement, &hint, &["zip"], true),
+        ArchivePluginFormat::Xz => single_archive(placement, &hint, &["xz", "txz"], false),
     };
 
     match resolved {
@@ -456,6 +456,8 @@ fn describes_any_archive(set: &Par2FileSet) -> bool {
         let lower = name.to_ascii_lowercase();
         lower.ends_with(".7z")
             || lower.ends_with(".zip")
+            || lower.ends_with(".7z.001")
+            || lower.ends_with(".zip.001")
             || lower.ends_with(".xz")
             || lower.ends_with(".txz")
             || rar_volume_info(&lower).is_some()
@@ -587,10 +589,16 @@ fn single_group(candidates: &[RarVolume]) -> Option<String> {
 
 /// Resolve a single-file format (7z / zip / xz): the hint wins when it names a
 /// covered file, otherwise the set must describe exactly one.
+///
+/// With `split_volumes`, the first part of a byte-split set stands for the
+/// archive: `name.7z.001` always, and a bare `name.001` when the hint names
+/// it, since nothing else says what a bare set holds. The later parts stay
+/// beside it, staged or not, for the extractor to join.
 fn single_archive(
     placement: &Placement,
     hint: &Path,
     extensions: &[&str],
+    split_volumes: bool,
 ) -> Result<String, Box<ArchivePluginProcessResponse>> {
     let label = extensions.first().copied().unwrap_or("archive");
     let hint_name = hint
@@ -604,9 +612,15 @@ fn single_archive(
         .filter_map(|canonical| {
             let canonical_name = file_name_of(canonical)?;
             let lower = canonical_name.to_ascii_lowercase();
-            extensions
+            let first_split_part = split_volumes
+                && (extensions
+                    .iter()
+                    .any(|extension| lower.ends_with(&format!(".{extension}.001")))
+                    || (lower.ends_with(".001") && hint_name.as_deref() == Some(lower.as_str())));
+            (extensions
                 .iter()
                 .any(|extension| lower.ends_with(&format!(".{extension}")))
+                || first_split_part)
                 .then_some((canonical_name, canonical.clone()))
         })
         .collect::<Vec<_>>();
@@ -979,7 +993,7 @@ fn safe_relative_path_lossy(path: &str) -> PathBuf {
 /// Handles both naming schemes: modern `name.partN.rar` and the legacy
 /// `name.rar` / `name.r00` / `name.s00` families, whose ordering is `.rar`
 /// first and then `r00..r99`, `s00..s99`, and so on.
-fn rar_volume_info(file_name: &str) -> Option<(String, usize)> {
+pub(crate) fn rar_volume_info(file_name: &str) -> Option<(String, usize)> {
     if let Some(stem) = file_name.strip_suffix(".rar") {
         if let Some((group, part)) = stem.rsplit_once(".part")
             && let Ok(part_index) = part.parse::<usize>()

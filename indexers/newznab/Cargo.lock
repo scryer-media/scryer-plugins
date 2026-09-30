@@ -356,7 +356,7 @@ dependencies = [
 
 [[package]]
 name = "newznab-indexer"
-version = "2.2.4"
+version = "2.3.0"
 dependencies = [
  "newznab-common",
  "scryer-plugin-pdk",
@@ -511,9 +511,9 @@ dependencies = [
 
 [[package]]
 name = "scryer-plugin-sdk"
-version = "3.11.0"
+version = "3.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed82740ae081bbbdce615fd871cf83817aeb197caa129d393d8aea4aa6b1058f"
+checksum = "275348caa465390decf4fc783434d2b4fd72bfa89fb24e569ae684742cae601b"
 dependencies = [
  "base64",
  "schemars",

@@ -1,21 +1,31 @@
 use std::collections::{BTreeMap, HashMap};
+use std::future::Future;
 
 use chrono::DateTime;
+use scryer_plugin_pdk::component::{StructuredPluginError, structured_plugin_error};
 use scryer_plugin_pdk::*;
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldRole, ConfigFieldType, IndexerCapabilities as Capabilities,
     IndexerCategoryModel, IndexerCategoryValueKind, IndexerDescriptor, IndexerFeedMode,
-    IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures, IndexerSearchInput,
-    IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor,
-    PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
+    IndexerLimitCapabilities, IndexerProtocol, IndexerResponseFeatures,
+    IndexerSearchIncompleteReason, IndexerSearchInput, IndexerSearchPluginError, IndexerSourceKind,
+    IndexerTorrentCapabilities, PluginDescriptor, PluginError, PluginErrorCode, PluginErrorDetails,
+    PluginRssCatchUp, PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
     PluginSearchResult as SearchResult, ProviderDescriptor, SDK_VERSION,
 };
 use serde::{Deserialize, Serialize};
 
 const DEFAULT_BASE_URL: &str = "https://api.broadcasthe.net/";
 const PAGE_SIZE: usize = 100;
+/// Sonarr's `BroadcastheNetRequestGenerator.MaxPages`, which also bounds its
+/// recent-feed paging.
 const MAX_PAGES: usize = 10;
+/// Sonarr's recent-feed id tier asks for torrents from this many ids below the
+/// last one it saw (`BroadcastheNetRequestGenerator.GetRecentRequests`).
+const CATCH_UP_ID_LOOKBACK: i64 = 100;
+/// The `guid` prefix every BTN result carries ahead of its torrent id.
+const GUID_PREFIX: &str = "BTN-";
 
 fn build_descriptor() -> PluginDescriptor {
     PluginDescriptor {
@@ -107,6 +117,14 @@ fn build_descriptor() -> PluginDescriptor {
 async fn search(req: SearchRequest) -> FnResult<SearchResponse> {
     let base_url = config_value("base_url").unwrap_or_else(|| DEFAULT_BASE_URL.to_string());
     let api_key = required_config("api_key")?;
+    if let Some(marker) = catch_up_marker(&req) {
+        return catch_up_search(
+            marker,
+            |query, offset| fetch_page(&base_url, &api_key, query, offset),
+            has_time_for_a_page,
+        )
+        .await;
+    }
     let limit = request_limit(&req);
     let queries = build_queries(&req);
     let mut results = Vec::new();
@@ -139,6 +157,222 @@ async fn search(req: SearchRequest) -> FnResult<SearchResponse> {
     Ok(SearchResponse {
         results,
         ..Default::default()
+    })
+}
+
+/// The recent (RSS) poll carries no search criteria at all.
+fn is_recent_request(req: &SearchRequest) -> bool {
+    req.query.trim().is_empty()
+        && req.ids.is_empty()
+        && req.season.is_none()
+        && req.episode.is_none()
+        && req.absolute_episode.is_none()
+}
+
+/// Sonarr's recent-feed query: everything uploaded in the last 24 hours.
+fn recent_query() -> BtnQuery {
+    BtnQuery {
+        age: Some("<=86400".to_string()),
+        ..BtnQuery::default()
+    }
+}
+
+/// Where the previous RSS poll stopped, when the host sent one on a recent
+/// poll. Any other request ignores it and keeps its usual single pass.
+fn catch_up_marker(req: &SearchRequest) -> Option<&PluginRssCatchUp> {
+    req.rss_catch_up.as_ref().filter(|_| is_recent_request(req))
+}
+
+/// The recent-feed tiers for a catch-up poll, as Sonarr's
+/// `GetRecentRequests` builds them: when the marker names a BTN torrent, first
+/// every torrent from just below that id, then the last 24 hours. A tier only
+/// runs when the one before it returned nothing.
+fn catch_up_queries(marker: &PluginRssCatchUp) -> Vec<BtnQuery> {
+    let mut queries = Vec::with_capacity(2);
+    if let Some(torrent_id) = marker
+        .last_seen_identity
+        .as_deref()
+        .and_then(|identity| identity.trim().strip_prefix(GUID_PREFIX))
+        .and_then(|id| id.parse::<i64>().ok())
+        .filter(|id| *id > 0)
+    {
+        queries.push(BtnQuery {
+            id: Some(format!(">={}", (torrent_id - CATCH_UP_ID_LOOKBACK).max(0))),
+            ..BtnQuery::default()
+        });
+    }
+    queries.push(recent_query());
+    queries
+}
+
+/// One page of a BTN query, with whether BTN reports more matches past it.
+struct CatchUpPage {
+    results: Vec<SearchResult>,
+    more: bool,
+}
+
+async fn fetch_page(
+    base_url: &str,
+    api_key: &str,
+    query: BtnQuery,
+    offset: usize,
+) -> Result<CatchUpPage, Error> {
+    let response = execute_query(base_url, api_key, &query, offset).await?;
+    let total = response.results as usize;
+    let results = parse_response(base_url, response)?;
+    Ok(CatchUpPage {
+        more: !results.is_empty() && offset + PAGE_SIZE < total,
+        results,
+    })
+}
+
+/// Time an RSS catch-up keeps in hand before the operation deadline. A page is
+/// only started with at least this much left, so the pages already read are
+/// returned instead of being lost to a host timeout.
+const CATCH_UP_DEADLINE_RESERVE_MS: u64 = 20_000;
+
+/// Whether the operation deadline leaves room to read one more catch-up page.
+fn has_time_for_a_page() -> bool {
+    scryer_plugin_pdk::component::operation_deadline_monotonic_ms()
+        .saturating_sub(scryer_plugin_pdk::component::monotonic_now_ms())
+        >= CATCH_UP_DEADLINE_RESERVE_MS
+}
+
+/// Page the recent feed back to the host's marker. Stops at the first page
+/// that holds the marked release or anything published before it, at a page
+/// BTN reports as the last, at `MAX_PAGES`, or when `has_time` says the
+/// operation deadline is too close for another page. Only those last two, or
+/// an upstream failure after at least one page was read, report the poll as
+/// incomplete, carrying every release read so far.
+async fn catch_up_search<F, Fut>(
+    marker: &PluginRssCatchUp,
+    mut fetch: F,
+    has_time: impl Fn() -> bool,
+) -> Result<SearchResponse, Error>
+where
+    F: FnMut(BtnQuery, usize) -> Fut,
+    Fut: Future<Output = Result<CatchUpPage, Error>>,
+{
+    for query in catch_up_queries(marker) {
+        let mut results = Vec::new();
+        let mut stopped: Option<(IndexerSearchIncompleteReason, Option<i64>, String)> = None;
+        for page in 0..MAX_PAGES {
+            if page > 0 && !has_time() {
+                stopped = Some((
+                    IndexerSearchIncompleteReason::PageCeilingReached,
+                    None,
+                    format!(
+                        "BTN RSS catch-up stopped after {page} page(s) before the operation deadline"
+                    ),
+                ));
+                break;
+            }
+            let fetched = match fetch(query.clone(), page * PAGE_SIZE).await {
+                Ok(fetched) => fetched,
+                Err(error) if page == 0 => return Err(error),
+                Err(error) => {
+                    let (reason, retry_after_seconds) = incomplete_reason(&error);
+                    stopped = Some((reason, retry_after_seconds, error.to_string()));
+                    break;
+                }
+            };
+            let reached = page_reaches_marker(&fetched.results, marker);
+            let more = fetched.more;
+            results.extend(fetched.results);
+            if reached || !more {
+                break;
+            }
+            if page + 1 == MAX_PAGES {
+                stopped = Some((
+                    IndexerSearchIncompleteReason::PageCeilingReached,
+                    None,
+                    format!(
+                        "BTN RSS catch-up read {MAX_PAGES} pages without reaching the previous poll"
+                    ),
+                ));
+            }
+        }
+        if results.is_empty() && stopped.is_none() {
+            continue;
+        }
+        let response = SearchResponse {
+            results: dedupe_results(results),
+            ..Default::default()
+        };
+        return match stopped {
+            None => Ok(response),
+            Some((reason, retry_after_seconds, detail)) => Err(incomplete_search_error(
+                response,
+                reason,
+                retry_after_seconds,
+                detail,
+            )),
+        };
+    }
+    Ok(SearchResponse::default())
+}
+
+/// Whether this page reaches the release the previous poll ended on: it holds
+/// that release, or something published before it. A marker whose time cannot
+/// be read and that names no release gives nothing to page toward, so the
+/// first page is the whole poll, as it was before catch-up existed.
+fn page_reaches_marker(page: &[SearchResult], marker: &PluginRssCatchUp) -> bool {
+    if page.iter().any(|result| marker.names(result)) {
+        return true;
+    }
+    let Ok(last_seen) = DateTime::parse_from_rfc3339(marker.last_seen_published_at.trim()) else {
+        return marker.last_seen_identity.is_none();
+    };
+    page.iter()
+        .filter_map(|result| result.published_at.as_deref())
+        .filter_map(|published| DateTime::parse_from_rfc3339(published.trim()).ok())
+        .min()
+        .is_some_and(|oldest| oldest < last_seen)
+}
+
+/// The incomplete reason a failed later page carries, from its typed error
+/// when it has one.
+fn incomplete_reason(error: &Error) -> (IndexerSearchIncompleteReason, Option<i64>) {
+    let Some(structured) = error.downcast_ref::<StructuredPluginError>() else {
+        return (IndexerSearchIncompleteReason::UpstreamFailure, None);
+    };
+    let plugin_error = structured.plugin_error();
+    let reason = match &plugin_error.details {
+        Some(PluginErrorDetails::IndexerSearch(
+            IndexerSearchPluginError::Deferred { reason, .. }
+            | IndexerSearchPluginError::PartialResults { reason, .. },
+        )) => *reason,
+        _ if plugin_error.code == PluginErrorCode::RateLimited => {
+            IndexerSearchIncompleteReason::RateLimited
+        }
+        _ => IndexerSearchIncompleteReason::UpstreamFailure,
+    };
+    (reason, plugin_error.retry_after_seconds)
+}
+
+fn incomplete_search_error(
+    response: SearchResponse,
+    reason: IndexerSearchIncompleteReason,
+    retry_after_seconds: Option<i64>,
+    detail: String,
+) -> Error {
+    let code = if reason == IndexerSearchIncompleteReason::RateLimited {
+        PluginErrorCode::RateLimited
+    } else {
+        PluginErrorCode::UpstreamUnavailable
+    };
+    structured_plugin_error(PluginError {
+        code,
+        public_message: "indexer search did not complete".to_string(),
+        debug_message: Some(detail),
+        retry_after_seconds,
+        details: Some(PluginErrorDetails::IndexerSearch(
+            IndexerSearchPluginError::PartialResults {
+                response: Box::new(response),
+                reason,
+                retry_after_seconds,
+            },
+        )),
     })
 }
 
@@ -176,16 +410,8 @@ fn build_queries(req: &SearchRequest) -> Vec<BtnQuery> {
     let tvrage = req.ids.get("tvrage_id").filter(|value| !value.is_empty());
 
     if tvdb.is_none() && tvrage.is_none() {
-        if req.query.trim().is_empty()
-            && req.ids.is_empty()
-            && req.season.is_none()
-            && req.episode.is_none()
-            && req.absolute_episode.is_none()
-        {
-            queries.push(BtnQuery {
-                age: Some("<=86400".to_string()),
-                ..BtnQuery::default()
-            });
+        if is_recent_request(req) {
+            queries.push(recent_query());
         }
         return queries;
     }
@@ -741,5 +967,292 @@ mod tests {
         };
 
         assert!(build_queries(&req).is_empty());
+    }
+
+    // -- RSS catch-up ------------------------------------------------------
+
+    use std::cell::RefCell;
+    use std::pin::pin;
+    use std::task::{Context, Poll, Waker};
+
+    /// Drive a future whose awaits all resolve immediately.
+    fn block_on<F: Future>(future: F) -> F::Output {
+        let mut future = pin!(future);
+        let mut context = Context::from_waker(Waker::noop());
+        loop {
+            if let Poll::Ready(output) = future.as_mut().poll(&mut context) {
+                return output;
+            }
+        }
+    }
+
+    /// Unix time of the newest synthetic release; each older id is a minute
+    /// older.
+    const NEWEST_TIME: i64 = 1_800_000_000;
+    const NEWEST_ID: i64 = 90_000;
+
+    fn release(torrent_id: i64) -> SearchResult {
+        let time = NEWEST_TIME - (NEWEST_ID - torrent_id) * 60;
+        SearchResult {
+            title: format!("Synthetic.Series.S01E{torrent_id}.1080p.WEB-DL-GROUP"),
+            guid: Some(format!("BTN-{torrent_id}")),
+            published_at: DateTime::from_timestamp(time, 0).map(|dt| dt.to_rfc3339()),
+            ..SearchResult::default()
+        }
+    }
+
+    fn published_at(torrent_id: i64) -> String {
+        release(torrent_id).published_at.unwrap()
+    }
+
+    /// Page `index` of a feed that lists ids newest first, `PAGE_SIZE` a page,
+    /// with more pages after it while `more` says so.
+    fn feed_page(index: usize, more: bool) -> CatchUpPage {
+        let newest = NEWEST_ID - (index * PAGE_SIZE) as i64;
+        CatchUpPage {
+            results: (0..PAGE_SIZE as i64).map(|n| release(newest - n)).collect(),
+            more,
+        }
+    }
+
+    fn marker(identity: Option<&str>, published: String) -> PluginRssCatchUp {
+        PluginRssCatchUp {
+            last_seen_published_at: published,
+            last_seen_identity: identity.map(str::to_string),
+        }
+    }
+
+    type Call = (Option<String>, Option<String>, usize);
+
+    /// Run a catch-up poll against a scripted feed, recording each request as
+    /// (`Id`, `Age`, offset).
+    fn run_catch_up(
+        marker: &PluginRssCatchUp,
+        mut respond: impl FnMut(&BtnQuery, usize) -> Result<CatchUpPage, Error>,
+    ) -> (Result<SearchResponse, Error>, Vec<Call>) {
+        let calls = RefCell::new(Vec::new());
+        let outcome = block_on(catch_up_search(
+            marker,
+            |query, offset| {
+                calls
+                    .borrow_mut()
+                    .push((query.id.clone(), query.age.clone(), offset));
+                std::future::ready(respond(&query, offset))
+            },
+            || true,
+        ));
+        (outcome, calls.into_inner())
+    }
+
+    fn partial_results(error: &Error) -> (&SearchResponse, IndexerSearchIncompleteReason) {
+        let structured = error
+            .downcast_ref::<StructuredPluginError>()
+            .expect("typed plugin error");
+        match &structured.plugin_error().details {
+            Some(PluginErrorDetails::IndexerSearch(IndexerSearchPluginError::PartialResults {
+                response,
+                reason,
+                ..
+            })) => (response, *reason),
+            other => panic!("expected partial results, got {other:?}"),
+        }
+    }
+
+    fn rss_request(marker: Option<PluginRssCatchUp>) -> SearchRequest {
+        SearchRequest {
+            rss_catch_up: marker,
+            ..SearchRequest::default()
+        }
+    }
+
+    #[test]
+    fn recent_poll_without_a_marker_keeps_its_single_query() {
+        let req = rss_request(None);
+
+        assert!(catch_up_marker(&req).is_none());
+        let queries = build_queries(&req);
+        assert_eq!(queries.len(), 1);
+        assert_eq!(queries[0].age.as_deref(), Some("<=86400"));
+        assert_eq!(queries[0].id, None);
+    }
+
+    #[test]
+    fn marker_on_a_criteria_search_is_ignored() {
+        let req = SearchRequest {
+            ids: HashMap::from([("tvdb_id".to_string(), "12345".to_string())]),
+            ..rss_request(Some(marker(Some("BTN-1"), published_at(1))))
+        };
+
+        assert!(catch_up_marker(&req).is_none());
+    }
+
+    #[test]
+    fn marker_naming_a_btn_torrent_starts_below_its_id_then_falls_back_to_a_day() {
+        let queries = catch_up_queries(&marker(Some("BTN-5000"), published_at(5000)));
+
+        assert_eq!(queries.len(), 2);
+        assert_eq!(queries[0].id.as_deref(), Some(">=4900"));
+        assert_eq!(queries[0].age, None);
+        assert_eq!(queries[1].id, None);
+        assert_eq!(queries[1].age.as_deref(), Some("<=86400"));
+
+        let wire = serde_json::to_value(&queries[0]).unwrap();
+        assert_eq!(wire, serde_json::json!({ "Id": ">=4900" }));
+    }
+
+    #[test]
+    fn marker_without_a_btn_identity_pages_the_last_day() {
+        for identity in [None, Some("https://tracker.invalid/other/5000")] {
+            let queries = catch_up_queries(&marker(identity, published_at(5000)));
+            assert_eq!(queries.len(), 1);
+            assert_eq!(queries[0].age.as_deref(), Some("<=86400"));
+        }
+    }
+
+    #[test]
+    fn catch_up_stops_at_the_page_holding_the_marked_release() {
+        // The marked release sits on the third page.
+        let last_seen = NEWEST_ID - 2 * PAGE_SIZE as i64 - 5;
+        let marker = marker(Some(&format!("BTN-{last_seen}")), published_at(last_seen));
+
+        let (outcome, calls) =
+            run_catch_up(&marker, |_, offset| Ok(feed_page(offset / PAGE_SIZE, true)));
+
+        let response = outcome.expect("complete catch-up");
+        assert_eq!(response.results.len(), 3 * PAGE_SIZE);
+        let offsets: Vec<usize> = calls.iter().map(|call| call.2).collect();
+        assert_eq!(offsets, vec![0, PAGE_SIZE, 2 * PAGE_SIZE]);
+        assert!(calls.iter().all(|call| call.0.is_some()));
+    }
+
+    #[test]
+    fn catch_up_stops_once_a_page_reaches_back_past_the_marker_time() {
+        // No identity: only the time. The second page's oldest release is
+        // older than the marker.
+        let last_seen = NEWEST_ID - PAGE_SIZE as i64 - 10;
+        let marker = marker(None, published_at(last_seen));
+
+        let (outcome, calls) =
+            run_catch_up(&marker, |_, offset| Ok(feed_page(offset / PAGE_SIZE, true)));
+
+        assert_eq!(outcome.expect("complete").results.len(), 2 * PAGE_SIZE);
+        assert_eq!(calls.len(), 2);
+        assert!(
+            calls
+                .iter()
+                .all(|call| call.1.as_deref() == Some("<=86400"))
+        );
+    }
+
+    #[test]
+    fn catch_up_stops_at_the_last_page_btn_reports() {
+        let marker = marker(None, published_at(1));
+
+        let (outcome, calls) = run_catch_up(&marker, |_, offset| {
+            let index = offset / PAGE_SIZE;
+            Ok(feed_page(index, index < 1))
+        });
+
+        assert_eq!(outcome.expect("complete").results.len(), 2 * PAGE_SIZE);
+        assert_eq!(calls.len(), 2);
+    }
+
+    #[test]
+    fn catch_up_reports_the_page_ceiling_with_everything_it_read() {
+        let marker = marker(Some("BTN-1"), published_at(1));
+
+        let (outcome, calls) =
+            run_catch_up(&marker, |_, offset| Ok(feed_page(offset / PAGE_SIZE, true)));
+
+        assert_eq!(calls.len(), MAX_PAGES);
+        let error = outcome.expect_err("ceiling reached before the marker");
+        let (response, reason) = partial_results(&error);
+        assert_eq!(reason, IndexerSearchIncompleteReason::PageCeilingReached);
+        assert_eq!(response.results.len(), MAX_PAGES * PAGE_SIZE);
+    }
+
+    #[test]
+    fn a_later_page_failure_keeps_the_pages_already_read() {
+        let marker = marker(None, published_at(1));
+
+        let (outcome, calls) = run_catch_up(&marker, |_, offset| {
+            if offset == 0 {
+                Ok(feed_page(0, true))
+            } else {
+                Err(Error::msg("BTN API returned HTTP 502"))
+            }
+        });
+
+        assert_eq!(calls.len(), 2);
+        let error = outcome.expect_err("incomplete");
+        let (response, reason) = partial_results(&error);
+        assert_eq!(reason, IndexerSearchIncompleteReason::UpstreamFailure);
+        assert_eq!(response.results.len(), PAGE_SIZE);
+    }
+
+    #[test]
+    fn a_deadline_close_to_expiry_returns_the_pages_already_read() {
+        let marker = marker(Some("BTN-1"), published_at(1));
+        let calls = RefCell::new(0usize);
+
+        let outcome = block_on(catch_up_search(
+            &marker,
+            |_, offset| {
+                *calls.borrow_mut() += 1;
+                std::future::ready(Ok(feed_page(offset / PAGE_SIZE, true)))
+            },
+            || *calls.borrow() < 2,
+        ));
+
+        assert_eq!(*calls.borrow(), 2);
+        let error = outcome.expect_err("deadline nears before the marker");
+        let (response, reason) = partial_results(&error);
+        assert_eq!(reason, IndexerSearchIncompleteReason::PageCeilingReached);
+        assert_eq!(response.results.len(), 2 * PAGE_SIZE);
+    }
+
+    #[test]
+    fn a_first_page_failure_is_the_plain_error() {
+        let marker = marker(None, published_at(1));
+
+        let (outcome, _) =
+            run_catch_up(&marker, |_, _| Err(Error::msg("BTN API returned HTTP 502")));
+
+        let error = outcome.expect_err("failed");
+        assert!(error.downcast_ref::<StructuredPluginError>().is_none());
+        assert!(error.to_string().contains("502"));
+    }
+
+    #[test]
+    fn an_empty_id_tier_falls_through_to_the_last_day() {
+        let last_seen = NEWEST_ID - 3;
+        let marker = marker(Some(&format!("BTN-{last_seen}")), published_at(last_seen));
+
+        let (outcome, calls) = run_catch_up(&marker, |query, _| {
+            if query.id.is_some() {
+                Ok(CatchUpPage {
+                    results: Vec::new(),
+                    more: false,
+                })
+            } else {
+                Ok(feed_page(0, true))
+            }
+        });
+
+        assert_eq!(outcome.expect("complete").results.len(), PAGE_SIZE);
+        assert_eq!(calls.len(), 2);
+        assert!(calls[0].0.is_some());
+        assert_eq!(calls[1].1.as_deref(), Some("<=86400"));
+    }
+
+    #[test]
+    fn a_marker_with_no_usable_time_or_identity_reads_one_page() {
+        let marker = marker(None, "not a time".to_string());
+
+        let (outcome, calls) =
+            run_catch_up(&marker, |_, offset| Ok(feed_page(offset / PAGE_SIZE, true)));
+
+        assert_eq!(outcome.expect("complete").results.len(), PAGE_SIZE);
+        assert_eq!(calls.len(), 1);
     }
 }

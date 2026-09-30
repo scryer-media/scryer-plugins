@@ -447,6 +447,7 @@ mod tests {
             absolute_episode: None,
             tagged_aliases: vec![],
             context: None,
+            rss_catch_up: None,
         }
     }
 

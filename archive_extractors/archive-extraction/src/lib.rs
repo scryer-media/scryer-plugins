@@ -1,10 +1,10 @@
 //! Scryer's archive-extraction plugin, as a WASI Preview 2 component.
 //!
-//! The plugin implements `scryer:archive/archive-extractor@1.0.0`: two exports
+//! The plugin implements `scryer:archive/archive-extractor@1.1.0`: two exports
 //! carrying UTF-8 JSON (`describe` returns a `PluginDescriptor`, `process`
 //! exchanges an `ArchivePluginProcessRequest` for an
 //! `ArchivePluginProcessResponse`), plus one imported `crypto` interface for
-//! AES-CBC and CRC-32. WASI Preview 2 arrives from the linker, which is how the
+//! AES-CBC, CRC-32, and the catalog `crc` function (used here for CRC-64/XZ). WASI Preview 2 arrives from the linker, which is how the
 //! guest sees its read-only source preopen, its writable output preopen, and
 //! its private `TMPDIR` scratch dir.
 //!
@@ -40,12 +40,13 @@ use sevenz_turbo::hooks as sevenz_hooks;
 use std::borrow::Cow;
 use std::collections::HashSet;
 use std::fs;
-use std::io::{self, Read, Write};
+use std::io::{self, Read, Seek, Write};
 use std::path::{Component, Path, PathBuf};
 use unrar_rs::hooks::{HostAesError, HostCryptoHooks, install_host_crypto_hooks};
 use unrar_rs::{RarArchive, RarError};
 
 mod par2;
+mod split_volumes;
 
 wit_bindgen::generate!({
     world: "archive-extractor",
@@ -70,7 +71,7 @@ const MAX_XZ_EXPANDED_BYTES: u64 = 128 * 1024 * 1024;
 /// a diagnosable plugin error instead of a host OOM trap.
 const MAX_XZ_DECODER_MEMORY_BYTES: u64 = 192 * 1024 * 1024;
 
-/// This crate's implementation of `scryer:archive/archive-extractor@1.0.0`.
+/// This crate's implementation of `scryer:archive/archive-extractor@1.1.0`.
 struct ArchiveExtractorComponent;
 
 impl Guest for ArchiveExtractorComponent {
@@ -103,13 +104,11 @@ impl Guest for ArchiveExtractorComponent {
 export!(ArchiveExtractorComponent);
 
 /// Point unrar-rs's bulk AES-CBC and CRC-32 delegation, sevenz-turbo's bulk
-/// AES-CBC decrypt, and lzma-turbo's bulk CRC-32 at the world's `crypto`
-/// import.
+/// AES-CBC decrypt, and lzma-turbo's bulk CRC-32 and CRC-64/XZ at the world's
+/// `crypto` import.
 ///
-/// lzma-turbo's hook set also takes CRC-64/XZ, which the world does not
-/// import, so that one is computed in the guest by [`guest_crc64_xz`]. Its
-/// SHA-256 hooks are never called: `crypto-host` is off, and the xz SHA-256
-/// check stays on the in-guest RustCrypto backend.
+/// lzma-turbo's SHA-256 hooks are never called: `crypto-host` is off, and the
+/// xz SHA-256 check stays on the in-guest RustCrypto backend.
 ///
 /// All three crates are transport-agnostic — they hold plain `fn` pointers and know
 /// nothing about WIT — so this adapter is the whole seam between them and the
@@ -145,6 +144,20 @@ fn install_crypto_hooks() {
         host_crypto::crc32(seed, data)
     }
 
+    /// lzma-turbo's hook resumes in the finalized domain with seed 0 starting
+    /// a stream. The host's `crc` resumes from `some(previous)` the same way,
+    /// and CRC-64/XZ's initial value equals its final XOR, so `some(0)` starts
+    /// a stream there too.
+    fn crc64_xz(seed: u64, data: &[u8]) -> u64 {
+        match host_crypto::crc(host_crypto::CrcAlgorithm::Crc64Xz, Some(seed), data) {
+            Ok(checksum) => checksum,
+            // A 64-bit algorithm has no out-of-range seed.
+            Err(host_crypto::CrcError::SeedOutOfRange) => {
+                unreachable!("host rejected a CRC-64/XZ seed as out of range")
+            }
+        }
+    }
+
     install_host_crypto_hooks(HostCryptoHooks {
         aes_cbc_decrypt: rar_aes_cbc_decrypt,
         crc32,
@@ -158,25 +171,13 @@ fn install_crypto_hooks() {
     }
     install_host_hash_hooks(HostHashHooks::new(
         crc32,
-        guest_crc64_xz,
+        crc64_xz,
         || sha256_not_delegated(),
         |_: HostSha256Handle| sha256_not_delegated(),
         |_: HostSha256Handle, _: &[u8]| sha256_not_delegated(),
         |_: HostSha256Handle| sha256_not_delegated(),
         |_: HostSha256Handle| sha256_not_delegated(),
     ));
-}
-
-/// CRC-64/XZ for lzma-turbo's `crc64_xz` hook, in the hook's convention: a
-/// resumable one-shot in the finalized domain, so `seed` 0 starts a stream and
-/// the result of one call seeds the next.
-///
-/// This goes to `crc-fast` directly rather than through `lzma_turbo::crc`,
-/// which with `crc-host` on routes straight back to this hook.
-fn guest_crc64_xz(seed: u64, data: &[u8]) -> u64 {
-    let mut digest = crc_fast::Digest::new_with_init_state(crc_fast::CrcAlgorithm::Crc64Xz, !seed);
-    digest.update(data);
-    digest.finalize()
 }
 
 fn build_descriptor() -> PluginDescriptor {
@@ -270,9 +271,29 @@ fn extract_prepared_archive(
 ) -> ArchivePluginProcessResponse {
     match format {
         ArchivePluginFormat::Rar => extract_rar(archive_path, output_dir, password),
-        ArchivePluginFormat::SevenZip => extract_sevenz(archive_path, output_dir, password),
-        ArchivePluginFormat::Zip => extract_zip(archive_path, output_dir, password),
+        ArchivePluginFormat::SevenZip | ArchivePluginFormat::Zip => {
+            extract_seekable_archive(archive_path, output_dir, format, password)
+        }
         ArchivePluginFormat::Xz => extract_xz(archive_path, output_dir, password),
+    }
+}
+
+/// 7z and ZIP read through one seekable stream, which is what lets a
+/// byte-split set (`name.7z.001`, `name.zip.001`, `name.001`) extract as the
+/// single archive it was cut from.
+fn extract_seekable_archive(
+    archive_path: &Path,
+    output_dir: &Path,
+    format: ArchivePluginFormat,
+    password: Option<&str>,
+) -> ArchivePluginProcessResponse {
+    let (source, format) = match split_volumes::open_archive(archive_path, format) {
+        Ok(opened) => opened,
+        Err(response) => return *response,
+    };
+    match format {
+        ArchivePluginFormat::Zip => extract_zip(source, output_dir, password),
+        _ => extract_sevenz(source, output_dir, password),
     }
 }
 
@@ -420,11 +441,12 @@ fn open_rar_archive(
 
     match password.filter(|password| !password.is_empty()) {
         Some(password) => RarArchive::open_with_password(archive_file, password).map_err(|error| {
-            Box::new(rar_error_response(
-                "open_rar",
-                "failed to read RAR archive",
-                error,
-            ))
+            let wrong_key = is_wrong_key_symptom(&error) && rar_headers_are_encrypted(archive_path);
+            let mut response = rar_error_response("open_rar", "failed to read RAR archive", error);
+            if wrong_key {
+                response.status = ArchivePluginStatus::PasswordInvalid;
+            }
+            Box::new(response)
         }),
         None => RarArchive::open(archive_file).map_err(|error| {
             Box::new(rar_error_response(
@@ -434,6 +456,37 @@ fn open_rar_archive(
             ))
         }),
     }
+}
+
+/// Whether the archive's headers are encrypted, asked by opening it without
+/// a password: that refuses a header-encrypted archive up front, where a
+/// wrong password only surfaces as headers that decrypt to garbage.
+fn rar_headers_are_encrypted(archive_path: &Path) -> bool {
+    fs::File::open(archive_path)
+        .is_ok_and(|file| matches!(RarArchive::open(file), Err(RarError::EncryptedArchive)))
+}
+
+/// The failures a wrong key produces on encrypted RAR data.
+///
+/// RAR5 checks the password against a stored check value and says so
+/// directly. RAR4 stores none: a wrong key decrypts to garbage that fails a
+/// header CRC, a data CRC, or the decompressor's own sanity checks. Only
+/// meaningful once it is known that a password was supplied and that what
+/// failed was encrypted — on plain data these are ordinary corruption.
+fn is_wrong_key_symptom(error: &RarError) -> bool {
+    matches!(
+        error,
+        RarError::HeaderCrcMismatch { .. }
+            | RarError::DataCrcMismatch { .. }
+            | RarError::Blake2Mismatch { .. }
+            | RarError::CorruptArchive { .. }
+            | RarError::TruncatedHeader { .. }
+            | RarError::TruncatedData { .. }
+            | RarError::InvalidVint { .. }
+            | RarError::InvalidHuffmanTable
+            | RarError::UnsupportedFilter { .. }
+            | RarError::SolidStatePoisoned { .. }
+    )
 }
 
 fn extract_rar(
@@ -558,7 +611,14 @@ fn extract_open_rar_archive(
             Ok(written) => written,
             Err(error) => {
                 let _ = fs::remove_file(&destination);
-                return rar_error_response("extract_rar", "failed to extract RAR member", error);
+                let wrong_key =
+                    password.is_some() && info.is_encrypted && is_wrong_key_symptom(&error);
+                let mut response =
+                    rar_error_response("extract_rar", "failed to extract RAR member", error);
+                if wrong_key {
+                    response.status = ArchivePluginStatus::PasswordInvalid;
+                }
+                return response;
             }
         };
 
@@ -590,24 +650,16 @@ fn extract_open_rar_archive(
     }
 }
 
-fn extract_zip(
-    archive_path: &Path,
+fn extract_zip<R: Read + Seek>(
+    source: R,
     output_dir: &Path,
     password: Option<&str>,
 ) -> ArchivePluginProcessResponse {
-    if password.is_some_and(|password| !password.is_empty()) {
-        return ArchivePluginProcessResponse {
-            status: ArchivePluginStatus::PasswordRequired,
-            message: Some("encrypted ZIP archives are not implemented yet".to_string()),
-            ..empty_response()
-        };
-    }
-
-    let archive_file = match fs::File::open(archive_path) {
-        Ok(file) => file,
-        Err(error) => return failed_response("open_zip", "failed to open ZIP archive", error),
-    };
-    let mut archive = match zip::ZipArchive::new(archive_file) {
+    // Encryption is per entry: a password is only ever applied to an entry
+    // flagged as encrypted (ZipCrypto or WinZip AES), and the zip crate reads
+    // every other entry as plaintext whatever was supplied.
+    let password = password.filter(|password| !password.is_empty());
+    let mut archive = match zip::ZipArchive::new(source) {
         Ok(archive) => archive,
         Err(error) => return failed_response("read_zip", "failed to read ZIP archive", error),
     };
@@ -630,8 +682,32 @@ fn extract_zip(
     }
 
     for index in 0..archive.len() {
-        let mut entry = match archive.by_index(index) {
+        let entry = match password {
+            Some(password) => archive.by_index_decrypt(index, password.as_bytes()),
+            None => archive.by_index(index),
+        };
+        let entry = match entry {
             Ok(entry) => entry,
+            Err(zip::result::ZipError::UnsupportedArchive(message))
+                if message == zip::result::ZipError::PASSWORD_REQUIRED =>
+            {
+                return ArchivePluginProcessResponse {
+                    status: ArchivePluginStatus::PasswordRequired,
+                    error_code: Some("read_entry".to_string()),
+                    message: Some("ZIP archive contains an encrypted entry".to_string()),
+                    ..empty_response()
+                };
+            }
+            // The password check stored with the entry (WinZip AES's
+            // verifier, or ZipCrypto's check byte) rejected the key.
+            Err(zip::result::ZipError::InvalidPassword) => {
+                return ArchivePluginProcessResponse {
+                    status: ArchivePluginStatus::PasswordInvalid,
+                    error_code: Some("read_entry".to_string()),
+                    message: Some("wrong password for an encrypted ZIP entry".to_string()),
+                    ..empty_response()
+                };
+            }
             Err(error) => return failed_response("read_entry", "failed to read ZIP entry", error),
         };
 
@@ -696,13 +772,26 @@ fn extract_zip(
                 .saturating_sub(entry.size())
                 .min(MAX_ARCHIVE_EXPANDED_BYTES),
         );
+        let encrypted = entry.encrypted();
+        let mut entry = ReadOutcome::new(entry);
         let written = match copy_limited(&mut entry, &mut output, copy_limit) {
             Ok(written) => written,
             Err(error) => {
                 let _ = fs::remove_file(&destination);
-                return failed_response("extract_file", "failed to extract ZIP entry", error);
+                let mut response =
+                    failed_response("extract_file", "failed to extract ZIP entry", error);
+                // ZipCrypto's check is one byte, so one wrong key in 256 gets
+                // past it and only fails the CRC (or inflating the garbage);
+                // WinZip AES fails its authentication code the same way. A
+                // failure while reading an encrypted entry the caller supplied
+                // a key for is that key being wrong.
+                if password.is_some() && encrypted && entry.failed {
+                    response.status = ArchivePluginStatus::PasswordInvalid;
+                }
+                return response;
             }
         };
+        let entry = entry.into_inner();
         if written > entry.size() {
             expanded_bytes = expanded_bytes
                 .saturating_sub(entry.size())
@@ -730,20 +819,16 @@ fn extract_zip(
     }
 }
 
-fn extract_sevenz(
-    archive_path: &Path,
+fn extract_sevenz<R: Read + Seek>(
+    source: R,
     output_dir: &Path,
     password: Option<&str>,
 ) -> ArchivePluginProcessResponse {
-    let archive_file = match fs::File::open(archive_path) {
-        Ok(file) => file,
-        Err(error) => return failed_response("open_7z", "failed to open 7z archive", error),
-    };
     let password_value = match password.filter(|password| !password.is_empty()) {
         Some(password) => sevenz_turbo::Password::from(password),
         None => sevenz_turbo::Password::empty(),
     };
-    let mut archive = match sevenz_turbo::ArchiveReader::new(archive_file, password_value) {
+    let mut archive = match sevenz_turbo::ArchiveReader::new(source, password_value) {
         Ok(archive) => archive,
         Err(error) => return sevenz_error_response("read_7z", error, password),
     };
@@ -785,15 +870,27 @@ fn extract_sevenz(
         };
     }
 
+    let encrypted = archive.archive().blocks.iter().any(|block| {
+        block
+            .coders
+            .iter()
+            .any(|coder| coder.encoder_method_id() == sevenz_turbo::EncoderMethod::ID_AES256_SHA256)
+    });
     let mut files = Vec::new();
     let mut actual_expanded_bytes = 0_u64;
     let mut output_paths = HashSet::new();
+    // Where a failure came from: this callback's own checks and writes, the
+    // entry's decoded bytes, or the decoder between entries.
+    let mut in_callback = false;
+    let mut entry_read_failed = false;
     let extraction = archive.for_each_entries(|entry, entry_reader| {
+        in_callback = true;
         let relative_path = safe_archive_relative_path(entry.name())
             .map_err(|response| sevenz_error_from_message(response.message.as_deref()))?;
         let destination = output_root.join(&relative_path);
         if entry.is_directory() {
             fs::create_dir_all(&destination)?;
+            in_callback = false;
             return Ok(true);
         }
         record_output_file_path(&mut output_paths, &relative_path)
@@ -804,10 +901,12 @@ fn extract_sevenz(
         }
         let mut output = fs::File::create(&destination)?;
         let copy_limit = MAX_ARCHIVE_EXPANDED_BYTES.saturating_sub(actual_expanded_bytes);
-        let written = match copy_limited(entry_reader, &mut output, copy_limit) {
+        let mut entry_reader = ReadOutcome::new(entry_reader);
+        let written = match copy_limited(&mut entry_reader, &mut output, copy_limit) {
             Ok(written) => written,
             Err(error) => {
                 let _ = fs::remove_file(&destination);
+                entry_read_failed = entry_reader.failed;
                 return Err(error.into());
             }
         };
@@ -825,11 +924,25 @@ fn extract_sevenz(
             size: Some(written),
             checksum: None,
         });
+        in_callback = false;
         Ok(true)
     });
 
     if let Err(error) = extraction {
-        return sevenz_error_response("extract_7z", error, password);
+        // 7z's AES has no password check value either. A wrong key decrypts
+        // to garbage that fails to decode or fails its CRC, and only that
+        // failure says anything: when the key was supplied for an encrypted
+        // archive, it is the key that is wrong.
+        let decode_failed = entry_read_failed || !in_callback;
+        let wrong_key = password.is_some_and(|password| !password.is_empty())
+            && encrypted
+            && decode_failed
+            && is_sevenz_wrong_key_symptom(&error);
+        let mut response = sevenz_error_response("extract_7z", error, password);
+        if wrong_key {
+            response.status = ArchivePluginStatus::PasswordInvalid;
+        }
+        return response;
     }
 
     ArchivePluginProcessResponse {
@@ -845,30 +958,50 @@ fn attach_rar_volumes(
     source_dir: &Path,
     archive_path: &Path,
 ) -> Result<(), RarError> {
-    let mut volume_paths = collect_rar_volume_paths(source_dir, archive_path)?;
-    volume_paths.sort();
-
-    for (offset, volume_path) in volume_paths.into_iter().enumerate() {
+    for (index, volume_path) in collect_rar_volume_paths(source_dir, archive_path)? {
         let volume_file = fs::File::open(&volume_path)?;
-        archive.add_volume(offset + 1, Box::new(volume_file))?;
+        archive.add_volume(index, Box::new(volume_file))?;
     }
 
     Ok(())
 }
 
+/// The later volumes of the primary archive's own set, each with its volume
+/// index relative to the primary (which is volume 0).
+///
+/// A directory can hold more than one RAR set, so a sibling only belongs when
+/// it has the primary's set name (ignoring ASCII case) under the same naming
+/// scheme: `name.partN.rar`, or the legacy `name.rar`, `name.r00`…`name.r99`,
+/// `name.s00`…, which is what RAR continues with once `.r99` is used up. The
+/// index comes from the name rather than the listing order, so a missing
+/// volume leaves a gap the extractor reports instead of shifting every later
+/// volume down by one.
 fn collect_rar_volume_paths(
     source_dir: &Path,
     archive_path: &Path,
-) -> Result<Vec<PathBuf>, RarError> {
+) -> Result<Vec<(usize, PathBuf)>, RarError> {
     let archive_file_name = archive_path
         .file_name()
         .and_then(|name| name.to_str())
         .unwrap_or_default()
         .to_ascii_lowercase();
-    let entries = fs::read_dir(source_dir)?;
-    let mut paths = Vec::new();
+    let named_volume = rar_volume_name(&archive_file_name);
+    let primary_is_a_volume_name = named_volume.is_some();
+    let primary = named_volume.unwrap_or_else(|| {
+        // An archive under a name that is not a RAR volume name at all still
+        // anchors a legacy set by its stem: `name.bin` pairs with `name.r00`.
+        let stem = archive_file_name
+            .rsplit_once('.')
+            .map_or(archive_file_name.as_str(), |(stem, _)| stem);
+        RarVolumeName {
+            modern: false,
+            set_name: stem.to_string(),
+            index: 0,
+        }
+    });
 
-    for entry in entries {
+    let mut volumes = std::collections::BTreeMap::new();
+    for entry in fs::read_dir(source_dir)? {
         let entry = entry?;
         let path = entry.path();
         if path == archive_path || !path.is_file() {
@@ -877,29 +1010,52 @@ fn collect_rar_volume_paths(
         let Some(file_name) = path.file_name().and_then(|name| name.to_str()) else {
             continue;
         };
-        if is_likely_rar_volume(&file_name.to_ascii_lowercase(), &archive_file_name) {
-            paths.push(path);
+        let Some(volume) = rar_volume_name(&file_name.to_ascii_lowercase()) else {
+            continue;
+        };
+        if volume.modern != primary.modern || volume.set_name != primary.set_name {
+            continue;
+        }
+        if volume.index == primary.index && !primary_is_a_volume_name {
+            continue;
+        }
+        if volume.index == primary.index || volumes.contains_key(&volume.index) {
+            return Err(RarError::Io(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                format!(
+                    "more than one file is RAR volume {} of this set",
+                    volume.index + 1
+                ),
+            )));
+        }
+        // A volume before the one the host named cannot be attached after it.
+        if let Some(index) = volume.index.checked_sub(primary.index) {
+            volumes.insert(index, path);
         }
     }
 
-    Ok(paths)
+    Ok(volumes.into_iter().collect())
 }
 
-fn is_likely_rar_volume(file_name: &str, first_archive_file_name: &str) -> bool {
-    if file_name == first_archive_file_name {
-        return false;
-    }
-    if file_name.ends_with(".rar") && file_name.contains(".part") {
-        return true;
-    }
-    let Some((_, extension)) = file_name.rsplit_once('.') else {
-        return false;
-    };
-    extension.len() == 3
-        && extension.starts_with('r')
-        && extension[1..]
-            .chars()
-            .all(|character| character.is_ascii_digit())
+struct RarVolumeName {
+    /// `name.partN.rar`, as opposed to the legacy `name.rar` / `name.rNN`.
+    modern: bool,
+    set_name: String,
+    index: usize,
+}
+
+/// Parse a lowercased file name as a RAR volume name, through the same
+/// scheme the PAR2 target resolution uses.
+fn rar_volume_name(file_name: &str) -> Option<RarVolumeName> {
+    let (set_name, index) = par2::rar_volume_info(file_name)?;
+    let modern = file_name
+        .strip_suffix(".rar")
+        .is_some_and(|stem| stem.len() > set_name.len());
+    Some(RarVolumeName {
+        modern,
+        set_name,
+        index,
+    })
 }
 
 fn normalize_relative_path(path: &Path) -> PathBuf {
@@ -965,6 +1121,35 @@ fn record_output_file_path(
         )));
     }
     Ok(())
+}
+
+/// A reader that remembers whether it failed, so a failed copy can tell the
+/// source's own decode or integrity failure from the copy's size limit or a
+/// failed write.
+struct ReadOutcome<R> {
+    inner: R,
+    failed: bool,
+}
+
+impl<R> ReadOutcome<R> {
+    fn new(inner: R) -> Self {
+        Self {
+            inner,
+            failed: false,
+        }
+    }
+
+    fn into_inner(self) -> R {
+        self.inner
+    }
+}
+
+impl<R: Read> Read for ReadOutcome<R> {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        let result = self.inner.read(buf);
+        self.failed |= result.is_err();
+        result
+    }
 }
 
 pub(crate) fn copy_limited<R: Read + ?Sized, W: Write>(
@@ -1109,6 +1294,20 @@ fn sevenz_error_response(
         error_code: Some(code.to_string()),
         message: Some(public_message),
         ..empty_response()
+    }
+}
+
+/// Decode and integrity failures, as opposed to a method this build lacks.
+fn is_sevenz_wrong_key_symptom(error: &sevenz_turbo::Error) -> bool {
+    use sevenz_turbo::{BlockErrorKind, Error as SevenzError};
+
+    match error {
+        SevenzError::BlockDecode { kind, .. } => !matches!(kind, BlockErrorKind::UnsupportedMethod),
+        SevenzError::ChecksumVerificationFailed
+        | SevenzError::MaybeBadPassword(_)
+        | SevenzError::Io(..)
+        | SevenzError::Other(_) => true,
+        _ => false,
     }
 }
 
@@ -1306,27 +1505,307 @@ mod tests {
         assert!(!output.path().join("subtitle.srt").exists());
     }
 
-    /// The three properties lzma-turbo's hook contract requires, against the
-    /// checksum it would compute itself.
-    #[test]
-    fn guest_crc64_xz_meets_the_hook_contract() {
-        let data = b"The quick brown fox jumps over the lazy dog, twice over.";
-        let whole = crc_fast::checksum(crc_fast::CrcAlgorithm::Crc64Xz, data);
+    fn touch_all(dir: &Path, names: &[&str]) {
+        for name in names {
+            fs::write(dir.join(name), b"").expect("write volume stub");
+        }
+    }
 
-        assert_eq!(guest_crc64_xz(0, data), whole);
-        assert_eq!(guest_crc64_xz(0, &[]), 0);
-        assert_eq!(
-            guest_crc64_xz(0x1234_5678_9ABC_DEF0, &[]),
-            0x1234_5678_9ABC_DEF0
+    fn collected(dir: &Path, primary: &str) -> Vec<(usize, String)> {
+        collect_rar_volume_paths(dir, &dir.join(primary))
+            .expect("collect RAR volumes")
+            .into_iter()
+            .map(|(index, path)| {
+                (
+                    index,
+                    path.file_name().unwrap().to_string_lossy().into_owned(),
+                )
+            })
+            .collect()
+    }
+
+    #[test]
+    fn rar_volumes_of_another_set_in_the_same_directory_are_not_attached() {
+        let dir = tempfile::tempdir().unwrap();
+        touch_all(
+            dir.path(),
+            &[
+                "Example.Show.S01E01.part1.rar",
+                "Example.Show.S01E01.part2.rar",
+                "EXAMPLE.SHOW.S01E01.PART3.RAR",
+                "Example.Show.S01E02.part1.rar",
+                "Example.Show.S01E02.part2.rar",
+                "Example.Show.S01E01.rar",
+                "Example.Show.S01E01.r00",
+                "Example.Show.S01E02.r00",
+                "Example.Show.S01E01.nfo",
+            ],
         );
-        for split in 0..=data.len() {
-            let (head, tail) = data.split_at(split);
+
+        assert_eq!(
+            collected(dir.path(), "Example.Show.S01E01.part1.rar"),
+            [
+                (1, "Example.Show.S01E01.part2.rar".to_string()),
+                (2, "EXAMPLE.SHOW.S01E01.PART3.RAR".to_string()),
+            ]
+        );
+        assert_eq!(
+            collected(dir.path(), "Example.Show.S01E01.rar"),
+            [(1, "Example.Show.S01E01.r00".to_string())]
+        );
+    }
+
+    #[test]
+    fn rar_part_volumes_are_ordered_by_number_not_by_name() {
+        let dir = tempfile::tempdir().unwrap();
+        let names = (1..=11)
+            .map(|part| format!("Example.Show.S01E01.part{part}.rar"))
+            .collect::<Vec<_>>();
+        touch_all(
+            dir.path(),
+            &names.iter().map(String::as_str).collect::<Vec<_>>(),
+        );
+
+        let volumes = collected(dir.path(), "Example.Show.S01E01.part1.rar");
+
+        assert_eq!(
+            volumes,
+            (2..=11)
+                .map(|part| (part - 1, format!("Example.Show.S01E01.part{part}.rar")))
+                .collect::<Vec<_>>()
+        );
+    }
+
+    /// Old-style naming runs `.rar`, `.r00`…`.r99`, then carries on at `.s00`.
+    #[test]
+    fn legacy_rar_volumes_continue_past_r99_into_s00() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut names = vec!["Example.Show.S01E01.rar".to_string()];
+        names.extend((0..100).map(|number| format!("Example.Show.S01E01.r{number:02}")));
+        names.extend((0..3).map(|number| format!("Example.Show.S01E01.s{number:02}")));
+        touch_all(
+            dir.path(),
+            &names.iter().map(String::as_str).collect::<Vec<_>>(),
+        );
+
+        let volumes = collected(dir.path(), "Example.Show.S01E01.rar");
+
+        assert_eq!(volumes.len(), 103);
+        assert_eq!(volumes[0], (1, "Example.Show.S01E01.r00".to_string()));
+        assert_eq!(volumes[99], (100, "Example.Show.S01E01.r99".to_string()));
+        assert_eq!(volumes[100], (101, "Example.Show.S01E01.s00".to_string()));
+        assert_eq!(volumes[102], (103, "Example.Show.S01E01.s02".to_string()));
+    }
+
+    #[test]
+    fn a_missing_rar_volume_leaves_a_gap_instead_of_renumbering() {
+        let dir = tempfile::tempdir().unwrap();
+        touch_all(
+            dir.path(),
+            &[
+                "Example.Show.S01E01.rar",
+                "Example.Show.S01E01.r00",
+                "Example.Show.S01E01.r02",
+            ],
+        );
+
+        assert_eq!(
+            collected(dir.path(), "Example.Show.S01E01.rar"),
+            [
+                (1, "Example.Show.S01E01.r00".to_string()),
+                (3, "Example.Show.S01E01.r02".to_string()),
+            ]
+        );
+    }
+
+    #[test]
+    fn two_files_claiming_one_rar_volume_are_refused() {
+        let dir = tempfile::tempdir().unwrap();
+        touch_all(
+            dir.path(),
+            &[
+                "Example.Show.S01E01.part1.rar",
+                "Example.Show.S01E01.part2.rar",
+                "Example.Show.S01E01.part02.rar",
+            ],
+        );
+
+        assert!(
+            collect_rar_volume_paths(
+                dir.path(),
+                &dir.path().join("Example.Show.S01E01.part1.rar")
+            )
+            .is_err()
+        );
+    }
+
+    /// The real multi-volume fixture, next to a second copy of itself under
+    /// another set name: extracting one set must not attach the other's
+    /// volumes, which carry the same volume numbers.
+    #[test]
+    fn a_multivolume_rar_extracts_beside_another_set() {
+        let source = tempfile::tempdir().unwrap();
+        let output = tempfile::tempdir().unwrap();
+        let fixtures = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/par2");
+        for part in 1..=6 {
+            let fixture = fixtures.join(format!("fixture_rar5_lz_plain.part{part}.rar"));
+            fs::copy(
+                &fixture,
+                source
+                    .path()
+                    .join(format!("Example.Show.S01E01.part{part}.rar")),
+            )
+            .unwrap();
+            fs::copy(
+                &fixture,
+                source
+                    .path()
+                    .join(format!("Example.Show.S01E02.part{part}.rar")),
+            )
+            .unwrap();
+        }
+
+        let response = extract_rar(
+            &source.path().join("Example.Show.S01E01.part1.rar"),
+            output.path(),
+            None,
+        );
+
+        assert_eq!(
+            response.status,
+            ArchivePluginStatus::Ok,
+            "{:?}",
+            response.message
+        );
+        assert_eq!(response.expanded_bytes, Some(1_109_271));
+    }
+
+    /// A password the host passes along for a download is not a claim that
+    /// the archive is encrypted: plain entries extract regardless.
+    #[test]
+    fn a_plain_zip_extracts_when_a_password_is_supplied() {
+        let source = tempfile::tempdir().unwrap();
+        let output = tempfile::tempdir().unwrap();
+        let archive = source.path().join("Example.Show.S01E01.zip");
+        let mut zip = zip::ZipWriter::new(fs::File::create(&archive).unwrap());
+        zip.start_file(
+            "Example.Show.S01E01.srt",
+            zip::write::SimpleFileOptions::default(),
+        )
+        .unwrap();
+        zip.write_all(b"1\n00:00:01,000 --> 00:00:02,000\nplain\n")
+            .unwrap();
+        zip.finish().unwrap();
+
+        let response = extract_archive(
+            archive.to_str().unwrap(),
+            output.path().to_str().unwrap(),
+            ArchivePluginFormat::Zip,
+            Some("Example-Password"),
+        );
+
+        assert_eq!(
+            response.status,
+            ArchivePluginStatus::Ok,
+            "{:?}",
+            response.message
+        );
+        assert_eq!(
+            fs::read(output.path().join("Example.Show.S01E01.srt")).unwrap(),
+            b"1\n00:00:01,000 --> 00:00:02,000\nplain\n"
+        );
+    }
+
+    fn rar_fixture(name: &str) -> PathBuf {
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/rar")
+            .join(name)
+    }
+
+    /// RAR4 stores no password check value, so a wrong key only shows up as
+    /// headers or data that fail their CRC. With a password supplied and
+    /// encryption present, that is a wrong password, not a damaged archive.
+    #[test]
+    fn rar4_wrong_password_is_password_invalid() {
+        for (fixture, password) in [
+            // Data-only encryption, stored.
+            ("rar4_enc_store.rar", "testpass123"),
+            // Data-only encryption, compressed: the garbage fails to unpack.
+            ("rar4_enc_lz.rar", "testpass123"),
+            // Header encryption: the headers themselves fail to decrypt.
+            ("rar4_hp_store.rar", "secretpass"),
+        ] {
+            let source = tempfile::tempdir().unwrap();
+            fs::copy(rar_fixture(fixture), source.path().join(fixture)).unwrap();
+            let archive = source.path().join(fixture);
+
+            let wrong_output = tempfile::tempdir().unwrap();
+            let wrong = extract_rar(&archive, wrong_output.path(), Some("not-the-password"));
             assert_eq!(
-                guest_crc64_xz(guest_crc64_xz(0, head), tail),
-                whole,
-                "split {split}"
+                wrong.status,
+                ArchivePluginStatus::PasswordInvalid,
+                "{fixture}: {:?}",
+                wrong.message
+            );
+            assert!(wrong.files.is_empty(), "{fixture}");
+            assert_eq!(
+                fs::read_dir(wrong_output.path()).unwrap().count(),
+                0,
+                "{fixture}: a wrong password must not leave output behind"
+            );
+
+            let missing = extract_rar(&archive, tempfile::tempdir().unwrap().path(), None);
+            assert_eq!(
+                missing.status,
+                ArchivePluginStatus::PasswordRequired,
+                "{fixture}: {:?}",
+                missing.message
+            );
+
+            let right_output = tempfile::tempdir().unwrap();
+            let right = extract_rar(&archive, right_output.path(), Some(password));
+            assert_eq!(
+                right.status,
+                ArchivePluginStatus::Ok,
+                "{fixture}: {:?}",
+                right.message
             );
         }
+    }
+
+    /// As with ZIP, a password handed along for a download does not make a
+    /// plain 7z encrypted: it is ignored and the archive extracts.
+    #[test]
+    fn a_plain_7z_extracts_when_a_password_is_supplied() {
+        let source = tempfile::tempdir().unwrap();
+        let output = tempfile::tempdir().unwrap();
+        let archive = source.path().join("Example.Show.S01E01.7z");
+        let mut writer = sevenz_turbo::ArchiveWriter::create(&archive).unwrap();
+        writer
+            .push_archive_entry(
+                sevenz_turbo::ArchiveEntry::new_file("Example.Show.S01E01.srt"),
+                Some(b"1\n00:00:01,000 --> 00:00:02,000\nplain\n".as_slice()),
+            )
+            .unwrap();
+        writer.finish().unwrap();
+
+        let response = extract_archive(
+            archive.to_str().unwrap(),
+            output.path().to_str().unwrap(),
+            ArchivePluginFormat::SevenZip,
+            Some("Example-Password"),
+        );
+
+        assert_eq!(
+            response.status,
+            ArchivePluginStatus::Ok,
+            "{:?}",
+            response.message
+        );
+        assert_eq!(
+            fs::read(output.path().join("Example.Show.S01E01.srt")).unwrap(),
+            b"1\n00:00:01,000 --> 00:00:02,000\nplain\n"
+        );
     }
 
     #[test]
@@ -1645,5 +2124,634 @@ mod par2_tests {
                 .collect::<Vec<_>>(),
             ["episode.mkv"]
         );
+    }
+}
+
+/// Byte-split 7z and ZIP sets, end to end through [`extract_archive`].
+#[cfg(test)]
+mod split_volume_tests {
+    use super::*;
+    use std::io::Cursor;
+
+    fn payload(len: usize) -> Vec<u8> {
+        let mut state = 0x5EED_u64 | 0x9E37_79B9_7F4A_7C15;
+        let mut out = Vec::with_capacity(len);
+        while out.len() < len {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            out.extend_from_slice(&state.wrapping_mul(0x2545_F491_4F6C_DD1D).to_le_bytes());
+        }
+        out.truncate(len);
+        out
+    }
+
+    fn sevenz_bytes(entry: &str, contents: &[u8]) -> Vec<u8> {
+        let mut archive =
+            sevenz_turbo::ArchiveWriter::new(Cursor::new(Vec::new())).expect("create 7z fixture");
+        archive
+            .push_archive_entry(sevenz_turbo::ArchiveEntry::new_file(entry), Some(contents))
+            .expect("write 7z fixture entry");
+        archive.finish().expect("finish 7z fixture").into_inner()
+    }
+
+    fn zip_bytes(entry: &str, contents: &[u8]) -> Vec<u8> {
+        let mut zip = zip::ZipWriter::new(Cursor::new(Vec::new()));
+        zip.start_file(entry, zip::write::SimpleFileOptions::default())
+            .expect("start ZIP entry");
+        zip.write_all(contents).expect("write ZIP payload");
+        zip.finish().expect("finish ZIP fixture").into_inner()
+    }
+
+    /// Cut `bytes` into `parts` roughly equal files named `{set_name}.001`…
+    fn split_into(dir: &Path, set_name: &str, bytes: &[u8], parts: usize) -> Vec<PathBuf> {
+        let chunk = bytes.len().div_ceil(parts);
+        bytes
+            .chunks(chunk)
+            .enumerate()
+            .map(|(index, part)| {
+                let path = dir.join(format!("{set_name}.{:03}", index + 1));
+                fs::write(&path, part).expect("write split part");
+                path
+            })
+            .collect()
+    }
+
+    fn extract(
+        source: &Path,
+        output: &Path,
+        archive: &str,
+        format: ArchivePluginFormat,
+    ) -> ArchivePluginProcessResponse {
+        extract_archive(
+            source.join(archive).to_str().unwrap(),
+            output.to_str().unwrap(),
+            format,
+            None,
+        )
+    }
+
+    #[test]
+    fn a_split_7z_extracts_as_one_archive() {
+        let source = tempfile::tempdir().unwrap();
+        let output = tempfile::tempdir().unwrap();
+        let contents = payload(96 * 1024);
+        split_into(
+            source.path(),
+            "Example.Show.S01E01.7z",
+            &sevenz_bytes("Example.Show.S01E01.mkv", &contents),
+            3,
+        );
+
+        let response = extract(
+            source.path(),
+            output.path(),
+            "Example.Show.S01E01.7z.001",
+            ArchivePluginFormat::SevenZip,
+        );
+
+        assert_eq!(
+            response.status,
+            ArchivePluginStatus::Ok,
+            "{:?}",
+            response.message
+        );
+        assert_eq!(
+            fs::read(output.path().join("Example.Show.S01E01.mkv")).unwrap(),
+            contents
+        );
+    }
+
+    #[test]
+    fn a_split_zip_extracts_as_one_archive() {
+        let source = tempfile::tempdir().unwrap();
+        let output = tempfile::tempdir().unwrap();
+        let contents = payload(96 * 1024);
+        split_into(
+            source.path(),
+            "Example.Show.S01E01.zip",
+            &zip_bytes("Example.Show.S01E01.mkv", &contents),
+            4,
+        );
+
+        let response = extract(
+            source.path(),
+            output.path(),
+            "Example.Show.S01E01.zip.001",
+            ArchivePluginFormat::Zip,
+        );
+
+        assert_eq!(
+            response.status,
+            ArchivePluginStatus::Ok,
+            "{:?}",
+            response.message
+        );
+        assert_eq!(
+            fs::read(output.path().join("Example.Show.S01E01.mkv")).unwrap(),
+            contents
+        );
+    }
+
+    /// A bare `name.001` says nothing about its contents, so the joined
+    /// stream's signature wins over whichever format the host guessed.
+    #[test]
+    fn a_bare_numbered_set_extracts_by_its_signature() {
+        for (bytes, host_format) in [
+            (
+                sevenz_bytes("Example.Show.S01E01.mkv", &payload(40_000)),
+                ArchivePluginFormat::Zip,
+            ),
+            (
+                zip_bytes("Example.Show.S01E01.mkv", &payload(40_000)),
+                ArchivePluginFormat::SevenZip,
+            ),
+        ] {
+            let source = tempfile::tempdir().unwrap();
+            let output = tempfile::tempdir().unwrap();
+            split_into(source.path(), "Example.Show.S01E01", &bytes, 2);
+
+            let response = extract(
+                source.path(),
+                output.path(),
+                "Example.Show.S01E01.001",
+                host_format,
+            );
+
+            assert_eq!(
+                response.status,
+                ArchivePluginStatus::Ok,
+                "{:?}",
+                response.message
+            );
+            assert_eq!(
+                fs::read(output.path().join("Example.Show.S01E01.mkv")).unwrap(),
+                payload(40_000)
+            );
+        }
+    }
+
+    #[test]
+    fn a_split_set_with_a_missing_middle_volume_names_it() {
+        let source = tempfile::tempdir().unwrap();
+        let output = tempfile::tempdir().unwrap();
+        let parts = split_into(
+            source.path(),
+            "Example.Show.S01E01.7z",
+            &sevenz_bytes("Example.Show.S01E01.mkv", &payload(96 * 1024)),
+            3,
+        );
+        fs::remove_file(&parts[1]).unwrap();
+
+        let response = extract(
+            source.path(),
+            output.path(),
+            "Example.Show.S01E01.7z.001",
+            ArchivePluginFormat::SevenZip,
+        );
+
+        assert_eq!(response.status, ArchivePluginStatus::Failed);
+        assert_eq!(response.error_code.as_deref(), Some("missing_volume"));
+        assert!(
+            response
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("'Example.Show.S01E01.7z.002'")),
+            "{:?}",
+            response.message
+        );
+        assert!(!output.path().join("Example.Show.S01E01.mkv").exists());
+    }
+
+    /// A recovery set over the parts of a split archive protects an archive,
+    /// not plain media: the damaged part is repaired in the scratch copy and
+    /// the joined parts are extracted from there.
+    #[test]
+    fn a_damaged_split_set_is_repaired_then_joined() {
+        use par2_rs::{BlockSizing, Par2Creator, Par2CreatorOptions, RecoveryAmount};
+        use std::io::{Seek, SeekFrom};
+
+        let source = tempfile::tempdir().unwrap();
+        let output = tempfile::tempdir().unwrap();
+        let contents = payload(96 * 1024);
+        let parts = split_into(
+            source.path(),
+            "Example.Show.S01E01.7z",
+            &sevenz_bytes("Example.Show.S01E01.mkv", &contents),
+            3,
+        );
+        let mut options = Par2CreatorOptions::with_output(
+            source.path().join("recovery"),
+            Some(source.path().to_path_buf()),
+            parts.clone(),
+        );
+        options.block_sizing = BlockSizing::Bytes(4_096);
+        options.recovery_amount = RecoveryAmount::Count(4);
+        let creator = Par2Creator::new(options);
+        let plan = creator.plan().expect("plan PAR2 creation");
+        creator.create(&plan).expect("create PAR2 recovery set");
+
+        let mut damaged = fs::OpenOptions::new().write(true).open(&parts[1]).unwrap();
+        damaged.seek(SeekFrom::Start(4_096)).unwrap();
+        damaged.write_all(&[0xA5; 4_096]).unwrap();
+        drop(damaged);
+
+        let response = extract(
+            source.path(),
+            output.path(),
+            "Example.Show.S01E01.7z.001",
+            ArchivePluginFormat::SevenZip,
+        );
+
+        assert_eq!(
+            response.status,
+            ArchivePluginStatus::Ok,
+            "{:?}",
+            response.message
+        );
+        assert_eq!(
+            response
+                .files
+                .iter()
+                .map(|file| file.relative_path.as_str())
+                .collect::<Vec<_>>(),
+            ["Example.Show.S01E01.mkv"]
+        );
+        assert_eq!(
+            fs::read(output.path().join("Example.Show.S01E01.mkv")).unwrap(),
+            contents
+        );
+    }
+}
+
+/// Encrypted ZIP and 7z entries, end to end through [`extract_archive`].
+#[cfg(test)]
+mod encryption_tests {
+    use super::*;
+    use sevenz_turbo::EncoderConfiguration;
+    use sevenz_turbo::encoder_options::{
+        AesEncoderOptions, Bzip2Options, DeflateOptions, Lzma2Options, LzmaOptions, PpmdOptions,
+    };
+    use std::io::Cursor;
+    use zip::AesMode;
+    use zip::unstable::write::FileOptionsExt;
+
+    const PASSWORD: &str = "example-pass-42";
+    const NON_ASCII_PASSWORD: &str = "pässwörd-例";
+    const ENTRY: &str = "Example.Show.S01E01.mkv";
+
+    /// Half text, half noise: every codec gets something to compress and
+    /// something it cannot.
+    fn payload() -> Vec<u8> {
+        let mut out = b"Example.Show.S01E01 synthetic payload line\n".repeat(700);
+        let mut state = 0x5EED_u64 | 0x9E37_79B9_7F4A_7C15;
+        while out.len() < 60_000 {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            out.extend_from_slice(&state.wrapping_mul(0x2545_F491_4F6C_DD1D).to_le_bytes());
+        }
+        out
+    }
+
+    #[derive(Clone, Copy, Debug)]
+    enum ZipCipher {
+        Aes(AesMode),
+        ZipCrypto,
+    }
+
+    const ZIP_CIPHERS: [ZipCipher; 4] = [
+        ZipCipher::Aes(AesMode::Aes128),
+        ZipCipher::Aes(AesMode::Aes192),
+        ZipCipher::Aes(AesMode::Aes256),
+        ZipCipher::ZipCrypto,
+    ];
+
+    /// `(entry name, contents, cipher)`; `None` stores the entry in the clear.
+    fn zip_bytes(entries: &[(&str, &[u8], Option<ZipCipher>)], password: &str) -> Vec<u8> {
+        let mut zip = zip::ZipWriter::new(Cursor::new(Vec::new()));
+        for (name, contents, cipher) in entries {
+            let options = zip::write::SimpleFileOptions::default()
+                .compression_method(zip::CompressionMethod::Deflated);
+            let options = match cipher {
+                None => options,
+                Some(ZipCipher::Aes(mode)) => options.with_aes_encryption(*mode, password),
+                Some(ZipCipher::ZipCrypto) => {
+                    options.with_deprecated_encryption(password.as_bytes())
+                }
+            };
+            zip.start_file(*name, options).expect("start ZIP entry");
+            zip.write_all(contents).expect("write ZIP payload");
+        }
+        zip.finish().expect("finish ZIP fixture").into_inner()
+    }
+
+    fn sevenz_bytes(codec: EncoderConfiguration, password: &str, encrypt_header: bool) -> Vec<u8> {
+        let mut archive =
+            sevenz_turbo::ArchiveWriter::new(Cursor::new(Vec::new())).expect("create 7z fixture");
+        archive.set_content_methods(vec![
+            AesEncoderOptions::new(sevenz_turbo::Password::new(password)).into(),
+            codec,
+        ]);
+        archive.set_encrypt_header(encrypt_header);
+        archive
+            .push_archive_entry(
+                sevenz_turbo::ArchiveEntry::new_file(ENTRY),
+                Some(payload().as_slice()),
+            )
+            .expect("write 7z fixture entry");
+        archive.finish().expect("finish 7z fixture").into_inner()
+    }
+
+    fn extract(
+        bytes: &[u8],
+        name: &str,
+        format: ArchivePluginFormat,
+        password: Option<&str>,
+    ) -> (ArchivePluginProcessResponse, tempfile::TempDir) {
+        let source = tempfile::tempdir().unwrap();
+        let output = tempfile::tempdir().unwrap();
+        fs::write(source.path().join(name), bytes).unwrap();
+        let response = extract_archive(
+            source.path().join(name).to_str().unwrap(),
+            output.path().to_str().unwrap(),
+            format,
+            password,
+        );
+        (response, output)
+    }
+
+    fn assert_extracted(
+        response: &ArchivePluginProcessResponse,
+        output: &Path,
+        expected: &[(&str, &[u8])],
+        label: &str,
+    ) {
+        assert_eq!(
+            response.status,
+            ArchivePluginStatus::Ok,
+            "{label}: {:?}",
+            response.message
+        );
+        assert_eq!(response.files.len(), expected.len(), "{label}");
+        for (name, contents) in expected {
+            assert_eq!(fs::read(output.join(name)).unwrap(), *contents, "{label}");
+        }
+    }
+
+    /// Nothing is reported and nothing is left behind, and the reply never
+    /// echoes the key it was given.
+    fn assert_refused(
+        response: &ArchivePluginProcessResponse,
+        output: &Path,
+        status: ArchivePluginStatus,
+        password: Option<&str>,
+        label: &str,
+    ) {
+        assert_eq!(response.status, status, "{label}: {:?}", response.message);
+        assert!(response.files.is_empty(), "{label}: {:?}", response.files);
+        assert!(
+            !output.join(ENTRY).exists(),
+            "{label}: partial output left behind"
+        );
+        if let (Some(password), Some(message)) = (password, response.message.as_deref()) {
+            assert!(
+                !message.contains(password),
+                "{label}: message echoes the key"
+            );
+        }
+    }
+
+    #[test]
+    fn encrypted_zip_entries_extract_only_with_the_right_password() {
+        let contents = payload();
+        for cipher in ZIP_CIPHERS {
+            let label = format!("{cipher:?}");
+            let bytes = zip_bytes(&[(ENTRY, &contents, Some(cipher))], PASSWORD);
+
+            let (right, output) = extract(
+                &bytes,
+                "sample.zip",
+                ArchivePluginFormat::Zip,
+                Some(PASSWORD),
+            );
+            assert_extracted(&right, output.path(), &[(ENTRY, &contents)], &label);
+
+            let (wrong, output) = extract(
+                &bytes,
+                "sample.zip",
+                ArchivePluginFormat::Zip,
+                Some("not-the-password"),
+            );
+            assert_refused(
+                &wrong,
+                output.path(),
+                ArchivePluginStatus::PasswordInvalid,
+                Some("not-the-password"),
+                &label,
+            );
+
+            let (missing, output) = extract(&bytes, "sample.zip", ArchivePluginFormat::Zip, None);
+            assert_refused(
+                &missing,
+                output.path(),
+                ArchivePluginStatus::PasswordRequired,
+                None,
+                &label,
+            );
+        }
+    }
+
+    /// ZipCrypto checks a key against a single byte, so one wrong key in 256
+    /// gets past it; the entry then fails its CRC, and that is reported as the
+    /// wrong key it is rather than as a damaged archive.
+    #[test]
+    fn a_wrong_zipcrypto_key_that_passes_the_check_byte_is_password_invalid() {
+        let contents = payload();
+        let bytes = zip_bytes(&[(ENTRY, &contents, Some(ZipCipher::ZipCrypto))], PASSWORD);
+        let mut archive = zip::ZipArchive::new(Cursor::new(bytes.as_slice())).unwrap();
+        let lucky = (0..100_000)
+            .map(|attempt| format!("wrong-{attempt}"))
+            .find(|candidate| archive.by_index_decrypt(0, candidate.as_bytes()).is_ok())
+            .expect("some wrong key passes a one-byte check");
+
+        let (response, output) =
+            extract(&bytes, "sample.zip", ArchivePluginFormat::Zip, Some(&lucky));
+        assert_refused(
+            &response,
+            output.path(),
+            ArchivePluginStatus::PasswordInvalid,
+            Some(&lucky),
+            "ZipCrypto check-byte collision",
+        );
+    }
+
+    #[test]
+    fn a_zip_mixing_plain_and_encrypted_entries_extracts_both() {
+        let plain = b"Example.Show.S01E01 plain notes\n".as_slice();
+        let secret = payload();
+        let bytes = zip_bytes(
+            &[
+                ("Example.Show.S01E01.nfo", plain, None),
+                (ENTRY, &secret, Some(ZipCipher::Aes(AesMode::Aes256))),
+            ],
+            PASSWORD,
+        );
+
+        let (right, output) = extract(
+            &bytes,
+            "sample.zip",
+            ArchivePluginFormat::Zip,
+            Some(PASSWORD),
+        );
+        assert_extracted(
+            &right,
+            output.path(),
+            &[("Example.Show.S01E01.nfo", plain), (ENTRY, &secret)],
+            "mixed ZIP",
+        );
+
+        let (missing, output) = extract(&bytes, "sample.zip", ArchivePluginFormat::Zip, None);
+        assert_refused(
+            &missing,
+            output.path(),
+            ArchivePluginStatus::PasswordRequired,
+            None,
+            "mixed ZIP without a password",
+        );
+    }
+
+    /// ZIP keys are the password's UTF-8 bytes, as 7-Zip and Info-ZIP on a
+    /// UTF-8 system write them.
+    #[test]
+    fn a_non_ascii_zip_password_extracts() {
+        let contents = payload();
+        for cipher in [ZipCipher::Aes(AesMode::Aes256), ZipCipher::ZipCrypto] {
+            let bytes = zip_bytes(&[(ENTRY, &contents, Some(cipher))], NON_ASCII_PASSWORD);
+            let (response, output) = extract(
+                &bytes,
+                "sample.zip",
+                ArchivePluginFormat::Zip,
+                Some(NON_ASCII_PASSWORD),
+            );
+            assert_extracted(
+                &response,
+                output.path(),
+                &[(ENTRY, &contents)],
+                &format!("{cipher:?}"),
+            );
+        }
+    }
+
+    /// Both 7z layouts: the header encrypted along with the data, and the
+    /// data alone behind a plain header that lists the entries.
+    #[test]
+    fn encrypted_7z_extracts_only_with_the_right_password() {
+        let contents = payload();
+        for encrypt_header in [true, false] {
+            let label = format!("encrypted header: {encrypt_header}");
+            let bytes = sevenz_bytes(Lzma2Options::default().into(), PASSWORD, encrypt_header);
+
+            let (right, output) = extract(
+                &bytes,
+                "sample.7z",
+                ArchivePluginFormat::SevenZip,
+                Some(PASSWORD),
+            );
+            assert_extracted(&right, output.path(), &[(ENTRY, &contents)], &label);
+
+            let (wrong, output) = extract(
+                &bytes,
+                "sample.7z",
+                ArchivePluginFormat::SevenZip,
+                Some("not-the-password"),
+            );
+            assert_refused(
+                &wrong,
+                output.path(),
+                ArchivePluginStatus::PasswordInvalid,
+                Some("not-the-password"),
+                &label,
+            );
+
+            let (missing, output) =
+                extract(&bytes, "sample.7z", ArchivePluginFormat::SevenZip, None);
+            assert_refused(
+                &missing,
+                output.path(),
+                ArchivePluginStatus::PasswordRequired,
+                None,
+                &label,
+            );
+        }
+    }
+
+    /// A wrong key fails differently behind each codec — a stored entry only
+    /// fails its CRC, the others usually fail to decode first — and each is
+    /// still the wrong key.
+    #[test]
+    fn every_7z_codec_decrypts_and_refuses_a_wrong_key() {
+        let contents = payload();
+        let codecs: [(&str, EncoderConfiguration); 6] = [
+            ("LZMA2", Lzma2Options::default().into()),
+            ("LZMA", LzmaOptions::default().into()),
+            ("BZip2", Bzip2Options::default().into()),
+            ("Deflate", DeflateOptions::default().into()),
+            ("PPMd", PpmdOptions::default().into()),
+            (
+                "stored",
+                EncoderConfiguration::new(sevenz_turbo::EncoderMethod::COPY),
+            ),
+        ];
+        for (label, codec) in codecs {
+            let bytes = sevenz_bytes(codec, PASSWORD, false);
+
+            let (right, output) = extract(
+                &bytes,
+                "sample.7z",
+                ArchivePluginFormat::SevenZip,
+                Some(PASSWORD),
+            );
+            assert_extracted(&right, output.path(), &[(ENTRY, &contents)], label);
+
+            let (wrong, output) = extract(
+                &bytes,
+                "sample.7z",
+                ArchivePluginFormat::SevenZip,
+                Some("not-the-password"),
+            );
+            assert_refused(
+                &wrong,
+                output.path(),
+                ArchivePluginStatus::PasswordInvalid,
+                Some("not-the-password"),
+                label,
+            );
+        }
+    }
+
+    /// 7z keys are the password's UTF-16LE code units.
+    #[test]
+    fn a_non_ascii_7z_password_extracts() {
+        let contents = payload();
+        for encrypt_header in [true, false] {
+            let bytes = sevenz_bytes(
+                Lzma2Options::default().into(),
+                NON_ASCII_PASSWORD,
+                encrypt_header,
+            );
+            let (response, output) = extract(
+                &bytes,
+                "sample.7z",
+                ArchivePluginFormat::SevenZip,
+                Some(NON_ASCII_PASSWORD),
+            );
+            assert_extracted(
+                &response,
+                output.path(),
+                &[(ENTRY, &contents)],
+                &format!("encrypted header: {encrypt_header}"),
+            );
+        }
     }
 }

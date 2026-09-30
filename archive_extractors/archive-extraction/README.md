@@ -9,7 +9,7 @@ Current support:
 - ZIP extraction for stored/deflated archives
 - 7z extraction through `sevenz-turbo` for LZMA/LZMA2, AES, BZip2, Deflate, PPMD, and Copy methods, using the host's AES/CRC imports
 - RAR extraction through `unrar-rs` using the host's AES/CRC imports
-- XZ stream extraction through `lzma-turbo`, using the host's CRC-32 import
+- XZ stream extraction through `lzma-turbo`, using the host's CRC-32 and CRC-64 imports
 - PAR2 verification, placement normalization, and repair through `par2-rs`
 
 Zstandard-compressed 7z archives are not supported yet.
@@ -17,17 +17,19 @@ Zstandard-compressed 7z archives are not supported yet.
 ## Artifact model
 
 The plugin is a **WASI Preview 2 component** implementing
-`scryer:archive/archive-extractor@1.0.0` (world vendored at `wit/archive.wit`).
+`scryer:archive/archive-extractor@1.1.0` (world vendored at `wit/archive.wit`).
 It exports `describe` and `process`, both carrying UTF-8 JSON, and imports one
-`crypto` interface for AES-CBC and CRC-32. WASI Preview 2 comes from the host's
+`crypto` interface for AES-CBC, CRC-32, and the catalog `crc` function. The
+1.1.0 world needs Scryer 0.21.10 or newer, which is the release's
+`min_scryer_version`; older hosts stay on 1.0.x. WASI Preview 2 comes from the host's
 linker, which is how the guest sees its preopened directories: a read-only
 source, a writable output, and a private `TMPDIR` scratch.
 
 Build target: `wasm32-wasip2`. Every codec is pure Rust, so the build needs no
 C toolchain or WASI SDK.
 
-The `crypto` import serves CRC-32 only. CRC-64/XZ (the default `xz` check) and
-the SHA-256 check are computed in the guest.
+CRC-32 goes to the import's `crc32`, and CRC-64/XZ (the default `xz` check) to
+`crc(crc64-xz, ..)`. The xz SHA-256 check is computed in the guest.
 
 The earlier `wasm32-wasip1` command artifact is gone. Scryer's archive host is
 component-only and rejects a core wasm module with an upgrade diagnostic, so

@@ -485,5 +485,6 @@ fn test_request() -> PluginNotificationRequest {
         application_update: None,
         manual_interaction: None,
         media_request: None,
+        title_move: None,
     }
 }

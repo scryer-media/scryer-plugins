@@ -4,8 +4,8 @@
 //! behave" but "this exact `.wasm` runs under Scryer's archive host". It
 //! therefore builds the shipping `wasm32-wasip2` component and drives it the
 //! way `crates/scryer-plugins/src/wasmtime_host/archive_component_host.rs`
-//! does: the world is linked as `scryer:archive/archive-extractor@1.0.0`, the
-//! `crypto` interface is served by the same AES-CBC and CRC-32 cores the host
+//! does: the world is linked as `scryer:archive/archive-extractor@1.1.0`, the
+//! `crypto` interface is served by the same AES-CBC and CRC cores the host
 //! uses, WASI Preview 2 comes from the linker, and the sandbox is exactly the
 //! host's — a read-only source preopen, a writable output preopen, and a
 //! private `TMPDIR` scratch dir.
@@ -33,13 +33,15 @@ use wasmtime_wasi::{FsPerms, WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
 
 mod archive_world {
     wasmtime::component::bindgen!({
-        world: "scryer:archive/archive-extractor@1.0.0",
+        world: "scryer:archive/archive-extractor@1.1.0",
         path: "wit",
     });
 }
 
 use archive_world::ArchiveExtractor;
-use archive_world::scryer::archive::crypto::{AesError, Host as CryptoHost};
+use archive_world::scryer::archive::crypto::{
+    AesError, CrcAlgorithm, CrcError, Host as CryptoHost,
+};
 
 /// The host's fixed guest paths (`crates/scryer-plugins/src/archive_adapter.rs`)
 /// and its scratch mount (`wasmtime_host/sandbox.rs`).
@@ -47,10 +49,13 @@ const GUEST_SOURCE_ROOT: &str = "/scryer/source";
 const GUEST_OUTPUT_ROOT: &str = "/scryer/output";
 const GUEST_SCRATCH_ROOT: &str = "/tmp";
 const RAR_PASSWORD: &str = "testpass123";
+const RAR4_HP_PASSWORD: &str = "secretpass";
 const SEVENZ_PASSWORD: &str = "sevenz-pass-42";
+const ZIP_PASSWORD: &str = "zip-pass-42";
 
 static AES_CALLS: AtomicUsize = AtomicUsize::new(0);
 static CRC_CALLS: AtomicUsize = AtomicUsize::new(0);
+static CRC64_XZ_CALLS: AtomicUsize = AtomicUsize::new(0);
 static PLUGIN_WASM: OnceLock<PathBuf> = OnceLock::new();
 
 #[test]
@@ -67,9 +72,12 @@ fn archive_extraction_release_wasm_conforms_to_host_contract() {
     assert_sevenz_rejects_unsafe_paths(&wasm_path);
     assert_sevenz_rejects_duplicate_paths(&wasm_path);
     assert_encrypted_sevenz_uses_the_crypto_import(&wasm_path);
+    assert_data_only_encrypted_sevenz_password_states(&wasm_path);
     assert_xz_extracts(&wasm_path);
     assert_zip_extracts(&wasm_path);
+    assert_encrypted_zip_password_states(&wasm_path);
     assert_zip_path_escape_is_rejected(&wasm_path);
+    assert_split_archives_are_joined(&wasm_path);
     assert_par2_repairs_a_damaged_archive_before_extracting(&wasm_path);
     assert_par2_emits_repaired_plain_files(&wasm_path);
     assert_par2_unrepairable_damage_fails(&wasm_path);
@@ -95,7 +103,7 @@ fn assert_artifact_is_a_component(wasm_path: &Path) {
 /// The exact check `validate_archive_component` performs on install: the
 /// artifact compiles, every import the guest emits is satisfiable from WASI
 /// Preview 2 plus the world's `crypto` interface, and its exports match
-/// `scryer:archive/archive-extractor@1.0.0`.
+/// `scryer:archive/archive-extractor@1.1.0`.
 fn assert_world_conformance(wasm_path: &Path) {
     let engine = Engine::default();
     let component = Component::from_file(&engine, wasm_path).expect("compile archive component");
@@ -106,7 +114,7 @@ fn assert_world_conformance(wasm_path: &Path) {
     linker
         .instantiate_pre(&component)
         .and_then(archive_world::ArchiveExtractorPre::new)
-        .expect("the artifact must satisfy scryer:archive/archive-extractor@1.0.0");
+        .expect("the artifact must satisfy scryer:archive/archive-extractor@1.1.0");
 }
 
 /// `describe` is a world export now, not an argv-driven stdout dump: the host
@@ -203,9 +211,11 @@ fn assert_encrypted_rars_use_the_crypto_import(wasm_path: &Path) {
     let source = stage_files(&[
         fixture_path("rar/rar4_enc_store.rar"),
         fixture_path("rar/rar5_enc_lz.rar"),
+        fixture_path("rar/rar4_hp_store.rar"),
     ]);
     let before = host_call_counts();
     assert_encrypted_rar4_password_states(wasm_path, source.path());
+    assert_header_encrypted_rar4_password_states(wasm_path, source.path());
     assert_encrypted_rar5_password_states(wasm_path, source.path());
     let after = host_call_counts();
 
@@ -241,7 +251,14 @@ fn assert_encrypted_rar4_password_states(wasm_path: &Path, source: &Path) {
         ArchivePluginFormat::Rar,
         Some("not-the-password"),
     );
-    assert_eq!(wrong.status, ArchivePluginStatus::Failed);
+    // RAR4 has no password check value: the wrong key shows up as a data CRC
+    // mismatch, which with a password supplied is a wrong password.
+    assert_eq!(
+        wrong.status,
+        ArchivePluginStatus::PasswordInvalid,
+        "RAR4 wrong password: {:?}",
+        wrong.message
+    );
 
     let output = tempfile::tempdir().expect("create RAR4 output dir");
     let correct = extract_archive(
@@ -263,6 +280,66 @@ fn assert_encrypted_rar4_password_states(wasm_path: &Path, source: &Path) {
         output.path(),
         &fs::read(fixture_path("rar/small.txt")).expect("read RAR4 plaintext"),
         "encrypted RAR4",
+    );
+}
+
+/// `rar -hp` on RAR4: the headers are encrypted too, so a wrong key is
+/// caught while reading the member list rather than while unpacking it.
+fn assert_header_encrypted_rar4_password_states(wasm_path: &Path, source: &Path) {
+    let archive = "rar4_hp_store.rar";
+    let missing_output = tempfile::tempdir().expect("create no-password RAR4 -hp output dir");
+    let missing = extract_archive(
+        wasm_path,
+        source,
+        missing_output.path(),
+        archive,
+        ArchivePluginFormat::Rar,
+        None,
+    );
+    assert_eq!(
+        missing.status,
+        ArchivePluginStatus::PasswordRequired,
+        "RAR4 -hp without a password: {:?}",
+        missing.message
+    );
+
+    let wrong_output = tempfile::tempdir().expect("create wrong-password RAR4 -hp output dir");
+    let wrong = extract_archive(
+        wasm_path,
+        source,
+        wrong_output.path(),
+        archive,
+        ArchivePluginFormat::Rar,
+        Some("not-the-password"),
+    );
+    assert_eq!(
+        wrong.status,
+        ArchivePluginStatus::PasswordInvalid,
+        "RAR4 -hp wrong password: {:?}",
+        wrong.message
+    );
+    assert!(wrong.files.is_empty());
+
+    let output = tempfile::tempdir().expect("create RAR4 -hp output dir");
+    let correct = extract_archive(
+        wasm_path,
+        source,
+        output.path(),
+        archive,
+        ArchivePluginFormat::Rar,
+        Some(RAR4_HP_PASSWORD),
+    );
+    assert_eq!(
+        correct.status,
+        ArchivePluginStatus::Ok,
+        "RAR4 -hp: {:?}",
+        correct.message
+    );
+    assert_response_contains_file_bytes(
+        &correct,
+        output.path(),
+        b"This is a test file for RAR4 header encryption.\n",
+        "header-encrypted RAR4",
     );
 }
 
@@ -338,6 +415,97 @@ fn assert_zip_extracts(wasm_path: &Path) {
         response.message
     );
     assert_response_contains_file_bytes(&response, output.path(), b"hello from zip\n", "ZIP");
+
+    // The host passes a download's password along without knowing whether
+    // the archive needs one; a plain archive ignores it.
+    let output = tempfile::tempdir().expect("create password ZIP output dir");
+    let response = extract_archive(
+        wasm_path,
+        source.path(),
+        output.path(),
+        "sample.zip",
+        ArchivePluginFormat::Zip,
+        Some("unneeded-password"),
+    );
+    assert_eq!(
+        response.status,
+        ArchivePluginStatus::Ok,
+        "plain ZIP with a password: {:?}",
+        response.message
+    );
+    assert_response_contains_file_bytes(&response, output.path(), b"hello from zip\n", "ZIP");
+}
+
+/// WinZip AES and ZipCrypto decrypt inside the guest (the zip crate's own
+/// ciphers), so this is the artifact's only proof that they were built in.
+fn assert_encrypted_zip_password_states(wasm_path: &Path) {
+    use zip::AesMode;
+    use zip::unstable::write::FileOptionsExt;
+
+    let payload = b"hello from encrypted zip\n";
+    for (label, mode) in [
+        ("AES-128", Some(AesMode::Aes128)),
+        ("AES-192", Some(AesMode::Aes192)),
+        ("AES-256", Some(AesMode::Aes256)),
+        ("ZipCrypto", None),
+    ] {
+        let source = tempfile::tempdir().expect("create encrypted ZIP source dir");
+        let file = fs::File::create(source.path().join("encrypted.zip"))
+            .expect("create encrypted ZIP fixture");
+        let mut zip = zip::ZipWriter::new(file);
+        let options = zip::write::SimpleFileOptions::default()
+            .compression_method(zip::CompressionMethod::Deflated);
+        let options = match mode {
+            Some(mode) => options.with_aes_encryption(mode, ZIP_PASSWORD),
+            None => options.with_deprecated_encryption(ZIP_PASSWORD.as_bytes()),
+        };
+        zip.start_file("secret.txt", options)
+            .expect("start encrypted ZIP entry");
+        zip.write_all(payload).expect("write encrypted ZIP payload");
+        zip.finish().expect("finish encrypted ZIP fixture");
+
+        for (password, expected) in [
+            (None, ArchivePluginStatus::PasswordRequired),
+            (
+                Some("not-the-password"),
+                ArchivePluginStatus::PasswordInvalid,
+            ),
+        ] {
+            let output = tempfile::tempdir().expect("create encrypted ZIP output dir");
+            let response = extract_archive(
+                wasm_path,
+                source.path(),
+                output.path(),
+                "encrypted.zip",
+                ArchivePluginFormat::Zip,
+                password,
+            );
+            assert_eq!(
+                response.status, expected,
+                "{label} ZIP with {password:?}: {:?}",
+                response.message
+            );
+            assert!(response.files.is_empty());
+            assert!(!output.path().join("secret.txt").exists());
+        }
+
+        let output = tempfile::tempdir().expect("create encrypted ZIP output dir");
+        let response = extract_archive(
+            wasm_path,
+            source.path(),
+            output.path(),
+            "encrypted.zip",
+            ArchivePluginFormat::Zip,
+            Some(ZIP_PASSWORD),
+        );
+        assert_eq!(
+            response.status,
+            ArchivePluginStatus::Ok,
+            "{label} ZIP: {:?}",
+            response.message
+        );
+        assert_response_contains_file_bytes(&response, output.path(), payload, label);
+    }
 }
 
 fn assert_zip_path_escape_is_rejected(wasm_path: &Path) {
@@ -359,6 +527,84 @@ fn assert_zip_path_escape_is_rejected(wasm_path: &Path) {
     let output_parent = output.path().parent().expect("temp output has a parent");
     assert!(!output_parent.join("escape.txt").exists());
     assert!(!output.path().join("escape.txt").exists());
+}
+
+/// Byte-split sets are read in place through the READ-ONLY source preopen:
+/// the guest has to list the directory for the later parts and join them as
+/// one stream, since there is nowhere writable beside them to join on disk.
+fn assert_split_archives_are_joined(wasm_path: &Path) {
+    let contents = deterministic_bytes(0x5B17_0001, 96 * 1024);
+    let sevenz = tempfile::tempdir().expect("create split 7z fixture dir");
+    let sevenz_path = sevenz.path().join("whole.7z");
+    create_sevenz_fixture(&sevenz_path, "Example.Show.S01E01.mkv", &contents);
+    let zip = tempfile::tempdir().expect("create split ZIP fixture dir");
+    let zip_path = zip.path().join("whole.zip");
+    create_zip_fixture_with_contents(&zip_path, "Example.Show.S01E01.mkv", &contents);
+
+    for (whole, set_name, format) in [
+        (
+            &sevenz_path,
+            "Example.Show.S01E01.7z",
+            ArchivePluginFormat::SevenZip,
+        ),
+        (
+            &zip_path,
+            "Example.Show.S01E01.zip",
+            ArchivePluginFormat::Zip,
+        ),
+        (
+            &zip_path,
+            "Example.Show.S01E01",
+            ArchivePluginFormat::SevenZip,
+        ),
+    ] {
+        let source = tempfile::tempdir().expect("create split source dir");
+        split_file_into(whole, source.path(), set_name, 3);
+        let output = tempfile::tempdir().expect("create split output dir");
+        let response = extract_archive(
+            wasm_path,
+            source.path(),
+            output.path(),
+            &format!("{set_name}.001"),
+            format,
+            None,
+        );
+        assert_eq!(
+            response.status,
+            ArchivePluginStatus::Ok,
+            "split {set_name}: {:?}",
+            response.message
+        );
+        assert_response_contains_file_bytes(&response, output.path(), &contents, set_name);
+    }
+
+    let source = tempfile::tempdir().expect("create gapped split source dir");
+    let parts = split_file_into(&sevenz_path, source.path(), "Example.Show.S01E01.7z", 3);
+    fs::remove_file(&parts[1]).expect("drop the middle part");
+    let output = tempfile::tempdir().expect("create gapped split output dir");
+    let response = extract_archive(
+        wasm_path,
+        source.path(),
+        output.path(),
+        "Example.Show.S01E01.7z.001",
+        ArchivePluginFormat::SevenZip,
+        None,
+    );
+    assert_eq!(response.status, ArchivePluginStatus::Failed);
+    assert_eq!(
+        response.error_code.as_deref(),
+        Some("missing_volume"),
+        "{:?}",
+        response.message
+    );
+    assert!(
+        response
+            .message
+            .as_deref()
+            .is_some_and(|message| message.contains("Example.Show.S01E01.7z.002")),
+        "{:?}",
+        response.message
+    );
 }
 
 fn assert_sevenz_extracts(wasm_path: &Path) {
@@ -394,6 +640,24 @@ fn assert_sevenz_extracts(wasm_path: &Path) {
         after.crc > before.crc,
         "7z extraction did not call the crypto crc32 import"
     );
+
+    // A password handed along for a plain archive is ignored.
+    let output = tempfile::tempdir().expect("create password 7z output dir");
+    let response = extract_archive(
+        wasm_path,
+        source.path(),
+        output.path(),
+        "sample.7z",
+        ArchivePluginFormat::SevenZip,
+        Some("unneeded-password"),
+    );
+    assert_eq!(
+        response.status,
+        ArchivePluginStatus::Ok,
+        "plain 7z with a password: {:?}",
+        response.message
+    );
+    assert_response_contains_file_bytes(&response, output.path(), b"hello from 7z\n", "7z");
 }
 
 fn assert_sevenz_rejects_unsafe_paths(wasm_path: &Path) {
@@ -468,11 +732,13 @@ fn assert_encrypted_sevenz_uses_the_crypto_import(wasm_path: &Path) {
         ArchivePluginFormat::SevenZip,
         Some("not-the-password"),
     );
-    assert_ne!(
+    assert_eq!(
         wrong.status,
-        ArchivePluginStatus::Ok,
-        "encrypted 7z extracted with the wrong password"
+        ArchivePluginStatus::PasswordInvalid,
+        "encrypted 7z with the wrong password: {:?}",
+        wrong.message
     );
+    assert!(wrong.files.is_empty());
 
     let before = host_call_counts();
     let output = tempfile::tempdir().expect("create encrypted 7z output dir");
@@ -497,6 +763,64 @@ fn assert_encrypted_sevenz_uses_the_crypto_import(wasm_path: &Path) {
         after.aes > before.aes,
         "encrypted 7z did not call the crypto aes-cbc-decrypt import"
     );
+}
+
+/// The data encrypted behind a plain header: the entry list reads without a
+/// key, so only the data's failure to decode tells a wrong key apart, and
+/// nothing may be listed or left behind for it.
+fn assert_data_only_encrypted_sevenz_password_states(wasm_path: &Path) {
+    let archive = "data-only.7z";
+    let payload = b"hello from data-only encrypted 7z\n";
+    let source = tempfile::tempdir().expect("create data-only 7z source dir");
+    create_encrypted_sevenz_fixture_with_header(
+        &source.path().join(archive),
+        "secret.txt",
+        payload,
+        SEVENZ_PASSWORD,
+        false,
+    );
+
+    for (password, expected) in [
+        (None, ArchivePluginStatus::PasswordRequired),
+        (
+            Some("not-the-password"),
+            ArchivePluginStatus::PasswordInvalid,
+        ),
+    ] {
+        let output = tempfile::tempdir().expect("create data-only 7z output dir");
+        let response = extract_archive(
+            wasm_path,
+            source.path(),
+            output.path(),
+            archive,
+            ArchivePluginFormat::SevenZip,
+            password,
+        );
+        assert_eq!(
+            response.status, expected,
+            "data-only 7z with {password:?}: {:?}",
+            response.message
+        );
+        assert!(response.files.is_empty());
+        assert!(!output.path().join("secret.txt").exists());
+    }
+
+    let output = tempfile::tempdir().expect("create data-only 7z output dir");
+    let response = extract_archive(
+        wasm_path,
+        source.path(),
+        output.path(),
+        archive,
+        ArchivePluginFormat::SevenZip,
+        Some(SEVENZ_PASSWORD),
+    );
+    assert_eq!(
+        response.status,
+        ArchivePluginStatus::Ok,
+        "data-only 7z: {:?}",
+        response.message
+    );
+    assert_response_contains_file_bytes(&response, output.path(), payload, "data-only 7z");
 }
 
 fn assert_sevenz_rejects_duplicate_paths(wasm_path: &Path) {
@@ -559,6 +883,12 @@ fn assert_xz_extracts(wasm_path: &Path) {
     assert!(
         after.crc > before.crc,
         "XZ extraction did not call the crypto crc32 import"
+    );
+    // The fixture's integrity check is xz's default CRC-64, which must reach
+    // the catalog `crc` import rather than a guest implementation.
+    assert!(
+        after.crc64_xz > before.crc64_xz,
+        "XZ extraction did not call the crypto crc import for CRC-64/XZ"
     );
 
     assert_eq!(
@@ -775,6 +1105,32 @@ impl CryptoHost for Ctx {
         hasher.update(&data);
         hasher.finalize()
     }
+
+    /// The host's catalog CRC semantics (`crypto_host::crc`): `none` starts
+    /// from the algorithm's initial value, `some(previous)` resumes from a
+    /// finalized result. The plugin only asks for CRC-64/XZ; any other
+    /// algorithm here is a plugin change the harness should learn about.
+    fn crc(
+        &mut self,
+        algorithm: CrcAlgorithm,
+        seed: Option<u64>,
+        data: Vec<u8>,
+    ) -> Result<u64, CrcError> {
+        let CrcAlgorithm::Crc64Xz = algorithm else {
+            panic!("unexpected crc algorithm from the plugin: {algorithm:?}");
+        };
+        CRC64_XZ_CALLS.fetch_add(1, Ordering::SeqCst);
+        let algorithm = crc_fast::CrcAlgorithm::Crc64Xz;
+        let mut digest = match seed {
+            None => crc_fast::Digest::new(algorithm),
+            Some(previous) => {
+                let xorout = crc_fast::Digest::new_with_init_state(algorithm, 0).finalize();
+                crc_fast::Digest::new_with_init_state(algorithm, previous ^ xorout)
+            }
+        };
+        digest.update(&data);
+        Ok(digest.finalize())
+    }
 }
 
 /// Instantiate the component under the host's sandbox: read-only source,
@@ -974,6 +1330,20 @@ fn damage_slices(path: &Path, slices: &[u64]) {
     }
 }
 
+/// Cut `whole` into `parts` byte ranges named `{set_name}.001`, `.002`, …
+fn split_file_into(whole: &Path, dir: &Path, set_name: &str, parts: usize) -> Vec<PathBuf> {
+    let bytes = fs::read(whole).expect("read archive to split");
+    bytes
+        .chunks(bytes.len().div_ceil(parts))
+        .enumerate()
+        .map(|(index, chunk)| {
+            let path = dir.join(format!("{set_name}.{:03}", index + 1));
+            fs::write(&path, chunk).expect("write split part");
+            path
+        })
+        .collect()
+}
+
 fn create_zip_fixture(path: &Path, entry_name: &str, payload: &[u8]) {
     create_zip_fixture_with_contents(path, entry_name, payload);
 }
@@ -1011,6 +1381,17 @@ fn create_sevenz_fixture_with_entries(path: &Path, entries: &[(&str, &[u8])]) {
 
 /// An AES-256 + LZMA2 7z with an encrypted header, as `7z a -p -mhe=on` makes.
 fn create_encrypted_sevenz_fixture(path: &Path, entry_name: &str, payload: &[u8], password: &str) {
+    create_encrypted_sevenz_fixture_with_header(path, entry_name, payload, password, true);
+}
+
+/// `encrypt_header: false` is `7z a -p -mhe=off`: the entry list stays readable.
+fn create_encrypted_sevenz_fixture_with_header(
+    path: &Path,
+    entry_name: &str,
+    payload: &[u8],
+    password: &str,
+    encrypt_header: bool,
+) {
     use sevenz_turbo::encoder_options::{AesEncoderOptions, Lzma2Options};
 
     let mut archive = sevenz_turbo::ArchiveWriter::create(path).expect("create encrypted 7z");
@@ -1018,6 +1399,7 @@ fn create_encrypted_sevenz_fixture(path: &Path, entry_name: &str, payload: &[u8]
         AesEncoderOptions::new(sevenz_turbo::Password::new(password)).into(),
         Lzma2Options::default().into(),
     ]);
+    archive.set_encrypt_header(encrypt_header);
     archive
         .push_archive_entry(
             sevenz_turbo::ArchiveEntry::new_file(entry_name),
@@ -1087,12 +1469,14 @@ fn assert_response_files_are_byte_correct(
 struct HostCallCounts {
     aes: usize,
     crc: usize,
+    crc64_xz: usize,
 }
 
 fn host_call_counts() -> HostCallCounts {
     HostCallCounts {
         aes: AES_CALLS.load(Ordering::SeqCst),
         crc: CRC_CALLS.load(Ordering::SeqCst),
+        crc64_xz: CRC64_XZ_CALLS.load(Ordering::SeqCst),
     }
 }
 

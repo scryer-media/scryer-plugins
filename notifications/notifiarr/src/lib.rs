@@ -682,6 +682,13 @@ fn event_label(req: &PluginNotificationRequest) -> String {
         ),
         NotificationEventType::TitleAdded => pick(episodic, "Series Added", "Added"),
         NotificationEventType::TitleDeleted => pick(episodic, "Series Deleted", "Deleted"),
+        NotificationEventType::TitleMoved => pick(episodic, "Series Moved", "Moved"),
+        NotificationEventType::ListTitleAdded
+        | NotificationEventType::ListRequestSubmitted
+        | NotificationEventType::ListItemHeld
+        | NotificationEventType::ListTitleLeft
+        | NotificationEventType::ListSyncFailed
+        | NotificationEventType::ListUnfollowed => "List Update".to_string(),
         NotificationEventType::ManualInteractionRequired => "Manual interaction needed".to_string(),
         NotificationEventType::PostProcessingCompleted => "Post-processing Complete".to_string(),
         NotificationEventType::SubtitleDownloaded => "Subtitle Downloaded".to_string(),
@@ -747,8 +754,15 @@ fn color(req: &PluginNotificationRequest) -> u32 {
         | NotificationEventType::ManualInteractionRequired
         | NotificationEventType::ApplicationUpdate
         | NotificationEventType::Rename
+        | NotificationEventType::TitleMoved
         | NotificationEventType::MediaRequestSubmitted
         | NotificationEventType::MediaRequestCanceled
+        | NotificationEventType::ListTitleAdded
+        | NotificationEventType::ListRequestSubmitted
+        | NotificationEventType::ListItemHeld
+        | NotificationEventType::ListTitleLeft
+        | NotificationEventType::ListSyncFailed
+        | NotificationEventType::ListUnfollowed
         | NotificationEventType::Test => COLOR_STANDARD,
         NotificationEventType::Download => {
             if is_failure(req) {
@@ -829,6 +843,11 @@ fn event_fields(req: &PluginNotificationRequest) -> Vec<Value> {
             for update in renamed_paths(req).into_iter().take(5) {
                 push_field(&mut fields, "Renamed", Some(update), false);
             }
+        }
+        NotificationEventType::TitleMoved => {
+            push_field(&mut fields, "From", title_move_source(req), false);
+            push_field(&mut fields, "To", title_move_destination(req), false);
+            push_field(&mut fields, "Warning", title_move_warning(req), false);
         }
         NotificationEventType::Test => {}
         _ => {
@@ -1249,7 +1268,15 @@ fn sonarr_event_type(req: &PluginNotificationRequest) -> Option<&'static str> {
         | NotificationEventType::MediaRequestSubmitted
         | NotificationEventType::MediaRequestApproved
         | NotificationEventType::MediaRequestRejected
-        | NotificationEventType::MediaRequestCanceled => None,
+        | NotificationEventType::MediaRequestCanceled
+        | NotificationEventType::TitleMoved => None,
+        // Not in `supported_events`, so the host never routes them here.
+        NotificationEventType::ListTitleAdded
+        | NotificationEventType::ListRequestSubmitted
+        | NotificationEventType::ListItemHeld
+        | NotificationEventType::ListTitleLeft
+        | NotificationEventType::ListSyncFailed
+        | NotificationEventType::ListUnfollowed => None,
     }
 }
 
@@ -2406,6 +2433,7 @@ mod tests {
             application_update: None,
             manual_interaction: None,
             media_request: None,
+            title_move: None,
         }
     }
 
@@ -2587,6 +2615,31 @@ mod tests {
             assert!(field.get("name").is_none(), "{field}");
             assert!(field.get("value").is_none(), "{field}");
         }
+    }
+
+    #[test]
+    fn passthrough_renders_a_title_moves_origin_and_destination() {
+        let mut req = request(NotificationEventType::TitleMoved);
+        req.title = Some(series_title());
+        req.summary_message = "Moved 'Cinder Line' from Library A to Library B.".to_string();
+        req.title_move = Some(PluginNotificationTitleMove {
+            source_library_name: Some("Library A".to_string()),
+            destination_library_name: Some("Library B".to_string()),
+            destination_path: Some("/media/b/Cinder Line".to_string()),
+            ..PluginNotificationTitleMove::default()
+        });
+
+        let (payload, _) = passthrough(&req);
+        assert_eq!(
+            text_of(&payload)["description"],
+            json!("Series Moved\nMoved 'Cinder Line' from Library A to Library B.")
+        );
+        assert_eq!(field_text(&payload, "From").as_deref(), Some("Library A"));
+        assert_eq!(
+            field_text(&payload, "To").as_deref(),
+            Some("/media/b/Cinder Line")
+        );
+        assert_eq!(field_text(&payload, "Warning"), None);
     }
 
     #[test]
@@ -3087,6 +3140,7 @@ mod tests {
             NotificationEventType::MediaRequestApproved,
             NotificationEventType::MediaRequestRejected,
             NotificationEventType::MediaRequestCanceled,
+            NotificationEventType::TitleMoved,
         ] {
             assert!(
                 sonarr_event_type(&request(event_type)).is_none(),

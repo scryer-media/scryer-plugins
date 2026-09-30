@@ -1,6 +1,6 @@
 # Jellyfin Notification Plugin
 
-This plugin sends targeted Jellyfin library refresh requests when Scryer imports, upgrades, renames, or deletes media.
+This plugin sends targeted Jellyfin library refresh requests when Scryer imports, upgrades, renames, moves, or deletes media.
 
 ## Setup
 
@@ -41,6 +41,7 @@ Example:
 - `import_complete`
 - `upgrade`
 - `rename`
+- `title_moved`
 - `file_deleted`
 - `file_deleted_for_upgrade`
 - `test`
@@ -49,6 +50,9 @@ Example:
 
 - `test`
   - Calls `GET /System/Info`
+- `title_moved`
+  - Each moved file is sent as its old path `Deleted` and its new path `Created`, through the requests below
+  - A move that relocated no media files sends nothing
 - Mapped file updates
   - Calls `POST /Library/Media/Updated`
 - Unmapped movie updates with provider IDs

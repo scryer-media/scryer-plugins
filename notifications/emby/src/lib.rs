@@ -223,6 +223,8 @@ fn media_refresh_events() -> Vec<NotificationEventType> {
         NotificationEventType::Rename,
         NotificationEventType::FileDeleted,
         NotificationEventType::FileDeletedForUpgrade,
+        // Each moved file arrives as a deleted old path and a created new one.
+        NotificationEventType::TitleMoved,
     ]
 }
 
@@ -566,9 +568,11 @@ fn parse_file_updates(file: &PluginNotificationFile) -> Vec<MediaUpdate> {
 fn event_update_type(event_type: NotificationEventType) -> Option<MediaUpdateType> {
     match event_type {
         NotificationEventType::ImportComplete => Some(MediaUpdateType::Created),
-        NotificationEventType::Upgrade | NotificationEventType::Rename => {
-            Some(MediaUpdateType::Modified)
-        }
+        // A move that carried no file paths still leaves the title at its new
+        // folder, which is what `title.path` names by then.
+        NotificationEventType::Upgrade
+        | NotificationEventType::Rename
+        | NotificationEventType::TitleMoved => Some(MediaUpdateType::Modified),
         NotificationEventType::FileDeleted | NotificationEventType::FileDeletedForUpgrade => {
             Some(MediaUpdateType::Deleted)
         }
@@ -888,6 +892,7 @@ mod tests {
             application_update: None,
             manual_interaction: None,
             media_request: None,
+            title_move: None,
         }
     }
 
@@ -1138,6 +1143,40 @@ mod tests {
     }
 
     #[test]
+    fn a_title_move_refreshes_both_the_old_and_the_new_path() {
+        assert!(media_refresh_events().contains(&NotificationEventType::TitleMoved));
+        let request = request(
+            NotificationEventType::TitleMoved,
+            "movie",
+            Some("/media/b/Example Title"),
+            vec![
+                (
+                    "/media/a/Example Title/Example Title.mkv",
+                    NotificationMediaUpdateType::Deleted,
+                ),
+                (
+                    "/media/b/Example Title/Example Title.mkv",
+                    NotificationMediaUpdateType::Created,
+                ),
+            ],
+            ids(None, None, None, None),
+        );
+        assert_eq!(
+            media_updates(&request).unwrap(),
+            vec![
+                MediaUpdate {
+                    path: "/media/a/Example Title/Example Title.mkv".to_string(),
+                    update_type: MediaUpdateType::Deleted,
+                },
+                MediaUpdate {
+                    path: "/media/b/Example Title/Example Title.mkv".to_string(),
+                    update_type: MediaUpdateType::Created,
+                },
+            ]
+        );
+    }
+
+    #[test]
     fn title_path_fallback_maps_events_to_exact_emby_update_types() {
         for (event, expected) in [
             (
@@ -1151,6 +1190,7 @@ mod tests {
                 NotificationEventType::FileDeletedForUpgrade,
                 MediaUpdateType::Deleted,
             ),
+            (NotificationEventType::TitleMoved, MediaUpdateType::Modified),
         ] {
             let request = request(
                 event,

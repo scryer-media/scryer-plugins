@@ -5,7 +5,7 @@
 //! Each plugin is a thin wrapper that calls [`execute_full_search`] with
 //! a provider-specific [`MetadataExtractor`] callback.
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::OnceLock;
 use std::time::{Duration, UNIX_EPOCH};
 
@@ -26,9 +26,10 @@ pub use scryer_plugin_sdk::{
     IndexerResponseFeatures, IndexerSearchIncompleteReason, IndexerSearchInput,
     IndexerSearchInvalidResponseKind, IndexerSearchPluginError, IndexerSourceKind,
     IndexerTorrentCapabilities, PluginDescriptor, PluginError, PluginErrorCode, PluginErrorDetails,
-    PluginResult, PluginScoringPolicy as ScoringPolicy, PluginSearchRequest as SearchRequest,
-    PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult,
-    PluginSearchSubjectKind, ProviderDescriptor, SDK_VERSION, current_sdk_constraint,
+    PluginResult, PluginRssCatchUp, PluginScoringPolicy as ScoringPolicy,
+    PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
+    PluginSearchResult as SearchResult, PluginSearchSubjectKind, ProviderDescriptor, SDK_VERSION,
+    current_sdk_constraint,
 };
 use serde::{Deserialize, Serialize};
 use unicode_normalization::{UnicodeNormalization, char::is_combining_mark};
@@ -131,6 +132,10 @@ fn protected_from_extra(extra: &HashMap<String, serde_json::Value>) -> Option<bo
 
 const DEFAULT_MAX_SEARCH_PAGES: usize = 30;
 const DEFAULT_REQUEST_INTERVAL_MS: u64 = 500;
+/// Time an RSS catch-up keeps in hand before the operation deadline. A page is
+/// only started with at least this much left, so the pages already read are
+/// returned instead of being lost to a host timeout.
+const RSS_CATCH_UP_DEADLINE_RESERVE_MS: u64 = 20_000;
 
 pub struct NewznabConfig {
     pub base_url: String,
@@ -840,12 +845,7 @@ pub async fn execute_full_search(
     let mut completed_page = false;
 
     for page in 0..max_pages {
-        let offset = page * page_size;
-        let page_params = if config.additional_params.is_empty() {
-            format!("&offset={offset}")
-        } else {
-            format!("{}&offset={offset}", config.additional_params)
-        };
+        let page_params = offset_page_params(&config.additional_params, page * page_size);
 
         let search_result = if search_shape == NabSearchShape::AnimeExact {
             execute_exact_anime_search(
@@ -1035,12 +1035,7 @@ pub async fn execute_raw_search(
     let mut completed_page = false;
 
     for page in 0..max_pages {
-        let offset = page * page_size;
-        let page_params = if config.additional_params.is_empty() {
-            format!("&offset={offset}")
-        } else {
-            format!("{}&offset={offset}", config.additional_params)
-        };
+        let page_params = offset_page_params(&config.additional_params, page * page_size);
 
         let search_result = execute_search(
             &endpoint,
@@ -1192,6 +1187,14 @@ pub async fn execute_raw_search(
 /// - Movie categories (2xxx) → `t=movie`
 /// - TV/anime categories (5xxx) → `t=tvsearch`
 /// - Unknown → both
+///
+/// Without a catch-up marker every search type reads its newest page only, and
+/// a full page is simply the feed's newest page. With the host's
+/// [`PluginRssCatchUp`] marker each search type pages by offset until a page
+/// names the last-seen release, a page's oldest release predates the marker's
+/// publish time, a page comes back short, or the page ceiling is reached. Every
+/// search type always runs; the run is reported incomplete, with everything it
+/// read, only when a search type hit the ceiling before reaching the marker.
 async fn execute_rss_search(
     config: &NewznabConfig,
     req: &SearchRequest,
@@ -1229,68 +1232,119 @@ async fn execute_rss_search(
         search_types
     );
 
+    let catch_up = req.rss_catch_up.as_ref();
+    let marker_published_at = catch_up.and_then(|marker| {
+        let parsed = parse_publish_epoch_seconds(&marker.last_seen_published_at);
+        if parsed.is_none() {
+            log!(
+                LogLevel::Warn,
+                "rss_search: unreadable catch-up publish time {:?}; matching on identity only",
+                marker.last_seen_published_at
+            );
+        }
+        parsed
+    });
+    let page_size = config.page_size;
+    let max_pages = if catch_up.is_some() {
+        config
+            .http_behavior
+            .max_search_pages
+            .clamp(1, DEFAULT_MAX_SEARCH_PAGES)
+    } else {
+        1
+    };
+
     let mut all_results: Vec<SearchResult> = Vec::new();
+    let mut seen_identities: HashSet<String> = HashSet::new();
     let mut last_limits = ApiLimits::default();
     let mut completed_page = false;
+    let mut ceiling_search_types: Vec<&'static str> = Vec::new();
+    let mut out_of_time_search_types: Vec<&'static str> = Vec::new();
 
-    for search_type in &search_types {
-        let search_result = execute_search(
-            &endpoint,
-            search_type,
-            None, // no query
-            &config.api_key,
-            None, // no imdb_id
-            None, // no tmdb_id
-            None, // no tvdb_id
-            None, // no tvrage_id
-            None, // no tvmaze_id
-            Some(cat_str),
-            config.page_size,
-            None, // no season
-            None, // no episode
-            &config.additional_params,
-            &config.http_behavior,
-        )
-        .await;
-        let (status, body) = match search_result {
-            Ok(response) => response,
-            Err(error) if error.downcast_ref::<StructuredPluginError>().is_some() => {
-                return Err(rss_branch_structured_error(
-                    error,
-                    newznab_search_response(all_results, &last_limits),
-                    completed_page,
-                ));
+    for &search_type in &search_types {
+        for page in 0..max_pages {
+            // Once a page is in hand, another one is only worth starting if it
+            // can finish before the operation deadline.
+            if catch_up.is_some() && completed_page && !rss_catch_up_has_time_for_a_page() {
+                out_of_time_search_types.push(search_type);
+                break;
             }
-            Err(error) if is_hit_budget_exhausted_error(&error) => {
-                let retry_after_seconds = hit_budget_retry_after_seconds(&config.http_behavior, 1)?;
-                return Err(incomplete_newznab_search_error(
-                    newznab_search_response(all_results, &last_limits),
-                    IndexerSearchIncompleteReason::RateLimited,
-                    retry_after_seconds,
-                    completed_page,
-                    None,
-                    error.to_string(),
-                ));
-            }
-            Err(error) => {
-                return Err(incomplete_newznab_search_error(
-                    newznab_search_response(all_results, &last_limits),
-                    IndexerSearchIncompleteReason::UpstreamFailure,
-                    None,
-                    completed_page,
-                    None,
-                    error.to_string(),
-                ));
-            }
-        };
+            let page_params = if catch_up.is_some() {
+                offset_page_params(&config.additional_params, page * page_size)
+            } else {
+                config.additional_params.clone()
+            };
+            let search_result = execute_search(
+                &endpoint,
+                search_type,
+                None, // no query
+                &config.api_key,
+                None, // no imdb_id
+                None, // no tmdb_id
+                None, // no tvdb_id
+                None, // no tvrage_id
+                None, // no tvmaze_id
+                Some(cat_str),
+                page_size,
+                None, // no season
+                None, // no episode
+                &page_params,
+                &config.http_behavior,
+            )
+            .await;
+            let (status, body) = match search_result {
+                Ok(response) => response,
+                Err(error) if error.downcast_ref::<StructuredPluginError>().is_some() => {
+                    return Err(rss_branch_structured_error(
+                        error,
+                        newznab_search_response(all_results, &last_limits),
+                        completed_page,
+                    ));
+                }
+                Err(error) if is_hit_budget_exhausted_error(&error) => {
+                    let retry_after_seconds =
+                        hit_budget_retry_after_seconds(&config.http_behavior, 1)?;
+                    return Err(incomplete_newznab_search_error(
+                        newznab_search_response(all_results, &last_limits),
+                        IndexerSearchIncompleteReason::RateLimited,
+                        retry_after_seconds,
+                        completed_page,
+                        None,
+                        error.to_string(),
+                    ));
+                }
+                Err(error) => {
+                    return Err(incomplete_newznab_search_error(
+                        newznab_search_response(all_results, &last_limits),
+                        IndexerSearchIncompleteReason::UpstreamFailure,
+                        None,
+                        completed_page,
+                        None,
+                        error.to_string(),
+                    ));
+                }
+            };
 
-        let trimmed = body.trim_start();
-        let is_xml = trimmed.starts_with("<?xml")
-            || trimmed.starts_with("<rss")
-            || trimmed.starts_with("<error");
+            let trimmed = body.trim_start();
+            let is_xml = trimmed.starts_with("<?xml")
+                || trimmed.starts_with("<rss")
+                || trimmed.starts_with("<error");
 
-        if is_xml {
-            if let Some((code, description)) = parse_error_xml(&body) {
+            if is_xml {
+                if let Some((code, description)) = parse_error_xml(&body) {
+                    if completed_page {
+                        return Err(incomplete_newznab_search_error(
+                            newznab_search_response(all_results, &last_limits),
+                            IndexerSearchIncompleteReason::FanoutBranchFailed,
+                            None,
+                            true,
+                            None,
+                            format!("Newznab feed branch returned {code}: {description}"),
+                        ));
+                    }
+                    return Err(classify_and_format_error(&code, &description));
+                }
+            } else if let Some((code, description)) = parse_error_json(&body) {
                 if completed_page {
                     return Err(incomplete_newznab_search_error(
                         newznab_search_response(all_results, &last_limits),
@@ -1303,69 +1357,63 @@ async fn execute_rss_search(
                 }
                 return Err(classify_and_format_error(&code, &description));
             }
-        } else if let Some((code, description)) = parse_error_json(&body) {
-            if completed_page {
+
+            if status >= 400 {
+                let reason = if status == 429 {
+                    IndexerSearchIncompleteReason::RateLimited
+                } else {
+                    IndexerSearchIncompleteReason::FanoutBranchFailed
+                };
                 return Err(incomplete_newznab_search_error(
                     newznab_search_response(all_results, &last_limits),
-                    IndexerSearchIncompleteReason::FanoutBranchFailed,
+                    reason,
                     None,
-                    true,
+                    completed_page,
                     None,
-                    format!("Newznab feed branch returned {code}: {description}"),
+                    format!("Newznab feed branch returned HTTP {status}"),
                 ));
             }
-            return Err(classify_and_format_error(&code, &description));
-        }
 
-        if status >= 400 {
-            let reason = if status == 429 {
-                IndexerSearchIncompleteReason::RateLimited
-            } else {
-                IndexerSearchIncompleteReason::FanoutBranchFailed
-            };
-            return Err(incomplete_newznab_search_error(
-                newznab_search_response(all_results, &last_limits),
-                reason,
-                None,
-                completed_page,
-                None,
-                format!("Newznab feed branch returned HTTP {status}"),
-            ));
-        }
+            let (page_results, limits, page_count) =
+                match parse_newznab_feed(&body, is_xml, page_size, extract_fn) {
+                    Ok(parsed) => parsed,
+                    Err(failure) => {
+                        return Err(incomplete_newznab_search_error(
+                            newznab_search_response(all_results, &last_limits),
+                            IndexerSearchIncompleteReason::MalformedContent,
+                            None,
+                            completed_page,
+                            Some(failure.kind),
+                            failure.message,
+                        ));
+                    }
+                };
 
-        let (page_results, limits, page_count) =
-            match parse_newznab_feed(&body, is_xml, config.page_size, extract_fn) {
-                Ok(parsed) => parsed,
-                Err(failure) => {
-                    return Err(incomplete_newznab_search_error(
-                        newznab_search_response(all_results, &last_limits),
-                        IndexerSearchIncompleteReason::MalformedContent,
-                        None,
-                        completed_page,
-                        Some(failure.kind),
-                        failure.message,
-                    ));
+            let reached_marker = catch_up.is_some_and(|marker| {
+                rss_page_reaches_marker(marker, marker_published_at, &page_results)
+            });
+            log!(
+                LogLevel::Info,
+                "rss_search: t={} page={} returned {} results reached_marker={}",
+                search_type,
+                page,
+                page_results.len(),
+                reached_marker
+            );
+            last_limits = limits;
+            for result in page_results {
+                if seen_identities.insert(PluginRssCatchUp::identity_of(&result).to_string()) {
+                    all_results.push(result);
                 }
-            };
+            }
+            completed_page = true;
 
-        log!(
-            LogLevel::Info,
-            "rss_search: t={} returned {} results",
-            search_type,
-            page_results.len()
-        );
-        last_limits = limits;
-        all_results.extend(page_results);
-        completed_page = true;
-        if page_count >= config.page_size {
-            return Err(incomplete_newznab_search_error(
-                newznab_search_response(all_results, &last_limits),
-                IndexerSearchIncompleteReason::PageCeilingReached,
-                None,
-                completed_page,
-                None,
-                "Newznab feed branch returned a full page without pagination".to_string(),
-            ));
+            if catch_up.is_none() || reached_marker || page_count < page_size {
+                break;
+            }
+            if page + 1 == max_pages {
+                ceiling_search_types.push(search_type);
+            }
         }
     }
 
@@ -1375,6 +1423,34 @@ async fn execute_rss_search(
         all_results.len(),
         search_types.len()
     );
+
+    if !out_of_time_search_types.is_empty() {
+        return Err(incomplete_newznab_search_error(
+            newznab_search_response(all_results, &last_limits),
+            IndexerSearchIncompleteReason::PageCeilingReached,
+            None,
+            completed_page,
+            None,
+            format!(
+                "Newznab RSS catch-up stopped before the operation deadline without reaching the last-seen release for t={}",
+                out_of_time_search_types.join(",")
+            ),
+        ));
+    }
+
+    if !ceiling_search_types.is_empty() {
+        return Err(incomplete_newznab_search_error(
+            newznab_search_response(all_results, &last_limits),
+            IndexerSearchIncompleteReason::PageCeilingReached,
+            None,
+            completed_page,
+            None,
+            format!(
+                "Newznab RSS catch-up reached the configured {max_pages}-page ceiling before the last-seen release for t={}",
+                ceiling_search_types.join(",")
+            ),
+        ));
+    }
 
     let (budget_current, budget_max) = hit_budget_snapshot(&config.http_behavior)?
         .map(NewznabHitBudgetSnapshot::limiting_current_max)
@@ -1477,6 +1553,208 @@ fn rss_search_types(req: &SearchRequest, caps: Option<&NewznabSearchCaps>) -> Ve
         return gated;
     }
     search_types
+}
+
+/// The extra query parameters for one page of a paged Newznab request.
+fn offset_page_params(additional_params: &str, offset: usize) -> String {
+    if additional_params.is_empty() {
+        format!("&offset={offset}")
+    } else {
+        format!("{additional_params}&offset={offset}")
+    }
+}
+
+/// Whether the operation deadline leaves room to read one more catch-up page.
+fn rss_catch_up_has_time_for_a_page() -> bool {
+    component::operation_deadline_monotonic_ms().saturating_sub(component::monotonic_now_ms())
+        >= RSS_CATCH_UP_DEADLINE_RESERVE_MS
+}
+
+/// Whether one RSS page reaches the host's catch-up marker: it contains the
+/// last-seen release, or even its newest release was published before the
+/// marker's publish time. A feed is ordered by when the indexer listed a
+/// release while `published_at` is when it was posted, so one late-listed old
+/// post on a page says nothing about the rest of it; only a page that is older
+/// throughout lies behind the marker. Releases whose publish time cannot be
+/// read do not count.
+fn rss_page_reaches_marker(
+    marker: &PluginRssCatchUp,
+    marker_published_at: Option<i64>,
+    page: &[SearchResult],
+) -> bool {
+    if page.iter().any(|result| marker.names(result)) {
+        return true;
+    }
+    let Some(marker_published_at) = marker_published_at else {
+        return false;
+    };
+    page.iter()
+        .filter_map(|result| result.published_at.as_deref())
+        .filter_map(parse_publish_epoch_seconds)
+        .max()
+        .is_some_and(|newest| newest < marker_published_at)
+}
+
+/// Unix seconds for a feed publish time: RFC 3339 (the catch-up marker) or
+/// RFC 2822 (Newznab `pubDate` and `usenetdate`).
+fn parse_publish_epoch_seconds(value: &str) -> Option<i64> {
+    let value = value.trim();
+    parse_rfc3339_epoch_seconds(value).or_else(|| parse_rfc2822_epoch_seconds(value))
+}
+
+fn ascii_number(value: &str) -> Option<i64> {
+    if value.is_empty() || !value.bytes().all(|byte| byte.is_ascii_digit()) {
+        return None;
+    }
+    value.parse().ok()
+}
+
+fn parse_rfc3339_epoch_seconds(value: &str) -> Option<i64> {
+    let bytes = value.as_bytes();
+    if bytes.len() < 20
+        || bytes[4] != b'-'
+        || bytes[7] != b'-'
+        || !matches!(bytes[10], b'T' | b't' | b' ')
+        || bytes[13] != b':'
+        || bytes[16] != b':'
+    {
+        return None;
+    }
+    let year = ascii_number(value.get(0..4)?)?;
+    let month = ascii_number(value.get(5..7)?)?;
+    let day = ascii_number(value.get(8..10)?)?;
+    let hour = ascii_number(value.get(11..13)?)?;
+    let minute = ascii_number(value.get(14..16)?)?;
+    let second = ascii_number(value.get(17..19)?)?;
+
+    let mut zone = value.get(19..)?;
+    if let Some(fraction) = zone.strip_prefix('.') {
+        let digits = fraction.bytes().take_while(u8::is_ascii_digit).count();
+        if digits == 0 {
+            return None;
+        }
+        zone = &fraction[digits..];
+    }
+    let offset_seconds = match zone {
+        "Z" | "z" => 0,
+        _ => {
+            let sign = match zone.as_bytes().first()? {
+                b'+' => 1,
+                b'-' => -1,
+                _ => return None,
+            };
+            let offset = &zone[1..];
+            if offset.len() != 5 || offset.as_bytes()[2] != b':' {
+                return None;
+            }
+            let hours = ascii_number(&offset[0..2])?;
+            let minutes = ascii_number(&offset[3..5])?;
+            sign * (hours * 3_600 + minutes * 60)
+        }
+    };
+    civil_epoch_seconds(year, month, day, hour, minute, second)
+        .map(|seconds| seconds - offset_seconds)
+}
+
+fn parse_rfc2822_epoch_seconds(value: &str) -> Option<i64> {
+    let value = value.split_once(',').map_or(value, |(_, rest)| rest);
+    let mut parts = value.split_ascii_whitespace();
+    let day = ascii_number(parts.next()?)?;
+    let month = match parts.next()?.to_ascii_lowercase().as_str() {
+        "jan" => 1,
+        "feb" => 2,
+        "mar" => 3,
+        "apr" => 4,
+        "may" => 5,
+        "jun" => 6,
+        "jul" => 7,
+        "aug" => 8,
+        "sep" => 9,
+        "oct" => 10,
+        "nov" => 11,
+        "dec" => 12,
+        _ => return None,
+    };
+    let year_text = parts.next()?;
+    let year = match (ascii_number(year_text)?, year_text.len()) {
+        (year, 1 | 2) if year < 50 => year + 2_000,
+        (year, 1 | 2 | 3) => year + 1_900,
+        (year, _) => year,
+    };
+    let mut clock = parts.next()?.split(':');
+    let hour = ascii_number(clock.next()?)?;
+    let minute = ascii_number(clock.next()?)?;
+    let second = match clock.next() {
+        Some(second) => ascii_number(second)?,
+        None => 0,
+    };
+    if clock.next().is_some() {
+        return None;
+    }
+    let offset_seconds = match parts.next() {
+        None => 0,
+        Some(zone) => rfc2822_zone_offset_seconds(zone)?,
+    };
+    civil_epoch_seconds(year, month, day, hour, minute, second)
+        .map(|seconds| seconds - offset_seconds)
+}
+
+fn rfc2822_zone_offset_seconds(zone: &str) -> Option<i64> {
+    if let Some(sign) = match zone.as_bytes().first() {
+        Some(b'+') => Some(1),
+        Some(b'-') => Some(-1),
+        _ => None,
+    } {
+        let offset = &zone[1..];
+        if offset.len() != 4 {
+            return None;
+        }
+        let hours = ascii_number(&offset[0..2])?;
+        let minutes = ascii_number(&offset[2..4])?;
+        return Some(sign * (hours * 3_600 + minutes * 60));
+    }
+    let hours = match zone.to_ascii_uppercase().as_str() {
+        "EDT" => -4,
+        "EST" | "CDT" => -5,
+        "CST" | "MDT" => -6,
+        "MST" | "PDT" => -7,
+        "PST" => -8,
+        // GMT, UT, UTC, Z and the obsolete military zones all read as UTC.
+        _ => 0,
+    };
+    Some(hours * 3_600)
+}
+
+/// Unix seconds for a UTC civil date and time, or `None` when a field is out
+/// of range.
+fn civil_epoch_seconds(
+    year: i64,
+    month: i64,
+    day: i64,
+    hour: i64,
+    minute: i64,
+    second: i64,
+) -> Option<i64> {
+    let leap = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
+    let days_in_month = match month {
+        1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
+        4 | 6 | 9 | 11 => 30,
+        2 if leap => 29,
+        2 => 28,
+        _ => return None,
+    };
+    if !(1..=days_in_month).contains(&day) || hour > 23 || minute > 59 || second > 60 {
+        return None;
+    }
+    // Days from the civil calendar, counted from 1970-01-01.
+    let shifted_year = if month <= 2 { year - 1 } else { year };
+    let era = shifted_year.div_euclid(400);
+    let year_of_era = shifted_year - era * 400;
+    let month_index = (month + 9) % 12;
+    let day_of_year = (153 * month_index + 2) / 5 + day - 1;
+    let day_of_era = year_of_era * 365 + year_of_era / 4 - year_of_era / 100 + day_of_year;
+    let days = era * 146_097 + day_of_era - 719_468;
+    Some(days * 86_400 + hour * 3_600 + minute * 60 + second)
 }
 
 // ---------------------------------------------------------------------------
@@ -7299,5 +7577,569 @@ mod tests {
             Some(None),
             "a remembered failure keeps the permissive shape until it expires"
         );
+    }
+
+    #[test]
+    fn publish_times_parse_from_rfc3339_and_rfc2822() {
+        let noon = 1_704_110_400;
+        assert_eq!(
+            parse_publish_epoch_seconds("2024-01-01T12:00:00Z"),
+            Some(noon)
+        );
+        assert_eq!(
+            parse_publish_epoch_seconds("2024-01-01T13:30:00.250+01:30"),
+            Some(noon)
+        );
+        assert_eq!(
+            parse_publish_epoch_seconds("Mon, 01 Jan 2024 12:00:00 +0000"),
+            Some(noon)
+        );
+        assert_eq!(
+            parse_publish_epoch_seconds("Mon, 01 Jan 2024 07:00:00 -0500"),
+            Some(noon)
+        );
+        assert_eq!(
+            parse_publish_epoch_seconds("1 Jan 2024 12:00 GMT"),
+            Some(noon)
+        );
+        assert_eq!(
+            parse_publish_epoch_seconds("Thu, 29 Feb 2024 00:00:00 EST"),
+            Some(1_709_182_800)
+        );
+        assert_eq!(
+            parse_publish_epoch_seconds("Fri, 30 Feb 2024 00:00:00 +0000"),
+            None
+        );
+        assert_eq!(parse_publish_epoch_seconds("not a date"), None);
+        assert_eq!(parse_publish_epoch_seconds(""), None);
+    }
+
+    /// RSS catch-up paging driven end to end against a scripted host: every
+    /// request goes through the real search path, and the host answers from
+    /// per-test feed pages keyed by search type and offset.
+    mod rss_catch_up {
+        use super::*;
+        use scryer_plugin_pdk::runtime::{
+            HostError, HostRuntime, PluginHttpFieldsResponse, PluginHttpRequest,
+            install_host_runtime,
+        };
+        use std::cell::RefCell;
+        use std::future::Future;
+        use std::pin::Pin;
+        use std::task::{Context, Poll, Waker};
+
+        const PAGE_SIZE: usize = 3;
+        /// 2024-01-01T12:00:00Z. Release `n` of a feed is published `n` minutes
+        /// before this, so offsets walk back in time.
+        const NEWEST_PUBLISHED_AT: u64 = 1_704_110_400;
+        /// Older than every release a test serves, so only an identity match
+        /// can stop paging.
+        const DISTANT_PAST: &str = "2023-06-01T00:00:00Z";
+        /// Monotonic time the scripted host reports before any feed request.
+        const RUN_STARTED_AT_MS: u64 = 1_000_000;
+
+        #[derive(Default)]
+        struct Script {
+            active: bool,
+            /// Monotonic time each served feed request takes.
+            ms_per_request: u64,
+            /// Operation deadline as time after the run starts; `None` never
+            /// expires.
+            deadline_after_ms: Option<u64>,
+            pages: HashMap<(String, usize), String>,
+            requests: Vec<(String, Option<usize>)>,
+        }
+
+        thread_local! {
+            static SCRIPT: RefCell<Script> = RefCell::new(Script::default());
+        }
+
+        /// Answers only on a thread that loaded a script; any other thread
+        /// sees the same inert host as a test with nothing installed.
+        struct ScriptedHost;
+
+        static SCRIPTED_HOST: ScriptedHost = ScriptedHost;
+
+        fn active() -> bool {
+            SCRIPT.with(|script| script.borrow().active)
+        }
+
+        impl HostRuntime for ScriptedHost {
+            fn http_fields(
+                &self,
+                request: PluginHttpRequest,
+            ) -> Pin<Box<dyn Future<Output = Result<PluginHttpFieldsResponse, HostError>> + '_>>
+            {
+                Box::pin(async move {
+                    if !active() {
+                        return Err(HostError::Transport);
+                    }
+                    let url = Url::parse(&request.url).map_err(|_| HostError::InvalidRequest)?;
+                    let param = |name: &str| {
+                        url.query_pairs()
+                            .find(|(key, _)| key == name)
+                            .map(|(_, value)| value.into_owned())
+                    };
+                    let search_type = param("t").unwrap_or_default();
+                    if search_type == "caps" {
+                        return Ok(PluginHttpFieldsResponse {
+                            status: 404,
+                            headers: Vec::new(),
+                            body: Vec::new(),
+                        });
+                    }
+                    let offset = param("offset").map(|value| value.parse::<usize>().unwrap());
+                    let body = SCRIPT.with(|script| {
+                        let mut script = script.borrow_mut();
+                        script.requests.push((search_type.clone(), offset));
+                        script
+                            .pages
+                            .get(&(search_type, offset.unwrap_or(0)))
+                            .cloned()
+                            .unwrap_or_else(|| feed(&[]))
+                    });
+                    Ok(PluginHttpFieldsResponse {
+                        status: 200,
+                        headers: Vec::new(),
+                        body: body.into_bytes(),
+                    })
+                })
+            }
+
+            fn sleep(&self, _duration_ms: u64) -> Pin<Box<dyn Future<Output = ()> + '_>> {
+                Box::pin(async {})
+            }
+
+            fn monotonic_now_ms(&self) -> u64 {
+                SCRIPT.with(|script| {
+                    let script = script.borrow();
+                    if script.active {
+                        RUN_STARTED_AT_MS + script.requests.len() as u64 * script.ms_per_request
+                    } else {
+                        0
+                    }
+                })
+            }
+
+            fn operation_deadline_monotonic_ms(&self) -> u64 {
+                SCRIPT.with(|script| {
+                    let script = script.borrow();
+                    match (script.active, script.deadline_after_ms) {
+                        (false, _) => 0,
+                        (true, Some(after_ms)) => RUN_STARTED_AT_MS + after_ms,
+                        (true, None) => u64::MAX,
+                    }
+                })
+            }
+
+            fn wall_now_ms(&self) -> u64 {
+                0
+            }
+
+            fn config_get(&self, _key: &str) -> Option<String> {
+                None
+            }
+
+            fn provider_profile_bytes(&self) -> Option<Vec<u8>> {
+                None
+            }
+
+            fn state_get(&self, _key: &str) -> Option<Vec<u8>> {
+                None
+            }
+
+            fn state_cas(
+                &self,
+                _key: &str,
+                _expected: Option<&[u8]>,
+                _replacement: Option<&[u8]>,
+            ) -> bool {
+                active()
+            }
+
+            fn log(&self, _level: scryer_plugin_pdk::log::LogLevel, _message: &str) {}
+        }
+
+        fn install_script() {
+            install_host_runtime(&SCRIPTED_HOST);
+            SCRIPT.with(|script| {
+                *script.borrow_mut() = Script {
+                    active: true,
+                    ..Script::default()
+                }
+            });
+        }
+
+        fn requests() -> Vec<(String, Option<usize>)> {
+            SCRIPT.with(|script| script.borrow().requests.clone())
+        }
+
+        /// Serve `pages` full pages of `search_type`, releases numbered from 0
+        /// at offset 0.
+        fn serve_full_pages(search_type: &str, pages: usize) {
+            for page in 0..pages {
+                let releases: Vec<usize> = (page * PAGE_SIZE..(page + 1) * PAGE_SIZE).collect();
+                serve_page(search_type, page * PAGE_SIZE, &releases);
+            }
+        }
+
+        fn serve_page(search_type: &str, offset: usize, releases: &[usize]) {
+            let body = feed(
+                &releases
+                    .iter()
+                    .map(|release| (guid(search_type, *release), *release))
+                    .collect::<Vec<_>>(),
+            );
+            SCRIPT.with(|script| {
+                script
+                    .borrow_mut()
+                    .pages
+                    .insert((search_type.to_string(), offset), body)
+            });
+        }
+
+        fn guid(search_type: &str, release: usize) -> String {
+            format!("guid-{search_type}-{release}")
+        }
+
+        fn feed(items: &[(String, usize)]) -> String {
+            let mut body = String::from(
+                "<?xml version=\"1.0\"?>\n<rss xmlns:newznab=\"http://www.newznab.com/DTD/2010/feeds/attributes/\">\n<channel>\n",
+            );
+            for (guid, release) in items {
+                let published =
+                    UNIX_EPOCH + Duration::from_secs(NEWEST_PUBLISHED_AT - 60 * *release as u64);
+                body.push_str(&format!(
+                    "<item><title>Sample.Feed.Release.{release}</title><guid>{guid}</guid>\
+                     <link>https://nab.example.invalid/details/{guid}</link>\
+                     <pubDate>{}</pubDate>\
+                     <enclosure url=\"https://nab.example.invalid/getnzb/{guid}\" length=\"1000\" type=\"application/x-nzb\"/>\
+                     </item>\n",
+                    httpdate::fmt_http_date(published)
+                ));
+            }
+            body.push_str("</channel>\n</rss>\n");
+            body
+        }
+
+        fn config(max_search_pages: usize) -> NewznabConfig {
+            NewznabConfig {
+                base_url: "https://nab.example.invalid".to_string(),
+                api_key: String::new(),
+                api_path: "/api".to_string(),
+                additional_params: String::new(),
+                page_size: PAGE_SIZE,
+                http_behavior: NewznabHttpBehavior {
+                    max_search_pages,
+                    ..NewznabHttpBehavior::default()
+                },
+            }
+        }
+
+        fn rss_request(categories: &[&str], catch_up: Option<PluginRssCatchUp>) -> SearchRequest {
+            SearchRequest {
+                categories: categories
+                    .iter()
+                    .map(|category| category.to_string())
+                    .collect(),
+                rss_catch_up: catch_up,
+                ..SearchRequest::default()
+            }
+        }
+
+        fn marker(published_at: &str, identity: Option<String>) -> PluginRssCatchUp {
+            PluginRssCatchUp {
+                last_seen_published_at: published_at.to_string(),
+                last_seen_identity: identity,
+            }
+        }
+
+        fn run(config: &NewznabConfig, request: &SearchRequest) -> Result<SearchResponse, Error> {
+            let future = execute_full_search(config, request, extract_base_metadata);
+            let mut future = std::pin::pin!(future);
+            let mut context = Context::from_waker(Waker::noop());
+            match future.as_mut().poll(&mut context) {
+                Poll::Ready(output) => output,
+                Poll::Pending => panic!("the scripted host never suspends"),
+            }
+        }
+
+        fn guids(results: &[SearchResult]) -> Vec<String> {
+            results
+                .iter()
+                .map(|result| result.guid.clone().unwrap_or_default())
+                .collect()
+        }
+
+        fn tv_offsets(offsets: &[usize]) -> Vec<(String, Option<usize>)> {
+            offsets
+                .iter()
+                .map(|offset| ("tvsearch".to_string(), Some(*offset)))
+                .collect()
+        }
+
+        #[test]
+        fn caught_up_within_the_first_page_reads_one_page() {
+            install_script();
+            serve_full_pages("tvsearch", 4);
+            let request = rss_request(
+                &["5000"],
+                Some(marker("2024-01-01T11:59:00Z", Some(guid("tvsearch", 1)))),
+            );
+
+            let response = run(&config(10), &request).expect("caught-up run completes");
+
+            assert_eq!(requests(), tv_offsets(&[0]));
+            assert_eq!(response.results.len(), PAGE_SIZE);
+        }
+
+        #[test]
+        fn marker_found_on_the_third_page_stops_there() {
+            install_script();
+            serve_full_pages("tvsearch", 6);
+            let request = rss_request(
+                &["5000"],
+                Some(marker(DISTANT_PAST, Some(guid("tvsearch", 7)))),
+            );
+
+            let response = run(&config(10), &request).expect("caught-up run completes");
+
+            assert_eq!(
+                requests(),
+                tv_offsets(&[0, PAGE_SIZE, 2 * PAGE_SIZE]),
+                "pages are requested at offsets 0, page_size, 2 * page_size"
+            );
+            assert_eq!(response.results.len(), 3 * PAGE_SIZE);
+            assert_eq!(response.results[0].guid.as_deref(), Some("guid-tvsearch-0"));
+            assert_eq!(response.results[8].guid.as_deref(), Some("guid-tvsearch-8"));
+        }
+
+        #[test]
+        fn marker_reached_by_publish_time_alone() {
+            install_script();
+            serve_full_pages("tvsearch", 6);
+            // Between release 9 (11:51) and release 10 (11:50): the page at
+            // offset 12 is the first whose every release predates it.
+            let request = rss_request(&["5000"], Some(marker("2024-01-01T11:50:30Z", None)));
+
+            let response = run(&config(10), &request).expect("caught-up run completes");
+
+            assert_eq!(
+                requests(),
+                tv_offsets(&[0, PAGE_SIZE, 2 * PAGE_SIZE, 3 * PAGE_SIZE, 4 * PAGE_SIZE])
+            );
+            assert_eq!(response.results.len(), 5 * PAGE_SIZE);
+        }
+
+        #[test]
+        fn a_late_listed_old_post_does_not_end_catch_up() {
+            install_script();
+            serve_full_pages("tvsearch", 6);
+            // Release 900 was posted long before the marker but listed just
+            // now, so it sits on the newest page among new releases.
+            serve_page("tvsearch", 0, &[0, 900, 1]);
+            let request = rss_request(
+                &["5000"],
+                Some(marker("2024-01-01T11:50:30Z", Some(guid("tvsearch", 7)))),
+            );
+
+            let response = run(&config(10), &request).expect("caught-up run completes");
+
+            assert_eq!(requests(), tv_offsets(&[0, PAGE_SIZE, 2 * PAGE_SIZE]));
+            assert!(guids(&response.results).contains(&guid("tvsearch", 5)));
+        }
+
+        #[test]
+        fn a_short_page_ends_catch_up_without_the_marker() {
+            install_script();
+            serve_full_pages("tvsearch", 1);
+            serve_page("tvsearch", PAGE_SIZE, &[3]);
+            let request = rss_request(
+                &["5000"],
+                Some(marker(DISTANT_PAST, Some("guid-never-served".to_string()))),
+            );
+
+            let response = run(&config(10), &request).expect("a short page completes the run");
+
+            assert_eq!(requests(), tv_offsets(&[0, PAGE_SIZE]));
+            assert_eq!(response.results.len(), PAGE_SIZE + 1);
+        }
+
+        #[test]
+        fn ceiling_without_marker_is_incomplete_and_keeps_every_search_type() {
+            install_script();
+            serve_full_pages("movie", 6);
+            serve_full_pages("tvsearch", 6);
+            // The movie feed never reaches the marker; the TV feed names it
+            // on its first page.
+            let request = rss_request(
+                &["2000", "5000"],
+                Some(marker(DISTANT_PAST, Some(guid("tvsearch", 0)))),
+            );
+
+            let error = run(&config(3), &request).expect_err("ceiling hit before the marker");
+
+            assert_eq!(
+                requests(),
+                vec![
+                    ("movie".to_string(), Some(0)),
+                    ("movie".to_string(), Some(PAGE_SIZE)),
+                    ("movie".to_string(), Some(2 * PAGE_SIZE)),
+                    ("tvsearch".to_string(), Some(0)),
+                ],
+                "the ceiling stops the movie feed and the TV feed still runs"
+            );
+            match indexer_search_details(&error) {
+                IndexerSearchPluginError::PartialResults {
+                    response, reason, ..
+                } => {
+                    assert_eq!(reason, IndexerSearchIncompleteReason::PageCeilingReached);
+                    let guids = guids(&response.results);
+                    assert_eq!(guids.len(), 4 * PAGE_SIZE);
+                    assert!(guids.contains(&guid("movie", 8)));
+                    assert!(guids.contains(&guid("tvsearch", 2)));
+                }
+                other => panic!("expected partial results, got {other:?}"),
+            }
+        }
+
+        /// Each feed request takes `ms_per_request`, and the operation expires
+        /// `deadline_after_ms` after the run starts.
+        fn set_clock(ms_per_request: u64, deadline_after_ms: u64) {
+            SCRIPT.with(|script| {
+                let mut script = script.borrow_mut();
+                script.ms_per_request = ms_per_request;
+                script.deadline_after_ms = Some(deadline_after_ms);
+            });
+        }
+
+        #[test]
+        fn a_deadline_close_to_expiry_returns_the_pages_already_read() {
+            install_script();
+            serve_full_pages("movie", 6);
+            serve_full_pages("tvsearch", 6);
+            // Two requests leave 30 s, enough for a third; three leave 15 s,
+            // less than the reserve.
+            set_clock(15_000, 60_000);
+            let request = rss_request(
+                &["2000", "5000"],
+                Some(marker(DISTANT_PAST, Some("guid-never-served".to_string()))),
+            );
+
+            let error = run(&config(10), &request).expect_err("deadline nears before the marker");
+
+            assert_eq!(
+                requests(),
+                vec![
+                    ("movie".to_string(), Some(0)),
+                    ("movie".to_string(), Some(PAGE_SIZE)),
+                    ("movie".to_string(), Some(2 * PAGE_SIZE)),
+                ],
+                "no page is started inside the reserve, in either feed"
+            );
+            match indexer_search_details(&error) {
+                IndexerSearchPluginError::PartialResults {
+                    response, reason, ..
+                } => {
+                    assert_eq!(reason, IndexerSearchIncompleteReason::PageCeilingReached);
+                    assert_eq!(response.results.len(), 3 * PAGE_SIZE);
+                }
+                other => panic!("expected partial results, got {other:?}"),
+            }
+        }
+
+        #[test]
+        fn a_short_deadline_still_reads_the_first_page() {
+            install_script();
+            serve_full_pages("tvsearch", 1);
+            serve_page("tvsearch", PAGE_SIZE, &[]);
+            set_clock(1_000, 5_000);
+            let request = rss_request(
+                &["5000"],
+                Some(marker("2024-01-01T11:59:00Z", Some(guid("tvsearch", 1)))),
+            );
+
+            let response = run(&config(10), &request).expect("the first page reaches the marker");
+
+            assert_eq!(requests(), tv_offsets(&[0]));
+            assert_eq!(response.results.len(), PAGE_SIZE);
+        }
+
+        #[test]
+        fn no_marker_reads_one_page_and_a_full_page_is_not_an_error() {
+            install_script();
+            serve_full_pages("tvsearch", 4);
+            let request = rss_request(&["5000"], None);
+
+            let response = run(&config(10), &request).expect("a full newest page is complete");
+
+            assert_eq!(
+                requests(),
+                vec![("tvsearch".to_string(), None)],
+                "without a marker the request carries no offset, as before"
+            );
+            assert_eq!(response.results.len(), PAGE_SIZE);
+        }
+
+        #[test]
+        fn both_search_types_run_when_the_first_page_is_full() {
+            install_script();
+            serve_full_pages("movie", 2);
+            serve_full_pages("tvsearch", 2);
+            let request = rss_request(&["2000", "5000"], None);
+
+            let response = run(&config(10), &request).expect("both feeds complete");
+
+            assert_eq!(
+                requests(),
+                vec![("movie".to_string(), None), ("tvsearch".to_string(), None)]
+            );
+            assert_eq!(response.results.len(), 2 * PAGE_SIZE);
+        }
+
+        #[test]
+        fn releases_repeated_across_pages_and_search_types_are_returned_once() {
+            install_script();
+            // Both feeds serve the same releases, and the second TV page
+            // repeats the last release of the first after a new upload
+            // shifted the feed.
+            for search_type in ["movie", "tvsearch"] {
+                SCRIPT.with(|script| {
+                    let mut script = script.borrow_mut();
+                    script.pages.insert(
+                        (search_type.to_string(), 0),
+                        feed(&[
+                            ("guid-shared-0".to_string(), 0),
+                            ("guid-shared-1".to_string(), 1),
+                            ("guid-shared-2".to_string(), 2),
+                        ]),
+                    );
+                    script.pages.insert(
+                        (search_type.to_string(), PAGE_SIZE),
+                        feed(&[
+                            ("guid-shared-2".to_string(), 2),
+                            ("guid-shared-3".to_string(), 3),
+                        ]),
+                    );
+                });
+            }
+            let request = rss_request(
+                &["2000", "5000"],
+                Some(marker(DISTANT_PAST, Some("guid-never-served".to_string()))),
+            );
+
+            let response = run(&config(10), &request).expect("short pages complete the run");
+
+            assert_eq!(requests().len(), 4);
+            assert_eq!(
+                guids(&response.results),
+                vec![
+                    "guid-shared-0",
+                    "guid-shared-1",
+                    "guid-shared-2",
+                    "guid-shared-3"
+                ]
+            );
+        }
     }
 }

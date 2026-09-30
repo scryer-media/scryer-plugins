@@ -44,7 +44,8 @@ pub use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldOption, ConfigFieldRole, ConfigFieldType, NotificationCapabilities,
     NotificationDeliveryMode, NotificationEventType, NotificationPayloadFormat, PluginDescriptor,
     PluginError, PluginErrorCode, PluginNotificationMediaFile, PluginNotificationRequest,
-    PluginNotificationResponse, PluginResult, ProviderDescriptor, SDK_VERSION,
+    PluginNotificationResponse, PluginNotificationTitleMove, PluginResult, ProviderDescriptor,
+    SDK_VERSION,
 };
 
 // Pre-existing shape, not introduced by the component migration: this is a
@@ -125,6 +126,7 @@ pub fn general_notification_events() -> Vec<NotificationEventType> {
         NotificationEventType::HealthRestored,
         NotificationEventType::ApplicationUpdate,
         NotificationEventType::ManualInteractionRequired,
+        NotificationEventType::TitleMoved,
         NotificationEventType::Test,
     ]
 }
@@ -271,6 +273,42 @@ pub fn poster_url(req: &PluginNotificationRequest) -> Option<String> {
                 .or_else(|| title.background_url.clone())
         })
         .filter(|url| !url.trim().is_empty())
+}
+
+/// Where a `title_moved` title came from: its old folder when the host reported
+/// one, otherwise the library it left.
+pub fn title_move_source(req: &PluginNotificationRequest) -> Option<String> {
+    let title_move = req.title_move.as_ref()?;
+    non_empty(title_move.source_path.as_deref())
+        .or_else(|| non_empty(title_move.source_library_name.as_deref()))
+}
+
+/// Where a `title_moved` title went: its new folder when the host reported one,
+/// otherwise the library it joined.
+pub fn title_move_destination(req: &PluginNotificationRequest) -> Option<String> {
+    let title_move = req.title_move.as_ref()?;
+    non_empty(title_move.destination_path.as_deref())
+        .or_else(|| non_empty(title_move.destination_library_name.as_deref()))
+}
+
+/// The warning a `title_moved` notification carries when the move finished with
+/// warnings, preferring the host's own detail. `None` for a clean move.
+pub fn title_move_warning(req: &PluginNotificationRequest) -> Option<String> {
+    let title_move = req.title_move.as_ref()?;
+    if !title_move.completed_with_warnings {
+        return None;
+    }
+    Some(
+        non_empty(title_move.detail.as_deref())
+            .unwrap_or_else(|| "Completed with warnings".to_string()),
+    )
+}
+
+fn non_empty(value: Option<&str>) -> Option<String> {
+    value
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_string)
 }
 
 pub fn ok_response() -> PluginNotificationResponse {
@@ -593,5 +631,79 @@ pub fn config_error(error: impl std::fmt::Display) -> PluginError {
         debug_message: None,
         retry_after_seconds: None,
         details: None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn title_moved(title_move: serde_json::Value) -> PluginNotificationRequest {
+        serde_json::from_value(serde_json::json!({
+            "event_type": "title_moved",
+            "summary_title": "Moved: Example Title",
+            "summary_message": "Moved 'Example Title'.",
+            "app": { "name": "Scryer", "version": "test" },
+            "title_move": title_move,
+        }))
+        .expect("title_moved request deserializes")
+    }
+
+    #[test]
+    fn general_events_include_title_moved() {
+        assert!(general_notification_events().contains(&NotificationEventType::TitleMoved));
+    }
+
+    #[test]
+    fn title_move_prefers_paths_over_library_names() {
+        let req = title_moved(serde_json::json!({
+            "source_library_name": "Library A",
+            "destination_library_name": "Library B",
+            "source_path": "/media/a/Example Title",
+            "destination_path": "/media/b/Example Title",
+        }));
+        assert_eq!(
+            title_move_source(&req).as_deref(),
+            Some("/media/a/Example Title")
+        );
+        assert_eq!(
+            title_move_destination(&req).as_deref(),
+            Some("/media/b/Example Title")
+        );
+        assert_eq!(title_move_warning(&req), None);
+    }
+
+    #[test]
+    fn title_move_falls_back_to_library_names_and_reports_warnings() {
+        let req = title_moved(serde_json::json!({
+            "source_library_name": "Library A",
+            "destination_library_name": "Library B",
+            "source_path": "  ",
+            "completed_with_warnings": true,
+        }));
+        assert_eq!(title_move_source(&req).as_deref(), Some("Library A"));
+        assert_eq!(title_move_destination(&req).as_deref(), Some("Library B"));
+        assert_eq!(
+            title_move_warning(&req).as_deref(),
+            Some("Completed with warnings")
+        );
+
+        let detailed = title_moved(serde_json::json!({
+            "completed_with_warnings": true,
+            "detail": "1 subtitle file was left behind",
+        }));
+        assert_eq!(
+            title_move_warning(&detailed).as_deref(),
+            Some("1 subtitle file was left behind")
+        );
+    }
+
+    #[test]
+    fn title_move_helpers_are_empty_without_the_block() {
+        let mut req = title_moved(serde_json::json!({}));
+        req.title_move = None;
+        assert_eq!(title_move_source(&req), None);
+        assert_eq!(title_move_destination(&req), None);
+        assert_eq!(title_move_warning(&req), None);
     }
 }

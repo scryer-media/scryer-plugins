@@ -1,6 +1,6 @@
 [package]
 name = "animetosho-xyz-indexer"
-version = "2.3.3"
+version = "2.4.0"
 edition = "2024"
 autolib = false
 license = "GPL-3.0-only"
@@ -22,7 +22,7 @@ path = "src/lib.rs"
 scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
 newznab-common = { path = "../newznab-common" }
 serde_json = "1"
-scryer-plugin-sdk = "3.11.0"
+scryer-plugin-sdk = "3.13.0"
 
 [profile.plugin-release]
 inherits = "release"

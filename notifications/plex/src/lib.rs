@@ -156,14 +156,39 @@ fn send_notification(req: &PluginNotificationRequest) -> FnResult<PluginNotifica
             return Ok(error_response(message, Some("invalid_config".to_string())));
         }
     };
-    let path = update_path(req).map(|path| map_path(&path, &path_mappings));
+    let paths: Vec<String> = refresh_paths(req)
+        .iter()
+        .map(|path| map_path(path, &path_mappings))
+        .collect();
     let section_types = section_types_for_request(req);
-    let targets = match refresh_targets(path.as_deref(), &section_types) {
-        Ok(targets) => targets,
-        Err(error) => {
-            return Ok(error_response(error.to_string(), None));
-        }
+    let mut targets: Vec<PlexRefreshTarget> = Vec::new();
+    let lookups: Vec<Option<&str>> = if paths.is_empty() {
+        vec![None]
+    } else {
+        paths.iter().map(|path| Some(path.as_str())).collect()
     };
+    for (index, path) in lookups.into_iter().enumerate() {
+        match refresh_targets(path, &section_types) {
+            Ok(found) => {
+                // Only the first folder may fall back to refreshing every
+                // section. A moved title's old folder that no section holds
+                // has nothing in Plex to clean up.
+                if index > 0 && found.iter().all(|target| target.path.is_none()) {
+                    continue;
+                }
+                for target in found {
+                    if !targets.iter().any(|known| {
+                        known.section_id == target.section_id && known.path == target.path
+                    }) {
+                        targets.push(target);
+                    }
+                }
+            }
+            Err(error) => {
+                return Ok(error_response(error.to_string(), None));
+            }
+        }
+    }
     let mut responses = Vec::new();
     for target in targets {
         responses.push(refresh_section(&target.section_id, target.path.as_deref()));
@@ -532,6 +557,36 @@ fn update_path(req: &PluginNotificationRequest) -> Option<String> {
         })
 }
 
+/// Every folder Plex has to rescan for this event. A moved title needs its new
+/// folder scanned and its old one too, since the old one can sit in another
+/// Plex section that would otherwise keep listing the title where it no longer
+/// is.
+fn refresh_paths(req: &PluginNotificationRequest) -> Vec<String> {
+    let title_move = if req.event_type == NotificationEventType::TitleMoved {
+        req.title_move.as_ref()
+    } else {
+        None
+    };
+    let non_empty = |path: &Option<String>| {
+        path.as_deref()
+            .map(str::trim)
+            .filter(|path| !path.is_empty())
+            .map(str::to_string)
+    };
+
+    let mut paths: Vec<String> = title_move
+        .and_then(|title_move| non_empty(&title_move.destination_path))
+        .or_else(|| update_path(req))
+        .into_iter()
+        .collect();
+    if let Some(source) = title_move.and_then(|title_move| non_empty(&title_move.source_path))
+        && !paths.contains(&source)
+    {
+        paths.push(source);
+    }
+    paths
+}
+
 fn parent_directory_for_refresh(path: &str) -> Option<String> {
     let trimmed = path.trim_end_matches(['/', '\\']);
     if trimmed.is_empty() {
@@ -698,6 +753,7 @@ fn should_update_library(req: &PluginNotificationRequest) -> bool {
             | NotificationEventType::FileDeletedForUpgrade
             | NotificationEventType::TitleAdded
             | NotificationEventType::TitleDeleted
+            | NotificationEventType::TitleMoved
     )
 }
 
@@ -975,6 +1031,7 @@ mod tests {
             application_update: None,
             manual_interaction: None,
             media_request: None,
+            title_move: None,
         }
     }
 
@@ -1163,6 +1220,7 @@ mod tests {
             application_update: None,
             manual_interaction: None,
             media_request: None,
+            title_move: None,
         };
 
         assert_eq!(
@@ -1216,6 +1274,7 @@ mod tests {
             application_update: None,
             manual_interaction: None,
             media_request: None,
+            title_move: None,
         };
 
         assert_eq!(
@@ -1232,6 +1291,47 @@ mod tests {
             update_path(&request),
             Some("/data/series/Bluey (2018)".to_string())
         );
+
+        // Every other event still refreshes that one folder, whatever else the
+        // request carries.
+        request.title_move = Some(PluginNotificationTitleMove {
+            source_path: Some("/data/other/Bluey (2018)".to_string()),
+            ..PluginNotificationTitleMove::default()
+        });
+        assert_eq!(
+            refresh_paths(&request),
+            vec!["/data/series/Bluey (2018)".to_string()]
+        );
+    }
+
+    #[test]
+    fn a_title_move_refreshes_the_new_folder_and_the_old_one() {
+        let mut request: PluginNotificationRequest = serde_json::from_value(serde_json::json!({
+            "event_type": "title_moved",
+            "summary_title": "Title moved",
+            "summary_message": "Moved one title.",
+            "app": { "name": "Scryer", "version": "test" },
+        }))
+        .expect("minimal notification request deserializes");
+        request.title_move = Some(PluginNotificationTitleMove {
+            source_path: Some("/data/series/Example Show".to_string()),
+            destination_path: Some("/data/anime/Example Show".to_string()),
+            ..PluginNotificationTitleMove::default()
+        });
+
+        assert!(should_update_library(&request));
+        assert_eq!(
+            refresh_paths(&request),
+            vec![
+                "/data/anime/Example Show".to_string(),
+                "/data/series/Example Show".to_string(),
+            ]
+        );
+
+        // Without the move block and without a title folder there is nothing
+        // specific to scan, so the whole matching section is refreshed.
+        request.title_move = None;
+        assert_eq!(refresh_paths(&request), Vec::<String>::new());
     }
 
     #[test]

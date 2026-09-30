@@ -39,7 +39,8 @@ a running channel keeps delivering and records a warning instead.
   Pushover's 250-character limit.
 * **message** — the event summary, followed by the facts the event carries:
   episode, quality, release and release group, indexer, size, download client,
-  destination or source path, health check and detail, application versions,
+  destination or source path, where a moved title came from and went to and any
+  warning from the move, health check and detail, application versions,
   subtitle languages, or media-request status. Trimmed to Pushover's
   1024-character limit, dropping detail lines from the end before the summary.
 * **timestamp** — the moment the event happened, from the contract's

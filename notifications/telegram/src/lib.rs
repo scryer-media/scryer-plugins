@@ -687,7 +687,20 @@ fn detail_lines(req: &PluginNotificationRequest) -> Vec<Line> {
             push(&mut lines, "Status", media_request_status(req));
             push(&mut lines, "Quality Profile", media_request_profile(req));
         }
-        NotificationEventType::Test => {}
+        NotificationEventType::TitleMoved => {
+            push(&mut lines, "From", title_move_source(req));
+            push(&mut lines, "To", title_move_destination(req));
+            push(&mut lines, "Warning", title_move_warning(req));
+        }
+        // Not in `supported_events`, so the host never routes them here; the
+        // summary lines are all such a notification would carry.
+        NotificationEventType::ListTitleAdded
+        | NotificationEventType::ListRequestSubmitted
+        | NotificationEventType::ListItemHeld
+        | NotificationEventType::ListTitleLeft
+        | NotificationEventType::ListSyncFailed
+        | NotificationEventType::ListUnfollowed
+        | NotificationEventType::Test => {}
     }
     lines
 }
@@ -1524,6 +1537,7 @@ mod tests {
             application_update: None,
             manual_interaction: None,
             media_request: None,
+            title_move: None,
         }
     }
 
@@ -1917,6 +1931,26 @@ mod tests {
             text.contains("<b>File:</b> /media/TV/Example Show/S01E01.mkv"),
             "{text}"
         );
+    }
+
+    #[test]
+    fn a_title_move_names_its_origin_and_destination() {
+        assert!(general_notification_events().contains(&NotificationEventType::TitleMoved));
+        let mut req = request(NotificationEventType::TitleMoved);
+        req.summary_title = "Moved: Example Show".to_string();
+        req.title_move = Some(PluginNotificationTitleMove {
+            source_library_name: Some("Library A".to_string()),
+            destination_library_name: Some("Library B".to_string()),
+            source_path: Some("/media/a/Example Show".to_string()),
+            destination_path: Some("/media/b/Example Show".to_string()),
+            ..PluginNotificationTitleMove::default()
+        });
+        let text = text_of(&build_payload(&req, &settings()).0);
+        assert!(
+            text.contains("<b>From:</b> /media/a/Example Show"),
+            "{text}"
+        );
+        assert!(text.contains("<b>To:</b> /media/b/Example Show"), "{text}");
     }
 
     #[test]

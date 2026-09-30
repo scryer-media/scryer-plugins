@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt;
 
 use scryer_plugin_pdk::component::{self, structured_plugin_error};
@@ -9,9 +9,9 @@ use scryer_plugin_sdk::{
     IndexerDescriptor, IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol,
     IndexerResponseFeatures, IndexerSearchIncompleteReason, IndexerSearchInput,
     IndexerSearchPluginError, IndexerSourceKind, IndexerTorrentCapabilities, PluginDescriptor,
-    PluginError, PluginErrorCode, PluginErrorDetails, PluginSearchRequest as SearchRequest,
-    PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult, ProviderDescriptor,
-    SDK_VERSION,
+    PluginError, PluginErrorCode, PluginErrorDetails, PluginRssCatchUp,
+    PluginSearchRequest as SearchRequest, PluginSearchResponse as SearchResponse,
+    PluginSearchResult as SearchResult, ProviderDescriptor, SDK_VERSION,
 };
 use serde::Deserialize;
 use serde_json::Value;
@@ -40,6 +40,19 @@ async fn search(request: SearchRequest) -> FnResult<SearchResponse> {
                 retry_after_seconds,
             )));
         }
+        Err(TsukihimeError::Incomplete {
+            response,
+            reason,
+            retry_after_seconds,
+            detail,
+        }) => {
+            return Err(structured_plugin_error(partial_results_error(
+                response,
+                reason,
+                retry_after_seconds,
+                detail,
+            )));
+        }
         Err(error) => return Err(Error::msg(error.to_string())),
     };
     Ok(response)
@@ -54,6 +67,32 @@ fn rate_limited_error(retry_after_seconds: Option<i64>) -> PluginError {
         details: Some(PluginErrorDetails::IndexerSearch(
             IndexerSearchPluginError::Deferred {
                 reason: IndexerSearchIncompleteReason::RateLimited,
+                retry_after_seconds,
+            },
+        )),
+    }
+}
+
+fn partial_results_error(
+    response: Box<SearchResponse>,
+    reason: IndexerSearchIncompleteReason,
+    retry_after_seconds: Option<i64>,
+    detail: String,
+) -> PluginError {
+    let code = if reason == IndexerSearchIncompleteReason::RateLimited {
+        PluginErrorCode::RateLimited
+    } else {
+        PluginErrorCode::UpstreamUnavailable
+    };
+    PluginError {
+        code,
+        public_message: "indexer search did not complete".to_string(),
+        debug_message: Some(detail),
+        retry_after_seconds,
+        details: Some(PluginErrorDetails::IndexerSearch(
+            IndexerSearchPluginError::PartialResults {
+                response,
+                reason,
                 retry_after_seconds,
             },
         )),
@@ -180,6 +219,8 @@ async fn search_impl(request: &SearchRequest) -> Result<SearchResponse, Tsukihim
     let limit = config.limit_for_request(request.limit);
     let results = if let Some(anime_id) = resolve_anime_id(&config, request).await? {
         anime_results(&config, anime_id, request, limit).await?
+    } else if let Some(pager) = catch_up_pager(request, config.include_adult) {
+        return catch_up_recent_results(&config, pager).await;
     } else {
         text_or_recent_results(&config, request, limit).await?
     };
@@ -257,7 +298,7 @@ async fn text_or_recent_results(
 ) -> Result<Vec<Torrent>, TsukihimeError> {
     let query = search_query(request);
     let path = if query.trim().is_empty() {
-        format!("torrents?limit={limit}&offset=0&sort_by=source_date&order=desc")
+        recent_torrents_path(limit, 0)
     } else if query.chars().count() < 2 {
         return Ok(Vec::new());
     } else {
@@ -268,6 +309,234 @@ async fn text_or_recent_results(
     };
 
     Ok(get_json::<TorrentPage>(config, &path).await?.results)
+}
+
+/// The newest-first listing behind the recent/RSS feed. `/torrents` pages by
+/// `limit` (1–100) and `offset`, per the API's published swagger document.
+fn recent_torrents_path(limit: usize, offset: usize) -> String {
+    format!("torrents?limit={limit}&offset={offset}&sort_by=source_date&order=desc")
+}
+
+/// Page size used while catching up: the API maximum, to spend as few of the
+/// per-minute requests as possible.
+const CATCH_UP_PAGE_SIZE: usize = API_MAX_RESULTS;
+const CATCH_UP_MAX_PAGES: usize = 30;
+const CATCH_UP_MAX_TORRENTS: usize = 1_000;
+/// Time an RSS catch-up keeps in hand before the operation deadline. A page is
+/// only started with at least this much left, so the pages already read are
+/// returned instead of being lost to a host timeout.
+const CATCH_UP_DEADLINE_RESERVE_MS: u64 = 20_000;
+
+/// Whether the operation deadline leaves room to read one more catch-up page.
+fn has_time_for_a_page() -> bool {
+    component::operation_deadline_monotonic_ms().saturating_sub(component::monotonic_now_ms())
+        >= CATCH_UP_DEADLINE_RESERVE_MS
+}
+
+/// A recent-feed poll that reads older pages until it reaches the release the
+/// host saw on its previous poll.
+struct CatchUpPager {
+    marker: PluginRssCatchUp,
+    marker_published_at: i64,
+    include_adult: bool,
+    seen: HashSet<i64>,
+    torrents: Vec<Torrent>,
+    pages: usize,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum CatchUpStep {
+    NextPage { offset: usize },
+    CaughtUp,
+    CeilingReached,
+}
+
+/// A pager only for a plain recent poll that carries a usable marker; anything
+/// else keeps the single-page behaviour.
+fn catch_up_pager(request: &SearchRequest, include_adult: bool) -> Option<CatchUpPager> {
+    if !search_query(request).trim().is_empty() {
+        return None;
+    }
+    let marker = request.rss_catch_up.clone()?;
+    let marker_published_at = parse_rfc3339_unix(&marker.last_seen_published_at)?;
+    Some(CatchUpPager {
+        marker,
+        marker_published_at,
+        include_adult,
+        seen: HashSet::new(),
+        torrents: Vec::new(),
+        pages: 0,
+    })
+}
+
+impl CatchUpPager {
+    fn accept(&mut self, page: Vec<Torrent>) -> CatchUpStep {
+        self.pages += 1;
+        let page_len = page.len();
+        let mut reached_marker = false;
+        let mut oldest_published_at: Option<i64> = None;
+        for torrent in page {
+            if let Some(published_at) = torrent.source_date.or(torrent.added_date) {
+                oldest_published_at = Some(
+                    oldest_published_at.map_or(published_at, |oldest| oldest.min(published_at)),
+                );
+            }
+            if torrent_to_search_results(&torrent, None)
+                .iter()
+                .any(|result| self.marker.names(result))
+            {
+                reached_marker = true;
+            }
+            if self.seen.insert(torrent.id) {
+                self.torrents.push(torrent);
+            }
+        }
+
+        let passed_marker_time =
+            oldest_published_at.is_some_and(|oldest| oldest < self.marker_published_at);
+        if reached_marker || passed_marker_time || page_len < CATCH_UP_PAGE_SIZE {
+            return CatchUpStep::CaughtUp;
+        }
+        let offset = self.pages * CATCH_UP_PAGE_SIZE;
+        if self.pages >= CATCH_UP_MAX_PAGES || offset >= CATCH_UP_MAX_TORRENTS {
+            return CatchUpStep::CeilingReached;
+        }
+        CatchUpStep::NextPage { offset }
+    }
+
+    fn response(&self) -> SearchResponse {
+        SearchResponse {
+            results: self
+                .torrents
+                .iter()
+                .filter(|torrent| include_torrent(torrent, self.include_adult))
+                .flat_map(|torrent| torrent_to_search_results(torrent, None))
+                .collect(),
+            ..SearchResponse::default()
+        }
+    }
+
+    /// Stops the catch-up after a failed page. The first page failing is the
+    /// same failure a single-page poll reports; a later one keeps what was read.
+    fn interrupted(&self, error: TsukihimeError) -> TsukihimeError {
+        if self.pages == 0 {
+            return error;
+        }
+        let (reason, retry_after_seconds) = match &error {
+            TsukihimeError::RateLimited(retry_after_seconds) => (
+                IndexerSearchIncompleteReason::RateLimited,
+                *retry_after_seconds,
+            ),
+            _ => (IndexerSearchIncompleteReason::UpstreamFailure, None),
+        };
+        TsukihimeError::Incomplete {
+            response: Box::new(self.response()),
+            reason,
+            retry_after_seconds,
+            detail: format!(
+                "Tsukihime RSS catch-up stopped after {} page(s): {error}",
+                self.pages
+            ),
+        }
+    }
+}
+
+async fn catch_up_recent_results(
+    config: &TsukihimeConfig,
+    mut pager: CatchUpPager,
+) -> Result<SearchResponse, TsukihimeError> {
+    let mut offset = 0;
+    loop {
+        if pager.pages > 0 && !has_time_for_a_page() {
+            return Err(TsukihimeError::Incomplete {
+                response: Box::new(pager.response()),
+                reason: IndexerSearchIncompleteReason::PageCeilingReached,
+                retry_after_seconds: None,
+                detail: format!(
+                    "Tsukihime RSS catch-up stopped after {} page(s) before the operation deadline",
+                    pager.pages
+                ),
+            });
+        }
+        let page = match get_json::<TorrentPage>(
+            config,
+            &recent_torrents_path(CATCH_UP_PAGE_SIZE, offset),
+        )
+        .await
+        {
+            Ok(page) => page.results,
+            Err(error) => return Err(pager.interrupted(error)),
+        };
+        match pager.accept(page) {
+            CatchUpStep::NextPage { offset: next } => offset = next,
+            CatchUpStep::CaughtUp => return Ok(pager.response()),
+            CatchUpStep::CeilingReached => {
+                return Err(TsukihimeError::Incomplete {
+                    response: Box::new(pager.response()),
+                    reason: IndexerSearchIncompleteReason::PageCeilingReached,
+                    retry_after_seconds: None,
+                    detail: format!(
+                        "Tsukihime RSS catch-up reached its {}-page ceiling before the last-seen release",
+                        pager.pages
+                    ),
+                });
+            }
+        }
+    }
+}
+
+/// Unix seconds of an RFC 3339 timestamp (`Z` or a numeric offset, optional
+/// fractional seconds, which are dropped).
+fn parse_rfc3339_unix(value: &str) -> Option<i64> {
+    let value = value.trim();
+    let (date, rest) = value.split_once(['T', 't', ' '])?;
+    let mut date_parts = date.splitn(3, '-');
+    let year: i64 = date_parts.next()?.parse().ok()?;
+    let month: i64 = date_parts.next()?.parse().ok()?;
+    let day: i64 = date_parts.next()?.parse().ok()?;
+
+    let (time, offset_seconds) = if let Some(time) = rest.strip_suffix(['Z', 'z']) {
+        (time, 0)
+    } else {
+        let split = rest.rfind(['+', '-'])?;
+        let (time, zone) = rest.split_at(split);
+        let sign = if zone.starts_with('-') { -1 } else { 1 };
+        let (hours, minutes) = zone[1..].split_once(':')?;
+        let hours: i64 = hours.parse().ok()?;
+        let minutes: i64 = minutes.parse().ok()?;
+        if hours > 23 || minutes > 59 {
+            return None;
+        }
+        (time, sign * (hours * 3_600 + minutes * 60))
+    };
+    let time = time.split_once('.').map_or(time, |(whole, _)| whole);
+    let mut time_parts = time.splitn(3, ':');
+    let hour: i64 = time_parts.next()?.parse().ok()?;
+    let minute: i64 = time_parts.next()?.parse().ok()?;
+    let second: i64 = time_parts.next()?.parse().ok()?;
+
+    if !(1..=12).contains(&month)
+        || !(1..=31).contains(&day)
+        || hour > 23
+        || minute > 59
+        || second > 60
+    {
+        return None;
+    }
+    Some(
+        days_from_civil(year, month, day) * 86_400 + hour * 3_600 + minute * 60 + second
+            - offset_seconds,
+    )
+}
+
+fn days_from_civil(year: i64, month: i64, day: i64) -> i64 {
+    let year = if month <= 2 { year - 1 } else { year };
+    let era = if year >= 0 { year } else { year - 399 } / 400;
+    let year_of_era = year - era * 400;
+    let month_prime = if month > 2 { month - 3 } else { month + 9 };
+    let day_of_year = (153 * month_prime + 2) / 5 + day - 1;
+    let day_of_era = year_of_era * 365 + year_of_era / 4 - year_of_era / 100 + day_of_year;
+    era * 146_097 + day_of_era - 719_468
 }
 
 fn search_query(request: &SearchRequest) -> String {
@@ -675,6 +944,13 @@ enum TsukihimeError {
     Message(String),
     NotFound,
     RateLimited(Option<i64>),
+    /// Paging stopped before it finished; `response` holds what was read.
+    Incomplete {
+        response: Box<SearchResponse>,
+        reason: IndexerSearchIncompleteReason,
+        retry_after_seconds: Option<i64>,
+        detail: String,
+    },
 }
 
 impl fmt::Display for TsukihimeError {
@@ -689,6 +965,7 @@ impl fmt::Display for TsukihimeError {
                 )
             }
             Self::RateLimited(None) => formatter.write_str("Tsukihime API rate limited"),
+            Self::Incomplete { detail, .. } => formatter.write_str(detail),
         }
     }
 }
@@ -1095,6 +1372,288 @@ mod tests {
     fn timestamp_formatter_outputs_rfc3339_utc() {
         assert_eq!(format_unix_timestamp(0), "1970-01-01T00:00:00Z");
         assert_eq!(format_unix_timestamp(1_783_111_465), "2026-07-03T20:44:25Z");
+    }
+
+    const MARKER_TIME: &str = "2026-03-01T12:00:00Z";
+    const MARKER_UNIX: i64 = 1_772_366_400;
+
+    fn synthetic_torrent(id: i64, source_date: i64) -> Torrent {
+        serde_json::from_value(serde_json::json!({
+            "id": id,
+            "state": "completed",
+            "name": format!("[SyntheticGroup] Example Show - {id:03} [1080p]"),
+            "is_adult": 0,
+            "source_date": source_date,
+        }))
+        .expect("synthetic torrent parses")
+    }
+
+    /// A full page of `CATCH_UP_PAGE_SIZE` torrents, newest first, with ids
+    /// counting down from `first_id` and every release after `newest_after`.
+    fn full_page(first_id: i64, newest_after: i64) -> Vec<Torrent> {
+        (0..CATCH_UP_PAGE_SIZE as i64)
+            .map(|index| synthetic_torrent(first_id - index, newest_after + 10_000 - index))
+            .collect()
+    }
+
+    fn recent_request(marker: Option<PluginRssCatchUp>) -> SearchRequest {
+        SearchRequest {
+            rss_catch_up: marker,
+            ..SearchRequest::default()
+        }
+    }
+
+    fn marker(identity: Option<&str>) -> PluginRssCatchUp {
+        PluginRssCatchUp {
+            last_seen_published_at: MARKER_TIME.to_string(),
+            last_seen_identity: identity.map(str::to_string),
+        }
+    }
+
+    fn pager(identity: Option<&str>) -> CatchUpPager {
+        catch_up_pager(&recent_request(Some(marker(identity))), false)
+            .expect("a recent poll with a marker pages")
+    }
+
+    fn result_guids(response: &SearchResponse) -> Vec<String> {
+        response
+            .results
+            .iter()
+            .filter_map(|result| result.guid.clone())
+            .collect()
+    }
+
+    #[test]
+    fn a_recent_poll_without_a_marker_reads_one_page_as_before() {
+        assert!(catch_up_pager(&recent_request(None), false).is_none());
+        assert_eq!(
+            recent_torrents_path(50, 0),
+            "torrents?limit=50&offset=0&sort_by=source_date&order=desc"
+        );
+    }
+
+    #[test]
+    fn a_marker_on_a_text_search_is_ignored() {
+        let request = SearchRequest {
+            query: "Example Show".to_string(),
+            ..recent_request(Some(marker(None)))
+        };
+        assert!(catch_up_pager(&request, false).is_none());
+    }
+
+    #[test]
+    fn an_unreadable_marker_time_keeps_the_single_page_poll() {
+        let request = recent_request(Some(PluginRssCatchUp {
+            last_seen_published_at: "yesterday".to_string(),
+            last_seen_identity: None,
+        }));
+        assert!(catch_up_pager(&request, false).is_none());
+    }
+
+    #[test]
+    fn catch_up_pages_until_a_page_holds_the_last_seen_release() {
+        let mut pager = pager(Some("tsukihime-850"));
+
+        assert_eq!(
+            pager.accept(full_page(1_000, MARKER_UNIX)),
+            CatchUpStep::NextPage {
+                offset: CATCH_UP_PAGE_SIZE
+            }
+        );
+        // The marker sits mid-page; everything on the page is still newer by
+        // time, so only the identity ends the run.
+        assert_eq!(
+            pager.accept(full_page(900, MARKER_UNIX)),
+            CatchUpStep::CaughtUp
+        );
+
+        let guids = result_guids(&pager.response());
+        assert_eq!(guids.len(), 2 * CATCH_UP_PAGE_SIZE);
+        assert_eq!(guids.first().map(String::as_str), Some("tsukihime-1000"));
+        assert!(guids.contains(&"tsukihime-850".to_string()));
+    }
+
+    #[test]
+    fn the_usenet_mirror_guid_also_names_the_last_seen_release() {
+        let mut pager = pager(Some("tsukihime-990-nzb"));
+        let mut page = full_page(1_000, MARKER_UNIX);
+        page[10].has_nzb = Some(1);
+        assert_eq!(pager.accept(page), CatchUpStep::CaughtUp);
+    }
+
+    #[test]
+    fn catch_up_stops_once_a_page_reaches_back_past_the_marker_time() {
+        let mut pager = pager(None);
+        let mut page = full_page(1_000, MARKER_UNIX);
+        page.last_mut().expect("full page").source_date = Some(MARKER_UNIX - 1);
+        assert_eq!(pager.accept(page), CatchUpStep::CaughtUp);
+    }
+
+    #[test]
+    fn a_release_published_exactly_at_the_marker_time_does_not_end_the_run() {
+        let mut pager = pager(None);
+        let mut page = full_page(1_000, MARKER_UNIX);
+        page.last_mut().expect("full page").source_date = Some(MARKER_UNIX);
+        assert_eq!(
+            pager.accept(page),
+            CatchUpStep::NextPage {
+                offset: CATCH_UP_PAGE_SIZE
+            }
+        );
+    }
+
+    #[test]
+    fn a_short_or_empty_page_ends_the_run() {
+        let mut short = pager(Some("tsukihime-1"));
+        let mut page = full_page(1_000, MARKER_UNIX);
+        page.truncate(3);
+        assert_eq!(short.accept(page), CatchUpStep::CaughtUp);
+        assert_eq!(result_guids(&short.response()).len(), 3);
+
+        let mut empty = pager(Some("tsukihime-1"));
+        assert_eq!(empty.accept(Vec::new()), CatchUpStep::CaughtUp);
+        assert!(empty.response().results.is_empty());
+    }
+
+    #[test]
+    fn catch_up_reports_the_ceiling_when_the_marker_is_never_reached() {
+        let mut pager = pager(Some("tsukihime-1"));
+        let mut offsets = Vec::new();
+        let mut first_id = 100_000;
+        let step = loop {
+            match pager.accept(full_page(first_id, MARKER_UNIX)) {
+                CatchUpStep::NextPage { offset } => offsets.push(offset),
+                other => break other,
+            }
+            first_id -= CATCH_UP_PAGE_SIZE as i64;
+        };
+
+        assert_eq!(step, CatchUpStep::CeilingReached);
+        let pages = CATCH_UP_MAX_TORRENTS / CATCH_UP_PAGE_SIZE;
+        assert_eq!(pager.pages, pages);
+        assert_eq!(
+            offsets,
+            (1..pages)
+                .map(|page| page * CATCH_UP_PAGE_SIZE)
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(
+            pager.response().results.len(),
+            CATCH_UP_MAX_TORRENTS,
+            "partial results are kept"
+        );
+    }
+
+    #[test]
+    fn releases_repeated_by_a_shifted_offset_are_reported_once() {
+        let mut pager = pager(Some("tsukihime-850"));
+        assert!(matches!(
+            pager.accept(full_page(1_000, MARKER_UNIX)),
+            CatchUpStep::NextPage { .. }
+        ));
+        // New releases arrived between requests, so the second page starts
+        // five releases before where the first one ended.
+        assert_eq!(
+            pager.accept(full_page(905, MARKER_UNIX)),
+            CatchUpStep::CaughtUp
+        );
+
+        let guids = result_guids(&pager.response());
+        let unique: HashSet<&String> = guids.iter().collect();
+        assert_eq!(unique.len(), guids.len());
+        assert_eq!(guids.len(), 2 * CATCH_UP_PAGE_SIZE - 5);
+    }
+
+    #[test]
+    fn filtered_releases_still_count_toward_reaching_the_marker() {
+        let mut pager = pager(Some("tsukihime-995"));
+        let mut page = full_page(1_000, MARKER_UNIX);
+        page[5].is_adult = Some(1);
+        assert_eq!(pager.accept(page), CatchUpStep::CaughtUp);
+        assert!(
+            !result_guids(&pager.response()).contains(&"tsukihime-995".to_string()),
+            "include_adult still applies to what is returned"
+        );
+    }
+
+    #[test]
+    fn a_failure_on_the_first_page_is_reported_as_before() {
+        let pager = pager(None);
+        assert!(matches!(
+            pager.interrupted(TsukihimeError::RateLimited(Some(30))),
+            TsukihimeError::RateLimited(Some(30))
+        ));
+    }
+
+    #[test]
+    fn a_failure_after_the_first_page_keeps_the_pages_already_read() {
+        let mut pager = pager(Some("tsukihime-1"));
+        pager.accept(full_page(1_000, MARKER_UNIX));
+
+        let TsukihimeError::Incomplete {
+            response,
+            reason,
+            retry_after_seconds,
+            ..
+        } = pager.interrupted(TsukihimeError::RateLimited(Some(30)))
+        else {
+            panic!("expected partial results");
+        };
+        assert_eq!(reason, IndexerSearchIncompleteReason::RateLimited);
+        assert_eq!(retry_after_seconds, Some(30));
+        assert_eq!(response.results.len(), CATCH_UP_PAGE_SIZE);
+
+        let TsukihimeError::Incomplete { reason, .. } =
+            pager.interrupted(TsukihimeError::Message("HTTP 502".to_string()))
+        else {
+            panic!("expected partial results");
+        };
+        assert_eq!(reason, IndexerSearchIncompleteReason::UpstreamFailure);
+    }
+
+    #[test]
+    fn the_page_ceiling_is_reported_as_typed_partial_results() {
+        let response = SearchResponse {
+            results: torrent_to_search_results(&synthetic_torrent(7, MARKER_UNIX), None),
+            ..SearchResponse::default()
+        };
+        let error = partial_results_error(
+            Box::new(response),
+            IndexerSearchIncompleteReason::PageCeilingReached,
+            None,
+            "ceiling".to_string(),
+        );
+        assert_eq!(error.code, PluginErrorCode::UpstreamUnavailable);
+        let Some(PluginErrorDetails::IndexerSearch(IndexerSearchPluginError::PartialResults {
+            response,
+            reason,
+            ..
+        })) = error.details
+        else {
+            panic!("expected typed partial results");
+        };
+        assert_eq!(reason, IndexerSearchIncompleteReason::PageCeilingReached);
+        assert_eq!(response.results.len(), 1);
+    }
+
+    #[test]
+    fn rfc3339_marker_times_parse_to_unix_seconds() {
+        assert_eq!(parse_rfc3339_unix(MARKER_TIME), Some(MARKER_UNIX));
+        assert_eq!(
+            parse_rfc3339_unix("2026-03-01T13:30:00+01:30"),
+            Some(MARKER_UNIX)
+        );
+        assert_eq!(
+            parse_rfc3339_unix("2026-03-01T07:00:00.250-05:00"),
+            Some(MARKER_UNIX)
+        );
+        assert_eq!(parse_rfc3339_unix("1970-01-01T00:00:00Z"), Some(0));
+        assert_eq!(
+            parse_rfc3339_unix(&format_unix_timestamp(1_783_111_465)),
+            Some(1_783_111_465)
+        );
+        assert_eq!(parse_rfc3339_unix("2026-03-01T12:00:00"), None);
+        assert_eq!(parse_rfc3339_unix("2026-13-01T12:00:00Z"), None);
     }
 
     #[test]

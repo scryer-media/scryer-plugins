@@ -48,6 +48,120 @@ fn amenzb_release_wasm_conforms_to_the_subtitle_host_contract() {
     suite.assert_another_family_is_an_invocation_error();
 }
 
+/// The search ladder through the release artifact: a TVDB `t=tvsearch` that
+/// finds nothing, then the AniDB `anime_id` search that does, and no title
+/// query after it. It also proves the full engine's caps lookup and its cached
+/// state work inside the subtitle world, which only the TVDB rung reaches.
+#[test]
+fn amenzb_search_ladder_moves_from_tvdb_to_anidb_on_an_empty_rung() {
+    let suite = suite();
+    let script = suite.script_with_routes(vec![
+        HttpRoute::contains("t=caps", HttpReply::new(200, caps_document().into_bytes())),
+        HttpRoute::contains("t=tvsearch", HttpReply::new(200, empty_feed().into_bytes())),
+        HttpRoute::contains(
+            "anime_id=14821",
+            HttpReply::new(200, newznab_feed().into_bytes()),
+        ),
+        HttpRoute::contains(
+            &subtitle_url(),
+            HttpReply::new(200, SUBTITLE_BYTES.to_vec()),
+        ),
+        HttpRoute::contains(
+            &format!("{BASE_URL}/release/{RELEASE_ID}"),
+            HttpReply::new(200, release_page().into_bytes()),
+        ),
+    ]);
+    let (mut store, plugin) = instantiate(&suite.wasm_path(), script);
+
+    let mut request = search_request();
+    request.title_candidates = vec!["Synthetic Harbor Tales".to_string()];
+    request.external_ids.insert(
+        "tvdb".to_string(),
+        vec!["900001".to_string(), "900777".to_string()],
+    );
+    request
+        .external_ids
+        .insert("anidb".to_string(), vec!["14821".to_string()]);
+
+    let result = call_subtitle(&mut store, &plugin, PluginSubtitleCommand::Search(request));
+    let PluginSubtitleCommandResult::Search(PluginResult::Ok(response)) = result else {
+        panic!("search did not return a typed ok result: {result:?}");
+    };
+    assert!(
+        !response.results.is_empty(),
+        "the AniDB rung's release must yield candidates: {response:?}"
+    );
+
+    let searches = store
+        .data()
+        .script
+        .urls
+        .iter()
+        .filter(|url| url.starts_with(&format!("{API_ENDPOINT}?")) && !url.contains("t=caps"))
+        .cloned()
+        .collect::<Vec<_>>();
+    assert_eq!(
+        searches.len(),
+        2,
+        "one search per rung up to the first hit: {searches:?}"
+    );
+
+    let tvdb = query_pairs(&searches[0]);
+    assert_eq!(pair(&tvdb, "t"), Some("tvsearch"), "{searches:?}");
+    assert_eq!(pair(&tvdb, "tvdbid"), Some("900001"));
+    assert_eq!(pair(&tvdb, "season"), Some("1"));
+    assert_eq!(pair(&tvdb, "ep"), Some("12"));
+    assert_eq!(pair(&tvdb, "anime_id"), None);
+    assert_eq!(pair(&tvdb, "q"), None);
+
+    let anidb = query_pairs(&searches[1]);
+    assert_eq!(pair(&anidb, "anime_id"), Some("14821"), "{searches:?}");
+    assert_eq!(pair(&anidb, "season"), Some("1"));
+    assert_eq!(pair(&anidb, "ep"), Some("12"));
+    assert_eq!(pair(&anidb, "tvdbid"), None);
+    assert_eq!(pair(&anidb, "q"), None);
+}
+
+fn query_pairs(url: &str) -> Vec<(String, String)> {
+    url::Url::parse(url)
+        .expect("search url parses")
+        .query_pairs()
+        .map(|(key, value)| (key.into_owned(), value.into_owned()))
+        .collect()
+}
+
+fn pair<'a>(pairs: &'a [(String, String)], key: &str) -> Option<&'a str> {
+    pairs
+        .iter()
+        .find(|(name, _)| name == key)
+        .map(|(_, value)| value.as_str())
+}
+
+/// The `<searching>` block ameNZB advertises.
+fn caps_document() -> String {
+    r#"<?xml version="1.0" encoding="UTF-8"?>
+<caps>
+  <searching>
+    <search available="yes" supportedParams="q"/>
+    <tv-search available="yes" supportedParams="q,cat,limit,offset,tvdbid,tvmazeid,rid,tvrageid,traktid,imdbid,season,ep"/>
+  </searching>
+  <categories>
+    <category id="5000" name="TV"><subcat id="5070" name="Anime"/></category>
+  </categories>
+</caps>"#
+        .to_string()
+}
+
+fn empty_feed() -> String {
+    r#"<?xml version="1.0"?>
+<rss xmlns:newznab="http://www.newznab.com/DTD/2010/feeds/attributes/">
+<channel>
+  <newznab:response offset="0" total="0"/>
+</channel>
+</rss>"#
+        .to_string()
+}
+
 fn suite() -> SubtitleConformance {
     SubtitleConformance::new(env!("CARGO_MANIFEST_DIR"), "amenzb")
         .wasm("amenzb_subtitles.wasm")
@@ -146,6 +260,7 @@ fn assert_search_drives_the_shared_newznab_engine(suite: &SubtitleConformance) {
 fn search_request() -> SubtitlePluginSearchRequest {
     SubtitlePluginSearchRequest {
         media_kind: SubtitleQueryMediaKind::Episode,
+        community_entry: None,
         facet: Some("anime".to_string()),
         file_hash: None,
         imdb_id: None,

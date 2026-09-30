@@ -77,9 +77,10 @@ release group, size, codecs, audio languages, subtitles, indexer, download
 client, custom formats and their score, release title, overview, destination
 path, and metadata links (TVDB/Trakt/TVmaze for series, TMDB/Trakt for movies,
 IMDb for both, and AniDB/AniList/MyAnimeList/Kitsu whenever an anime id is
-present). File-delete, application-update, health and rename events get their
-own field sets. An event this plugin has no special case for still renders — it
-is never a failure.
+present). File-delete, application-update, health, rename and title-moved events
+get their own field sets; a moved title shows `From`, `To` and, when the move
+finished with warnings, `Warning`. An event this plugin has no special case for
+still renders — it is never a failure.
 
 Discord's embed limits are enforced before sending (title 256, description 4096,
 field name 256, field value 1024, footer 2048, 25 fields, 6000 characters

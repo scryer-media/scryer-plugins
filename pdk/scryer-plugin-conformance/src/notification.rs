@@ -183,6 +183,16 @@ pub fn test_request(event_type: NotificationEventType) -> PluginNotificationRequ
         application_update: None,
         manual_interaction: None,
         media_request: None,
+        // Every later optional block (`title_move` and whatever an SDK minor
+        // adds next) comes from the wire defaults, so this fixture compiles
+        // against each SDK 3.x line a plugin's lock resolves.
+        ..serde_json::from_value(serde_json::json!({
+            "event_type": "test",
+            "summary_title": "",
+            "summary_message": "",
+            "app": { "name": "Scryer", "version": "test" },
+        }))
+        .expect("minimal notification request deserializes")
     }
 }
 

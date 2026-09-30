@@ -51,7 +51,8 @@ accept, and this channel works against them.
   2. a section of up to ten label/value fields, chosen per event from whatever
      the notification actually carries: episode, quality, release, release group,
      indexer, size, download client, import source and destination, file counts,
-     deleted paths, health status, versions;
+     deleted paths, where a moved title came from and went to and any warning
+     from the move, health status, versions;
   3. a context line with metadata links (TVDB/Trakt/TVmaze/TMDB/IMDb for an
      episodic title, TMDB/IMDb for a movie, AniDB/AniList/MyAnimeList/Kitsu when
      those ids are present), then the Scryer instance name and the event time.
@@ -61,9 +62,9 @@ accept, and this channel works against them.
 `warning` for grabs, health issues and manual interaction; `danger` for failed
 downloads, rejected imports, deletions and failed subtitle searches; `good` for
 imports, upgrades, additions, restored health and application updates; and a
-neutral blue for renames, tests and submitted or cancelled media requests. A
-notification whose severity is an error is always `danger`; a warning severity
-raises anything that is not already `danger`.
+neutral blue for renames, moved titles, tests and submitted or cancelled media
+requests. A notification whose severity is an error is always `danger`; a
+warning severity raises anything that is not already `danger`.
 
 Note that Scryer's `Download` event is a **failed** download — a successful
 import arrives as `ImportComplete` or `Upgrade` — so it renders red and says so.

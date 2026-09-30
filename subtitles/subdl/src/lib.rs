@@ -1521,6 +1521,7 @@ mod tests {
         external_ids.insert("tmdb".to_string(), vec!["438631".to_string()]);
         SubtitlePluginSearchRequest {
             media_kind: SubtitleQueryMediaKind::Movie,
+            community_entry: None,
             facet: Some("movie".to_string()),
             file_hash: None,
             imdb_id: Some("tt1160419".to_string()),
@@ -1554,6 +1555,7 @@ mod tests {
     fn episode_request() -> SubtitlePluginSearchRequest {
         SubtitlePluginSearchRequest {
             media_kind: SubtitleQueryMediaKind::Episode,
+            community_entry: None,
             facet: Some("series".to_string()),
             file_hash: None,
             imdb_id: None,

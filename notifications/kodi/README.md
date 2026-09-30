@@ -52,6 +52,7 @@ this and names the setting to fix.
 | File deleted / deleted for upgrade | yes | yes | yes |
 | Title added | yes | yes | yes |
 | Title deleted | yes | yes | only when the event carries deleted paths |
+| Title moved | yes | yes | only when the event carries the old paths of moved files |
 | Import rejected, post-processing, subtitles, media requests, health, application update, manual interaction | yes | — | — |
 | Test | always | — | — |
 

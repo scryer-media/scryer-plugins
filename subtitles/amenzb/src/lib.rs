@@ -1,11 +1,12 @@
 use std::collections::{BTreeMap, HashMap};
+use std::future::Future;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use newznab_common::{
     NewznabConfig, NewznabHitBudget, NewznabHttpBehavior, SearchRequest, SearchResult,
-    current_sdk_constraint, execute_raw_search, is_hit_budget_exhausted_error,
+    current_sdk_constraint, execute_full_search, execute_raw_search, is_hit_budget_exhausted_error,
 };
 use scryer_plugin_pdk::component::StructuredPluginError;
 use scryer_plugin_pdk::runtime::{self, PluginHttpRequest};
@@ -285,12 +286,12 @@ impl AmenzbConfig {
         self.base_url.trim_end_matches('/')
     }
 
-    fn newznab_config(&self, request: &SubtitlePluginSearchRequest) -> NewznabConfig {
+    fn newznab_config(&self, additional_params: &str) -> NewznabConfig {
         let mut config = NewznabConfig {
             base_url: self.base_url.clone(),
             api_key: self.api_key.clone(),
             api_path: self.api_path.clone(),
-            additional_params: provider_params(self, request),
+            additional_params: additional_params.to_string(),
             page_size: self.max_results,
             http_behavior: NewznabHttpBehavior::default(),
         };
@@ -338,22 +339,17 @@ async fn subtitle_search_impl(
         return Ok(vec![]);
     }
 
-    let search_request = search_request_for(config, request);
-
-    let response = execute_raw_search(
-        &config.newznab_config(request),
-        &search_request,
-        amenzb_metadata_extractor,
-    )
-    .await
-    .map_err(AmenzbError::from_search_error)?;
+    let releases = run_search_ladder(search_rungs(config, request), |rung| {
+        execute_rung_search(config, rung)
+    })
+    .await?;
 
     let requested_languages = requested_languages(&request.languages);
     let behavior = config.http_behavior();
     let mut results = Vec::new();
     let mut detail_fetches = 0usize;
 
-    for release in response.results {
+    for release in releases {
         if detail_fetches >= config.max_detail_fetches || results.len() >= config.max_results {
             break;
         }
@@ -390,15 +386,82 @@ async fn subtitle_search_impl(
     Ok(results)
 }
 
-fn search_request_for(
-    config: &AmenzbConfig,
-    request: &SubtitlePluginSearchRequest,
-) -> SearchRequest {
-    let query = if has_exact_provider_filter(request) {
+/// Which upstream filter one search rung leans on.
+///
+/// ameNZB files each release under one of a title's AniDB entries, and not
+/// consistently: a single season's episodes can be spread across two AniDB ids,
+/// so an `anime_id` search misses whatever landed on the sibling entry. Its
+/// `season`/`ep` filters, though, read the release's own TVDB-style numbering,
+/// which is why a TVDB series id finds every episode in one place and leads the
+/// ladder. The AniDB id is the fallback for titles without a TVDB id, and the
+/// title query catches whatever neither id reaches.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SearchRung {
+    Tvdb,
+    Anidb,
+    Title,
+}
+
+/// One planned upstream search: the engine request plus the ameNZB-specific
+/// query parameters that ride along with it.
+#[derive(Debug, Clone)]
+struct RungSearch {
+    rung: SearchRung,
+    request: SearchRequest,
+    additional_params: String,
+}
+
+/// Plan the rungs this request can use, in the order they are tried.
+///
+/// The id rungs never carry a title query: ameNZB ANDs its filters, so a noisy
+/// parsed title would only narrow an exact id match. For the same reason the
+/// TVDB and AniDB ids are never combined in one request.
+fn search_rungs(config: &AmenzbConfig, request: &SubtitlePluginSearchRequest) -> Vec<RungSearch> {
+    let mut rungs = Vec::new();
+    if let Some(tvdb_id) = external_tvdb_id(request) {
+        let mut search_request = base_search_request(config, request, String::new());
+        // The engine's TV shape turns these into `t=tvsearch&tvdbid=…&season=…&ep=…`.
+        // Without the anime facet it keeps the season alongside the episode,
+        // which ameNZB needs because both filters read the release's own
+        // numbering.
+        search_request.ids = HashMap::from([("tvdb_id".to_string(), tvdb_id)]);
+        search_request.facet = Some("series".to_string());
+        search_request.category = Some("series".to_string());
+        search_request.episode = requested_episode(request);
+        search_request.absolute_episode = None;
+        rungs.push(RungSearch {
+            rung: SearchRung::Tvdb,
+            request: search_request,
+            additional_params: provider_params(config, request, SearchRung::Tvdb),
+        });
+    }
+    if external_anidb_id(request).is_some() {
+        rungs.push(RungSearch {
+            rung: SearchRung::Anidb,
+            request: base_search_request(config, request, String::new()),
+            additional_params: provider_params(config, request, SearchRung::Anidb),
+        });
+    }
+    // An info hash names one release exactly, so the title query stays off
+    // whenever one is present; it would only narrow that match.
+    let query = if external_info_hash(request).is_some() {
         String::new()
     } else {
         search_query(request)
     };
+    rungs.push(RungSearch {
+        rung: SearchRung::Title,
+        request: base_search_request(config, request, query),
+        additional_params: provider_params(config, request, SearchRung::Title),
+    });
+    rungs
+}
+
+fn base_search_request(
+    config: &AmenzbConfig,
+    request: &SubtitlePluginSearchRequest,
+    query: String,
+) -> SearchRequest {
     let categories = config
         .category
         .as_ref()
@@ -416,7 +479,48 @@ fn search_request_for(
         absolute_episode: request.absolute_episode.and_then(i32_to_u32),
         tagged_aliases: vec![],
         context: None,
+        rss_catch_up: None,
     }
+}
+
+/// Walk the rungs in order and return the first non-empty release list.
+///
+/// An empty rung moves on to the next; any error, a rate limit included, ends
+/// the search, exactly as a failed single query did.
+async fn run_search_ladder<F, Fut>(
+    rungs: Vec<RungSearch>,
+    mut execute: F,
+) -> Result<Vec<SearchResult>, AmenzbError>
+where
+    F: FnMut(RungSearch) -> Fut,
+    Fut: Future<Output = Result<Vec<SearchResult>, AmenzbError>>,
+{
+    for rung in rungs {
+        let releases = execute(rung).await?;
+        if !releases.is_empty() {
+            return Ok(releases);
+        }
+    }
+    Ok(Vec::new())
+}
+
+async fn execute_rung_search(
+    config: &AmenzbConfig,
+    rung: RungSearch,
+) -> Result<Vec<SearchResult>, AmenzbError> {
+    let newznab_config = config.newznab_config(&rung.additional_params);
+    let response = match rung.rung {
+        // The only rung that needs a `t=tvsearch` id lookup, which the full
+        // engine plans (against the cached caps) and the raw search cannot.
+        SearchRung::Tvdb => {
+            execute_full_search(&newznab_config, &rung.request, amenzb_metadata_extractor).await
+        }
+        SearchRung::Anidb | SearchRung::Title => {
+            execute_raw_search(&newznab_config, &rung.request, amenzb_metadata_extractor).await
+        }
+    }
+    .map_err(AmenzbError::from_search_error)?;
+    Ok(response.results)
 }
 
 async fn subtitle_download_impl(
@@ -461,7 +565,11 @@ async fn subtitle_download_impl(
     })
 }
 
-fn provider_params(config: &AmenzbConfig, request: &SubtitlePluginSearchRequest) -> String {
+fn provider_params(
+    config: &AmenzbConfig,
+    request: &SubtitlePluginSearchRequest,
+    rung: SearchRung,
+) -> String {
     let mut pairs = Vec::new();
     if config.healthy_only {
         pairs.push(("healthy".to_string(), "1".to_string()));
@@ -469,18 +577,26 @@ fn provider_params(config: &AmenzbConfig, request: &SubtitlePluginSearchRequest)
     if let Some(info_hash) = external_info_hash(request) {
         pairs.push(("info_hash".to_string(), info_hash.to_ascii_lowercase()));
     }
-    if let Some(anidb_id) =
-        external_id(request, "anidb_id").or_else(|| external_id(request, "anidb"))
-    {
-        pairs.push(("anime_id".to_string(), anidb_id));
+    // The TVDB rung's id, season and episode travel as engine parameters. The
+    // AniDB and title rungs go through the raw search, which sends neither, so
+    // they spell the episode filter here; the AniDB rung adds `anime_id`, which
+    // the engine has no parameter for.
+    let spells_episode_filter = match rung {
+        SearchRung::Tvdb => false,
+        SearchRung::Anidb => match external_anidb_id(request) {
+            Some(anidb_id) => {
+                pairs.push(("anime_id".to_string(), anidb_id));
+                true
+            }
+            None => false,
+        },
+        SearchRung::Title => true,
+    };
+    if spells_episode_filter {
         if let Some(season) = request.season.and_then(i32_to_u32) {
             pairs.push(("season".to_string(), season.to_string()));
         }
-        if let Some(episode) = request
-            .absolute_episode
-            .or(request.episode)
-            .and_then(i32_to_u32)
-        {
+        if let Some(episode) = requested_episode(request) {
             pairs.push(("ep".to_string(), episode.to_string()));
         }
     }
@@ -643,7 +759,7 @@ fn candidate_for_link(
         AmenzbError::Message(format!("failed to encode ameNZB subtitle ref: {error}"))
     })?;
 
-    let mut match_hints = release_match_hints(request);
+    let mut match_hints = release_match_hints(request, release);
     match_hints.push(SubtitleMatchHint {
         kind: SubtitleMatchHintKind::Language,
         value: Some(link.language.clone()),
@@ -742,26 +858,60 @@ fn requested_languages(languages: &[String]) -> Vec<String> {
         .collect()
 }
 
-fn release_match_hints(request: &SubtitlePluginSearchRequest) -> Vec<SubtitleMatchHint> {
-    vec![
-        SubtitleMatchHint {
-            kind: SubtitleMatchHintKind::ExternalId,
-            value: external_id(request, "anidb_id")
-                .or_else(|| external_id(request, "anidb"))
-                .map(|value| format!("anidb:{value}")),
-        },
-        SubtitleMatchHint {
-            kind: SubtitleMatchHintKind::AbsoluteEpisode,
-            value: request.absolute_episode.map(|episode| episode.to_string()),
-        },
-        SubtitleMatchHint {
+/// Match hints backed by the release's own numbering.
+///
+/// ameNZB tags every item with `season` and `episode` attributes, and the host
+/// reads a `SeasonEpisode` hint as a full season-and-episode match. A search
+/// rung can still return other episodes (the title rung in particular), so an
+/// episode hint is only claimed when the release's attributes say so; a
+/// release without them gets none.
+fn release_match_hints(
+    request: &SubtitlePluginSearchRequest,
+    release: &SearchResult,
+) -> Vec<SubtitleMatchHint> {
+    let mut hints = vec![SubtitleMatchHint {
+        kind: SubtitleMatchHintKind::ExternalId,
+        value: external_anidb_id(request).map(|value| format!("anidb:{value}")),
+    }];
+    let release_season = release_number_attr(release, "season");
+    let release_episode = release_number_attr(release, "episode");
+    let requested_season = request.season.and_then(i32_to_u32);
+
+    if let (Some(season), Some(episode)) = (release_season, release_episode)
+        && requested_season == Some(season)
+        && request.episode.and_then(i32_to_u32) == Some(episode)
+    {
+        hints.push(SubtitleMatchHint {
             kind: SubtitleMatchHintKind::SeasonEpisode,
-            value: request
-                .season
-                .zip(request.episode)
-                .map(|(season, episode)| format!("S{season:02}E{episode:02}")),
-        },
-    ]
+            value: Some(format!("S{season:02}E{episode:02}")),
+        });
+    }
+
+    let season_agrees = match (release_season, requested_season) {
+        (Some(release), Some(requested)) => release == requested,
+        _ => true,
+    };
+    if let (Some(episode), Some(absolute)) = (
+        release_episode,
+        request.absolute_episode.and_then(i32_to_u32),
+    ) && episode == absolute
+        && season_agrees
+    {
+        hints.push(SubtitleMatchHint {
+            kind: SubtitleMatchHintKind::AbsoluteEpisode,
+            value: Some(absolute.to_string()),
+        });
+    }
+    hints
+}
+
+/// A numeric newznab attribute the metadata extractor kept, read leniently so
+/// `1`, `01` and `S01`/`E01` spellings all parse.
+fn release_number_attr(release: &SearchResult, key: &str) -> Option<u32> {
+    let raw = release.provider_extra.get(key)?.as_str()?.trim();
+    raw.trim_start_matches(|ch: char| ch.is_ascii_alphabetic())
+        .parse::<u32>()
+        .ok()
 }
 
 #[derive(Debug, Clone)]
@@ -1261,11 +1411,24 @@ fn external_id(request: &SubtitlePluginSearchRequest, key: &str) -> Option<Strin
         .filter(|value| !value.is_empty())
 }
 
-fn has_exact_provider_filter(request: &SubtitlePluginSearchRequest) -> bool {
-    external_info_hash(request).is_some()
-        || external_id(request, "anidb_id")
-            .or_else(|| external_id(request, "anidb"))
-            .is_some()
+fn external_anidb_id(request: &SubtitlePluginSearchRequest) -> Option<String> {
+    external_id(request, "anidb_id").or_else(|| external_id(request, "anidb"))
+}
+
+/// The series TVDB id. Scryer sends it first under `tvdb`, where an
+/// episode-level id may follow it, so only the first value is read.
+fn external_tvdb_id(request: &SubtitlePluginSearchRequest) -> Option<String> {
+    external_id(request, "tvdb").or_else(|| external_id(request, "tvdb_id"))
+}
+
+/// The episode number ameNZB filters on. Its `ep` reads the release's own
+/// TVDB-style episode attribute, so the season episode leads and the absolute
+/// number stands in only when the request has no season episode.
+fn requested_episode(request: &SubtitlePluginSearchRequest) -> Option<u32> {
+    request
+        .episode
+        .and_then(i32_to_u32)
+        .or_else(|| request.absolute_episode.and_then(i32_to_u32))
 }
 
 fn external_info_hash(request: &SubtitlePluginSearchRequest) -> Option<String> {
@@ -1487,6 +1650,7 @@ mod tests {
     fn subtitle_request() -> SubtitlePluginSearchRequest {
         SubtitlePluginSearchRequest {
             media_kind: SubtitleQueryMediaKind::Episode,
+            community_entry: None,
             facet: Some("anime".to_string()),
             file_hash: None,
             imdb_id: None,
@@ -1559,7 +1723,7 @@ mod tests {
         let mut config = amenzb_config();
         config.healthy_only = true;
 
-        let params = provider_params(&config, &request);
+        let params = provider_params(&config, &request, SearchRung::Anidb);
 
         assert!(params.contains("healthy=1"));
         assert!(params.contains("info_hash=a1b2c3d4e5f6789012345678901234567890abcd"));
@@ -1577,26 +1741,412 @@ mod tests {
         let mut request = subtitle_request();
         request.file_hash = Some("A1B2C3D4E5F6789012345678901234567890ABCD".to_string());
 
-        let params = provider_params(&amenzb_config(), &request);
+        let params = provider_params(&amenzb_config(), &request, SearchRung::Title);
 
         assert!(!params.contains("info_hash="));
     }
 
-    #[test]
-    fn exact_anidb_search_clears_broad_title_query() {
+    fn param_pairs(params: &str) -> Vec<(String, String)> {
+        url::form_urlencoded::parse(params.trim_start_matches('&').as_bytes())
+            .map(|(key, value)| (key.into_owned(), value.into_owned()))
+            .collect()
+    }
+
+    fn has_param(params: &str, key: &str) -> bool {
+        param_pairs(params).iter().any(|(name, _)| name == key)
+    }
+
+    fn param(params: &str, key: &str) -> Option<String> {
+        param_pairs(params)
+            .into_iter()
+            .find(|(name, _)| name == key)
+            .map(|(_, value)| value)
+    }
+
+    fn release(title: &str) -> SearchResult {
+        SearchResult {
+            title: title.to_string(),
+            ..SearchResult::default()
+        }
+    }
+
+    /// Drive a future whose every await resolves immediately, which is all the
+    /// ladder's test executors do.
+    fn block_on<F: Future>(future: F) -> F::Output {
+        let mut future = std::pin::pin!(future);
+        let mut context = std::task::Context::from_waker(std::task::Waker::noop());
+        match future.as_mut().poll(&mut context) {
+            std::task::Poll::Ready(output) => output,
+            std::task::Poll::Pending => panic!("test executor never suspends"),
+        }
+    }
+
+    /// Run the ladder against canned per-rung results, recording which rungs
+    /// reached upstream.
+    fn run_ladder(
+        rungs: Vec<RungSearch>,
+        results: &[(SearchRung, Vec<SearchResult>)],
+    ) -> (Vec<SearchResult>, Vec<SearchRung>) {
+        let mut calls = Vec::new();
+        let releases = block_on(run_search_ladder(rungs, |rung| {
+            calls.push(rung.rung);
+            let releases = results
+                .iter()
+                .find(|(kind, _)| *kind == rung.rung)
+                .map(|(_, releases)| releases.clone())
+                .unwrap_or_default();
+            std::future::ready(Ok(releases))
+        }))
+        .expect("ladder succeeds");
+        (releases, calls)
+    }
+
+    fn request_with_both_ids() -> SubtitlePluginSearchRequest {
         let mut request = subtitle_request();
-        request.title_candidates = vec!["Noisy Parsed Title".to_string()];
+        request.title_candidates = vec!["Synthetic Harbor Tales".to_string()];
+        request.external_ids.insert(
+            "tvdb".to_string(),
+            vec!["900001".to_string(), "900777".to_string()],
+        );
         request
             .external_ids
             .insert("anidb".to_string(), vec!["14821".to_string()]);
+        request
+    }
 
-        let search_request = search_request_for(&amenzb_config(), &request);
-        let params = provider_params(&amenzb_config(), &request);
+    #[test]
+    fn tvdb_rung_leads_with_series_id_season_and_episode_only() {
+        let request = request_with_both_ids();
 
-        assert!(search_request.query.is_empty());
-        assert!(params.contains("anime_id=14821"));
-        assert!(params.contains("season=1"));
-        assert!(params.contains("ep=12"));
+        let rungs = search_rungs(&amenzb_config(), &request);
+
+        assert_eq!(
+            rungs.iter().map(|rung| rung.rung).collect::<Vec<_>>(),
+            vec![SearchRung::Tvdb, SearchRung::Anidb, SearchRung::Title]
+        );
+        let tvdb = &rungs[0];
+        assert_eq!(
+            tvdb.request.ids,
+            HashMap::from([("tvdb_id".to_string(), "900001".to_string())])
+        );
+        assert!(tvdb.request.query.is_empty());
+        assert_eq!(tvdb.request.season, Some(1));
+        assert_eq!(tvdb.request.episode, Some(12));
+        assert_eq!(tvdb.request.absolute_episode, None);
+        assert_eq!(tvdb.request.categories, vec![DEFAULT_CATEGORY.to_string()]);
+        assert!(!has_param(&tvdb.additional_params, "anime_id"));
+        assert!(!has_param(&tvdb.additional_params, "q"));
+        assert!(!has_param(&tvdb.additional_params, "season"));
+        assert!(!has_param(&tvdb.additional_params, "ep"));
+        assert_eq!(
+            param(&tvdb.additional_params, "sub_lang").as_deref(),
+            Some("en")
+        );
+        assert_eq!(
+            param(&tvdb.additional_params, "release_group").as_deref(),
+            Some("SubsPlease")
+        );
+    }
+
+    #[test]
+    fn id_rungs_prefer_season_episode_over_absolute_number() {
+        let mut request = request_with_both_ids();
+        request.season = Some(2);
+        request.episode = Some(1);
+        request.absolute_episode = Some(13);
+
+        let rungs = search_rungs(&amenzb_config(), &request);
+
+        assert_eq!(rungs[0].request.season, Some(2));
+        assert_eq!(rungs[0].request.episode, Some(1));
+        assert_eq!(
+            param(&rungs[1].additional_params, "ep").as_deref(),
+            Some("1")
+        );
+    }
+
+    #[test]
+    fn tvdb_rung_accepts_tvdb_id_key_and_sends_absolute_only_without_episode() {
+        let mut request = subtitle_request();
+        request
+            .external_ids
+            .insert("tvdb_id".to_string(), vec!["900002".to_string()]);
+        request.episode = None;
+        request.absolute_episode = Some(37);
+
+        let rungs = search_rungs(&amenzb_config(), &request);
+
+        assert_eq!(rungs[0].rung, SearchRung::Tvdb);
+        assert_eq!(rungs[0].request.ids["tvdb_id"], "900002");
+        assert_eq!(rungs[0].request.season, Some(1));
+        assert_eq!(rungs[0].request.episode, Some(37));
+    }
+
+    #[test]
+    fn anidb_rung_filters_by_anime_id_without_title_or_tvdb() {
+        let request = request_with_both_ids();
+
+        let rungs = search_rungs(&amenzb_config(), &request);
+        let anidb = &rungs[1];
+
+        assert_eq!(anidb.rung, SearchRung::Anidb);
+        assert!(anidb.request.query.is_empty());
+        assert!(anidb.request.ids.is_empty());
+        assert_eq!(
+            param(&anidb.additional_params, "anime_id").as_deref(),
+            Some("14821")
+        );
+        assert_eq!(
+            param(&anidb.additional_params, "season").as_deref(),
+            Some("1")
+        );
+        assert_eq!(param(&anidb.additional_params, "ep").as_deref(), Some("12"));
+        assert!(!has_param(&anidb.additional_params, "tvdbid"));
+    }
+
+    #[test]
+    fn title_rung_keeps_title_query_when_ids_are_present() {
+        let request = request_with_both_ids();
+
+        let rungs = search_rungs(&amenzb_config(), &request);
+        let title = &rungs[2];
+
+        assert_eq!(title.rung, SearchRung::Title);
+        assert_eq!(title.request.query, "Synthetic Harbor Tales");
+        assert!(title.request.ids.is_empty());
+        assert!(!has_param(&title.additional_params, "anime_id"));
+        assert!(!has_param(&title.additional_params, "tvdbid"));
+        assert_eq!(
+            param(&title.additional_params, "season").as_deref(),
+            Some("1")
+        );
+        assert_eq!(param(&title.additional_params, "ep").as_deref(), Some("12"));
+    }
+
+    #[test]
+    fn title_rung_omits_episode_filter_without_numbering() {
+        let mut request = subtitle_request();
+        request.season = None;
+        request.episode = None;
+
+        let rungs = search_rungs(&amenzb_config(), &request);
+
+        assert!(!has_param(&rungs[0].additional_params, "season"));
+        assert!(!has_param(&rungs[0].additional_params, "ep"));
+    }
+
+    fn numbered_release(season: Option<&str>, episode: Option<&str>) -> SearchResult {
+        let mut release = release("Synthetic Harbor Tales - numbered");
+        if let Some(season) = season {
+            release
+                .provider_extra
+                .insert("season".to_string(), json!(season));
+        }
+        if let Some(episode) = episode {
+            release
+                .provider_extra
+                .insert("episode".to_string(), json!(episode));
+        }
+        release
+    }
+
+    fn hint_value(hints: &[SubtitleMatchHint], kind: SubtitleMatchHintKind) -> Option<String> {
+        hints
+            .iter()
+            .find(|hint| hint.kind == kind)
+            .map(|hint| hint.value.clone().unwrap_or_default())
+    }
+
+    #[test]
+    fn release_with_matching_attrs_gets_season_episode_hint() {
+        let request = subtitle_request();
+
+        let hints = release_match_hints(&request, &numbered_release(Some("1"), Some("12")));
+
+        assert_eq!(
+            hint_value(&hints, SubtitleMatchHintKind::SeasonEpisode).as_deref(),
+            Some("S01E12")
+        );
+        assert_eq!(
+            hint_value(&hints, SubtitleMatchHintKind::AbsoluteEpisode),
+            None
+        );
+    }
+
+    #[test]
+    fn release_with_other_episode_attr_gets_no_episode_hint() {
+        let mut request = subtitle_request();
+        request.absolute_episode = Some(12);
+
+        let hints = release_match_hints(&request, &numbered_release(Some("1"), Some("3")));
+
+        assert_eq!(
+            hint_value(&hints, SubtitleMatchHintKind::SeasonEpisode),
+            None
+        );
+        assert_eq!(
+            hint_value(&hints, SubtitleMatchHintKind::AbsoluteEpisode),
+            None
+        );
+    }
+
+    #[test]
+    fn release_without_numbering_attrs_gets_no_episode_hint() {
+        let mut request = subtitle_request();
+        request.absolute_episode = Some(12);
+
+        let hints = release_match_hints(&request, &numbered_release(None, None));
+
+        assert_eq!(
+            hint_value(&hints, SubtitleMatchHintKind::SeasonEpisode),
+            None
+        );
+        assert_eq!(
+            hint_value(&hints, SubtitleMatchHintKind::AbsoluteEpisode),
+            None
+        );
+    }
+
+    #[test]
+    fn absolute_hint_needs_matching_episode_and_agreeing_season() {
+        let mut request = subtitle_request();
+        request.season = Some(2);
+        request.episode = Some(1);
+        request.absolute_episode = Some(13);
+
+        let agreeing = release_match_hints(&request, &numbered_release(Some("2"), Some("13")));
+        let unnumbered_season = release_match_hints(&request, &numbered_release(None, Some("13")));
+        let other_season = release_match_hints(&request, &numbered_release(Some("1"), Some("13")));
+
+        assert_eq!(
+            hint_value(&agreeing, SubtitleMatchHintKind::AbsoluteEpisode).as_deref(),
+            Some("13")
+        );
+        assert_eq!(
+            hint_value(&agreeing, SubtitleMatchHintKind::SeasonEpisode),
+            None
+        );
+        assert_eq!(
+            hint_value(&unnumbered_season, SubtitleMatchHintKind::AbsoluteEpisode).as_deref(),
+            Some("13")
+        );
+        assert_eq!(
+            hint_value(&other_season, SubtitleMatchHintKind::AbsoluteEpisode),
+            None
+        );
+    }
+
+    #[test]
+    fn info_hash_filter_rides_every_rung_and_keeps_title_query_off() {
+        let mut request = request_with_both_ids();
+        request.external_ids.insert(
+            "btih".to_string(),
+            vec!["A1B2C3D4E5F6789012345678901234567890ABCD".to_string()],
+        );
+
+        let rungs = search_rungs(&amenzb_config(), &request);
+
+        assert_eq!(rungs.len(), 3);
+        for rung in &rungs {
+            assert_eq!(
+                param(&rung.additional_params, "info_hash").as_deref(),
+                Some("a1b2c3d4e5f6789012345678901234567890abcd")
+            );
+            assert!(rung.request.query.is_empty());
+        }
+    }
+
+    #[test]
+    fn empty_tvdb_rung_falls_through_to_anidb() {
+        let rungs = search_rungs(&amenzb_config(), &request_with_both_ids());
+
+        let (releases, calls) = run_ladder(
+            rungs,
+            &[(
+                SearchRung::Anidb,
+                vec![release("Synthetic Harbor Tales - S01E12")],
+            )],
+        );
+
+        assert_eq!(calls, vec![SearchRung::Tvdb, SearchRung::Anidb]);
+        assert_eq!(releases.len(), 1);
+        assert_eq!(releases[0].title, "Synthetic Harbor Tales - S01E12");
+    }
+
+    #[test]
+    fn empty_id_rungs_fall_through_to_title_query() {
+        let rungs = search_rungs(&amenzb_config(), &request_with_both_ids());
+
+        let (releases, calls) = run_ladder(
+            rungs,
+            &[(
+                SearchRung::Title,
+                vec![release("Synthetic Harbor Tales - 12")],
+            )],
+        );
+
+        assert_eq!(
+            calls,
+            vec![SearchRung::Tvdb, SearchRung::Anidb, SearchRung::Title]
+        );
+        assert_eq!(releases[0].title, "Synthetic Harbor Tales - 12");
+    }
+
+    #[test]
+    fn non_empty_first_rung_stops_the_ladder() {
+        let rungs = search_rungs(&amenzb_config(), &request_with_both_ids());
+
+        let (releases, calls) = run_ladder(
+            rungs,
+            &[
+                (
+                    SearchRung::Tvdb,
+                    vec![
+                        release("Synthetic Harbor Tales - S01E12 [1080p]"),
+                        release("Synthetic Harbor Tales - S01E12 [720p]"),
+                    ],
+                ),
+                (
+                    SearchRung::Anidb,
+                    vec![release("Synthetic Harbor Tales - S01E12 other")],
+                ),
+            ],
+        );
+
+        assert_eq!(calls, vec![SearchRung::Tvdb]);
+        assert_eq!(releases.len(), 2);
+    }
+
+    #[test]
+    fn ladder_error_stops_without_trying_later_rungs() {
+        let rungs = search_rungs(&amenzb_config(), &request_with_both_ids());
+        let mut calls = Vec::new();
+
+        let outcome = block_on(run_search_ladder(rungs, |rung| {
+            calls.push(rung.rung);
+            std::future::ready(Err(AmenzbError::RateLimited(Some(30))))
+        }));
+
+        assert!(matches!(outcome, Err(AmenzbError::RateLimited(Some(30)))));
+        assert_eq!(calls, vec![SearchRung::Tvdb]);
+    }
+
+    #[test]
+    fn request_without_ids_searches_title_only() {
+        let mut request = subtitle_request();
+        request.title_candidates = vec!["Synthetic Harbor Tales".to_string()];
+
+        let rungs = search_rungs(&amenzb_config(), &request);
+
+        assert_eq!(rungs.len(), 1);
+        assert_eq!(rungs[0].rung, SearchRung::Title);
+        assert_eq!(rungs[0].request.query, "Synthetic Harbor Tales");
+        assert!(!has_param(&rungs[0].additional_params, "anime_id"));
+        assert!(!has_param(&rungs[0].additional_params, "tvdbid"));
+
+        let (releases, calls) = run_ladder(rungs, &[]);
+        assert_eq!(calls, vec![SearchRung::Title]);
+        assert!(releases.is_empty());
     }
 
     #[test]
@@ -1604,7 +2154,7 @@ mod tests {
         let mut request = subtitle_request();
         request.languages = vec!["eng".to_string(), "spa".to_string()];
 
-        let params = provider_params(&amenzb_config(), &request);
+        let params = provider_params(&amenzb_config(), &request, SearchRung::Title);
 
         assert!(!params.contains("sub_lang="));
     }

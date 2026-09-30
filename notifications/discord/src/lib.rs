@@ -616,6 +616,13 @@ fn event_fields(req: &PluginNotificationRequest, selected: &[String]) -> Vec<Val
         }
         // Health embeds are title + description only in Sonarr.
         NotificationEventType::HealthIssue | NotificationEventType::HealthRestored => Vec::new(),
+        NotificationEventType::TitleMoved => {
+            let mut fields = Vec::new();
+            push_field(&mut fields, "From", title_move_source(req), false);
+            push_field(&mut fields, "To", title_move_destination(req), false);
+            push_field(&mut fields, "Warning", title_move_warning(req), false);
+            fields
+        }
         NotificationEventType::Rename => Vec::new(),
         NotificationEventType::Test => Vec::new(),
         // Scryer-only events Sonarr has no renderer for. Never fail on an event
@@ -885,6 +892,14 @@ fn event_label(req: &PluginNotificationRequest) -> String {
         NotificationEventType::HealthIssue => "Health Issue".to_string(),
         NotificationEventType::HealthRestored => "Health Issue Resolved".to_string(),
         NotificationEventType::ApplicationUpdate => "Application Updated".to_string(),
+        NotificationEventType::TitleMoved => episodic_label(episodic, "Series Moved", "Moved"),
+        // Not in `supported_events`, so the host never routes them here.
+        NotificationEventType::ListTitleAdded
+        | NotificationEventType::ListRequestSubmitted
+        | NotificationEventType::ListItemHeld
+        | NotificationEventType::ListTitleLeft
+        | NotificationEventType::ListSyncFailed
+        | NotificationEventType::ListUnfollowed => "List Update".to_string(),
         NotificationEventType::Test => "Test".to_string(),
     }
 }
@@ -957,6 +972,13 @@ fn embed_color(req: &PluginNotificationRequest) -> i64 {
         | NotificationEventType::Rename
         | NotificationEventType::MediaRequestSubmitted
         | NotificationEventType::MediaRequestCanceled
+        | NotificationEventType::TitleMoved
+        | NotificationEventType::ListTitleAdded
+        | NotificationEventType::ListRequestSubmitted
+        | NotificationEventType::ListItemHeld
+        | NotificationEventType::ListTitleLeft
+        | NotificationEventType::ListSyncFailed
+        | NotificationEventType::ListUnfollowed
         | NotificationEventType::Test => COLOR_STANDARD,
         NotificationEventType::Download => {
             if is_failure(req) {
@@ -1778,6 +1800,7 @@ mod tests {
             application_update: None,
             manual_interaction: None,
             media_request: None,
+            title_move: None,
         }
     }
 
@@ -2328,6 +2351,38 @@ mod tests {
         // Sonarr's series-delete embed carries exactly one field.
         assert_eq!(embed["fields"].as_array().unwrap().len(), 1);
         assert!(field_named(embed, "Links").is_some());
+    }
+
+    #[test]
+    fn a_title_move_renders_origin_and_destination_fields() {
+        let mut req = request(NotificationEventType::TitleMoved);
+        req.title = Some(series_title());
+        req.summary_message = "Moved 'Cinder Line' from Library A to Library B.".to_string();
+        req.title_move = Some(PluginNotificationTitleMove {
+            source_library_name: Some("Library A".to_string()),
+            destination_library_name: Some("Library B".to_string()),
+            source_path: Some("/media/a/Cinder Line".to_string()),
+            destination_path: Some("/media/b/Cinder Line".to_string()),
+            ..PluginNotificationTitleMove::default()
+        });
+
+        let (payload, _) = render(&req);
+        let embed = embed_of(&payload);
+        assert_eq!(embed["color"], json!(COLOR_STANDARD));
+        assert_eq!(
+            embed["description"],
+            json!("Series Moved\nMoved 'Cinder Line' from Library A to Library B.")
+        );
+        assert_eq!(
+            field_named(embed, "From").unwrap()["value"],
+            json!("/media/a/Cinder Line")
+        );
+        assert_eq!(
+            field_named(embed, "To").unwrap()["value"],
+            json!("/media/b/Cinder Line")
+        );
+        assert!(field_named(embed, "Warning").is_none());
+        assert!(general_notification_events().contains(&NotificationEventType::TitleMoved));
     }
 
     #[test]

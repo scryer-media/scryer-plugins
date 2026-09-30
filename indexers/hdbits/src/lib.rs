@@ -37,7 +37,7 @@ use scryer_plugin_sdk::{
     IndexerProtocol, IndexerResponseFeatures, IndexerSearchIncompleteReason, IndexerSearchInput,
     IndexerSearchInvalidResponseKind, IndexerSearchPluginError, IndexerSourceKind,
     IndexerTorrentCapabilities, PluginDescriptor, PluginError, PluginErrorCode, PluginErrorDetails,
-    PluginSearchRequest as SearchRequest, PluginSearchRequestKind,
+    PluginRssCatchUp, PluginSearchRequest as SearchRequest, PluginSearchRequestKind,
     PluginSearchResponse as SearchResponse, PluginSearchResult as SearchResult, ProviderDescriptor,
     SDK_VERSION, derive_indexer_flags, torrent_result,
 };
@@ -48,6 +48,9 @@ const DEFAULT_BASE_URL: &str = "https://hdbits.org";
 const DEFAULT_CATEGORIES: &str = "2,3";
 /// `limit` is documented as 1..=100 and both Sonarr and Prowlarr pin it at 100.
 const MAX_PAGE_SIZE: usize = 100;
+/// Pages an RSS catch-up poll may read: 1,000 releases, Sonarr's
+/// `HttpIndexerBase.MaxNumResultsPerQuery`.
+const MAX_CATCH_UP_PAGES: usize = 10;
 /// HDBits' own 403 body says "Please try again in 15 minutes."
 const FORBIDDEN_RATE_LIMIT_SECONDS: i64 = 900;
 /// Sonarr's `HttpIndexerBase.FetchReleases` `minimumBackoff` when a rate limit
@@ -370,6 +373,18 @@ fn config_fields() -> Vec<ConfigFieldDef> {
 
 async fn search(request: SearchRequest) -> FnResult<SearchResponse> {
     let config = HdbitsConfig::from_host()?;
+    if let Some(marker) = catch_up_marker(&request) {
+        // The recent poll is a single tier.
+        let Some(query) = build_query_tiers(&config, &request).into_iter().next() else {
+            return Ok(SearchResponse::default());
+        };
+        return catch_up_search(
+            marker,
+            |page| fetch_page(&config, &query, page),
+            has_time_for_a_page,
+        )
+        .await;
+    }
     let limit = result_limit(&request);
 
     // Sonarr's tier chain: run a tier, and only fall through to the next one
@@ -387,6 +402,192 @@ async fn search(request: SearchRequest) -> FnResult<SearchResponse> {
     }
 
     Ok(SearchResponse::default())
+}
+
+// ---------------------------------------------------------------------------
+// RSS catch-up
+// ---------------------------------------------------------------------------
+
+/// Where the previous RSS poll stopped, when the host sent one on a recent
+/// poll. Any other request ignores it and keeps its usual single page.
+fn catch_up_marker(request: &SearchRequest) -> Option<&PluginRssCatchUp> {
+    request
+        .rss_catch_up
+        .as_ref()
+        .filter(|_| is_recent_request(request))
+}
+
+/// One page of the recent feed, with whether it was full (a short page is the
+/// end of the feed).
+struct CatchUpPage {
+    results: Vec<SearchResult>,
+    full: bool,
+}
+
+/// Read page `page` (zero-based) of `query`. The first page goes out exactly
+/// as the plain recent poll does; later ones add HDBits' `page` member, which
+/// Prowlarr pages this API with (`HDBitsRequestGenerator.GetRequest`:
+/// `query.Page = Offset / Limit`).
+async fn fetch_page(
+    config: &HdbitsConfig,
+    query: &TorrentQuery,
+    page: usize,
+) -> Result<CatchUpPage, Error> {
+    let body = post_query(config, &page_query(query, page)).await?;
+    let (results, rows) = parse_response_rows(config, &body)?;
+    Ok(CatchUpPage {
+        results,
+        full: rows >= MAX_PAGE_SIZE,
+    })
+}
+
+fn page_query(query: &TorrentQuery, page: usize) -> TorrentQuery {
+    TorrentQuery {
+        page: (page > 0).then_some(page as i64),
+        ..query.clone()
+    }
+}
+
+/// Time an RSS catch-up keeps in hand before the operation deadline. A page is
+/// only started with at least this much left, so the pages already read are
+/// returned instead of being lost to a host timeout.
+const CATCH_UP_DEADLINE_RESERVE_MS: u64 = 20_000;
+
+/// Whether the operation deadline leaves room to read one more catch-up page.
+fn has_time_for_a_page() -> bool {
+    scryer_plugin_pdk::component::operation_deadline_monotonic_ms()
+        .saturating_sub(scryer_plugin_pdk::component::monotonic_now_ms())
+        >= CATCH_UP_DEADLINE_RESERVE_MS
+}
+
+/// Page the recent feed back to the host's marker. Stops at the first page
+/// that holds the marked release or anything published before it, at a short
+/// page, at `MAX_CATCH_UP_PAGES`, or when `has_time` says the operation
+/// deadline is too close for another page. Only those last two, or an upstream
+/// failure after at least one page was read, report the poll as incomplete,
+/// carrying every release read so far.
+async fn catch_up_search<F, Fut>(
+    marker: &PluginRssCatchUp,
+    mut fetch: F,
+    has_time: impl Fn() -> bool,
+) -> Result<SearchResponse, Error>
+where
+    F: FnMut(usize) -> Fut,
+    Fut: std::future::Future<Output = Result<CatchUpPage, Error>>,
+{
+    let mut results = Vec::new();
+    let mut stopped: Option<(IndexerSearchIncompleteReason, Option<i64>, String)> = None;
+    for page in 0..MAX_CATCH_UP_PAGES {
+        if page > 0 && !has_time() {
+            stopped = Some((
+                IndexerSearchIncompleteReason::PageCeilingReached,
+                None,
+                format!(
+                    "HDBits RSS catch-up stopped after {page} page(s) before the operation deadline"
+                ),
+            ));
+            break;
+        }
+        let fetched = match fetch(page).await {
+            Ok(fetched) => fetched,
+            Err(error) if page == 0 => return Err(error),
+            Err(error) => {
+                let (reason, retry_after_seconds) = incomplete_reason(&error);
+                stopped = Some((reason, retry_after_seconds, error.to_string()));
+                break;
+            }
+        };
+        let reached = page_reaches_marker(&fetched.results, marker);
+        let more = fetched.full && !fetched.results.is_empty();
+        results.extend(fetched.results);
+        if reached || !more {
+            break;
+        }
+        if page + 1 == MAX_CATCH_UP_PAGES {
+            stopped = Some((
+                IndexerSearchIncompleteReason::PageCeilingReached,
+                None,
+                format!(
+                    "HDBits RSS catch-up read {MAX_CATCH_UP_PAGES} pages without reaching the \
+                     previous poll"
+                ),
+            ));
+        }
+    }
+    let response = SearchResponse {
+        results: dedupe_results(results),
+        ..Default::default()
+    };
+    match stopped {
+        None => Ok(response),
+        Some((reason, retry_after_seconds, detail)) => Err(incomplete_search_error(
+            response,
+            reason,
+            retry_after_seconds,
+            detail,
+        )),
+    }
+}
+
+/// Whether this page reaches the release the previous poll ended on: it holds
+/// that release, or something published before it. A marker whose time cannot
+/// be read and that names no release gives nothing to page toward, so the
+/// first page is the whole poll, as it was before catch-up existed.
+fn page_reaches_marker(page: &[SearchResult], marker: &PluginRssCatchUp) -> bool {
+    if page.iter().any(|result| marker.names(result)) {
+        return true;
+    }
+    let Some(last_seen) = rfc3339_to_unix(&marker.last_seen_published_at) else {
+        return marker.last_seen_identity.is_none();
+    };
+    page.iter()
+        .filter_map(|result| result.published_at.as_deref())
+        .filter_map(rfc3339_to_unix)
+        .min()
+        .is_some_and(|oldest| oldest < last_seen)
+}
+
+/// The incomplete reason a failed later page carries, from its typed error.
+fn incomplete_reason(error: &Error) -> (IndexerSearchIncompleteReason, Option<i64>) {
+    let Some(structured) = error.downcast_ref::<component::StructuredPluginError>() else {
+        return (IndexerSearchIncompleteReason::UpstreamFailure, None);
+    };
+    let plugin_error = structured.plugin_error();
+    let reason = match &plugin_error.details {
+        Some(PluginErrorDetails::IndexerSearch(
+            IndexerSearchPluginError::Deferred { reason, .. }
+            | IndexerSearchPluginError::PartialResults { reason, .. },
+        )) => *reason,
+        _ if plugin_error.code == PluginErrorCode::RateLimited => {
+            IndexerSearchIncompleteReason::RateLimited
+        }
+        _ => IndexerSearchIncompleteReason::UpstreamFailure,
+    };
+    (reason, plugin_error.retry_after_seconds)
+}
+
+fn incomplete_search_error(
+    response: SearchResponse,
+    reason: IndexerSearchIncompleteReason,
+    retry_after_seconds: Option<i64>,
+    detail: String,
+) -> Error {
+    let code = if reason == IndexerSearchIncompleteReason::RateLimited {
+        PluginErrorCode::RateLimited
+    } else {
+        PluginErrorCode::UpstreamUnavailable
+    };
+    typed_error(
+        code,
+        "indexer search did not complete".to_string(),
+        detail,
+        retry_after_seconds,
+        Some(IndexerSearchPluginError::PartialResults {
+            response: Box::new(response),
+            reason,
+            retry_after_seconds,
+        }),
+    )
 }
 
 fn result_limit(request: &SearchRequest) -> usize {
@@ -942,6 +1143,16 @@ fn classify_api_status(status: i64, message: &str) -> Error {
 // ---------------------------------------------------------------------------
 
 fn parse_response(config: &HdbitsConfig, body: &str) -> Result<Vec<SearchResult>, Error> {
+    parse_response_rows(config, body).map(|(results, _)| results)
+}
+
+/// The releases in one response, with the number of rows HDBits sent (some
+/// rows may not become releases), which is what tells a full page from the
+/// last one.
+fn parse_response_rows(
+    config: &HdbitsConfig,
+    body: &str,
+) -> Result<(Vec<SearchResult>, usize), Error> {
     let response: HdbitsResponse = serde_json::from_str(body).map_err(|error| {
         invalid_response_error(
             IndexerSearchInvalidResponseKind::MalformedBody,
@@ -981,7 +1192,7 @@ fn parse_response(config: &HdbitsConfig, body: &str) -> Result<Vec<SearchResult>
             results.push(result);
         }
     }
-    Ok(results)
+    Ok((results, items.len()))
 }
 
 /// HDBits' site-wide leech economics, ported from Prowlarr's
@@ -1320,6 +1531,54 @@ fn unix_to_rfc3339(timestamp: i64) -> Option<String> {
     ))
 }
 
+/// Seconds since the Unix epoch for an RFC 3339 instant
+/// (`YYYY-MM-DDTHH:MM:SS[.fraction](Z|±HH:MM)`), dropping any fraction.
+fn rfc3339_to_unix(raw: &str) -> Option<i64> {
+    let raw = raw.trim();
+    let (date, rest) = raw.split_once(['T', 't', ' '])?;
+    if !matches_mask(date, "0000-00-00") || rest.len() < 8 || !rest.is_char_boundary(8) {
+        return None;
+    }
+    let (time, rest) = rest.split_at(8);
+    if !matches_mask(time, "00:00:00") {
+        return None;
+    }
+    let zone = rest.trim_start_matches(|ch: char| ch == '.' || ch.is_ascii_digit());
+    let offset_seconds = match zone {
+        "Z" | "z" => 0,
+        _ if zone.len() == 6 && zone.is_ascii() && matches_mask(&zone[1..], "00:00") => {
+            let magnitude =
+                zone[1..3].parse::<i64>().ok()? * 3_600 + zone[4..6].parse::<i64>().ok()? * 60;
+            match &zone[..1] {
+                "+" => magnitude,
+                "-" => -magnitude,
+                _ => return None,
+            }
+        }
+        _ => return None,
+    };
+    let field = |value: &str| value.parse::<i64>().ok();
+    let days = days_from_civil(
+        field(&date[..4])?,
+        field(&date[5..7])?,
+        field(&date[8..10])?,
+    );
+    let seconds = field(&time[..2])? * 3_600 + field(&time[3..5])? * 60 + field(&time[6..8])?;
+    Some(days * 86_400 + seconds - offset_seconds)
+}
+
+/// Days since the Unix epoch for a proleptic Gregorian date; the inverse of
+/// [`civil_from_days`].
+fn days_from_civil(year: i64, month: i64, day: i64) -> i64 {
+    let year = if month <= 2 { year - 1 } else { year };
+    let era = if year >= 0 { year } else { year - 399 } / 400;
+    let year_of_era = year - era * 400;
+    let month_position = if month > 2 { month - 3 } else { month + 9 };
+    let day_of_year = (153 * month_position + 2) / 5 + day - 1;
+    let day_of_era = year_of_era * 365 + year_of_era / 4 - year_of_era / 100 + day_of_year;
+    era * 146_097 + day_of_era - 719_468
+}
+
 fn civil_from_days(days_since_epoch: i64) -> (i64, i64, i64) {
     let z = days_since_epoch + 719_468;
     let era = if z >= 0 { z } else { z - 146_096 } / 146_097;
@@ -1467,6 +1726,9 @@ struct TorrentQuery {
     tvdb: Option<TvdbQuery>,
     #[serde(skip_serializing_if = "Option::is_none")]
     limit: Option<i64>,
+    /// Zero-based page of `limit` results; only an RSS catch-up poll sets it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    page: Option<i64>,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Serialize)]
@@ -3083,5 +3345,281 @@ mod tests {
         assert_eq!(retry_minutes_from_body("no window here"), None);
         assert!(looks_like_rate_limit("Rate-limit exceeded."));
         assert!(!looks_like_rate_limit("Access denied"));
+    }
+
+    // -- RSS catch-up --------------------------------------------------------
+
+    use std::cell::RefCell;
+    use std::pin::pin;
+    use std::task::{Context, Poll, Waker};
+
+    /// Drive a future whose awaits all resolve immediately.
+    fn block_on<F: std::future::Future>(future: F) -> F::Output {
+        let mut future = pin!(future);
+        let mut context = Context::from_waker(Waker::noop());
+        loop {
+            if let Poll::Ready(output) = future.as_mut().poll(&mut context) {
+                return output;
+            }
+        }
+    }
+
+    /// Unix time of the newest synthetic release; each older id is a minute
+    /// older.
+    const NEWEST_TIME: i64 = 1_800_000_000;
+    const NEWEST_ID: i64 = 500_000;
+
+    fn release(id: i64) -> SearchResult {
+        SearchResult {
+            title: format!("Synthetic.Series.S01E{id}.1080p.BluRay.x264-GROUP"),
+            guid: Some(format!("HDBits-{id}")),
+            published_at: unix_to_rfc3339(NEWEST_TIME - (NEWEST_ID - id) * 60),
+            ..SearchResult::default()
+        }
+    }
+
+    fn published_at(id: i64) -> String {
+        release(id).published_at.unwrap()
+    }
+
+    /// Page `index` of a feed listing ids newest first, a full page each.
+    fn feed_page(index: usize) -> CatchUpPage {
+        let newest = NEWEST_ID - (index * MAX_PAGE_SIZE) as i64;
+        CatchUpPage {
+            results: (0..MAX_PAGE_SIZE as i64)
+                .map(|n| release(newest - n))
+                .collect(),
+            full: true,
+        }
+    }
+
+    fn marker(identity: Option<&str>, published: String) -> PluginRssCatchUp {
+        PluginRssCatchUp {
+            last_seen_published_at: published,
+            last_seen_identity: identity.map(str::to_string),
+        }
+    }
+
+    /// Run a catch-up poll against a scripted feed, recording each page asked
+    /// for.
+    fn run_catch_up(
+        marker: &PluginRssCatchUp,
+        mut respond: impl FnMut(usize) -> Result<CatchUpPage, Error>,
+    ) -> (Result<SearchResponse, Error>, Vec<usize>) {
+        let pages = RefCell::new(Vec::new());
+        let outcome = block_on(catch_up_search(
+            marker,
+            |page| {
+                pages.borrow_mut().push(page);
+                std::future::ready(respond(page))
+            },
+            || true,
+        ));
+        (outcome, pages.into_inner())
+    }
+
+    fn partial_results(error: &Error) -> (SearchResponse, IndexerSearchIncompleteReason) {
+        match details(error) {
+            IndexerSearchPluginError::PartialResults {
+                response, reason, ..
+            } => (*response, reason),
+            other => panic!("expected partial results, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn the_first_catch_up_page_is_the_plain_recent_query() {
+        let recent = build_query_tiers(&config(), &request()).remove(0);
+
+        assert_eq!(body(&page_query(&recent, 0)), body(&recent));
+        assert!(body(&recent).get("page").is_none());
+        assert_eq!(body(&page_query(&recent, 2))["page"], serde_json::json!(2));
+    }
+
+    #[test]
+    fn a_marker_is_only_honoured_on_the_recent_poll() {
+        let recent = SearchRequest {
+            rss_catch_up: Some(marker(None, published_at(1))),
+            ..request()
+        };
+        assert!(catch_up_marker(&recent).is_some());
+        assert!(catch_up_marker(&request()).is_none());
+
+        let search = SearchRequest {
+            ids: HashMap::from([("tvdb_id".to_string(), "12345".to_string())]),
+            ..recent
+        };
+        assert!(catch_up_marker(&search).is_none());
+    }
+
+    #[test]
+    fn catch_up_stops_at_the_page_holding_the_marked_release() {
+        let last_seen = NEWEST_ID - 2 * MAX_PAGE_SIZE as i64 - 7;
+        let marker = marker(
+            Some(&format!("HDBits-{last_seen}")),
+            published_at(last_seen),
+        );
+
+        let (outcome, pages) = run_catch_up(&marker, |page| Ok(feed_page(page)));
+
+        assert_eq!(outcome.expect("complete").results.len(), 3 * MAX_PAGE_SIZE);
+        assert_eq!(pages, vec![0, 1, 2]);
+    }
+
+    #[test]
+    fn catch_up_stops_once_a_page_reaches_back_past_the_marker_time() {
+        let last_seen = NEWEST_ID - MAX_PAGE_SIZE as i64 - 3;
+        let marker = marker(None, published_at(last_seen));
+
+        let (outcome, pages) = run_catch_up(&marker, |page| Ok(feed_page(page)));
+
+        assert_eq!(outcome.expect("complete").results.len(), 2 * MAX_PAGE_SIZE);
+        assert_eq!(pages, vec![0, 1]);
+    }
+
+    #[test]
+    fn a_short_page_is_the_end_of_the_feed() {
+        let marker = marker(None, published_at(1));
+
+        let (outcome, pages) = run_catch_up(&marker, |page| {
+            let mut fetched = feed_page(page);
+            fetched.full = page == 0;
+            Ok(fetched)
+        });
+
+        assert_eq!(outcome.expect("complete").results.len(), 2 * MAX_PAGE_SIZE);
+        assert_eq!(pages, vec![0, 1]);
+    }
+
+    #[test]
+    fn catch_up_reports_the_page_ceiling_with_everything_it_read() {
+        let marker = marker(Some("HDBits-1"), published_at(1));
+
+        let (outcome, pages) = run_catch_up(&marker, |page| Ok(feed_page(page)));
+
+        assert_eq!(pages.len(), MAX_CATCH_UP_PAGES);
+        let error = outcome.expect_err("ceiling reached before the marker");
+        assert_eq!(error_code(&error), PluginErrorCode::UpstreamUnavailable);
+        let (response, reason) = partial_results(&error);
+        assert_eq!(reason, IndexerSearchIncompleteReason::PageCeilingReached);
+        assert_eq!(response.results.len(), MAX_CATCH_UP_PAGES * MAX_PAGE_SIZE);
+    }
+
+    #[test]
+    fn a_rate_limit_on_a_later_page_keeps_the_pages_already_read() {
+        let marker = marker(None, published_at(1));
+
+        let (outcome, pages) = run_catch_up(&marker, |page| {
+            if page < 2 {
+                Ok(feed_page(page))
+            } else {
+                Err(deferred_error(
+                    IndexerSearchIncompleteReason::RateLimited,
+                    Some(900),
+                    "HDBits query limit reached".to_string(),
+                    "rate limited".to_string(),
+                ))
+            }
+        });
+
+        assert_eq!(pages, vec![0, 1, 2]);
+        let error = outcome.expect_err("incomplete");
+        assert_eq!(error_code(&error), PluginErrorCode::RateLimited);
+        assert_eq!(plugin_error(&error).retry_after_seconds, Some(900));
+        let (response, reason) = partial_results(&error);
+        assert_eq!(reason, IndexerSearchIncompleteReason::RateLimited);
+        assert_eq!(response.results.len(), 2 * MAX_PAGE_SIZE);
+    }
+
+    #[test]
+    fn a_deadline_close_to_expiry_returns_the_pages_already_read() {
+        let marker = marker(Some("HDBits-1"), published_at(1));
+        let pages = RefCell::new(Vec::new());
+
+        let outcome = block_on(catch_up_search(
+            &marker,
+            |page| {
+                pages.borrow_mut().push(page);
+                std::future::ready(Ok(feed_page(page)))
+            },
+            || pages.borrow().len() < 2,
+        ));
+
+        assert_eq!(*pages.borrow(), vec![0, 1]);
+        let error = outcome.expect_err("deadline nears before the marker");
+        let (response, reason) = partial_results(&error);
+        assert_eq!(reason, IndexerSearchIncompleteReason::PageCeilingReached);
+        assert_eq!(response.results.len(), 2 * MAX_PAGE_SIZE);
+    }
+
+    #[test]
+    fn a_first_page_failure_is_returned_unchanged() {
+        let marker = marker(None, published_at(1));
+
+        let (outcome, pages) = run_catch_up(&marker, |_| {
+            Err(deferred_error(
+                IndexerSearchIncompleteReason::UpstreamFailure,
+                None,
+                "HDBits could not be reached".to_string(),
+                "down".to_string(),
+            ))
+        });
+
+        assert_eq!(pages, vec![0]);
+        assert!(matches!(
+            details(&outcome.expect_err("failed")),
+            IndexerSearchPluginError::Deferred {
+                reason: IndexerSearchIncompleteReason::UpstreamFailure,
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn a_marker_with_no_usable_time_or_identity_reads_one_page() {
+        let marker = marker(None, "yesterday".to_string());
+
+        let (outcome, pages) = run_catch_up(&marker, |page| Ok(feed_page(page)));
+
+        assert_eq!(outcome.expect("complete").results.len(), MAX_PAGE_SIZE);
+        assert_eq!(pages, vec![0]);
+    }
+
+    #[test]
+    fn a_page_counts_rows_that_do_not_become_releases() {
+        let body = r#"{"status":0,"data":[{"id":1,"name":"A"},{"name":"no id"}]}"#;
+
+        let (results, rows) = parse_response_rows(&config(), body).expect("parses");
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(rows, 2);
+    }
+
+    #[test]
+    fn rfc3339_instants_read_back_to_unix_seconds() {
+        assert_eq!(rfc3339_to_unix("1970-01-01T00:00:00Z"), Some(0));
+        assert_eq!(rfc3339_to_unix("2015-04-04T20:30:46Z"), Some(1_428_179_446));
+        assert_eq!(
+            rfc3339_to_unix("2015-04-04T22:30:46.250+02:00"),
+            Some(1_428_179_446)
+        );
+        assert_eq!(
+            rfc3339_to_unix("2015-04-04T15:30:46-05:00"),
+            Some(1_428_179_446)
+        );
+        assert_eq!(rfc3339_to_unix("1969-12-31T23:59:59Z"), Some(-1));
+        for timestamp in [1, 951_782_400, 1_800_000_000] {
+            let rendered = unix_to_rfc3339(timestamp).unwrap();
+            assert_eq!(rfc3339_to_unix(&rendered), Some(timestamp));
+        }
+        for junk in [
+            "",
+            "yesterday",
+            "2015-04-04",
+            "2015-04-04T20:30:46",
+            "2015-04-04T20:30:46+0200",
+        ] {
+            assert_eq!(rfc3339_to_unix(junk), None, "{junk}");
+        }
     }
 }

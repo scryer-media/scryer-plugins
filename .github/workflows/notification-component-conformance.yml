@@ -69,6 +69,8 @@ jobs:
             manifest: notifications/ntfy/Cargo.toml
           - plugin: plex
             manifest: notifications/plex/Cargo.toml
+          - plugin: pushbullet
+            manifest: notifications/pushbullet/Cargo.toml
           - plugin: pushcut
             manifest: notifications/pushcut/Cargo.toml
           - plugin: pushover

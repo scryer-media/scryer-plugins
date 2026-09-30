@@ -53,7 +53,8 @@ The title is the event heading Scryer composes (`Grabbed: Example Show`,
 
 The body is the event summary followed by whatever the event actually carries —
 episode, quality, release, release group, indexer, size, download client,
-destination or deleted path, health check detail, version numbers, subtitle
+destination or deleted path, where a moved title came from and went to and any
+warning from the move, health check detail, version numbers, subtitle
 languages, media-request status. Fields that are absent are simply not rendered, so
 a sparse event produces the same single line it always did.
 

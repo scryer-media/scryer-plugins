@@ -57,7 +57,7 @@ what Sonarr does. `auto` derives Apprise's type from the event instead:
 | Severity `warning` — health issue | `warning` |
 | Manual interaction required | `warning` |
 | Import complete, upgrade, post-processing complete, title added, subtitle downloaded, media request approved, health restored | `success` |
-| Everything else — grab, rename, deletions, tests | `info` |
+| Everything else — grab, rename, title moved, deletions, tests | `info` |
 
 The default stays `info`, so an existing channel keeps behaving exactly as it
 did.
@@ -68,8 +68,9 @@ did.
   "Import complete: Example Show", "Download failed: Example Show").
 * **body** — the event summary, followed by the facts the event carries:
   episode, quality, release and release group, indexer, size, download client,
-  destination or source path, deleted file, health check and detail,
-  application versions, subtitle languages, or media-request status. Apprise
+  destination or source path, deleted file, where a moved title came from and
+  went to and any warning from the move, health check and detail, application
+  versions, subtitle languages, or media-request status. Apprise
   requires a body, so an event with no summary falls back to its heading.
 * **type** — as configured, or derived under `auto`.
 * **format** — always `text`. The body is plain text and says so, rather than

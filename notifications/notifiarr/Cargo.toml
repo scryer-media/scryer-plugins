@@ -1,6 +1,6 @@
 [package]
 name = "notifiarr-notification"
-version = "1.0.1"
+version = "1.1.0"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Notifiarr notification plugin"
@@ -13,8 +13,9 @@ catalog_versions = ["v3"]
 # Scryer 0.20.0 is the first release whose notification backing is the
 # `scryer:notification/notification@1.0.0` component host. Earlier releases
 # run the Preview 1 command runtime and cannot instantiate this artifact at
-# all, so the floor is load-bearing, not advisory.
-min_scryer_version = "0.20.0"
+# all, so the floor is load-bearing, not advisory. Scryer 0.21.11 is the
+# first release that sends the `title_moved` event this version handles.
+min_scryer_version = "0.21.11"
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/notifiarr"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/notifications/notifiarr"
 
@@ -24,7 +25,7 @@ crate-type = ["cdylib"]
 [dependencies]
 notify-common = { path = "../notify-common" }
 scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
-scryer-plugin-sdk = "3.11.0"
+scryer-plugin-sdk = "3.12.0"
 serde_json = "1"
 wit-bindgen = "0.61"
 

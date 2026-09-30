@@ -740,6 +740,13 @@ fn event_label(req: &PluginNotificationRequest) -> String {
         NotificationEventType::TitleDeleted => {
             episodic_label(episodic, "Series Deleted", "Deleted")
         }
+        NotificationEventType::TitleMoved => episodic_label(episodic, "Series Moved", "Moved"),
+        NotificationEventType::ListTitleAdded
+        | NotificationEventType::ListRequestSubmitted
+        | NotificationEventType::ListItemHeld
+        | NotificationEventType::ListTitleLeft
+        | NotificationEventType::ListSyncFailed
+        | NotificationEventType::ListUnfollowed => "List Update".to_string(),
         NotificationEventType::ManualInteractionRequired => {
             "Manual Interaction Required".to_string()
         }
@@ -797,8 +804,15 @@ fn attachment_color(req: &PluginNotificationRequest) -> &'static str {
         | NotificationEventType::SubtitleDownloaded
         | NotificationEventType::MediaRequestApproved => COLOR_GOOD,
         NotificationEventType::Rename
+        | NotificationEventType::TitleMoved
         | NotificationEventType::MediaRequestSubmitted
         | NotificationEventType::MediaRequestCanceled
+        | NotificationEventType::ListTitleAdded
+        | NotificationEventType::ListRequestSubmitted
+        | NotificationEventType::ListItemHeld
+        | NotificationEventType::ListTitleLeft
+        | NotificationEventType::ListSyncFailed
+        | NotificationEventType::ListUnfollowed
         | NotificationEventType::Test => COLOR_INFO,
     };
 
@@ -886,6 +900,11 @@ fn event_fields(req: &PluginNotificationRequest) -> Vec<(&'static str, String)> 
         }
         NotificationEventType::TitleAdded | NotificationEventType::TitleDeleted => {
             push(&mut fields, "Library Path", title_path(req));
+        }
+        NotificationEventType::TitleMoved => {
+            push(&mut fields, "From", title_move_source(req));
+            push(&mut fields, "To", title_move_destination(req));
+            push(&mut fields, "Warning", title_move_warning(req));
         }
         NotificationEventType::HealthIssue | NotificationEventType::HealthRestored => {
             push(&mut fields, "Status", health_status(req));
@@ -1645,6 +1664,7 @@ mod tests {
             application_update: None,
             manual_interaction: None,
             media_request: None,
+            title_move: None,
         }
     }
 
@@ -2114,6 +2134,29 @@ mod tests {
         let fields = field_texts(&payload);
         assert_eq!(fields, vec!["*Release*\nCinder.Line.S02E03.1080p.WEB-DL"]);
         assert!(warnings.is_empty());
+    }
+
+    #[test]
+    fn a_title_move_renders_its_origin_and_destination() {
+        let mut req = request(NotificationEventType::TitleMoved);
+        req.title = Some(series_title());
+        req.title_move = Some(PluginNotificationTitleMove {
+            source_library_name: Some("Library A".to_string()),
+            destination_path: Some("/media/b/Cinder Line".to_string()),
+            completed_with_warnings: true,
+            detail: Some("One subtitle could not be moved".to_string()),
+            ..PluginNotificationTitleMove::default()
+        });
+
+        let (payload, _) = render(&req);
+        assert_eq!(
+            field_texts(&payload),
+            vec![
+                "*From*\nLibrary A",
+                "*To*\n/media/b/Cinder Line",
+                "*Warning*\nOne subtitle could not be moved",
+            ]
+        );
     }
 
     #[test]

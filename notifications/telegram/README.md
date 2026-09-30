@@ -29,7 +29,8 @@ Every message is:
 2. the event's summary sentence;
 3. `Label: value` lines for whatever the event actually carries — episode,
    quality, release, release group, indexer, size, download client, destination
-   path, deleted file, health check, version numbers, subtitle languages, media
+   path, deleted file, where a moved title came from and went to and any warning
+   from the move, health check, version numbers, subtitle languages, media
    request status;
 4. one `<a href>` line per selected metadata link that the title has an id for.
 

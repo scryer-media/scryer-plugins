@@ -247,6 +247,7 @@ fn media_refresh_events() -> Vec<SdkNotificationEventType> {
         SdkNotificationEventType::Rename,
         SdkNotificationEventType::FileDeleted,
         SdkNotificationEventType::FileDeletedForUpgrade,
+        SdkNotificationEventType::TitleMoved,
     ]
 }
 
@@ -337,6 +338,17 @@ fn build_request_plans(
 ) -> Result<Vec<JellyfinRequestPlan>, String> {
     if matches!(request.event_type, SdkNotificationEventType::Test) {
         return Ok(vec![JellyfinRequestPlan::SystemInfo]);
+    }
+    // A move reports each moved file as a deleted old path and a created new
+    // one. A move that relocated no media files carries no file block, and
+    // there is then nothing for Jellyfin to rescan.
+    if matches!(request.event_type, SdkNotificationEventType::TitleMoved)
+        && request
+            .file
+            .as_ref()
+            .is_none_or(|file| file.media_updates.is_empty())
+    {
+        return Ok(Vec::new());
     }
 
     let mappings = parse_path_mappings(&config.path_mappings)?;
@@ -742,6 +754,7 @@ mod tests {
                 "upgrade" => SdkNotificationEventType::Upgrade,
                 "rename" => SdkNotificationEventType::Rename,
                 "file_deleted" => SdkNotificationEventType::FileDeleted,
+                "title_moved" => SdkNotificationEventType::TitleMoved,
                 "test" => SdkNotificationEventType::Test,
                 other => panic!("unsupported event_type in test fixture: {other}"),
             },
@@ -807,6 +820,7 @@ mod tests {
             application_update: None,
             manual_interaction: None,
             media_request: None,
+            title_move: None,
         }
     }
 
@@ -928,6 +942,53 @@ mod tests {
                     update_type: MediaUpdateType::Created,
                 }],
             }]
+        );
+    }
+
+    #[test]
+    fn build_request_plans_for_a_title_move_rescan_both_paths() {
+        assert!(media_refresh_events().contains(&SdkNotificationEventType::TitleMoved));
+        let request = request_with_metadata(
+            "title_moved",
+            "series",
+            serde_json::json!({
+                "media_updates": [
+                    { "path": "/data/tv/Old Root/Show/S01E01.mkv", "update_type": "deleted" },
+                    { "path": "/data/tv/New Root/Show/S01E01.mkv", "update_type": "created" }
+                ],
+                "external_ids": { "tvdb_id": "12345" }
+            }),
+        );
+
+        let plans = build_request_plans(&request, &config("/data/tv => /mnt/tv")).unwrap();
+        assert_eq!(
+            plans,
+            vec![JellyfinRequestPlan::MediaUpdated {
+                updates: vec![
+                    MediaUpdate {
+                        path: "/mnt/tv/Old Root/Show/S01E01.mkv".to_string(),
+                        update_type: MediaUpdateType::Deleted,
+                    },
+                    MediaUpdate {
+                        path: "/mnt/tv/New Root/Show/S01E01.mkv".to_string(),
+                        update_type: MediaUpdateType::Created,
+                    },
+                ],
+            }]
+        );
+    }
+
+    #[test]
+    fn build_request_plans_for_a_title_move_without_files_sends_nothing() {
+        let mut request = request_with_metadata(
+            "title_moved",
+            "series",
+            serde_json::json!({ "external_ids": { "tvdb_id": "12345" } }),
+        );
+        request.file = None;
+        assert_eq!(
+            build_request_plans(&request, &config("/data/tv => /mnt/tv")).unwrap(),
+            Vec::new()
         );
     }
 

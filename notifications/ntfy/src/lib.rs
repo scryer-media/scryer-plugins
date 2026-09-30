@@ -1061,7 +1061,20 @@ fn detail_lines(req: &PluginNotificationRequest) -> Vec<Line> {
             push(&mut lines, "Status", media_request_status(req));
             push(&mut lines, "Quality Profile", media_request_profile(req));
         }
-        NotificationEventType::Test => {}
+        NotificationEventType::TitleMoved => {
+            push(&mut lines, "From", title_move_source(req));
+            push(&mut lines, "To", title_move_destination(req));
+            push(&mut lines, "Warning", title_move_warning(req));
+        }
+        // Not in `supported_events`, so the host never routes them here; the
+        // summary lines are all such a notification would carry.
+        NotificationEventType::ListTitleAdded
+        | NotificationEventType::ListRequestSubmitted
+        | NotificationEventType::ListItemHeld
+        | NotificationEventType::ListTitleLeft
+        | NotificationEventType::ListSyncFailed
+        | NotificationEventType::ListUnfollowed
+        | NotificationEventType::Test => {}
     }
     lines
 }
@@ -2279,6 +2292,7 @@ mod tests {
             application_update: None,
             manual_interaction: None,
             media_request: None,
+            title_move: None,
         }
     }
 
@@ -3067,6 +3081,28 @@ mod tests {
         assert_eq!(
             episode_display(&daily).as_deref(),
             Some("2026-09-02 - Tonight")
+        );
+    }
+
+    #[test]
+    fn a_title_move_renders_its_origin_and_destination() {
+        assert!(general_notification_events().contains(&NotificationEventType::TitleMoved));
+        let mut req = request(NotificationEventType::TitleMoved);
+        req.summary_message = "Moved 'Example Show' from Library A to Library B.".to_string();
+        req.title_move = Some(PluginNotificationTitleMove {
+            source_library_name: Some("Library A".to_string()),
+            destination_library_name: Some("Library B".to_string()),
+            destination_path: Some("/media/b/Example Show".to_string()),
+            completed_with_warnings: true,
+            detail: Some("1 file was left behind".to_string()),
+            ..PluginNotificationTitleMove::default()
+        });
+        let message = message_of(&req, &settings()).message;
+        assert!(message.contains("From: Library A"), "{message}");
+        assert!(message.contains("To: /media/b/Example Show"), "{message}");
+        assert!(
+            message.contains("Warning: 1 file was left behind"),
+            "{message}"
         );
     }
 

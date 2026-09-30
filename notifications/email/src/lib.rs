@@ -214,6 +214,7 @@ fn general_notification_events() -> Vec<NotificationEventType> {
         NotificationEventType::MediaRequestApproved,
         NotificationEventType::MediaRequestRejected,
         NotificationEventType::MediaRequestCanceled,
+        NotificationEventType::TitleMoved,
     ]
 }
 
@@ -759,6 +760,34 @@ fn build_body(request: &PluginNotificationRequest) -> String {
     if let Some(title) = &request.title {
         lines.push(format!("Title: {}", title.name));
     }
+    if let Some(title_move) = &request.title_move {
+        let place = |path: &Option<String>, library: &Option<String>| {
+            [path, library]
+                .into_iter()
+                .flatten()
+                .map(|value| value.trim())
+                .find(|value| !value.is_empty())
+                .map(str::to_string)
+        };
+        if let Some(from) = place(&title_move.source_path, &title_move.source_library_name) {
+            lines.push(format!("From: {from}"));
+        }
+        if let Some(to) = place(
+            &title_move.destination_path,
+            &title_move.destination_library_name,
+        ) {
+            lines.push(format!("To: {to}"));
+        }
+        if title_move.completed_with_warnings {
+            let detail = title_move
+                .detail
+                .as_deref()
+                .map(str::trim)
+                .filter(|detail| !detail.is_empty())
+                .unwrap_or("Completed with warnings");
+            lines.push(format!("Warning: {detail}"));
+        }
+    }
     if let Some(event_id) = &request.event_id {
         lines.push(format!("Event ID: {event_id}"));
     }
@@ -802,7 +831,7 @@ mod tests {
     use super::*;
     use scryer_plugin_sdk::{
         NotificationEventType, PluginNotificationApp, PluginNotificationExternalIds,
-        PluginNotificationTitle,
+        PluginNotificationTitle, PluginNotificationTitleMove,
     };
 
     #[test]
@@ -870,6 +899,39 @@ mod tests {
         assert!(message.contains("Content-Type: text/plain; charset=utf-8\r\n"));
         assert!(message.contains("This is a test."));
         assert!(message.ends_with("\r\n"));
+    }
+
+    #[test]
+    fn renders_a_title_move_with_origin_and_destination() {
+        let notification = match descriptor().provider {
+            ProviderDescriptor::Notification(notification) => notification,
+            provider => panic!("expected notification provider, got {provider:?}"),
+        };
+        assert!(
+            notification
+                .capabilities
+                .supported_events
+                .contains(&NotificationEventType::TitleMoved)
+        );
+
+        let mut request = test_request();
+        request.event_type = NotificationEventType::TitleMoved;
+        request.is_test = false;
+        request.summary_title = "Moved: Example Show".to_string();
+        request.summary_message = "Moved 'Example Show' from Library A to Library B.".to_string();
+        request.title_move = Some(PluginNotificationTitleMove {
+            source_library_name: Some("Library A".to_string()),
+            destination_library_name: Some("Library B".to_string()),
+            source_path: None,
+            destination_path: Some("/media/b/Example Show".to_string()),
+            completed_with_warnings: true,
+            ..PluginNotificationTitleMove::default()
+        });
+        let body = build_body(&request);
+        assert!(body.contains("Event: title_moved"), "{body}");
+        assert!(body.contains("From: Library A"), "{body}");
+        assert!(body.contains("To: /media/b/Example Show"), "{body}");
+        assert!(body.contains("Warning: Completed with warnings"), "{body}");
     }
 
     #[test]
@@ -950,6 +1012,7 @@ mod tests {
             application_update: None,
             manual_interaction: None,
             media_request: None,
+            title_move: None,
         }
     }
 }

@@ -1,6 +1,6 @@
 [package]
 name = "tsukihime-subtitles"
-version = "1.0.1"
+version = "1.1.0"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Tsukihime anime subtitle provider using cached public subtitle attachments"
@@ -10,11 +10,11 @@ official = true
 plugin_id = "tsukihime-subtitles"
 status = "beta"
 catalog_versions = ["v3"]
-# Scryer 0.20.0 is the first release whose subtitle host serves
-# `scryer:subtitle/subtitle-provider@1.1.0`. A host that only serves the 1.0.0
-# world (or the Preview 1 command runtime before it) cannot bind this artifact
-# at all, so the floor is load-bearing, not advisory.
-min_scryer_version = "0.20.0"
+# Scryer 0.21.10 is the first release whose subtitle host fills
+# `SubtitlePluginSearchRequest::community_entry`, which this version's anime
+# episode matching depends on. Older hosts never send the field, so the floor
+# is load-bearing, not advisory.
+min_scryer_version = "0.21.10"
 docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/tsukihime"
 source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/subtitles/tsukihime"
 
@@ -24,7 +24,7 @@ crate-type = ["cdylib"]
 [dependencies]
 base64 = "0.23"
 scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
-scryer-plugin-sdk = "3.11.0"
+scryer-plugin-sdk = "3.12.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 wit-bindgen = { version = "0.61", features = ["async"] }

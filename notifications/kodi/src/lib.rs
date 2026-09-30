@@ -774,6 +774,21 @@ fn library_plan(req: &Request) -> LibraryPlan {
             scan: true,
             clean: !deleted_paths(req).is_empty(),
         },
+        // Each moved file arrives as its deleted old path and its created new
+        // one, so the old entries need cleaning; a move with no files carries
+        // no deleted paths and a scan is enough.
+        NotificationEventType::TitleMoved => LibraryPlan {
+            notify: true,
+            scan: true,
+            clean: !deleted_paths(req).is_empty(),
+        },
+        // Not in `supported_events`, so the host never routes them here.
+        NotificationEventType::ListTitleAdded
+        | NotificationEventType::ListRequestSubmitted
+        | NotificationEventType::ListItemHeld
+        | NotificationEventType::ListTitleLeft
+        | NotificationEventType::ListSyncFailed
+        | NotificationEventType::ListUnfollowed => notify_only,
         // Scryer-only events with no library consequence, plus Sonarr's
         // notify-only set.
         NotificationEventType::ImportRejected
@@ -882,6 +897,13 @@ fn header_suffix(event_type: NotificationEventType) -> &'static str {
         }
         NotificationEventType::TitleAdded => "Added",
         NotificationEventType::TitleDeleted => "Deleted",
+        NotificationEventType::TitleMoved => "Moved",
+        NotificationEventType::ListTitleAdded
+        | NotificationEventType::ListRequestSubmitted
+        | NotificationEventType::ListItemHeld
+        | NotificationEventType::ListTitleLeft
+        | NotificationEventType::ListSyncFailed
+        | NotificationEventType::ListUnfollowed => "List Update",
         NotificationEventType::PostProcessingCompleted => "Post-processing",
         NotificationEventType::SubtitleDownloaded => "Subtitles Downloaded",
         NotificationEventType::SubtitleSearchFailed => "Subtitle Search Failed",
@@ -1948,6 +1970,7 @@ mod tests {
             application_update: None,
             manual_interaction: None,
             media_request: None,
+            title_move: None,
         }
     }
 
@@ -2348,6 +2371,26 @@ mod tests {
         let mut req = request(NotificationEventType::TitleDeleted);
         req.file = Some(deleted_update("/media/TV/Example Show/s01e01.mkv"));
         assert!(library_plan(&req).clean);
+    }
+
+    #[test]
+    fn a_title_move_scans_and_cleans_the_old_paths_it_carries() {
+        let plan = library_plan(&request(NotificationEventType::TitleMoved));
+        assert!(plan.notify);
+        assert!(plan.scan);
+        assert!(!plan.clean);
+
+        let mut req = request(NotificationEventType::TitleMoved);
+        req.file = Some(deleted_update("/media/TV/Example Show/s01e01.mkv"));
+        assert_eq!(
+            library_plan(&req),
+            LibraryPlan {
+                notify: true,
+                scan: true,
+                clean: true
+            }
+        );
+        assert_eq!(notification_header(&req), "Scryer - Moved");
     }
 
     #[test]

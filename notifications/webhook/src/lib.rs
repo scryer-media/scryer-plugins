@@ -205,6 +205,7 @@ fn general_notification_events() -> Vec<NotificationEventType> {
         NotificationEventType::Rename,
         NotificationEventType::TitleAdded,
         NotificationEventType::TitleDeleted,
+        NotificationEventType::TitleMoved,
         NotificationEventType::FileDeleted,
         NotificationEventType::FileDeletedForUpgrade,
         NotificationEventType::PostProcessingCompleted,
@@ -356,6 +357,41 @@ mod tests {
     }
 
     #[test]
+    fn a_title_move_is_delivered_with_its_move_block() {
+        let notification = match build_descriptor().provider {
+            ProviderDescriptor::Notification(notification) => notification,
+            provider => panic!("expected notification provider, got {provider:?}"),
+        };
+        assert!(
+            notification
+                .capabilities
+                .supported_events
+                .contains(&NotificationEventType::TitleMoved)
+        );
+
+        let mut request: PluginNotificationRequest = serde_json::from_value(serde_json::json!({
+            "event_type": "title_moved",
+            "summary_title": "Title moved: Cinder Line",
+            "summary_message": "Moved 'Cinder Line' from Library A to Library B.",
+            "app": { "name": "Scryer", "version": "test" },
+        }))
+        .expect("minimal notification request deserializes");
+        request.title_move = Some(scryer_plugin_sdk::PluginNotificationTitleMove {
+            source_path: Some("/media/a/Cinder Line".to_string()),
+            destination_path: Some("/media/b/Cinder Line".to_string()),
+            ..Default::default()
+        });
+
+        let parsed = serde_json::to_value(to_webhook_json(&request)).unwrap();
+        assert_eq!(parsed["event_type"], "title_moved");
+        assert_eq!(
+            parsed["title_move"]["destination_path"],
+            "/media/b/Cinder Line"
+        );
+        assert_eq!(parsed["title_move"]["source_path"], "/media/a/Cinder Line");
+    }
+
+    #[test]
     fn webhook_payload_serialization() {
         let payload = PluginNotificationRequest {
             schema_version: 1,
@@ -400,6 +436,7 @@ mod tests {
             application_update: None,
             manual_interaction: None,
             media_request: None,
+            title_move: None,
         };
         let json = serde_json::to_string(&payload).unwrap();
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();

@@ -47,9 +47,10 @@ send is reported as a failure rather than being ignored.
 Line 1 is Scryer's event heading (`Grabbed: Example Show`), line 2 is the event
 summary, and further `Label: value` lines are added from whichever structured
 blocks the event carries — episode, quality, release, release group, indexer,
-size, download client, destination or deleted path, health check, version
-change, manual-interaction reason and link, subtitle languages. An event with no
-extra blocks renders as the two lines Sonarr sends.
+size, download client, destination or deleted path, where a moved title came
+from and went to and any warning from the move, health check, version change,
+manual-interaction reason and link, subtitle languages. An event with no extra
+blocks renders as the two lines Sonarr sends.
 
 `text_mode` is always sent, so the server's `DEFAULT_SIGNAL_TEXT_MODE`
 environment variable can never reinterpret text this channel composed. In

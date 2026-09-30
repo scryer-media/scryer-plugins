@@ -25,6 +25,6 @@ TLS verification is mandatory. The plugin does not support insecure certificate 
 
 ## Message behavior
 
-The plugin sends a plaintext RFC 5322 email for each Scryer event. The notification title becomes the subject, optionally prefixed with **subject_prefix**; the summary becomes the body. Recipients may be separated by commas or newlines.
+The plugin sends a plaintext RFC 5322 email for each Scryer event. The notification title becomes the subject, optionally prefixed with **subject_prefix**; the summary becomes the body. A moved title adds `From`, `To` and, when the move finished with warnings, `Warning` lines. Recipients may be separated by commas or newlines.
 
 Authentication is attempted only when both **username** and **password** are supplied. This plugin has no HTML templates, attachments, OAuth, or delivery queue of its own.

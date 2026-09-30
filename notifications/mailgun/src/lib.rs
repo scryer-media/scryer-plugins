@@ -827,7 +827,20 @@ fn detail_lines(
             push(&mut lines, "Status", media_request_status(req));
             push(&mut lines, "Quality Profile", media_request_profile(req));
         }
-        NotificationEventType::Test => {}
+        NotificationEventType::TitleMoved => {
+            push(&mut lines, "From", title_move_source(req));
+            push(&mut lines, "To", title_move_destination(req));
+            push(&mut lines, "Warning", title_move_warning(req));
+        }
+        // Not in `supported_events`, so the host never routes them here; the
+        // summary lines are all such a notification would carry.
+        NotificationEventType::ListTitleAdded
+        | NotificationEventType::ListRequestSubmitted
+        | NotificationEventType::ListItemHeld
+        | NotificationEventType::ListTitleLeft
+        | NotificationEventType::ListSyncFailed
+        | NotificationEventType::ListUnfollowed
+        | NotificationEventType::Test => {}
     }
 
     // Every event carries these when the core filled them, and an email is the
@@ -1861,6 +1874,7 @@ mod tests {
             application_update: None,
             manual_interaction: None,
             media_request: None,
+            title_move: None,
         }
     }
 
@@ -2458,6 +2472,25 @@ mod tests {
         );
         let rendered: BTreeMap<&str, String> = lines.iter().cloned().collect();
         assert_eq!(rendered["File"], "/media/TV/Example Show/S01E01.old.mkv");
+    }
+
+    #[test]
+    fn a_title_move_names_its_origin_and_destination() {
+        assert!(general_notification_events().contains(&NotificationEventType::TitleMoved));
+        let mut req = populated_request(NotificationEventType::TitleMoved);
+        req.title_move = Some(PluginNotificationTitleMove {
+            source_library_name: Some("Library A".to_string()),
+            destination_library_name: Some("Library B".to_string()),
+            source_path: Some("/media/a/Example Show".to_string()),
+            destination_path: Some("/media/b/Example Show".to_string()),
+            completed_with_warnings: true,
+            ..PluginNotificationTitleMove::default()
+        });
+        let lines = detail_lines(&req, &mut no_warnings());
+        let rendered: BTreeMap<&str, String> = lines.iter().cloned().collect();
+        assert_eq!(rendered["From"], "/media/a/Example Show");
+        assert_eq!(rendered["To"], "/media/b/Example Show");
+        assert_eq!(rendered["Warning"], "Completed with warnings");
     }
 
     #[test]

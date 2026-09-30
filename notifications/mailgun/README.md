@@ -44,7 +44,8 @@ nothing usable in it is an error either way.
   per-event constant instead.
 * **text** — the event summary exactly as before, then the facts the event
   carries, one `Label: value` per line: episode, quality, release and release
-  group, indexer, size, download client, destination or source path, health check
+  group, indexer, size, download client, destination or source path, where a
+  moved title came from and went to and any warning from the move, health check
   and detail, application versions, subtitle languages, media-request status,
   plus the title and the event name.
 * **html** — the same content as a small inline-styled table, with the title's

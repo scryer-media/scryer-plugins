@@ -1,6 +1,6 @@
 # Emby
 
-Send targeted media updates to an Emby server after Scryer imports, upgrades, renames, or removes media.
+Send targeted media updates to an Emby server after Scryer imports, upgrades, renames, moves, or removes media.
 
 ## Configuration
 
@@ -16,6 +16,6 @@ With no path mappings, event paths are assumed to be visible to Emby already. Ma
 
 A channel test sends `GET /System/Info`. Media refreshes are deduplicated by path and update type and sent in one PascalCase `POST /Library/Media/Updated` payload. When item discovery is needed, the plugin sends `GET /Items` with `Recursive=true`, the Series or Movie item type, and `Path,ProviderIds` fields.
 
-Only import-complete, upgrade, rename, file-deleted, and file-deleted-for-upgrade events are advertised. Update types are `Created`, `Modified`, and `Deleted` exactly.
+Only import-complete, upgrade, rename, title-moved, file-deleted, and file-deleted-for-upgrade events are advertised. A moved title sends each moved file as its old path `Deleted` and its new path `Created`; a move that carried no file paths sends the title's new folder as `Modified`. Update types are `Created`, `Modified`, and `Deleted` exactly.
 
 Failed upstream requests report only the operation and HTTP status. Response bodies, authorization headers, and API keys are not included in plugin errors.
