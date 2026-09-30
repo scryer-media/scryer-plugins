@@ -90,6 +90,42 @@ const CATEGORY_LABELS: &[(i64, &str)] = &[
     (28, "RO Dubbed"),
 ];
 
+/// Prowlarr's `FileList` newznab category mappings, used to translate the
+/// categories an operator picks for an unscoped search into FileList ids.
+const NEWZNAB_CATEGORY_MAP: &[(i64, i64)] = &[
+    (24, 5070),
+    (11, 3000),
+    (29, 7000),
+    (30, 8000),
+    (15, 5000),
+    (18, 8000),
+    (16, 7000),
+    (25, 2060),
+    (6, 2045),
+    (26, 2050),
+    (20, 2050),
+    (2, 2070),
+    (3, 2010),
+    (4, 2040),
+    (19, 2010),
+    (1, 2030),
+    (5, 3040),
+    (10, 1000),
+    (9, 4050),
+    (31, 5020),
+    (17, 4000),
+    (22, 4070),
+    (8, 4000),
+    (28, 2010),
+    (28, 5020),
+    (27, 5045),
+    (21, 5040),
+    (23, 5030),
+    (13, 5060),
+    (12, 3020),
+    (7, 6000),
+];
+
 /// The set Sonarr's `FileListCategories` offers, in Sonarr's order.
 const SERIES_CATEGORY_IDS: &[i64] = &[24, 15, 27, 21, 23, 13, 28];
 /// The set Radarr's `FileListCategories` offers, in Radarr's order.
@@ -361,6 +397,9 @@ enum FacetKind {
     Series,
     Anime,
     Movie,
+    /// A bare text query with no facet, ids or numbering — an interactive raw
+    /// search. Prowlarr's manual search sends no `category` filter for it.
+    Unscoped,
 }
 
 fn facet_kind(request: &SearchRequest) -> FacetKind {
@@ -376,8 +415,50 @@ fn facet_kind(request: &SearchRequest) -> FacetKind {
         // An absolute episode number is only ever an anime request, and Sonarr
         // routes it to `AnimeCategories` regardless of how it was labelled.
         _ if request.absolute_episode.is_some() => FacetKind::Anime,
+        None | Some("") if is_unscoped_text_request(request) => FacetKind::Unscoped,
         _ => FacetKind::Series,
     }
+}
+
+/// True for a facetless request that carries only free text.
+fn is_unscoped_text_request(request: &SearchRequest) -> bool {
+    request
+        .facet
+        .as_deref()
+        .is_none_or(|facet| facet.trim().is_empty())
+        && request.ids.is_empty()
+        && request.season.is_none()
+        && request.episode.is_none()
+        && request.absolute_episode.is_none()
+}
+
+/// The newznab categories the host asked for, as sent on the request.
+fn requested_newznab_categories(request: &SearchRequest) -> Vec<i64> {
+    let raw: Vec<&str> = if request.categories.is_empty() {
+        request.category.as_deref().into_iter().collect()
+    } else {
+        request.categories.iter().map(String::as_str).collect()
+    };
+    raw.iter()
+        .flat_map(|value| value.split(','))
+        .filter_map(|value| value.trim().parse::<i64>().ok())
+        .collect()
+}
+
+/// Prowlarr's `MapTorznabCapsToTrackers`: a requested code selects every
+/// FileList id mapped to that code, and a parent code (`5000`) also selects
+/// the ids mapped to its subcategories.
+fn map_newznab_categories(requested: &[i64]) -> Vec<i64> {
+    let mut out: Vec<i64> = Vec::new();
+    for (tracker_id, newznab) in NEWZNAB_CATEGORY_MAP {
+        let selected = requested.iter().any(|code| {
+            *code == *newznab || (code % 1000 == 0 && *newznab > *code && *newznab < code + 1000)
+        });
+        if selected && !out.contains(tracker_id) {
+            out.push(*tracker_id);
+        }
+    }
+    out
 }
 
 /// True for the recent/RSS poll: either the host said so, or the request
@@ -420,15 +501,27 @@ fn build_request_tiers(config: &FileListConfig, request: &SearchRequest) -> Vec<
         )];
     }
 
+    let mapped_categories;
     let categories = match facet_kind(request) {
         FacetKind::Series => &config.categories,
         FacetKind::Anime => &config.anime_categories,
         FacetKind::Movie => &config.movie_categories,
+        FacetKind::Unscoped => {
+            // Prowlarr's manual search filters by category only when the
+            // operator picked some; categories FileList has no ids for leave
+            // nothing to search.
+            let requested = requested_newznab_categories(request);
+            mapped_categories = map_newznab_categories(&requested);
+            if !requested.is_empty() && mapped_categories.is_empty() {
+                return Vec::new();
+            }
+            &mapped_categories
+        }
     };
     // Sonarr's `GetRequest` yields nothing when the category list for the
     // criteria is empty, which is how an anime-only or TV-only configuration
     // opts out of the other facets.
-    if categories.is_empty() {
+    if categories.is_empty() && facet_kind(request) != FacetKind::Unscoped {
         return Vec::new();
     }
 
@@ -541,18 +634,28 @@ fn name_query(request: &SearchRequest) -> Option<String> {
 
 /// `{base}/api.php?action=…&category=…{params}&username=…&passkey=…`.
 ///
+/// An empty category list omits `category` entirely, which searches every
+/// FileList category.
+///
 /// The `action`/`category`/params prefix is byte-identical to Sonarr's
 /// `FileListRequestGenerator.GetRequest`; the credentials are appended because
 /// FileList documents `username`/`passkey` as query parameters (Sonarr relies
 /// on .NET's Basic challenge-response, which the Scryer host does not perform).
 fn request_url(config: &FileListConfig, action: &str, categories: &[i64], params: &str) -> String {
-    let categories = categories
-        .iter()
-        .map(ToString::to_string)
-        .collect::<Vec<_>>()
-        .join(",");
+    let categories = if categories.is_empty() {
+        String::new()
+    } else {
+        format!(
+            "&category={}",
+            categories
+                .iter()
+                .map(ToString::to_string)
+                .collect::<Vec<_>>()
+                .join(",")
+        )
+    };
     format!(
-        "{}/api.php?action={action}&category={categories}{params}&username={}&passkey={}",
+        "{}/api.php?action={action}{categories}{params}&username={}&passkey={}",
         config.base_url,
         urlencoding::encode(&config.username),
         urlencoding::encode(&config.passkey),
@@ -1875,19 +1978,58 @@ mod tests {
     }
 
     #[test]
-    fn interactive_free_text_issues_a_single_name_request() {
+    fn interactive_free_text_searches_every_category() {
         let mut req = request();
-        req.query = "Mankind Divided 1080p".to_string();
+        req.query = "Synthetic Show 1080p".to_string();
 
         let tiers = build_request_tiers(&test_config(), &req);
         assert_eq!(
             tiers,
             vec![
-                "https://filelist.io/api.php?action=search-torrents&category=23,21,27\
-                 &type=name&query=Mankind%20Divided%201080p&username=someuser&passkey=somepass"
+                "https://filelist.io/api.php?action=search-torrents\
+                 &type=name&query=Synthetic%20Show%201080p&username=someuser&passkey=somepass"
                     .to_string()
             ]
         );
+    }
+
+    #[test]
+    fn interactive_free_text_filters_by_the_categories_the_operator_picked() {
+        let mut req = request();
+        req.query = "Synthetic Show".to_string();
+        req.categories = vec!["2000".to_string(), "5040".to_string()];
+
+        let tiers = build_request_tiers(&test_config(), &req);
+        assert_eq!(
+            tiers,
+            vec![
+                "https://filelist.io/api.php?action=search-torrents\
+                 &category=25,6,26,20,2,3,4,19,1,28,21\
+                 &type=name&query=Synthetic%20Show&username=someuser&passkey=somepass"
+                    .to_string()
+            ]
+        );
+    }
+
+    #[test]
+    fn interactive_free_text_with_only_unmapped_categories_issues_no_requests() {
+        let mut req = request();
+        req.query = "Synthetic Show".to_string();
+        req.categories = vec!["9999".to_string()];
+
+        assert!(build_request_tiers(&test_config(), &req).is_empty());
+    }
+
+    #[test]
+    fn a_facetless_episode_request_keeps_the_series_categories() {
+        let mut req = request();
+        req.query = "Synthetic Show".to_string();
+        req.season = Some(1);
+        req.episode = Some(2);
+
+        let tiers = build_request_tiers(&test_config(), &req);
+        assert_eq!(tiers.len(), 1);
+        assert!(tiers[0].contains("&category=23,21,27&type=name"));
     }
 
     #[test]
