@@ -89,6 +89,19 @@ const CATEGORY_LABELS: &[(i64, &str)] = &[
     (8, "Misc/Demo"),
 ];
 
+/// Prowlarr's `HDBits` newznab category mappings, used to translate the
+/// categories an operator picks for an unscoped search into HDBits ids.
+const NEWZNAB_CATEGORY_MAP: &[(i64, i64)] = &[
+    (1, 2000),
+    (2, 5000),
+    (3, 5080),
+    (4, 3000),
+    (5, 5060),
+    (6, 3000),
+    (7, 6000),
+    (8, 8000),
+];
+
 /// The categories a series/anime search is allowed to use.
 const SERIES_CATEGORY_IDS: &[i64] = &[2, 3, 5, 8];
 /// The categories a movie search is allowed to use.
@@ -697,6 +710,23 @@ fn build_query_tiers(config: &HdbitsConfig, request: &SearchRequest) -> Vec<Torr
         return vec![base(&categories)];
     }
 
+    if is_unscoped_text_request(request) {
+        // Prowlarr's manual search sends `category` only when the operator
+        // picked categories (`HDBitsRequestGenerator.GetRequest`); categories
+        // HDBits has no ids for leave nothing to search.
+        let requested = requested_newznab_categories(request);
+        let categories = map_newznab_categories(&requested);
+        if !requested.is_empty() && categories.is_empty() {
+            return Vec::new();
+        }
+        let Some(term) = basic_search_term(request) else {
+            return Vec::new();
+        };
+        let mut query = base(&categories);
+        query.search = Some(term);
+        return vec![query];
+    }
+
     let facet = facet_kind(request);
     let categories = match facet {
         FacetKind::Series => &config.categories,
@@ -785,6 +815,74 @@ fn build_query_tiers(config: &HdbitsConfig, request: &SearchRequest) -> Vec<Torr
 fn free_text_term(request: &SearchRequest) -> Option<String> {
     let sanitized = sanitize_search_term(request.query.trim());
     (!sanitized.is_empty()).then_some(sanitized)
+}
+
+/// True for a facetless request that carries only free text — an interactive
+/// raw search.
+fn is_unscoped_text_request(request: &SearchRequest) -> bool {
+    request
+        .facet
+        .as_deref()
+        .is_none_or(|facet| facet.trim().is_empty())
+        && request.ids.is_empty()
+        && request.season.is_none()
+        && request.episode.is_none()
+        && request.absolute_episode.is_none()
+}
+
+/// Prowlarr's `SanitizedSearchTerm`, which its basic (manual) search sends as
+/// `search`: dashes and single quotes are standardised and only letters,
+/// digits, whitespace and `-._()@/'[]+%` survive.
+fn basic_search_term(request: &SearchRequest) -> Option<String> {
+    let term: String = request
+        .query
+        .trim()
+        .chars()
+        .map(|ch| match ch {
+            '\u{2010}'..='\u{2015}' | '\u{2212}' | '\u{FE58}' | '\u{FE63}' | '\u{FF0D}' => '-',
+            '\u{0060}' | '\u{00B4}' | '\u{2018}' | '\u{2019}' => '\'',
+            other => other,
+        })
+        .filter(|ch| {
+            ch.is_alphanumeric()
+                || ch.is_whitespace()
+                || matches!(
+                    ch,
+                    '-' | '.' | '_' | '(' | ')' | '@' | '/' | '\'' | '[' | ']' | '+' | '%'
+                )
+        })
+        .collect();
+    let term = term.trim().to_string();
+    (!term.is_empty()).then_some(term)
+}
+
+/// The newznab categories the host asked for, as sent on the request.
+fn requested_newznab_categories(request: &SearchRequest) -> Vec<i64> {
+    let raw: Vec<&str> = if request.categories.is_empty() {
+        request.category.as_deref().into_iter().collect()
+    } else {
+        request.categories.iter().map(String::as_str).collect()
+    };
+    raw.iter()
+        .flat_map(|value| value.split(','))
+        .filter_map(|value| value.trim().parse::<i64>().ok())
+        .collect()
+}
+
+/// Prowlarr's `MapTorznabCapsToTrackers`: a requested code selects every
+/// HDBits id mapped to that code, and a parent code (`5000`) also selects the
+/// ids mapped to its subcategories.
+fn map_newznab_categories(requested: &[i64]) -> Vec<i64> {
+    let mut out: Vec<i64> = Vec::new();
+    for (tracker_id, newznab) in NEWZNAB_CATEGORY_MAP {
+        let selected = requested.iter().any(|code| {
+            *code == *newznab || (code % 1000 == 0 && *newznab > *code && *newznab < code + 1000)
+        });
+        if selected && !out.contains(tracker_id) {
+            out.push(*tracker_id);
+        }
+    }
+    out
 }
 
 /// HDBits' id members are integers. A non-numeric or zero id is no id at all,
@@ -2462,16 +2560,49 @@ mod tests {
     }
 
     #[test]
-    fn an_interactive_free_text_search_issues_one_sanitised_query() {
+    fn an_interactive_free_text_search_sends_no_category() {
         let mut request = request();
-        request.query = "Marvel's Agents of S.H.I.E.L.D.".to_string();
+        request.query = "Synthetic's Show S.H.O.W. S01E02 1080p".to_string();
         request.context = Some(context(PluginSearchRequestKind::Search));
         let tiers = build_query_tiers(&config(), &request);
         assert_eq!(tiers.len(), 1);
+        let body = body(&tiers[0]);
         assert_eq!(
-            tiers[0].search.as_deref(),
-            Some("Marvel s Agents of S H I E L D")
+            body["search"],
+            serde_json::json!("Synthetic's Show S.H.O.W. S01E02 1080p")
         );
+        assert!(body.get("category").is_none());
+        assert!(body.get("tvdb").is_none());
+        assert!(body.get("imdb").is_none());
+    }
+
+    #[test]
+    fn an_interactive_free_text_search_maps_the_picked_categories() {
+        let mut request = request();
+        request.query = "Synthetic Show".to_string();
+        request.categories = vec!["2000".to_string(), "5080".to_string()];
+        let tiers = build_query_tiers(&config(), &request);
+        assert_eq!(tiers.len(), 1);
+        assert_eq!(body(&tiers[0])["category"], serde_json::json!([1, 3]));
+    }
+
+    #[test]
+    fn an_interactive_free_text_search_with_unmapped_categories_is_skipped() {
+        let mut request = request();
+        request.query = "Synthetic Show".to_string();
+        request.categories = vec!["7000".to_string()];
+        assert!(build_query_tiers(&config(), &request).is_empty());
+    }
+
+    #[test]
+    fn a_facetless_episode_request_keeps_the_series_categories() {
+        let mut request = request();
+        request.query = "Synthetic Show".to_string();
+        request.season = Some(1);
+        request.episode = Some(2);
+        let tiers = build_query_tiers(&config(), &request);
+        assert_eq!(tiers.len(), 1);
+        assert_eq!(body(&tiers[0])["category"], serde_json::json!([2, 3]));
     }
 
     #[test]
@@ -2627,6 +2758,7 @@ mod tests {
         config.categories = Vec::new();
         config.movie_categories = vec![1];
         let mut request = request();
+        request.facet = Some("series".to_string());
         request.query = "Some Show".to_string();
         assert!(build_query_tiers(&config, &request).is_empty());
     }
