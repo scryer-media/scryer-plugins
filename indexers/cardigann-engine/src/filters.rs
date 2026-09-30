@@ -124,7 +124,48 @@ fn regexp_extract(value: &str, args: &[String]) -> Result<String, String> {
 /// covers .NET's Unicode *block* names, which have no Rust equivalent but map
 /// onto the script of the same name for every block the corpus names.
 pub(crate) fn cardigann_regex(pattern: &str) -> Result<fancy_regex::Regex, fancy_regex::Error> {
-    fancy_regex::Regex::new(&rewrite_unicode_blocks(pattern))
+    fancy_regex::Regex::new(&rewrite_unicode_blocks(&escape_class_literals(pattern)))
+}
+
+/// Escape the characters a .NET character class reads literally but Rust
+/// reads as class syntax: a bare `[` (Rust opens a nested class) and `&` / `~`
+/// (Rust's `&&` and `~~` set operators). .NET class subtraction (`-[...]`) is
+/// left alone.
+fn escape_class_literals(pattern: &str) -> String {
+    let mut output = String::with_capacity(pattern.len());
+    let mut characters = pattern.chars().peekable();
+    let mut in_class = false;
+    let mut class_start = false;
+    while let Some(character) = characters.next() {
+        if character == '\\' {
+            output.push(character);
+            if let Some(next) = characters.next() {
+                output.push(next);
+            }
+            class_start = false;
+            continue;
+        }
+        if !in_class {
+            output.push(character);
+            if character == '[' {
+                in_class = true;
+                class_start = true;
+                if characters.peek() == Some(&'^') {
+                    output.push(characters.next().expect("peeked caret"));
+                }
+            }
+            continue;
+        }
+        match character {
+            ']' if !class_start => in_class = false,
+            '[' if !output.ends_with('-') || output.ends_with("\\-") => output.push('\\'),
+            '&' | '~' => output.push('\\'),
+            _ => {}
+        }
+        output.push(character);
+        class_start = false;
+    }
+    output
 }
 
 fn rewrite_unicode_blocks(pattern: &str) -> String {
@@ -748,6 +789,19 @@ fn validate(value: &str, args: &[String]) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_bare_bracket_inside_a_class_is_literal_like_dotnet() {
+        let punctuation = cardigann_regex(r##"[\[!"#$%&'()*+,\-.\/:;<=>?@[\]^_`{|}~]"##).unwrap();
+        assert_eq!(
+            punctuation.replace_all("Synthetic[Show]&~Title", " "),
+            "Synthetic Show   Title"
+        );
+        let negated = cardigann_regex(r"[^[a]+").unwrap();
+        assert_eq!(negated.replace_all("x[ay", ""), "[a");
+        let leading = cardigann_regex(r"[]x]").unwrap();
+        assert_eq!(leading.replace_all("a]x", ""), "a");
+    }
 
     #[test]
     fn applies_common_cardigann_filter_chain() {

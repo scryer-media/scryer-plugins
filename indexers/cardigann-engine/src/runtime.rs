@@ -1208,6 +1208,52 @@ fn build_search_request(
     Ok(http_request(&method, url, body, headers))
 }
 
+/// Render every search path of `definition` for `request` without driving the
+/// flow, returning each path's rendered path and inputs.
+///
+/// The search flow renders a path only once the previous one has been
+/// fetched, so a template error in a later path would otherwise only surface
+/// mid-search, against the live site.
+#[cfg(test)]
+pub(crate) fn render_all_search_paths(
+    definition: &Definition,
+    config: &BTreeMap<String, String>,
+    request: &PluginSearchRequest,
+) -> Result<Vec<String>, String> {
+    let variables = search_variables(definition, config, request)?;
+    let mut rendered = Vec::with_capacity(definition.search.paths.len());
+    for (index, path) in definition.search.paths.iter().enumerate() {
+        let describe = |error: String| format!("search path {}: {error}", index + 1);
+        render(&path.method, &variables).map_err(describe)?;
+        let mut line = render_search_path(&path.path, &variables).map_err(describe)?;
+        let mut inputs = Vec::new();
+        if path.inherit_inputs {
+            inputs.extend(
+                render_map_allow_empty(
+                    &definition.search.inputs,
+                    &variables,
+                    definition.search.allow_empty_inputs,
+                )
+                .map_err(describe)?,
+            );
+        }
+        inputs.extend(
+            render_map_allow_empty(
+                &path.inputs,
+                &variables,
+                definition.search.allow_empty_inputs,
+            )
+            .map_err(describe)?,
+        );
+        render_headers(&definition.search.headers, &variables).map_err(describe)?;
+        for (key, value) in inputs {
+            line.push_str(&format!(" {key}={value}"));
+        }
+        rendered.push(line);
+    }
+    Ok(rendered)
+}
+
 fn begin_grab(definition: &Definition, context: Context) -> Result<Step, String> {
     let Some(download) = definition.download.as_ref() else {
         return complete_grab(&context, &grab_url(&context)?, "GET", Vec::new());

@@ -237,6 +237,124 @@ mod tests {
         assert!(failures.is_empty(), "{}", failures.join("\n"));
     }
 
+    fn bundled_definition(id: &str) -> crate::definition::Definition {
+        let yaml = definition_yaml(id)
+            .unwrap()
+            .unwrap_or_else(|| panic!("`{id}` is bundled"));
+        crate::parse_definition(&yaml).unwrap_or_else(|error| panic!("`{id}` parses: {error}"))
+    }
+
+    fn render_paths(
+        definition: &crate::definition::Definition,
+        base_url: &str,
+        request: &sdk::PluginSearchRequest,
+    ) -> Result<Vec<String>, String> {
+        crate::runtime::render_all_search_paths(
+            definition,
+            &BTreeMap::from([("base_url".to_string(), base_url.to_string())]),
+            request,
+        )
+    }
+
+    fn search_requests() -> Vec<(&'static str, sdk::PluginSearchRequest)> {
+        vec![
+            (
+                "raw text",
+                sdk::PluginSearchRequest {
+                    query: "Synthetic Show 1080p".to_string(),
+                    ..Default::default()
+                },
+            ),
+            ("keywordless", sdk::PluginSearchRequest::default()),
+            (
+                "episode",
+                sdk::PluginSearchRequest {
+                    query: "Synthetic Show".to_string(),
+                    facet: Some("series".to_string()),
+                    season: Some(1),
+                    episode: Some(2),
+                    categories: vec!["5000".to_string()],
+                    ..Default::default()
+                },
+            ),
+            (
+                "movie",
+                sdk::PluginSearchRequest {
+                    query: "Synthetic Film".to_string(),
+                    facet: Some("movie".to_string()),
+                    ids: std::collections::HashMap::from([(
+                        "imdb_id".to_string(),
+                        "tt0000001".to_string(),
+                    )]),
+                    categories: vec!["2000".to_string()],
+                    ..Default::default()
+                },
+            ),
+        ]
+    }
+
+    /// The flow renders a search path only after the previous one has been
+    /// fetched, so the sync gate — which stops at the first request — cannot
+    /// see a template error in a later path. Render them all here.
+    #[test]
+    fn every_bundled_definition_renders_every_search_path() {
+        let rows = index().expect("bundled Cardigann definition index must be valid");
+        let mut failures = Vec::new();
+        for row in &rows {
+            let definition = bundled_definition(&row.id);
+            for (label, request) in search_requests() {
+                if let Err(error) = render_paths(&definition, &row.base_url, &request) {
+                    failures.push(format!("{} ({label}): {error}", row.id));
+                }
+            }
+        }
+        assert!(failures.is_empty(), "{}", failures.join("\n"));
+    }
+
+    #[test]
+    fn every_1337x_search_path_renders_for_a_text_query() {
+        let definition = bundled_definition("1337x");
+        let request = sdk::PluginSearchRequest {
+            query: "Synthetic Show".to_string(),
+            ..Default::default()
+        };
+        let paths = render_paths(&definition, "https://1337x.to/", &request).unwrap();
+        assert_eq!(paths.len(), 4);
+        for (index, path) in paths.iter().enumerate() {
+            assert!(
+                path.starts_with("sort-search/Synthetic%20Show/"),
+                "path {}: {path}",
+                index + 1
+            );
+            assert!(
+                path.ends_with(&format!("/{}/", index + 1)),
+                "path {}: {path}",
+                index + 1
+            );
+        }
+    }
+
+    /// A facetless text search with no picked categories sends no category
+    /// filter; picked newznab categories are mapped through the definition.
+    #[test]
+    fn a_facetless_text_search_sends_no_category_unless_one_was_picked() {
+        let definition = bundled_definition("torrentdownloads");
+        let raw = sdk::PluginSearchRequest {
+            query: "Synthetic Show".to_string(),
+            ..Default::default()
+        };
+        let paths = render_paths(&definition, "https://www.torrentdownloads.pro/", &raw).unwrap();
+        assert_eq!(paths, ["search/ search=Synthetic Show"]);
+
+        let picked = sdk::PluginSearchRequest {
+            categories: vec!["2000".to_string()],
+            ..raw
+        };
+        let paths =
+            render_paths(&definition, "https://www.torrentdownloads.pro/", &picked).unwrap();
+        assert_eq!(paths, ["search/ s_cat=4 search=Synthetic Show"]);
+    }
+
     #[test]
     fn selector_offers_custom_first_and_prefills_only_the_base_url() {
         let rows = index().unwrap();
