@@ -15,20 +15,23 @@ Supported feeds: recent/RSS polls, automatic search and interactive search, for
 | `passkey` | password | — | FileList account passkey. Required. |
 | `base_url` | connection URL | `https://filelist.io` | Must be an `http(s)` URL. A mirror with a path (`https://mirror/fl`) is honoured on every URL the plugin builds. |
 | `categories` | tag list | `23,21,27` | Category IDs searched for series. |
-| `anime_categories` | tag list | — | Category IDs searched for anime. Empty means anime searches are skipped. |
-| `movie_categories` | tag list | — | Category IDs searched for movies. Empty means movie searches are skipped. |
+| `anime_categories` | tag list | `24,15` | Anime and Animation categories searched for anime. Explicitly empty means anime searches are skipped. |
+| `movie_categories` | tag list | `24,15,1,2,3,4,19,6,20,26,25,28,7` | Radarr-supported FileList categories searched for movies. Explicitly empty means movie searches are skipped. |
 | `minimum_seeders` | number | `1` | Host-side release-selection preference. The plugin never filters on it. |
 
 The three category fields are pick-lists in the UI and still accept the legacy
-comma-separated form, so existing configurations keep working. At least one of
-them must contain an ID or the plugin reports an `InvalidConfig` fault instead
-of searching.
+comma-separated form. Existing configurations that do not yet contain the new
+anime or movie fields get their defaults at runtime; an explicitly empty value
+stored for either field still opts that facet out. At least one category list must contain an ID or the
+plugin reports an `InvalidConfig` fault instead of searching.
 
-Options offered for `categories` / `anime_categories` (Sonarr's set): Anime 24,
-Animation 15, TV 4K 27, TV HD 21, TV SD 23, Sport 13, RO Dubbed 28. Options for
-`movie_categories` (Radarr's set): Anime 24, Animation 15, Movies SD 1, Movies
-DVD 2, Movies DVD-RO 3, Movies HD 4, Movies HD-RO 19, Movies 4K 6, Movies
-Blu-Ray 20, Movies 4K Blu-Ray 26, Movies 3D 25, RO Dubbed 28, XXX 7.
+Options offered for `categories` (series): Anime 24, Animation 15, TV 4K 27,
+TV HD 21, TV SD 23, Sport 13, RO Dubbed 28, and K-Drama 31. `anime_categories`
+offers Anime 24 and Animation 15. Options for `movie_categories` (Radarr's set):
+Anime 24, Animation 15, Movies SD 1, Movies DVD 2, Movies DVD-RO 3, Movies HD
+4, Movies HD-RO 19, Movies 4K 6, Movies Blu-Ray 20, Movies 4K Blu-Ray 26,
+Movies 3D 25, RO Dubbed 28, and XXX 7. Books 29 and Courses 30 are not exposed
+as search categories because Scryer has no books or courses facet.
 
 ## Authentication
 

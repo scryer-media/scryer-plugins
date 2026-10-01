@@ -38,6 +38,8 @@ use serde::Deserialize;
 const DEFAULT_BASE_URL: &str = "https://filelist.io";
 /// Sonarr's `FileListSettings` default: TV SD, TV HD, TV 4K.
 const DEFAULT_CATEGORIES: &str = "23,21,27";
+const DEFAULT_ANIME_CATEGORIES: &str = "24,15";
+const DEFAULT_MOVIE_CATEGORIES: &str = "24,15,1,2,3,4,19,6,20,26,25,28,7";
 /// `latest-torrents` accepts `limit` in 1..=100 and `search-torrents` never
 /// returns more than one page, so 100 is the true ceiling.
 const MAX_PAGE_SIZE: usize = 100;
@@ -88,10 +90,14 @@ const CATEGORY_LABELS: &[(i64, &str)] = &[
     (26, "Movies 4K Blu-Ray (Filme 4K Blu-Ray)"),
     (27, "TV 4K (Seriale 4K)"),
     (28, "RO Dubbed"),
+    (29, "Books"),
+    (30, "Courses"),
+    (31, "K-Drama"),
 ];
 
-/// The set Sonarr's `FileListCategories` offers, in Sonarr's order.
-const SERIES_CATEGORY_IDS: &[i64] = &[24, 15, 27, 21, 23, 13, 28];
+/// FileList series categories supported by Sonarr, plus its K-Drama category.
+const SERIES_CATEGORY_IDS: &[i64] = &[24, 15, 27, 21, 23, 13, 28, 31];
+const ANIME_CATEGORY_IDS: &[i64] = &[24, 15];
 /// The set Radarr's `FileListCategories` offers, in Radarr's order.
 const MOVIE_CATEGORY_IDS: &[i64] = &[24, 15, 1, 2, 3, 4, 19, 6, 20, 26, 25, 28, 7];
 
@@ -296,8 +302,8 @@ fn config_fields() -> Vec<ConfigFieldDef> {
         tag_field(
             "anime_categories",
             "Anime Categories",
-            SERIES_CATEGORY_IDS,
-            None,
+            ANIME_CATEGORY_IDS,
+            Some(DEFAULT_ANIME_CATEGORIES),
             false,
             "FileList category IDs searched for anime. Leave empty to skip anime \
              searches, as Sonarr does.",
@@ -306,7 +312,7 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             "movie_categories",
             "Movie Categories",
             MOVIE_CATEGORY_IDS,
-            None,
+            Some(DEFAULT_MOVIE_CATEGORIES),
             false,
             "FileList category IDs searched for movies. Leave empty to skip movie \
              searches.",
@@ -1264,8 +1270,16 @@ impl FileListConfig {
         })?;
 
         let categories = parse_categories(categories.as_deref().unwrap_or(DEFAULT_CATEGORIES));
-        let anime_categories = parse_categories(anime_categories.as_deref().unwrap_or_default());
-        let movie_categories = parse_categories(movie_categories.as_deref().unwrap_or_default());
+        let anime_categories = parse_categories(
+            anime_categories
+                .as_deref()
+                .unwrap_or(DEFAULT_ANIME_CATEGORIES),
+        );
+        let movie_categories = parse_categories(
+            movie_categories
+                .as_deref()
+                .unwrap_or(DEFAULT_MOVIE_CATEGORIES),
+        );
         if categories.is_empty() && anime_categories.is_empty() && movie_categories.is_empty() {
             return Err(invalid_config_error(
                 "categories",
@@ -2167,8 +2181,8 @@ mod tests {
             Some("u".to_string()),
             Some("p".to_string()),
             Some("".to_string()),
-            None,
-            None,
+            Some("".to_string()),
+            Some("".to_string()),
         )
         .expect_err("no categories should fail");
         let error = plugin_error(&error);
@@ -2184,11 +2198,52 @@ mod tests {
             Some("p".to_string()),
             Some("".to_string()),
             Some("24".to_string()),
-            None,
+            Some("".to_string()),
         )
         .expect("an anime-only configuration should be accepted");
         assert!(config.categories.is_empty());
         assert_eq!(config.anime_categories, vec![24]);
+        assert!(config.movie_categories.is_empty());
+    }
+
+    #[test]
+    fn missing_facet_categories_default_for_existing_configurations() {
+        let config = FileListConfig::resolve(
+            None,
+            Some("u".to_string()),
+            Some("p".to_string()),
+            Some("23,21,27".to_string()),
+            None,
+            None,
+        )
+        .expect("legacy series-only config should gain facet defaults");
+
+        assert_eq!(config.categories, vec![23, 21, 27]);
+        assert_eq!(config.anime_categories.as_slice(), ANIME_CATEGORY_IDS);
+        assert_eq!(config.movie_categories.as_slice(), MOVIE_CATEGORY_IDS);
+
+        let mut movie_request = request();
+        movie_request.facet = Some("movie".to_string());
+        movie_request.query = "Coyote vs. Acme".to_string();
+        let tiers = build_request_tiers(&config, &movie_request);
+        assert_eq!(tiers.len(), 1);
+        assert!(tiers[0].contains("category=24,15,1,2,3,4,19,6,20,26,25,28,7"));
+    }
+
+    #[test]
+    fn explicitly_empty_facet_categories_remain_opted_out() {
+        let config = FileListConfig::resolve(
+            None,
+            Some("u".to_string()),
+            Some("p".to_string()),
+            Some("23,21,27".to_string()),
+            Some("".to_string()),
+            Some("".to_string()),
+        )
+        .expect("series categories remain configured");
+
+        assert!(config.anime_categories.is_empty());
+        assert!(config.movie_categories.is_empty());
     }
 
     #[test]
@@ -2326,16 +2381,41 @@ mod tests {
             .iter()
             .map(|option| option.value.as_str())
             .collect();
-        assert_eq!(values, vec!["24", "15", "27", "21", "23", "13", "28"]);
+        assert_eq!(values, vec!["24", "15", "27", "21", "23", "13", "28", "31"]);
 
         let anime = by_key("anime_categories");
         assert_eq!(anime.field_type, ConfigFieldType::Tag);
-        assert!(anime.default_value.is_none());
+        assert_eq!(
+            anime.default_value.as_deref(),
+            Some(DEFAULT_ANIME_CATEGORIES)
+        );
         assert!(!anime.required);
+        assert_eq!(
+            anime
+                .options
+                .iter()
+                .map(|option| option.value.as_str())
+                .collect::<Vec<_>>(),
+            vec!["24", "15"]
+        );
 
         let movies = by_key("movie_categories");
         assert_eq!(movies.field_type, ConfigFieldType::Tag);
-        assert!(movies.options.iter().any(|option| option.value == "4"));
+        assert_eq!(
+            movies.default_value.as_deref(),
+            Some(DEFAULT_MOVIE_CATEGORIES)
+        );
+        assert_eq!(
+            movies
+                .options
+                .iter()
+                .map(|option| option.value.as_str())
+                .collect::<Vec<_>>(),
+            MOVIE_CATEGORY_IDS
+                .iter()
+                .map(|category_id| category_id.to_string())
+                .collect::<Vec<_>>()
+        );
 
         // Existing keys are a public contract.
         for key in ["username", "passkey", "base_url", "minimum_seeders"] {
@@ -2354,6 +2434,14 @@ mod tests {
 
     #[test]
     fn the_declared_category_metadata_matches_the_published_table() {
+        for category_id in 1..=31 {
+            assert_ne!(
+                category_label(category_id),
+                "Unknown",
+                "category {category_id}"
+            );
+        }
+
         let model = indexer_descriptor()
             .capabilities
             .category_model
@@ -2375,6 +2463,14 @@ mod tests {
             .expect("Anime must be declared");
         assert!(anime.facets.contains(&"anime".to_string()));
         assert!(anime.facets.contains(&"movie".to_string()));
+
+        let k_drama = model
+            .categories
+            .iter()
+            .find(|descriptor| descriptor.value == "31")
+            .expect("K-Drama must be declared for series");
+        assert_eq!(k_drama.label.as_deref(), Some("K-Drama"));
+        assert_eq!(k_drama.facets, vec!["series".to_string()]);
     }
 
     // -- Dedupe --------------------------------------------------------------
