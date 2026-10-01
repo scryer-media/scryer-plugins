@@ -406,6 +406,7 @@ impl OpenSubtitlesConfig {
     fn from_host() -> Result<Self, String> {
         let api_key = config_required_string("api_key")?;
         let username = config_required_string("username")?;
+        validate_username(&username)?;
         let password = config_required_string("password")?;
         Ok(Self {
             api_key,
@@ -1917,6 +1918,15 @@ fn config_required_string(key: &str) -> Result<String, String> {
     }
 }
 
+fn validate_username(username: &str) -> Result<(), String> {
+    if username.contains('@') {
+        return Err(
+            "OpenSubtitles requires the account username, not the email address".to_string(),
+        );
+    }
+    Ok(())
+}
+
 fn config_bool(key: &str, default: bool) -> bool {
     match config::get(key) {
         Ok(Some(value)) => match value.trim().to_ascii_lowercase().as_str() {
@@ -1936,7 +1946,7 @@ mod tests {
         MAX_SEARCH_REQUESTS, OpenSubtitlesConfig, SearchAttributes, SearchResult, SearchTransport,
         SubtitleSearch, append_translation_filter_params, compact_error_body,
         config_auth_fingerprint, descriptor, encode_query, from_opensubtitles_language,
-        is_real_forced, to_opensubtitles_language,
+        is_real_forced, to_opensubtitles_language, validate_username,
     };
     use scryer_plugin_sdk::{
         ConfigFieldValueSource, PluginHostBindingId, ProviderDescriptor, SubtitleMatchHintKind,
@@ -2043,6 +2053,20 @@ mod tests {
             config_auth_fingerprint(&base),
             config_auth_fingerprint(&changed)
         );
+    }
+
+    #[test]
+    fn rejects_email_addresses_as_usernames() {
+        let error = validate_username("person@example.com").expect_err("email should be rejected");
+        assert_eq!(
+            error,
+            "OpenSubtitles requires the account username, not the email address"
+        );
+    }
+
+    #[test]
+    fn accepts_account_usernames() {
+        assert!(validate_username("account-name").is_ok());
     }
 
     #[test]
