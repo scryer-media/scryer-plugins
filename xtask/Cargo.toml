@@ -21,10 +21,10 @@ scryer-plugin-sdk = "3.12.0"
 tempfile = "3"
 toml_edit = "0.25"
 futures = { version = "0.3", default-features = false, features = ["executor"] }
-wasmtime = "48.0.1"
+wasmtime = "=48.0.4"
 # Preview 2 only: the Preview 1 (`p1`) tier pulled in `wiggle` to run
 # command-model modules, and there are no core-module plugin artifacts left.
-wasmtime-wasi = { version = "48.0.1", default-features = false, features = ["p2"] }
+wasmtime-wasi = { version = "=48.0.4", default-features = false, features = ["p2"] }
 zstd = "0.13"
 
 [dev-dependencies]

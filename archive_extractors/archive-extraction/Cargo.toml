@@ -55,8 +55,8 @@ par2-rs = "0.10.6"
 lzma-turbo = { version = "0.6.0", default-features = false, features = ["enc"] }
 sevenz-turbo = { version = "0.26.0", default-features = false, features = ["compress"] }
 tempfile = "3"
-wasmtime = "48.0.2"
-wasmtime-wasi = "48.0.2"
+wasmtime = "=48.0.4"
+wasmtime-wasi = "=48.0.4"
 
 [profile.plugin-release]
 inherits = "release"
