@@ -40,7 +40,7 @@ wit-bindgen = "0.62"
 # wasm32-wasip2 build fail on the pinned stable toolchain (still true of
 # zip 8.6.0 with typed-path 0.12.3). Lift the `=` once typed-path no longer
 # needs the unstable feature.
-zip = { version = "=7.1.0", default-features = false, features = ["aes-crypto", "deflate-flate2-zlib-rs"] }
+zip = { version = "=7.2.0", default-features = false, features = ["aes-crypto", "deflate-flate2-zlib-rs"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 sevenz-turbo = { version = "0.26.0", default-features = false, features = ["native-crypto"] }
@@ -55,8 +55,8 @@ par2-rs = "0.10.6"
 lzma-turbo = { version = "0.6.0", default-features = false, features = ["enc"] }
 sevenz-turbo = { version = "0.26.0", default-features = false, features = ["compress"] }
 tempfile = "3"
-wasmtime = "=48.0.4"
-wasmtime-wasi = "=48.0.4"
+wasmtime = "=48.0.5"
+wasmtime-wasi = "=48.0.5"
 
 [profile.plugin-release]
 inherits = "release"
