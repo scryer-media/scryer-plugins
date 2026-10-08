@@ -9767,6 +9767,8 @@ B[virtuality] nige jouzu no wakagimi - nced [da254b39]
 
 B[virtuality] nige jouzu no wakagimi - ncop [a4a803d0]
 
+Ba.whisker.away.2020.1080p.bluray.dd+5.1.x265-kawatare
+
 Bcharacter cm - konekomaru miwa & renzou shima version
 
 Bcharacter cm - shiemi moriyama & izumo kamiki version
@@ -10209,8 +10211,6 @@ B[wham] last exile - nced (bd 1280x720 avc 10-bits flac)
 
 Ba.silent.voice.2016.1080p.bluray.opus2.0.h.265-lys1th3a
 
-Ba.whisker.away.2020.1080p.bluray.opus5.1.h.265-lys1th3a
-
 Bblue.giant.2023.1080p.bluray.dd+5.1.atmos.x265-kawatare
 
 Bfairy tail - s01e01 - the fairy tail bluray-1080p remux
@@ -10312,6 +10312,8 @@ L[subsmix] kancolle - s01e04 - it's our turn! follow me!
 L[subsmix] kancolle - s01e07 - i hate carrier group one!
 
 L[watashi]_the_case_of_hana_&_alice_[bd_1080p][31076d88]
+
+La.whisker.away.2020.1080p.bluray.opus5.1.h.265-lys1th3a
 
 Lbrain powerd blu-ray box pv [bd.1080p] [iznjie biznjie]
 
@@ -11663,8 +11665,6 @@ B[npz] pop in q - special news (jp bd remux, 1080p) [0ff4eaf3]
 B[ozr] demon slayer - s03 nced (bd 1080p hevc opus) [10fa021d]
 
 B[ozr] demon slayer - s03 ncop (bd 1080p hevc opus) [c7f81de1]
-
-B[pog42] nakitai watashi wa neko o kaburu (bd 1080p hevc flac)
 
 B[saizen]_chronus_-_anime mirai_2014_[v2][1080p][bd][f3cf020d]
 
@@ -32888,6 +32888,8 @@ Bescanor|plastic nee san jpbd remux 1080p avc flac 2 0
 
 Binkaorphan|maps densetsu no samayoeru seijin tachi ld
 
+Bkawatare|a whisker away 2020 1080p bluray dd 5 1 x265
+
 Bkh|dragonar academy 02 ties that bind the astral flow
 
 Blegion|dorohedoro ncop 1080p bluray aac2 0 x264 hi10p
@@ -33120,8 +33122,6 @@ Bkoala|porco rosso 1992 1080p blu ray remux avc flac 2 0
 
 Blys1th3a|a silent voice 2016 1080p bluray opus2 0 h 265
 
-Blys1th3a|a whisker away 2020 1080p bluray opus5 1 h 265
-
 Bmoxie|ao no exorcist the movie 2012 bd remux 1080p flac
 
 Bmoxie|gatchaman crowds ncop 01a bd remux 1080p flac 2 0
@@ -33205,6 +33205,8 @@ Lkawatare|perfect blue 1997 1080p uhd bluray dd 5 1 x265
 Lkh|campione 11 princess shrine maiden of the long sword
 
 Lkh|mobile suit gundam age 18 graduation ceremony battle
+
+Llys1th3a|a whisker away 2020 1080p bluray opus5 1 h 265
 
 Lmd|arpeggio of blue steel nced04a 1920x1080 blu ray aac
 
@@ -33437,8 +33439,6 @@ Bozr|the eminence in shadow ncop 01b v2 bd 1080p hevc opus
 Bozr|the eminence in shadow ncop 01c v2 bd 1080p hevc opus
 
 Bozr|the eminence in shadow ncop 01d v2 bd 1080p hevc opus
-
-Bpog42|nakitai watashi wa neko o kaburu bd 1080p hevc flac
 
 Bporksoup|isekai shokudou nced01 bd 1080p x265 10 bit flac
 
