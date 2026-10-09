@@ -62,7 +62,7 @@ const COMPONENT_MIN_SCRYER_VERSION: &str = "0.20.0";
 
 const WIT_BINDGEN_VERSION: &str = "0.61";
 const PDK_PATH_FROM_PLUGIN: &str = "../../pdk/scryer-plugin-pdk";
-const PDK_VERSION: &str = "0.6.1";
+const PDK_VERSION: &str = "0.7.0";
 const CONFORMANCE_PATH_FROM_PLUGIN: &str = "../../pdk/scryer-plugin-conformance";
 
 pub(crate) fn run_plugin_new(ctx: &TaskContext, args: PluginNewArgs) -> Result<()> {

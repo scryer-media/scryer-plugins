@@ -17,7 +17,7 @@ Zstandard-compressed 7z archives are not supported yet.
 ## Artifact model
 
 The plugin is a **WASI Preview 2 component** implementing
-`scryer:archive/archive-extractor@1.1.0` (world vendored at `wit/archive.wit`).
+`scryer:archive/archive-extractor@1.1.0` (world defined in the [canonical PDK contract](../../pdk/scryer-plugin-pdk/wit/archive-v1.1.0/archive.wit)).
 It exports `describe` and `process`, both carrying UTF-8 JSON, and imports one
 `crypto` interface for AES-CBC, CRC-32, and the catalog `crc` function. The
 1.1.0 world needs Scryer 0.21.10 or newer, which is the release's
