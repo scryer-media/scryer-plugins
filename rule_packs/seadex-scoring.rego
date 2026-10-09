@@ -9692,6 +9692,8 @@ L[kh] mobile suit gundam age - 45 - sid the destroyer
 
 L[kh] the sacred blacksmith - 03 - demon blade; sword
 
+L[lia] noukin - s01e09 - didn't i say wyvern hunting!
+
 L[metroidman7] in the distant future... - 2 min promo
 
 L[polished] mahoromatic 12 [final][bd 720p][1837d3f1]
@@ -11001,6 +11003,10 @@ L[arid] carole & tuesday - 22 - just like heaven [611fcd21]
 L[arid] steins;gate - 15 - missing link necrosis [30140885]
 
 L[brodcast start - last minute special] kuroko's basketball
+
+L[commie] heike monogatari - nced [bd 1080p aac] [90626604]
+
+L[commie] heike monogatari - ncop [bd 1080p aac] [09e34b67]
 
 L[commie] otherside picnic - nced [bd 1080p aac] [9536855a]
 
@@ -12466,6 +12472,8 @@ Lahiru no sora - s01e44 - fuse (1080p cr dual audio web-dl -ks-)
 
 Lall.you.need.is.kill.2026.1080p.bluray.dual.ddp5.1.x264-atelier
 
+Lami's first love [1080p_hi10p_blu-ray_flac] [hark0n] [ac5d51ae]
+
 Laoashi - episode 13 - turn 1080p bdrip x265 flac 2.0 kira [sev]
 
 Larknights.s02e01.conspiracy.1080p.cr.web-dl.ddp5.1.h.264-zigzag
@@ -12479,6 +12487,8 @@ Lbaki.2018.s02e07.kaioh.1080p.nf.web-dl.multi.aac2.0.h.264-varyg
 Lblack rock shooter - dawn fall - s01e06 - collapse bluray-1080p
 
 Lfunimation.intro.1080p.bluray.remux.dts-hd.ma.5.1.avc-demihuman
+
+Linterview with chris niosi [720p_hi10p_blu-ray_flac] [25ce27e6]
 
 Ljojo's bizarre adventure (2012) s03e30 cats love yoshikage kira
 
@@ -12746,6 +12756,8 @@ L[hchcsen] un-go s01e07 daydream [bd dual audio 1080 x264 2xflac]
 L[kametsu] alice & zouroku - 12v2 (bd 1080p hi10 flac) [2d38ee36]
 
 L[kh] ulysses - jeanne d'arc and the alchemist knight - 01 - oath
+
+L[lia] noukin - s01e11 - didn't i say arrogance leads to trouble!
 
 L[natsumi no sekai] date a bullet - bdmenu 01 [bd 1080p hevc aac]
 
@@ -13152,6 +13164,8 @@ Lmacross.7.s01e42.risky.capture.1080p.dsnp.web-dl.aac2.0.h.264-ntb
 
 Lrequiem of the rose king - s01e01 - wars of the roses webdl-1080p
 
+Lsailor moon supers ncop [576p_hi10p_dvd_flac] [hark0n] [1b08e28a]
+
 Lthe_borrowers_arrietty_(2010)_[1080p,bluray,x264,dts]_-_thora-utw
 
 Lto.be.hero.x.s01e23.lie.1080p.cr.web-dl.dual.aac2.0.h.264-kitsune
@@ -13427,6 +13441,8 @@ L[lce] chiisana eiyuu - ed [bd 1038p x264 aac dual-audio][a83f97bd]
 
 L[lce] chiisana eiyuu - op [bd 1038p x264 aac dual-audio][43f98a74]
 
+L[lia] noukin - s01e01 - you said i'd get a do-over in a new world!
+
 L[mottoj] knight's & magic - nced (bdrip 1920x1080 hevc ma10p flac)
 
 L[mottoj] knight's & magic - ncop (bdrip 1920x1080 hevc ma10p flac)
@@ -13609,10 +13625,6 @@ B[netaro] assault lily bouquet - s01 ncop (bd 1080p hevc) [e2a19de4]
 B[npz] pop in q - dance animation pv (jp bd remux, 1080p) [5f07eab6]
 
 B[npz] pop in q - super special news (jp bd remux, 1080p) [1682a7f9]
-
-B[o7] heike monogatari - nced (bd 1080p x265 10-bit flac) [200a9b21]
-
-B[o7] heike monogatari - ncop (bd 1080p x265 10-bit flac) [dff7a246]
 
 B[sam] hunter x hunter (2011) - nced 01v2 [bd 1080p flac] [ed142e86]
 
@@ -14167,6 +14179,8 @@ Ldays.with.my.stepsister.s01e12.and.1080p.bluray.opus2.0.av1-tasokare
 
 Lgarakowa.restore.the.world.2016.1080p.bluray.opus5.1.x265-headpatter
 
+Linterview with the royal family [720p_hi10p_blu-ray_flac] [46b88b9a]
+
 Ljojo's bizarre adventure (2012) s03e13 we picked up something crazy!
 
 Ljojo's bizarre adventure (2012) s04e14 il treno espresso per firenze
@@ -14182,6 +14196,8 @@ Lmurder.princess.s01e04.exile.1080p.bluray.dual.flac.2.0.x264-kitsune
 Lninja.robots.s01e01.the.open.door.1080p.flac.2.0.avc.remux-framestor
 
 Lninja.robots.s01e12.time.to.leave.1080p.flac.2.0.avc.remux-framestor
+
+Lsailor moon supers special [576p_hi10p_dvd_flac] [hark0n] [9b7eda29]
 
 Ltougen.anki.s01e11.thank.you.1080p.cr.web-dl.dual.ddp2.0.h.264-dooky
 
@@ -14419,6 +14435,12 @@ L[hchcsen] un-go s01e02 pitiless song [bd dual audio 1080 x264 2xflac]
 L[kh] c3 - cube x cursed x curious - 06 - weak, like a spherical glass
 
 L[kh] mobile suit gundam age - 17 - friendship, love, and mobile suits
+
+L[lia] noukin - s01e02 - didn't i say the four of us would be a party!
+
+L[lia] noukin - s01e07 - didn't i say we should take breaks sometimes!
+
+L[lia] noukin - s01e10 - didn't i say surprises should be kept secret!
 
 L[md] arpeggio of blue steel ncop01 (1920x1080 blu-ray aac) [6fad7344]
 
@@ -14870,6 +14892,10 @@ Lbaki.2018.s02e06.excellennnnt.1080p.nf.web-dl.multi.aac2.0.h.264-varyg
 
 Lbubblegum crisis - line artwork [bd.1080p] [iznjie biznjie] [71bcc978]
 
+Linterview with erik scott kimerer [720p_hi10p_blu-ray_flac] [2c51a419]
+
+Linterview with sandy fox [720p_hi10p_blu-ray_flac] [hark0n] [8898ec26]
+
 Ljojo's bizarre adventure (2012) s04e09 the first mission from the boss
 
 Ljojo's bizarre adventure (2012) s04e20 the final mission from the boss
@@ -14885,6 +14911,8 @@ Lninja.robots.s01e25.a.short.meeting.1080p.flac.2.0.avc.remux-framestor
 Lpop.team.epic.ncop03.male.version.1080p.bluray.opus2.0.h.264-demihuman
 
 Lsailor moon r the movie [1080p_hi10p_blu-ray_flac] [hark0n] [361490e1]
+
+Lsailor moon s the movie [1080p_hi10p_blu-ray_flac] [hark0n] [f27c7041]
 
 Lto.be.hero.x.s01e16.the.cure.1080p.cr.web-dl.dual.aac2.0.h.264-kitsune
 
@@ -15226,6 +15254,8 @@ Ldemon slayer world tour tokyo stage greeting digest [sunday 2023.02.05]
 Lghost.in.the.shell.1995.1080p.bluray.dual-audio.opus2.0.x265-headpatter
 
 Lgreat teacher onizuka - 05 - gto - an eye for an eye, a butt for a butt
+
+Linterview with tara sands [720p_hi10p_blu-ray_flac] [hark0n] [bbab9458]
 
 Ljojo's bizarre adventure (2012) s03e02 josuke higashikata! meets angelo
 
@@ -15601,6 +15631,8 @@ Lbaki.2018.s01e05.want.some.more.1080p.nf.web-dl.multi.aac2.0.h.264-varyg
 Ldemon slayer world tour taipei stage greeting digest [sunday 2023.03.19]
 
 Lgreat teacher onizuka - 36 - self-improvement fuyutsuki%60s transformation
+
+Linterview with the sailor guardians [720p_hi10p_blu-ray_flac] [8644c466]
 
 Lishura.s02e11.hiroto.the.paradox.1080p.bluray.dual-audio.aac2.0.x265-8rm
 
@@ -15987,6 +16019,8 @@ Ldemon slayer world tour tokyo stage greeting digest [saturday 2023.02.04]
 
 Lgundam.build.divers.s01e13.duel.1080p.cr.web-dl.dual.ddp2.0.h.264-kitsune
 
+Linterview with kate higgins [720p_hi10p_blu-ray_flac] [hark0n] [1d4be283]
+
 Lishura.s02e12.shiki,.enemy.of.all.1080p.bluray.dual-audio.aac2.0.x265-8rm
 
 Lmacross.7.s01e45.ambition.on.varauta.4.1080p.dsnp.web-dl.aac2.0.h.264-ntb
@@ -16003,7 +16037,11 @@ Lranma1-2.2024.s01e12.shampoo.cleans.up.1080p.nf.web-dl.aac2.0.h.264-varyg
 
 Lrequiem of the rose king - s01e11 - that is my. my punishment webdl-1080p
 
+Lsailor moon supers special tv promos [720p_hi10p_blu-ray_flac] [9b4501b9]
+
 Lsasaki.and.miyano.graduation.2023.1080p.cr.web-dl.dual.ddp2.0.h.264-anozu
+
+Lscripting sailor moon supers special [720p_hi10p_blu-ray_flac] [c2edc469]
 
 Lthe.elusive.samurai.s01e09.my.buddha.1080p.bluray.remux.avc.flac.2.0-nan0
 
@@ -16323,6 +16361,10 @@ Lahiru no sora - s01e49 - the last period (1080p cr dual audio web-dl -ks-)
 Ldemon slayer world tour mexico stage greeting digest [saturday 2023.03.04]
 
 Leromanga-sensei ova (bd menu) [bdrip 1920x1080 hevc flac] [exp] [d13747ce]
+
+Linterview with chris hackney [720p_hi10p_blu-ray_flac] [hark0n] [d331c28c]
+
+Linterview with michelle ruff [720p_hi10p_blu-ray_flac] [hark0n] [f0ad0f90]
 
 Lishura.s01e07.war.commences.repack.1080p.bluray.dual-audio.aac2.0.x265-8rm
 
@@ -16673,6 +16715,10 @@ L[kh] ulysses - jeanne d'arc and the alchemist knight - 05 - proof of purity
 
 L[kh] ulysses - jeanne d'arc and the alchemist knight - 11 - utopia, then...
 
+L[lia] noukin - s01e04 - didn't i say this was the crimson vow's first step!
+
+L[lia] noukin - s01e06 - didn't i say i'm not going into the forest anymore!
+
 L[lostyears] a certain scientific railgun t - 25 (web 1080p x264 10-bit aac)
 
 L[lostyears] the girl from the other side (bdrip 1080p hi10p aac) [8ededb7a]
@@ -16768,6 +16814,8 @@ Lninja.robots.s01e22.run.towards.the.hope.1080p.flac.2.0.avc.remux-framestor
 Lpop.team.epic.sp02.eyecatch.collection.1080p.bluray.opus2.0.h.264-demihuman
 
 Lranma1-2.2024.s01e05.who.says.youre.cute.1080p.nf.web-dl.aac2.0.h.264-varyg
+
+Lsailor moon supers the movie [1080p_hi10p_blu-ray_flac] [hark0n] [235ef696]
 
 Lthe.moment.you.fall.in.love.2016.1080p.bluray.opus5.1.10bit.x264-headpatter
 
@@ -17114,6 +17162,8 @@ L[kh] the master of ragnarok & blesser of einherjar - 06 - valkyrie's day off
 
 L[komorebi] carnival phantasm ex season (bd 1080p x264-10bit flac) [c213035a]
 
+L[lia] noukin - s01e03 - didn't i say to make my graduation plain and simple!
+
 L[md] arpeggio of blue steel 07 - iwo jima (1920x1080 blu-ray aac) [d136a0cc]
 
 L[neko-kbaraka] boku no hero academia - nced 01a [bd][1080p][flac] [aa2e17b0]
@@ -17159,6 +17209,8 @@ Ljojo's bizarre adventure (2012) s04e28 beneath a sky on the verge of falling
 Lmobile suit gundam unicorn re 0096 - 15 - waiting in space [gcs8] [7c999509]
 
 Lsailor moon r the movie us op [1080p_hi10p_blu-ray_flac] [hark0n] [5ec13dea]
+
+Lsailor moon s the movie us op [1080p_hi10p_blu-ray_flac] [hark0n] [c6a8d65e]
 
 Lsand.land.the.series.s01e09.fiend.power.1080p.dsnp.web-dl.ddp5.1.h.264-varyg
 
@@ -17459,6 +17511,8 @@ L[kh] shirobako - 05 - if you're gonna blame others for everything, just quit!
 
 L[kh] the master of ragnarok & blesser of einherjar - 02 - tactics of the wolf
 
+L[lia] noukin - s01e05 - didn't i say that we're doing everyone's backstories!
+
 L[lulu] code geass lelouch of the rebellion - 01x02 - the white knight awakens
 
 L[lulu] code geass lelouch of the rebellion - 01x12 - the messenger from kyoto
@@ -17520,6 +17574,10 @@ Lblack.clover.sword.of.the.wizard.king.2023.1080p.nf.web-dl.ddp5.1.h.264-varyg
 Lbubblegum crisis - holiday in bali (sd) [bd.480p] [iznjie biznjie] [8264506f]
 
 Lgundam.build.divers.s01e08.festival.1080p.cr.web-dl.dual.ddp2.0.h.264-kitsune
+
+Linterview with sailor moon and guardians [720p_hi10p_blu-ray_flac] [b51e0acf]
+
+Linterview with sandy fox and chris niosi [720p_hi10p_blu-ray_flac] [45c1ba0c]
 
 Lishura.s02e01.mele.the.horizon's.roar.1080p.bluray.dual-audio.aac2.0.x265-8rm
 
@@ -17813,6 +17871,8 @@ L[kh] c3 - cube x cursed x curious - 01 - i don't know what moved into my futon
 L[kh] the master of ragnarok & blesser of einherjar - 12 - a place to call home
 
 L[lce] chiisana eiyuu - 03 - invisible [bd 1038p x264 aac dual-audio][03e2a637]
+
+L[lia] noukin - s01e12 - didn't i say the crimson vow would never be destroyed!
 
 L[mtbb] sword art online progressive - aria of a starless night (v2) [9aab2594]
 
@@ -18617,6 +18677,8 @@ Lgundam.build.divers.s01e17.joint.front.1080p.cr.web-dl.dual.ddp2.0.h.264-kitsun
 
 Lgundam.build.divers.s01e18.a.mans.will.1080p.cr.web-dl.dual.ddp2.0.h.264-kitsune
 
+Linterview with robbie daymond & toru furuya [720p_hi10p_blu-ray_flac] [bbbf6df8]
+
 Lkaze.no.stigma.s01e19.pandemonium.dvdrip.480p-hi10p.dd5.1.dual.[srls].[cb3fdbdb]
 
 Lkuroko's basketball - episode 22.5 - tip off 1080p bdrip x265 pcm 2.0 kira [sev]
@@ -19078,6 +19140,8 @@ Lnier automata ver1.1a - s01e13 (web 1080p hevc e-ac-3 aac) [a071c938] [lostyear
 
 Lpop.team.epic.sp04.felt.model.female.version.1080p.bluray.opus2.0.h.264-demihuman
 
+Lsailor moon supers the movie us op [1080p_hi10p_blu-ray_flac] [hark0n] [c6a8d65e]
+
 Lsand.land.the.series.s01e12.the.final.battle.1080p.dsnp.web-dl.ddp5.1.h.264-varyg
 
 Lserial experiments lain - s01e06 - kids [1080p bluray flac 2.0 x264] [patchedtab]
@@ -19392,6 +19456,8 @@ L[kh] motto to love-ru - 10 - pollen telepathy - a girl's feelings - doki doki m
 L[kh] ulysses - jeanne d'arc and the alchemist knight - 02 - the girl called jeanne
 
 L[kh] ulysses - jeanne d'arc and the alchemist knight - 03 - to the scheming palace
+
+L[lia] noukin - s01e08 - no one mentioned that pauline's getting married, did they!
 
 L[md] arpeggio of blue steel 02 - into the storm (1920x1080 blu-ray aac) [64fa50c1]
 
@@ -24301,6 +24367,8 @@ Linazuma eleven - ares no tenbin - 22 - the legendary captain 1080p bdrip x265 f
 
 Linazuma eleven - outer code - story 06 - spiky hair festival 1080p bdrip x265 flac 2.0 kira [sev]
 
+Linterview with chibi moon and guardians of the outer planets [720p_hi10p_blu-ray_flac] [bc2dcc50]
+
 Lkaze.no.stigma.s01e22.determination.and.hesitation.dvdrip.480p-hi10p.dd5.1.dual.[srls].[4d4fec95]
 
 Lkuroko's basketball - episode 03 - it's better if i can't win 1080p bdrip x265 pcm 2.0 kira [sev]
@@ -24915,7 +24983,7 @@ Xvivid strike! (2016) - s05e01 - fuuka reventon - 1080p bluray remux avc lpcm 2.
 `,
 }
 strict_template_routes := {
-  "10": `{"B\tending §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n"]],"X\tmenu - §":[[""],["\n00\n01\n02\n03\n04\n05\n06\n07\n"]],"X\tnced - §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\tncop - §":[[""],["\n01\n02\n"]]}`,
+  "10": `{"B\tending §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n"]],"B\tnoukin §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\tmenu - §":[[""],["\n00\n01\n02\n03\n04\n05\n06\n07\n"]],"X\tnced - §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\tncop - §":[[""],["\n01\n02\n"]]}`,
   "100": `{"B\t[hchcsen] mobile suit gundam seed destiny hd remaster s§e§ [bd remux dual audio §p avc §xflac ac§]":[["01","","1080","2","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n"]],"B\tblood blockade battlefront s§e§ spectral eyes phantom vision part § [bluray-§p remux-h§]-lazyremux":[["02","","","1080","264"],["\n11,1\n12,2\n"]],
 "B\tpossibly.the.greatest.alchemist.of.all.time.s§e§.§p.bluray.remux.avc.dual-audio.flac§.§-headpatter":[["01","","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tthe.greatest.demon.lord.is.reborn.as.a.typical.nobody.s§e§.§p.bluray.dual-audio.opus.§.§.x§-legion":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tthe.most.notorious.talker.runs.the.world's.greatest.clan.s§e§.§p.bluray.remux.flac§.§.h.§-crucible":[
 ["01","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\tfate grand order - absolute demonic front babylonia s§e§ (bd remux §p avc flac) [dual audio] [pmr]":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n"]]}`,
@@ -25289,8 +25357,8 @@ strict_template_routes := {
 ],"B\t[vodes] tensei shitara slime datta ken - s§e§":[["02",""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\t[wap] horimiya - nced§ (bd remux §p avc flac)":[["","1080"],["\n01\n02\n"]],"B\t[yuri] gj-bu (creditless ed§) [bd §p x§ flac]":[["","1080","264"],["\n1\n2\n3\n4\n"]],"B\tchainsaw.man.s§e§.§p.bluray.opus§.§.x§-flugel":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tjujutsu kaisen - s§e§ v§ (bd §p hevc) [vodes]":[["01",
 "","2","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"B\tkissxsis.s§e§.§p.bluray.opus§.§.x§-headpatter":[["00","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tmeikyuu black company - nced§ [bd §p x§ flac]":[["","1080","265"],["\n1\n2\n"]],"B\tnana - s§e§.§ (§p vrv dual audio web-dl -ks-)":[["01","","5","1080"],["\n11\n21\n36\n"]],"B\tspy.x.family.s§e§.§p.bluray.opus§.§.h.§-abdex":
 [["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\turara meirochou - vol. § menu [bd §p x§ flac]":[["","1080","264"],["\n1\n2\n3\n4\n5\n6\n"]],"L\t[aro] subete ga f ni naru - § [bd §p x§ flac]":[["","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n"]],"L\t[asakura] tate no yuusha no nariagari - § [§]":[["",""],["\n01,dcf54ff3\n02,ca20549e\n03,5f2a9022\n04,57cb0538\n05,5f7d8104\n06,9ba935b7\n07,2b54d692\n08,7647ab21\n09,031a22f2\n10,77f035db\n11,b5ef36ba\n12,1721b4e3\n13,85cb4ff0\n14,0b2be65e\n15,74a120ea\n16,da85ceca\n17,1e394fea\n18,3fc02e59\n19,161e02b8\n20,1330cace\n21,15d8847b\n22,235fbe21\n23,c492f647\n24,e71b266e\n25,295e00a9\n"]
-],"L\t[ayaya] gin no saji - § (bd §p hevc flac) [§]":[["","720",""],["\n01,46a5c287\n02,e822d4ad\n03,b262ff4e\n04,fa73a6d8\n05,5ba6f50f\n06,3e0249f1\n07,e6a8eac8\n08,66572a2c\n09,5484035e\n10,b13c6bc4\n11,2fbdeb8e\n"]],"L\t[bd menu §] to your eternity - season § [§-§]":[["","02","2022","2023"],["\n01\n02\n"]],"L\t[cbt] black bullet - § (bd §p hi§ dual audio)":[["","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"L\t[commie] otherside picnic - § [bd §p aac] [§]":
-[["","1080",""],["\n01,fa3eeaee\n02,7b0159ad\n03,88fc51c2\n04,2c037802\n05,e897d188\n06,a64053cc\n07,c7b2fe0a\n08,2f9ac4cf\n09,458a9803\n10,a6333348\n11,814b5b8f\n12,71622f58\n"]],"L\t[commie] samurai flamenco - § [bd §p aac] [§]":[["","720",""],["\n01,81e4e393\n02,eb90ecb5\n03,d4a6c3e8\n04,745822dc\n05,e82ee442\n06,8c54f023\n07,f81c7b4f\n08,c7a847d7\n09,5c492969\n10,4a6e2af4\n11,42dbbd5b\n12,a484af0c\n13,311eca8d\n14,e1169062\n15,5c4068be\n16,5bc260e0\n17,32c370f2\n18,0f420495\n19,c4858f7e\n20,60fc8b8e\n21,f22d967c\n22,0729bbdb\n"]
+],"L\t[ayaya] gin no saji - § (bd §p hevc flac) [§]":[["","720",""],["\n01,46a5c287\n02,e822d4ad\n03,b262ff4e\n04,fa73a6d8\n05,5ba6f50f\n06,3e0249f1\n07,e6a8eac8\n08,66572a2c\n09,5484035e\n10,b13c6bc4\n11,2fbdeb8e\n"]],"L\t[bd menu §] to your eternity - season § [§-§]":[["","02","2022","2023"],["\n01\n02\n"]],"L\t[cbt] black bullet - § (bd §p hi§ dual audio)":[["","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"L\t[commie] heike monogatari - § [bd §p aac] [§]":
+[["","1080",""],["\n01,6254071c\n02,55de3f7b\n03,be0c61a4\n04,dea6e3f8\n05,1c898a1d\n06,2b2a5388\n07,0de871eb\n08,2e89f4e6\n09,9844b864\n10,8d8e9b47\n11,192128a3\n"]],"L\t[commie] otherside picnic - § [bd §p aac] [§]":[["","1080",""],["\n01,fa3eeaee\n02,7b0159ad\n03,88fc51c2\n04,2c037802\n05,e897d188\n06,a64053cc\n07,c7b2fe0a\n08,2f9ac4cf\n09,458a9803\n10,a6333348\n11,814b5b8f\n12,71622f58\n"]],"L\t[commie] samurai flamenco - § [bd §p aac] [§]":[["","720",""],["\n01,81e4e393\n02,eb90ecb5\n03,d4a6c3e8\n04,745822dc\n05,e82ee442\n06,8c54f023\n07,f81c7b4f\n08,c7a847d7\n09,5c492969\n10,4a6e2af4\n11,42dbbd5b\n12,a484af0c\n13,311eca8d\n14,e1169062\n15,5c4068be\n16,5bc260e0\n17,32c370f2\n18,0f420495\n19,c4858f7e\n20,60fc8b8e\n21,f22d967c\n22,0729bbdb\n"]
 ],"L\t[css] sora no woto - § [bdrip §p x§ flac] [§]":[["","1080","264",""],["\n01,3663df88\n03,53ff4a88\n04,73a52430\n05,0552c9d6\n06,ef4a9081\n07,382b2187\n08,284bdc4a\n09,45ebfd55\n10,a4b73dca\n11,7ff16b1e\n12,ef9e69ea\n13,e77f7300\n"]],"L\t[gs] classroom crisis § (bd §p §bit flac) [§]":[["","1080","10",""],["\n08,8c0d3efe\n09,8991e7ef\n10,34bbf50c\n11,de107aa1\n12,5bf615c9\n"]],"L\t[holomux] isuca § [bd §p x§ §bit flac §.§][§]":[["","1080","264","10","2","0",""],["\n01,c04ce739\n02,70e80721\n03,63a78dd2\n04,b6078f14\n05,62c44a58\n06,8d1cd394\n07,1f2751d3\n08,c654ba22\n09,692bf089\n10,fd1a9eaf\n"]
 ],"L\t[horriblesubs] boku no hero academia - § [§p]":[["","1080"],["\n64\n65\n66\n67\n68\n69\n70\n71\n72\n73\n74\n75\n76\n77\n78\n79\n80\n81\n82\n83\n84\n85\n86\n87\n88\n"]],"L\t[horriblesubs] hataage! kemono michi - § [§p]":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\t[impatience] bungou stray dogs - § [bd §p][§]":[["","1080",""],["\n26,64bbac04\n27,5003a08e\n28,3843fb9e\n29,c3783115\n30,de0ff4b3\n31,0d371fde\n32,08820f50\n33,9a724025\n34,3019cfe2\n35,aea34c10\n36,d29d809e\n37,78d43f67\n"]
 ],"L\t[index] isekai meikyuu de harem wo - s§e§ [§]":[["","",""],["\n00,01,e1d47cfb\n00,02,fc3e4e0c\n01,01,8612d839\n01,02,0912f92e\n01,03,32ff658d\n01,04,8cc1319b\n01,05,54966acd\n01,06,512430a1\n01,07,114c633f\n01,08,8368e73c\n01,09,0497a71b\n01,10,e9fbb82c\n01,11,9d66e141\n01,12,21c61e80\n"]],"L\t[mirai] dive!! - s§e§ (bdrip §p hi§ flac) [§]":[["01","","1080","10",""],["\n01,2d1165f6\n02,2a091756\n03,1c90c7a2\n04,5af4be20\n05,d3d284af\n06,71314ce8\n07,e7d9b5d7\n08,c950e3d6\n09,c1a4675d\n10,30b86813\n11,229639ca\n12,449c32fb\n"]
@@ -25466,12 +25534,12 @@ strict_template_routes := {
 "","1080",""],["\n10,c2a5d4bf\n11,339ef30a\n12,574a78dd\n13,69b86959\n"]],"B\t[metal] kurau phantom memory § (dvd x§ §x§ ac§) [§]":[["","264","768","576","3",""],["\n01,264627b0\n02,fe792ca4\n03,9f36f9de\n04,c1e3e291\n05,440decd1\n06,a798b8fd\n07,c5bfd6e8\n08,be7c4b5e\n09,8c9c768b\n10,6e9b6738\n11,9fe12cf1\n12,5fd19538\n13,0dc3efad\n14,c93d1fca\n15,15b755b9\n16,c61e700a\n17,521ca5d1\n18,c45498ba\n19,39ca2144\n20,08ff243a\n21,a4a4ec35\n22,94212564\n23,28204f66\n24,b4ff74cb\n"]],"B\t[moxie] battery - nced § (bd remux §p flac §.§) [§]":
 [["","1080","2","0",""],["\n01,29712739\n02,dd9c9216\n03,a5cd143d\n"]],"B\t[moxie] comet lucifer - s§e§ (bd remux §p flac) [§]":[["01","","1080",""],["\n01,265ad266\n02,a8c59919\n03,38e90c22\n04,cf30b7f6\n05,754c0043\n06,3fa4ab65\n07,f3599fa9\n08,7bc069b1\n09,8e8387b9\n10,dfed3e1c\n11,184bd9a8\n12,a23d6ada\n"]],"B\t[nh] zombie land saga - § (bd §p x§ §-bit flac) [§]":[["","1080","264","10",""],["\n01,1a11a378\n02,4c1ce51f\n03,5f3d3394\n04,fe7db1e2\n05,25bc93fd\n06,9491c0e9\n07,03bce5bb\n08,d0f3465f\n09,c3b9cb99\n10,ccb80b9c\n11,6a2e3be1\n12,7458a881\n"]
 ],"B\t[ntrm] fullmetal alchemist - § (bd §p ma§ flac) [§]":[["","720","10",""],["\n01,fef303e2\n02,c11d7da5\n03,8364d27e\n04,188e6c62\n05,acf2c3c9\n06,5e47533c\n07,4ece437b\n08,bc3e5d1e\n09,7e9865e4\n10,3b9a4bb2\n11,fe923b64\n12,5da1fa40\n13,fa3a85f9\n14,ee238525\n15,6455e401\n16,aced7f8d\n17,3b72732c\n18,57ccb210\n19,2fc17159\n20,bebd723d\n21,a5fd75ea\n22,bdd1c639\n23,d7b94c5d\n24,60f0bf6e\n25,2b54d5a5\n26,a64b60cc\n27,50822773\n28,7a2d915e\n29,fd2212d7\n30,f6eeb3c3\n31,2106cc9d\n32,f32420b7\n33,2720f869\n",
-"\n34,d3ce48b0\n35,d133f01f\n36,e603e83c\n37,5b0eaaa9\n38,99311343\n39,2442b250\n40,3a786c7b\n41,2f4ac231\n42,afabbc56\n43,f605212c\n44,46336c54\n45,7787a185\n46,148e1809\n47,ff660e12\n48,8e49cb98\n49,578b96c7\n50,4fd56491\n51,037f7d41\n"]],"B\t[okay-subs] insomniacs after school - § (bd §p) [§]":[["","1080",""],["\n01,5214673a\n02,6bb5ffad\n03,7f0eac5e\n04,5a772b4c\n05,28e5b54f\n06,6b981078\n07,896697cf\n08,e9f0b4ee\n09,1d69b8bd\n10,972db5ae\n11,45363771\n12,ac7fd7d6\n13,8e3c50c1\n"]],"B\t[o§] heike monogatari - § (bd §p x§ §-bit flac) [§]":
-[["7","","1080","265","10",""],["\n01,afb9f55b\n02,32210a86\n03,343751de\n04,dcd22a7d\n05,05ff94dd\n06,49c48001\n07,f40dd16c\n08,c164ae4a\n09,e122d162\n10,75256725\n11,1ff9892e\n"]],"B\t[pizza] ssss.dynazenon - s§e§ [bd §p hevc opus] [§]":[["01","","1080",""],["\n02,701980f4\n04,419d659e\n05,3b2f3857\n06,ed97c962\n"]],"B\t[pizza] ssss.dynazenon - s§e§ [§] [bd §p hevc opus]":[["01","","","1080"],["\n10,762fb8da\n11,d42c8306\n12,7350aeca\n"]],"B\t[p§] kyousougiga (§) - s§e§ - (bd §p hevc opus) [§]":
-[["9","2013","01","","1080",""],["\n01,06cb64cb\n02,dc579679\n03,4cf9dae2\n04,73ac0ea2\n05,a7de57ca\n06,8c2a1fdd\n07,bc2b7c0d\n08,ff26a6e1\n09,204212f5\n10,f784b6b1\n"]],"B\t[sam] ascendance of a bookworm - § [bd §p flac] [§]":[["","1080",""],["\n15,15e6a7c4\n16,517d5da6\n17,286aa73d\n18,7338800a\n19,eb90afee\n20,b3e634bb\n21,ee6c242e\n22,686bb981\n23,798e641f\n24,2e14ec10\n25,3711e1e4\n26,9cd212a4\n27,b73a5e14\n28,e0be2af8\n29,2f4e6f41\n30,f67072c6\n31,04aedd23\n32,ee0e99fc\n33,9870b1e7\n34,d0213b30\n35,c61c172b\n36,ec98c95f\n"]
-],"B\t[sam] haikyuu!! land vs. air - §v§ [bd §p flac] [§]":[["","3","1080",""],["\n01,9213b3a3\n02,0e7af213\n"]],"B\t[sam] hataraku maou-sama! - nced § [bd §p flac] [§]":[["","1080",""],["\n1,e793f8d3\n2,2794793e\n"]],"B\t[sam] hunter x hunter (§) - nced § [bd §p flac] [§]":[["2011","","1080",""],["\n02,67e12fb2\n03,e194396f\n"]],"B\t[sam] hunter x hunter (§) - ncop § [bd §p flac] [§]":[["2011","","1080",""],["\n02,ea71c37a\n03,16d63594\n04,007ac5c5\n"]],"B\t[sam] kusuriya no hitorigoto - §v§ [bd §p flac] [§]":
-[["","2","1080",""],["\n01,58719017\n02,ef25be70\n03,4a303fe1\n04,034bbe3a\n05,db8cbee0\n06,6e4f58db\n07,8b1ed973\n08,a03c7550\n09,7c44d176\n10,345e9dcd\n11,4b57683e\n12,5dafe5a2\n"]],"B\t[sam] mahoutsukai no yome - nced § [bd §p flac] [§]":[["","1080",""],["\n01,90c513e4\n02,6884a1fa\n"]],"B\t[sam] mahoutsukai no yome - ncop § [bd §p flac] [§]":[["","1080",""],["\n01,89e667b3\n02,bd0aa244\n"]],"B\t[sam] zombie land saga revenge - § [bd §p flac] [§]":[["","1080",""],["\n01,74889394\n02,b9b8c9f6\n03,deb96156\n04,b87cc2c5\n05,8484826c\n06,9df262d2\n07,73be8d53\n08,cd08a9e7\n09,2d08c0bf\n10,3a60264f\n11,aead3e69\n12,8dc7929d\n"]
-],"B\t[spirale] spice and wolf - § [bdrip §p x§ flac] [§]":[["","1080","264",""],["\n01,84189899\n02,2d8dbafe\n03,260bd562\n04,70db0825\n05,29b754b5\n06,1284d44a\n07,4c551348\n08,d7bab3d9\n09,36d0f244\n10,beb5ec39\n11,b41092cd\n12,8609ed66\n13,017022aa\n"]],"B\t[virtuality] sengoku youko senma konton-hen - § [§]":[["",""],["\n01,75189d61\n02,0e77c743\n03,97b86c26\n04,24ca339f\n05,339d7ec4\n06,f23bf5fb\n07,412f6b49\n08,b2045fab\n09,55268d1c\n10,05e956fd\n11,095aa795\n12,07f50d4f\n13,e2b36116\n14,00ab94b8\n15,f3c011f5\n16,607211b9\n17,8ef1c68b\n18,47dc8788\n19,28477ba9\n20,1edca048\n21,dff5de7a\n22,06656b8b\n"]
+"\n34,d3ce48b0\n35,d133f01f\n36,e603e83c\n37,5b0eaaa9\n38,99311343\n39,2442b250\n40,3a786c7b\n41,2f4ac231\n42,afabbc56\n43,f605212c\n44,46336c54\n45,7787a185\n46,148e1809\n47,ff660e12\n48,8e49cb98\n49,578b96c7\n50,4fd56491\n51,037f7d41\n"]],"B\t[okay-subs] insomniacs after school - § (bd §p) [§]":[["","1080",""],["\n01,5214673a\n02,6bb5ffad\n03,7f0eac5e\n04,5a772b4c\n05,28e5b54f\n06,6b981078\n07,896697cf\n08,e9f0b4ee\n09,1d69b8bd\n10,972db5ae\n11,45363771\n12,ac7fd7d6\n13,8e3c50c1\n"]],"B\t[pizza] ssss.dynazenon - s§e§ [bd §p hevc opus] [§]":
+[["01","","1080",""],["\n02,701980f4\n04,419d659e\n05,3b2f3857\n06,ed97c962\n"]],"B\t[pizza] ssss.dynazenon - s§e§ [§] [bd §p hevc opus]":[["01","","","1080"],["\n10,762fb8da\n11,d42c8306\n12,7350aeca\n"]],"B\t[p§] kyousougiga (§) - s§e§ - (bd §p hevc opus) [§]":[["9","2013","01","","1080",""],["\n01,06cb64cb\n02,dc579679\n03,4cf9dae2\n04,73ac0ea2\n05,a7de57ca\n06,8c2a1fdd\n07,bc2b7c0d\n08,ff26a6e1\n09,204212f5\n10,f784b6b1\n"]],"B\t[sam] ascendance of a bookworm - § [bd §p flac] [§]":
+[["","1080",""],["\n15,15e6a7c4\n16,517d5da6\n17,286aa73d\n18,7338800a\n19,eb90afee\n20,b3e634bb\n21,ee6c242e\n22,686bb981\n23,798e641f\n24,2e14ec10\n25,3711e1e4\n26,9cd212a4\n27,b73a5e14\n28,e0be2af8\n29,2f4e6f41\n30,f67072c6\n31,04aedd23\n32,ee0e99fc\n33,9870b1e7\n34,d0213b30\n35,c61c172b\n36,ec98c95f\n"]],"B\t[sam] haikyuu!! land vs. air - §v§ [bd §p flac] [§]":[["","3","1080",""],["\n01,9213b3a3\n02,0e7af213\n"]],"B\t[sam] hataraku maou-sama! - nced § [bd §p flac] [§]":[["","1080",""]
+,["\n1,e793f8d3\n2,2794793e\n"]],"B\t[sam] hunter x hunter (§) - nced § [bd §p flac] [§]":[["2011","","1080",""],["\n02,67e12fb2\n03,e194396f\n"]],"B\t[sam] hunter x hunter (§) - ncop § [bd §p flac] [§]":[["2011","","1080",""],["\n02,ea71c37a\n03,16d63594\n04,007ac5c5\n"]],"B\t[sam] kusuriya no hitorigoto - §v§ [bd §p flac] [§]":[["","2","1080",""],["\n01,58719017\n02,ef25be70\n03,4a303fe1\n04,034bbe3a\n05,db8cbee0\n06,6e4f58db\n07,8b1ed973\n08,a03c7550\n09,7c44d176\n10,345e9dcd\n11,4b57683e\n12,5dafe5a2\n"]
+],"B\t[sam] mahoutsukai no yome - nced § [bd §p flac] [§]":[["","1080",""],["\n01,90c513e4\n02,6884a1fa\n"]],"B\t[sam] mahoutsukai no yome - ncop § [bd §p flac] [§]":[["","1080",""],["\n01,89e667b3\n02,bd0aa244\n"]],"B\t[sam] zombie land saga revenge - § [bd §p flac] [§]":[["","1080",""],["\n01,74889394\n02,b9b8c9f6\n03,deb96156\n04,b87cc2c5\n05,8484826c\n06,9df262d2\n07,73be8d53\n08,cd08a9e7\n09,2d08c0bf\n10,3a60264f\n11,aead3e69\n12,8dc7929d\n"]],"B\t[spirale] spice and wolf - § [bdrip §p x§ flac] [§]":
+[["","1080","264",""],["\n01,84189899\n02,2d8dbafe\n03,260bd562\n04,70db0825\n05,29b754b5\n06,1284d44a\n07,4c551348\n08,d7bab3d9\n09,36d0f244\n10,beb5ec39\n11,b41092cd\n12,8609ed66\n13,017022aa\n"]],"B\t[virtuality] sengoku youko senma konton-hen - § [§]":[["",""],["\n01,75189d61\n02,0e77c743\n03,97b86c26\n04,24ca339f\n05,339d7ec4\n06,f23bf5fb\n07,412f6b49\n08,b2045fab\n09,55268d1c\n10,05e956fd\n11,095aa795\n12,07f50d4f\n13,e2b36116\n14,00ab94b8\n15,f3c011f5\n16,607211b9\n17,8ef1c68b\n18,47dc8788\n19,28477ba9\n20,1edca048\n21,dff5de7a\n22,06656b8b\n"]
 ],"B\t[wap] horimiya - s§e§ (bd remux §p avc flac truehd)":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"B\t[wap] sorairo utility - s§e§ (bd remux §p avc flac)":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tao no exorcist - § [§p - avc - [pcm, ja][flac, en]]":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tapocalypse.hotel.s§e§.§p.bluray.flac§.§.x§-kawatare":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
 ],"B\tbeatless.s§e§.§p.bluray.remux.flac§.§.x§-headpatter":[["01","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"B\tdragon ball nced § - romantikku ageru yo [yugidmx§]":[["","5"],["\n1\n3\n4\n"]],"B\tfantastic children - § (r§dvd §x§ x§ hi§p ac§ chap)":[["","2","768","576","264","10","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n"]],
 "B\tflower.and.asura.s§e§.§p.bluray.flac§.§.x§-kawatare":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tginga eiyuu densetsu - omei - § [bdrip §x§ x§ flac]":[["","960","720","264"],["\n01\n02\n03\n04\n"]],"B\tmomoiro sisters - § (dvd §p x§ ac§) [peachflavored]":[["","480","264","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"B\tmono.s§e§.§p.bluray.dual-audio.opus.§.§.x§-yurasuka":
@@ -25538,11 +25606,13 @@ strict_template_routes := {
 ],"L\t[ukw] henjin no salad bowl § (bdrip §x§ x§ flac) [§]":[["","1920","1080","264",""],["\n01,1fbfb7f3\n02,6abd68bc\n03,be7f35e2\n04,526b46da\n05,671de8ae\n06,e7865e9c\n07,213b5627\n08,eceb1251\n09,bdf49dc5\n10,7425f22d\n11,b5417c2d\n12,c362c3fe\n"]],"L\t[wor] moriarty the patriot s§e§ [bd av§ §p flac thd]":[["00","","1","1080"],["\n01\n02\n"]],"L\t[yuri] hacka doll the animation-s§e§ [bd §p x§ flac]":[["01","","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]
 ],"L\t[yuri] himouto! umaru-chan s§e§ [bd §p x§ §bit flac]":[["01","","1080","264","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\t[yuri] interspecies reviewers s§e§ [bd §p hevc flac]":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\t[yuri] so, i can\u0060t play h! s§e§ [bd §p x§ §bit flac]":[["01","","1080","264","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tapocalypse.hotel.s§e§.§p.bluray.opus.§.§.x§-yurasuka":[["01",
 "","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\teromanga-sensei - s§e§ [bdrip §x§ x§ flac] [exp] [§]":[["01","","1920","1080","264",""],["\n01,72003108\n02,1938af15\n03,258a2ca5\n04,e9d9a1e7\n05,10e61d96\n06,2a908b43\n07,0ac96875\n08,ad3e77a3\n09,80f7709f\n10,ddd5e624\n11,22cb9674\n12,bc7b4595\n"]],"L\tjojo's bizarre adventure (§) s§e§ thankful death (§)":[["2012","04","",""],["\n15,1\n16,2\n"]],"L\tre.monster.s§e§.§p.bluray.dual-audio.flac§.§.x§-mugi":
-[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tsymphogear.s§e§.gx.§p-hi§p.bluray.flac§.§.x§-ctr.[§]":[["03","","1080","10","2","0","264",""],["\n01,da62f8ff\n02,80cce75a\n03,08f5ed12\n04,31ad3851\n05,379afd15\n06,2297e684\n07,dfa7aaa5\n08,8bacacc3\n09,d2de765e\n10,2976f7dc\n11,1b1e8ab4\n12,74ccf5d7\n13,9c606c4d\n"]],"L\ttoo.cute.crisis.s§e§.§p.bluray.opus§.§.x§-headpatter":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
-],"X\t[commie] ookiku furikabutte - nced § [bd §p aac] [§]":[["","540",""],["\n1,4218e8de\n2,d57f0b15\n"]],"X\t[commie] ookiku furikabutte - ncop § [bd §p aac] [§]":[["","540",""],["\n1,ad12d42d\n2,ace27acc\n"]],"X\t[cunny] one room second season nced - § (bd §p flac)":[["","1080"],["\n00\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\t[kametsu] seraph of the end - § (bd §p hi§ flac) [§]":[["","1080","10",""],["\n01,b7265d19\n02,c39a4cb7\n03,0370ceda\n04,ed5aa0d0\n05,c3cb8e33\n06,a210d90a\n07,0283833f\n08,7eb77e96\n09,8c07641a\n10,f536eadf\n11,ca372b35\n12,7154c7ad\n13,c6d76741\n14,33dbb882\n15,d09e1641\n16,44a95c71\n17,3411be9c\n18,be9f6440\n19,9b4488f6\n20,a23174a1\n21,43ecd9ba\n22,d0a030ac\n23,2eb3f0d7\n24,6201018e\n"]
-],"X\t[lulu] aldnoah zero - § [bd §p hi§ flac][dual-audio]":[["","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"X\t[moxie] sora no method - s§e§ (bd remux §p flac) [§]":[["","","1080",""],["\n00,01,84826255\n01,01,e7365549\n01,02,3b7decae\n01,03,ea34048c\n01,04,1d33be7e\n01,05,a32e2e70\n01,06,3f3b62bf\n01,07,dd5e2a3b\n01,08,59c77b23\n01,09,f967b79e\n01,10,56cb785e\n01,11,01a5385c\n01,12,44d15844\n01,13,25aa4490\n"]],"X\t[neko-raws]the rolling girls - §[bd][§p][hi§p][flac]":
-[["","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\t[o§] genshiken nidaime - § (bd §p x§ §-bit flac) [§]":[["7","","1080","264","10",""],["\n01,6581a54a\n02,2fba9410\n03,686a7102\n04,39320909\n05,6ad90e32\n06,ac655fc2\n07,9c36e597\n08,379a62ae\n09,ed1e3fac\n10,e30fddc7\n11,6018a602\n12,fb1339f7\n13,5401c61f\n"]],"X\t[pookie] flying witch petit - § [bd §x§ x§ flac] [§]":[["","1920","1080","264",""],["\n01,2c85b812\n02,83599cde\n03,32cdcc24\n04,20c3e660\n05,0a6ef83a\n06,24698269\n07,ea37a8e2\n08,2f45dacd\n09,630273ab\n10,f8a16f68\n"]
-],"X\t[sam] haikyuu!! to the top - nced § [bd §p flac] [§]":[["","1080",""],["\n01,53f2ff68\n02,bfc73f15\n"]],"X\t[sam] haikyuu!! to the top - ncop § [bd §p flac] [§]":[["","1080",""],["\n01,69cc2431\n02,55cc2d48\n"]],"X\t[yuri] dusk maiden of amnesia s§e§ [bd §p hevc flac]":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\tattack.on.titan.s§e§.§p.bluray.x§.opus.§.§-zerobuild":[["","","1080","265","2","0"],["\n03,01\n03,02\n03,03\n03,04\n03,05\n03,06\n03,07\n03,08\n03,09\n03,10\n03,11\n03,12\n03,13\n03,14\n03,15\n03,16\n03,17\n03,18\n03,19\n03,20\n03,21\n03,22\n04,01\n04,02\n04,03\n04,04\n04,05\n04,06\n04,07\n04,08\n04,09\n04,10\n04,11\n04,12\n04,13\n04,14\n04,15\n04,16\n04,17\n04,18\n04,19\n04,20\n04,21\n04,22\n04,23\n04,24\n04,25\n04,26\n04,27\n04,28\n04,29\n04,30\n"]
+[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tsailor moon supers § [§p_hi§p_dvd_flac] [hark§n] [§]":[["","576","10","0",""],["\n128,0b04e85d\n129,355e95a7\n130,60742c50\n131,c8230da1\n132,28a2248c\n133,04d4fccb\n134,e6c9e635\n135,ea9c95a0\n136,9d289d4d\n137,86650478\n138,e2dc506a\n139,4c57f9a7\n140,ef273f1b\n141,0e879a9d\n142,d8aa7dda\n143,84878b30\n144,294a2fac\n145,ade81334\n146,cf45c465\n147,7f1b9c6c\n148,2f01cd8d\n149,24194dfe\n150,e62c5a32\n151,ce3322e8\n152,cc2d0819\n153,857eb0fb\n154,ad9473dd\n155,0ebfe082\n156,0a01d32e\n157,e7a920e0\n",
+"\n158,9524c260\n159,7979b0e3\n160,6414a1bf\n161,face40f0\n162,76b69f57\n163,3ca5d2ae\n164,0c54a654\n165,cb6bf740\n166,e2caee1b\n"]],"L\tsymphogear.s§e§.gx.§p-hi§p.bluray.flac§.§.x§-ctr.[§]":[["03","","1080","10","2","0","264",""],["\n01,da62f8ff\n02,80cce75a\n03,08f5ed12\n04,31ad3851\n05,379afd15\n06,2297e684\n07,dfa7aaa5\n08,8bacacc3\n09,d2de765e\n10,2976f7dc\n11,1b1e8ab4\n12,74ccf5d7\n13,9c606c4d\n"]],"L\ttoo.cute.crisis.s§e§.§p.bluray.opus§.§.x§-headpatter":[["01","","1080","2",
+"0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\t[commie] ookiku furikabutte - nced § [bd §p aac] [§]":[["","540",""],["\n1,4218e8de\n2,d57f0b15\n"]],"X\t[commie] ookiku furikabutte - ncop § [bd §p aac] [§]":[["","540",""],["\n1,ad12d42d\n2,ace27acc\n"]],"X\t[cunny] one room second season nced - § (bd §p flac)":[["","1080"],["\n00\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\t[kametsu] seraph of the end - § (bd §p hi§ flac) [§]":[["","1080","10",""],[
+"\n01,b7265d19\n02,c39a4cb7\n03,0370ceda\n04,ed5aa0d0\n05,c3cb8e33\n06,a210d90a\n07,0283833f\n08,7eb77e96\n09,8c07641a\n10,f536eadf\n11,ca372b35\n12,7154c7ad\n13,c6d76741\n14,33dbb882\n15,d09e1641\n16,44a95c71\n17,3411be9c\n18,be9f6440\n19,9b4488f6\n20,a23174a1\n21,43ecd9ba\n22,d0a030ac\n23,2eb3f0d7\n24,6201018e\n"]],"X\t[lulu] aldnoah zero - § [bd §p hi§ flac][dual-audio]":[["","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]
+],"X\t[moxie] sora no method - s§e§ (bd remux §p flac) [§]":[["","","1080",""],["\n00,01,84826255\n01,01,e7365549\n01,02,3b7decae\n01,03,ea34048c\n01,04,1d33be7e\n01,05,a32e2e70\n01,06,3f3b62bf\n01,07,dd5e2a3b\n01,08,59c77b23\n01,09,f967b79e\n01,10,56cb785e\n01,11,01a5385c\n01,12,44d15844\n01,13,25aa4490\n"]],"X\t[neko-raws]the rolling girls - §[bd][§p][hi§p][flac]":[["","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\t[o§] genshiken nidaime - § (bd §p x§ §-bit flac) [§]":
+[["7","","1080","264","10",""],["\n01,6581a54a\n02,2fba9410\n03,686a7102\n04,39320909\n05,6ad90e32\n06,ac655fc2\n07,9c36e597\n08,379a62ae\n09,ed1e3fac\n10,e30fddc7\n11,6018a602\n12,fb1339f7\n13,5401c61f\n"]],"X\t[pookie] flying witch petit - § [bd §x§ x§ flac] [§]":[["","1920","1080","264",""],["\n01,2c85b812\n02,83599cde\n03,32cdcc24\n04,20c3e660\n05,0a6ef83a\n06,24698269\n07,ea37a8e2\n08,2f45dacd\n09,630273ab\n10,f8a16f68\n"]],"X\t[sam] haikyuu!! to the top - nced § [bd §p flac] [§]":[
+["","1080",""],["\n01,53f2ff68\n02,bfc73f15\n"]],"X\t[sam] haikyuu!! to the top - ncop § [bd §p flac] [§]":[["","1080",""],["\n01,69cc2431\n02,55cc2d48\n"]],"X\t[yuri] dusk maiden of amnesia s§e§ [bd §p hevc flac]":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\tattack.on.titan.s§e§.§p.bluray.x§.opus.§.§-zerobuild":[["","","1080","265","2","0"],["\n03,01\n03,02\n03,03\n03,04\n03,05\n03,06\n03,07\n03,08\n03,09\n03,10\n03,11\n03,12\n03,13\n03,14\n03,15\n03,16\n03,17\n03,18\n03,19\n03,20\n03,21\n03,22\n04,01\n04,02\n04,03\n04,04\n04,05\n04,06\n04,07\n04,08\n04,09\n04,10\n04,11\n04,12\n04,13\n04,14\n04,15\n04,16\n04,17\n04,18\n04,19\n04,20\n04,21\n04,22\n04,23\n04,24\n04,25\n04,26\n04,27\n04,28\n04,29\n04,30\n"]
 ],"X\t§.eighty.six.s§e§.repack.§p.blu-ray.opus§.§.x§-koala":[["86","01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n"]]}`,
   "55": `{"B\t[armx] gochuumon wa usagi desu ka - § [bd §p x§ flac]":[["","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\t[drag] kino no tabi (§) - § (bd §p x§ §-bit flac) [§]":[["2017","","1080","265","10",""],["\n01,990111a4\n02,6488800c\n03,6b620fac\n04,0bae86c3\n05,c0a2ee3b\n06,514b3a43\n07,7c8b07fb\n08,02290de7\n09,633a43e0\n10,53844c75\n11,cb3f5378\n12,0a316cc5\n"]],"B\t[exp] jinsei (creditless ed§) [bdrip §x§ x§ flac] [§]":[["","1920","1080","264",""],["\n1,aef0f3a2\n2,ba0b40f1\n"]
 ],"B\t[half-baked] penguindrum - s§e§ [bd §p hevc opus] [§]":[["01","","1080",""],["\n01,9bf7d14c\n02,03ff9951\n03,1c471764\n04,1b43b08a\n05,a2fc72c4\n06,23fe7ba7\n07,b913a4c8\n08,52b38da0\n09,8ed40eb3\n10,ffc094cb\n11,d7532bb2\n12,0c7c557f\n13,caa24d0d\n14,e918ca7e\n15,52c4eb0a\n16,1539861a\n17,baef74cf\n18,5e4ac010\n19,f0ca20a5\n20,dfcd1370\n21,d46231f8\n22,f2b27a31\n23,786c6c5a\n24,b79e69cf\n"]],"B\t[lazy] girls band cry - §v§ (bdremux §p avc flac) [§]":[["","2","1080",""],["\n01,51e57c96\n02,6e819f85\n03,46290361\n04,126c16c9\n05,7b0cd67c\n06,af34b920\n07,c28944d4\n08,ade92c4c\n09,476436db\n"]
@@ -25676,12 +25746,13 @@ strict_template_routes := {
 "\n67,5226e692\n68,f93196e1\n69,04176b85\n70,c7351525\n71,969bb13e\n72,2a9df5a4\n73,c9ca4ed2\n74,9ef5f68b\n75,706dda43\n76,c790aa4f\n"]],"L\t[§de] dead dead demons § destruction - s§e§ (web §p) [§]":[["4","dededede","","","1080",""],["\n00,01,e0b65685\n01,01,0aac7fe1\n01,02,b38968c7\n01,03,504fe051\n01,04,c0fcb96e\n01,05,315575fd\n01,06,810ad7ac\n01,07,9b5f38af\n01,08,ee3ca252\n01,09,a6e2bd45\n01,10,b461226a\n01,11,89026ecf\n01,12,3aa9b2b9\n01,13,4da657ff\n01,14,d34c7055\n01,15,0121bc28\n01,16,8fcc443f\n01,17,dededede\n"]
 ],"L\tclean.freak.aoyama-kun.s§e§.§p.cr.web-dl.aac§.§.x§-eldon":[["01","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tcleopatra.d.c.s§e§.repack§.§p.bluray.flac§.§.x§-kawatare":[["01","","2","1080","2","0","265"],["\n02\n03\n"]],"L\tdeath note - creditless ending § [bdrip §x§ x§ flac] [§]":[["","1280","720","264",""],["\n01,13688816\n02,e85db804\n"]],"L\tharukana receive cm§ [§p_hi§p_blu-ray_flac] [hark§n] [§]":[["","1080","10","0",""],
 ["\n1,5796dd9c\n2,8c95a2a7\n3,98957667\n"]],"L\tharukana receive pv§ [§p_hi§p_blu-ray_flac] [hark§n] [§]":[["","1080","10","0",""],["\n1,c592fe61\n2,c76be496\n"]],"L\tjojo's bizarre adventure (§) s§e§ sheer heart attack (§)":[["2012","03","",""],["\n23,1\n24,2\n"]],"L\tjojo's bizarre adventure (§) s§e§ shigechi's harvest (§)":[["2012","03","",""],["\n18,1\n19,2\n"]],"L\tmagical.girl.site.s§e§.v§.§p.bluray.opus.§.§.x§-yurasuka":[["01","","","1080","2","0","265"],["\n01,3\n02,2\n03,2\n04,2\n05,3\n06,3\n07,2\n08,2\n09,2\n10,2\n11,2\n12,2\n"]
-],"L\tspy.x.family.s§e§.§p.webrip.multi.opus.§.§.x§-yolerejiju":[["02","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tsymphogear.g.ova§.s§e§.§p-hi§p.bluray.flac§.§.x§-ctr.[§]":[["1","00","","1080","10","2","0","264",""],["\n01,cf537a0e\n02,2fcdaf8c\n"]],"L\tsymphogear.gx.sp§.s§e§.§p-hi§p.bluray.flac§.§.x§-ctr.[§]":[["","00","","1080","10","2","0","264",""],["\n1,03,45a1543d\n2,04,9810d547\n3,05,c97dc143\n4,06,a791e805\n"]],"L\ttears.to.tiara.s§e§.v§.§p-hi§p.bluray.flac§.§.x§-ctr.[§]":
-[["01","","2","1080","10","2","0","264",""],["\n01,c2cff796\n02,94f4933d\n03,1237f5e8\n04,73c47221\n05,fcebce87\n06,ef0aaf5e\n07,3baa085c\n08,dc763e93\n09,98d6804f\n10,55cfa3f6\n11,9ef6ddf4\n12,c3a623c0\n13,f04289b3\n14,9daf8d8f\n15,78711657\n16,64557cc1\n17,d1a3bc86\n18,ad547153\n19,d1ebf7e7\n20,f1315422\n21,8d8d7a57\n22,17568dbf\n23,9dfd6dcc\n24,8df263cd\n25,289a459f\n26,73dd9ee7\n"]],"L\tthe.price.of.smiles.s§e§.§p.bluray.opus§.§.x§-headpatter":[["01","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
-],"X\t[chihiro] yuusha, yamemasu §.§ [blu-ray §p hi§p flac][§]":[["13","","1080","10",""],["\n1,82314da6\n2,8d7fe93b\n"]],"X\t[css] jashin-chan dropkick' ep § (§) [bdrip §x§ x§ flac]":[["","2020","1920","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n"]],"X\t[hchcsen] fairy gone s§e§ [bd dual audio §p hevc §xflac]":[["01","","1080","2"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"X\t[hentai-subs] dokyuu hentai hxeros § (bdrip §x§ x§ flac)":
-[["","1920","1080","264"],["\n07\n08\n10\n11\n12\n"]],"X\t[holomux] motto to love-ru § [bd x§ §bit §p flac §.§][§]":[["","264","10","1080","2","0",""],["\n01,fc0cf0da\n02,cb9c30ad\n03,98447f2e\n04,2d8741a7\n05,f8c8c6f6\n06,1f5bea84\n07,850cab4a\n08,afdce89a\n09,79fa3f3e\n10,4599dc18\n11,c18fa46f\n12,b9c7ab14\n"]],"X\t[mysteria] isshuukan friends - s§e§ (bd §p hi§ flac) [§]":[["","","1080","10",""],["\n00,01,f7c4f950\n00,02,3b4b6fd6\n00,03,58057b7b\n00,04,2d3cd1fd\n00,05,9d4709b6\n00,06,30749566\n00,07,b4d06acd\n00,08,a5f0b65d\n00,09,48fc31c7\n00,10,41feb686\n00,11,bb4678f3\n00,12,a910c190\n01,01,5a8e7645\n01,02,8195efc8\n01,03,db137e87\n01,04,d91856c1\n01,05,171ceef8\n01,07,e9a332fe\n01,08,50ea51e7\n01,09,d9fb2f74\n01,10,d5c45c78\n01,11,8a93340e\n01,12,77b499ee\n"]
-],"X\t[thighs] seirei tsukai no blade dance sp - § (bd §p) [§]":[["","1080",""],["\n01,5becd315\n02,6668bdcd\n03,d76c3017\n04,b91a3ef4\n05,356ed8f9\n06,d36664ee\n"]],"X\t[udf] gunslinger girl - § (bdrip §p x§) [dual-audio] [§]":[["","1080","264",""],["\n01,d51c0822\n02,ef7c4484\n03,ba4ee337\n04,bb930254\n05,d2d4d52c\n06,b43fe907\n07,9626b0bc\n08,2e0960e8\n09,7016c697\n10,e2de176c\n11,b9980d4d\n12,e23c4421\n13,f332c60f\n"]],"X\t[yuri] at the mercy of the sky s§e§ [bd §p x§ §bit flac]":
-[["01","","1080","264","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\tattack.on.titan.s§e§.§p.bluray.remux.avc.flac.§.§-flugel":[["00","","1080","2","0"],["\n07\n13\n14\n15\n16\n17\n18\n19\n"]],"X\tjojo's bizarre adventure (§) s§e§ the high priestess (§)":[["2012","02","",""],["\n23,1\n24,2\n"]]}`,
+],"L\tsailor moon supers nced§ [§p_hi§p_dvd_flac] [hark§n] [§]":[["","576","10","0",""],["\n1,83c9515e\n2,997a41f3\n"]],"L\tspy.x.family.s§e§.§p.webrip.multi.opus.§.§.x§-yolerejiju":[["02","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tsymphogear.g.ova§.s§e§.§p-hi§p.bluray.flac§.§.x§-ctr.[§]":[["1","00","","1080","10","2","0","264",""],["\n01,cf537a0e\n02,2fcdaf8c\n"]],"L\tsymphogear.gx.sp§.s§e§.§p-hi§p.bluray.flac§.§.x§-ctr.[§]":
+[["","00","","1080","10","2","0","264",""],["\n1,03,45a1543d\n2,04,9810d547\n3,05,c97dc143\n4,06,a791e805\n"]],"L\ttears.to.tiara.s§e§.v§.§p-hi§p.bluray.flac§.§.x§-ctr.[§]":[["01","","2","1080","10","2","0","264",""],["\n01,c2cff796\n02,94f4933d\n03,1237f5e8\n04,73c47221\n05,fcebce87\n06,ef0aaf5e\n07,3baa085c\n08,dc763e93\n09,98d6804f\n10,55cfa3f6\n11,9ef6ddf4\n12,c3a623c0\n13,f04289b3\n14,9daf8d8f\n15,78711657\n16,64557cc1\n17,d1a3bc86\n18,ad547153\n19,d1ebf7e7\n20,f1315422\n21,8d8d7a57\n22,17568dbf\n23,9dfd6dcc\n24,8df263cd\n25,289a459f\n26,73dd9ee7\n"]
+],"L\tthe.price.of.smiles.s§e§.§p.bluray.opus§.§.x§-headpatter":[["01","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\t[chihiro] yuusha, yamemasu §.§ [blu-ray §p hi§p flac][§]":[["13","","1080","10",""],["\n1,82314da6\n2,8d7fe93b\n"]],"X\t[css] jashin-chan dropkick' ep § (§) [bdrip §x§ x§ flac]":[["","2020","1920","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n"]],"X\t[hchcsen] fairy gone s§e§ [bd dual audio §p hevc §xflac]":[["01",
+"","1080","2"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"X\t[hentai-subs] dokyuu hentai hxeros § (bdrip §x§ x§ flac)":[["","1920","1080","264"],["\n07\n08\n10\n11\n12\n"]],"X\t[holomux] motto to love-ru § [bd x§ §bit §p flac §.§][§]":[["","264","10","1080","2","0",""],["\n01,fc0cf0da\n02,cb9c30ad\n03,98447f2e\n04,2d8741a7\n05,f8c8c6f6\n06,1f5bea84\n07,850cab4a\n08,afdce89a\n09,79fa3f3e\n10,4599dc18\n11,c18fa46f\n12,b9c7ab14\n"]
+],"X\t[mysteria] isshuukan friends - s§e§ (bd §p hi§ flac) [§]":[["","","1080","10",""],["\n00,01,f7c4f950\n00,02,3b4b6fd6\n00,03,58057b7b\n00,04,2d3cd1fd\n00,05,9d4709b6\n00,06,30749566\n00,07,b4d06acd\n00,08,a5f0b65d\n00,09,48fc31c7\n00,10,41feb686\n00,11,bb4678f3\n00,12,a910c190\n01,01,5a8e7645\n01,02,8195efc8\n01,03,db137e87\n01,04,d91856c1\n01,05,171ceef8\n01,07,e9a332fe\n01,08,50ea51e7\n01,09,d9fb2f74\n01,10,d5c45c78\n01,11,8a93340e\n01,12,77b499ee\n"]],"X\t[thighs] seirei tsukai no blade dance sp - § (bd §p) [§]":
+[["","1080",""],["\n01,5becd315\n02,6668bdcd\n03,d76c3017\n04,b91a3ef4\n05,356ed8f9\n06,d36664ee\n"]],"X\t[udf] gunslinger girl - § (bdrip §p x§) [dual-audio] [§]":[["","1080","264",""],["\n01,d51c0822\n02,ef7c4484\n03,ba4ee337\n04,bb930254\n05,d2d4d52c\n06,b43fe907\n07,9626b0bc\n08,2e0960e8\n09,7016c697\n10,e2de176c\n11,b9980d4d\n12,e23c4421\n13,f332c60f\n"]],"X\t[yuri] at the mercy of the sky s§e§ [bd §p x§ §bit flac]":[["01","","1080","264","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
+],"X\tattack.on.titan.s§e§.§p.bluray.remux.avc.flac.§.§-flugel":[["00","","1080","2","0"],["\n07\n13\n14\n15\n16\n17\n18\n19\n"]],"X\tjojo's bizarre adventure (§) s§e§ the high priestess (§)":[["2012","02","",""],["\n23,1\n24,2\n"]]}`,
   "59": `{"B\t[cbt] hentai ouji to warawanai neko s§e§ (bd §p hi§ flac)":[["01","","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\t[cyc-scy] karneval § (bd §p hi§ x§ flac) [dual-audio] [§]":[["","1080","10","264",""],["\n01,393c37d9\n02,8eb7909e\n03,fa086df4\n04,896dbbe7\n05,e23c6eb3\n06,6e109eb1\n07,471f5c39\n08,8345d3be\n09,ef16a61e\n10,a72a5c46\n11,cf453e52\n12,bc0be026\n13,d41812fe\n"]],"B\t[drag] denpa teki na kanojo - § (bd §p x§ §-bit flac) [§]":[["","1080","264",
 "10",""],["\n01,9c4ceed1\n02,3cde4509\n"]],"B\t[getittwisted] senran kagura - nced§ [bd §p avc opus] [§]":[["","1080",""],["\n1,812ac3ba\n2,3018ca18\n3,b927a8d1\n"]],"B\t[gsk_kun] dagashi kashi § [ncop§] [ma§p §p] [x§ flac] [§]":[["2","","10","1080","265",""],["\n01,bbcac781\n02,933f0719\n"]],"B\t[hchcsen] aim for the top s§e§v§ [bd remux §p avc §xflac]":[["01","","2","1080","3"],["\n01\n02\n03\n04\n05\n06\n"]],"B\t[hchcsen] just because! s§e§ [bd dual audio §p x§ §xflac]":[["01",
 "","1080","264","2"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\t[ik] toaru kagaku no railgun - nced ep§ (bd §x§ hi§ flac)":[["","1920","1080","10"],["\n12\n14\n16\n17\n22\n23\n24\n"]],"B\t[ik] toaru kagaku no railgun s - nced § (bd §x§ hi§ flac)":[["","1920","1080","10"],["\n01\n02\n"]],"B\t[ik] toaru kagaku no railgun s - ncop § (bd §x§ hi§ flac)":[["","1920","1080","10"],["\n01\n02\n"]],"B\t[kametsu] alderamin on the sky - §v§ (bd §p hi§ flac) [§]":[["","2","1080",
@@ -31420,6 +31491,10 @@ Larid|carole tuesday 06 life is a carnival
 
 Larid|steins gate 15 missing link necrosis
 
+Lcommie|heike monogatari nced bd 1080p aac
+
+Lcommie|heike monogatari ncop bd 1080p aac
+
 Lcommie|otherside picnic nced bd 1080p aac
 
 Lcommie|otherside picnic ncop bd 1080p aac
@@ -31957,6 +32032,8 @@ Lkh|no rin 10 veggie battle ultimate v supreme
 Lkh|the sacred blacksmith 03 demon blade sword
 
 Lkh|the sacred blacksmith 06 imperial princess
+
+Llia|noukin s01e09 didn t i say wyvern hunting
 
 Lorz|nobunagun 07 musashi wonder bd 1080p flac
 
@@ -32520,10 +32597,6 @@ Bmoxie|uchouten kazoku nced bd remux 1080p flac 2 0
 Bmoxie|uchouten kazoku ncop bd remux 1080p flac 2 0
 
 Bnetaro|assault lily bouquet s01 ncop bd 1080p hevc
-
-Bo7|heike monogatari nced bd 1080p x265 10 bit flac
-
-Bo7|heike monogatari ncop bd 1080p x265 10 bit flac
 
 Bpeachflavored|momoiro sisters ed dvd 480p x264 ac3
 
@@ -33494,6 +33567,8 @@ Lkh|c3 cube x cursed x curious 11 the fanatic is somewhere
 
 Lkh|mobile suit gundam age 28 upheaval in the earth sphere
 
+Llia|noukin s01e11 didn t i say arrogance leads to trouble
+
 Lm74|saraba uchuu senkan yamato ai no senshi tachi bd 720p
 
 Lmd|arpeggio of blue steel 06 friend 1920x1080 blu ray aac
@@ -33829,6 +33904,8 @@ Lizetta|shuumatsu no izetta ncop01 bd 1080p x264 10 bit flac
 Lkh|mobile suit gundam age 22 big ring absolute defense line
 
 Lkh|mobile suit gundam age 30 the city becomes a battlefield
+
+Llia|noukin s01e01 you said i d get a do over in a new world
 
 Llulu|code geass lelouch of the rebellion 01x10 guren dances
 
@@ -34338,6 +34415,12 @@ Lkawatare|cleopatra d c s01e01 repack 1080p bluray flac2 0 x265
 Lkawatare|grave of the fireflies 1988 1080p bluray flac2 0 x265
 
 Lkh|assassins pride 08 the last testament of a certain skeleton
+
+Llia|noukin s01e02 didn t i say the four of us would be a party
+
+Llia|noukin s01e07 didn t i say we should take breaks sometimes
+
+Llia|noukin s01e10 didn t i say surprises should be kept secret
 
 Llulu|code geass lelouch of the rebellion 01x06 the stolen mask
 
@@ -35671,6 +35754,10 @@ Lkitsune|murder princess s01e04 exile 1080p bluray dual flac 2 0 x264
 
 Lkitsune|world trigger s03e12 melee 1080p cr web dl dual ddp2 0 h 264
 
+Llia|noukin s01e04 didn t i say this was the crimson vow s first step
+
+Llia|noukin s01e06 didn t i say i m not going into the forest anymore
+
 Llulu|code geass lelouch of the rebellion 01x16 nunnally held hostage
 
 Lmald|zenshu 2025 s01e10v2 chaos 1080p web dl h264 ddp 2 0 dual audio
@@ -35923,6 +36010,8 @@ Lkh|the master of ragnarok blesser of einherjar 02 tactics of the wolf
 Lkitsune|murder princess s01e03 return 1080p bluray dual flac 2 0 x264
 
 Lkitsune|world trigger s03e02 choice 1080p cr web dl dual ddp2 0 h 264
+
+Llia|noukin s01e03 didn t i say to make my graduation plain and simple
 
 Llys1th3a|as the moon so beautiful s01 nced bluray 1080p opus2 0 h 264
 
@@ -36191,6 +36280,8 @@ Lkitsune|to be hero x s01e24 x repack 1080p cr web dl dual aac2 0 h 264
 
 Lkitsune|wind breaker s02e03 re start 1080p cr web dl dual ddp2 0 h 264
 
+Llia|noukin s01e05 didn t i say that we re doing everyone s backstories
+
 Llostyears|vivy fluorite eye s song 01v2 web 1080p x265 10 bit aac eac3
 
 Lmald|zenshu 2025 s01e03v2 destiny 1080p web dl h264 ddp 2 0 dual audio
@@ -36451,6 +36542,8 @@ Lkitsune|wind breaker s02e10 salvation 1080p cr web dl dual ddp2 0 h 264
 Lkitsune|world trigger s03e03 strategy 1080p cr web dl dual ddp2 0 h 264
 
 Lkitsune|world trigger s03e06 decision 1080p cr web dl dual ddp2 0 h 264
+
+Llia|noukin s01e12 didn t i say the crimson vow would never be destroyed
 
 Llulu|code geass lelouch of the rebellion 01x02 the white knight awakens
 
@@ -37194,6 +37287,8 @@ Lkitsune|world trigger s03e04 secret plan 1080p cr web dl dual ddp2 0 h 264
 Lkitsune|world trigger s03e07 premonition 1080p cr web dl dual ddp2 0 h 264
 
 Lkitsune|world trigger s03e11 final round 1080p cr web dl dual ddp2 0 h 264
+
+Llia|noukin s01e08 no one mentioned that pauline s getting married did they
 
 Llulu|code geass lelouch of the rebellion 01x18 i order you suzaku kururugi
 
@@ -43327,12 +43422,12 @@ tolerant_template_routes := {
 ],"B\tokaysubs|city the animation § bd §p":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"B\torphanbeatrice|let s nupu nupu § ld":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n"]],"B\treza|the devil is a part timer s§e§":[["02",""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\trmx|hoshiai no sora § bd §p x§ flac":[["","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tsam|ballroom e youkoso § bd §p flac":
 [["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"B\tsam|hataraku maou sama § bd §p flac":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"B\tsam|natsume yuujinchou § bd §p flac":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"B\tsam|paripi koumei nced § bd §p flac":[["","1080"],["\n01\n02\n03\n"]],"B\tsubsplease|muv luv alternative § §p":[["","1080"],["\n01\n03\n04\n05\n07\n08\n09\n10\n11\n12\n20\n21\n22\n23\n24\n"]
 ],"B\tsubsplease|shinobi no ittoki §v§ §p":[["","2","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n10\n"]],"B\tvirtuality|nige jouzu no wakagimi §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tvodes|jigokuraku s§e§ v§ bd §p hevc":[["01","","2","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"L\tac|freezing § bd §p flac dual audio":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tayaya|gin no saji § bd §p hevc flac":[["","720"]
-,["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n"]],"L\tcommie|free web preview § bd §p aac":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n"]],"L\tcommie|ghost in the shell sac § §v§":[["2045","","2"],["\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"L\tcommie|otherside picnic § bd §p aac":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tcommie|samurai flamenco § bd §p aac":[["","720"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n"]
-],"L\tcommie|yowamushi pedal glory line §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n"]],"L\tcss|sora no woto § bdrip §p x§ flac":[["","1080","264"],["\n01\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"L\tcyc|code breaker §v§ bd §x§ x§ flac":[["","2","1920","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"L\tdokiaso|no § § §x§ hi§p bd ac§ flac":[["6","","1920","1080","10","3"],["\n01\n02\n03\n05\n06\n07\n08\n09\n10\n11\n"]
-],"L\tdrag|durarara § bd §p x§ § bit flac":[["","1080","264","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n"]],"L\tfffremux|accel world §v§ dual audio":[["","2"],["\n07\n11\n"]],"L\tfinal§|hen zemi tv § bd §x§ x§ flac":[["8","","1920","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"L\thorriblesubs|nami yo kiitekure § §p":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tkawaii|endro § bd §x§ x§ § bit flac":
-[["","1920","1080","264","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tkh|joker game § double joker part §":[["",""],["\n08,1\n09,2\n"]],"L\tmtbb|the apothecary diaries § bd §p":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"L\tnetaro|backflip s§e§ bd §p hi§ opus":[["01","","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tntw|bofuri s§ § bd §p hevc aac flac":[["2","","1080"]
-,["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tradiate|coppelion § bd §p hi§p flac":[["","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"L\trasetsu|watamote § bd §p hi§ flacx§":[["","1080","10","2"],["\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\trigav§|taisho otome fairy tale s§e§":[["1","01",""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tsalchow|medalist s§e§ web §p x§ aac":[["02","","1080","264"],["\n04\n05\n06\n07\n08\n09\n"]
-],"L\tsubsplease|hoshi no samidare §v§ §p":[["","2","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n20\n21\n23\n24\n"]],"L\twhomst|blue box s§e§ web §p x§ eac§":[["01","","1080","264","3"],["\n21\n22\n23\n24\n25\n"]]}`,
+,["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n"]],"L\tcommie|free web preview § bd §p aac":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n"]],"L\tcommie|ghost in the shell sac § §v§":[["2045","","2"],["\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"L\tcommie|heike monogatari § bd §p aac":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n"]],"L\tcommie|otherside picnic § bd §p aac":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tcommie|samurai flamenco § bd §p aac":
+[["","720"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n"]],"L\tcommie|yowamushi pedal glory line §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n"]],"L\tcss|sora no woto § bdrip §p x§ flac":[["","1080","264"],["\n01\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"L\tcyc|code breaker §v§ bd §x§ x§ flac":[["","2","1920","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]
+],"L\tdokiaso|no § § §x§ hi§p bd ac§ flac":[["6","","1920","1080","10","3"],["\n01\n02\n03\n05\n06\n07\n08\n09\n10\n11\n"]],"L\tdrag|durarara § bd §p x§ § bit flac":[["","1080","264","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n"]],"L\tfffremux|accel world §v§ dual audio":[["","2"],["\n07\n11\n"]],"L\tfinal§|hen zemi tv § bd §x§ x§ flac":[["8","","1920","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]
+],"L\thorriblesubs|nami yo kiitekure § §p":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tkawaii|endro § bd §x§ x§ § bit flac":[["","1920","1080","264","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tkh|joker game § double joker part §":[["",""],["\n08,1\n09,2\n"]],"L\tmtbb|the apothecary diaries § bd §p":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"L\tnetaro|backflip s§e§ bd §p hi§ opus":
+[["01","","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tntw|bofuri s§ § bd §p hevc aac flac":[["2","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tradiate|coppelion § bd §p hi§p flac":[["","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"L\trasetsu|watamote § bd §p hi§ flacx§":[["","1080","10","2"],["\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\trigav§|taisho otome fairy tale s§e§":[["1","01",""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
+],"L\tsalchow|medalist s§e§ web §p x§ aac":[["02","","1080","264"],["\n04\n05\n06\n07\n08\n09\n"]],"L\tsubsplease|hoshi no samidare §v§ §p":[["","2","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n20\n21\n23\n24\n"]],"L\twhomst|blue box s§e§ web §p x§ eac§":[["01","","1080","264","3"],["\n21\n22\n23\n24\n25\n"]]}`,
   "38": `{"B\tane|maria holic ep§ bdrip §p x§ flac":[["","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tcappybara|hamefura s§e§v§ bd §p hevc":[["01","","4","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tfoxtrot|great pretender § bd §p flac":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n"]],"B\tik|high school dxd § bd §x§ hi§ flac":[["","1920","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tmoxie|days tv nced§ bd remux §p flac":
 [["","1080"],["\n1\n2\n"]],"B\tmoxie|days tv ncop§ bd remux §p flac":[["","1080"],["\n1\n2\n"]],"B\tmoxie|dive s§e§ bd remux §p flac § §":[["01","","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tmtbb|boku dake ga inai machi § bd §p":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tmtbb|kaguya sama love is war § bd §p":[["","1080"],["\n01\n02\n03\n04\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tsam|dance dance danseur § bd §p flac":[["","1080"]
 ,["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n"]],"B\tsam|dr stone stone wars § bd §p flac":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n"]],"B\tsam|hunter x hunter § §v§ bd §p flac":[["2011","","2","1080"],["\n001\n002\n003\n004\n005\n006\n007\n008\n009\n010\n011\n012\n013\n"]],"B\tsam|isekai shokudou § § web §p eac §":[["2","","1080","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tsam|mahoutsukai no yome § bd §p flac":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]
@@ -43407,21 +43502,20 @@ tolerant_template_routes := {
 ,["\n04\n06\n07\n"]],"B\tkawatare|gamers s§e§ §p bluray flac§ § x§":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tlazy|girls band cry § bdremux §p avc flac":[["","1080"],["\n10\n11\n12\n13\n"]],"B\tlv§villain|beelzebub s§e§ bdremux §p flac":[["99","01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n52\n53\n54\n55\n56\n57\n58\n59\n60\n"]
 ],"B\tmoxie|battery nced § bd remux §p flac § §":[["","1080","2","0"],["\n01\n02\n03\n"]],"B\tmoxie|comet lucifer s§e§ bd remux §p flac":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tnekokbaraka|overlord special § bd §p flac":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n"]],"B\tnh|zombie land saga § bd §p x§ § bit flac":[["","1080","264","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tntrm|fullmetal alchemist § bd §p ma§ flac":
 [["","720","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n"]],"B\tokaysubs|birdy the mighty decode § dvd §p":[["","480"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n"]],"B\tokaysubs|little witch academia s§ § bd §p":[["1","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n"]
-],"B\tokaysubs|too many losing heroines § bd §p":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\to§|heike monogatari § bd §p x§ § bit flac":[["7","","1080","265","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n"]],"B\tpizza|do it yourself s§e§ bd §p hevc opus":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tpizza|ssss dynazenon s§e§ bd §p hevc opus":[["01","","1080"],["\n02\n04\n05\n06\n10\n11\n12\n"]],"B\tpmr|date a live s§e§ bd remux §p avc flac":
-[["02","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n"]],"B\tpmr|gnosia s§ nced § bd remux §p avc flac":[["01","","1080"],["\n01\n02\n03\n04\n05\n"]],"B\tp§|shoushimin series s§e§ bd §p hevc opus":[["9","01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n"]],"B\tsam|ascendance of a bookworm § bd §p flac":[["","1080"],["\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n"]],"B\tsam|hunter x hunter § ncop §v§ bd §p flac":[["2011",
-"","2","1080"],["\n01\n04\n"]],"B\tsam|kusuriya no hitorigoto §v§ bd §p flac":[["","2","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tsam|mahoutsukai no yome nced § bd §p flac":[["","1080"],["\n01\n02\n"]],"B\tsam|mahoutsukai no yome ncop § bd §p flac":[["","1080"],["\n01\n02\n"]],"B\tsam|zombie land saga revenge § bd §p flac":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tsolce|pingu in the city s§ § web §p e ac§":[["2","","1080","3"],
-["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n"]],"B\tspirale|spice and wolf § bdrip §p x§ flac":[["","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"B\tvodes|shangri la frontier s§e§ bd §p hevc":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n"]],"B\tvodes|tensei shitara slime datta ken s§e§":[["02",""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
-],"B\tyuri|gj bu creditless op v§ bd §p x§ flac":[["","1080","264"],["\n1\n2\n"]],"L\talmighty|edens zero § bd §x§ x§ §bit flac":[["","1920","1080","264","10"],["\n07\n22\n"]],"L\tane|yosuga no sora ep§v§ bdrip §p x§ flac":[["","2","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tbluraydesuyo|cop craft § bd §x§ §bit flac":[["","1920","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tcaitsidhe|super cub ncopv§ bd §p hevc aac":[["",
-"1080"],["\n1\n2\n"]],"L\tchimera|occultic nine § bdrip §x§ x§ flac":[["","1920","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tcms|the world god only knows § bd §p flac":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tcss|yuru camp season § § bdrip §p x§ flac":[["2","","1080","264"],["\n02\n03\n04\n"]],"L\tdeanzel|noir § bd §p hi§p dual audio flac":[["","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n"]
-],"L\tdebian|sakura trick nced § bd §p hi§ flac":[["","1080","10"],["\n01\n02\n"]],"L\teldon|nanbaka s§e§ §p cr web dl aac§ § x§":[["","","1080","2","0","264"],["\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n01,13\n02,01\n02,02\n02,03\n02,04\n02,05\n02,06\n02,07\n02,08\n02,09\n02,10\n02,11\n02,12\n"]],"L\terairaws|blue lock § §p multiple subtitle":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]
-],"L\terairaws|plunderer § §p multiple subtitle":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"L\texception|null peta § bd §p x§ § bit flac":[["","1080","265","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tflfl|blast of tempest s§e§ bd §p hi§ flac":[["01","","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"L\theadpatter|days s§e§ §p bluray opus§ § x§":
-[["01","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"L\tholomux|glasslip § bd §p x§ §bit flac § §":[["","1080","264","10","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"L\thorriblesubs|actors songs connection § §p":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tik|high school dxd born § bd §x§ hi§ flac":[["","1920","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
-],"L\tindex|isekai meikyuu de harem wo bd§ menu":[[""],["\n1\n2\n"]],"L\tinkasubs|chou kousoku galvion episode §v§":[["",""],["\n01,3\n02,2\n03,2\n04,2\n05,2\n06,2\n07,2\n08,2\n09,2\n10,2\n"]],"L\tkawaii|shadows house s§e§ bd §p hevc flac":[["02","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tminimtbb|birdy the mighty decode § dvd §p":[["","576"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n"]],"L\tnotfoxtrot|vinland saga nced § bd §p flac":
-[["","1080"],["\n1\n2\n"]],"L\tnotfoxtrot|vinland saga ncop § bd §p flac":[["","1080"],["\n1\n2\n"]],"L\tntw|sousei no onmyouji § bd §p avc truehd":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n"]],"L\tsam|mahoutsukai no yome s§ § web §p eac §":[["2","","1080","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]]
-,"L\tscoot|spy x family s§ § web §p hevc eac §":[["2","","1080","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tscp§|koi to uso § blu ray §p h§ §bit flac":[["2223","","1080","265","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tsgt|mysteria friends s§e§ bd §p hevc flac":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n"]],"L\tspirale|flying witch § bdrip §p hevc flac":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
-],"L\tstarbez|listeners s§e§ bd §p x§ §bit flac":[["01","","1080","265","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tsubsplease|kyuuketsuki sugu shinu s§ § §p":[["2","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tsubsplease|mairimashita iruma kun s§ § §p":[["2","","1080"],["\n02\n03\n04\n06\n07\n08\n09\n10\n11\n12\n14\n15\n16\n17\n18\n19\n21\n"]],"L\tsubsplease|otona no bouguya san s§ §v§ §p":[["2","","2","1080"],["\n01\n02\n03\n04\n"]]
-,"L\tsubsplease|shiroi suna no aquatope §v§ §p":[["","2","1080"],["\n01\n02\n03\n07\n08\n09\n12\n13\n14\n15\n"]],"L\ttlacatlc§|ao no exorcist § bd §x§ x§ flac":[["6","","1920","1080","264"],["\n24\n25\n"]],"L\tudf|darker than black ryuusei no gemini §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tvivid|tonari no seki kun ova § dvd §p ac§":[["","576","3"],["\n1\n2\n"]],"L\tyuri|demon king daimao s§e§ bd §p x§ flac":[["","","1080","264"],["\n00,01\n00,02\n00,03\n00,04\n00,05\n00,06\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n"]
-]}`,
+],"B\tokaysubs|too many losing heroines § bd §p":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tpizza|do it yourself s§e§ bd §p hevc opus":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tpizza|ssss dynazenon s§e§ bd §p hevc opus":[["01","","1080"],["\n02\n04\n05\n06\n10\n11\n12\n"]],"B\tpmr|date a live s§e§ bd remux §p avc flac":[["02","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n"]],"B\tpmr|gnosia s§ nced § bd remux §p avc flac":
+[["01","","1080"],["\n01\n02\n03\n04\n05\n"]],"B\tp§|shoushimin series s§e§ bd §p hevc opus":[["9","01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n"]],"B\tsam|ascendance of a bookworm § bd §p flac":[["","1080"],["\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n"]],"B\tsam|hunter x hunter § ncop §v§ bd §p flac":[["2011","","2","1080"],["\n01\n04\n"]],"B\tsam|kusuriya no hitorigoto §v§ bd §p flac":[["","2","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
+],"B\tsam|mahoutsukai no yome nced § bd §p flac":[["","1080"],["\n01\n02\n"]],"B\tsam|mahoutsukai no yome ncop § bd §p flac":[["","1080"],["\n01\n02\n"]],"B\tsam|zombie land saga revenge § bd §p flac":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tsolce|pingu in the city s§ § web §p e ac§":[["2","","1080","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n"]],"B\tspirale|spice and wolf § bdrip §p x§ flac":
+[["","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"B\tvodes|shangri la frontier s§e§ bd §p hevc":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n"]],"B\tvodes|tensei shitara slime datta ken s§e§":[["02",""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tyuri|gj bu creditless op v§ bd §p x§ flac":[["","1080","264"],["\n1\n2\n"]],"L\talmighty|edens zero § bd §x§ x§ §bit flac":
+[["","1920","1080","264","10"],["\n07\n22\n"]],"L\tane|yosuga no sora ep§v§ bdrip §p x§ flac":[["","2","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tbluraydesuyo|cop craft § bd §x§ §bit flac":[["","1920","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tcaitsidhe|super cub ncopv§ bd §p hevc aac":[["","1080"],["\n1\n2\n"]],"L\tchimera|occultic nine § bdrip §x§ x§ flac":[["","1920","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
+],"L\tcms|the world god only knows § bd §p flac":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tcss|yuru camp season § § bdrip §p x§ flac":[["2","","1080","264"],["\n02\n03\n04\n"]],"L\tdeanzel|noir § bd §p hi§p dual audio flac":[["","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n"]],"L\tdebian|sakura trick nced § bd §p hi§ flac":[["","1080","10"],["\n01\n02\n"]],"L\teldon|nanbaka s§e§ §p cr web dl aac§ § x§":
+[["","","1080","2","0","264"],["\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n01,13\n02,01\n02,02\n02,03\n02,04\n02,05\n02,06\n02,07\n02,08\n02,09\n02,10\n02,11\n02,12\n"]],"L\terairaws|blue lock § §p multiple subtitle":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"L\terairaws|plunderer § §p multiple subtitle":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]
+],"L\texception|null peta § bd §p x§ § bit flac":[["","1080","265","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tflfl|blast of tempest s§e§ bd §p hi§ flac":[["01","","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"L\theadpatter|days s§e§ §p bluray opus§ § x§":[["01","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],
+"L\tholomux|glasslip § bd §p x§ §bit flac § §":[["","1080","264","10","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"L\thorriblesubs|actors songs connection § §p":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tik|high school dxd born § bd §x§ hi§ flac":[["","1920","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tindex|isekai meikyuu de harem wo bd§ menu":[[""],["\n1\n2\n"]],"L\tinkasubs|chou kousoku galvion episode §v§":
+[["",""],["\n01,3\n02,2\n03,2\n04,2\n05,2\n06,2\n07,2\n08,2\n09,2\n10,2\n"]],"L\tkawaii|shadows house s§e§ bd §p hevc flac":[["02","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tminimtbb|birdy the mighty decode § dvd §p":[["","576"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n"]],"L\tnotfoxtrot|vinland saga nced § bd §p flac":[["","1080"],["\n1\n2\n"]],"L\tnotfoxtrot|vinland saga ncop § bd §p flac":[["","1080"]
+,["\n1\n2\n"]],"L\tntw|sousei no onmyouji § bd §p avc truehd":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n"]],"L\tsam|mahoutsukai no yome s§ § web §p eac §":[["2","","1080","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tscoot|spy x family s§ § web §p hevc eac §":[["2","","1080","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
+],"L\tscp§|koi to uso § blu ray §p h§ §bit flac":[["2223","","1080","265","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tsgt|mysteria friends s§e§ bd §p hevc flac":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n"]],"L\tspirale|flying witch § bdrip §p hevc flac":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tstarbez|listeners s§e§ bd §p x§ §bit flac":[["01","","1080","265","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
+],"L\tsubsplease|kyuuketsuki sugu shinu s§ § §p":[["2","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tsubsplease|mairimashita iruma kun s§ § §p":[["2","","1080"],["\n02\n03\n04\n06\n07\n08\n09\n10\n11\n12\n14\n15\n16\n17\n18\n19\n21\n"]],"L\tsubsplease|otona no bouguya san s§ §v§ §p":[["2","","2","1080"],["\n01\n02\n03\n04\n"]],"L\tsubsplease|shiroi suna no aquatope §v§ §p":[["","2","1080"],["\n01\n02\n03\n07\n08\n09\n12\n13\n14\n15\n"]],"L\ttlacatlc§|ao no exorcist § bd §x§ x§ flac":
+[["6","","1920","1080","264"],["\n24\n25\n"]],"L\tudf|darker than black ryuusei no gemini §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tvivid|tonari no seki kun ova § dvd §p ac§":[["","576","3"],["\n1\n2\n"]],"L\tyuri|demon king daimao s§e§ bd §p x§ flac":[["","","1080","264"],["\n00,01\n00,02\n00,03\n00,04\n00,05\n00,06\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n"]]}`,
   "44": `{"B\tarmx|houkago teibou nisshi § bd §p x§ flac":[["","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tdatte§|my love story ncop § bd §p hi§ flac":[["13","","1080","10"],["\n01\n02\n03\n"]],"B\tdrag|frame arms girl § bd §p x§ § bit flac":[["","1080","264","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tfoxtrot|ranking of kings nced § bd §p flac":[["","1080"],["\n01\n02\n"]],"B\tgambler|kakegurui s§ nced bd remux §p flac":[["","1080"],["\n01\n02\n"]
 ],"B\tgambler|kakegurui s§ ncop bd remux §p flac":[["","1080"],["\n01\n02\n"]],"B\tgotp|juuou mujin no fafnir § bd h§ §p flac":[["","264","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\thalfbaked|penguindrum s§e§ bd §p hevc opus":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"B\thchcsen|rahxephon s§e§ bd §p x§ § bit opus":[["01","","720","265","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n"]
 ],"B\those|meikyuu black company § bd §p x§ flac":[["","1080","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tlulu|yesterday wo utatte § bd §p hevc flac":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tlys§th§a|hyouka s§e§ §p bluray opus§ § h §":[["1","3","01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n"]],"B\tman|azumanga daioh § bd dvdrip §x§ x§ flac":[["","1440",
