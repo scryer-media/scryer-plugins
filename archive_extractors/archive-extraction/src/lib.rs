@@ -50,7 +50,7 @@ mod split_volumes;
 
 wit_bindgen::generate!({
     world: "archive-extractor",
-    path: "wit",
+    path: "../../pdk/scryer-plugin-pdk/wit/archive-v1.1.0",
 });
 
 use crate::scryer::archive::crypto as host_crypto;

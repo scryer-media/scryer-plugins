@@ -35,10 +35,8 @@ use crate::{
 mod notification_world {
     wasmtime::component::bindgen!({
         world: "scryer:notification/notification@1.0.0",
-        // Two packages, two paths — the same layout the host's bindgen uses,
-        // and the same two files every channel vendors for its own guest
-        // bindings.
-        path: ["wit/host-v1.0.0", "wit/notification-v1.0.0"],
+        // Host and guest bindings consume the same versioned PDK contracts.
+        path: ["../scryer-plugin-pdk/wit/host-v1.0.0", "../scryer-plugin-pdk/wit/notification-v1.0.0"],
     });
 }
 

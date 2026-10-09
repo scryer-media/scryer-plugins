@@ -1,6 +1,6 @@
 [package]
 name = "wizdom-subtitle-provider"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "Hebrew subtitle provider for Wizdom with IMDb-keyed search and zip downloads"
@@ -23,8 +23,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 base64 = "0.23"
-# Needs no host archive extraction: Wizdom's zip downloads are forwarded to
-# Scryer as-is (see `download_subtitle_impl`), so nothing here opens a container.
+# ZIP extraction uses the existing bounded host service through the PDK.
 scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
 scryer-plugin-sdk = "3.12.0"
 serde = { version = "1", features = ["derive"] }

@@ -95,6 +95,11 @@ jobs:
         working-directory: ${{ matrix.directory }}
         run: cargo clippy --all-targets --all-features --locked -- -D warnings
 
+      - name: Test plugin scaffolding and canonical WIT contracts
+        if: ${{ matrix.kind == 'xtask' }}
+        working-directory: xtask
+        run: cargo test --locked plugin_new::tests
+
       - name: Build xtask
         if: ${{ matrix.kind == 'xtask' }}
         working-directory: xtask

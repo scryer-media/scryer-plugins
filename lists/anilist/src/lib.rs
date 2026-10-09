@@ -44,7 +44,7 @@ use serde_json::{Map, Value, json};
 
 wit_bindgen::generate!({
     world: "scryer:lists/list-provider@1.0.0",
-    path: ["wit/host-v1.0.0", "wit/runtime-v1.0.0", "wit/list-v1.0.0"],
+    path: ["../../pdk/scryer-plugin-pdk/wit/host-v1.0.0", "../../pdk/scryer-plugin-pdk/wit/runtime-v1.0.0", "../../pdk/scryer-plugin-pdk/wit/list-v1.0.0"],
     generate_all,
 });
 

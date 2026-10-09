@@ -453,7 +453,7 @@ checksum = "252afb9ae5eaa683babdc6a068b3f5726eb19e05070c731f9b2a23a7c3e8ed34"
 
 [[package]]
 name = "email-notification"
-version = "1.1.0"
+version = "1.1.1"
 dependencies = [
  "base64 0.23.1",
  "futures",
@@ -1385,7 +1385,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scryer-plugin-conformance"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "base64 0.23.1",
  "postcard",
@@ -1397,7 +1397,7 @@ dependencies = [
 
 [[package]]
 name = "scryer-plugin-pdk"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "anyhow",
  "futures-util",
