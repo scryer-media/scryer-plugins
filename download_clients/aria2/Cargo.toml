@@ -1,6 +1,6 @@
 [package]
 name = "aria2-download-client"
-version = "2.0.1"
+version = "2.0.2"
 edition = "2024"
 rust-version = "1.97.1"
 license = "GPL-3.0-only"
@@ -29,7 +29,7 @@ crate-type = ["cdylib"]
 base64 = "0.23"
 roxmltree = "0.21"
 scryer-plugin-sdk = "3.11.0"
-scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.7.0" }
 serde = "1"
 serde_json = "1"
 # `aria2.addUri` answers with a GID, never with the info hash, and the GID it

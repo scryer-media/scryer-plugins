@@ -41,7 +41,10 @@
 //! # The whole of a migrated plugin's boilerplate
 //!
 //! ```ignore
-//! wit_bindgen::generate!({ world: "subtitle-provider", path: "wit" });
+//! wit_bindgen::generate!({
+//!     world: "scryer:subtitle/subtitle-provider@1.1.0",
+//!     path: ["../../pdk/scryer-plugin-pdk/wit/host-v1.0.0", "../../pdk/scryer-plugin-pdk/wit/runtime-v1.0.0", "../../pdk/scryer-plugin-pdk/wit/subtitle-v1.1.0"],
+//! });
 //!
 //! scryer_plugin_pdk::scryer_subtitle_component_main!(
 //!     descriptor = build_descriptor,

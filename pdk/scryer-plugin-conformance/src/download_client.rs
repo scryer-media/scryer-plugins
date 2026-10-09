@@ -32,10 +32,8 @@ use crate::{
 mod download_client_world {
     wasmtime::component::bindgen!({
         world: "scryer:download-client/download-client@1.0.0",
-        // Two packages, two paths — the same layout the host's bindgen uses,
-        // and the same two files every plugin vendors for its own guest
-        // bindings.
-        path: ["wit/host-v1.0.0", "wit/download-client-v1.0.0"],
+        // Host and guest bindings consume the same versioned PDK contracts.
+        path: ["../scryer-plugin-pdk/wit/host-v1.0.0", "../scryer-plugin-pdk/wit/download-client-v1.0.0"],
     });
 }
 

@@ -1346,7 +1346,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scryer-plugin-conformance"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "base64 0.23.1",
  "postcard",
@@ -1358,7 +1358,7 @@ dependencies = [
 
 [[package]]
 name = "scryer-plugin-pdk"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "futures-util",
@@ -1685,7 +1685,7 @@ checksum = "7d56353a2a665ad0f41a421187180aab746c8c325620617ad883a99a1cbe66d2"
 
 [[package]]
 name = "torrent-blackhole-download-client"
-version = "2.0.1"
+version = "2.0.2"
 dependencies = [
  "base64 0.23.1",
  "scryer-plugin-conformance",

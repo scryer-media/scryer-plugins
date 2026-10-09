@@ -19,14 +19,14 @@ use crate::PluginDescriptor;
 mod contract_v1_0 {
     wasmtime::component::bindgen!({
         world: "scryer:indexer/indexer-plugin@1.0.0",
-        path: "wit",
+        path: "../pdk/scryer-plugin-pdk/wit/indexer-v1.0.0",
     });
 }
 
 mod contract_v1_1 {
     wasmtime::component::bindgen!({
         world: "scryer:indexer/indexer-plugin@1.1.0",
-        path: "wit/indexer-v1.1.0",
+        path: "../pdk/scryer-plugin-pdk/wit/indexer-v1.1.0",
     });
 }
 
@@ -36,7 +36,7 @@ mod contract_v1_1 {
 mod archive_v1_0 {
     wasmtime::component::bindgen!({
         world: "scryer:archive/archive-extractor@1.0.0",
-        path: "wit/archive-v1.0.0",
+        path: "../pdk/scryer-plugin-pdk/wit/archive-v1.0.0",
     });
 }
 
@@ -45,7 +45,7 @@ mod archive_v1_0 {
 mod archive_v1_1 {
     wasmtime::component::bindgen!({
         world: "scryer:archive/archive-extractor@1.1.0",
-        path: "wit/archive-v1.1.0",
+        path: "../pdk/scryer-plugin-pdk/wit/archive-v1.1.0",
     });
 }
 
@@ -66,7 +66,7 @@ mod family_v1_1 {
         world: "scryer:subtitle/subtitle-provider@1.1.0",
         // Three packages, three paths — the two host packages first, so the
         // family package's imports resolve against them.
-        path: ["wit/host-v1.0.0", "wit/runtime-v1.0.0", "wit/subtitle-v1.1.0"],
+        path: ["../pdk/scryer-plugin-pdk/wit/host-v1.0.0", "../pdk/scryer-plugin-pdk/wit/runtime-v1.0.0", "../pdk/scryer-plugin-pdk/wit/subtitle-v1.1.0"],
         imports: { default: async },
         exports: { default: async },
     });

@@ -45,10 +45,8 @@ use crate::{
 mod subtitle_world {
     wasmtime::component::bindgen!({
         world: "scryer:subtitle/subtitle-provider@1.1.0",
-        // Three packages, three paths — the same layout the host's bindgen
-        // uses, and the same three files every provider vendors for its own
-        // guest bindings.
-        path: ["wit/host-v1.0.0", "wit/runtime-v1.0.0", "wit/subtitle-v1.1.0"],
+        // Host and guest bindings consume the same versioned PDK contracts.
+        path: ["../scryer-plugin-pdk/wit/host-v1.0.0", "../scryer-plugin-pdk/wit/runtime-v1.0.0", "../scryer-plugin-pdk/wit/subtitle-v1.1.0"],
         // `process` is an `async func` and so are the runtime import's `http`
         // and `sleep`, so both directions are generated async — the same pair
         // of options the host's own bindgen passes.

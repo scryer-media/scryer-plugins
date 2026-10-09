@@ -9,21 +9,18 @@
 //! and the family-neutral typed `scryer:runtime/host@1.0.0` surface reached
 //! through `scryer_plugin_pdk::runtime`.
 //!
-//! ## No host archive extraction here
-//!
-//! Wizdom serves every subtitle as a zip, and this provider never opens one:
-//! it forwards the container and lets Scryer's own extraction step deal with
-//! it. There is therefore nothing to route through
-//! [`scryer_plugin_pdk::host::archive_extract`], and the plugin does not enable
-//! the PDK's `archive-extract` feature.
+//! ZIP members are extracted by the bounded host archive service. The provider
+//! selects a usable subtitle, preferring UTF-8 over legacy Hebrew encodings.
 
 use std::time::Duration;
 
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
+use scryer_plugin_pdk::host::{HostCallError, archive_extract};
 use scryer_plugin_pdk::sdk::command::{PluginSubtitleCommand, PluginSubtitleCommandResult};
 use scryer_plugin_pdk::{HttpRequest, HttpResponse, config, http};
 use scryer_plugin_sdk::current_sdk_constraint;
+use scryer_plugin_sdk::host::{PluginArchiveExtractRequest, PluginArchiveExtractedFile};
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldRole, ConfigFieldType, ConfigFieldValueSource, PluginDescriptor,
     PluginError, PluginErrorCode, PluginResult, ProviderDescriptor, SDK_VERSION,
@@ -43,7 +40,7 @@ wit_bindgen::generate!({
     // Three packages, three paths, matching the host's own bindgen: the shared
     // `scryer:host` package is listed first so the family package's
     // `import scryer:host/services@1.0.0` resolves against it.
-    path: ["wit/host-v1.0.0", "wit/runtime-v1.0.0", "wit/subtitle-v1.1.0"],
+    path: ["../../pdk/scryer-plugin-pdk/wit/host-v1.0.0", "../../pdk/scryer-plugin-pdk/wit/runtime-v1.0.0", "../../pdk/scryer-plugin-pdk/wit/subtitle-v1.1.0"],
     // The shared host package lives in its own WIT package, so wit-bindgen
     // asks explicitly whether to generate for it. Yes: the PDK holds only a
     // `fn` pointer and the entry macro binds it to this module's
@@ -62,7 +59,6 @@ const USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_V
 const PROVIDER_LANGUAGE: &str = "heb";
 const RETRY_AMOUNT: usize = 3;
 const RETRY_TIMEOUT_SECS: u64 = 5;
-const MAX_RATE_LIMIT_WAIT_SECONDS: i64 = 10;
 const MAX_DOWNLOAD_BYTES: usize = 8 * 1024 * 1024;
 const ERROR_BODY_PREVIEW_LIMIT: usize = 240;
 const VALIDATION_PROBE_IMDB_ID: &str = "tt1375666";
@@ -80,6 +76,7 @@ enum FailureKind {
     RateLimited,
     Unreachable,
     Unsupported,
+    MissingCapability,
 }
 
 #[derive(Debug, Clone)]
@@ -160,7 +157,7 @@ fn unsupported(message: &str) -> PluginError {
 
 fn validate_config() -> SubtitlePluginValidateConfigResponse {
     match WizdomConfig::from_host()
-        .and_then(|config| fetch_releases(&config, VALIDATION_PROBE_IMDB_ID))
+        .and_then(|config| fetch_releases(&config, VALIDATION_PROBE_IMDB_ID, false))
     {
         Ok(_) => SubtitlePluginValidateConfigResponse {
             status: SubtitleValidateConfigStatus::Valid,
@@ -198,6 +195,7 @@ fn to_plugin_result<T>(result: Result<T, Failure>) -> PluginResult<T> {
         FailureKind::RateLimited => PluginErrorCode::RateLimited,
         FailureKind::Unreachable => PluginErrorCode::UpstreamUnavailable,
         FailureKind::Unsupported => PluginErrorCode::Temporary,
+        FailureKind::MissingCapability => PluginErrorCode::Unsupported,
     };
     PluginResult::Err(PluginError {
         code,
@@ -307,21 +305,44 @@ fn search_subtitles_impl(
         return Ok(Vec::new());
     }
 
-    let Some(imdb_id) = resolve_imdb_id(config, request)? else {
+    if let Some(imdb_id) = direct_imdb_id(request) {
+        return search_by_imdb(config, request, &imdb_id);
+    }
+    let Some(api_key) = config.tmdb_api_key.as_deref() else {
         return Ok(Vec::new());
     };
+    let mut searched_ids = std::collections::HashSet::new();
+    for title in titles_for_search(request) {
+        let Some(imdb_id) =
+            lookup_imdb_id_via_tmdb(api_key, &title, request.year, request.media_kind)?
+        else {
+            continue;
+        };
+        if searched_ids.insert(imdb_id.clone()) {
+            let candidates = search_by_imdb(config, request, &imdb_id)?;
+            if !candidates.is_empty() {
+                return Ok(candidates);
+            }
+        }
+    }
+    Ok(Vec::new())
+}
 
-    let releases = fetch_releases(config, &imdb_id)?;
+fn search_by_imdb(
+    config: &WizdomConfig,
+    request: &SubtitlePluginSearchRequest,
+    imdb_id: &str,
+) -> Result<Vec<SubtitlePluginCandidate>, Failure> {
+    let releases = fetch_releases(config, imdb_id, true)?;
     let subs = collect_subs(
         releases.subs.as_ref(),
         request.media_kind,
         request.season,
         request.episode,
     );
-
     Ok(subs
         .iter()
-        .filter_map(|sub| sub_to_candidate(config, request, sub, &imdb_id))
+        .filter_map(|sub| sub_to_candidate(config, request, sub, imdb_id))
         .collect())
 }
 
@@ -356,25 +377,6 @@ fn direct_imdb_id(request: &SubtitlePluginSearchRequest) -> Option<String> {
         }),
     }
     .and_then(|value| normalize_imdb_id(&value))
-}
-
-/// Scryer's own IMDb ID is preferred; the optional TMDB key only backfills a
-/// title lookup, so this provider never ships a shared third-party credential.
-fn resolve_imdb_id(
-    config: &WizdomConfig,
-    request: &SubtitlePluginSearchRequest,
-) -> Result<Option<String>, Failure> {
-    if let Some(direct) = direct_imdb_id(request) {
-        return Ok(Some(direct));
-    }
-
-    let Some(api_key) = config.tmdb_api_key.as_deref() else {
-        return Ok(None);
-    };
-    let Some(title) = title_for_search(request) else {
-        return Ok(None);
-    };
-    lookup_imdb_id_via_tmdb(api_key, &title, request.year, request.media_kind)
 }
 
 fn lookup_imdb_id_via_tmdb(
@@ -428,17 +430,21 @@ fn lookup_imdb_id_via_tmdb(
         .and_then(normalize_imdb_id))
 }
 
-fn fetch_releases(config: &WizdomConfig, imdb_id: &str) -> Result<WizdomReleases, Failure> {
+fn fetch_releases(
+    config: &WizdomConfig,
+    imdb_id: &str,
+    allow_missing: bool,
+) -> Result<WizdomReleases, Failure> {
     let url = format!("{}/api/releases/{imdb_id}", config.base_url);
     let response = http_get("Wizdom releases", &url, "application/json", None)?;
     // The releases endpoint answers with HTTP 500 for an IMDb ID it does not
     // carry, which is a miss rather than a provider fault.
-    if response.status_code() == 500 {
+    if allow_missing && response.status_code() == 500 {
         return Ok(WizdomReleases::default());
     }
     map_http_status("Wizdom releases", &response)?;
     let body = response.body();
-    if body.is_empty() {
+    if allow_missing && body.is_empty() {
         return Ok(WizdomReleases::default());
     }
     serde_json::from_slice(&body).map_err(|error| {
@@ -581,21 +587,145 @@ fn download_subtitle_impl(
         .and_then(content_disposition_filename)
         .or_else(|| normalize_non_empty(&reference.filename))
         .unwrap_or_else(|| format!("{}.zip", reference.subtitle_id));
-    let content_type = response_header(&response, "content-type")
-        .and_then(normalize_non_empty)
-        .unwrap_or_else(|| "application/zip".to_string());
-
-    // Wizdom always serves a zip; archives stay packed for Scryer's normal
-    // archive handling rather than being unpacked inside the plugin.
-    Ok(SubtitlePluginDownloadResponse {
-        content_base64: BASE64.encode(bytes),
-        format: filename
-            .rsplit_once('.')
-            .map_or("zip", |(_, extension)| extension)
-            .to_string(),
+    let extracted = archive_extract(PluginArchiveExtractRequest {
+        content: bytes,
+        format: "zip".to_string(),
         filename: Some(filename),
-        content_type: Some(content_type),
+        password: None,
     })
+    .map_err(|error| {
+        let kind = match &error {
+            HostCallError::Service(error) if error.code == PluginErrorCode::Unsupported => {
+                FailureKind::MissingCapability
+            }
+            _ => FailureKind::Unsupported,
+        };
+        Failure::new(kind, format!("Wizdom subtitle extraction failed: {error}"))
+    })?;
+    select_subtitle(extracted.files)
+}
+
+/// Wizdom may bundle the same subtitle in UTF-8 and Windows-1255. Validate
+/// cue structure before choosing a member, and keep legacy bytes intact for
+/// consumers which detect their encoding. The host owns archive/path limits.
+fn select_subtitle(
+    files: Vec<PluginArchiveExtractedFile>,
+) -> Result<SubtitlePluginDownloadResponse, Failure> {
+    let mut candidates = files
+        .into_iter()
+        .filter_map(|file| {
+            let format = file.relative_path.rsplit_once('.')?.1.to_ascii_lowercase();
+            let text = String::from_utf8_lossy(&file.content)
+                .replace("\r\n", "\n")
+                .replace('\r', "\n");
+            if file.content.len() > MAX_DOWNLOAD_BYTES
+                || file.content.contains(&0)
+                || !valid_subtitle(&text, &format)
+            {
+                return None;
+            }
+            Some((file, format))
+        })
+        .collect::<Vec<_>>();
+    // Stable ordering retains the provider's order within each encoding.
+    candidates.sort_by_key(|(file, _)| std::str::from_utf8(&file.content).is_err());
+    let Some((file, format)) = candidates.into_iter().next() else {
+        return Err(Failure::new(
+            FailureKind::Unsupported,
+            "Wizdom archive contained no valid SRT or SUB subtitle",
+        ));
+    };
+    let mut content = Vec::with_capacity(file.content.len());
+    let mut bytes = file.content.into_iter().peekable();
+    while let Some(byte) = bytes.next() {
+        if byte == b'\r' {
+            if bytes.peek() == Some(&b'\n') {
+                bytes.next();
+            }
+            content.push(b'\n');
+        } else {
+            content.push(byte);
+        }
+    }
+    Ok(SubtitlePluginDownloadResponse {
+        content_base64: BASE64.encode(content),
+        content_type: Some("text/plain".to_string()),
+        filename: Some(
+            file.relative_path
+                .rsplit(['/', '\\'])
+                .next()
+                .unwrap_or("subtitle.srt")
+                .to_string(),
+        ),
+        format,
+    })
+}
+
+fn valid_subtitle(text: &str, format: &str) -> bool {
+    let text = text.trim_start_matches('\u{feff}').trim();
+    if text.is_empty() {
+        return false;
+    }
+    match format {
+        "srt" => text
+            .split("\n\n")
+            .filter(|block| !block.trim().is_empty())
+            .all(valid_srt_cue),
+        "sub" => text
+            .lines()
+            .filter(|line| !line.trim().is_empty())
+            .all(valid_microdvd_cue),
+        _ => false,
+    }
+}
+
+fn valid_srt_cue(block: &str) -> bool {
+    let mut lines = block.lines();
+    let Some(index) = lines.next() else {
+        return false;
+    };
+    if index.trim().parse::<u32>().is_err() {
+        return false;
+    }
+    let Some((start, end)) = lines.next().and_then(|line| line.split_once("-->")) else {
+        return false;
+    };
+    let (Some(start), Some(end)) = (
+        srt_time(start.trim()),
+        srt_time(end.split_whitespace().next().unwrap_or_default()),
+    ) else {
+        return false;
+    };
+    end > start && lines.any(|line| !line.trim().is_empty())
+}
+
+fn valid_microdvd_cue(line: &str) -> bool {
+    let Some((start, rest)) = line
+        .trim()
+        .strip_prefix('{')
+        .and_then(|s| s.split_once('}'))
+    else {
+        return false;
+    };
+    let Some((end, content)) = rest.strip_prefix('{').and_then(|s| s.split_once('}')) else {
+        return false;
+    };
+    matches!((start.parse::<u32>(), end.parse::<u32>()), (Ok(start), Ok(end)) if end >= start)
+        && !content.trim().is_empty()
+}
+
+fn srt_time(value: &str) -> Option<u64> {
+    let mut fields = value.split([':', ',', '.']);
+    let hours = fields.next()?.parse::<u64>().ok()?;
+    let minutes = fields.next()?.parse::<u64>().ok()?;
+    let seconds = fields.next()?.parse::<u64>().ok()?;
+    let millis = fields.next()?.parse::<u64>().ok()?;
+    if fields.next().is_some() || minutes >= 60 || seconds >= 60 || millis >= 1000 {
+        return None;
+    }
+    hours
+        .checked_mul(3_600_000)?
+        .checked_add(minutes * 60_000 + seconds * 1000 + millis)
 }
 
 fn http_get_json(label: &str, url: &str) -> Result<Value, Failure> {
@@ -609,7 +739,7 @@ fn http_get_json(label: &str, url: &str) -> Result<Value, Failure> {
     })
 }
 
-/// One GET with bounded retries on transport failures and rate limits. The
+/// One GET with bounded transport retries. Rate limits return to the host. The
 /// status is classified here only to decide whether to retry; callers map it.
 fn http_get(
     label: &str,
@@ -639,13 +769,7 @@ fn http_get(
                 _ => Ok(response),
             });
         match result {
-            Err(failure)
-                if attempt < RETRY_AMOUNT
-                    && matches!(
-                        failure.kind,
-                        FailureKind::RateLimited | FailureKind::Unreachable
-                    ) =>
-            {
+            Err(failure) if attempt < RETRY_AMOUNT && failure.kind == FailureKind::Unreachable => {
                 attempt += 1;
                 std::thread::sleep(Duration::from_secs(RETRY_TIMEOUT_SECS));
             }
@@ -663,7 +787,7 @@ fn map_http_status(label: &str, response: &HttpResponse) -> Result<(), Failure> 
     }
     let retry_after_seconds = response_header(response, "retry-after")
         .and_then(|value| value.parse::<i64>().ok())
-        .filter(|seconds| *seconds > 0 && *seconds <= MAX_RATE_LIMIT_WAIT_SECONDS);
+        .filter(|seconds| *seconds >= 0);
     map_http_status_details(
         label,
         status,
@@ -685,6 +809,9 @@ fn map_http_status_details(
             format!("{label} authentication failed"),
         )),
         429 => {
+            // Let the host schedule the next invocation; never retry before
+            // an upstream cooldown, or discard a long Retry-After hint.
+            let retry_after_seconds = retry_after_seconds.or(Some(RETRY_TIMEOUT_SECS as i64));
             let message = match retry_after_seconds {
                 Some(seconds) => format!("{label} rate limited — retry after {seconds}s"),
                 None => format!("{label} rate limited — try again later"),
@@ -693,7 +820,11 @@ fn map_http_status_details(
                 .with_retry_after(retry_after_seconds))
         }
         status => Err(Failure::new(
-            FailureKind::Unsupported,
+            if status >= 500 {
+                FailureKind::Unreachable
+            } else {
+                FailureKind::Unsupported
+            },
             format!("{label} returned HTTP {status}: {body_text}"),
         )),
     }
@@ -705,7 +836,9 @@ fn validation_error_response(failure: &Failure) -> SubtitlePluginValidateConfigR
         FailureKind::AuthFailed => SubtitleValidateConfigStatus::AuthFailed,
         FailureKind::RateLimited => SubtitleValidateConfigStatus::RateLimited,
         FailureKind::Unreachable => SubtitleValidateConfigStatus::Unreachable,
-        FailureKind::Unsupported => SubtitleValidateConfigStatus::Unsupported,
+        FailureKind::Unsupported | FailureKind::MissingCapability => {
+            SubtitleValidateConfigStatus::Unsupported
+        }
     };
     SubtitlePluginValidateConfigResponse {
         status,
@@ -732,13 +865,16 @@ fn is_hebrew_language(code: &str) -> bool {
     matches!(base, "heb" | "he" | "iw")
 }
 
-fn title_for_search(request: &SubtitlePluginSearchRequest) -> Option<String> {
+fn titles_for_search(request: &SubtitlePluginSearchRequest) -> Vec<String> {
+    let mut seen = std::collections::HashSet::new();
     request
         .title_candidates
         .iter()
         .chain(std::iter::once(&request.title))
         .chain(request.title_aliases.iter())
-        .find_map(|candidate| normalize_non_empty(candidate))
+        .filter_map(|candidate| normalize_non_empty(candidate))
+        .filter(|title| seen.insert(title.to_lowercase()))
+        .collect()
 }
 
 fn normalize_imdb_id(value: &str) -> Option<String> {
@@ -1118,5 +1254,87 @@ mod tests {
             )
             .is_empty()
         );
+    }
+
+    fn archive_file(name: &str, content: &[u8]) -> PluginArchiveExtractedFile {
+        PluginArchiveExtractedFile {
+            relative_path: name.into(),
+            content: content.to_vec(),
+        }
+    }
+
+    #[test]
+    fn archive_selection_skips_invalid_members_and_prefers_utf8() {
+        let legacy = b"1\r\n00:00:01,000 --> 00:00:02,000\r\n\xf9\xec\xe5\xed\r\n";
+        let utf8 = "1\r\n00:00:01,000 --> 00:00:02,000\r\nשלום\r\n";
+        let selected = select_subtitle(vec![
+            archive_file("broken.srt", b"this is not a subtitle"),
+            archive_file("legacy.srt", legacy),
+            archive_file("utf8.SRT", utf8.as_bytes()),
+        ])
+        .unwrap();
+        assert_eq!(selected.filename.as_deref(), Some("utf8.SRT"));
+        assert_eq!(selected.format, "srt");
+        assert_eq!(
+            BASE64.decode(selected.content_base64).unwrap(),
+            utf8.replace("\r\n", "\n").as_bytes()
+        );
+    }
+
+    #[test]
+    fn archive_selection_preserves_legacy_hebrew_and_sub_files() {
+        let legacy = b"1\n00:00:01,000 --> 00:00:02,000\n\xf9\xec\xe5\xed\n";
+        let selected = select_subtitle(vec![archive_file("legacy.srt", legacy)]).unwrap();
+        assert_eq!(BASE64.decode(selected.content_base64).unwrap(), legacy);
+        let microdvd = b"{1}{25}hello\r\n{26}{50}world\r\n";
+        let selected = select_subtitle(vec![archive_file("subtitle.sub", microdvd)]).unwrap();
+        assert_eq!(selected.format, "sub");
+        assert_eq!(
+            BASE64.decode(selected.content_base64).unwrap(),
+            b"{1}{25}hello\n{26}{50}world\n"
+        );
+    }
+
+    #[test]
+    fn malformed_subtitles_are_not_selected() {
+        for content in [
+            "",
+            "garbage",
+            "1\n00:00:01,000 --> 00:00:02,000\n",
+            "1\n00:00:03,000 --> 00:00:02,000\nhello\n",
+            "1\n00:99:01,000 --> 00:99:02,000\nhello\n",
+            "1\n00:00:01,000 --> 00:00:02,000\nhello\0\n",
+        ] {
+            assert!(
+                select_subtitle(vec![archive_file("bad.srt", content.as_bytes())]).is_err(),
+                "{content:?}"
+            );
+        }
+        assert!(select_subtitle(vec![archive_file("readme.txt", b"hello")]).is_err());
+        assert!(select_subtitle(vec![]).is_err());
+    }
+
+    #[test]
+    fn alternate_titles_are_trimmed_deduplicated_and_ordered() {
+        let request = search_request(serde_json::json!({
+            "media_kind": "movie", "title": "Original",
+            "title_candidates": ["", " Original ", "Translated"],
+            "title_aliases": ["original", "Alias", "Translated"],
+        }));
+        assert_eq!(
+            titles_for_search(&request),
+            ["Original", "Translated", "Alias"]
+        );
+    }
+
+    #[test]
+    fn long_rate_limit_hints_are_preserved() {
+        let failure = map_http_status_details("probe", 429, "", Some(3600)).unwrap_err();
+        assert_eq!(failure.retry_after_seconds, Some(3600));
+        let PluginResult::<()>::Err(error) = to_plugin_result(Err(failure)) else {
+            panic!("expected failure")
+        };
+        assert_eq!(error.code, PluginErrorCode::RateLimited);
+        assert_eq!(error.retry_after_seconds, Some(3600));
     }
 }

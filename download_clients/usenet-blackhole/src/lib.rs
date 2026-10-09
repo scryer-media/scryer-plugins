@@ -574,7 +574,7 @@ wit_bindgen::generate!({
     world: "scryer:download-client/download-client@1.0.0",
     // The shared `scryer:host` package is listed first so the family package's
     // `import scryer:host/services@1.0.0` resolves against it.
-    path: ["wit/host-v1.0.0", "wit/download-client-v1.0.0"],
+    path: ["../../pdk/scryer-plugin-pdk/wit/host-v1.0.0", "../../pdk/scryer-plugin-pdk/wit/download-client-v1.0.0"],
     // The host package is its own WIT package, so wit-bindgen asks explicitly
     // whether to generate for it. Yes: the PDK holds only a `fn` pointer and
     // the entry macro binds it to this module's
