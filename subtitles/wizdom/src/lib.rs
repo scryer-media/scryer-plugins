@@ -668,8 +668,10 @@ fn valid_subtitle(text: &str, format: &str) -> bool {
     }
     match format {
         "srt" => text
-            .split("\n\n")
-            .filter(|block| !block.trim().is_empty())
+            .lines()
+            .collect::<Vec<_>>()
+            .split(|line| line.trim().is_empty())
+            .filter(|block| !block.is_empty())
             .all(valid_srt_cue),
         "sub" => text
             .lines()
@@ -679,8 +681,8 @@ fn valid_subtitle(text: &str, format: &str) -> bool {
     }
 }
 
-fn valid_srt_cue(block: &str) -> bool {
-    let mut lines = block.lines();
+fn valid_srt_cue(block: &[&str]) -> bool {
+    let mut lines = block.iter().copied();
     let Some(index) = lines.next() else {
         return false;
     };
@@ -696,7 +698,10 @@ fn valid_srt_cue(block: &str) -> bool {
     ) else {
         return false;
     };
-    end > start && lines.any(|line| !line.trim().is_empty())
+    // A timing line inside the body indicates an unseparated cue. Reject it
+    // rather than accepting unchecked timestamps as subtitle text. Consume
+    // every body line while preserving ordinary multiline dialogue.
+    end > start && lines.clone().next().is_some() && lines.all(|line| !line.contains("-->"))
 }
 
 fn valid_microdvd_cue(line: &str) -> bool {
@@ -1312,6 +1317,46 @@ mod tests {
         }
         assert!(select_subtitle(vec![archive_file("readme.txt", b"hello")]).is_err());
         assert!(select_subtitle(vec![]).is_err());
+    }
+
+    #[test]
+    fn srt_accepts_multiline_cues_and_whitespace_separators() {
+        for separator in ["\n", " \t\n", "\n \n"] {
+            let content = format!(
+                "1\n00:00:01,000 --> 00:00:02,000\nfirst line\n42\nlast line\n{separator}2\n00:00:03,000 --> 00:00:04,000\nnext cue\n"
+            );
+            assert!(valid_subtitle(&content, "srt"), "{content:?}");
+        }
+    }
+
+    #[test]
+    fn malformed_later_srt_cues_do_not_displace_valid_legacy_members() {
+        let legacy = b"1\n00:00:01,000 --> 00:00:02,000\n\xf9\xec\xe5\xed\n";
+        for separator in ["", "\n", " \t\n"] {
+            for timing in [
+                "00:99:03,000 --> 00:00:04,000",
+                "00:00:04,000 --> 00:00:03,000",
+                "invalid --> invalid",
+            ] {
+                let broken = format!(
+                    "1\n00:00:01,000 --> 00:00:02,000\nvalid text\n{separator}2\n{timing}\ninvalid cue\n"
+                );
+                let selected = select_subtitle(vec![
+                    archive_file("utf8.srt", broken.as_bytes()),
+                    archive_file("legacy.srt", legacy),
+                ])
+                .unwrap();
+                assert_eq!(
+                    selected.filename.as_deref(),
+                    Some("legacy.srt"),
+                    "{broken:?}"
+                );
+                assert_eq!(BASE64.decode(selected.content_base64).unwrap(), legacy);
+            }
+        }
+        let missing_separator =
+            "1\n00:00:01,000 --> 00:00:02,000\ntext\n2\n00:00:03,000 --> 00:00:04,000\ntext";
+        assert!(!valid_subtitle(missing_separator, "srt"));
     }
 
     #[test]
