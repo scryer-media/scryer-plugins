@@ -6,6 +6,10 @@
 - Apply the security posture and threat model documented there when deciding whether behavior is a security finding and when assigning severity.
 - Do not report behavior that `SECURITY.md` defines as expected merely because it would be risky under a different deployment model. Require a concrete violation of this project's stated security boundaries.
 
+## There is exactly one SMG
+
+- SMG is a centrally operated SaaS service at `smg.scryer.media`. There is no self-hosted, operator-run, regional, or "custom" SMG, and there never will be. Plugins never take an SMG URL as configuration or assume a different gateway; anything SMG-issued reaches a plugin through the host.
+
 ## Versioning
 
 - Every PR must include the proper semver version bump for each plugin or crate whose shipped behavior or artifact it changes. Do not leave the bump for a later release commit.

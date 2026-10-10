@@ -426,7 +426,22 @@ fn nyaa_urls(
     // plugin is issuing. Drop the term members from the operator's parameters
     // while a term of our own is in play; on a bare poll (above) they are left
     // alone, because there they are a deliberate standing filter.
-    let params = strip_term_params(additional_params);
+    let params = if is_unscoped_text_request(req) {
+        // Prowlarr's Nyaa manual search sends `c=0_0&f=0` — every category, no
+        // quality filter — unless the operator picked categories. The
+        // configured anime category and remake filter are standing defaults
+        // for automatic anime searches, not for a raw text search.
+        let Some(category) = unscoped_category(req) else {
+            return Vec::new();
+        };
+        let params = strip_params(
+            additional_params,
+            &["q", "term", "c", "cats", "f", "filter"],
+        );
+        format!("{params}&c={category}&f=0")
+    } else {
+        strip_params(additional_params, &["q", "term"])
+    };
     let base = format!("{root}/?page=rss{params}");
 
     terms
@@ -643,17 +658,113 @@ fn percent_encode_term(term: &str) -> String {
         .join("+")
 }
 
-/// Remove any `q`/`term` member from an `additional_params` string, preserving
-/// the rest verbatim.
-fn strip_term_params(additional_params: &str) -> String {
+/// Remove every member named in `keys` from an `additional_params` string,
+/// preserving the rest verbatim.
+fn strip_params(additional_params: &str, keys: &[&str]) -> String {
     additional_params
         .split('&')
         .filter(|member| {
             let key = member.split('=').next().unwrap_or_default().trim();
-            !(key.eq_ignore_ascii_case("q") || key.eq_ignore_ascii_case("term"))
+            !keys
+                .iter()
+                .any(|stripped| key.eq_ignore_ascii_case(stripped))
         })
         .collect::<Vec<_>>()
         .join("&")
+}
+
+/// True for a facetless request that carries only free text — an interactive
+/// raw search.
+fn is_unscoped_text_request(req: &SearchRequest) -> bool {
+    req.facet
+        .as_deref()
+        .is_none_or(|facet| facet.trim().is_empty())
+        && req.ids.is_empty()
+        && req.season.is_none()
+        && req.episode.is_none()
+        && req.absolute_episode.is_none()
+}
+
+/// Prowlarr's Nyaa newznab category mappings (`nyaasi.yml`), as
+/// (Nyaa id, newznab code).
+const NEWZNAB_CATEGORY_MAP: &[(&str, i64)] = &[
+    ("1_0", 5070),
+    ("1_1", 5070),
+    ("1_2", 5070),
+    ("1_3", 5070),
+    ("1_4", 5070),
+    ("1_0", 2020),
+    ("1_1", 2020),
+    ("1_2", 2020),
+    ("1_3", 2020),
+    ("1_4", 2020),
+    ("2_0", 3000),
+    ("2_1", 3000),
+    ("2_2", 3000),
+    ("3_0", 7000),
+    ("3_1", 7000),
+    ("3_2", 7000),
+    ("3_3", 7000),
+    ("4_0", 5000),
+    ("4_1", 5000),
+    ("4_2", 5000),
+    ("4_3", 5000),
+    ("4_4", 5000),
+    ("5_0", 8000),
+    ("5_1", 8000),
+    ("5_2", 8000),
+    ("6_0", 4000),
+    ("6_1", 4020),
+    ("6_2", 4050),
+];
+
+/// The single Nyaa `c` value for an unscoped search.
+///
+/// With no categories requested that is `0_0`, every category. Otherwise the
+/// newznab codes are mapped the way Prowlarr's `MapTorznabCapsToTrackers`
+/// maps them (a parent code also selects its subcategories). Nyaa takes one
+/// category, so one id is sent as itself, several ids inside one main
+/// category as that category's `N_0`, and ids spanning main categories as
+/// `0_0`. `None` means nothing requested exists on Nyaa, so nothing is
+/// searched.
+fn unscoped_category(req: &SearchRequest) -> Option<String> {
+    let raw: Vec<&str> = if req.categories.is_empty() {
+        req.category.as_deref().into_iter().collect()
+    } else {
+        req.categories.iter().map(String::as_str).collect()
+    };
+    let requested: Vec<i64> = raw
+        .iter()
+        .flat_map(|value| value.split(','))
+        .filter_map(|value| value.trim().parse::<i64>().ok())
+        .collect();
+    if requested.is_empty() {
+        return Some("0_0".to_string());
+    }
+    let mut ids: Vec<&str> = Vec::new();
+    for (id, newznab) in NEWZNAB_CATEGORY_MAP {
+        let selected = requested.iter().any(|code| {
+            *code == *newznab || (code % 1000 == 0 && *newznab > *code && *newznab < code + 1000)
+        });
+        if selected && !ids.contains(id) {
+            ids.push(id);
+        }
+    }
+    match ids.as_slice() {
+        [] => None,
+        [only] => Some((*only).to_string()),
+        [first, rest @ ..] => {
+            let main = first.split('_').next().unwrap_or_default();
+            if rest
+                .iter()
+                .all(|id| id.split('_').next().unwrap_or_default() == main)
+            {
+                Some(format!("{main}_0"))
+            } else {
+                Some("0_0".to_string())
+            }
+        }
+    }
 }
 
 fn dedupe_strings(values: Vec<String>) -> Vec<String> {
@@ -2283,6 +2394,7 @@ mod tests {
     #[test]
     fn a_search_term_is_never_shadowed_by_a_q_in_the_additional_parameters() {
         let req = SearchRequest {
+            facet: Some("anime".to_string()),
             query: "Bleach".to_string(),
             ..SearchRequest::default()
         };
@@ -2357,6 +2469,7 @@ mod tests {
     #[test]
     fn tagged_aliases_do_not_fan_the_request_out() {
         let req = SearchRequest {
+            facet: Some("anime".to_string()),
             query: "Naruto Shippuuden".to_string(),
             tagged_aliases: vec![
                 TaggedAlias {
@@ -2380,6 +2493,7 @@ mod tests {
     #[test]
     fn a_tagged_alias_is_used_only_when_the_host_sent_no_query() {
         let req = SearchRequest {
+            facet: Some("anime".to_string()),
             tagged_aliases: vec![TaggedAlias {
                 name: "Naruto Shippuuden".to_string(),
                 language: "en".to_string(),
@@ -2402,6 +2516,7 @@ mod tests {
     #[test]
     fn a_scene_title_from_the_context_wins_over_the_query() {
         let req = SearchRequest {
+            facet: Some("anime".to_string()),
             query: "Attack on Titan".to_string(),
             context: Some(PluginSearchContext {
                 scene_titles: vec!["Shingeki no Kyojin".to_string()],
@@ -2447,6 +2562,7 @@ mod tests {
     #[test]
     fn a_trailing_slash_on_the_base_url_is_not_doubled() {
         let req = SearchRequest {
+            facet: Some("anime".to_string()),
             query: "Bleach".to_string(),
             ..SearchRequest::default()
         };
@@ -2462,12 +2578,115 @@ mod tests {
     #[test]
     fn an_empty_additional_parameters_value_still_builds_a_feed_url() {
         let req = SearchRequest {
+            facet: Some("anime".to_string()),
             query: "Bleach".to_string(),
             ..SearchRequest::default()
         };
         assert_eq!(
             nyaa_urls("https://nyaa.si", "", &req, false),
             vec!["https://nyaa.si/?page=rss&term=Bleach"]
+        );
+    }
+
+    fn raw_search(query: &str, categories: &[&str]) -> SearchRequest {
+        SearchRequest {
+            query: query.to_string(),
+            categories: categories
+                .iter()
+                .map(|value| (*value).to_string())
+                .collect(),
+            context: Some(PluginSearchContext {
+                search_origin: PluginSearchOrigin::Interactive,
+                query_kind: PluginSearchQueryKind::Text,
+                ..search_context(
+                    PluginSearchRequestKind::Search,
+                    PluginSearchSubjectKind::Unknown,
+                )
+            }),
+            ..SearchRequest::default()
+        }
+    }
+
+    /// Prowlarr's Nyaa manual search: every category, no quality filter.
+    #[test]
+    fn a_raw_text_search_covers_every_category_without_a_filter() {
+        assert_eq!(
+            nyaa_urls(
+                "https://nyaa.si",
+                DEFAULT_ADDITIONAL_PARAMS,
+                &raw_search("Synthetic Show 1080p", &[]),
+                false
+            ),
+            vec!["https://nyaa.si/?page=rss&c=0_0&f=0&term=Synthetic+Show+1080p"]
+        );
+    }
+
+    #[test]
+    fn a_raw_text_search_keeps_the_operators_other_parameters() {
+        assert_eq!(
+            nyaa_urls(
+                "https://nyaa.si",
+                "&c=1_2&f=2&u=someuploader&s=seeders&o=desc",
+                &raw_search("Synthetic Show", &[]),
+                false
+            ),
+            vec![
+                "https://nyaa.si/?page=rss&u=someuploader&s=seeders&o=desc&c=0_0&f=0\
+                 &term=Synthetic+Show"
+            ]
+        );
+    }
+
+    #[test]
+    fn a_raw_text_search_maps_the_picked_categories_to_one_nyaa_category() {
+        let cases: &[(&[&str], &str)] = &[
+            (&["5070"], "1_0"),
+            (&["2000"], "1_0"),
+            (&["3000"], "2_0"),
+            (&["4050"], "6_2"),
+            (&["4000"], "6_0"),
+            (&["7000", "3000"], "0_0"),
+            (&["5000"], "0_0"),
+        ];
+        for (categories, expected) in cases {
+            assert_eq!(
+                nyaa_urls(
+                    "https://nyaa.si",
+                    DEFAULT_ADDITIONAL_PARAMS,
+                    &raw_search("Synthetic", categories),
+                    false
+                ),
+                vec![format!(
+                    "https://nyaa.si/?page=rss&c={expected}&f=0&term=Synthetic"
+                )],
+                "categories {categories:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_raw_text_search_for_categories_nyaa_lacks_issues_no_request() {
+        assert!(
+            nyaa_urls(
+                "https://nyaa.si",
+                DEFAULT_ADDITIONAL_PARAMS,
+                &raw_search("Synthetic", &["6000"]),
+                false
+            )
+            .is_empty()
+        );
+    }
+
+    #[test]
+    fn an_anime_search_keeps_the_configured_category_and_filter() {
+        let req = SearchRequest {
+            query: "Synthetic Show".to_string(),
+            facet: Some("anime".to_string()),
+            ..SearchRequest::default()
+        };
+        assert_eq!(
+            nyaa_urls("https://nyaa.si", DEFAULT_ADDITIONAL_PARAMS, &req, false),
+            vec!["https://nyaa.si/?page=rss&cats=1_0&filter=1&term=Synthetic+Show"]
         );
     }
 

@@ -1,8 +1,10 @@
 use std::collections::{BTreeMap, HashMap};
 
 use base64::{Engine as _, engine::general_purpose::STANDARD};
-use quick_xml::Reader;
-use quick_xml::events::{BytesStart, Event};
+use quick_xml::escape::resolve_predefined_entity;
+use quick_xml::events::attributes::Attribute;
+use quick_xml::events::{BytesRef, BytesStart, Event};
+use quick_xml::{Reader, XmlVersion};
 use regex::Regex;
 use scryer_plugin_pdk::component::{self, LogLevel, StartRateGate};
 use scryer_plugin_pdk::*;
@@ -520,19 +522,22 @@ fn parse_rss_feed(
     preference: DownloadPreference,
     rewrite_rules: &[TitleRewriteRule],
 ) -> Vec<SearchResult> {
+    // Element text arrives split at every entity reference, so it is collected
+    // untrimmed and trimmed once when the element closes.
     let mut reader = Reader::from_str(body);
-    reader.config_mut().trim_text(true);
 
     let mut buf = Vec::new();
     let mut results = Vec::new();
     let mut item = ParsedItem::default();
     let mut in_item = false;
     let mut current_tag: Option<String> = None;
+    let mut text = String::new();
 
     loop {
         match reader.read_event_into(&mut buf) {
             Ok(Event::Start(ref event)) => {
                 let name = tag_name(event);
+                text.clear();
                 if name == "item" {
                     in_item = true;
                     item = ParsedItem::default();
@@ -560,19 +565,14 @@ fn parse_rss_feed(
                     item.attrs.push(pair);
                 }
             }
-            Ok(Event::Text(text)) if in_item => {
-                apply_text(
-                    &mut item,
-                    current_tag.as_deref(),
-                    decode_text(text.as_ref()),
-                );
+            Ok(Event::Text(ref fragment)) if in_item && current_tag.is_some() => {
+                text.push_str(&fragment.xml10_content());
             }
-            Ok(Event::CData(text)) if in_item => {
-                apply_text(
-                    &mut item,
-                    current_tag.as_deref(),
-                    decode_text(text.as_ref()),
-                );
+            Ok(Event::GeneralRef(ref reference)) if in_item && current_tag.is_some() => {
+                push_general_ref(&mut text, reference);
+            }
+            Ok(Event::CData(ref fragment)) if in_item && current_tag.is_some() => {
+                text.push_str(&fragment.xml10_content());
             }
             Ok(Event::End(ref event)) => {
                 let name = event.name().as_ref().to_string();
@@ -584,6 +584,8 @@ fn parse_rss_feed(
                     }
                     item = ParsedItem::default();
                 } else if current_tag.as_deref() == Some(name.as_str()) {
+                    apply_text(&mut item, current_tag.as_deref(), &text);
+                    text.clear();
                     current_tag = None;
                 }
             }
@@ -602,15 +604,33 @@ fn tag_name(event: &BytesStart<'_>) -> String {
     event.name().as_ref().to_string()
 }
 
-fn decode_text(text: &str) -> String {
-    text.replace("&amp;", "&")
-        .replace("&lt;", "<")
-        .replace("&gt;", ">")
-        .replace("&quot;", "\"")
-        .replace("&#39;", "'")
+/// Append the text an entity or character reference stands for. A named entity
+/// XML does not predefine is kept as written rather than dropped.
+fn push_general_ref(text: &mut String, reference: &BytesRef<'_>) {
+    if let Ok(Some(ch)) = reference.resolve_char_ref() {
+        text.push(ch);
+        return;
+    }
+    let name = reference.xml10_content();
+    match resolve_predefined_entity(&name) {
+        Some(resolved) => text.push_str(resolved),
+        None => {
+            text.push('&');
+            text.push_str(&name);
+            text.push(';');
+        }
+    }
 }
 
-fn apply_text(item: &mut ParsedItem, current_tag: Option<&str>, value: String) {
+/// An attribute's value with entity and character references resolved, or
+/// the raw value when it holds a reference XML does not define.
+fn attr_text(attr: &Attribute<'_>) -> String {
+    attr.normalized_value(XmlVersion::Implicit1_0)
+        .map(|value| value.into_owned())
+        .unwrap_or_else(|_| attr.value.to_string())
+}
+
+fn apply_text(item: &mut ParsedItem, current_tag: Option<&str>, value: &str) {
     let trimmed = value.trim();
     if trimmed.is_empty() {
         return;
@@ -637,7 +657,7 @@ fn merge_text(slot: &mut Option<String>, value: &str) {
 fn parse_enclosure(event: &BytesStart<'_>, item: &mut ParsedItem) {
     for attr in event.attributes().flatten() {
         let key = attr.key.as_ref();
-        let value = attr.value.to_string();
+        let value = attr_text(&attr);
         match key {
             "url" => item.enclosure_url = Some(value),
             "length" => item.enclosure_length = value.replace(',', "").parse::<i64>().ok(),
@@ -652,8 +672,8 @@ fn parse_attr_pair(event: &BytesStart<'_>) -> Option<(String, String)> {
     let mut value = None;
     for attr in event.attributes().flatten() {
         match attr.key.as_ref() {
-            "name" => name = Some(attr.value.to_string()),
-            "value" => value = Some(attr.value.to_string()),
+            "name" => name = Some(attr_text(&attr)),
+            "value" => value = Some(attr_text(&attr)),
             _ => {}
         }
     }
@@ -1159,6 +1179,53 @@ mod tests {
         let json = serde_json::to_string(&build_descriptor()).unwrap();
         assert!(json.contains("\"provider_type\":\"torrent_rss\""));
         assert!(json.contains("\"source_kind\":\"torrent\""));
+    }
+
+    #[test]
+    fn entity_and_cdata_text_decodes_whole() {
+        let body = r#"
+<rss>
+  <channel>
+    <item>
+      <title>Sample &amp; Order &#39;Pilot&#39; &#x2013; &lt;Cut&gt; 1080p</title>
+      <link>https://tracker.example/details.php?id=1&amp;hit=1</link>
+      <guid>https://tracker.example/details.php?id=1&amp;guid=1</guid>
+      <enclosure url="https://tracker.example/download.php?id=1&amp;passkey=synthetic" length="10" type="application/x-bittorrent" />
+      <torznab:attr name="magneturl" value="magnet:?xt=urn:btih:abcdef1234567890abcdef1234567890abcdef12&amp;tr=udp%3A%2F%2Ftracker.example%3A80" />
+    </item>
+    <item>
+      <title><![CDATA[Sample & Friends <Special>]]></title>
+      <enclosure url="https://tracker.example/download.php?id=2" length="10" type="application/x-bittorrent" />
+    </item>
+  </channel>
+</rss>
+"#;
+
+        let results = parse(body, DownloadPreference::Auto);
+        assert_eq!(results.len(), 2);
+        let first = &results[0];
+        assert_eq!(first.title, "Sample & Order 'Pilot' \u{2013} <Cut> 1080p");
+        assert_eq!(
+            first.link.as_deref(),
+            Some("https://tracker.example/details.php?id=1&hit=1")
+        );
+        assert_eq!(
+            first.guid.as_deref(),
+            Some("https://tracker.example/details.php?id=1&guid=1")
+        );
+        assert_eq!(
+            parse(body, DownloadPreference::Enclosure)[0]
+                .download_url
+                .as_deref(),
+            Some("https://tracker.example/download.php?id=1&passkey=synthetic")
+        );
+        assert_eq!(
+            first.provider_extra.get("magnet_uri"),
+            Some(&serde_json::Value::from(
+                "magnet:?xt=urn:btih:abcdef1234567890abcdef1234567890abcdef12&tr=udp%3A%2F%2Ftracker.example%3A80"
+            ))
+        );
+        assert_eq!(results[1].title, "Sample & Friends <Special>");
     }
 
     #[test]

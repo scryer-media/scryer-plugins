@@ -59,7 +59,7 @@ fn build_descriptor() -> PluginDescriptor {
                 deduplicates_aliases: false,
                 season_param: Some("season".to_string()),
                 episode_param: Some("episode".to_string()),
-                query_param: None,
+                query_param: Some("Search".to_string()),
                 supported_query_facets: vec![],
                 search: true,
                 imdb_search: false,
@@ -74,6 +74,7 @@ fn build_descriptor() -> PluginDescriptor {
                     IndexerFeedMode::InteractiveSearch,
                 ],
                 search_inputs: vec![
+                    IndexerSearchInput::TextQuery,
                     IndexerSearchInput::Season,
                     IndexerSearchInput::Episode,
                     IndexerSearchInput::Limit,
@@ -404,6 +405,53 @@ fn config_fields() -> Vec<ConfigFieldDef> {
     ]
 }
 
+/// Prowlarr's `Search` member for free text: every space becomes a `%`
+/// wildcard (`BroadcastheNetRequestGenerator`).
+fn text_search(req: &SearchRequest) -> Option<String> {
+    let term = req.query.trim();
+    (!term.is_empty()).then(|| term.replace(' ', "%"))
+}
+
+/// The queries for a text search with no series id, shaped as Prowlarr's
+/// generator shapes them: the free text alone, or scoped by the same
+/// `Category`/`Name` pattern an id search uses when numbering is present.
+fn text_queries(req: &SearchRequest, search: String) -> Vec<BtnQuery> {
+    let base = BtnQuery {
+        search: Some(search),
+        ..BtnQuery::default()
+    };
+    match (req.season, req.episode) {
+        (Some(season), Some(episode)) => vec![BtnQuery {
+            category: Some("Episode".to_string()),
+            name: Some(episode_name_pattern(season, episode)),
+            ..base
+        }],
+        (Some(season), None) => vec![
+            BtnQuery {
+                category: Some("Season".to_string()),
+                name: Some(format!("Season {season}%")),
+                ..base.clone()
+            },
+            BtnQuery {
+                category: Some("Episode".to_string()),
+                name: Some(format!("S{season:02}E%")),
+                ..base
+            },
+        ],
+        _ => vec![base],
+    }
+}
+
+/// Episodes >= 100 already render as three digits, where the wildcard after
+/// the `E` would only broaden the match for nothing.
+fn episode_name_pattern(season: u32, episode: u32) -> String {
+    if episode < 100 {
+        format!("S{season:02}%E%{episode:02}%")
+    } else {
+        format!("S{season:02}%E{episode:02}%")
+    }
+}
+
 fn build_queries(req: &SearchRequest) -> Vec<BtnQuery> {
     let mut queries = Vec::new();
     let tvdb = req.ids.get("tvdb_id").filter(|value| !value.is_empty());
@@ -412,6 +460,8 @@ fn build_queries(req: &SearchRequest) -> Vec<BtnQuery> {
     if tvdb.is_none() && tvrage.is_none() {
         if is_recent_request(req) {
             queries.push(recent_query());
+        } else if let Some(search) = text_search(req) {
+            queries.extend(text_queries(req, search));
         }
         return queries;
     }
@@ -444,13 +494,7 @@ fn build_queries(req: &SearchRequest) -> Vec<BtnQuery> {
     // Scryer's search timeout.
     match (req.season, req.episode) {
         (Some(season), Some(episode)) => {
-            // Episodes >= 100 already render as three digits, where the
-            // wildcard would only broaden the match for nothing.
-            let name = if episode < 100 {
-                format!("S{season:02}%E%{episode:02}%")
-            } else {
-                format!("S{season:02}%E{episode:02}%")
-            };
+            let name = episode_name_pattern(season, episode);
 
             queries.push(BtnQuery {
                 category: Some("Episode".to_string()),
@@ -967,6 +1011,99 @@ mod tests {
         };
 
         assert!(build_queries(&req).is_empty());
+    }
+
+    fn body(query: &BtnQuery) -> serde_json::Value {
+        serde_json::to_value(query).expect("query serialises")
+    }
+
+    #[test]
+    fn a_text_only_search_sends_the_wildcarded_term() {
+        let req = SearchRequest {
+            query: "Synthetic Show 1080p".to_string(),
+            ..SearchRequest::default()
+        };
+
+        let queries = build_queries(&req);
+
+        assert_eq!(queries.len(), 1);
+        assert_eq!(
+            body(&queries[0]),
+            serde_json::json!({"Search": "Synthetic%Show%1080p"})
+        );
+    }
+
+    #[test]
+    fn a_text_search_with_an_episode_scopes_the_group_name() {
+        let req = SearchRequest {
+            query: "Synthetic Show".to_string(),
+            season: Some(2),
+            episode: Some(5),
+            ..SearchRequest::default()
+        };
+
+        let queries = build_queries(&req);
+
+        assert_eq!(queries.len(), 1);
+        assert_eq!(
+            body(&queries[0]),
+            serde_json::json!({
+                "Search": "Synthetic%Show",
+                "Category": "Episode",
+                "Name": "S02%E%05%"
+            })
+        );
+    }
+
+    #[test]
+    fn a_text_search_with_a_season_tries_the_pack_then_its_episodes() {
+        let req = SearchRequest {
+            query: "Synthetic Show".to_string(),
+            season: Some(3),
+            ..SearchRequest::default()
+        };
+
+        let queries = build_queries(&req);
+
+        assert_eq!(queries.len(), 2);
+        assert_eq!(queries[0].name.as_deref(), Some("Season 3%"));
+        assert_eq!(queries[0].search.as_deref(), Some("Synthetic%Show"));
+        assert_eq!(queries[1].name.as_deref(), Some("S03E%"));
+    }
+
+    #[test]
+    fn an_id_search_never_sends_the_text() {
+        let mut req = episode_request(1, 2);
+        req.query = "Synthetic Show".to_string();
+
+        let queries = build_queries(&req);
+
+        assert!(queries.iter().all(|query| query.search.is_none()));
+        assert!(
+            queries
+                .iter()
+                .all(|query| query.tvdb.as_deref() == Some("433335"))
+        );
+    }
+
+    #[test]
+    fn the_descriptor_declares_text_search() {
+        let descriptor = build_descriptor();
+        let ProviderDescriptor::Indexer(indexer) = descriptor.provider else {
+            panic!("indexer descriptor");
+        };
+        assert!(
+            indexer
+                .capabilities
+                .search_inputs
+                .contains(&IndexerSearchInput::TextQuery)
+        );
+        assert!(
+            indexer
+                .capabilities
+                .feed_modes
+                .contains(&IndexerFeedMode::InteractiveSearch)
+        );
     }
 
     // -- RSS catch-up ------------------------------------------------------
