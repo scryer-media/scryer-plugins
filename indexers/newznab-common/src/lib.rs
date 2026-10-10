@@ -983,8 +983,8 @@ async fn search_with_paging(
     let mut last_limits = ApiLimits::default();
     let mut completed_page = false;
 
+    let mut offset = first_offset;
     for page in 0..max_pages {
-        let offset = first_offset + page * page_size;
         let page_params = offset_page_params(&config.additional_params, offset);
         let page_limit = page_size.min(wanted - all_results.len());
 
@@ -1146,6 +1146,10 @@ async fn search_with_paging(
                 ),
             ));
         }
+        // The next page starts after the results this one asked for: fewer
+        // than a full page once the limit is nearly met, so advancing by the
+        // page size would skip the records between.
+        offset += page_limit;
     }
 
     completed_search_response(config, all_results, &last_limits, None)
@@ -1184,8 +1188,8 @@ async fn raw_search_with_paging(
     let mut last_limits = ApiLimits::default();
     let mut completed_page = false;
 
+    let mut offset = first_offset;
     for page in 0..max_pages {
-        let offset = first_offset + page * page_size;
         let page_params = offset_page_params(&config.additional_params, offset);
         let page_limit = page_size.min(wanted - all_results.len());
 
@@ -1322,6 +1326,10 @@ async fn raw_search_with_paging(
                 ),
             ));
         }
+        // The next page starts after the results this one asked for: fewer
+        // than a full page once the limit is nearly met, so advancing by the
+        // page size would skip the records between.
+        offset += page_limit;
     }
 
     completed_search_response(config, all_results, &last_limits, None)
@@ -8324,6 +8332,32 @@ mod tests {
             });
         }
 
+        /// Serve a page like [`serve_page`], except that `untitled` has no
+        /// title: the parser counts the item but keeps no result for it.
+        fn serve_page_with_untitled(
+            search_type: &str,
+            offset: usize,
+            releases: &[usize],
+            untitled: usize,
+        ) {
+            let body = feed(
+                &releases
+                    .iter()
+                    .map(|release| (guid(search_type, *release), *release))
+                    .collect::<Vec<_>>(),
+            )
+            .replace(
+                &format!("<title>Sample.Feed.Release.{untitled}</title>"),
+                "",
+            );
+            SCRIPT.with(|script| {
+                script
+                    .borrow_mut()
+                    .pages
+                    .insert((search_type.to_string(), offset), body)
+            });
+        }
+
         fn guid(search_type: &str, release: usize) -> String {
             format!("guid-{search_type}-{release}")
         }
@@ -8810,6 +8844,43 @@ mod tests {
             }
 
             #[test]
+            fn a_reduced_final_page_with_a_discarded_item_resumes_where_it_stopped() {
+                install_script();
+                serve_full_pages("search", 1);
+                // The second page asks for the 2 results still wanted; the
+                // indexer answers 2 items but one has no title, so only one
+                // result comes back and the search reads on.
+                serve_page_with_untitled("search", 3, &[3, 4], 4);
+                serve_page("search", 5, &[5]);
+
+                let response = run(
+                    &config(10),
+                    &text_request("Sample Film", PluginSearchOrigin::Interactive, &[], 5),
+                )
+                .expect("the search completes");
+
+                let offsets: Vec<String> = sent()
+                    .iter()
+                    .map(|params| params.get("offset").cloned().unwrap_or_default())
+                    .collect();
+                assert_eq!(
+                    offsets,
+                    vec!["0", "3", "5"],
+                    "the third page starts after the two records the second asked for"
+                );
+                assert_eq!(
+                    guids(&response.results),
+                    vec![
+                        "guid-search-0",
+                        "guid-search-1",
+                        "guid-search-2",
+                        "guid-search-3",
+                        "guid-search-5",
+                    ]
+                );
+            }
+
+            #[test]
             fn automatic_searches_still_page_to_the_request_limit() {
                 install_script();
                 serve_full_pages("search", 4);
@@ -9099,6 +9170,34 @@ mod tests {
                         "an indexer that ignores limit is truncated to it"
                     );
                     assert_eq!(response.next_cursor.as_deref(), Some("offset:40"));
+                }
+
+                #[test]
+                fn an_unpaged_search_resumes_after_a_reduced_page_with_a_discarded_item() {
+                    install_script();
+                    serve_page("tvsearch", 0, &(0..NAB_PAGE).collect::<Vec<_>>());
+                    serve_page_with_untitled(
+                        "tvsearch",
+                        NAB_PAGE,
+                        &(100..150).collect::<Vec<_>>(),
+                        120,
+                    );
+                    serve_page("tvsearch", 150, &[150]);
+
+                    let response = run(&paged_config(), &tiered_request(150, None))
+                        .expect("the search completes");
+
+                    let sent = sent();
+                    let offsets: Vec<Option<&str>> =
+                        sent.iter().map(|params| param(params, "offset")).collect();
+                    assert_eq!(offsets, vec![Some("0"), Some("100"), Some("150")]);
+                    let limits: Vec<Option<&str>> =
+                        sent.iter().map(|params| param(params, "limit")).collect();
+                    assert_eq!(limits, vec![Some("100"), Some("50"), Some("1")]);
+                    let seen = guids(&response.results);
+                    assert_eq!(seen.len(), 150);
+                    assert!(!seen.iter().any(|guid| guid == "guid-tvsearch-120"));
+                    assert_eq!(seen.last().map(String::as_str), Some("guid-tvsearch-150"));
                 }
 
                 #[test]
