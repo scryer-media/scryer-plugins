@@ -1,6 +1,6 @@
 [package]
 name = "torrent-rss-indexer"
-version = "2.2.4"
+version = "2.2.5"
 edition = "2024"
 autolib = false
 license = "GPL-3.0-only"
@@ -21,7 +21,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 base64 = "0.23"
-scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.7.0" }
 quick-xml = "0.42"
 scryer-plugin-sdk = "3.11.0"
 serde = { version = "1", features = ["derive"] }

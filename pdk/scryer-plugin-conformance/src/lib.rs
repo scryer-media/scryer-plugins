@@ -21,8 +21,8 @@
 //!   with extra host-call variants extends without reopening this crate.
 //! - [`download_client`], [`notification`] and [`subtitle`] are behind cargo
 //!   features of the same name. Each owns its own
-//!   `wasmtime::component::bindgen!` over the WIT vendored under this crate's
-//!   `wit/`, plus the family's default check set as a builder.
+//!   `wasmtime::component::bindgen!` over the canonical versioned WIT under
+//!   `../scryer-plugin-pdk/wit/`, plus the family's default check set as a builder.
 //!
 //! # This crate is a dev-dependency, and only ever a dev-dependency
 //!

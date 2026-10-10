@@ -93,7 +93,7 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "filelist-indexer"
-version = "2.2.2"
+version = "2.2.6"
 dependencies = [
  "base64 0.23.1",
  "scryer-plugin-pdk",
@@ -477,7 +477,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scryer-plugin-pdk"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "futures-util",

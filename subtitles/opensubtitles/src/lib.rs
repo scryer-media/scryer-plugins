@@ -73,7 +73,7 @@ wit_bindgen::generate!({
     // Three packages, three paths, matching the host's own bindgen: the shared
     // `scryer:host` package is listed first so the family package's
     // `import scryer:host/services@1.0.0` resolves against it.
-    path: ["wit/host-v1.0.0", "wit/runtime-v1.0.0", "wit/subtitle-v1.1.0"],
+    path: ["../../pdk/scryer-plugin-pdk/wit/host-v1.0.0", "../../pdk/scryer-plugin-pdk/wit/runtime-v1.0.0", "../../pdk/scryer-plugin-pdk/wit/subtitle-v1.1.0"],
     // The shared host package lives in its own WIT package, so wit-bindgen
     // asks explicitly whether to generate for it. Yes: the PDK holds only a
     // `fn` pointer and the entry macro binds it to this module's
@@ -381,7 +381,10 @@ fn plugin_error(error: String) -> PluginError {
             PluginErrorCode::RateLimited,
             retry_after_from_message(&error),
         )
-    } else if error.contains("required") || error.contains("missing") {
+    } else if error.contains("required")
+        || error.contains("missing")
+        || error == EMAIL_USERNAME_ERROR
+    {
         (PluginErrorCode::InvalidConfig, None)
     } else if error.contains("request failed") {
         (PluginErrorCode::UpstreamUnavailable, None)
@@ -406,6 +409,7 @@ impl OpenSubtitlesConfig {
     fn from_host() -> Result<Self, String> {
         let api_key = config_required_string("api_key")?;
         let username = config_required_string("username")?;
+        validate_username(&username)?;
         let password = config_required_string("password")?;
         Ok(Self {
             api_key,
@@ -1917,6 +1921,16 @@ fn config_required_string(key: &str) -> Result<String, String> {
     }
 }
 
+const EMAIL_USERNAME_ERROR: &str =
+    "OpenSubtitles requires the account username, not the email address";
+
+fn validate_username(username: &str) -> Result<(), String> {
+    if username.contains('@') {
+        return Err(EMAIL_USERNAME_ERROR.to_string());
+    }
+    Ok(())
+}
+
 fn config_bool(key: &str, default: bool) -> bool {
     match config::get(key) {
         Ok(Some(value)) => match value.trim().to_ascii_lowercase().as_str() {
@@ -1936,7 +1950,7 @@ mod tests {
         MAX_SEARCH_REQUESTS, OpenSubtitlesConfig, SearchAttributes, SearchResult, SearchTransport,
         SubtitleSearch, append_translation_filter_params, compact_error_body,
         config_auth_fingerprint, descriptor, encode_query, from_opensubtitles_language,
-        is_real_forced, to_opensubtitles_language,
+        is_real_forced, to_opensubtitles_language, validate_username,
     };
     use scryer_plugin_sdk::{
         ConfigFieldValueSource, PluginHostBindingId, ProviderDescriptor, SubtitleMatchHintKind,
@@ -2043,6 +2057,26 @@ mod tests {
             config_auth_fingerprint(&base),
             config_auth_fingerprint(&changed)
         );
+    }
+
+    #[test]
+    fn rejects_email_addresses_as_usernames() {
+        let error = validate_username("person@example.com").expect_err("email should be rejected");
+        assert_eq!(
+            error,
+            "OpenSubtitles requires the account username, not the email address"
+        );
+        let structured = super::plugin_error(error);
+        assert_eq!(
+            structured.code,
+            scryer_plugin_sdk::PluginErrorCode::InvalidConfig
+        );
+        assert!(structured.retry_after_seconds.is_none());
+    }
+
+    #[test]
+    fn accepts_account_usernames() {
+        assert!(validate_username("account-name").is_ok());
     }
 
     #[test]

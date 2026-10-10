@@ -13,7 +13,8 @@ use scryer_plugin_pdk::*;
 use scryer_plugin_sdk::{ConfigFieldOption, ConfigFieldValueSource};
 
 const PROVIDER_ID: &str = "animetosho-xyz";
-const DEFAULT_BASE_URL: &str = "https://feed.animetosho.xyz";
+const DEFAULT_BASE_URL: &str = "https://feed.animetosho.net";
+const LEGACY_BASE_URL: &str = "https://feed.animetosho.xyz";
 const DEFAULT_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"));
 const PAGE_SIZE: usize = 200;
 const NATIVE_PAGE_SIZE: usize = 75;
@@ -73,7 +74,7 @@ impl DownloadMode {
 fn build_descriptor() -> PluginDescriptor {
     PluginDescriptor {
         id: PROVIDER_ID.to_string(),
-        name: "AnimeTosho.xyz Indexer".to_string(),
+        name: "AnimeTosho.net Indexer".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
         sdk_constraint: current_sdk_constraint(),
@@ -193,20 +194,20 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             role: Some(ConfigFieldRole::ConnectionUrl),
             host_binding: None,
             options: vec![],
-            help_text: Some("AnimeTosho.xyz feed API base URL".to_string()),
+            help_text: Some("AnimeTosho.net feed API base URL".to_string()),
             ..Default::default()
         },
         ConfigFieldDef {
             key: "api_key".to_string(),
             label: "API Key".to_string(),
             field_type: ConfigFieldType::Password,
-            required: true,
+            required: false,
             default_value: None,
             value_source: ConfigFieldValueSource::User,
             role: None,
             host_binding: None,
             options: vec![],
-            help_text: Some("AnimeTosho.xyz API key".to_string()),
+            help_text: Some("Leave empty for AnimeTosho.net".to_string()),
             ..Default::default()
         },
         ConfigFieldDef {
@@ -250,14 +251,26 @@ fn config_fields() -> Vec<ConfigFieldDef> {
 }
 
 fn animetosho_config(mode: DownloadMode) -> Result<NewznabConfig, Error> {
-    let base_url = config_string("base_url")?.unwrap_or_else(|| DEFAULT_BASE_URL.to_string());
-    let api_key =
-        config_string("api_key")?.ok_or_else(|| Error::msg("api_key is not configured"))?;
+    animetosho_config_from(mode, config_string)
+}
+
+fn animetosho_config_from(
+    mode: DownloadMode,
+    mut read: impl FnMut(&str) -> Result<Option<String>, Error>,
+) -> Result<NewznabConfig, Error> {
+    let base_url = read("base_url")?.unwrap_or_else(|| DEFAULT_BASE_URL.to_string());
+    let base_url =
+        if base_url.trim().is_empty() || base_url.trim().trim_end_matches('/') == LEGACY_BASE_URL {
+            DEFAULT_BASE_URL.to_string()
+        } else {
+            base_url
+        };
+    let api_key = read("api_key")?.unwrap_or_default().trim().to_string();
     Ok(NewznabConfig {
         base_url,
         api_key,
         api_path: mode.api_path().to_string(),
-        additional_params: config_string("additional_params")?.unwrap_or_default(),
+        additional_params: read("additional_params")?.unwrap_or_default(),
         page_size: PAGE_SIZE,
         http_behavior: NewznabHttpBehavior {
             plugin_id: PROVIDER_ID.to_string(),
@@ -372,7 +385,9 @@ fn native_search_url(
         })
         .map(ToString::to_string)
         .collect::<Vec<_>>();
-    params.push(format!("apikey={}", url_encode(&config.api_key)));
+    if !config.api_key.trim().is_empty() {
+        params.push(format!("apikey={}", url_encode(&config.api_key)));
+    }
     params.push(format!("aid={anidb_id}"));
     if let Some(query) = query {
         params.push(format!("q={}", url_encode(query)));
@@ -699,7 +714,7 @@ mod tests {
     }
 
     #[test]
-    fn descriptor_requires_api_key_and_supports_both_protocols() {
+    fn descriptor_allows_empty_api_key_and_supports_both_protocols() {
         let descriptor = build_descriptor();
         let ProviderDescriptor::Indexer(indexer) = descriptor.provider else {
             panic!("expected indexer descriptor");
@@ -710,7 +725,7 @@ mod tests {
             .iter()
             .find(|field| field.key == "api_key")
             .expect("api_key field");
-        assert!(api_key.required);
+        assert!(!api_key.required);
         assert_eq!(
             indexer.capabilities.protocols,
             vec![IndexerProtocol::Usenet, IndexerProtocol::Torrent]
@@ -808,7 +823,7 @@ mod tests {
 
         assert_eq!(
             url,
-            "https://feed.animetosho.xyz/json?foo=bar&apikey=test-key&aid=1535&q=S02E03&page=1"
+            "https://feed.animetosho.net/json?foo=bar&apikey=test-key&aid=1535&q=S02E03&page=1"
         );
         assert!(!url.contains("Synthetic"));
     }
@@ -835,8 +850,54 @@ mod tests {
         assert_eq!(native_episode_query(&request).as_deref(), Some("21"));
         assert_eq!(
             native_search_url(&config, 1535, Some("21"), 1),
-            "https://feed.animetosho.xyz/json?apikey=test-key&aid=1535&q=21&page=1"
+            "https://feed.animetosho.net/json?apikey=test-key&aid=1535&q=21&page=1"
         );
+    }
+
+    #[test]
+    fn configuration_accepts_missing_and_blank_api_keys() {
+        for mode in [DownloadMode::Nzb, DownloadMode::Torrent] {
+            for api_key in [None, Some(""), Some("   ")] {
+                let config = animetosho_config_from(mode, |key| {
+                    Ok(if key == "api_key" {
+                        api_key.map(str::to_string)
+                    } else {
+                        None
+                    })
+                })
+                .expect("AnimeTosho does not require an API key");
+                assert_eq!(config.base_url, "https://feed.animetosho.net");
+                assert!(config.api_key.is_empty());
+                assert_eq!(config.api_path, mode.api_path());
+                assert_eq!(
+                    native_search_url(&config, 1535, Some("21"), 1),
+                    "https://feed.animetosho.net/json?aid=1535&q=21&page=1"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn configuration_migrates_legacy_default_and_preserves_custom_urls() {
+        for (configured, expected) in [
+            ("https://feed.animetosho.xyz", "https://feed.animetosho.net"),
+            (
+                "https://feed.animetosho.xyz/",
+                "https://feed.animetosho.net",
+            ),
+            ("", "https://feed.animetosho.net"),
+            ("https://feed.example.test", "https://feed.example.test"),
+            (
+                "https://feed.animetosho.xyz.example.test",
+                "https://feed.animetosho.xyz.example.test",
+            ),
+        ] {
+            let config = animetosho_config_from(DownloadMode::Nzb, |key| {
+                Ok((key == "base_url").then(|| configured.to_string()))
+            })
+            .expect("valid configuration");
+            assert_eq!(config.base_url, expected);
+        }
     }
 
     #[test]

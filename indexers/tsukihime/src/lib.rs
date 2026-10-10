@@ -3,6 +3,7 @@ use std::fmt;
 
 use scryer_plugin_pdk::component::{self, structured_plugin_error};
 use scryer_plugin_pdk::*;
+use scryer_plugin_sdk::command::{PluginActionRequest, PluginActionResponse};
 use scryer_plugin_sdk::current_sdk_constraint;
 use scryer_plugin_sdk::{
     ConfigFieldDef, ConfigFieldRole, ConfigFieldType, ConfigFieldValueSource, IndexerCapabilities,
@@ -31,6 +32,11 @@ const SEARCH_RATE_LIMIT_STATE_KEY: &str = "tsukihime-indexer-search-rate-limit-v
 const API_COOLDOWN_STATE_KEY: &str = "tsukihime-indexer-api-cooldown-v2";
 const SEARCH_COOLDOWN_STATE_KEY: &str = "tsukihime-indexer-search-cooldown-v2";
 const REQUEST_START_STATE_KEY: &str = "tsukihime-indexer-request-start-v2";
+const NZB_STORAGE_HOST: &str = "storage.tsukihime.org";
+const NZB_STORAGE_URL_PREFIX: &str = "https://storage.tsukihime.org/nzbs/";
+/// Upper bound on a decompressed NZB. Large season packs stay well below it; a
+/// payload that inflates past it is refused rather than buffered.
+const MAX_NZB_BYTES: usize = 64 * 1024 * 1024;
 
 async fn search(request: SearchRequest) -> FnResult<SearchResponse> {
     let response = match search_impl(&request).await {
@@ -180,7 +186,10 @@ fn build_descriptor() -> PluginDescriptor {
             },
             scoring_policies: vec![],
             config_fields: config_fields(),
-            allowed_hosts: vec!["api.tsukihime.org".to_string()],
+            allowed_hosts: vec![
+                "api.tsukihime.org".to_string(),
+                NZB_STORAGE_HOST.to_string(),
+            ],
             rate_limit_seconds: Some(RATE_LIMIT_HINT_SECONDS as i64),
         }),
     }
@@ -743,6 +752,164 @@ fn nzb_download_url(torrent: &Torrent) -> String {
     )
 }
 
+/// The component's named-action surface.
+///
+/// `grab` fetches a Tsukihime NZB for Scryer's download router. Tsukihime
+/// serves NZBs gzip-compressed as a plain `application/gzip` file (no
+/// `Content-Encoding`), so the plugin inflates the body and hands the host
+/// the NZB XML. Torrent and magnet links are reported as unsupported so the
+/// host keeps fetching them itself.
+async fn action(request: PluginActionRequest) -> FnResult<PluginActionResponse> {
+    if request.action != "grab" {
+        return Err(structured_plugin_error(component::action_unsupported(
+            &request.action,
+        )));
+    }
+    let url = grab_url(&request.payload).map_err(Error::msg)?;
+    if !is_nzb_storage_url(&url) {
+        return Err(structured_plugin_error(PluginError {
+            code: PluginErrorCode::Unsupported,
+            public_message: "this indexer only resolves its own NZB downloads".to_string(),
+            debug_message: None,
+            retry_after_seconds: None,
+            details: None,
+        }));
+    }
+    let payload = grab_nzb(&url)
+        .await
+        .map_err(|error| Error::msg(error.to_string()))?;
+    Ok(PluginActionResponse { payload })
+}
+
+fn grab_url(payload: &Value) -> Result<String, String> {
+    match payload {
+        Value::String(url) => Some(url.as_str()),
+        Value::Object(object) => object.get("url").and_then(Value::as_str),
+        _ => None,
+    }
+    .map(str::trim)
+    .filter(|url| !url.is_empty())
+    .map(str::to_string)
+    .ok_or_else(|| "grab action requires a non-empty URL payload".to_string())
+}
+
+fn is_nzb_storage_url(url: &str) -> bool {
+    url.strip_prefix(NZB_STORAGE_URL_PREFIX)
+        .is_some_and(|rest| !rest.is_empty())
+}
+
+async fn grab_nzb(url: &str) -> Result<Value, TsukihimeError> {
+    let response = http_get_accepting(
+        url,
+        "application/gzip, application/x-gzip, application/x-nzb, */*",
+    )
+    .await?;
+    match response.status {
+        200..=299 => {}
+        429 => {
+            return Err(TsukihimeError::RateLimited(
+                retry_after_delay_ms(&response.headers).map(retry_after_seconds_from_ms),
+            ));
+        }
+        status => {
+            return Err(TsukihimeError::Message(format!(
+                "Tsukihime NZB download returned HTTP {status}"
+            )));
+        }
+    }
+    let nzb = decode_nzb_body(&response.body, MAX_NZB_BYTES).map_err(TsukihimeError::Message)?;
+    Ok(serde_json::json!({
+        "url": url,
+        "body": nzb,
+        "file_name": nzb_file_name(url),
+        "content_type": "application/x-nzb",
+    }))
+}
+
+/// Inflate a gzip-compressed NZB, or pass through one that is already XML.
+///
+/// Anything else, and any NZB larger than `max_bytes` once inflated, is
+/// refused with a message the operator can act on.
+fn decode_nzb_body(body: &[u8], max_bytes: usize) -> Result<Vec<u8>, String> {
+    use std::io::Read;
+
+    let decoded = if body.starts_with(&[0x1f, 0x8b]) {
+        let mut decoded = Vec::new();
+        flate2::read::MultiGzDecoder::new(body)
+            .take(max_bytes as u64 + 1)
+            .read_to_end(&mut decoded)
+            .map_err(|error| format!("Tsukihime NZB download is not valid gzip: {error}"))?;
+        decoded
+    } else {
+        body.to_vec()
+    };
+    if decoded.len() > max_bytes {
+        return Err(format!(
+            "Tsukihime NZB download exceeds the {} MiB limit",
+            max_bytes / (1024 * 1024)
+        ));
+    }
+    if !starts_like_xml(&decoded) {
+        return Err("Tsukihime NZB download was neither gzip-compressed nor NZB XML".to_string());
+    }
+    Ok(decoded)
+}
+
+fn starts_like_xml(bytes: &[u8]) -> bool {
+    let bytes = bytes.strip_prefix(&[0xEF, 0xBB, 0xBF]).unwrap_or(bytes);
+    bytes
+        .iter()
+        .find(|byte| !byte.is_ascii_whitespace())
+        .is_some_and(|byte| *byte == b'<')
+}
+
+/// `<release>.nzb` from the storage URL's last path segment.
+fn nzb_file_name(url: &str) -> String {
+    let segment = url
+        .split(['?', '#'])
+        .next()
+        .unwrap_or_default()
+        .rsplit('/')
+        .next()
+        .unwrap_or_default();
+    let decoded = url_decode(segment);
+    let without_gz = decoded.strip_suffix(".gz").unwrap_or(&decoded);
+    let stem = without_gz.strip_suffix(".nzb").unwrap_or(without_gz);
+    let stem: String = stem
+        .chars()
+        .map(|ch| match ch {
+            '"' | '/' | '\\' => '_',
+            ch if ch.is_control() => '_',
+            ch => ch,
+        })
+        .collect();
+    let stem = stem.trim();
+    if stem.is_empty() {
+        "tsukihime.nzb".to_string()
+    } else {
+        format!("{stem}.nzb")
+    }
+}
+
+fn url_decode(input: &str) -> String {
+    let bytes = input.as_bytes();
+    let mut output = Vec::with_capacity(bytes.len());
+    let mut index = 0;
+    while index < bytes.len() {
+        if bytes[index] == b'%'
+            && let Some(hex) = input.get(index + 1..index + 3)
+            && let Ok(byte) = u8::from_str_radix(hex, 16)
+        {
+            output.push(byte);
+            index += 3;
+            continue;
+        }
+        output.push(bytes[index]);
+        index += 1;
+    }
+    String::from_utf8_lossy(&output).into_owned()
+}
+
 fn has_nzb(torrent: &Torrent) -> bool {
     positive_i64(torrent.has_nzb).is_some()
 }
@@ -795,11 +962,18 @@ async fn get_json<T: for<'de> Deserialize<'de>>(
 }
 
 async fn http_get(url: &str) -> Result<TsukihimeHttpResponse, TsukihimeError> {
+    http_get_accepting(url, "application/json").await
+}
+
+async fn http_get_accepting(
+    url: &str,
+    accept: &str,
+) -> Result<TsukihimeHttpResponse, TsukihimeError> {
     let response = component::http(PluginHttpRequest {
         url: url.to_string(),
         method: Some("GET".to_string()),
         headers: BTreeMap::from([
-            ("Accept".to_string(), "application/json".to_string()),
+            ("Accept".to_string(), accept.to_string()),
             ("User-Agent".to_string(), DEFAULT_USER_AGENT.to_string()),
         ]),
         body: Vec::new(),
@@ -1179,7 +1353,11 @@ fn civil_from_days(days: i64) -> (i64, i64, i64) {
     (year, month, day)
 }
 
-scryer_indexer_component_main!(descriptor = build_descriptor, search = search,);
+scryer_indexer_component_main!(
+    descriptor = build_descriptor,
+    search = search,
+    action = action,
+);
 
 #[cfg(test)]
 mod tests {
@@ -1217,6 +1395,125 @@ mod tests {
                 .capabilities
                 .search_inputs
                 .contains(&IndexerSearchInput::TextQuery)
+        );
+        assert_eq!(
+            indexer.allowed_hosts,
+            vec![
+                "api.tsukihime.org".to_string(),
+                "storage.tsukihime.org".to_string()
+            ]
+        );
+    }
+
+    const SYNTHETIC_NZB: &[u8] = br#"<?xml version="1.0" encoding="UTF-8"?>
+<nzb xmlns="http://www.newzbin.com/DTD/2003/nzb">
+  <file poster="poster@example.invalid" date="1700000000" subject="Synthetic Show 01 [1080p].mkv">
+    <groups><group>alt.binaries.example</group></groups>
+    <segments><segment bytes="1024" number="1">part1@example.invalid</segment></segments>
+  </file>
+</nzb>
+"#;
+
+    fn gzip(bytes: &[u8]) -> Vec<u8> {
+        use std::io::Write;
+        let mut encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
+        encoder.write_all(bytes).unwrap();
+        encoder.finish().unwrap()
+    }
+
+    #[test]
+    fn decode_nzb_body_inflates_gzip() {
+        let decoded = decode_nzb_body(&gzip(SYNTHETIC_NZB), MAX_NZB_BYTES).unwrap();
+        assert_eq!(decoded, SYNTHETIC_NZB);
+    }
+
+    #[test]
+    fn decode_nzb_body_passes_plain_xml_through() {
+        let decoded = decode_nzb_body(SYNTHETIC_NZB, MAX_NZB_BYTES).unwrap();
+        assert_eq!(decoded, SYNTHETIC_NZB);
+
+        let with_bom_and_space = [b"\xEF\xBB\xBF \n".as_slice(), SYNTHETIC_NZB].concat();
+        assert_eq!(
+            decode_nzb_body(&with_bom_and_space, MAX_NZB_BYTES).unwrap(),
+            with_bom_and_space
+        );
+    }
+
+    #[test]
+    fn decode_nzb_body_refuses_payloads_over_the_limit() {
+        let limit = SYNTHETIC_NZB.len() - 1;
+        let compressed = decode_nzb_body(&gzip(SYNTHETIC_NZB), limit).unwrap_err();
+        assert!(compressed.contains("exceeds"), "{compressed}");
+        let plain = decode_nzb_body(SYNTHETIC_NZB, limit).unwrap_err();
+        assert!(plain.contains("exceeds"), "{plain}");
+        assert!(decode_nzb_body(&gzip(SYNTHETIC_NZB), SYNTHETIC_NZB.len()).is_ok());
+    }
+
+    #[test]
+    fn decode_nzb_body_rejects_corrupt_gzip_and_non_xml() {
+        let mut truncated = gzip(SYNTHETIC_NZB);
+        truncated.truncate(truncated.len() / 2);
+        let error = decode_nzb_body(&truncated, MAX_NZB_BYTES).unwrap_err();
+        assert!(error.contains("not valid gzip"), "{error}");
+
+        let error = decode_nzb_body(b"{\"error\":\"nope\"}", MAX_NZB_BYTES).unwrap_err();
+        assert!(error.contains("neither"), "{error}");
+        let error = decode_nzb_body(&gzip(b"PK\x03\x04binary"), MAX_NZB_BYTES).unwrap_err();
+        assert!(error.contains("neither"), "{error}");
+        assert!(decode_nzb_body(b"", MAX_NZB_BYTES).is_err());
+    }
+
+    #[test]
+    fn grab_accepts_only_tsukihime_nzb_storage_urls() {
+        assert_eq!(
+            grab_url(
+                &serde_json::json!({"url": " https://storage.tsukihime.org/nzbs/1/a.nzb.gz "})
+            )
+            .unwrap(),
+            "https://storage.tsukihime.org/nzbs/1/a.nzb.gz"
+        );
+        assert_eq!(
+            grab_url(&serde_json::json!(
+                "https://storage.tsukihime.org/nzbs/1/a.nzb.gz"
+            ))
+            .unwrap(),
+            "https://storage.tsukihime.org/nzbs/1/a.nzb.gz"
+        );
+        assert!(grab_url(&serde_json::json!({"url": "  "})).is_err());
+        assert!(grab_url(&serde_json::json!(42)).is_err());
+
+        assert!(is_nzb_storage_url(
+            "https://storage.tsukihime.org/nzbs/7/Synthetic%20Show.nzb.gz"
+        ));
+        assert!(!is_nzb_storage_url("https://storage.tsukihime.org/nzbs/"));
+        assert!(!is_nzb_storage_url(
+            "https://nyaa.example/download/7.torrent"
+        ));
+        assert!(!is_nzb_storage_url("magnet:?xt=urn:btih:00"));
+        assert!(!is_nzb_storage_url(
+            "https://storage.tsukihime.org.example/nzbs/7/a.nzb.gz"
+        ));
+        assert!(!is_nzb_storage_url(
+            "http://storage.tsukihime.org/nzbs/7/a.nzb.gz"
+        ));
+    }
+
+    #[test]
+    fn grab_file_name_comes_from_the_storage_url() {
+        let torrent: Torrent =
+            serde_json::from_str(r#"{"id": 7, "name": "[Group] Synthetic Show - 01 [1080p]"}"#)
+                .unwrap();
+        assert_eq!(
+            nzb_file_name(&nzb_download_url(&torrent)),
+            "[Group] Synthetic Show - 01 [1080p].nzb"
+        );
+        assert_eq!(
+            nzb_file_name("https://storage.tsukihime.org/nzbs/7/a%22b%2Fc.nzb.gz?x=1"),
+            "a_b_c.nzb"
+        );
+        assert_eq!(
+            nzb_file_name("https://storage.tsukihime.org/nzbs/7/"),
+            "tsukihime.nzb"
         );
     }
 

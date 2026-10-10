@@ -50,15 +50,15 @@
 //!
 //! ## Usage — a family component
 //!
-//! A migrated plugin generates its own family world (the WIT is vendored in
-//! the plugin crate, as the archive extractor does) and then hands the entry
+//! A plugin generates its family world from the versioned WIT in this PDK
+//! and then hands the entry
 //! macro a descriptor factory and its existing command handler. That is the
 //! whole of the boilerplate:
 //!
 //! ```ignore
 //! wit_bindgen::generate!({
 //!     world: "scryer:subtitle/subtitle-provider@1.1.0",
-//!     path: ["wit/host-v1.0.0", "wit/runtime-v1.0.0", "wit/subtitle-v1.1.0"],
+//!     path: ["../../pdk/scryer-plugin-pdk/wit/host-v1.0.0", "../../pdk/scryer-plugin-pdk/wit/runtime-v1.0.0", "../../pdk/scryer-plugin-pdk/wit/subtitle-v1.1.0"],
 //!     generate_all,
 //! });
 //!
@@ -425,7 +425,7 @@ macro_rules! __scryer_family_component_main {
 /// ```ignore
 /// wit_bindgen::generate!({
 ///     world: "scryer:subtitle/subtitle-provider@1.1.0",
-///     path: ["wit/host-v1.0.0", "wit/runtime-v1.0.0", "wit/subtitle-v1.1.0"],
+///     path: ["../../pdk/scryer-plugin-pdk/wit/host-v1.0.0", "../../pdk/scryer-plugin-pdk/wit/runtime-v1.0.0", "../../pdk/scryer-plugin-pdk/wit/subtitle-v1.1.0"],
 ///     generate_all,
 /// });
 ///

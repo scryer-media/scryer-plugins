@@ -44,11 +44,19 @@ client item is present in both sources.
 
 ## Usage
 
-A plugin generates its family world from the WIT vendored in its own crate and
-hands the entry macro a descriptor factory and a command handler:
+A plugin generates its family world from the canonical versioned contracts in
+`pdk/scryer-plugin-pdk/wit/` and hands the entry macro a descriptor factory and
+a command handler. For a first-party plugin under `notifications/<plugin>/`:
 
 ```ignore
-wit_bindgen::generate!({ world: "notification", path: "wit" });
+wit_bindgen::generate!({
+    world: "scryer:notification/notification@1.0.0",
+    path: [
+        "../../pdk/scryer-plugin-pdk/wit/host-v1.0.0",
+        "../../pdk/scryer-plugin-pdk/wit/notification-v1.0.0",
+    ],
+    generate_all,
+});
 
 scryer_plugin_pdk::scryer_notification_component_main!(
     descriptor = build_descriptor,

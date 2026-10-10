@@ -42,7 +42,7 @@ wit_bindgen::generate!({
     // imported packages are listed first so the family package's
     // `import scryer:host/services@1.0.0` and
     // `import scryer:runtime/host@1.0.0` resolve against them.
-    path: ["wit/host-v1.0.0", "wit/runtime-v1.0.0", "wit/subtitle-v1.1.0"],
+    path: ["../../pdk/scryer-plugin-pdk/wit/host-v1.0.0", "../../pdk/scryer-plugin-pdk/wit/runtime-v1.0.0", "../../pdk/scryer-plugin-pdk/wit/subtitle-v1.1.0"],
     // The imported packages live in their own WIT packages, so wit-bindgen asks
     // explicitly whether to generate for them. Yes: the PDK holds only a `fn`
     // pointer and a runtime backend, and the entry macro binds them to this

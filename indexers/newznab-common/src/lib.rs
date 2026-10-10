@@ -1734,7 +1734,7 @@ fn parse_rfc2822_epoch_seconds(value: &str) -> Option<i64> {
     let year_text = parts.next()?;
     let year = match (ascii_number(year_text)?, year_text.len()) {
         (year, 1 | 2) if year < 50 => year + 2_000,
-        (year, 1 | 2 | 3) => year + 1_900,
+        (year, 1..=3) => year + 1_900,
         (year, _) => year,
     };
     let mut clock = parts.next()?.split(':');

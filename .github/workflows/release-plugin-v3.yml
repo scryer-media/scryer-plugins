@@ -698,6 +698,10 @@ jobs:
       CF_R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
       CF_R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
       GH_TOKEN: ${{ github.token }}
+      # Repair override: a signed full-catalog asset on the catalog/v3 release
+      # to merge onto instead of the one the modern redirect serves. Unset it
+      # again once the repair has published.
+      SCRYER_CATALOG_MERGE_BASE_ASSET: ${{ vars.SCRYER_CATALOG_MERGE_BASE_ASSET }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -881,44 +885,52 @@ jobs:
           fi
           existing_dir="existing-central-catalog-v3"
           mkdir -p "${existing_dir}"
-          # The merge base must be the FULL catalog. The modern redirect points
-          # at the unfiltered master; the legacy redirect's rungs are
-          # per-stratum projections, and merging against a projection would
-          # silently drop every release the projection filtered out (the whole
-          # component fleet). The modern redirect does not exist until the
-          # first publish after the strata change, so bootstrap once from the
-          # legacy redirect — at that point its last rung is still the full
-          # catalog.
-          existing_redirect="catalog-v3.modern.redirect.json"
-          existing_redirect_bundle="catalog-v3.modern.redirect.bundle.json"
-          if ! gh release download "catalog/v3" \
-            --repo "${GITHUB_REPOSITORY}" \
-            --pattern "${existing_redirect}" \
-            --pattern "${existing_redirect_bundle}" \
-            --dir "${existing_dir}" \
-            --clobber \
-            || [ ! -s "${existing_dir}/${existing_redirect}" ]; then
-            echo "modern redirect not published yet; bootstrapping the merge base from the legacy redirect"
-            existing_redirect="catalog-v3.redirect.json"
-            existing_redirect_bundle="catalog-v3.redirect.bundle.json"
-            gh release download "catalog/v3" \
-              --repo "${GITHUB_REPOSITORY}" \
-              --pattern "${existing_redirect}" \
-              --pattern "${existing_redirect_bundle}" \
-              --dir "${existing_dir}" \
-              --clobber
+          # The merge base must be the FULL catalog, and an unattended publish
+          # (the nightly rule-pack refreshes included) has exactly one source
+          # for it: the signed modern redirect, which points at the unfiltered
+          # master. The legacy redirect's rungs are per-stratum projections;
+          # merging onto one silently drops every release the projection
+          # filtered out, for the whole fleet. That happened once when a
+          # GitHub 5xx on the redirect download was mistaken for "modern
+          # redirect not published yet" and the step fell back to the legacy
+          # ladder. So: no fallback. A transient failure retries and then
+          # fails the job. Only an operator can name a different merge base,
+          # through SCRYER_CATALOG_MERGE_BASE_ASSET.
+          download_catalog_release_assets() {
+            local attempt
+            for attempt in 1 2 3 4 5; do
+              if gh release download "catalog/v3" \
+                --repo "${GITHUB_REPOSITORY}" \
+                --dir "${existing_dir}" \
+                --clobber \
+                "$@"; then
+                return 0
+              fi
+              echo "catalog/v3 asset download failed (attempt ${attempt}/5): $*" >&2
+              sleep $(( attempt * 10 ))
+            done
+            return 1
+          }
+          if [ -n "${SCRYER_CATALOG_MERGE_BASE_ASSET:-}" ]; then
+            # Operator repair or bootstrap: merge onto a named, signed catalog
+            # asset instead of the one the modern redirect serves.
+            echo "::warning::merging onto operator-selected catalog asset ${SCRYER_CATALOG_MERGE_BASE_ASSET}"
+            catalog_asset="${SCRYER_CATALOG_MERGE_BASE_ASSET}"
+          else
+            modern_redirect="catalog-v3.modern.redirect.json"
+            download_catalog_release_assets \
+              --pattern "${modern_redirect}" \
+              --pattern "catalog-v3.modern.redirect.bundle.json"
+            test -s "${existing_dir}/${modern_redirect}"
+            verify_release_blob_tag_bound \
+              "${existing_dir}/${modern_redirect}" \
+              "${existing_dir}/catalog-v3.modern.redirect.bundle.json" \
+              "${GITHUB_REPOSITORY}"
+            catalog_asset="$(python3 -c 'import json, sys; from pathlib import Path; redirect = json.loads(Path(sys.argv[1]).read_text()); artifacts = redirect.get("artifacts") or []; sys.exit("catalog-v3 redirect does not contain any artifacts") if not artifacts else None; print(artifacts[-1]["url"].rsplit("/", 1)[-1])' "${existing_dir}/${modern_redirect}")"
           fi
-          verify_release_blob_tag_bound \
-            "${existing_dir}/${existing_redirect}" \
-            "${existing_dir}/${existing_redirect_bundle}" \
-            "${GITHUB_REPOSITORY}"
-          catalog_asset="$(python3 -c 'import json, sys; from pathlib import Path; redirect = json.loads(Path(sys.argv[1]).read_text()); artifacts = redirect.get("artifacts") or []; sys.exit("catalog-v3 redirect does not contain any artifacts") if not artifacts else None; print(artifacts[-1]["url"].rsplit("/", 1)[-1])' "${existing_dir}/${existing_redirect}")"
-          gh release download "catalog/v3" \
-            --repo "${GITHUB_REPOSITORY}" \
+          download_catalog_release_assets \
             --pattern "${catalog_asset}" \
-            --pattern "${catalog_asset}.bundle.zst" \
-            --dir "${existing_dir}" \
-            --clobber
+            --pattern "${catalog_asset}.bundle.zst"
           zstd -dc "${existing_dir}/${catalog_asset}.bundle.zst" > "${existing_dir}/${catalog_asset}.bundle"
           verify_release_blob_tag_bound \
             "${existing_dir}/${catalog_asset}" \

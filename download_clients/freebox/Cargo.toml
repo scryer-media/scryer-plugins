@@ -1,6 +1,6 @@
 [package]
 name = "freebox-download-client"
-version = "2.0.1"
+version = "2.0.2"
 edition = "2024"
 rust-version = "1.97.1"
 license = "GPL-3.0-only"
@@ -29,7 +29,7 @@ crate-type = ["cdylib"]
 base64 = "0.23"
 hmac = "0.13"
 scryer-plugin-sdk = "3.11.0"
-scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.6.0" }
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.7.0" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha1 = "0.11"

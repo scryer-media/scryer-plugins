@@ -18,7 +18,7 @@ use scryer_plugin_sdk::{
 
 wit_bindgen::generate!({
     world: "indexer-plugin",
-    path: "wit",
+    path: "wit/indexer-v1.1.0",
     pub_export_macro: true,
 });
 

@@ -26,7 +26,7 @@ use url::Url;
 
 wit_bindgen::generate!({
     world: "scryer:subtitle/subtitle-provider@1.1.0",
-    path: ["wit/host-v1.0.0", "wit/runtime-v1.0.0", "wit/subtitle-v1.1.0"],
+    path: ["../../pdk/scryer-plugin-pdk/wit/host-v1.0.0", "../../pdk/scryer-plugin-pdk/wit/runtime-v1.0.0", "../../pdk/scryer-plugin-pdk/wit/subtitle-v1.1.0"],
     generate_all,
 });
 

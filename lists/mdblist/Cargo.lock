@@ -183,7 +183,7 @@ checksum = "09edd9e8b54e49e587e4f6295a7d29c3ea94d469cb40ab8ca70b288248a81db2"
 
 [[package]]
 name = "list-provider-common"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "quick-xml",
  "scryer-plugin-pdk",
@@ -219,7 +219,7 @@ dependencies = [
 
 [[package]]
 name = "mdblist-list-provider"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "list-provider-common",
  "regex",
@@ -382,7 +382,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scryer-plugin-pdk"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "futures-util",

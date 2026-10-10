@@ -34,7 +34,7 @@ use wasmtime_wasi::{FsPerms, WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
 mod archive_world {
     wasmtime::component::bindgen!({
         world: "scryer:archive/archive-extractor@1.1.0",
-        path: "wit",
+        path: "../../pdk/scryer-plugin-pdk/wit/archive-v1.1.0",
     });
 }
 
