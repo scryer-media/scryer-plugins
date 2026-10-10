@@ -160,6 +160,7 @@ fn build_descriptor() -> PluginDescriptor {
         sdk_version: SDK_VERSION.to_string(),
         sdk_constraint: current_sdk_constraint(),
         socket_permissions: vec![],
+        settings: Vec::new(),
         provider: ProviderDescriptor::Subtitle(SubtitleDescriptor {
             provider_type: PROVIDER_TYPE.to_string(),
             provider_aliases: vec!["amenzb.moe".to_string()],
@@ -480,6 +481,7 @@ fn base_search_request(
         tagged_aliases: vec![],
         context: None,
         rss_catch_up: None,
+        page_cursor: None,
     }
 }
 

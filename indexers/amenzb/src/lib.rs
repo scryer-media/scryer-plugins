@@ -33,6 +33,7 @@ fn build_descriptor() -> PluginDescriptor {
         sdk_version: SDK_VERSION.to_string(),
         sdk_constraint: current_sdk_constraint(),
         socket_permissions: vec![],
+        settings: Vec::new(),
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: PROVIDER_ID.to_string(),
             provider_aliases: vec![],
@@ -190,6 +191,7 @@ fn empty_hit_budget_response(config: &NewznabConfig) -> Result<SearchResponse, E
         api_max,
         grab_current: None,
         grab_max: None,
+        next_cursor: None,
     })
 }
 
@@ -209,6 +211,7 @@ fn empty_hit_budget_response(config: &NewznabConfig) -> Result<SearchResponse, E
         api_max,
         grab_current: None,
         grab_max: None,
+        next_cursor: None,
     })
 }
 
@@ -448,6 +451,7 @@ mod tests {
             tagged_aliases: vec![],
             context: None,
             rss_catch_up: None,
+            page_cursor: None,
         }
     }
 

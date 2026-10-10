@@ -131,6 +131,12 @@ fn protected_from_extra(extra: &HashMap<String, serde_json::Value>) -> Option<bo
 // ---------------------------------------------------------------------------
 
 const DEFAULT_MAX_SEARCH_PAGES: usize = 30;
+/// Largest `limit` a Newznab request asks for, and so the most results one
+/// page of a paged search returns. Plugins advertise it as `max_page_size`.
+pub const NEWZNAB_MAX_PAGE_SIZE: usize = 100;
+/// Prefix of the page cursors a paged search hands the host; the rest is the
+/// provider offset the next page starts at.
+const PAGE_CURSOR_OFFSET_PREFIX: &str = "offset:";
 const DEFAULT_REQUEST_INTERVAL_MS: u64 = 500;
 /// Time an RSS catch-up keeps in hand before the operation deadline. A page is
 /// only started with at least this much left, so the pages already read are
@@ -262,8 +268,8 @@ impl NewznabConfig {
         let page_size = configured("page_size")
             .and_then(|v| v.parse::<usize>().ok())
             .or_else(|| profile.map(|profile| profile.page_size as usize))
-            .unwrap_or(100)
-            .clamp(1, 100);
+            .unwrap_or(NEWZNAB_MAX_PAGE_SIZE)
+            .clamp(1, NEWZNAB_MAX_PAGE_SIZE);
         let mut http_behavior = NewznabHttpBehavior::default();
         if let Some(profile) = profile {
             http_behavior.plugin_id = profile.profile_id.clone();
@@ -702,6 +708,7 @@ fn newznab_search_response(results: Vec<SearchResult>, limits: &ApiLimits) -> Se
         api_max: limits.api_max,
         grab_current: limits.grab_current,
         grab_max: limits.grab_max,
+        next_cursor: None,
     }
 }
 
@@ -755,16 +762,140 @@ fn incomplete_newznab_search_error(
 /// 3. Executes a tiered search (query+ID → ID-only → generic fallback)
 /// 4. Auto-detects response format (JSON or XML) and parses
 /// 5. Classifies errors with Newznab-specific handling
+///
+/// Searches page through the provider inside this one call, up to the page
+/// ceiling or the request's `limit`. Plugins that declare `paged_search` use
+/// [`execute_paged_search`] instead.
 pub async fn execute_full_search(
     config: &NewznabConfig,
     req: &SearchRequest,
     extract_fn: MetadataExtractor,
 ) -> Result<SearchResponse, Error> {
+    search_with_paging(config, req, extract_fn, SearchPaging::Accumulate).await
+}
+
+/// Execute one page of a Newznab search, for plugins that declare
+/// `paged_search`.
+///
+/// Without a `page_cursor` the page starts at offset 0; with one it starts at
+/// the offset the cursor names. The page asks the provider for
+/// `min(limit, page_size)` results (`limit` 0 meaning `page_size`), never more
+/// than [`NEWZNAB_MAX_PAGE_SIZE`], and the response carries a `next_cursor`
+/// when that page came back full. A short page ends the search. Requests for
+/// recent releases (no query, no ids) keep the RSS behaviour, including
+/// catch-up paging, and never carry a cursor.
+pub async fn execute_paged_search(
+    config: &NewznabConfig,
+    req: &SearchRequest,
+    extract_fn: MetadataExtractor,
+) -> Result<SearchResponse, Error> {
+    let offset = decode_page_cursor(req.page_cursor.as_deref())?;
+    search_with_paging(config, req, extract_fn, SearchPaging::OnePage { offset }).await
+}
+
+/// How a search walks the provider's pages.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SearchPaging {
+    /// Read pages into one response until the request's limit is met, a page
+    /// comes back short, or the page ceiling is reached.
+    Accumulate,
+    /// Read exactly one page starting at `offset` and report where the next
+    /// one starts.
+    OnePage { offset: usize },
+}
+
+impl SearchPaging {
+    fn first_offset(self) -> usize {
+        match self {
+            Self::Accumulate => 0,
+            Self::OnePage { offset } => offset,
+        }
+    }
+
+    fn max_pages(self, config: &NewznabConfig) -> usize {
+        match self {
+            Self::Accumulate => config
+                .http_behavior
+                .max_search_pages
+                .clamp(1, DEFAULT_MAX_SEARCH_PAGES),
+            Self::OnePage { .. } => 1,
+        }
+    }
+
+    /// Results one call asks for: the caller's limit, and for a single page
+    /// never more than [`NEWZNAB_MAX_PAGE_SIZE`].
+    fn wanted(self, limit: usize) -> usize {
+        match self {
+            Self::Accumulate => requested_result_cap(limit),
+            Self::OnePage { .. } => requested_result_cap(limit).min(NEWZNAB_MAX_PAGE_SIZE),
+        }
+    }
+}
+
+fn encode_page_cursor(offset: usize) -> String {
+    format!("{PAGE_CURSOR_OFFSET_PREFIX}{offset}")
+}
+
+/// The offset a page cursor names; no cursor starts at offset 0.
+fn decode_page_cursor(cursor: Option<&str>) -> Result<usize, Error> {
+    let Some(cursor) = cursor else {
+        return Ok(0);
+    };
+    cursor
+        .strip_prefix(PAGE_CURSOR_OFFSET_PREFIX)
+        .and_then(|offset| offset.parse::<usize>().ok())
+        .ok_or_else(|| {
+            structured_plugin_error(PluginError {
+                code: PluginErrorCode::Permanent,
+                public_message: "indexer search page cursor is not valid".to_string(),
+                debug_message: Some(format!(
+                    "Newznab page cursor {cursor:?} was not issued by this plugin"
+                )),
+                retry_after_seconds: None,
+                details: None,
+            })
+        })
+}
+
+/// The successful response of a search, carrying the API counters the
+/// provider or the local hit budget reported.
+fn completed_search_response(
+    config: &NewznabConfig,
+    results: Vec<SearchResult>,
+    limits: &ApiLimits,
+    next_cursor: Option<String>,
+) -> Result<SearchResponse, Error> {
+    let (budget_current, budget_max) = hit_budget_snapshot(&config.http_behavior)?
+        .map(NewznabHitBudgetSnapshot::limiting_current_max)
+        .unwrap_or((None, None));
+
+    Ok(SearchResponse {
+        results,
+        api_current: limits.api_current.or(budget_current),
+        api_max: limits.api_max.or(budget_max),
+        grab_current: limits.grab_current,
+        grab_max: limits.grab_max,
+        next_cursor,
+    })
+}
+
+/// Where the page after one read at `offset` starts, when the provider may
+/// have more: the page came back full.
+fn next_page_cursor(offset: usize, page_limit: usize, page_count: usize) -> Option<String> {
+    (page_limit > 0 && page_count >= page_limit).then(|| encode_page_cursor(offset + page_limit))
+}
+
+async fn search_with_paging(
+    config: &NewznabConfig,
+    req: &SearchRequest,
+    extract_fn: MetadataExtractor,
+    paging: SearchPaging,
+) -> Result<SearchResponse, Error> {
     // A search the user typed goes to the indexer as typed, the way Prowlarr's
     // manual search sends it; title cleaning and typed search modes belong to
     // searches the host derived from a title.
     if is_interactive_text_search(req) {
-        return execute_raw_search(config, req, extract_fn).await;
+        return raw_search_with_paging(config, req, extract_fn, paging).await;
     }
 
     let query = req.query.trim().to_string();
@@ -839,22 +970,22 @@ pub async fn execute_full_search(
     let endpoint = build_endpoint(&config.base_url, &config.api_path)?;
     let search_caps = resolve_search_caps_for_search(config, &endpoint).await?;
 
-    // Paginated search: fetch up to DEFAULT_MAX_SEARCH_PAGES pages.
-    // Stop early if a page returns fewer results than the page size.
+    // Paginated search: fetch up to DEFAULT_MAX_SEARCH_PAGES pages, or the
+    // one page a paged search asked for. Stop early if a page returns fewer
+    // results than the page size.
     let page_size = config.page_size;
-    let max_pages = config
-        .http_behavior
-        .max_search_pages
-        .clamp(1, DEFAULT_MAX_SEARCH_PAGES);
+    let max_pages = paging.max_pages(config);
+    let first_offset = paging.first_offset();
 
-    let wanted = requested_result_cap(req.limit);
+    let wanted = paging.wanted(req.limit);
 
     let mut all_results: Vec<SearchResult> = Vec::new();
     let mut last_limits = ApiLimits::default();
     let mut completed_page = false;
 
+    let mut offset = first_offset;
     for page in 0..max_pages {
-        let page_params = offset_page_params(&config.additional_params, page * page_size);
+        let page_params = offset_page_params(&config.additional_params, offset);
         let page_limit = page_size.min(wanted - all_results.len());
 
         let search_result = if search_shape == NabSearchShape::AnimeExact {
@@ -994,6 +1125,10 @@ pub async fn execute_full_search(
         all_results.extend(page_results);
         completed_page = true;
 
+        if let SearchPaging::OnePage { .. } = paging {
+            let next_cursor = next_page_cursor(offset, page_limit, page_count);
+            return completed_search_response(config, all_results, &last_limits, next_cursor);
+        }
         // Stop once the caller has as many results as it asked for, or once a
         // page comes back short (the indexer has nothing further).
         if all_results.len() >= wanted || page_count < page_limit {
@@ -1011,19 +1146,13 @@ pub async fn execute_full_search(
                 ),
             ));
         }
+        // The next page starts after the results this one asked for: fewer
+        // than a full page once the limit is nearly met, so advancing by the
+        // page size would skip the records between.
+        offset += page_limit;
     }
 
-    let (budget_current, budget_max) = hit_budget_snapshot(&config.http_behavior)?
-        .map(NewznabHitBudgetSnapshot::limiting_current_max)
-        .unwrap_or((None, None));
-
-    Ok(SearchResponse {
-        results: all_results,
-        api_current: last_limits.api_current.or(budget_current),
-        api_max: last_limits.api_max.or(budget_max),
-        grab_current: last_limits.grab_current,
-        grab_max: last_limits.grab_max,
-    })
+    completed_search_response(config, all_results, &last_limits, None)
 }
 
 /// Run a plain `t=search` with the request's text and categories, one request
@@ -1038,22 +1167,30 @@ pub async fn execute_raw_search(
     req: &SearchRequest,
     extract_fn: MetadataExtractor,
 ) -> Result<SearchResponse, Error> {
+    raw_search_with_paging(config, req, extract_fn, SearchPaging::Accumulate).await
+}
+
+async fn raw_search_with_paging(
+    config: &NewznabConfig,
+    req: &SearchRequest,
+    extract_fn: MetadataExtractor,
+    paging: SearchPaging,
+) -> Result<SearchResponse, Error> {
     let endpoint = build_endpoint(&config.base_url, &config.api_path)?;
     let query = raw_search_query(&req.query);
     let newznab_cat = build_category_param(&req.categories);
     let page_size = config.page_size;
-    let max_pages = config
-        .http_behavior
-        .max_search_pages
-        .clamp(1, DEFAULT_MAX_SEARCH_PAGES);
-    let wanted = requested_result_cap(req.limit);
+    let max_pages = paging.max_pages(config);
+    let first_offset = paging.first_offset();
+    let wanted = paging.wanted(req.limit);
 
     let mut all_results = Vec::new();
     let mut last_limits = ApiLimits::default();
     let mut completed_page = false;
 
+    let mut offset = first_offset;
     for page in 0..max_pages {
-        let page_params = offset_page_params(&config.additional_params, page * page_size);
+        let page_params = offset_page_params(&config.additional_params, offset);
         let page_limit = page_size.min(wanted - all_results.len());
 
         let search_result = execute_search(
@@ -1170,6 +1307,10 @@ pub async fn execute_raw_search(
         all_results.extend(page_results);
         completed_page = true;
 
+        if let SearchPaging::OnePage { .. } = paging {
+            let next_cursor = next_page_cursor(offset, page_limit, page_count);
+            return completed_search_response(config, all_results, &last_limits, next_cursor);
+        }
         if all_results.len() >= wanted || page_count < page_limit {
             break;
         }
@@ -1185,19 +1326,13 @@ pub async fn execute_raw_search(
                 ),
             ));
         }
+        // The next page starts after the results this one asked for: fewer
+        // than a full page once the limit is nearly met, so advancing by the
+        // page size would skip the records between.
+        offset += page_limit;
     }
 
-    let (budget_current, budget_max) = hit_budget_snapshot(&config.http_behavior)?
-        .map(NewznabHitBudgetSnapshot::limiting_current_max)
-        .unwrap_or((None, None));
-
-    Ok(SearchResponse {
-        results: all_results,
-        api_current: last_limits.api_current.or(budget_current),
-        api_max: last_limits.api_max.or(budget_max),
-        grab_current: last_limits.grab_current,
-        grab_max: last_limits.grab_max,
-    })
+    completed_search_response(config, all_results, &last_limits, None)
 }
 
 /// Whether `req` is text the user typed into an interactive search, with no
@@ -1273,6 +1408,7 @@ async fn execute_rss_search(
                 api_max: None,
                 grab_current: None,
                 grab_max: None,
+                next_cursor: None,
             });
         }
     };
@@ -1518,6 +1654,7 @@ async fn execute_rss_search(
         api_max: last_limits.api_max.or(budget_max),
         grab_current: last_limits.grab_current,
         grab_max: last_limits.grab_max,
+        next_cursor: None,
     })
 }
 
@@ -8038,6 +8175,8 @@ mod tests {
             /// expires.
             deadline_after_ms: Option<u64>,
             pages: HashMap<(String, usize), String>,
+            /// Pages the indexer answers with HTTP 500 instead of a feed.
+            failing: HashSet<(String, usize)>,
             requests: Vec<(String, Option<usize>)>,
             /// Every requested URL, capability probes included, in order.
             urls: Vec<String>,
@@ -8083,17 +8222,18 @@ mod tests {
                         });
                     }
                     let offset = param("offset").map(|value| value.parse::<usize>().unwrap());
-                    let body = SCRIPT.with(|script| {
+                    let (status, body) = SCRIPT.with(|script| {
                         let mut script = script.borrow_mut();
                         script.requests.push((search_type.clone(), offset));
-                        script
-                            .pages
-                            .get(&(search_type, offset.unwrap_or(0)))
-                            .cloned()
-                            .unwrap_or_else(|| feed(&[]))
+                        let key = (search_type, offset.unwrap_or(0));
+                        if script.failing.contains(&key) {
+                            return (500, String::new());
+                        }
+                        let body = script.pages.get(&key).cloned().unwrap_or_else(|| feed(&[]));
+                        (200, body)
                     });
                     Ok(PluginHttpFieldsResponse {
-                        status: 200,
+                        status,
                         headers: Vec::new(),
                         body: body.into_bytes(),
                     })
@@ -8183,6 +8323,32 @@ mod tests {
                     .iter()
                     .map(|release| (guid(search_type, *release), *release))
                     .collect::<Vec<_>>(),
+            );
+            SCRIPT.with(|script| {
+                script
+                    .borrow_mut()
+                    .pages
+                    .insert((search_type.to_string(), offset), body)
+            });
+        }
+
+        /// Serve a page like [`serve_page`], except that `untitled` has no
+        /// title: the parser counts the item but keeps no result for it.
+        fn serve_page_with_untitled(
+            search_type: &str,
+            offset: usize,
+            releases: &[usize],
+            untitled: usize,
+        ) {
+            let body = feed(
+                &releases
+                    .iter()
+                    .map(|release| (guid(search_type, *release), *release))
+                    .collect::<Vec<_>>(),
+            )
+            .replace(
+                &format!("<title>Sample.Feed.Release.{untitled}</title>"),
+                "",
             );
             SCRIPT.with(|script| {
                 script
@@ -8678,6 +8844,43 @@ mod tests {
             }
 
             #[test]
+            fn a_reduced_final_page_with_a_discarded_item_resumes_where_it_stopped() {
+                install_script();
+                serve_full_pages("search", 1);
+                // The second page asks for the 2 results still wanted; the
+                // indexer answers 2 items but one has no title, so only one
+                // result comes back and the search reads on.
+                serve_page_with_untitled("search", 3, &[3, 4], 4);
+                serve_page("search", 5, &[5]);
+
+                let response = run(
+                    &config(10),
+                    &text_request("Sample Film", PluginSearchOrigin::Interactive, &[], 5),
+                )
+                .expect("the search completes");
+
+                let offsets: Vec<String> = sent()
+                    .iter()
+                    .map(|params| params.get("offset").cloned().unwrap_or_default())
+                    .collect();
+                assert_eq!(
+                    offsets,
+                    vec!["0", "3", "5"],
+                    "the third page starts after the two records the second asked for"
+                );
+                assert_eq!(
+                    guids(&response.results),
+                    vec![
+                        "guid-search-0",
+                        "guid-search-1",
+                        "guid-search-2",
+                        "guid-search-3",
+                        "guid-search-5",
+                    ]
+                );
+            }
+
+            #[test]
             fn automatic_searches_still_page_to_the_request_limit() {
                 install_script();
                 serve_full_pages("search", 4);
@@ -8709,6 +8912,417 @@ mod tests {
                 let sent = sent();
                 assert_eq!(sent.len(), 1);
                 assert_eq!(sent[0].get("q").map(String::as_str), Some("Sample Show"));
+            }
+
+            /// Searches for plugins that declare `paged_search`: one provider
+            /// page per call, resumed from the cursor the previous call
+            /// returned.
+            mod paged {
+                use super::*;
+
+                /// Results per page on the paged endpoint, the Newznab default.
+                const NAB_PAGE: usize = 100;
+                /// More hits than the 30-page ceiling of an unpaged search
+                /// can reach at 100 per page.
+                const LARGE_RESULT_SET: usize = 3_250;
+
+                fn paged_config() -> NewznabConfig {
+                    NewznabConfig {
+                        page_size: NAB_PAGE,
+                        ..config(DEFAULT_MAX_SEARCH_PAGES)
+                    }
+                }
+
+                /// Serve `total` hits of `search_type` in pages of
+                /// [`NAB_PAGE`], whatever `limit` a request names.
+                fn serve_hits(search_type: &str, total: usize) {
+                    for offset in (0..total).step_by(NAB_PAGE) {
+                        let releases: Vec<usize> =
+                            (offset..(offset + NAB_PAGE).min(total)).collect();
+                        serve_page(search_type, offset, &releases);
+                    }
+                }
+
+                fn run_paged(
+                    config: &NewznabConfig,
+                    request: &SearchRequest,
+                ) -> Result<SearchResponse, Error> {
+                    let future = execute_paged_search(config, request, extract_base_metadata);
+                    let mut future = std::pin::pin!(future);
+                    let mut context = Context::from_waker(Waker::noop());
+                    match future.as_mut().poll(&mut context) {
+                        Poll::Ready(output) => output,
+                        Poll::Pending => panic!("the scripted host never suspends"),
+                    }
+                }
+
+                /// An automatic episode search with a TVDB id: the tiered
+                /// shape, `t=tvsearch` with `season` and `ep`.
+                fn tiered_request(limit: usize, cursor: Option<&str>) -> SearchRequest {
+                    SearchRequest {
+                        query: "Sample Show".to_string(),
+                        ids: HashMap::from([("tvdb_id".to_string(), "990001".to_string())]),
+                        facet: Some("series".to_string()),
+                        limit,
+                        season: Some(1),
+                        episode: Some(5),
+                        context: Some(scryer_plugin_sdk::PluginSearchContext {
+                            subject_kind: PluginSearchSubjectKind::Episode,
+                            search_origin: PluginSearchOrigin::Automatic,
+                            query_kind: PluginSearchQueryKind::Title,
+                            ..scryer_plugin_sdk::PluginSearchContext::default()
+                        }),
+                        page_cursor: cursor.map(str::to_string),
+                        ..SearchRequest::default()
+                    }
+                }
+
+                /// An automatic anime episode search: the exact-anime shape,
+                /// `t=tvsearch` with the absolute number as `ep` and no
+                /// season.
+                fn anime_request(limit: usize, cursor: Option<&str>) -> SearchRequest {
+                    SearchRequest {
+                        query: "Sample Anime".to_string(),
+                        ids: HashMap::from([("tvdb_id".to_string(), "990002".to_string())]),
+                        facet: Some("anime".to_string()),
+                        limit,
+                        season: Some(1),
+                        episode: Some(12),
+                        absolute_episode: Some(112),
+                        context: Some(scryer_plugin_sdk::PluginSearchContext {
+                            subject_kind: PluginSearchSubjectKind::AnimeEpisode,
+                            search_origin: PluginSearchOrigin::Automatic,
+                            query_kind: PluginSearchQueryKind::Title,
+                            ..scryer_plugin_sdk::PluginSearchContext::default()
+                        }),
+                        page_cursor: cursor.map(str::to_string),
+                        ..SearchRequest::default()
+                    }
+                }
+
+                fn param<'a>(params: &'a BTreeMap<String, String>, key: &str) -> Option<&'a str> {
+                    params.get(key).map(String::as_str)
+                }
+
+                #[test]
+                fn following_the_cursor_walks_every_page_one_request_per_call() {
+                    install_script();
+                    serve_hits("tvsearch", LARGE_RESULT_SET);
+                    let config = paged_config();
+
+                    let mut cursor: Option<String> = None;
+                    let mut seen = Vec::new();
+                    let mut calls = 0;
+                    loop {
+                        let before = sent().len();
+                        let response = run_paged(&config, &tiered_request(1000, cursor.as_deref()))
+                            .expect("every page completes");
+                        calls += 1;
+                        let sent = sent();
+                        assert_eq!(sent.len(), before + 1, "one provider request per call");
+                        let params = &sent[before];
+                        assert_eq!(
+                            param(params, "offset"),
+                            Some((seen.len()).to_string().as_str()),
+                            "the cursor names the offset after the last page"
+                        );
+                        assert_eq!(param(params, "limit"), Some("100"));
+                        if calls == 1 {
+                            assert_eq!(response.results.len(), NAB_PAGE);
+                            assert_eq!(response.next_cursor.as_deref(), Some("offset:100"));
+                        }
+                        seen.extend(guids(&response.results));
+                        match response.next_cursor {
+                            Some(next) => cursor = Some(next),
+                            None => {
+                                assert_eq!(
+                                    response.results.len(),
+                                    LARGE_RESULT_SET % NAB_PAGE,
+                                    "the short last page ends the walk"
+                                );
+                                break;
+                            }
+                        }
+                        assert!(calls < 100, "the walk must end");
+                    }
+
+                    assert_eq!(calls, LARGE_RESULT_SET.div_ceil(NAB_PAGE));
+                    assert_eq!(
+                        seen.len(),
+                        LARGE_RESULT_SET,
+                        "no page read twice or skipped"
+                    );
+                    assert_eq!(seen.first().map(String::as_str), Some("guid-tvsearch-0"));
+                    assert_eq!(
+                        seen.last().cloned(),
+                        Some(guid("tvsearch", LARGE_RESULT_SET - 1))
+                    );
+                }
+
+                #[test]
+                fn a_short_first_page_ends_the_search() {
+                    install_script();
+                    serve_hits("tvsearch", 7);
+
+                    let response = run_paged(&paged_config(), &tiered_request(1000, None))
+                        .expect("a short page completes");
+
+                    assert_eq!(sent().len(), 1);
+                    assert_eq!(response.results.len(), 7);
+                    assert_eq!(response.next_cursor, None);
+                }
+
+                #[test]
+                fn a_full_last_page_is_confirmed_by_an_empty_one() {
+                    install_script();
+                    serve_hits("tvsearch", 2 * NAB_PAGE);
+
+                    let second = run_paged(&paged_config(), &tiered_request(0, Some("offset:100")))
+                        .expect("the second page completes");
+                    assert_eq!(second.results.len(), NAB_PAGE);
+                    assert_eq!(second.next_cursor.as_deref(), Some("offset:200"));
+
+                    let third = run_paged(&paged_config(), &tiered_request(0, Some("offset:200")))
+                        .expect("an empty page completes");
+                    assert!(third.results.is_empty());
+                    assert_eq!(third.next_cursor, None);
+                }
+
+                #[test]
+                fn the_cursor_is_honoured_by_the_tiered_shape() {
+                    install_script();
+                    serve_hits("tvsearch", 1_000);
+
+                    let response =
+                        run_paged(&paged_config(), &tiered_request(1000, Some("offset:300")))
+                            .expect("the page completes");
+
+                    let sent = sent();
+                    assert_eq!(sent.len(), 1);
+                    let params = &sent[0];
+                    assert_eq!(param(params, "t"), Some("tvsearch"));
+                    assert_eq!(param(params, "tvdbid"), Some("990001"));
+                    assert_eq!(param(params, "season"), Some("1"));
+                    assert_eq!(param(params, "ep"), Some("5"));
+                    assert_eq!(param(params, "offset"), Some("300"));
+                    assert_eq!(
+                        response.results.first().and_then(|r| r.guid.clone()),
+                        Some(guid("tvsearch", 300))
+                    );
+                    assert_eq!(response.next_cursor.as_deref(), Some("offset:400"));
+                }
+
+                #[test]
+                fn the_cursor_is_honoured_by_the_exact_anime_shape() {
+                    install_script();
+                    serve_hits("tvsearch", 1_000);
+
+                    let response =
+                        run_paged(&paged_config(), &anime_request(1000, Some("offset:500")))
+                            .expect("the page completes");
+
+                    let sent = sent();
+                    assert_eq!(sent.len(), 1);
+                    let params = &sent[0];
+                    assert_eq!(param(params, "t"), Some("tvsearch"));
+                    assert_eq!(param(params, "tvdbid"), Some("990002"));
+                    assert_eq!(param(params, "ep"), Some("112"), "absolute number as ep");
+                    assert_eq!(param(params, "season"), None);
+                    assert_eq!(param(params, "offset"), Some("500"));
+                    assert_eq!(
+                        response.results.first().and_then(|r| r.guid.clone()),
+                        Some(guid("tvsearch", 500))
+                    );
+                    assert_eq!(response.next_cursor.as_deref(), Some("offset:600"));
+                }
+
+                #[test]
+                fn the_cursor_is_honoured_by_a_typed_search() {
+                    install_script();
+                    serve_hits("search", 1_000);
+
+                    let mut request =
+                        text_request("Sample Film", PluginSearchOrigin::Interactive, &[], 0);
+                    request.page_cursor = Some("offset:200".to_string());
+                    let response =
+                        run_paged(&paged_config(), &request).expect("the page completes");
+
+                    let sent = sent();
+                    assert_eq!(sent.len(), 1);
+                    assert_eq!(param(&sent[0], "t"), Some("search"));
+                    assert_eq!(param(&sent[0], "q"), Some("Sample Film"));
+                    assert_eq!(param(&sent[0], "offset"), Some("200"));
+                    assert_eq!(response.next_cursor.as_deref(), Some("offset:300"));
+                }
+
+                #[test]
+                fn a_smaller_limit_bounds_the_page_and_the_next_offset() {
+                    install_script();
+                    serve_hits("tvsearch", 1_000);
+
+                    let response = run_paged(&paged_config(), &tiered_request(40, None))
+                        .expect("the page completes");
+
+                    assert_eq!(param(&sent()[0], "limit"), Some("40"));
+                    assert_eq!(
+                        response.results.len(),
+                        40,
+                        "an indexer that ignores limit is truncated to it"
+                    );
+                    assert_eq!(response.next_cursor.as_deref(), Some("offset:40"));
+                }
+
+                #[test]
+                fn an_unpaged_search_resumes_after_a_reduced_page_with_a_discarded_item() {
+                    install_script();
+                    serve_page("tvsearch", 0, &(0..NAB_PAGE).collect::<Vec<_>>());
+                    serve_page_with_untitled(
+                        "tvsearch",
+                        NAB_PAGE,
+                        &(100..150).collect::<Vec<_>>(),
+                        120,
+                    );
+                    serve_page("tvsearch", 150, &[150]);
+
+                    let response = run(&paged_config(), &tiered_request(150, None))
+                        .expect("the search completes");
+
+                    let sent = sent();
+                    let offsets: Vec<Option<&str>> =
+                        sent.iter().map(|params| param(params, "offset")).collect();
+                    assert_eq!(offsets, vec![Some("0"), Some("100"), Some("150")]);
+                    let limits: Vec<Option<&str>> =
+                        sent.iter().map(|params| param(params, "limit")).collect();
+                    assert_eq!(limits, vec![Some("100"), Some("50"), Some("1")]);
+                    let seen = guids(&response.results);
+                    assert_eq!(seen.len(), 150);
+                    assert!(!seen.iter().any(|guid| guid == "guid-tvsearch-120"));
+                    assert_eq!(seen.last().map(String::as_str), Some("guid-tvsearch-150"));
+                }
+
+                #[test]
+                fn an_oversized_page_is_truncated_to_the_page_size() {
+                    install_script();
+                    let releases: Vec<usize> = (0..250).collect();
+                    serve_page("tvsearch", 0, &releases);
+
+                    let response = run_paged(&paged_config(), &tiered_request(1000, None))
+                        .expect("the page completes");
+
+                    assert_eq!(response.results.len(), NAB_PAGE);
+                    assert_eq!(response.next_cursor.as_deref(), Some("offset:100"));
+                }
+
+                #[test]
+                fn a_page_size_above_the_newznab_maximum_is_still_bounded() {
+                    install_script();
+                    serve_page("tvsearch", 0, &(0..300).collect::<Vec<_>>());
+                    let config = NewznabConfig {
+                        page_size: 500,
+                        ..paged_config()
+                    };
+
+                    let response =
+                        run_paged(&config, &tiered_request(0, None)).expect("the page completes");
+
+                    assert_eq!(param(&sent()[0], "limit"), Some("100"));
+                    assert_eq!(response.results.len(), NEWZNAB_MAX_PAGE_SIZE);
+                }
+
+                #[test]
+                fn a_failed_page_is_deferred_without_a_cursor() {
+                    install_script();
+                    serve_hits("tvsearch", 1_000);
+                    SCRIPT.with(|script| {
+                        script
+                            .borrow_mut()
+                            .failing
+                            .insert(("tvsearch".to_string(), 200));
+                    });
+
+                    let error =
+                        run_paged(&paged_config(), &tiered_request(1000, Some("offset:200")))
+                            .expect_err("the page fails");
+
+                    match indexer_search_details(&error) {
+                        IndexerSearchPluginError::Deferred { reason, .. } => {
+                            assert_eq!(reason, IndexerSearchIncompleteReason::UpstreamFailure);
+                        }
+                        other => panic!("expected a deferred page, got {other:?}"),
+                    }
+                }
+
+                #[test]
+                fn a_cursor_this_plugin_never_issued_is_refused() {
+                    install_script();
+                    serve_hits("tvsearch", 1_000);
+
+                    for cursor in ["300", "offset:", "offset:-1", "page:3"] {
+                        let error = run_paged(&paged_config(), &tiered_request(1000, Some(cursor)))
+                            .expect_err("a foreign cursor is refused");
+                        let structured = error
+                            .downcast_ref::<StructuredPluginError>()
+                            .expect("structured plugin error");
+                        assert_eq!(
+                            structured.plugin_error().code,
+                            PluginErrorCode::Permanent,
+                            "{cursor}"
+                        );
+                    }
+                    assert!(sent().is_empty(), "no request goes out for a bad cursor");
+                }
+
+                #[test]
+                fn a_recent_releases_request_keeps_the_rss_behaviour_and_no_cursor() {
+                    install_script();
+                    serve_hits("tvsearch", 1_000);
+
+                    let response = run_paged(&paged_config(), &rss_request(&["5000"], None))
+                        .expect("the newest page completes");
+
+                    assert_eq!(requests(), vec![("tvsearch".to_string(), None)]);
+                    assert_eq!(response.results.len(), NAB_PAGE);
+                    assert_eq!(response.next_cursor, None);
+                }
+
+                /// The unpaged search pages to the request's limit: the 1,000
+                /// the host asks for take ten pages and end without a ceiling.
+                #[test]
+                fn an_unpaged_search_stops_at_the_requested_limit() {
+                    install_script();
+                    serve_hits("tvsearch", LARGE_RESULT_SET);
+
+                    let response = run(&paged_config(), &tiered_request(1000, None))
+                        .expect("a met limit is a complete search");
+
+                    assert_eq!(sent().len(), 10);
+                    assert_eq!(response.results.len(), 1000);
+                    assert_eq!(response.next_cursor, None);
+                }
+
+                /// Without a limit the unpaged search reads the full 30-page
+                /// ceiling, 3,000 results at 100 per page, and reports the
+                /// ceiling: the shape a search takes when the limit is lost.
+                #[test]
+                fn an_unpaged_search_without_a_limit_ends_at_the_page_ceiling() {
+                    install_script();
+                    serve_hits("tvsearch", LARGE_RESULT_SET);
+
+                    let error = run(&paged_config(), &tiered_request(0, None))
+                        .expect_err("the ceiling leaves results unread");
+
+                    assert_eq!(sent().len(), DEFAULT_MAX_SEARCH_PAGES);
+                    match indexer_search_details(&error) {
+                        IndexerSearchPluginError::PartialResults {
+                            response, reason, ..
+                        } => {
+                            assert_eq!(reason, IndexerSearchIncompleteReason::PageCeilingReached);
+                            assert_eq!(response.results.len(), DEFAULT_MAX_SEARCH_PAGES * NAB_PAGE);
+                            assert_eq!(response.next_cursor, None);
+                        }
+                        other => panic!("expected partial results, got {other:?}"),
+                    }
+                }
             }
         }
     }

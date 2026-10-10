@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "animetosho-xyz-indexer"
-version = "2.4.3"
+version = "2.4.4"
 dependencies = [
  "newznab-common",
  "scryer-plugin-pdk",
@@ -352,7 +352,7 @@ checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
 name = "newznab-common"
-version = "0.1.6"
+version = "0.2.0"
 dependencies = [
  "httpdate",
  "quick-xml",
@@ -510,9 +510,9 @@ dependencies = [
 
 [[package]]
 name = "scryer-plugin-sdk"
-version = "3.13.0"
+version = "3.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "275348caa465390decf4fc783434d2b4fd72bfa89fb24e569ae684742cae601b"
+checksum = "739032851cf583d8bd40cdc8151c4215f09966f4229df013c9c451d1c26fdbb2"
 dependencies = [
  "base64",
  "schemars",

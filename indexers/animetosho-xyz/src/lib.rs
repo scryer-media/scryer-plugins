@@ -79,6 +79,7 @@ fn build_descriptor() -> PluginDescriptor {
         sdk_version: SDK_VERSION.to_string(),
         sdk_constraint: current_sdk_constraint(),
         socket_permissions: vec![],
+        settings: Vec::new(),
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: PROVIDER_ID.to_string(),
             provider_aliases: vec![],
@@ -136,6 +137,7 @@ fn build_descriptor() -> PluginDescriptor {
                     rate_limit_hint_seconds: Some(2),
                     api_quota_supported: true,
                     grab_quota_supported: false,
+                    paged_search: false,
                 }),
                 torrent: Some(IndexerTorrentCapabilities {
                     reports_seeders: true,
