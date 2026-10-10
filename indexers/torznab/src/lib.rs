@@ -83,6 +83,9 @@ fn build_descriptor() -> PluginDescriptor {
                     rate_limit_hint_seconds: Some(2),
                     api_quota_supported: true,
                     grab_quota_supported: true,
+                    // Paged responses carry at most one provider page, so a host
+                    // must follow `next_cursor` to see the rest. Hosts that cannot
+                    // are kept off this release by the SDK floor above (3.14).
                     paged_search: true,
                 }),
                 torrent: Some(IndexerTorrentCapabilities {
