@@ -5,7 +5,7 @@ use newznab_common::{
     IndexerFeedMode, IndexerLimitCapabilities, IndexerProtocol, IndexerSearchInput,
     IndexerSourceKind, NewznabConfig, PluginActionRequest, PluginActionResponse, PluginDescriptor,
     ProviderDescriptor, SDK_VERSION, SearchRequest, SearchResponse, current_sdk_constraint,
-    execute_full_search, extract_profile_metadata, standard_config_fields,
+    execute_paged_search, extract_profile_metadata, standard_config_fields,
 };
 use scryer_plugin_pdk::*;
 
@@ -33,6 +33,7 @@ fn build_descriptor() -> PluginDescriptor {
         sdk_version: SDK_VERSION.to_string(),
         sdk_constraint: current_sdk_constraint(),
         socket_permissions: vec![],
+        settings: Vec::new(),
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: "newznab".to_string(),
             provider_aliases: vec!["nzbgeek".to_string(), "dognzb".to_string()],
@@ -93,6 +94,7 @@ fn build_descriptor() -> PluginDescriptor {
                     max_pages: Some(30),
                     api_quota_supported: true,
                     grab_quota_supported: true,
+                    paged_search: true,
                     ..IndexerLimitCapabilities::default()
                 }),
                 torrent: None,
@@ -108,7 +110,7 @@ fn build_descriptor() -> PluginDescriptor {
 
 async fn search(req: SearchRequest) -> Result<SearchResponse, Error> {
     let config = NewznabConfig::from_host()?;
-    let response = execute_full_search(&config, &req, extract_profile_metadata).await?;
+    let response = execute_paged_search(&config, &req, extract_profile_metadata).await?;
     Ok(response)
 }
 
@@ -163,5 +165,18 @@ mod tests {
             .find(|field| field.key == "base_url")
             .expect("base URL field");
         assert!(!base_url.required);
+    }
+
+    #[test]
+    fn descriptor_declares_paged_search_within_the_newznab_page_size() {
+        let ProviderDescriptor::Indexer(indexer) = build_descriptor().provider else {
+            panic!("expected indexer descriptor");
+        };
+        let limits = indexer.capabilities.limits.expect("limit capabilities");
+        assert!(limits.paged_search);
+        assert_eq!(
+            limits.paged_response_bound(1000),
+            Some(newznab_common::NEWZNAB_MAX_PAGE_SIZE)
+        );
     }
 }

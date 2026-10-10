@@ -6,7 +6,7 @@ use newznab_common::{
     IndexerSearchInput, IndexerSourceKind, IndexerTorrentCapabilities, NewznabConfig,
     PasswordMetadataClassification, PluginActionRequest, PluginActionResponse, PluginDescriptor,
     ProviderDescriptor, SDK_VERSION, SearchRequest, SearchResponse, classify_password_metadata,
-    current_sdk_constraint, execute_full_search, standard_config_fields,
+    current_sdk_constraint, execute_paged_search, standard_config_fields,
 };
 use scryer_plugin_pdk::*;
 
@@ -18,6 +18,7 @@ fn build_descriptor() -> PluginDescriptor {
         sdk_version: SDK_VERSION.to_string(),
         sdk_constraint: current_sdk_constraint(),
         socket_permissions: vec![],
+        settings: Vec::new(),
         provider: ProviderDescriptor::Indexer(IndexerDescriptor {
             provider_type: "torznab".to_string(),
             provider_aliases: vec!["jackett".to_string()],
@@ -82,6 +83,7 @@ fn build_descriptor() -> PluginDescriptor {
                     rate_limit_hint_seconds: Some(2),
                     api_quota_supported: true,
                     grab_quota_supported: true,
+                    paged_search: true,
                 }),
                 torrent: Some(IndexerTorrentCapabilities {
                     reports_seeders: true,
@@ -116,7 +118,7 @@ fn build_descriptor() -> PluginDescriptor {
 
 async fn search(req: SearchRequest) -> Result<SearchResponse, Error> {
     let config = NewznabConfig::from_host()?;
-    let mut response = execute_full_search(&config, &req, torznab_metadata_extractor).await?;
+    let mut response = execute_paged_search(&config, &req, torznab_metadata_extractor).await?;
     apply_magnet_fallback(&mut response);
     Ok(response)
 }
