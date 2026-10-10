@@ -25,7 +25,7 @@ checksum = "e9d4ee0d472d1cd2e28c97dfa124b3d8d992e10eb0a035f33f5d12e3a177ba3b"
 
 [[package]]
 name = "amenzb-subtitles"
-version = "1.1.3"
+version = "1.1.4"
 dependencies = [
  "base64 0.23.1",
  "newznab-common",
@@ -1416,9 +1416,9 @@ dependencies = [
 
 [[package]]
 name = "scryer-plugin-sdk"
-version = "3.13.0"
+version = "3.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "275348caa465390decf4fc783434d2b4fd72bfa89fb24e569ae684742cae601b"
+checksum = "739032851cf583d8bd40cdc8151c4215f09966f4229df013c9c451d1c26fdbb2"
 dependencies = [
  "base64 0.22.1",
  "schemars",
