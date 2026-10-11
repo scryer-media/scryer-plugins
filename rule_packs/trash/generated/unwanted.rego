@@ -2,7 +2,7 @@ package scryer.user.trash_guides_unwanted
 import rego.v1
 
 
-# Generated from parser snapshot 9b06d40e142fd9b9f6299d64f26be30ec34e54f3.
+# Generated from parser snapshot d21112a72b6565049f987c2d067dbf5b47078cf5.
 trash_detection_tables := {
   "blocked_title_rules_by_anchor": {
     "1XBET": [
@@ -10,7 +10,7 @@ trash_detection_tables := {
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "movie",
-        "order": 40,
+        "order": 41,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -24,7 +24,7 @@ trash_detection_tables := {
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "series",
-        "order": 50,
+        "order": 51,
         "pattern": {
           "kind": "required_tokens",
           "tokens": [
@@ -97,7 +97,7 @@ trash_detection_tables := {
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "movie",
-        "order": 41,
+        "order": 42,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -111,7 +111,7 @@ trash_detection_tables := {
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "series",
-        "order": 51,
+        "order": 52,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -122,12 +122,27 @@ trash_detection_tables := {
         }
       }
     ],
+    "CMV4": [
+      {
+        "category": "any",
+        "code": "trash_guides_lq_release_title",
+        "facet": "movie",
+        "order": 40,
+        "pattern": {
+          "kind": "required_tokens",
+          "tokens": [
+            "CMV4",
+            "SICFOI"
+          ]
+        }
+      }
+    ],
     "CREATIVE24": [
       {
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "series",
-        "order": 52,
+        "order": 53,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -198,7 +213,7 @@ trash_detection_tables := {
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "movie",
-        "order": 42,
+        "order": 43,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -210,7 +225,7 @@ trash_detection_tables := {
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "series",
-        "order": 53,
+        "order": 54,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -253,7 +268,7 @@ trash_detection_tables := {
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "movie",
-        "order": 43,
+        "order": 44,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -701,7 +716,7 @@ trash_detection_tables := {
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "movie",
-        "order": 44,
+        "order": 45,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -715,7 +730,7 @@ trash_detection_tables := {
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "movie",
-        "order": 45,
+        "order": 46,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -727,7 +742,7 @@ trash_detection_tables := {
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "series",
-        "order": 54,
+        "order": 55,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -741,7 +756,7 @@ trash_detection_tables := {
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "movie",
-        "order": 46,
+        "order": 47,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -755,7 +770,7 @@ trash_detection_tables := {
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "movie",
-        "order": 47,
+        "order": 48,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -770,7 +785,7 @@ trash_detection_tables := {
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "movie",
-        "order": 48,
+        "order": 49,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -787,7 +802,7 @@ trash_detection_tables := {
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "movie",
-        "order": 49,
+        "order": 50,
         "pattern": {
           "kind": "sequence",
           "tokens": [

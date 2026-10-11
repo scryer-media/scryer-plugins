@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_revision": "9b06d40e142fd9b9f6299d64f26be30ec34e54f3",
+  "source_revision": "d21112a72b6565049f987c2d067dbf5b47078cf5",
   "files": [
     {
       "path": "docs/json/guide-only/language-german-and-original.json",
@@ -10105,8 +10105,8 @@
     },
     {
       "path": "docs/json/radarr/cf/generated-dynamic-hdr.json",
-      "sha256": "2b8ff51146568116f16ef31ee5f614bfb0dfd52f6b663a123b7af9b76cf2417d",
-      "canonical_sha256": "df47ae634cbf0775a2acb450155dc92930a247d817f97ccba9d899a5a25bd9b2",
+      "sha256": "3ce8b940e7a6a61403a3ebb149e9ae3ff53e0d6b0682c3d853bf8fd582bf1709",
+      "canonical_sha256": "793fe24d4a445c18c6ea49a224f263ddff661bc70dfaae74a7081b1820d675d8",
       "records": [
         {
           "name": "Generated Dynamic HDR",
@@ -10163,6 +10163,15 @@
               }
             },
             {
+              "name": "SumVision",
+              "implementation": "ReleaseGroupSpecification",
+              "required": false,
+              "negate": false,
+              "fields": {
+                "value": "^(SumVision)$"
+              }
+            },
+            {
               "name": "tarunk9c",
               "implementation": "ReleaseGroupSpecification",
               "required": false,
@@ -10199,21 +10208,21 @@
               }
             },
             {
-              "name": "HDR10+",
-              "implementation": "ReleaseTitleSpecification",
-              "required": false,
-              "negate": false,
-              "fields": {
-                "value": "\\bHDR10(\\+|P(lus)?\\b)"
-              }
-            },
-            {
               "name": "DV",
               "implementation": "ReleaseTitleSpecification",
               "required": false,
               "negate": false,
               "fields": {
                 "value": "\\b(dv|dovi|dolby[ .]?v(ision)?)\\b"
+              }
+            },
+            {
+              "name": "HDR10+",
+              "implementation": "ReleaseTitleSpecification",
+              "required": false,
+              "negate": false,
+              "fields": {
+                "value": "\\bHDR10(\\+|P(lus)?\\b)"
               }
             }
           ]
@@ -14622,8 +14631,8 @@
     },
     {
       "path": "docs/json/radarr/cf/lq-release-title.json",
-      "sha256": "254a3693f0929fc8af59b7badcfaadc02be517fe0b14b878c4a9b8f16c011423",
-      "canonical_sha256": "b11281eccba3c1600b5fd89df993565304a725678970199c9d6031b6ccbdcbb0",
+      "sha256": "06249e4ee510276e90f0644369dfc16b2a1e29477588a64958c3851d0cececd4",
+      "canonical_sha256": "eefe8f359b6e216999ceb283a915360764be8d990bacfb92e1616252c9d53dc4",
       "records": [
         {
           "name": "LQ (Release Title)",
@@ -14731,6 +14740,15 @@
               "negate": false,
               "fields": {
                 "value": "\\b(READ(\\s|\\.)+NOTE)\\b"
+              }
+            },
+            {
+              "name": "SiCFoI + CM4v",
+              "implementation": "ReleaseTitleSpecification",
+              "required": false,
+              "negate": false,
+              "fields": {
+                "value": "^(?=.*\\b(CMv4)\\b).*\\b(SiCFoI)\\b"
               }
             },
             {

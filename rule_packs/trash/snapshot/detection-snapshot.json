@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "source_revision": "9b06d40e142fd9b9f6299d64f26be30ec34e54f3",
+  "source_revision": "d21112a72b6565049f987c2d067dbf5b47078cf5",
   "counts": {
-    "blocked_title_rules": 55,
+    "blocked_title_rules": 56,
     "fact_rules": 132,
     "locale_group_fact_rules": 1275,
     "no_release_group_fact_facets": 2,
@@ -515,6 +515,19 @@
         "facet": "movie",
         "order": 40,
         "pattern": {
+          "kind": "required_tokens",
+          "tokens": [
+            "CMV4",
+            "SICFOI"
+          ]
+        }
+      },
+      {
+        "category": "any",
+        "code": "trash_guides_lq_release_title",
+        "facet": "movie",
+        "order": 41,
+        "pattern": {
           "kind": "sequence",
           "tokens": [
             "1XBET"
@@ -525,7 +538,7 @@
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "movie",
-        "order": 41,
+        "order": 42,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -539,7 +552,7 @@
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "movie",
-        "order": 42,
+        "order": 43,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -551,7 +564,7 @@
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "movie",
-        "order": 43,
+        "order": 44,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -563,7 +576,7 @@
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "movie",
-        "order": 44,
+        "order": 45,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -575,7 +588,7 @@
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "movie",
-        "order": 45,
+        "order": 46,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -587,26 +600,11 @@
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "movie",
-        "order": 46,
-        "pattern": {
-          "kind": "sequence",
-          "tokens": [
-            "TEKNO3D"
-          ]
-        }
-      },
-      {
-        "category": "any",
-        "code": "trash_guides_lq_release_title",
-        "facet": "movie",
         "order": 47,
         "pattern": {
           "kind": "sequence",
           "tokens": [
-            "WEB",
-            "DL",
-            "RIP",
-            "EVO"
+            "TEKNO3D"
           ]
         }
       },
@@ -621,7 +619,7 @@
             "WEB",
             "DL",
             "RIP",
-            "PIRATES"
+            "EVO"
           ]
         }
       },
@@ -633,6 +631,21 @@
         "pattern": {
           "kind": "sequence",
           "tokens": [
+            "WEB",
+            "DL",
+            "RIP",
+            "PIRATES"
+          ]
+        }
+      },
+      {
+        "category": "any",
+        "code": "trash_guides_lq_release_title",
+        "facet": "movie",
+        "order": 50,
+        "pattern": {
+          "kind": "sequence",
+          "tokens": [
             "WILL1869"
           ]
         }
@@ -641,7 +654,7 @@
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "series",
-        "order": 50,
+        "order": 51,
         "pattern": {
           "kind": "required_tokens",
           "tokens": [
@@ -654,7 +667,7 @@
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "series",
-        "order": 51,
+        "order": 52,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -668,7 +681,7 @@
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "series",
-        "order": 52,
+        "order": 53,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -680,7 +693,7 @@
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "series",
-        "order": 53,
+        "order": 54,
         "pattern": {
           "kind": "sequence",
           "tokens": [
@@ -692,7 +705,7 @@
         "category": "any",
         "code": "trash_guides_lq_release_title",
         "facet": "series",
-        "order": 54,
+        "order": 55,
         "pattern": {
           "kind": "sequence",
           "tokens": [

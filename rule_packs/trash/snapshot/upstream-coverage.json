@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_revision": "9b06d40e142fd9b9f6299d64f26be30ec34e54f3",
+  "source_revision": "d21112a72b6565049f987c2d067dbf5b47078cf5",
   "input_files": [
     {
       "path": "docs/json/guide-only/language-german-and-original.json",
@@ -428,7 +428,7 @@
     },
     {
       "path": "docs/json/radarr/cf/generated-dynamic-hdr.json",
-      "sha256": "2b8ff51146568116f16ef31ee5f614bfb0dfd52f6b663a123b7af9b76cf2417d"
+      "sha256": "3ce8b940e7a6a61403a3ebb149e9ae3ff53e0d6b0682c3d853bf8fd582bf1709"
     },
     {
       "path": "docs/json/radarr/cf/german-1080p-booster.json",
@@ -648,7 +648,7 @@
     },
     {
       "path": "docs/json/radarr/cf/lq-release-title.json",
-      "sha256": "254a3693f0929fc8af59b7badcfaadc02be517fe0b14b878c4a9b8f16c011423"
+      "sha256": "06249e4ee510276e90f0644369dfc16b2a1e29477588a64958c3851d0cececd4"
     },
     {
       "path": "docs/json/radarr/cf/lq.json",
@@ -1936,15 +1936,15 @@
     }
   ],
   "table_counts": {
-    "blocked_title_rules": 55,
+    "blocked_title_rules": 56,
     "fact_rules": 132,
     "locale_group_fact_rules": 1275,
     "no_release_group_fact_facets": 2,
     "service_alias_rules": 106,
     "token_signal_rules": 49
   },
-  "core_sha256": "5bf05a55975782c37f792817be0e7404cedf79e0a8dcf876d2b6c35377aab819",
-  "detection_sha256": "59ec8a55c84cf59953db58a5f42333b1dd70eca517bff15ecad4f4116d2251ed",
+  "core_sha256": "649c52e31ffdd21ef327ce55193b704e58c874591a002fa88d4ae6ddb83b82d7",
+  "detection_sha256": "c91e8dfb54cdb40c8008964d5d46b32ecd275edabd3193ea62a84e44c9bd07a5",
   "ignored_records": [
     "docs/json/radarr/cf/amzn.json:WEBDL:requires_positive_title",
     "docs/json/radarr/cf/amzn.json:WEBRIP:requires_positive_title",
