@@ -32,5 +32,5 @@ scryer-plugin-sdk = "3.11.0"
 postcard = { version = "1", features = ["use-std"] }
 serde_json = "1"
 tokio = { version = "1", features = ["rt", "time", "macros"], optional = true }
-wasmtime = "=48.0.4"
-wasmtime-wasi = "=48.0.4"
+wasmtime = "=48.0.5"
+wasmtime-wasi = "=48.0.5"
