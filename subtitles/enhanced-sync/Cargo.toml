@@ -53,7 +53,7 @@ scryer-plugin-conformance = { path = "../../pdk/scryer-plugin-conformance", feat
 tempfile = "3"
 # The sync family's authority is WASI preopens, not host services, so this
 # suite stages its own `WasiCtx` rather than taking the shared one.
-wasmtime-wasi = "48.0.1"
+wasmtime-wasi = "49.0.0"
 
 [profile.plugin-release]
 inherits = "release"
