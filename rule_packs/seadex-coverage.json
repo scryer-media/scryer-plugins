@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.23",
-  "snapshot_sha256": "c72906a49972fce7c47fa263a6b7a51f9d13bdef3b258c12c8886bf8bff39b2c",
+  "pack_version": "1.0.24",
+  "snapshot_sha256": "9f04fdb8d5deadcddf7a9c2a9dc9d4cb7391a56539ced5a431ecd15fd56f7a8d",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -23951,14 +23951,6 @@
     },
     {
       "alias_sources": 0,
-      "entry_id": "eao1zw1sj2cqxjt",
-      "file_sources": 24,
-      "release_id": "gd8o57ow8mo1zyq",
-      "strict_keys": 24,
-      "tolerant_keys": 0
-    },
-    {
-      "alias_sources": 0,
       "entry_id": "eaz1i82y858i9ls",
       "file_sources": 12,
       "release_id": "i7ei3k67hnl1yxw",
@@ -26980,6 +26972,22 @@
       "release_id": "9t2lhptkckkgdl2",
       "strict_keys": 3,
       "tolerant_keys": 3
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "fyqrac4delyswgb",
+      "file_sources": 95,
+      "release_id": "w7c9h61td5l1xlf",
+      "strict_keys": 95,
+      "tolerant_keys": 95
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "fyqrac4delyswgb",
+      "file_sources": 95,
+      "release_id": "x0p6deloncg2kiu",
+      "strict_keys": 95,
+      "tolerant_keys": 95
     },
     {
       "alias_sources": 0,
@@ -50234,6 +50242,22 @@
       "entry_id": "snpld2vcozrssrs",
       "file_sources": 1,
       "release_id": "yxa8tcheid5zsy0",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "snpur26mgqsnfck",
+      "file_sources": 1,
+      "release_id": "5bhzmwrxx4kr5wo",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "snpur26mgqsnfck",
+      "file_sources": 1,
+      "release_id": "gfu3lvt3plv77r7",
       "strict_keys": 1,
       "tolerant_keys": 1
     },
@@ -93718,6 +93742,150 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "m17tl66b13prvwg",
       "source_name": "Nihon Chinbotsu 10.mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box - 01v2 - Student Council in the House! [WIP] [50631441].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box - 02v2 - Are You the Culprit But Of Course, It's Me! [WIP] [37AC8989].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box - 03v2 - None of Your Business!! As You Wish, Medaka-san!! [WIP] [6D84D293].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box - 04v2 - Make Your Choice!! If You're Going to Make a Wish... [WIP] [B72803B5].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box - 05v2 - Win Your Earnings! [WIP] [DD84816B].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box - 06v2 - I Don't Expect You to Understand [WIP] [77D74058].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box - 07v2 - Does Everyone Do This My Own Tune!! [WIP] [F0ADEE63].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box - 08v2 - I Will Crush Kurokami Medaka!! [WIP] [5CF0F334].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box - 09v2 - It's Not Justice If You Don't Go Overboard! [WIP] [FE28341D].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box - 10v2 - I Will Not Forgive You!! [WIP] [BBFAE692].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box - 11v2 - This Is the End!! [WIP] [E8B0DFAC].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box - 12v2 - Even Without Kurokami Medaka [WIP] [E1643C27].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box Abnormal - 01 - Normal, Special, and Abnormal [WIP] [FCB2D9E4].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box Abnormal - 02 - Sister, Sister, Sister! [WIP] [C517C221].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box Abnormal - 03 - Crush You Today! [WIP] [9C075433].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box Abnormal - 04 - The Monster I've Sought [WIP] [275EA780].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box Abnormal - 05 - You Can't Be Killed [WIP] [005DBDBC].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box Abnormal - 06 - Please Become My Something [WIP] [1A02D6DE].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box Abnormal - 07 - The Lovely Name Kurokami Kujira [WIP] [B3712FC5].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box Abnormal - 08 - I Don't Want to See You Cry [WIP] [6540315D].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box Abnormal - 09 - Kurokami Medaka (Rev) [WIP] [75D32DFC].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box Abnormal - 10 - How to Make Everyone Happy [WIP] [CFBA43C7].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box Abnormal - 11 - That's All She Wrote! [WIP] [C24FA823].mkv"
+    },
+    {
+      "entry_id": "4prry8isoxbojvj",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gd8o57ow8mo1zyq",
+      "source_name": "Medaka Box Abnormal - 12 - Good Loser Kumagawa [WIP] [1961B237].mkv"
     },
     {
       "entry_id": "4pupic8vvnupswa",
@@ -152224,6 +152392,18 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "yzhu1iioatoon6l",
       "source_name": "NCOP #01.mkv"
+    },
+    {
+      "entry_id": "fyqrac4delyswgb",
+      "reason": "non_release_file",
+      "release_id": "w7c9h61td5l1xlf",
+      "source_name": "[Obscurerips] Miss Machiko Extra - Creditless Opening [7B84722A].mkv"
+    },
+    {
+      "entry_id": "fyqrac4delyswgb",
+      "reason": "non_release_file",
+      "release_id": "w7c9h61td5l1xlf",
+      "source_name": "[Obscurerips] Miss Machiko.sfv"
     },
     {
       "entry_id": "fyxax9ivt8752jk",
@@ -358633,7 +358813,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E01 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E01 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E01 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -358654,7 +358848,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E02 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E02 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E02 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -358675,7 +358883,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E03 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E03 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E03 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -358696,7 +358918,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E04 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E04 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E04 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -358717,7 +358953,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E05 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E05 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E05 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -358738,7 +358988,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E06 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E06 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E06 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -358759,7 +359023,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E07 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E07 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E07 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -358780,7 +359058,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E08 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E08 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E08 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -358801,7 +359093,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E09 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E09 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E09 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -358822,7 +359128,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E10 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E10 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E10 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -358843,7 +359163,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E11 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E11 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E11 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -358864,7 +359198,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E12 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E12 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E12 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -358885,7 +359233,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E13 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E13 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E13 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -358906,7 +359268,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E14 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E14 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E14 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -358927,7 +359303,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E15 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E15 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E15 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -358948,7 +359338,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E16 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E16 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E16 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -358969,7 +359373,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E17 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E17 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E17 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -358990,7 +359408,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E18 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E18 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E18 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359011,7 +359443,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E19 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E19 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E19 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359032,7 +359478,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E20 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E20 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E20 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359053,7 +359513,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E01 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E01 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E01 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359074,7 +359548,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E02 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E02 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E02 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359095,7 +359583,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E03 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E03 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E03 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359116,7 +359618,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E04 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E04 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E04 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359137,7 +359653,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E05 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E05 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E05 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359158,7 +359688,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E06 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E06 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E06 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359179,7 +359723,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E07 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E07 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E07 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359200,7 +359758,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E08 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E08 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E08 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359221,7 +359793,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E09 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E09 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E09 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359242,7 +359828,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E10 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E10 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E10 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359263,7 +359863,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E11 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E11 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E11 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359284,7 +359898,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E12 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E12 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E12 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359305,7 +359933,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E13 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E13 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E13 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359326,7 +359968,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E14 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E14 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E14 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359347,7 +360003,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E15 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E15 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E15 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359368,7 +360038,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E16 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E16 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E16 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359389,7 +360073,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E17 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E17 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E17 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359410,7 +360108,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E18 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E18 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E18 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359431,7 +360143,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E19 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E19 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E19 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359452,7 +360178,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E20 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E20 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E20 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359473,7 +360213,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E21 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E21 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E21 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359494,7 +360248,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E22 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E22 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E22 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359515,7 +360283,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E23 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E23 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E23 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359536,7 +360318,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E24 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E24 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E24 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359557,7 +360353,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E25 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E25 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E25 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359578,7 +360388,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E26 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E26 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E26 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359599,7 +360423,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E27 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E27 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E27 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359620,7 +360458,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E28 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E28 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E28 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -359641,7 +360493,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E29 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E29 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E29 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -500948,6 +501814,510 @@
     {
       "candidates": [
         {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 01v2 - Student Council in the House! [WIP] [50631441].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 01v2 - Student Council in the House! [WIP] [50631441].mkv"
+        }
+      ],
+      "key": "medaka box - 01v2 - student council in the house! [wip] [50631441]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 02v2 - Are You the Culprit But Of Course, It's Me! [WIP] [37AC8989].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 02v2 - Are You the Culprit But Of Course, It's Me! [WIP] [37AC8989].mkv"
+        }
+      ],
+      "key": "medaka box - 02v2 - are you the culprit but of course, it's me! [wip] [37ac8989]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 03v2 - None of Your Business!! As You Wish, Medaka-san!! [WIP] [6D84D293].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 03v2 - None of Your Business!! As You Wish, Medaka-san!! [WIP] [6D84D293].mkv"
+        }
+      ],
+      "key": "medaka box - 03v2 - none of your business!! as you wish, medaka-san!! [wip] [6d84d293]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 04v2 - Make Your Choice!! If You're Going to Make a Wish... [WIP] [B72803B5].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 04v2 - Make Your Choice!! If You're Going to Make a Wish... [WIP] [B72803B5].mkv"
+        }
+      ],
+      "key": "medaka box - 04v2 - make your choice!! if you're going to make a wish... [wip] [b72803b5]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 05v2 - Win Your Earnings! [WIP] [DD84816B].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 05v2 - Win Your Earnings! [WIP] [DD84816B].mkv"
+        }
+      ],
+      "key": "medaka box - 05v2 - win your earnings! [wip] [dd84816b]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 06v2 - I Don't Expect You to Understand [WIP] [77D74058].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 06v2 - I Don't Expect You to Understand [WIP] [77D74058].mkv"
+        }
+      ],
+      "key": "medaka box - 06v2 - i don't expect you to understand [wip] [77d74058]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 07v2 - Does Everyone Do This My Own Tune!! [WIP] [F0ADEE63].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 07v2 - Does Everyone Do This My Own Tune!! [WIP] [F0ADEE63].mkv"
+        }
+      ],
+      "key": "medaka box - 07v2 - does everyone do this my own tune!! [wip] [f0adee63]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 08v2 - I Will Crush Kurokami Medaka!! [WIP] [5CF0F334].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 08v2 - I Will Crush Kurokami Medaka!! [WIP] [5CF0F334].mkv"
+        }
+      ],
+      "key": "medaka box - 08v2 - i will crush kurokami medaka!! [wip] [5cf0f334]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 09v2 - It's Not Justice If You Don't Go Overboard! [WIP] [FE28341D].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 09v2 - It's Not Justice If You Don't Go Overboard! [WIP] [FE28341D].mkv"
+        }
+      ],
+      "key": "medaka box - 09v2 - it's not justice if you don't go overboard! [wip] [fe28341d]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 10v2 - I Will Not Forgive You!! [WIP] [BBFAE692].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 10v2 - I Will Not Forgive You!! [WIP] [BBFAE692].mkv"
+        }
+      ],
+      "key": "medaka box - 10v2 - i will not forgive you!! [wip] [bbfae692]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 11v2 - This Is the End!! [WIP] [E8B0DFAC].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 11v2 - This Is the End!! [WIP] [E8B0DFAC].mkv"
+        }
+      ],
+      "key": "medaka box - 11v2 - this is the end!! [wip] [e8b0dfac]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 12v2 - Even Without Kurokami Medaka [WIP] [E1643C27].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box - 12v2 - Even Without Kurokami Medaka [WIP] [E1643C27].mkv"
+        }
+      ],
+      "key": "medaka box - 12v2 - even without kurokami medaka [wip] [e1643c27]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 01 - Normal, Special, and Abnormal [WIP] [FCB2D9E4].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 01 - Normal, Special, and Abnormal [WIP] [FCB2D9E4].mkv"
+        }
+      ],
+      "key": "medaka box abnormal - 01 - normal, special, and abnormal [wip] [fcb2d9e4]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 02 - Sister, Sister, Sister! [WIP] [C517C221].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 02 - Sister, Sister, Sister! [WIP] [C517C221].mkv"
+        }
+      ],
+      "key": "medaka box abnormal - 02 - sister, sister, sister! [wip] [c517c221]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 03 - Crush You Today! [WIP] [9C075433].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 03 - Crush You Today! [WIP] [9C075433].mkv"
+        }
+      ],
+      "key": "medaka box abnormal - 03 - crush you today! [wip] [9c075433]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 04 - The Monster I've Sought [WIP] [275EA780].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 04 - The Monster I've Sought [WIP] [275EA780].mkv"
+        }
+      ],
+      "key": "medaka box abnormal - 04 - the monster i've sought [wip] [275ea780]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 05 - You Can't Be Killed [WIP] [005DBDBC].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 05 - You Can't Be Killed [WIP] [005DBDBC].mkv"
+        }
+      ],
+      "key": "medaka box abnormal - 05 - you can't be killed [wip] [005dbdbc]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 06 - Please Become My Something [WIP] [1A02D6DE].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 06 - Please Become My Something [WIP] [1A02D6DE].mkv"
+        }
+      ],
+      "key": "medaka box abnormal - 06 - please become my something [wip] [1a02d6de]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 07 - The Lovely Name Kurokami Kujira [WIP] [B3712FC5].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 07 - The Lovely Name Kurokami Kujira [WIP] [B3712FC5].mkv"
+        }
+      ],
+      "key": "medaka box abnormal - 07 - the lovely name kurokami kujira [wip] [b3712fc5]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 08 - I Don't Want to See You Cry [WIP] [6540315D].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 08 - I Don't Want to See You Cry [WIP] [6540315D].mkv"
+        }
+      ],
+      "key": "medaka box abnormal - 08 - i don't want to see you cry [wip] [6540315d]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 09 - Kurokami Medaka (Rev) [WIP] [75D32DFC].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 09 - Kurokami Medaka (Rev) [WIP] [75D32DFC].mkv"
+        }
+      ],
+      "key": "medaka box abnormal - 09 - kurokami medaka (rev) [wip] [75d32dfc]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 10 - How to Make Everyone Happy [WIP] [CFBA43C7].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 10 - How to Make Everyone Happy [WIP] [CFBA43C7].mkv"
+        }
+      ],
+      "key": "medaka box abnormal - 10 - how to make everyone happy [wip] [cfba43c7]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 11 - That's All She Wrote! [WIP] [C24FA823].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 11 - That's All She Wrote! [WIP] [C24FA823].mkv"
+        }
+      ],
+      "key": "medaka box abnormal - 11 - that's all she wrote! [wip] [c24fa823]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 14527,
+          "entry_id": "4prry8isoxbojvj",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 12 - Good Loser Kumagawa [WIP] [1961B237].mkv"
+        },
+        {
+          "anilist_id": 11761,
+          "entry_id": "eao1zw1sj2cqxjt",
+          "release_id": "gd8o57ow8mo1zyq",
+          "source": "file",
+          "source_name": "Medaka Box Abnormal - 12 - Good Loser Kumagawa [WIP] [1961B237].mkv"
+        }
+      ],
+      "key": "medaka box abnormal - 12 - good loser kumagawa [wip] [1961b237]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
           "anilist_id": 15565,
           "entry_id": "khanf84jjbtclsl",
           "release_id": "nj5696g5fl4xexj",
@@ -604074,7 +605444,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E01 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E01 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E01 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604095,7 +605479,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E02 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E02 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E02 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604116,7 +605514,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E03 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E03 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E03 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604137,7 +605549,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E04 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E04 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E04 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604158,7 +605584,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E05 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E05 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E05 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604179,7 +605619,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E06 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E06 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E06 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604200,7 +605654,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E07 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E07 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E07 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604221,7 +605689,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E08 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E08 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E08 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604242,7 +605724,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E09 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E09 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E09 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604263,7 +605759,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E10 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E10 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E10 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604284,7 +605794,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E11 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E11 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E11 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604305,7 +605829,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E12 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E12 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E12 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604326,7 +605864,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E13 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E13 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E13 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604347,7 +605899,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E14 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E14 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E14 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604368,7 +605934,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E15 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E15 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E15 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604389,7 +605969,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E16 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E16 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E16 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604410,7 +606004,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E17 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E17 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E17 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604431,7 +606039,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E18 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E18 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E18 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604452,7 +606074,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E19 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E19 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E19 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604473,7 +606109,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E20 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E20 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S01E20 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604494,7 +606144,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E01 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E01 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E01 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604515,7 +606179,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E02 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E02 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E02 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604536,7 +606214,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E03 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E03 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E03 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604557,7 +606249,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E04 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E04 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E04 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604578,7 +606284,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E05 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E05 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E05 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604599,7 +606319,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E06 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E06 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E06 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604620,7 +606354,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E07 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E07 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E07 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604641,7 +606389,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E08 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E08 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E08 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604662,7 +606424,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E09 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E09 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E09 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604683,7 +606459,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E10 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E10 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E10 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604704,7 +606494,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E11 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E11 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E11 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604725,7 +606529,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E12 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E12 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E12 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604746,7 +606564,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E13 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E13 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E13 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604767,7 +606599,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E14 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E14 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E14 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604788,7 +606634,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E15 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E15 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E15 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604809,7 +606669,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E16 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E16 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E16 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604830,7 +606704,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E17 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E17 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E17 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604851,7 +606739,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E18 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E18 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E18 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604872,7 +606774,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E19 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E19 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E19 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604893,7 +606809,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E20 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E20 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E20 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604914,7 +606844,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E21 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E21 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E21 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604935,7 +606879,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E22 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E22 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E22 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604956,7 +606914,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E23 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E23 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E23 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604977,7 +606949,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E24 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E24 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E24 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -604998,7 +606984,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E25 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E25 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E25 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -605019,7 +607019,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E26 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E26 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E26 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -605040,7 +607054,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E27 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E27 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E27 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -605061,7 +607089,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E28 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E28 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E28 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -605082,7 +607124,21 @@
         {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
+          "release_id": "4x4g2cqvy2qndap",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E29 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 435,
+          "entry_id": "nrvp8h3fe3botqk",
           "release_id": "zyx9awevf6ik45d",
+          "source": "file",
+          "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E29 [BD Remux 1080p AVC] [Dual Audio].mkv"
+        },
+        {
+          "anilist_id": 1563,
+          "entry_id": "prjqfvk9s7b6k9q",
+          "release_id": "4x4g2cqvy2qndap",
           "source": "file",
           "source_name": "[Khaoklong] Magic Knight Rayearth (1994) S02E29 [BD Remux 1080p AVC] [Dual Audio].mkv"
         },
@@ -734778,69 +736834,47 @@
   "changes": {
     "entries": {
       "added": [
-        "0h7pdw15sofxpps",
-        "1e8wzcrnwk57eba",
-        "eao1zw1sj2cqxjt",
-        "ly0fs9b1aejrm6m",
-        "prjqfvk9s7b6k9q"
+        "4prry8isoxbojvj",
+        "fyqrac4delyswgb",
+        "snpur26mgqsnfck"
       ],
       "removed": []
     },
     "releases": {
       "added": [
-        "0j314hlebh8aur7",
-        "0rav7cw2v00eaxv",
-        "21f6zu5hern9oox",
-        "2ubpsuvxrchzrg4",
-        "4ltj521bk3m6k8n",
-        "5jofej3pj7aiyn9",
-        "7bx8xt6i535abey",
-        "as75e2h2hgzhvsd",
-        "bywgrf052fbz7cg",
-        "gd8o57ow8mo1zyq",
-        "jmqfzbuhxap8a23",
-        "lz3g64rdyfa4p5l",
-        "mwd1ynnm1skwlgc",
-        "nqy3zj0v9gpw2yg",
-        "p9tqd870id2l9cb",
-        "wmz0qxrks1of2qg",
-        "xe3nz555mczceok",
-        "zyx9awevf6ik45d"
+        "4x4g2cqvy2qndap",
+        "5bhzmwrxx4kr5wo",
+        "gfu3lvt3plv77r7",
+        "w7c9h61td5l1xlf",
+        "x0p6deloncg2kiu"
       ],
-      "removed": [
-        "88z693lpanwqbjv",
-        "c2cuodsmtuqndph",
-        "cdzp8a89bt0vsu9",
-        "cf5kqsu0lyxgfig",
-        "u2ko2xrzgbqlnd7",
-        "ucnec4976utw2fg"
-      ]
+      "removed": []
     }
   },
   "matching": {
     "encoding": {
       "direct_buckets": {
         "bucket_count": 350,
-        "key_count": 20857,
+        "key_count": 20859,
         "max_keys": 231,
-        "mean_keys": 59.59142857142857
+        "mean_keys": 59.597142857142856
       },
-      "direct_entries": 20857,
+      "direct_entries": 20859,
       "route_buckets": 259,
-      "source_bytes": 2970614,
-      "source_lines": 44700,
+      "source_bytes": 2972500,
+      "source_lines": 44706,
       "template_buckets": {
         "bucket_count": 259,
-        "key_count": 6534,
+        "key_count": 6536,
         "max_keys": 126,
-        "mean_keys": 25.227799227799228
+        "mean_keys": 25.235521235521237
       },
-      "template_groups": 6534,
-      "tuple_chunks": 6730
+      "template_groups": 6536,
+      "tuple_chunks": 6734
     },
     "provenance": {
-      "strict_keys": 56382,
-      "tolerant_keys": 45763
+      "strict_keys": 56454,
+      "tolerant_keys": 45859
     },
     "stale_overrides": []
   }
