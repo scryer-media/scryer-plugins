@@ -31,7 +31,7 @@ zstd = "0.13"
 aws-lc-sys = "0.45"
 crc32fast = "1"
 sevenz-rust2 = { version = "0.22", default-features = false, features = ["compress"] }
-zip = { version = "8.6.0", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+zip = { version = "9.0.4", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 
 [profile.xtask-release]
 inherits = "dev"

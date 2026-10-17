@@ -470,7 +470,9 @@ fn assert_encrypted_zip_password_states(wasm_path: &Path) {
             .compression_method(zip::CompressionMethod::Deflated);
         let options = match mode {
             Some(mode) => options.with_aes_encryption(mode, ZIP_PASSWORD),
-            None => options.with_deprecated_encryption(ZIP_PASSWORD.as_bytes()),
+            None => options
+                .with_deprecated_encryption(ZIP_PASSWORD.as_bytes())
+                .expect("enable ZipCrypto"),
         };
         zip.start_file("secret.txt", options)
             .expect("start encrypted ZIP entry");

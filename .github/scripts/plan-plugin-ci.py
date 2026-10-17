@@ -31,6 +31,11 @@ def documentation_only(path: PurePosixPath) -> bool:
     return path.suffix.lower() in {".md", ".mdx"} or path.name in {"LICENSE", "NOTICE"}
 
 
+def rule_pack_data(path: PurePosixPath) -> bool:
+    # Rule packs are published data; no plugin builds or tests read them.
+    return path.parts[:1] == ("rule_packs",)
+
+
 def scope_for_changes(
     changed_paths: list[str], plugins: dict[str, PurePosixPath]
 ) -> tuple[str, list[str]]:
@@ -39,7 +44,7 @@ def scope_for_changes(
         path = PurePosixPath(raw_path)
         if path.is_absolute() or ".." in path.parts:
             return "full", []
-        if documentation_only(path):
+        if documentation_only(path) or rule_pack_data(path):
             continue
         for plugin_id, plugin_dir in plugins.items():
             if path == plugin_dir or plugin_dir in path.parents:

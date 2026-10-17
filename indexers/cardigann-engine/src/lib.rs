@@ -39,8 +39,10 @@ fn build_descriptor() -> sdk::PluginDescriptor {
         id: "cardigann-engine".to_string(),
         name: "Advanced Indexers".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
-        sdk_version: sdk::SDK_VERSION.to_string(),
-        sdk_constraint: sdk::current_sdk_constraint(),
+        // The JSON endpoint-resolution extension requires the 3.16 host contract,
+        // even while the typed PDK uses the older SDK surface.
+        sdk_version: "3.16.0".to_string(),
+        sdk_constraint: ">=3.16.0, <4.0.0".to_string(),
         socket_permissions: vec![],
         provider: sdk::ProviderDescriptor::Indexer(sdk::IndexerDescriptor {
             provider_type: "cardigann".to_string(),
@@ -500,6 +502,8 @@ search:
         assert!(indexer.allowed_hosts.is_empty());
         assert!(indexer.capabilities.search);
         let wire: Value = serde_json::from_slice(&descriptor_bytes()).unwrap();
+        assert_eq!(wire["sdk_version"], "3.16.0");
+        assert_eq!(wire["sdk_constraint"], ">=3.16.0, <4.0.0");
         assert_eq!(
             wire["provider"]["capabilities"]["resolve_network_endpoints"],
             true

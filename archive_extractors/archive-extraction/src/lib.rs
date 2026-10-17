@@ -2443,9 +2443,9 @@ mod encryption_tests {
             let options = match cipher {
                 None => options,
                 Some(ZipCipher::Aes(mode)) => options.with_aes_encryption(*mode, password),
-                Some(ZipCipher::ZipCrypto) => {
-                    options.with_deprecated_encryption(password.as_bytes())
-                }
+                Some(ZipCipher::ZipCrypto) => options
+                    .with_deprecated_encryption(password.as_bytes())
+                    .expect("enable ZipCrypto"),
             };
             zip.start_file(*name, options).expect("start ZIP entry");
             zip.write_all(contents).expect("write ZIP payload");
