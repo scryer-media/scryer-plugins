@@ -155,6 +155,7 @@ mod tests {
             indexer
                 .scoring_policies
                 .iter()
+                .filter(|policy| policy.name != "indexer_language_confirmed")
                 .all(|policy| policy.rego_source.contains("newznab_profile_id"))
         );
         let selector = indexer

@@ -159,7 +159,18 @@ pub(super) fn scoring_policies(profiles: &[IndexerProviderProfile]) -> Vec<Plugi
     policy_registry()
         .into_iter()
         .filter(|policy| selected.contains(policy.name.as_str()))
+        .chain(provider_agnostic_policies())
         .collect()
+}
+
+/// Policies that apply to every release whatever indexer listed it, so no
+/// profile row has to opt in.
+fn provider_agnostic_policies() -> Vec<PluginScoringPolicy> {
+    vec![PluginScoringPolicy {
+        name: "indexer_language_confirmed".to_string(),
+        rego_source: REGO_INDEXER_LANGUAGE_CONFIRMED.to_string(),
+        applied_facets: vec![],
+    }]
 }
 
 fn policy_registry() -> Vec<PluginScoringPolicy> {
@@ -167,11 +178,6 @@ fn policy_registry() -> Vec<PluginScoringPolicy> {
         PluginScoringPolicy {
             name: "nzbgeek_vote_penalty".to_string(),
             rego_source: REGO_NZBGEEK_VOTE_PENALTY.to_string(),
-            applied_facets: vec![],
-        },
-        PluginScoringPolicy {
-            name: "nzbgeek_language_bonus".to_string(),
-            rego_source: REGO_NZBGEEK_LANGUAGE_BONUS.to_string(),
             applied_facets: vec![],
         },
         PluginScoringPolicy {
@@ -331,13 +337,18 @@ score_entry["nzbgeek_thumbs_down"] := penalty if {
 }
 "#;
 
-const REGO_NZBGEEK_LANGUAGE_BONUS: &str = r#"package scryer.rules.user.plugin_nzbgeek_language_bonus
+// Reads only the languages the indexer itself reported. `languages_audio` also
+// carries languages Scryer inferred from the name and the title, which confirm
+// nothing.
+const REGO_INDEXER_LANGUAGE_CONFIRMED: &str = r#"package scryer.rules.user.plugin_indexer_language_confirmed
 import rego.v1
 
-score_entry["nzbgeek_english_confirmed"] := 200 if {
-    input.release.extra.newznab_profile_id == "nzbgeek"
-    some lang in input.release.languages_audio
-    lower(lang) == "eng"
+score_entry["indexer_language_confirmed"] := 80 if {
+    count(input.profile.required_audio_languages) > 0
+    reported := {lower(lang) | some lang in input.release.indexer_languages}
+    every lang in input.profile.required_audio_languages {
+        lower(lang) in reported
+    }
 }
 "#;
 
@@ -440,22 +451,41 @@ mod tests {
         let (profiles, _) = load();
         let policies = scoring_policies(&profiles);
         assert_eq!(policies.len(), 3);
-        for policy in &policies {
+        for policy in policies
+            .iter()
+            .filter(|policy| policy.name != "indexer_language_confirmed")
+        {
             assert!(policy.rego_source.contains("newznab_profile_id"));
         }
-        let language = policies
-            .iter()
-            .find(|policy| policy.name == "nzbgeek_language_bonus")
-            .expect("language policy");
+    }
+
+    #[test]
+    fn language_policy_reads_only_indexer_reported_languages_for_every_provider() {
+        let policies = scoring_policies(&[]);
+        assert_eq!(policies.len(), 1);
+        let language = &policies[0];
+        assert_eq!(language.name, "indexer_language_confirmed");
         assert!(
             language
                 .rego_source
-                .contains("input.release.languages_audio")
+                .contains("input.release.indexer_languages")
         );
         assert!(
-            !language
+            language
                 .rego_source
-                .contains("input.release.extra.languages")
+                .contains("input.profile.required_audio_languages")
         );
+        assert!(
+            language
+                .rego_source
+                .contains(r#"score_entry["indexer_language_confirmed"] := 80 if"#)
+        );
+        assert!(
+            language
+                .rego_source
+                .contains("every lang in input.profile.required_audio_languages")
+        );
+        assert!(!language.rego_source.contains("languages_audio"));
+        assert!(!language.rego_source.contains("input.release.extra"));
     }
 }
