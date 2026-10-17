@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.24",
-  "snapshot_sha256": "9f04fdb8d5deadcddf7a9c2a9dc9d4cb7391a56539ced5a431ecd15fd56f7a8d",
+  "pack_version": "1.0.25",
+  "snapshot_sha256": "1959f05093d9d04d09159fc803f51822a9662b6855788457e4709880cc4d95e4",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -1314,6 +1314,14 @@
       "entry_id": "0k2jo4ojsb4ju7h",
       "file_sources": 12,
       "release_id": "0sy9krd6hgu7h9r",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "0k2jo4ojsb4ju7h",
+      "file_sources": 12,
+      "release_id": "dq3x6vai1qhmsx8",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -4441,6 +4449,14 @@
       "alias_sources": 0,
       "entry_id": "2l6v6vann2b1wjw",
       "file_sources": 1,
+      "release_id": "6ei7vuya4a44kxi",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "2l6v6vann2b1wjw",
+      "file_sources": 1,
       "release_id": "mzsg1t9hdn1arum",
       "strict_keys": 1,
       "tolerant_keys": 1
@@ -4580,6 +4596,22 @@
       "release_id": "rqcbn4735h2a14w",
       "strict_keys": 13,
       "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "2n4g025nl0xw9ha",
+      "file_sources": 101,
+      "release_id": "4f0f2mb6x7raat3",
+      "strict_keys": 101,
+      "tolerant_keys": 101
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "2n4g025nl0xw9ha",
+      "file_sources": 100,
+      "release_id": "dyi00sw55jej2n9",
+      "strict_keys": 100,
+      "tolerant_keys": 100
     },
     {
       "alias_sources": 0,
@@ -14449,15 +14481,7 @@
       "alias_sources": 0,
       "entry_id": "89kbypxmxwsonyx",
       "file_sources": 12,
-      "release_id": "ar960pucmuuy4l1",
-      "strict_keys": 12,
-      "tolerant_keys": 12
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "89kbypxmxwsonyx",
-      "file_sources": 12,
-      "release_id": "jff8xnbqua9ucrh",
+      "release_id": "y4ca68h6x1fq3a2",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -16170,6 +16194,14 @@
       "entry_id": "9b60pagmbiwuv04",
       "file_sources": 12,
       "release_id": "ud6hxihaeq81nkq",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "9bfobo5cx7kixg8",
+      "file_sources": 12,
+      "release_id": "b2hqwsdlbtydvaf",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -24527,6 +24559,14 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "ep3hq4xvdjevuk3",
+      "file_sources": 13,
+      "release_id": "y3ldsdbsfyp6nxx",
+      "strict_keys": 13,
+      "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "ep5ayhf863xcvwc",
       "file_sources": 12,
       "release_id": "c6pejvfhb042qgg",
@@ -27546,6 +27586,14 @@
       "entry_id": "gbfgvupzh7mlh95",
       "file_sources": 12,
       "release_id": "qodbj21m8xx4s50",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "gbfgvupzh7mlh95",
+      "file_sources": 12,
+      "release_id": "stq1yathqt4dx9r",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -32583,6 +32631,22 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "jeyb9hfoadtglid",
+      "file_sources": 12,
+      "release_id": "7x3tuvzxjnnf0kh",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "jeyb9hfoadtglid",
+      "file_sources": 13,
+      "release_id": "ou143z67scwqky0",
+      "strict_keys": 13,
+      "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "jf54fue1yvq9812",
       "file_sources": 1,
       "release_id": "1xm2k8uq9mr2jjk",
@@ -33442,6 +33506,14 @@
       "entry_id": "jqgdqhg8g5ec4x5",
       "file_sources": 1,
       "release_id": "64trk42gsmloa9k",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "jqgdqhg8g5ec4x5",
+      "file_sources": 1,
+      "release_id": "anycttmvzizvgmw",
       "strict_keys": 1,
       "tolerant_keys": 1
     },
@@ -38583,6 +38655,22 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "mdc6nu99wbbmw09",
+      "file_sources": 9,
+      "release_id": "1eamzera4n2kf6t",
+      "strict_keys": 9,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "mdc6nu99wbbmw09",
+      "file_sources": 9,
+      "release_id": "8ovo6jypif699ru",
+      "strict_keys": 9,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "me7y59taynnwjgk",
       "file_sources": 12,
       "release_id": "098d9w0dl4dix5m",
@@ -39553,7 +39641,7 @@
       "alias_sources": 0,
       "entry_id": "muwybgzewq5iej2",
       "file_sources": 16,
-      "release_id": "qn2el723ykugou3",
+      "release_id": "53xilsc9rxzl36w",
       "strict_keys": 16,
       "tolerant_keys": 16
     },
@@ -39561,7 +39649,15 @@
       "alias_sources": 0,
       "entry_id": "muwybgzewq5iej2",
       "file_sources": 16,
-      "release_id": "rglhz5ytk5mevb5",
+      "release_id": "g5bsesz02h6jiru",
+      "strict_keys": 16,
+      "tolerant_keys": 16
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "muwybgzewq5iej2",
+      "file_sources": 16,
+      "release_id": "qn2el723ykugou3",
       "strict_keys": 16,
       "tolerant_keys": 16
     },
@@ -51993,6 +52089,14 @@
       "alias_sources": 0,
       "entry_id": "twe9o99bdnfj054",
       "file_sources": 12,
+      "release_id": "41ygaw715j61qlq",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "twe9o99bdnfj054",
+      "file_sources": 12,
       "release_id": "iec975iuzaedq5q",
       "strict_keys": 12,
       "tolerant_keys": 12
@@ -52108,6 +52212,22 @@
       "release_id": "r8q2843labndevn",
       "strict_keys": 6,
       "tolerant_keys": 6
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "u0lexhhj70k3bpp",
+      "file_sources": 8,
+      "release_id": "t681feihrtpiyg1",
+      "strict_keys": 8,
+      "tolerant_keys": 8
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "u0lexhhj70k3bpp",
+      "file_sources": 8,
+      "release_id": "y1g2a3h2tbr4nf3",
+      "strict_keys": 8,
+      "tolerant_keys": 8
     },
     {
       "alias_sources": 0,
@@ -55186,6 +55306,14 @@
       "entry_id": "vxjcsbulpgtw8mu",
       "file_sources": 12,
       "release_id": "9p2d3fx1kue33xf",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "vxjcsbulpgtw8mu",
+      "file_sources": 12,
+      "release_id": "joq32c020axwrki",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -199672,6 +199800,114 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "wrkm8w50y3f3y6i",
       "source_name": "Tears.to.Tiara.S01E26.v2.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[73DD9EE7].mkv"
+    },
+    {
+      "entry_id": "mdc6nu99wbbmw09",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "1eamzera4n2kf6t",
+      "source_name": "Sora wo Miageru Shoujo no Hitomi ni Utsuru Sekai - 1v2 [CF20FD99].mkv"
+    },
+    {
+      "entry_id": "mdc6nu99wbbmw09",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "1eamzera4n2kf6t",
+      "source_name": "Sora wo Miageru Shoujo no Hitomi ni Utsuru Sekai - 2 [4EB61430].mkv"
+    },
+    {
+      "entry_id": "mdc6nu99wbbmw09",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "1eamzera4n2kf6t",
+      "source_name": "Sora wo Miageru Shoujo no Hitomi ni Utsuru Sekai - 3 [453ABB14].mkv"
+    },
+    {
+      "entry_id": "mdc6nu99wbbmw09",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "1eamzera4n2kf6t",
+      "source_name": "Sora wo Miageru Shoujo no Hitomi ni Utsuru Sekai - 4 [FC6FA73F].mkv"
+    },
+    {
+      "entry_id": "mdc6nu99wbbmw09",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "1eamzera4n2kf6t",
+      "source_name": "Sora wo Miageru Shoujo no Hitomi ni Utsuru Sekai - 5 [FE542E8E].mkv"
+    },
+    {
+      "entry_id": "mdc6nu99wbbmw09",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "1eamzera4n2kf6t",
+      "source_name": "Sora wo Miageru Shoujo no Hitomi ni Utsuru Sekai - 6 [424D2379].mkv"
+    },
+    {
+      "entry_id": "mdc6nu99wbbmw09",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "1eamzera4n2kf6t",
+      "source_name": "Sora wo Miageru Shoujo no Hitomi ni Utsuru Sekai - 7 [F81AC389].mkv"
+    },
+    {
+      "entry_id": "mdc6nu99wbbmw09",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "1eamzera4n2kf6t",
+      "source_name": "Sora wo Miageru Shoujo no Hitomi ni Utsuru Sekai - 8 [4163D7FD].mkv"
+    },
+    {
+      "entry_id": "mdc6nu99wbbmw09",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "1eamzera4n2kf6t",
+      "source_name": "Sora wo Miageru Shoujo no Hitomi ni Utsuru Sekai - 9 [8717632E].mkv"
+    },
+    {
+      "entry_id": "mdc6nu99wbbmw09",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "8ovo6jypif699ru",
+      "source_name": "Sora wo Miageru Shoujo no Hitomi ni Utsuru Sekai - 1v2 [CF20FD99].mkv"
+    },
+    {
+      "entry_id": "mdc6nu99wbbmw09",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "8ovo6jypif699ru",
+      "source_name": "Sora wo Miageru Shoujo no Hitomi ni Utsuru Sekai - 2 [4EB61430].mkv"
+    },
+    {
+      "entry_id": "mdc6nu99wbbmw09",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "8ovo6jypif699ru",
+      "source_name": "Sora wo Miageru Shoujo no Hitomi ni Utsuru Sekai - 3 [453ABB14].mkv"
+    },
+    {
+      "entry_id": "mdc6nu99wbbmw09",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "8ovo6jypif699ru",
+      "source_name": "Sora wo Miageru Shoujo no Hitomi ni Utsuru Sekai - 4 [FC6FA73F].mkv"
+    },
+    {
+      "entry_id": "mdc6nu99wbbmw09",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "8ovo6jypif699ru",
+      "source_name": "Sora wo Miageru Shoujo no Hitomi ni Utsuru Sekai - 5 [FE542E8E].mkv"
+    },
+    {
+      "entry_id": "mdc6nu99wbbmw09",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "8ovo6jypif699ru",
+      "source_name": "Sora wo Miageru Shoujo no Hitomi ni Utsuru Sekai - 6 [424D2379].mkv"
+    },
+    {
+      "entry_id": "mdc6nu99wbbmw09",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "8ovo6jypif699ru",
+      "source_name": "Sora wo Miageru Shoujo no Hitomi ni Utsuru Sekai - 7 [F81AC389].mkv"
+    },
+    {
+      "entry_id": "mdc6nu99wbbmw09",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "8ovo6jypif699ru",
+      "source_name": "Sora wo Miageru Shoujo no Hitomi ni Utsuru Sekai - 8 [4163D7FD].mkv"
+    },
+    {
+      "entry_id": "mdc6nu99wbbmw09",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "8ovo6jypif699ru",
+      "source_name": "Sora wo Miageru Shoujo no Hitomi ni Utsuru Sekai - 9 [8717632E].mkv"
     },
     {
       "entry_id": "mf594vdhdkqr8b4",
@@ -736834,47 +737070,68 @@
   "changes": {
     "entries": {
       "added": [
-        "4prry8isoxbojvj",
-        "fyqrac4delyswgb",
-        "snpur26mgqsnfck"
+        "2n4g025nl0xw9ha",
+        "9bfobo5cx7kixg8",
+        "ep3hq4xvdjevuk3",
+        "jeyb9hfoadtglid",
+        "mdc6nu99wbbmw09",
+        "u0lexhhj70k3bpp"
       ],
       "removed": []
     },
     "releases": {
       "added": [
-        "4x4g2cqvy2qndap",
-        "5bhzmwrxx4kr5wo",
-        "gfu3lvt3plv77r7",
-        "w7c9h61td5l1xlf",
-        "x0p6deloncg2kiu"
+        "1eamzera4n2kf6t",
+        "41ygaw715j61qlq",
+        "4f0f2mb6x7raat3",
+        "53xilsc9rxzl36w",
+        "6ei7vuya4a44kxi",
+        "7x3tuvzxjnnf0kh",
+        "8ovo6jypif699ru",
+        "anycttmvzizvgmw",
+        "b2hqwsdlbtydvaf",
+        "dq3x6vai1qhmsx8",
+        "dyi00sw55jej2n9",
+        "g5bsesz02h6jiru",
+        "joq32c020axwrki",
+        "ou143z67scwqky0",
+        "stq1yathqt4dx9r",
+        "t681feihrtpiyg1",
+        "y1g2a3h2tbr4nf3",
+        "y3ldsdbsfyp6nxx",
+        "y4ca68h6x1fq3a2"
       ],
-      "removed": []
+      "removed": [
+        "ar960pucmuuy4l1",
+        "jff8xnbqua9ucrh",
+        "rglhz5ytk5mevb5"
+      ]
     }
   },
   "matching": {
     "encoding": {
       "direct_buckets": {
         "bucket_count": 350,
-        "key_count": 20859,
+        "key_count": 20874,
         "max_keys": 231,
-        "mean_keys": 59.597142857142856
+        "mean_keys": 59.64
       },
-      "direct_entries": 20859,
+      "direct_entries": 20874,
       "route_buckets": 259,
-      "source_bytes": 2972500,
-      "source_lines": 44706,
+      "source_bytes": 2977037,
+      "source_lines": 44741,
       "template_buckets": {
         "bucket_count": 259,
-        "key_count": 6536,
+        "key_count": 6545,
         "max_keys": 126,
-        "mean_keys": 25.235521235521237
+        "mean_keys": 25.27027027027027
       },
-      "template_groups": 6536,
-      "tuple_chunks": 6734
+      "template_groups": 6545,
+      "tuple_chunks": 6747
     },
     "provenance": {
-      "strict_keys": 56454,
-      "tolerant_keys": 45859
+      "strict_keys": 56622,
+      "tolerant_keys": 46018
     },
     "stale_overrides": []
   }
