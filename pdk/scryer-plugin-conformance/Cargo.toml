@@ -23,6 +23,10 @@ default = []
 download-client = []
 notification = []
 subtitle = ["dep:tokio"]
+# `HttpScript::Live`: the plugin's outbound HTTP is performed for real. Only an
+# opt-in, ignored-by-default live test enables it, so no plugin's ordinary
+# conformance run (or its `Cargo.lock`) carries an HTTP client.
+live-http = ["dep:ureq"]
 
 [dependencies]
 base64 = "0.23"
@@ -32,5 +36,8 @@ scryer-plugin-sdk = "3.11.0"
 postcard = { version = "1", features = ["use-std"] }
 serde_json = "1"
 tokio = { version = "1", features = ["rt", "time", "macros"], optional = true }
+# Plain HTTP only: a live check talks to a service on the developer's own
+# machine, so TLS stays out of the graph.
+ureq = { version = "3.4.2", default-features = false, optional = true }
 wasmtime = "48.0.6"
 wasmtime-wasi = "48.0.6"

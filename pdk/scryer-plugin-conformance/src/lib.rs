@@ -47,6 +47,8 @@ use wasmtime_wasi::{WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
 
 #[cfg(feature = "download-client")]
 pub mod download_client;
+#[cfg(feature = "live-http")]
+mod live_http;
 #[cfg(feature = "notification")]
 pub mod notification;
 #[cfg(feature = "subtitle")]
@@ -302,6 +304,12 @@ pub enum HttpScript {
     /// claims is refused in-band, which is how "the host refuses everything"
     /// is expressed as an empty table.
     Routed(Vec<HttpRoute>),
+    /// Requests are performed for real — method, URL, headers and body — and
+    /// the upstream's real status, headers and body come back. Only for an
+    /// opt-in live check against a service the developer runs themselves; a
+    /// transport failure is answered in-band as `UpstreamUnavailable`.
+    #[cfg(feature = "live-http")]
+    Live,
 }
 
 impl HttpScript {
@@ -534,8 +542,17 @@ pub fn default_respond(
                     body: request.body.clone(),
                 });
 
+                #[cfg(feature = "live-http")]
+                if let HttpScript::Live = &script.http {
+                    return Ok(PluginHostResponse::Http(live_http::perform(
+                        &method, &request,
+                    )));
+                }
+
                 let reply = match &script.http {
                     HttpScript::Refused => None,
+                    #[cfg(feature = "live-http")]
+                    HttpScript::Live => unreachable!("answered live above"),
                     HttpScript::Routed(routes) => routes
                         .iter()
                         .find(|route| route.url.matches(&request.url))

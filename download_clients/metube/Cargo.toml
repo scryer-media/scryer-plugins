@@ -1,0 +1,46 @@
+[package]
+name = "metube-download-client"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97.1"
+license = "GPL-3.0-only"
+description = "MeTube (yt-dlp) HTTP download client plugin"
+
+[package.metadata.scryer]
+official = true
+plugin_id = "metube"
+status = "beta"
+catalog_versions = ["v3"]
+# The `http` protocol family (`DownloadInputKind::HttpResource`, the `http`
+# capability block and `PluginHttpDownloadSource`) first ships in Scryer
+# 0.21.19 on SDK 3.17.0. An older host never routes an HTTP release to any
+# client, so the floor is the first release that can hand this plugin work.
+min_scryer_version = "0.21.19"
+docs_url = "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/metube"
+source_repo = "https://github.com/scryer-media/scryer-plugins/tree/main/download_clients/metube"
+
+# A component: the world's `describe` and `process` are exported from the
+# library itself, so there is no `main` and no `[[bin]]`.
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+base64 = "0.23"
+scryer-plugin-sdk = "3.17.0"
+scryer-plugin-pdk = { path = "../../pdk/scryer-plugin-pdk", version = "0.7.0" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+wit-bindgen = "0.61"
+
+[dev-dependencies]
+scryer-plugin-conformance = { path = "../../pdk/scryer-plugin-conformance", features = [
+    "download-client",
+    "live-http",
+] }
+
+[profile.plugin-release]
+inherits = "release"
+opt-level = 3
+lto = "fat"
+strip = true
+panic = "abort"

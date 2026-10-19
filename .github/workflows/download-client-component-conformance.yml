@@ -30,6 +30,7 @@ on:
       - download_clients/downloadstation/**
       - download_clients/flood/**
       - download_clients/freebox/**
+      - download_clients/metube/**
       - download_clients/qbittorrent/**
       - download_clients/rqbit/**
       - download_clients/rtorrent/**
@@ -74,6 +75,8 @@ jobs:
             manifest: download_clients/flood/Cargo.toml
           - plugin: freebox
             manifest: download_clients/freebox/Cargo.toml
+          - plugin: metube
+            manifest: download_clients/metube/Cargo.toml
           - plugin: rqbit
             manifest: download_clients/rqbit/Cargo.toml
           - plugin: rtorrent
