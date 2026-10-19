@@ -19,7 +19,9 @@ use serde_json::{Value, json};
 use crate::api::{MvwConfig, MvwError, QueryCall, parse_channels, parse_reply};
 use crate::cursor::PageCursor;
 use crate::engine::{self, Fetch, HttpReply, PAGE_CEILING, PageOutcome};
-use crate::release::{infer_height, release_title, rfc3339_from_unix, subtitle_format};
+use crate::release::{
+    Variant, infer_height, media_geo, release_title, rfc3339_from_unix, subtitle_format, variant,
+};
 
 /// A real three-result answer for "Die Sendung mit der Maus".
 const QUERY_SAMPLE: &str = include_str!("../tests/fixtures/query_sample.json");
@@ -28,6 +30,9 @@ const QUERY_CHANNEL: &str = include_str!("../tests/fixtures/query_channel.json")
 /// Synthetic entries covering HLS, accessibility variants, clips, string
 /// numbers, missing pages and unusable entries.
 const QUERY_VARIANTS: &str = include_str!("../tests/fixtures/query_variants.json");
+/// Synthetic entries with plain titles whose ARD page ids name the variant,
+/// and media paths that name the rights region.
+const QUERY_CRID_VARIANTS: &str = include_str!("../tests/fixtures/query_crid_variants.json");
 /// The real HTTP 500 body the API returns for a malformed query.
 const ERROR_SERVER: &str = include_str!("../tests/fixtures/error_server.json");
 const ERROR_REJECTED: &str = include_str!("../tests/fixtures/error_rejected.json");
@@ -588,7 +593,13 @@ fn a_sample_entry_becomes_a_direct_file_release() {
     assert_eq!(http.page_url, page);
     assert_eq!(http.duration_seconds, Some(1818));
     assert_eq!(http.channel.as_ref().unwrap().name, "KiKA");
-    assert_eq!(http.availability, HttpAvailability::Unknown);
+    assert_eq!(
+        http.availability,
+        HttpAvailability::GeoRestricted,
+        "ARD files under `/de/` are Germany-only"
+    );
+    assert_eq!(result.provider_extra["geo"], "de");
+    assert_eq!(result.provider_extra["geo_region"], "DE");
 
     let media = resources_of(result, HttpResourceRole::Muxed)
         .into_iter()
@@ -748,6 +759,219 @@ fn synthetic_variants_map_hls_missing_pages_and_string_numbers() {
         subtitle.subtitle.as_ref().unwrap().format.as_deref(),
         Some("srt")
     );
+}
+
+#[test]
+fn ard_page_ids_mark_variants_that_titles_leave_plain() {
+    let defaults = run(
+        &config_with(&[]),
+        &request("Synthetic"),
+        &FixtureFetch::ok(QUERY_CRID_VARIANTS),
+    )
+    .unwrap();
+    assert_eq!(
+        ids(&defaults.response.results),
+        vec!["syntheticCridPlainEnt=", "syntheticZdfPlainEnt4="],
+        "audio-described and signed versions are dropped by default"
+    );
+
+    let only_described = run(
+        &config_with(&[("include_audio_description", "true")]),
+        &request("Synthetic"),
+        &FixtureFetch::ok(QUERY_CRID_VARIANTS),
+    )
+    .unwrap();
+    assert_eq!(
+        ids(&only_described.response.results),
+        vec![
+            "syntheticCridAdEntry1=",
+            "syntheticCridPlainEnt=",
+            "syntheticZdfPlainEnt4="
+        ]
+    );
+
+    let everything = run(
+        &config_with(&[
+            ("include_audio_description", "true"),
+            ("include_sign_language", "true"),
+        ]),
+        &request("Synthetic"),
+        &FixtureFetch::ok(QUERY_CRID_VARIANTS),
+    )
+    .unwrap();
+    let results = &everything.response.results;
+    assert_eq!(results.len(), 4);
+
+    let described = by_id(results, "syntheticCridAdEntry1=");
+    assert_eq!(
+        described.title, "Synthetic Show - Folge 5: Der Testfall [WDR]",
+        "the release title is unchanged"
+    );
+    assert_eq!(described.provider_extra["audio_description"], true);
+    assert_eq!(described.provider_extra["sign_language"], false);
+    assert!(
+        resources_of(described, HttpResourceRole::Muxed)
+            .iter()
+            .filter(|resource| resource.transport == HttpTransport::DirectFile)
+            .all(
+                |resource| resource.audio.as_ref().and_then(|audio| audio.role)
+                    == Some(HttpAudioRole::AudioDescription)
+            )
+    );
+
+    let signed = by_id(results, "syntheticCridDgsEntry=");
+    assert_eq!(signed.provider_extra["sign_language"], true);
+    assert_eq!(signed.provider_extra["audio_description"], false);
+
+    let plain = by_id(results, "syntheticCridPlainEnt=");
+    assert_eq!(plain.provider_extra["audio_description"], false);
+    assert_eq!(plain.provider_extra["sign_language"], false);
+}
+
+#[test]
+fn ard_page_ids_decode_in_both_base64_alphabets() {
+    let entry = |url: &str| crate::api::Entry {
+        title: "Folge 5".to_string(),
+        url_website: url.to_string(),
+        ..crate::api::Entry::default()
+    };
+    let described = Variant {
+        audio_description: true,
+        sign_language: false,
+    };
+    let signed = Variant {
+        audio_description: false,
+        sign_language: true,
+    };
+    // `crid://example.test/Beitrag-synthetic-???/hoerfassung`: URL-safe,
+    // unpadded and padded.
+    for url in [
+        "https://www.ardmediathek.de/video/Y3JpZDovL2V4YW1wbGUudGVzdC9CZWl0cmFnLXN5bnRoZXRpYy0_Pz8vaG9lcmZhc3N1bmc",
+        "https://www.ardmediathek.de/video/Y3JpZDovL2V4YW1wbGUudGVzdC9CZWl0cmFnLXN5bnRoZXRpYy0_Pz8vaG9lcmZhc3N1bmc=?mcV6=x",
+    ] {
+        assert_eq!(variant(&entry(url)), described, "{url}");
+    }
+    // `crid://example.test/Beitrag-synthetic-0004/gebaerdensprache`.
+    assert_eq!(
+        variant(&entry(
+            "https://ardmediathek.de/video/Y3JpZDovL2V4YW1wbGUudGVzdC9CZWl0cmFnLXN5bnRoZXRpYy0wMDA0L2dlYmFlcmRlbnNwcmFjaGU="
+        )),
+        signed
+    );
+    // A real plain WDR page id, another host, and text that is not a crid.
+    for url in [
+        "https://www.ardmediathek.de/video/Y3JpZDovL3dkci5kZS9CZWl0cmFnLXNvcGhvcmEtNzNkN2QwM2UtZjFjZC00MzQ3LTg5NGMtYTU2MDc0N2FkZWY5",
+        "https://www.ardmediathek.example.test/video/Y3JpZDovL2V4YW1wbGUudGVzdC9CZWl0cmFnLXN5bnRoZXRpYy0wMDAxL2F1ZGlvZGVza3JpcHRpb24",
+        "https://www.ardmediathek.de/video/folge-5-audiodeskription",
+        "https://www.ardmediathek.de/sendung/Y3JpZDovL2V4YW1wbGUudGVzdC9CZWl0cmFnLXN5bnRoZXRpYy0wMDAxL2F1ZGlvZGVza3JpcHRpb24",
+    ] {
+        assert_eq!(variant(&entry(url)), Variant::default(), "{url}");
+    }
+}
+
+#[test]
+fn media_paths_set_the_rights_region() {
+    let outcome = run(
+        &config_with(&[
+            ("include_audio_description", "true"),
+            ("include_sign_language", "true"),
+        ]),
+        &request("Synthetic"),
+        &FixtureFetch::ok(QUERY_CRID_VARIANTS),
+    )
+    .unwrap();
+    let results = &outcome.response.results;
+    let region = |id: &str| {
+        let result = by_id(results, id);
+        (
+            result.http.as_ref().unwrap().availability,
+            result.provider_extra.get("geo").cloned(),
+            result.provider_extra.get("geo_region").cloned(),
+        )
+    };
+    assert_eq!(
+        region("syntheticCridAdEntry1="),
+        (
+            HttpAvailability::Available,
+            Some(json!("worldwide")),
+            Some(json!("worldwide"))
+        )
+    );
+    for id in ["syntheticCridDgsEntry=", "syntheticCridPlainEnt="] {
+        assert_eq!(
+            region(id),
+            (
+                HttpAvailability::GeoRestricted,
+                Some(json!("de")),
+                Some(json!("DE"))
+            ),
+            "{id}"
+        );
+    }
+    assert_eq!(
+        region("syntheticZdfPlainEnt4="),
+        (HttpAvailability::Unknown, None, None)
+    );
+
+    // The real KiKA answer: one Germany-only file set, one worldwide.
+    let channel = run(
+        &config_with(&[("channels", "KiKA")]),
+        &request("Die Sendung mit der Maus"),
+        &FixtureFetch::ok(QUERY_CHANNEL),
+    )
+    .unwrap();
+    let availability = |id: &str| {
+        by_id(&channel.response.results, id)
+            .http
+            .as_ref()
+            .unwrap()
+            .availability
+    };
+    assert_eq!(
+        availability("FTXJUjzJBBIF+3iuitHuePQ9ufKsHjf8v8KCGeT8nF8="),
+        HttpAvailability::GeoRestricted
+    );
+    assert_eq!(
+        availability("JtVDYXrdkHMcw4BU0LTGLSNS/1esexVVp/3T7wn0D0M="),
+        HttpAvailability::Available
+    );
+}
+
+#[test]
+fn only_known_path_shapes_name_a_region() {
+    use crate::release::Geo;
+    for (url, expected) in [
+        (
+            "https://wdr-progressive.ard-mcdn.de/media/p/public/de/2026/10/13/x/x_AVC-720.mp4",
+            Some(Geo::Germany),
+        ),
+        (
+            "https://wdr-progressive.ard-mcdn.de/medp/ondemand/de/fsk0/x/x_AVC-720.mp4",
+            Some(Geo::Germany),
+        ),
+        (
+            "https://wdr-progressive.ard-mcdn.de/medp/ondemand/weltweit/fsk0/x/x_AVC-720.mp4",
+            Some(Geo::Worldwide),
+        ),
+        (
+            "https://hr-progressive.ard-mcdn.de/odinson/geoavailability_D/x/x_AVC-720.mp4",
+            Some(Geo::Germany),
+        ),
+        // `/de/` elsewhere is a language or site path, not a rights region.
+        ("https://cdn.example.test/de/film_AVC-720.mp4", None),
+        (
+            "https://nrodlzdf-a.akamaihd.net/none/zdf/26/10/x/x_808k_p11v17.mp4",
+            None,
+        ),
+        (
+            "https://tvdlzdf-a.akamaihd.net/de/x/x_808k_p11v17.mp4",
+            None,
+        ),
+        ("https://wdr-progressive.ard-mcdn.de/x/x_AVC-720.mp4", None),
+        ("", None),
+    ] {
+        assert_eq!(media_geo(url), expected, "{url}");
+    }
 }
 
 #[test]

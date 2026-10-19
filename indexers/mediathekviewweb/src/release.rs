@@ -32,19 +32,154 @@ pub struct Variant {
     pub sign_language: bool,
 }
 
-/// Read the variant from the title and topic. Broadcasters mark it in
-/// words (`Audiodeskription`, `Hörfassung`, `Gebärdensprache`) or with a
-/// bracketed abbreviation (`(AD)`, `(DGS)`).
+/// Read the variant from the title, the topic and the programme page.
+/// Broadcasters mark it in words (`Audiodeskription`, `Hörfassung`,
+/// `Gebärdensprache`) or with a bracketed abbreviation (`(AD)`, `(DGS)`).
+/// ARD often leaves the title plain and marks the variant only in the
+/// content id its page URL carries (see [`ard_page_variant`]).
 pub fn variant(entry: &Entry) -> Variant {
     let text = format!("{} {}", entry.title, entry.topic);
     let lower = text.to_lowercase();
+    let page = ard_page_variant(&entry.url_website);
     Variant {
-        audio_description: lower.contains("audiodeskription")
+        audio_description: page.audio_description
+            || lower.contains("audiodeskription")
             || lower.contains("hörfassung")
             || has_bracketed_tag(&text, "AD"),
-        sign_language: lower.contains("gebärdensprache")
+        sign_language: page.sign_language
+            || lower.contains("gebärdensprache")
             || has_bracketed_tag(&text, "DGS")
             || has_bracketed_tag(&text, "ÖGS"),
+    }
+}
+
+/// The variant an ARD Mediathek page URL names. Its last path segment is a
+/// base64 content id such as
+/// `crid://wdr.de/Beitrag-sophora-<uuid>/audiodeskription`; the final
+/// segment of that id names the accessibility version.
+fn ard_page_variant(url: &str) -> Variant {
+    let Some(crid) = ard_page_crid(url) else {
+        return Variant::default();
+    };
+    let crid = crid.trim_end_matches('/').to_ascii_lowercase();
+    let last = crid.rsplit('/').next().unwrap_or_default();
+    Variant {
+        audio_description: matches!(last, "audiodeskription" | "hoerfassung"),
+        sign_language: matches!(last, "gebaerdensprache" | "dgs"),
+    }
+}
+
+/// The decoded `crid://` id of an `ardmediathek.de/video/…` page URL.
+fn ard_page_crid(url: &str) -> Option<String> {
+    let without_scheme = url
+        .strip_prefix("https://")
+        .or_else(|| url.strip_prefix("http://"))?;
+    let (host, path) = without_scheme.split_once('/')?;
+    let host = host.to_ascii_lowercase();
+    if host != "ardmediathek.de" && host != "www.ardmediathek.de" {
+        return None;
+    }
+    let path = path.split(['?', '#']).next().unwrap_or_default();
+    let rest = path.strip_prefix("video/")?;
+    let segment = rest.split('/').rfind(|segment| !segment.is_empty())?;
+    let decoded = decode_base64(segment)?;
+    let crid = String::from_utf8(decoded).ok()?;
+    crid.starts_with("crid://").then_some(crid)
+}
+
+/// Standard or URL-safe base64, padding optional. `None` for anything else.
+fn decode_base64(text: &str) -> Option<Vec<u8>> {
+    let text = text.trim_end_matches('=');
+    if text.len() % 4 == 1 {
+        return None;
+    }
+    let mut out = Vec::with_capacity(text.len() * 3 / 4);
+    let mut buffer: u32 = 0;
+    let mut bits = 0;
+    for byte in text.bytes() {
+        let value = match byte {
+            b'A'..=b'Z' => byte - b'A',
+            b'a'..=b'z' => byte - b'a' + 26,
+            b'0'..=b'9' => byte - b'0' + 52,
+            b'+' | b'-' => 62,
+            b'/' | b'_' => 63,
+            _ => return None,
+        };
+        buffer = (buffer << 6) | u32::from(value);
+        bits += 6;
+        if bits >= 8 {
+            bits -= 8;
+            out.push((buffer >> bits) as u8);
+            buffer &= (1 << bits) - 1;
+        }
+    }
+    Some(out)
+}
+
+/// Where a release's media files may be downloaded from.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Geo {
+    /// Germany only; the CDN refuses requests from elsewhere.
+    Germany,
+    Worldwide,
+}
+
+impl Geo {
+    /// The short hint in `provider_extra.geo`.
+    pub fn hint(self) -> &'static str {
+        match self {
+            Self::Germany => "de",
+            Self::Worldwide => "worldwide",
+        }
+    }
+
+    /// The region in `provider_extra.geo_region`.
+    pub fn region(self) -> &'static str {
+        match self {
+            Self::Germany => "DE",
+            Self::Worldwide => "worldwide",
+        }
+    }
+}
+
+/// The rights region one media URL encodes in its path. ARD's CDN files
+/// Germany-only media under a `/de/` segment (`/media/p/public/de/…`,
+/// `/medp/ondemand/de/…`) or a `geoavailability_D` segment, and worldwide
+/// media under `/weltweit/`. A `/de/` segment counts only on ARD's
+/// `ard-mcdn.de` hosts, where it is known to mean the rights region.
+pub fn media_geo(url: &str) -> Option<Geo> {
+    if !is_http_url(url) {
+        return None;
+    }
+    let host = url_host(url);
+    let path = url_path(url);
+    let segments: Vec<&str> = path.split('/').filter(|s| !s.is_empty()).collect();
+    if segments.contains(&"weltweit") {
+        return Some(Geo::Worldwide);
+    }
+    if segments.contains(&"geoavailability_d") {
+        return Some(Geo::Germany);
+    }
+    if host.ends_with(".ard-mcdn.de") && segments.contains(&"de") {
+        return Some(Geo::Germany);
+    }
+    None
+}
+
+/// The release's region: Germany when any media file is Germany-only,
+/// worldwide when every media file is worldwide, otherwise unknown.
+fn release_geo(resources: &[PluginHttpResource]) -> Option<Geo> {
+    let geos: Vec<Option<Geo>> = resources
+        .iter()
+        .filter(|resource| resource.role == HttpResourceRole::Muxed)
+        .map(|resource| media_geo(&resource.url))
+        .collect();
+    if geos.contains(&Some(Geo::Germany)) {
+        Some(Geo::Germany)
+    } else if !geos.is_empty() && geos.iter().all(|geo| *geo == Some(Geo::Worldwide)) {
+        Some(Geo::Worldwide)
+    } else {
+        None
     }
 }
 
@@ -72,6 +207,20 @@ pub fn release_title(entry: &Entry) -> String {
     } else {
         format!("{base} [{channel}]")
     }
+}
+
+/// The URL's host, lowercased, without port.
+fn url_host(url: &str) -> String {
+    let without_scheme = url.split_once("://").map_or(url, |(_, rest)| rest);
+    let authority = without_scheme
+        .split(['/', '?', '#'])
+        .next()
+        .unwrap_or_default();
+    let host = authority.rsplit('@').next().unwrap_or_default();
+    host.split(':')
+        .next()
+        .unwrap_or_default()
+        .to_ascii_lowercase()
 }
 
 /// The URL's path, lowercased, without query or fragment.
@@ -270,6 +419,7 @@ pub fn build_result(entry: &Entry) -> Option<PluginSearchResult> {
     if resources.is_empty() {
         return None;
     }
+    let geo = release_geo(&resources);
     if let Some(subtitle) = subtitle_resource(&entry.url_subtitle) {
         resources.push(subtitle);
     }
@@ -307,6 +457,10 @@ pub fn build_result(entry: &Entry) -> Option<PluginSearchResult> {
     }
     extra.insert("audio_description".into(), json!(variant.audio_description));
     extra.insert("sign_language".into(), json!(variant.sign_language));
+    if let Some(geo) = geo {
+        extra.insert("geo".into(), json!(geo.hint()));
+        extra.insert("geo_region".into(), json!(geo.region()));
+    }
     let description: String = entry.description.chars().take(500).collect();
     if !description.is_empty() {
         extra.insert("description".into(), json!(description));
@@ -334,7 +488,11 @@ pub fn build_result(entry: &Entry) -> Option<PluginSearchResult> {
                 id: None,
                 name: channel.to_string(),
             }),
-            availability: HttpAvailability::Unknown,
+            availability: match geo {
+                Some(Geo::Worldwide) => HttpAvailability::Available,
+                Some(Geo::Germany) => HttpAvailability::GeoRestricted,
+                None => HttpAvailability::Unknown,
+            },
             rights_window: None,
             playlist: None,
             resources,

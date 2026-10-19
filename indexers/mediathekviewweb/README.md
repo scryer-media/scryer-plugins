@@ -30,9 +30,9 @@ Calls go straight from your Scryer to `mediathekviewweb.de`. No Scryer service s
   - The API's size is a rounded estimate for the default quality only, so it is reported as `size_estimate` on that resource and never as an exact size.
   - a `subtitle` resource when the entry has a subtitle URL. Its format comes from the URL: `.ttml`/`.xml` and ARD's `ebutt` paths are TTML, `.vtt` is WebVTT, `.srt` is SRT. Other URLs, such as KiKA's, name no format, and none is claimed.
   - a `provider_page` resource for the programme page, for clients that resolve pages themselves (MeTube, for example).
-- **Accessibility versions** are separate releases, never extra qualities of the plain one. Audio-described versions carry the `audio_description` audio role on their media resources. The SDK has no sign-language role, so sign-language versions are marked only in `provider_extra.sign_language`.
-- **Availability** is `unknown`. The film list does not say whether a file is still online or blocked outside a country. ARD files under `/de/` paths, for example, are refused outside Germany.
-- **`provider_extra`** fields, for Rego rules: `raw_title`, `topic`, `channel`, `description` (first 500 characters), `duration_seconds`, `size_estimate`, `audio_description`, `sign_language`, `has_subtitles` and `filmliste_timestamp`.
+- **Accessibility versions** are separate releases, never extra qualities of the plain one. They are recognised from the title and topic (`Audiodeskription`, `Hörfassung`, `(AD)`, `Gebärdensprache`, `(DGS)`) and, because ARD often leaves the title plain, from the content id in an ARD Mediathek page URL: the last segment of `ardmediathek.de/video/…` is a base64 `crid://` id, and one ending in `/audiodeskription` or `/hoerfassung` marks audio description, `/gebaerdensprache` or `/dgs` sign language. Audio-described versions carry the `audio_description` audio role on their media resources. The SDK has no sign-language role, so sign-language versions are marked only in `provider_extra.sign_language`.
+- **Availability** comes from the rights region ARD encodes in its media paths. A `/weltweit/` segment means the file downloads worldwide: availability `available`, `provider_extra.geo` `worldwide`. A `geoavailability_D` segment, or a `/de/` segment on an `ard-mcdn.de` host (`/media/p/public/de/…`, `/medp/ondemand/de/…`), means the CDN refuses requests from outside Germany: availability `geo_restricted`, `provider_extra.geo` `de` and `provider_extra.geo_region` `DE`. A release counts as Germany-only when any of its media files is, and as worldwide only when all of them are. Every other shape, including ZDF's, stays `unknown`, with no `geo` hint. The SDK has no field naming the region, so the region is only in `provider_extra`. The film list does not say whether a file is still online.
+- **`provider_extra`** fields, for Rego rules: `raw_title`, `topic`, `channel`, `description` (first 500 characters), `duration_seconds`, `size_estimate`, `audio_description`, `sign_language`, `has_subtitles`, `filmliste_timestamp`, and `geo`/`geo_region` when the media paths name a region.
 
 ## Errors
 
@@ -43,4 +43,4 @@ Calls go straight from your Scryer to `mediathekviewweb.de`. No Scryer service s
 ## Not covered
 
 - Automatic search and RSS. The plugin declares interactive search only.
-- Range support and geo blocking are not probed at search time.
+- Range support and geo blocking are not probed at search time; the region is read from the URL only.
