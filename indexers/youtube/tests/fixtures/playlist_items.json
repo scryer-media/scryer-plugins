@@ -1,0 +1,59 @@
+{
+  "kind": "youtube#playlistItemListResponse",
+  "etag": "synthetic-etag-playlist",
+  "nextPageToken": "EAAaBlBUOkNESQ",
+  "pageInfo": { "totalResults": 120, "resultsPerPage": 50 },
+  "items": [
+    {
+      "kind": "youtube#playlistItem",
+      "id": "synthetic-playlist-item-1",
+      "snippet": {
+        "publishedAt": "2026-01-02T05:00:00Z",
+        "channelId": "UCsyntheticChannel000001",
+        "title": "Synthetic Show S01E02 & Friends | Synthetic Channel",
+        "description": "",
+        "thumbnails": { "medium": { "url": "https://i.ytimg.com/vi/synthAAA001/mqdefault.jpg" } },
+        "channelTitle": "Synthetic Channel",
+        "playlistId": "UUsyntheticChannel000001",
+        "position": 0,
+        "resourceId": { "kind": "youtube#video", "videoId": "synthAAA001" },
+        "videoOwnerChannelTitle": "Synthetic Channel",
+        "videoOwnerChannelId": "UCsyntheticChannel000001"
+      },
+      "contentDetails": { "videoId": "synthAAA001", "videoPublishedAt": "2026-01-02T03:04:05Z" },
+      "status": { "privacyStatus": "public" }
+    },
+    {
+      "kind": "youtube#playlistItem",
+      "id": "synthetic-playlist-item-2",
+      "snippet": {
+        "publishedAt": "2026-01-03T05:00:00Z",
+        "channelId": "UCsyntheticChannel000001",
+        "title": "Unrelated Synthetic Vlog",
+        "channelTitle": "Synthetic Channel",
+        "playlistId": "UUsyntheticChannel000001",
+        "position": 1,
+        "resourceId": { "kind": "youtube#video", "videoId": "synthVLG009" },
+        "videoOwnerChannelTitle": "Synthetic Channel",
+        "videoOwnerChannelId": "UCsyntheticChannel000001"
+      },
+      "contentDetails": { "videoId": "synthVLG009", "videoPublishedAt": "2026-01-03T03:04:05Z" },
+      "status": { "privacyStatus": "public" }
+    },
+    {
+      "kind": "youtube#playlistItem",
+      "id": "synthetic-playlist-item-3",
+      "snippet": {
+        "publishedAt": "2026-01-04T05:00:00Z",
+        "channelId": "UCsyntheticChannel000001",
+        "title": "Synthetic Show S01E03",
+        "channelTitle": "Synthetic Channel",
+        "playlistId": "UUsyntheticChannel000001",
+        "position": 2,
+        "resourceId": { "kind": "youtube#video", "videoId": "synthPRV010" }
+      },
+      "contentDetails": { "videoId": "synthPRV010" },
+      "status": { "privacyStatus": "private" }
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "kind": "youtube#playlistItemListResponse",
+  "pageInfo": { "totalResults": 2, "resultsPerPage": 50 },
+  "items": [
+    {
+      "snippet": {
+        "publishedAt": "2026-01-05T05:00:00Z",
+        "channelId": "UCsyntheticChannel000002",
+        "title": "Synthetic Show S01E04",
+        "channelTitle": "Synthetic Network",
+        "playlistId": "UUsyntheticChannel000002",
+        "position": 0,
+        "resourceId": { "kind": "youtube#video", "videoId": "synthCCC003" },
+        "videoOwnerChannelTitle": "Synthetic Network",
+        "videoOwnerChannelId": "UCsyntheticChannel000002"
+      },
+      "contentDetails": { "videoId": "synthCCC003", "videoPublishedAt": "2026-01-16T03:04:05Z" },
+      "status": { "privacyStatus": "public" }
+    }
+  ]
+}

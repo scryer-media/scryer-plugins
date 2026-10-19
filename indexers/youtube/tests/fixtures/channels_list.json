@@ -1,0 +1,19 @@
+{
+  "kind": "youtube#channelListResponse",
+  "etag": "synthetic-etag-channels",
+  "pageInfo": { "totalResults": 2, "resultsPerPage": 5 },
+  "items": [
+    {
+      "kind": "youtube#channel",
+      "etag": "synthetic-etag-ch1",
+      "id": "UCsyntheticChannel000001",
+      "contentDetails": { "relatedPlaylists": { "likes": "", "uploads": "UUsyntheticChannel000001" } }
+    },
+    {
+      "kind": "youtube#channel",
+      "etag": "synthetic-etag-ch2",
+      "id": "UCsyntheticChannel000002",
+      "contentDetails": { "relatedPlaylists": { "likes": "", "uploads": "UUsyntheticChannel000002" } }
+    }
+  ]
+}

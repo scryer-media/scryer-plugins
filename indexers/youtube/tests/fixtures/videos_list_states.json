@@ -1,0 +1,23 @@
+{
+  "kind": "youtube#videoListResponse",
+  "items": [
+    {
+      "id": "synthPRV006",
+      "snippet": { "title": "Synthetic Show S01E07", "channelTitle": "Synthetic Channel", "liveBroadcastContent": "none" },
+      "contentDetails": { "duration": "PT20M", "definition": "hd" },
+      "status": { "uploadStatus": "processed", "privacyStatus": "private" }
+    },
+    {
+      "id": "synthREJ007",
+      "snippet": { "title": "Synthetic Show S01E08", "channelTitle": "Synthetic Channel", "liveBroadcastContent": "none" },
+      "contentDetails": { "duration": "PT20M", "definition": "hd" },
+      "status": { "uploadStatus": "rejected", "privacyStatus": "public" }
+    },
+    {
+      "id": "synthLIV008",
+      "snippet": { "title": "Synthetic Show Live", "channelTitle": "Synthetic Channel", "liveBroadcastContent": "live" },
+      "contentDetails": { "duration": "P0D", "definition": "hd" },
+      "status": { "uploadStatus": "uploaded", "privacyStatus": "public" }
+    }
+  ]
+}

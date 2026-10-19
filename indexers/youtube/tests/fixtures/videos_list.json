@@ -1,0 +1,82 @@
+{
+  "kind": "youtube#videoListResponse",
+  "etag": "synthetic-etag-videos",
+  "items": [
+    {
+      "kind": "youtube#video",
+      "etag": "synthetic-etag-va",
+      "id": "synthAAA001",
+      "snippet": {
+        "publishedAt": "2026-01-02T03:04:05Z",
+        "channelId": "UCsyntheticChannel000001",
+        "title": "Synthetic Show S01E02 & Friends | Synthetic Channel",
+        "description": "A synthetic description.",
+        "thumbnails": {
+          "default": { "url": "https://i.ytimg.com/vi/synthAAA001/default.jpg", "width": 120, "height": 90 },
+          "medium": { "url": "https://i.ytimg.com/vi/synthAAA001/mqdefault.jpg", "width": 320, "height": 180 },
+          "high": { "url": "https://i.ytimg.com/vi/synthAAA001/hqdefault.jpg", "width": 480, "height": 360 }
+        },
+        "channelTitle": "Synthetic Channel",
+        "tags": ["synthetic", "fixture"],
+        "categoryId": "24",
+        "liveBroadcastContent": "none",
+        "defaultLanguage": "en",
+        "localized": { "title": "Synthetic Show S01E02 & Friends | Synthetic Channel", "description": "A synthetic description." },
+        "defaultAudioLanguage": "en"
+      },
+      "contentDetails": {
+        "duration": "PT22M5S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "true",
+        "licensedContent": true,
+        "regionRestriction": { "blocked": ["DE"] },
+        "contentRating": {},
+        "projection": "rectangular"
+      },
+      "status": {
+        "uploadStatus": "processed",
+        "privacyStatus": "public",
+        "license": "youtube",
+        "embeddable": true,
+        "publicStatsViewable": true,
+        "madeForKids": false
+      }
+    },
+    {
+      "kind": "youtube#video",
+      "id": "synthBBB002",
+      "snippet": {
+        "publishedAt": "2026-01-09T03:04:05Z",
+        "channelId": "UCsyntheticChannel000001",
+        "title": "Synthetic Show Episode 3 [Official Video] (Premiere)",
+        "channelTitle": "Synthetic Channel",
+        "categoryId": "24",
+        "liveBroadcastContent": "upcoming"
+      },
+      "contentDetails": { "duration": "P0D", "definition": "sd", "caption": "false", "licensedContent": false },
+      "status": { "uploadStatus": "uploaded", "privacyStatus": "public", "madeForKids": false }
+    },
+    {
+      "kind": "youtube#video",
+      "id": "synthCCC003",
+      "snippet": {
+        "publishedAt": "2026-01-16T03:04:05Z",
+        "channelId": "UCsyntheticChannel000002",
+        "title": "Synthetic Show Ep. 4",
+        "channelTitle": "Synthetic Network",
+        "categoryId": "24",
+        "liveBroadcastContent": "none"
+      },
+      "contentDetails": {
+        "duration": "PT1H2M3S",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": true,
+        "regionRestriction": { "allowed": ["GB", "IE"] }
+      },
+      "status": { "uploadStatus": "processed", "privacyStatus": "public", "madeForKids": false }
+    }
+  ],
+  "pageInfo": { "totalResults": 3, "resultsPerPage": 3 }
+}

@@ -1,0 +1,79 @@
+{
+  "kind": "youtube#searchListResponse",
+  "etag": "synthetic-etag-search-1",
+  "nextPageToken": "CDIQAA",
+  "regionCode": "US",
+  "pageInfo": { "totalResults": 1000000, "resultsPerPage": 50 },
+  "items": [
+    {
+      "kind": "youtube#searchResult",
+      "etag": "synthetic-etag-a",
+      "id": { "kind": "youtube#video", "videoId": "synthAAA001" },
+      "snippet": {
+        "publishedAt": "2026-01-02T03:04:05Z",
+        "channelId": "UCsyntheticChannel000001",
+        "title": "Synthetic Show S01E02 &amp; Friends | Synthetic Channel",
+        "description": "A synthetic description.",
+        "thumbnails": {
+          "default": { "url": "https://i.ytimg.com/vi/synthAAA001/default.jpg", "width": 120, "height": 90 },
+          "medium": { "url": "https://i.ytimg.com/vi/synthAAA001/mqdefault.jpg", "width": 320, "height": 180 }
+        },
+        "channelTitle": "Synthetic Channel",
+        "liveBroadcastContent": "none",
+        "publishTime": "2026-01-02T03:04:05Z"
+      }
+    },
+    {
+      "kind": "youtube#searchResult",
+      "etag": "synthetic-etag-channel",
+      "id": { "kind": "youtube#channel", "channelId": "UCsyntheticChannel000001" },
+      "snippet": {
+        "publishedAt": "2020-01-01T00:00:00Z",
+        "channelId": "UCsyntheticChannel000001",
+        "title": "Synthetic Channel",
+        "description": "",
+        "channelTitle": "Synthetic Channel",
+        "liveBroadcastContent": "none"
+      }
+    },
+    {
+      "kind": "youtube#searchResult",
+      "etag": "synthetic-etag-b",
+      "id": { "kind": "youtube#video", "videoId": "synthBBB002" },
+      "snippet": {
+        "publishedAt": "2026-01-09T03:04:05Z",
+        "channelId": "UCsyntheticChannel000001",
+        "title": "Synthetic Show Episode 3 [Official Video] (Premiere)",
+        "description": "",
+        "channelTitle": "Synthetic Channel",
+        "liveBroadcastContent": "upcoming"
+      }
+    },
+    {
+      "kind": "youtube#searchResult",
+      "etag": "synthetic-etag-c",
+      "id": { "kind": "youtube#video", "videoId": "synthCCC003" },
+      "snippet": {
+        "publishedAt": "2026-01-16T03:04:05Z",
+        "channelId": "UCsyntheticChannel000002",
+        "title": "Synthetic Show Ep. 4",
+        "description": "",
+        "channelTitle": "Synthetic Network",
+        "liveBroadcastContent": "none"
+      }
+    },
+    {
+      "kind": "youtube#searchResult",
+      "etag": "synthetic-etag-d",
+      "id": { "kind": "youtube#video", "videoId": "synthDDD004" },
+      "snippet": {
+        "publishedAt": "2026-01-23T03:04:05Z",
+        "channelId": "UCsyntheticChannel000002",
+        "title": "Synthetic Show #5",
+        "description": "",
+        "channelTitle": "Synthetic Network",
+        "liveBroadcastContent": "none"
+      }
+    }
+  ]
+}

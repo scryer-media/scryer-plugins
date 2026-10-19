@@ -1,0 +1,19 @@
+{
+  "kind": "youtube#searchListResponse",
+  "etag": "synthetic-etag-search-2",
+  "prevPageToken": "CDIQAQ",
+  "pageInfo": { "totalResults": 51, "resultsPerPage": 50 },
+  "items": [
+    {
+      "kind": "youtube#searchResult",
+      "id": { "kind": "youtube#video", "videoId": "synthEEE005" },
+      "snippet": {
+        "publishedAt": "2026-02-01T00:00:00Z",
+        "channelId": "UCsyntheticChannel000002",
+        "title": "Synthetic Show S01E06",
+        "channelTitle": "Synthetic Network",
+        "liveBroadcastContent": "none"
+      }
+    }
+  ]
+}
