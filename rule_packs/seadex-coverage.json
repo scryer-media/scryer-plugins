@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.26",
-  "snapshot_sha256": "15bf4e0df075319d22418ad10ae73420fa90a7d0f42ea4519111e93b0e28430b",
+  "pack_version": "1.0.27",
+  "snapshot_sha256": "5ab86d7789520651e5360c412b0457c7c39fb81c66372ef9c28403e13c0a6e5f",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -3540,6 +3540,30 @@
       "release_id": "m8wbwj11ln698zs",
       "strict_keys": 8,
       "tolerant_keys": 8
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "215n8kug64t5n85",
+      "file_sources": 13,
+      "release_id": "jsora5zr623fgil",
+      "strict_keys": 13,
+      "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "215n8kug64t5n85",
+      "file_sources": 13,
+      "release_id": "u74t2r98dsicf50",
+      "strict_keys": 13,
+      "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "215n8kug64t5n85",
+      "file_sources": 13,
+      "release_id": "yq6e0s3vpkgn632",
+      "strict_keys": 13,
+      "tolerant_keys": 13
     },
     {
       "alias_sources": 0,
@@ -9511,6 +9535,22 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "5ijpsrqvpxit0qv",
+      "file_sources": 22,
+      "release_id": "6njaaipy88purhg",
+      "strict_keys": 22,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "5ijpsrqvpxit0qv",
+      "file_sources": 22,
+      "release_id": "zjcunypjg9c8o16",
+      "strict_keys": 22,
+      "tolerant_keys": 22
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "5ji0csg6en65yho",
       "file_sources": 12,
       "release_id": "47dvr7zlx4g6cuo",
@@ -12961,7 +13001,7 @@
       "alias_sources": 0,
       "entry_id": "7gjk1hxzxsb0dzi",
       "file_sources": 12,
-      "release_id": "dzmmzw3adtit4zi",
+      "release_id": "uw290fg6q9uwo8e",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -13674,6 +13714,14 @@
       "entry_id": "7sb1b3nt3iz9b6g",
       "file_sources": 12,
       "release_id": "5jzkta0d4cvj51a",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "7sb1b3nt3iz9b6g",
+      "file_sources": 12,
+      "release_id": "f1epfiru9mzkvgf",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -22089,31 +22137,7 @@
       "alias_sources": 0,
       "entry_id": "cyfmk8y89deg4i8",
       "file_sources": 1,
-      "release_id": "5594yq6yo4c7cai",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "cyfmk8y89deg4i8",
-      "file_sources": 1,
-      "release_id": "ehqgrtr7dosrze4",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "cyfmk8y89deg4i8",
-      "file_sources": 1,
-      "release_id": "x32hutqw11c4cqx",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "cyfmk8y89deg4i8",
-      "file_sources": 1,
-      "release_id": "xuyafu87t9la9qm",
+      "release_id": "lg0ky7k7b4s5i0l",
       "strict_keys": 1,
       "tolerant_keys": 1
     },
@@ -24484,14 +24508,6 @@
       "release_id": "wcdfngrnbykkii4",
       "strict_keys": 12,
       "tolerant_keys": 12
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "emtdf5kb54azwza",
-      "file_sources": 12,
-      "release_id": "yg0ek4y7il6p3tn",
-      "strict_keys": 12,
-      "tolerant_keys": 0
     },
     {
       "alias_sources": 0,
@@ -29330,6 +29346,14 @@
       "entry_id": "hkc75po9cy6pl69",
       "file_sources": 1,
       "release_id": "iohgtluo3razvuy",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "hkc75po9cy6pl69",
+      "file_sources": 1,
+      "release_id": "kp1skmyo44fbs7m",
       "strict_keys": 1,
       "tolerant_keys": 1
     },
@@ -97884,6 +97908,138 @@
       "source_name": "Why Does Nobody Remember Me in This World S01E12 2024 1080p Bluray REMUX AVC AAC 2.0 Dual Audio -ZR-.mkv"
     },
     {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 01 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 02 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 03 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 04 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 05 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 06 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 07 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 08 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 09 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 10 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 11 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 12 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 13 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 14 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 15 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 16 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 17 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 18 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 19 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 20 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 21 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
+      "entry_id": "5ijpsrqvpxit0qv",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6njaaipy88purhg",
+      "source_name": "Ghost Hound - 22 [BDRip 1920x1080 x264 FLAC] BDRip Dual Audio 1080p AVC 10-Bit-ZR-.mkv"
+    },
+    {
       "entry_id": "5ji0csg6en65yho",
       "reason": "non_release_file",
       "release_id": "9cruy1utz4id94u",
@@ -139174,78 +139330,6 @@
       "reason": "non_release_file",
       "release_id": "wcdfngrnbykkii4",
       "source_name": "Extras/[Lia] Noukin - NCOP.mkv"
-    },
-    {
-      "entry_id": "emtdf5kb54azwza",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "yg0ek4y7il6p3tn",
-      "source_name": "Noukin 01.mkv"
-    },
-    {
-      "entry_id": "emtdf5kb54azwza",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "yg0ek4y7il6p3tn",
-      "source_name": "Noukin 02.mkv"
-    },
-    {
-      "entry_id": "emtdf5kb54azwza",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "yg0ek4y7il6p3tn",
-      "source_name": "Noukin 03.mkv"
-    },
-    {
-      "entry_id": "emtdf5kb54azwza",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "yg0ek4y7il6p3tn",
-      "source_name": "Noukin 04.mkv"
-    },
-    {
-      "entry_id": "emtdf5kb54azwza",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "yg0ek4y7il6p3tn",
-      "source_name": "Noukin 05.mkv"
-    },
-    {
-      "entry_id": "emtdf5kb54azwza",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "yg0ek4y7il6p3tn",
-      "source_name": "Noukin 06.mkv"
-    },
-    {
-      "entry_id": "emtdf5kb54azwza",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "yg0ek4y7il6p3tn",
-      "source_name": "Noukin 07.mkv"
-    },
-    {
-      "entry_id": "emtdf5kb54azwza",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "yg0ek4y7il6p3tn",
-      "source_name": "Noukin 08.mkv"
-    },
-    {
-      "entry_id": "emtdf5kb54azwza",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "yg0ek4y7il6p3tn",
-      "source_name": "Noukin 09.mkv"
-    },
-    {
-      "entry_id": "emtdf5kb54azwza",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "yg0ek4y7il6p3tn",
-      "source_name": "Noukin 10.mkv"
-    },
-    {
-      "entry_id": "emtdf5kb54azwza",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "yg0ek4y7il6p3tn",
-      "source_name": "Noukin 11.mkv"
-    },
-    {
-      "entry_id": "emtdf5kb54azwza",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "yg0ek4y7il6p3tn",
-      "source_name": "Noukin 12.mkv"
     },
     {
       "entry_id": "eozj2qjx5pc59te",
@@ -737061,20 +737145,31 @@
   "stale_overrides": [],
   "changes": {
     "entries": {
-      "added": [],
+      "added": [
+        "215n8kug64t5n85",
+        "5ijpsrqvpxit0qv"
+      ],
       "removed": []
     },
     "releases": {
       "added": [
-        "0rg7ky9dt4ffqxq",
-        "9tyszmncruad507",
-        "d3q0em4qbn7zm5k"
+        "6njaaipy88purhg",
+        "f1epfiru9mzkvgf",
+        "jsora5zr623fgil",
+        "kp1skmyo44fbs7m",
+        "lg0ky7k7b4s5i0l",
+        "u74t2r98dsicf50",
+        "uw290fg6q9uwo8e",
+        "yq6e0s3vpkgn632",
+        "zjcunypjg9c8o16"
       ],
       "removed": [
-        "6m5clpvp6oduc9w",
-        "o0qz2wrkmsddbsk",
-        "vhr6nb9gmzxu5y9",
-        "vtwqagyy5vhqm5p"
+        "5594yq6yo4c7cai",
+        "dzmmzw3adtit4zi",
+        "ehqgrtr7dosrze4",
+        "x32hutqw11c4cqx",
+        "xuyafu87t9la9qm",
+        "yg0ek4y7il6p3tn"
       ]
     }
   },
@@ -737082,26 +737177,26 @@
     "encoding": {
       "direct_buckets": {
         "bucket_count": 350,
-        "key_count": 20848,
+        "key_count": 20846,
         "max_keys": 231,
-        "mean_keys": 59.565714285714286
+        "mean_keys": 59.56
       },
-      "direct_entries": 20848,
+      "direct_entries": 20846,
       "route_buckets": 259,
-      "source_bytes": 2974483,
-      "source_lines": 44689,
+      "source_bytes": 2976531,
+      "source_lines": 44687,
       "template_buckets": {
         "bucket_count": 259,
-        "key_count": 6547,
+        "key_count": 6557,
         "max_keys": 126,
-        "mean_keys": 25.27799227799228
+        "mean_keys": 25.316602316602317
       },
-      "template_groups": 6547,
-      "tuple_chunks": 6749
+      "template_groups": 6557,
+      "tuple_chunks": 6759
     },
     "provenance": {
-      "strict_keys": 56622,
-      "tolerant_keys": 46018
+      "strict_keys": 56692,
+      "tolerant_keys": 46078
     },
     "stale_overrides": []
   }
