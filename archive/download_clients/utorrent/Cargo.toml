@@ -45,8 +45,8 @@ wit-bindgen = "0.61"
 
 [dev-dependencies]
 postcard = { version = "1", features = ["use-std"] }
-wasmtime = "48.0.1"
-wasmtime-wasi = "48.0.1"
+wasmtime = "49.0.0"
+wasmtime-wasi = "49.0.0"
 
 [profile.plugin-release]
 inherits = "release"
