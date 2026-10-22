@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.28",
-  "snapshot_sha256": "0461e321d6621e4ddaf449b69e0cf3a348e99f8edfc5f410051b489b7a3b340f",
+  "pack_version": "1.0.29",
+  "snapshot_sha256": "1d1b16a7784ea137e7d99736aa3fb29ba6529a63d77ad8e37331fb454fa3233f",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -22143,6 +22143,14 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "cyfmk8y89deg4i8",
+      "file_sources": 1,
+      "release_id": "o7zf15zvlpiautb",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "cyk7b3iiazwoa11",
       "file_sources": 1,
       "release_id": "4rlzo0zm9jywz5v",
@@ -37332,6 +37340,14 @@
       "release_id": "8ykzytrzh0f4zau",
       "strict_keys": 1,
       "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "ln68sib3b9tl5px",
+      "file_sources": 12,
+      "release_id": "d9xbjmmcpus3msy",
+      "strict_keys": 12,
+      "tolerant_keys": 12
     },
     {
       "alias_sources": 0,
@@ -55592,18 +55608,10 @@
     {
       "alias_sources": 0,
       "entry_id": "w05zvzjg160wad8",
-      "file_sources": 14,
-      "release_id": "opr9p72zshccawm",
-      "strict_keys": 14,
-      "tolerant_keys": 14
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "w05zvzjg160wad8",
-      "file_sources": 14,
-      "release_id": "rjduew7kxfziehj",
-      "strict_keys": 14,
-      "tolerant_keys": 14
+      "file_sources": 12,
+      "release_id": "r25zdzq1xbh6vvr",
+      "strict_keys": 12,
+      "tolerant_keys": 12
     },
     {
       "alias_sources": 0,
@@ -737615,53 +737623,18 @@
   "stale_overrides": [],
   "changes": {
     "entries": {
-      "added": [
-        "cwlj5evvndn3kwc",
-        "gd3q6jamc0mdpel",
-        "ln68sib3b9tl5px",
-        "mg2gsd34mg7679l",
-        "uucsxtgjnmgi642"
-      ],
+      "added": [],
       "removed": []
     },
     "releases": {
       "added": [
-        "2ej24gcrn2h18lh",
-        "2oxgct0oe18fu54",
-        "36ioiwozayv4u4x",
-        "4bbqimhzosq5olu",
-        "5e10f9lk6h4586o",
-        "5eno9kfaa1lkgqf",
-        "5opk32r690xtv3l",
-        "873p8a31wibsueo",
-        "8y6hsqc6kfr27dn",
-        "8ykzytrzh0f4zau",
-        "9q2d6fknhh36fek",
-        "9q98qtqr31poh1x",
-        "e2yg1vgnc245qbu",
-        "hs9rbv8v2mlkr21",
-        "i77gmqk3s8c5g3q",
-        "lnv06rxsntnew06",
-        "mb1o564nxjlllo1",
-        "n3m04030mkn3dtr",
-        "nmszhheb8nibtpp",
-        "p6v2wz32639p8jy",
-        "p84wk5xvn2tbjja",
-        "pf033nqbsjvlqmj",
-        "qvyg151651qmjpu",
-        "ruzxrauie25n6yb",
-        "sdr6q56hulhn2co",
-        "twrukhom6p1wt2n",
-        "upr530t51yp473a",
-        "w1okmhz6qjliv8j",
-        "x9pyseq1be2y2j5",
-        "xcfm1lu028ozo45",
-        "y0lx2doksuvdai4"
+        "d9xbjmmcpus3msy",
+        "o7zf15zvlpiautb",
+        "r25zdzq1xbh6vvr"
       ],
       "removed": [
-        "1e9cf5ztbsqnzh3",
-        "depanf4ha04pomn",
-        "uer95ob8ffx5mdo"
+        "opr9p72zshccawm",
+        "rjduew7kxfziehj"
       ]
     }
   },
@@ -737669,26 +737642,26 @@
     "encoding": {
       "direct_buckets": {
         "bucket_count": 350,
-        "key_count": 20899,
+        "key_count": 20895,
         "max_keys": 231,
-        "mean_keys": 59.71142857142857
+        "mean_keys": 59.7
       },
-      "direct_entries": 20899,
+      "direct_entries": 20895,
       "route_buckets": 259,
-      "source_bytes": 2981422,
-      "source_lines": 44793,
+      "source_bytes": 2981579,
+      "source_lines": 44788,
       "template_buckets": {
         "bucket_count": 259,
-        "key_count": 6562,
+        "key_count": 6564,
         "max_keys": 126,
-        "mean_keys": 25.335907335907336
+        "mean_keys": 25.343629343629345
       },
-      "template_groups": 6562,
-      "tuple_chunks": 6764
+      "template_groups": 6564,
+      "tuple_chunks": 6766
     },
     "provenance": {
-      "strict_keys": 56758,
-      "tolerant_keys": 46116
+      "strict_keys": 56768,
+      "tolerant_keys": 46126
     },
     "stale_overrides": []
   }
