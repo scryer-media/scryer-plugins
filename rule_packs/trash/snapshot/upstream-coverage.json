@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_revision": "d21112a72b6565049f987c2d067dbf5b47078cf5",
+  "source_revision": "07a6c54390507c62f64b3df3af1ff5fea598bf35",
   "input_files": [
     {
       "path": "docs/json/guide-only/language-german-and-original.json",
@@ -595,6 +595,10 @@
       "sha256": "cdd8792ef9101d79e925729839991140dc8bcfc59126fb0bd8325a514c3ac1a6"
     },
     {
+      "path": "docs/json/radarr/cf/imf.json",
+      "sha256": "6e6561f86cf5b6c8b5c770c16d2479bb464fd131cd5082791a50938de2fe2f8b"
+    },
+    {
       "path": "docs/json/radarr/cf/internal.json",
       "sha256": "95c37002fe965e8b8c57c83794699b7eb5f0756cb722829f7278da897914d448"
     },
@@ -652,7 +656,7 @@
     },
     {
       "path": "docs/json/radarr/cf/lq.json",
-      "sha256": "6fa5f21d06cd25e1ccdb61e150ffd89f5db39fffc79aec918fe596b11d4bf4e7"
+      "sha256": "6e0b4f1cf20989ac1edd71259f1031bc7101258e5fcfabbf2bb119d3d2afdacd"
     },
     {
       "path": "docs/json/radarr/cf/ma.json",
@@ -1943,8 +1947,8 @@
     "service_alias_rules": 106,
     "token_signal_rules": 49
   },
-  "core_sha256": "649c52e31ffdd21ef327ce55193b704e58c874591a002fa88d4ae6ddb83b82d7",
-  "detection_sha256": "c91e8dfb54cdb40c8008964d5d46b32ecd275edabd3193ea62a84e44c9bd07a5",
+  "core_sha256": "e59fe775e79100fba7e3b2f8a4d908b1c4bf805752e515aeb054b7126864277f",
+  "detection_sha256": "dffeb9266352d11ffc3e7d0799ed8bc736fdf6d6df38fde20618ac78315e144b",
   "ignored_records": [
     "docs/json/radarr/cf/amzn.json:WEBDL:requires_positive_title",
     "docs/json/radarr/cf/amzn.json:WEBRIP:requires_positive_title",

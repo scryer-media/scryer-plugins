@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_revision": "d21112a72b6565049f987c2d067dbf5b47078cf5",
+  "source_revision": "07a6c54390507c62f64b3df3af1ff5fea598bf35",
   "files": [
     {
       "path": "docs/json/guide-only/language-german-and-original.json",
@@ -14127,6 +14127,31 @@
       ]
     },
     {
+      "path": "docs/json/radarr/cf/imf.json",
+      "sha256": "6e6561f86cf5b6c8b5c770c16d2479bb464fd131cd5082791a50938de2fe2f8b",
+      "canonical_sha256": "eb6b512797048de2db1617378afc2102574f18859d0fe16be0b3ddf0a3982010",
+      "records": [
+        {
+          "name": "IMF",
+          "trash_id": "7737598007e71665c5edc7f1626bfbf1",
+          "trash_scores": {
+            "default": 20
+          },
+          "specifications": [
+            {
+              "name": "Interoperable Master Format",
+              "implementation": "ReleaseTitleSpecification",
+              "required": true,
+              "negate": false,
+              "fields": {
+                "value": "(\\b(IMF)\\b(?=.*\\b(web[ ._-]?rip))\\b)"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "path": "docs/json/radarr/cf/internal.json",
       "sha256": "95c37002fe965e8b8c57c83794699b7eb5f0756cb722829f7278da897914d448",
       "canonical_sha256": "f82cea738803a28fd4991e8ad72bbf2a018a964a70ed62e61773525a4e1719fd",
@@ -14802,8 +14827,8 @@
     },
     {
       "path": "docs/json/radarr/cf/lq.json",
-      "sha256": "6fa5f21d06cd25e1ccdb61e150ffd89f5db39fffc79aec918fe596b11d4bf4e7",
-      "canonical_sha256": "405471fb29b29eb20de51bc9d464ee78849eac3d66ec161b2e8c42de65fd8098",
+      "sha256": "6e0b4f1cf20989ac1edd71259f1031bc7101258e5fcfabbf2bb119d3d2afdacd",
+      "canonical_sha256": "95a6292b5eb1e4822c69046ec26b22f0740fdec8334f72b8a83dc549eb036085",
       "records": [
         {
           "name": "LQ",
@@ -15198,7 +15223,7 @@
               "required": false,
               "negate": false,
               "fields": {
-                "value": "^(HDS)$"
+                "value": "^(10bit-)?HDS$"
               }
             },
             {
