@@ -201,6 +201,8 @@ Llove.through.a.prism.s01e09.a.gradation.of.talent.and.effort.1080p.nf.web-dl.du
 
 Llove.through.a.prism.s01e17.a.confession.gone.with.the.waves.1080p.nf.web-dl.dual.ddp5.1.h.264-varyg
 
+Lmazinger.z.s01e83.first.encounter.phantom.officer.viscount.pygman.1080p.bluray.flac.1.0.x264-kitsune
+
 Lmobile.suit.gundam.seed.special.edition.ii.the.far.away.dawn.2004.1080p.bluray.flac.2.0.x264-kitsune
 
 Lmobile.suit.gundam.seed.special.edition.iii.the.rumbling.sky.2004.1080p.bluray.flac.2.0.x264-kitsune
@@ -448,6 +450,8 @@ Lheavens.lost.property.the.movie.the.angeloid.of.clockwork.2011.1080p.bluray.dua
 
 Linazuma eleven - ares no tenbin - 05 - seishou academy’s despair 1080p bdrip x265 flac 2.0 kira [sev]
 
+Lmazinger.z.s01e28.treacherous.orders.the.plot.to.steal.super-alloy.1080p.bluray.flac.1.0.x264-kitsune
+
 Lmobile suit gundam 00 'a wakening of the trailblazer' [bd 1080p hi10p aac dual-audio][kuchikirukia]v2
 
 Lmobile.suit.gundam.unicorn.s01e04.at.the.bottom.of.the.gravity.well.1080p.bluray.opus5.1.av1-tasokare
@@ -681,6 +685,10 @@ Lkuroko's basketball - episode 04 - take care of the counterattack! 1080p bdrip 
 
 Lkuroko's basketball - episode 51 - i'm just going at full strength 1080p bdrip x265 pcm 2.0 kira [sev]
 
+Lmazinger.z.s01e78.baron.ashura.dies.with.honor.in.the.pacific.ocean.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e87.death.by.explosion.the.terrifying.viscount.pygman.1080p.bluray.flac.1.0.x264-kitsune
+
 Lmysterious.disappearances.s01e03.horns.bullying.and.a.hair.ornament.1080p.cr.web-dl.aac2.0.h.264-varyg
 
 Lmysterious.disappearances.s01e11.cats.swimsuits.and.a.black.aeonium.1080p.cr.web-dl.aac2.0.h.264-varyg
@@ -853,6 +861,8 @@ Linazuma eleven - ares no tenbin - 24 - nosaka’s declaration of war 1080p bdri
 Llaid-back.camp.s03e07.true.or.embellished.retrospective.camping.1080p.cr.web-dl.aac2.0.h.264.dual-varyg
 
 Llove.through.a.prism.s01e18.five.years.later.an.engagement.ring.1080p.nf.web-dl.dual.ddp5.1.h.264-varyg
+
+Lmazinger.z.s01e35.the.reaper.mechanical.beast.deathmas.fierce.attack.1080p.bluray.flac.1.0.x264-kitsune
 
 Lmobile.suit.gundam.seed.special.edition.i.the.empty.battlefield.2004.1080p.bluray.flac.2.0.x264-kitsune
 
@@ -1052,6 +1062,8 @@ Ldemon slayer - episode 57 - water hashira ・ giyu tomioka's pain 1080p ita bdr
 Lkuroko's basketball - episode 26 - i've never thought we'd meet here 1080p bdrip x265 pcm 2.0 kira [sev]
 
 Llove.through.a.prism.s01e08.the.perspective.of.childhood.friends.1080p.nf.web-dl.dual.ddp5.1.h.264-varyg
+
+Lmazinger.z.s01e89.its.now.or.never.miracle.at.4000.meters.underground.1080p.bluray.flac.1.0.x264-kitsune
 
 Lmysterious.disappearances.s01e05.underwear.snacks.and.scarlet.clothes.1080p.cr.web-dl.aac2.0.h.264-varyg
 
@@ -1404,6 +1416,8 @@ Lactors - songs connection (2019) - s01e07 - 007 - stravagante [webdl-1080p][8bi
 Lbubblegum crisis - akuma to tenshi no kiss (devil and angel's kiss) [bd.1080p] [iznjie biznjie] [9bbd61b8]
 
 Llaid-back.camp.s03e09.touring.and.checking.out.the.cherry.blossoms.1080p.cr.web-dl.aac2.0.h.264.dual-varyg
+
+Lmazinger.z.s01e53.double.transformation.the.camouflage.mechanical.beast.1080p.bluray.flac.1.0.x264-kitsune
 
 Lmobile.suit.gundam.seed.destiny.special.edition.i.the.broken.world.2006.1080p.bluray.flac.2.0.x264-kitsune
 
@@ -1936,6 +1950,8 @@ Lfate.strange.fake.s01e09.hybrid.the.nightmare.comes.with.the.dawn.of.london.108
 
 Linazuma eleven - ares no tenbin - 03 - the mysterious coach, zhao jinyun 1080p bdrip x265 flac 2.0 kira [sev]
 
+Lmazinger.z.s01e31.the.hostage-taking.mechanical.beast.and.the.em.wave.plot.1080p.bluray.flac.1.0.x264-kitsune
+
 Lmobile.suit.gundam.seed.destiny.special.edition.iii.flames.of.destiny.2006.1080p.bluray.flac.2.0.x264-kitsune
 
 Lrequiem of the rose king - s01e22 - use your head more, damn brat. don’t die even if you are weak webdl-1080p
@@ -2107,6 +2123,8 @@ Lbuddy daddies (2023) - s01e08 - 008 - nothing seek nothing find [webdl-1080p][1
 Lishura.s01e03.dakai.the.magpie.and.regnejee.the.wings.of.sunset.repack.1080p.bluray.dual-audio.aac2.0.x265-8rm
 
 Lishura.s01e05.higuare.the.pelagic.and.nastique.the.quiet.singer.repack.1080p.bluray.dual-audio.aac2.0.x265-8rm
+
+Lmazinger.z.s01e36.the.transforming.mechanical.beast.in.the.five.great.lakes.1080p.bluray.flac.1.0.x264-kitsune
 
 Lmobile.suit.gundam.seed.destiny.special.edition.iv.the.cost.of.freedom.2007.1080p.bluray.flac.2.0.x264-kitsune
 
@@ -15840,6 +15858,8 @@ Lmacross.7.s01e18.falling.little.devil.1080p.dsnp.web-dl.aac2.0.h.264-ntb
 
 Lmade in abyss - dawn of the deep soul [bd 1080p hevc dual-audio] [vodes]
 
+Lmazinger.z.s01e04.mazinger.z.in.peril.1080p.bluray.flac.1.0.x264-kitsune
+
 Lninja.robots.s01e02.the.unknown.world.1080p.flac.2.0.avc.remux-framestor
 
 Lninja.robots.s01e13.destiny's.torrent.1080p.flac.2.0.avc.remux-framestor
@@ -16220,6 +16240,10 @@ Linterview with kate higgins [720p_hi10p_blu-ray_flac] [hark0n] [1d4be283]
 Lishura.s02e12.shiki,.enemy.of.all.1080p.bluray.dual-audio.aac2.0.x265-8rm
 
 Lmacross.7.s01e45.ambition.on.varauta.4.1080p.dsnp.web-dl.aac2.0.h.264-ntb
+
+Lmazinger.z.s01e02.stop.the.ashura.army.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e57.dr.hell.seizes.japan.1080p.bluray.flac.1.0.x264-kitsune
 
 Lmobile suit gundam unicorn re 0096 - 12 - a private war [gcs8] [815641a4]
 
@@ -17009,6 +17033,10 @@ Lkuroko's basketball - episode 18 - no!! 1080p bdrip x265 pcm 2.0 kira [sev]
 
 Lkuroko's basketball - episode 50 - win! 1080p bdrip x265 pcm 2.0 kira [sev]
 
+Lmazinger.z.s01e05.ghost.mazinger.appears.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e73.mazinger.z.is.abducted.1080p.bluray.flac.1.0.x264-kitsune
+
 Lninja.robots.s01e03.the.wounded.princess.1080p.flac.2.0.avc.remux-framestor
 
 Lninja.robots.s01e11.murmurs.of.the.devil.1080p.flac.2.0.avc.remux-framestor
@@ -17420,6 +17448,8 @@ Ljojo's bizarre adventure (2012) s03e20 yukaku yamagishi dreams of cinderella
 
 Ljojo's bizarre adventure (2012) s04e28 beneath a sky on the verge of falling
 
+Lmazinger.z.s01e63.the.beauty.holds.a.bomb.1080p.bluray.flac.1.0.x264-kitsune
+
 Lmobile suit gundam unicorn re 0096 - 15 - waiting in space [gcs8] [7c999509]
 
 Lsailor moon r the movie us op [1080p_hi10p_blu-ray_flac] [hark0n] [5ec13dea]
@@ -17813,6 +17843,12 @@ Lkuroko's basketball - episode 49 - enough 1080p bdrip x265 pcm 2.0 kira [sev]
 
 Llost in starlight (2025) (2160p nf web-dl h265 sdr ddp atmos 5.1 dual - hone)
 
+Lmazinger.z.s01e07.baron.ashuras.great.plan.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e21.showdown.in.a.ghost.town.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e48.boss.borots.first.battle.1080p.bluray.flac.1.0.x264-kitsune
+
 Lninja.robots.s01e08.the.wandering.warriors.1080p.flac.2.0.avc.remux-framestor
 
 Lninja.robots.s01e18.old.soldiers.never.die.1080p.flac.2.0.avc.remux-framestor
@@ -18173,6 +18209,10 @@ Lkuroko's basketball - episode 44 - tell me 1080p bdrip x265 pcm 2.0 kira [sev]
 Lmacross.7.s01e14.fighting.woman.mayor.milia.1080p.dsnp.web-dl.aac2.0.h.264-ntb
 
 Lmacross.7.s01e33.betrayal.and.a.girls.tears.1080p.dsnp.web-dl.aac2.0.h.264-ntb
+
+Lmazinger.z.s01e10.the.flying.metal.arm.dyan.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e81.sleep.in.hell.koji.kabuto.1080p.bluray.flac.1.0.x264-kitsune
 
 Lmobile suit gundam unicorn re 0096 - 21 - to the world's end [gcs8] [8030cf38]
 
@@ -18551,6 +18591,12 @@ Lmacross.7.s01e30.formula.for.a.love.triangle.1080p.dsnp.web-dl.aac2.0.h.264-ntb
 
 Lmacross.7.s01e37.mystery.of.the.cosmic.ruins.1080p.dsnp.web-dl.aac2.0.h.264-ntb
 
+Lmazinger.z.s01e19.the.flying.demon.deviler.x.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e50.shoot.it.down.jet.scrander.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e66.invisible.killer.jenova.m9.1080p.bluray.flac.1.0.x264-kitsune
+
 Lmobile suit gundam unicorn re 0096 - 07 - the battle of palau [gcs8] [ab927d75]
 
 Lmobile suit gundam unicorn re 0096 - 19 - another cosmic glow [gcs8] [38449e71]
@@ -18922,6 +18968,12 @@ Lmacross.7.s01e40.a.message.that.pierces.stars.1080p.dsnp.web-dl.aac2.0.h.264-nt
 Lmacross.7.s01e44.nightmarish.strike.operation.1080p.dsnp.web-dl.aac2.0.h.264-ntb
 
 Lmai mai shinko to sennen no mahou [1080p_hi10p_blu-ray_flac] [hark0n] [1616a349]
+
+Lmazinger.z.s01e40.count.brocken.ruler.of.evil.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e56.the.super.alloy.z.is.stolen.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e71.crisis.relief.go.new.pilder.1080p.bluray.flac.1.0.x264-kitsune
 
 Lmobile suit gundam unicorn re 0096 - 11 - battle at torrington [gcs8] [df585391]
 
@@ -19368,6 +19420,14 @@ Lkuroko's basketball - episode 58 - true light 1080p bdrip x265 pcm 2.0 kira [se
 
 Lmacross.7.s01e38.sivil.of.the.forbidden.planet.1080p.dsnp.web-dl.aac2.0.h.264-ntb
 
+Lmazinger.z.s01e24.mach.mechanical.beast.jinrai.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e29.great.turnaround.mazin.power.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e47.fierce.a.hellish.double.plan.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e64.lady.007.vs.brockens.hit.men.1080p.bluray.flac.1.0.x264-kitsune
+
 Lmobile suit gundam unicorn re 0096 - 03 - they called it gundam [gcs8] [b14e2fb9]
 
 Lnier automata ver1.1a - s01e13 (web 1080p hevc e-ac-3 aac) [a071c938] [lostyears]
@@ -19785,6 +19845,14 @@ Lmacross.7.s01e29.dad.and.mom.fall.in.love.again.1080p.dsnp.web-dl.aac2.0.h.264-
 
 Lmacross.7.s01e49.a.song.heard.across.the.galaxy.1080p.dsnp.web-dl.aac2.0.h.264-ntb
 
+Lmazinger.z.s01e27.operation.capture.aphrodite.a.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e74.heroic.the.end.of.aphrodite.a.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e76.lover.of.the.century.dianan.a.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e80.a.trap.waits.at.bardos.island.1080p.bluray.flac.1.0.x264-kitsune
+
 Lmobile suit gundam unicorn re 0096 - 04 - full frontal's pursuit [gcs8] [92385415]
 
 Lmurder.princess.s01e06.determination's.end.1080p.bluray.dual.flac.2.0.x264-kitsune
@@ -20159,6 +20227,16 @@ Lkuroko's basketball - oad - a monkey can't win! 480p dvdrip x265 pcm 2.0 kira [
 Llaid-back.camp.s03e06.see.you.again.someday.1080p.cr.web-dl.aac2.0.h.264.dual-varyg
 
 Llaid-back.camp.s03e11.scenery.from.way.back.1080p.cr.web-dl.aac2.0.h.264.dual-varyg
+
+Lmazinger.z.s01e38.the.mysterious.robot.minerva.x.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e51.hells.assassins.the.skull.army.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e58.front.line.base.hells.fortress.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e62.no.way.boss.borot.takes.flight.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e65.the.wind.carries.balloon.bombs.1080p.bluray.flac.1.0.x264-kitsune
 
 Lmobile suit gundam unicorn re 0096 - 13 - banagher links, soldier [gcs8] [2be57500]
 
@@ -20538,6 +20616,12 @@ Lkuroko's basketball - episode 74 - so it was you 1080p bdrip x265 pcm 2.0 kira 
 Llove.through.a.prism.s01e04.his.rough.sketch.1080p.nf.web-dl.dual.ddp5.1.h.264-varyg
 
 Llove.through.a.prism.s01e19.drawn.by.destiny.1080p.nf.web-dl.dual.ddp5.1.h.264-varyg
+
+Lmazinger.z.s01e01.the.birth.of.a.miraculous.robot.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e13.the.devils.great.rolling.attack.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e14.rage.the.sleeping.giant.spartan.1080p.bluray.flac.1.0.x264-kitsune
 
 Lmobile suit gundam unicorn re 0096 - 05 - clash with the red comet [gcs8] [2585dd23]
 
@@ -20950,6 +21034,8 @@ Llove.through.a.prism.s01e15.stormy.crossroads.1080p.nf.web-dl.dual.ddp5.1.h.264
 
 Lmai mai shinko to sennen no mahou nced [1080p_hi10p_blu-ray_flac] [hark0n] [948ae8b2]
 
+Lmazinger.z.s01e22.pursuit.undersea.fortress.salude.1080p.bluray.flac.1.0.x264-kitsune
+
 Lmobile suit gundam unicorn re 0096 - 14 - clash of the two unicorns [gcs8] [835ba1fe]
 
 Lmobile.suit.gundam.unicorn.s01e05.the.black.unicorn.1080p.bluray.opus5.1.av1-tasokare
@@ -21278,6 +21364,20 @@ Lkuroko's basketball - episode 60 - in order to win 1080p bdrip x265 pcm 2.0 kir
 Lkuroko's basketball - episode 67 - final tip-off!! 1080p bdrip x265 pcm 2.0 kira [sev]
 
 Lkuroko's basketball - episode 75 - many times over 1080p bdrip x265 pcm 2.0 kira [sev]
+
+Lmazinger.z.s01e03.the.plan.to.annihilate.mazinger.z.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e08.great.devil.abdullahs.true.colors.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e09.deimos.f3.is.satans.bastard.child.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e12.traitor.the.enlarged.robot.vikong.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e15.the.mechanical.beast.tsunami.plot.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e16.orders.to.assassinate.koji.kabuto.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e43.assault.the.invading.paratroopers.1080p.bluray.flac.1.0.x264-kitsune
 
 Lmobile.suit.gundam.unicorn.s01e01.day.of.the.unicorn.1080p.bluray.opus5.1.av1-tasokare
 
@@ -21650,6 +21750,18 @@ Llove.through.a.prism.s01e11.a.portrait.in.sepia.1080p.nf.web-dl.dual.ddp5.1.h.2
 
 Llove.through.a.prism.s01e14.farewell.on.the.sea.1080p.nf.web-dl.dual.ddp5.1.h.264-varyg
 
+Lmazinger.z.s01e18.gangster.of.the.sea.pirate.glossom.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e30.shiro.in.peril.move.out.mazinger.z.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e49.the.insane.robots.desperate.battle.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e60.mazinger.z.fires.its.secret.weapon.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e69.melted.in.the.air.the.hover.pilder.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e85.bizarre.attack.of.the.black.shadow.1080p.bluray.flac.1.0.x264-kitsune
+
 Lmobile suit gundam unicorn re 0096 - 08 - laplace, where it all began [gcs8] [63ebf29e]
 
 Lranma1-2.2024.s01e03.because.theres.someone.he.likes.1080p.nf.web-dl.aac2.0.h.264-varyg
@@ -21982,6 +22094,10 @@ Lkuroko's basketball - episode 57 - it makes me laugh 1080p bdrip x265 pcm 2.0 k
 Lkuroko's basketball - episode 70 - weight of resolve 1080p bdrip x265 pcm 2.0 kira [sev]
 
 Llove.through.a.prism.s01e20.love.through.a.prism.1080p.nf.web-dl.dual.ddp5.1.h.264-varyg
+
+Lmazinger.z.s01e54.explosion.the.powerful.rocket.punch.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e68.bodyguard.from.hell.archduke.gorgon.1080p.bluray.flac.1.0.x264-kitsune
 
 Lmobile.suit.gundam.unicorn.s01e03.the.ghost.of.laplace.1080p.bluray.opus5.1.av1-tasokare
 
@@ -22340,6 +22456,20 @@ Llove.through.a.prism.s01e07.a.red.rose.has.thorns.1080p.nf.web-dl.dual.ddp5.1.h
 
 Llove.through.a.prism.s01e10.outlines.of.triangles.1080p.nf.web-dl.dual.ddp5.1.h.264-varyg
 
+Lmazinger.z.s01e06.dr.hells.two.great.mechanical.beasts.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e61.robot.of.destiny.the.song.of.rhine.x.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e70.the.invincible.commander.koji.kabuto.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e77.officer.at.deaths.door.count.brocken.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e82.mazinger.falls.into.the.devils.hands.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e86.general.attack.triple.death.strategy.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e92.death.match.resurrect.our.mazinger.z.1080p.bluray.flac.1.0.x264-kitsune
+
 Lmobile suit gundam unicorn re 0096 - 16 - the side co-prosperity sphere [gcs8] [f23e11d0]
 
 Lscott.pilgrim.takes.off.s01e07.2.scott.2.pilgrim.1080p.bluray.remux.avc.dts-hd.ma5.1-nan0
@@ -22692,6 +22822,8 @@ Lkuroko's basketball - episode 59 - don't belittle us!! 1080p bdrip x265 pcm 2.0
 
 Lkuroko's basketball - episode 61 - this time, for sure 1080p bdrip x265 pcm 2.0 kira [sev]
 
+Lmazinger.z.s01e55.the.great.schuss.operation.of.mt.fuji.1080p.bluray.flac.1.0.x264-kitsune
+
 Lpop.team.epic.sp03.pop.team.epicrimson.female.version.1080p.bluray.opus2.0.h.264-demihuman
 
 Lsand.land.the.series.s01e05.the.terrifying.insect.men.1080p.dsnp.web-dl.ddp5.1.h.264-varyg
@@ -22987,6 +23119,10 @@ Lkuroko's basketball - episode 73 - why don't we give up 1080p bdrip x265 pcm 2.
 
 Llaid-back.camp.s03e02.mini.camping.and.yard.camping.1080p.cr.web-dl.aac2.0.h.264.dual-varyg
 
+Lmazinger.z.s01e41.broken.wings.death.battle.in.the.skies.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e67.dont.cry.koji.a.sole.life.on.the.cross.1080p.bluray.flac.1.0.x264-kitsune
+
 Lrequiem of the rose king - s01e19 - i will protect edward. that child is my son webdl-1080p
 
 Lsand.land.the.series.s01e13.the.battle.comes.to.an.end.1080p.dsnp.web-dl.ddp5.1.h.264-varyg
@@ -23261,6 +23397,14 @@ Lkuroko's basketball - episode 48 - i don't want to lose! 1080p bdrip x265 pcm 2
 Lkuroko's basketball - episode 62 - he is the best player 1080p bdrip x265 pcm 2.0 kira [sev]
 
 Lkuroko's basketball - episode 63 - a day with blue skies 1080p bdrip x265 pcm 2.0 kira [sev]
+
+Lmazinger.z.s01e34.a.red.flash.of.lightning.mazinger.flies.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e46.the.ninja.twin.mechanical.beasts.appear.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e75.suicide.attack.gorgons.mechanical.beast.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e84.the.oceans.depths.are.mazinger.zs.grave.1080p.bluray.flac.1.0.x264-kitsune
 
 Lmobile.suit.gundam.unicorn.s01e06.two.worlds.two.tomorrows.1080p.bluray.opus5.1.av1-tasokare
 
@@ -23794,6 +23938,12 @@ Lkuroko's basketball - episode 45 - of course it's not easy 1080p bdrip x265 pcm
 
 Lkuroko's basketball - episode 53 - don't you get in my way 1080p bdrip x265 pcm 2.0 kira [sev]
 
+Lmazinger.z.s01e11.the.phantom.galen.cannon.is.going.to.blow.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e25.the.aero.brothers.the.great.eruption.plot.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e72.for.the.kill.the.giant.swing.rocket.punch.1080p.bluray.flac.1.0.x264-kitsune
+
 Lrequiem of the rose king - s01e03 - i am the shadow, the darkness behind the light webdl-1080p
 
 Lshingeki no bahamut - 09 - decision in the wailing woods [bd][1080p][x264][flac][eng-sub]-df68
@@ -24058,6 +24208,12 @@ Lkuroko's basketball - episode 24 - don't get the wrong idea 1080p bdrip x265 pc
 Lkuroko's basketball - episode 31 - i surpassed you long ago 1080p bdrip x265 pcm 2.0 kira [sev]
 
 Llove.through.a.prism.s01e13.a.collage.of.joy.and.sorrow.1080p.nf.web-dl.dual.ddp5.1.h.264-varyg
+
+Lmazinger.z.s01e17.the.underground.mechanical.beast.holzon.v3.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e52.koji.in.a.pinch.sayaka.deploys.in.mazinger.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e90.get.angry.shiro.shoot.your.mothers.vestige.1080p.bluray.flac.1.0.x264-kitsune
 
 Lmy home hero (2023) - s01e05 - 005 - are you happy [webdl-1080p][8bit][x264][aac 2.0][ja+en]-cw
 
@@ -24362,6 +24518,12 @@ Llaid-back.camp.s03e12.april.2nd.cherry.blossom.camp.trip.1080p.cr.web-dl.aac2.0
 
 Llove.through.a.prism.s01e05.views.of.a.honey.gold.summer.1080p.nf.web-dl.dual.ddp5.1.h.264-varyg
 
+Lmazinger.z.s01e20.the.storm-calling.mechanical.beast.stronger.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e37.messenger.from.the.dark.the.deadly.scrander.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e79.mazinger.will.explode.in.less.than.1.minute.1080p.bluray.flac.1.0.x264-kitsune
+
 Lopening event digest day version 2023.06.18 - tokyo 卍 revengers - season 03 - tenjiku arc [2023]
 
 Lrequiem of the rose king - s00e01 - part one digest - meetings and partings webdl-1080p [no dub]
@@ -24640,6 +24802,10 @@ Llaid-back.camp.s03e03.were.off.land.of.suspension.bridges.1080p.cr.web-dl.aac2.
 Llove.through.a.prism.s01e12.the.golden.ratio.between.them.1080p.nf.web-dl.dual.ddp5.1.h.264-varyg
 
 Llove.through.a.prism.s01e16.colorless.cubism.of.the.heart.1080p.nf.web-dl.dual.ddp5.1.h.264-varyg
+
+Lmazinger.z.s01e32.the.horrifying.three-headed.mechanical.beast.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e45.the.devils.target.the.photon.light.institute.1080p.bluray.flac.1.0.x264-kitsune
 
 Lmy home hero (2023) - s01e09 - 009 - the fateful day [webdl-1080p][8bit][x264][aac 2.0][ja+en]-cw
 
@@ -24962,6 +25128,16 @@ Linazuma eleven - ares no tenbin - 23 - surpassing the legend! 1080p bdrip x265 
 
 Llaid-back.camp.s03e04.hatanagi.attack.death.road.from.hell.1080p.cr.web-dl.aac2.0.h.264.dual-varyg
 
+Lmazinger.z.s01e23.mechanical.beast.dam-dam.the.great.wheel.plan.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e39.suicide.challenge.salude.in.the.scarlet.ocean.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e44.great.charge.the.new.underwater.fortress.bood.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e88.life.or.death.desperate.battle.of.hell.island.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e91.last.chance.dr.hells.decisive.battle.of.death.1080p.bluray.flac.1.0.x264-kitsune
+
 Lmy home hero (2023) - s01e02 - 002 - cutting the cake [webdl-1080p][8bit][x264][aac 2.0][ja+en]-cw
 
 Lmy home hero (2023) - s01e03 - 003 - the correct path [webdl-1080p][8bit][x264][aac 2.0][ja+en]-cw
@@ -25203,6 +25379,14 @@ Lkuroko's basketball - episode 71 - in my own way, i'm desperate 1080p bdrip x26
 
 Llove.through.a.prism.s01e01.black.bread.and.iridescent.hope.1080p.nf.web-dl.dual.ddp5.1.h.264-varyg
 
+Lmazinger.z.s01e26.clash.samurai.koji.vs.ashuras.mechanical.beast.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e33.great.aerial.raid.barras.k.outlaw.of.the.skies.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e42.the.demons.command.attacks.from.sky.and.ground.1080p.bluray.flac.1.0.x264-kitsune
+
+Lmazinger.z.s01e59.hell.fortress.the.devils.declaration.of.battle.1080p.bluray.flac.1.0.x264-kitsune
+
 Lmy hero academia (boku no hero academia) s04e01v3 2019 1080p web-dl avc aac 2.0 dual audio -zr- (1)
 
 Lmy home hero (2023) - s01e07 - 007 - mother and mother [webdl-1080p][8bit][x264][aac 2.0][ja+en]-cw
@@ -25350,14 +25534,13 @@ strict_template_routes := {
   "192": `{"B\tthe misfit of demon king academy (maou gakuin no futekigousha shijou saikyou no maou no shiso, tensei shite shison-tachi no gakkou e kayou) s§e§ § §p bluray remux avc aac §.§ dual audio -zr-":[["02","","2023","1080","2","0"],["\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]]}`,
   "193": `{"B\tthe misfit of demon king academy (maou gakuin no futekigousha shijou saikyou no maou no shiso, tensei shite shison-tachi no gakkou e kayou) s§e§ § §p bluray remux avc aac §.§ dual audio -zr-.":[["02","","2023","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]]}`,
   "20": `{"B\tbdmv menu - vol. §":[[""],["\n1\n2\n3\n4\n5\n6\n"]],"B\tfuni dbz ed§ (§-§)":[["","",""],["\n1,1,107\n2,108,199\n3,200,291\n"]],"B\tfuni dbz op§ (§-§)":[["","",""],["\n1,1,107\n2,108,199\n3,200,291\n"]],"X\tminami-ke okaeri §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]]}`,
-  "21": `{"B\t[nced§] freek'n you":[[""],["\n1\n2\n"]],"B\ttoonami usa promo §":[[""],["\n1\n3\n"]],"L\tchibi revengers - §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"L\tmazinger z jpbd ep§":[[""],["\n1\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n2\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n3\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n4\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n5\n50\n51\n52\n53\n54\n55\n56\n57\n58\n59\n6\n60\n61\n62\n63\n64\n65\n66\n67\n68\n69\n7\n70\n71\n72\n73\n74\n75\n76\n77\n78\n79\n8\n80\n81\n82\n83\n84\n85\n86\n87\n88\n89\n9\n90\n91\n92\n"]
-],"X\tminami-ke okawari §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]]}`,
+  "21": `{"B\t[nced§] freek'n you":[[""],["\n1\n2\n"]],"B\ttoonami usa promo §":[[""],["\n1\n3\n"]],"L\tchibi revengers - §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"X\tminami-ke okawari §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]]}`,
   "22": `{"L\tlove lab - nced§ [§]":[["",""],["\n1,231bab69\n2,cd1e3036\n"]],"X\t[reza] oreimo - s§e§":[["",""],["\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n02,01\n02,02\n02,03\n02,04\n02,05\n02,06\n02,07\n02,08\n02,09\n02,10\n02,11\n02,12\n02,13\n"]]}`,
   "23": `{"B\tdbz § nep + dbz m§ cm":[["",""],["\n009,1\n037,2\n038,2\n039,2\n052,3\n053,3\n054,3\n079,4\n080,4\n081,4\n097,5\n098,5\n099,5\n128,6\n129,6\n130,6\n145,7\n146,7\n147,7\n176,8\n190,9\n191,9\n192,9\n218,10\n219,10\n220,10\n230,11\n231,11\n232,11\n256,12\n257,12\n258,12\n268,13\n269,13\n270,13\n271,13\n272,13\n"]],"B\tfate zero - nced§ [§]":[["",""],["\n1,210a4639\n2,67f2034c\n"]],"B\tfate zero - ncop§ [§]":[["",""],["\n1,5f548b0a\n2,63c93e23\n"]],"B\tkimi no iru machi - §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
 ],"B\ttoonami s§ long promo":[[""],["\n5\n6\n"]],"B\t§ - intoccabile act §":[["",""],["\n08,1\n09,2\n"]],"L\t[reza] food wars s§e§":[["04",""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\t[starbez] nced § - e§":[["",""],["\n04,07\n05,12\n"]],"L\tbattery.s§e§.§p-varyg":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n"]],"L\tgintama tv § nced §.§":[["","",""],["\n5,2,1\n5,2,2\n8,1,01\n8,1,02\n8,1,03\n8,1,04\n8,1,05\n8,1,06\n8,1,07\n8,1,08\n8,1,09\n8,1,10\n8,1,11\n8,1,12\n"]
 ],"L\tgintama tv § ncop §.§":[["","1",""],["\n5,1\n5,2\n5,3\n8,1\n8,2\n"]],"X\t[reza] haganai - s§e§":[["",""],["\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n02,01\n02,02\n02,03\n02,04\n02,05\n02,06\n02,07\n02,08\n02,09\n02,10\n02,11\n02,12\n"]],"X\t[toshy] new game! - §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]]}`,
-  "24": `{"B\tbeck - § [§x§ x§ flac]":[["","960","720","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n"]],"B\ttoonami s§ short promo":[[""],["\n2\n5\n"]],"B\ttoonami s§ § sec promo":[["","30"],["\n4\n6\n"]],"L\t[commie] pluto - § [§]":[["",""],["\n03,1ed32213\n04,042ee32f\n05,24099634\n08,911160be\n"]],"L\t[pithree] noblesse - §":[[""],["\n07\n08\n10\n11\n12\n13\n"]],"L\tmazinger-z_bd_ep§_simu":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n52\n53\n54\n55\n56\n57\n58\n59\n60\n61\n62\n63\n64\n65\n66\n67\n68\n69\n70\n71\n72\n73\n74\n75\n76\n77\n78\n79\n80\n81\n82\n83\n84\n85\n86\n87\n88\n89\n90\n91\n92\n"]
-],"L\tone piece - § [f-r][§]":[["","63e5c556"],["\n0492\n492\n"]],"X\t[reza] oreimo - s§ova§":[["",""],["\n01,01\n01,02\n01,03\n01,04\n02,01\n02,02\n02,03\n"]],"X\t[toshy] new game!! - §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]]}`,
+  "24": `{"B\tbeck - § [§x§ x§ flac]":[["","960","720","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n"]],"B\ttoonami s§ short promo":[[""],["\n2\n5\n"]],"B\ttoonami s§ § sec promo":[["","30"],["\n4\n6\n"]],"L\t[commie] pluto - § [§]":[["",""],["\n03,1ed32213\n04,042ee32f\n05,24099634\n08,911160be\n"]],"L\t[pithree] noblesse - §":[[""],["\n07\n08\n10\n11\n12\n13\n"]],"L\tone piece - § [f-r][§]":[["","63e5c556"],["\n0492\n492\n"]
+],"X\t[reza] oreimo - s§ova§":[["",""],["\n01,01\n01,02\n01,03\n01,04\n02,01\n02,02\n02,03\n"]],"X\t[toshy] new game!! - §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]]}`,
   "25": `{"B\t[arc] golden boy - s§e§":[["01",""],["\n01\n02\n03\n04\n05\n06\n"]],"L\t[crane§] food wars s§e§":[["0922","04",""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\t[reza] yashahime - s§e§":[["01",""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"X\t[kh] maken-ki! - sp - §":[[""],["\n01\n02\n03\n04\n05\n06\n"]],"X\t[mtbb] odd taxi - § [§]":[["",""],["\n01,fcf47f3f\n02,e53fe9d8\n03,2fe6aec8\n04,2fa45c6a\n05,4b599c66\n06,44625c30\n07,6501fe85\n08,d415d3f2\n09,41b53120\n10,a97c7487\n11,7cddcdfb\n12,edc0bb18\n13,f6638888\n"]
 ]}`,
   "26": `{"B\t[mtbb] kanon (§) - § [§]":[["2006","",""],["\n01,7f893002\n02,ec485718\n03,c61854a0\n04,7e90450c\n05,35679ba2\n06,d75c707c\n07,485c6bc0\n08,7fd6eb6a\n09,9b93f98d\n10,c2687432\n11,7e709521\n12,6f91d1cf\n13,ad3f3e7d\n14,d39c6b96\n15,89494e87\n16,1a228d15\n17,c3d63e1d\n18,383819f5\n19,de8af8d6\n20,e5713ccd\n21,c75f0132\n22,03e61872\n23,c7244585\n24,d0493bdd\n"]],"B\t[mtbb] shirobako - § [§]":[["",""],["\n01,93092ade\n02,31a1937e\n03,9867cf81\n04,ffaccf8d\n05,f10607cf\n06,845dfbe0\n07,f6f2e0d4\n08,8a777a4a\n09,830419ef\n10,bd330c84\n11,d006e2da\n12,686e7d19\n13,c93897fd\n14,4d9f4d5d\n15,2e5302d7\n16,a30c3dca\n17,fe8cf77f\n18,ffbf5685\n19,8b8e1e28\n20,5799806f\n21,6468f1af\n22,1ab4e4f2\n23,28bb37f2\n24,f020886b\n"]
@@ -26465,18 +26648,19 @@ strict_template_routes := {
 "\n186\n187\n188\n189\n19\n190\n191\n192\n193\n194\n195\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n52\n53\n54\n55\n56\n57\n58\n59\n60\n61\n62\n63\n64\n65\n66\n67\n68\n69\n70\n71\n72\n73\n74\n75\n76\n77\n78\n79\n80\n81\n82\n83\n84\n85\n86\n87\n88\n89\n90\n91\n92\n93\n94\n95\n96\n97\n98\n99\n"]],"B\tyuuki yuuna is a hero - s§e§ (bd remux §p avc flac) [dual audio] [pmr]":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
 ],"B\tyuuna and the haunted hot springs - s§e§ (bd remux §p avc flac) [skra]":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\t[ane] ookami-san to shichinin no nakama-tachi - ep§ [bdrip §p x§ flac]":[["","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\t[chihiro] in the heart of kunoichi tsubaki § [blu-ray §p hevc flac][§]":[["","1080",""],["\n01,095d29bf\n02,507701ed\n03,158273f8\n04,db7a2a19\n05,744f9661\n06,ee187e79\n07,bfd7a1eb\n08,6c53f1b7\n09,5e5bf8e8\n10,4ce04ab5\n11,00354e92\n12,bb4a91b2\n13,e4a664ea\n"]
 ],"L\t[doki] zero no tsukaima - princess no rondo - § (§x§ hevc bd flac) [§]":[["","1280","720",""],["\n01,5b69fe61\n02,173bc3f5\n03,9a05d137\n04,7004501a\n05,f59d2578\n06,5ecb8492\n07,fb5a4330\n08,891ae568\n09,57817c42\n10,2120531c\n11,653566f0\n12,0debd414\n"]],"L\t[dragon-releases] qualidea code - § (§) [hevc][§-bit][bdrip][hd §p][§]":[["","2016","10","1080",""],["\n01,657a6d2e\n02,8f780488\n03,7b5a6aa1\n04,68a61a0c\n05,9985a7f6\n06,1a93192f\n07,36a46fb7\n08,aa613ef5\n09,1e18bce3\n10,6f09aeb5\n11,8f72769d\n12,2f10f41d\n"]
-],"L\t[getittwisted] psycho-pass - s§e§ [bd §p hevc opus aac dual-audio] [§]":[["03","","1080",""],["\n01,67bae81e\n02,a5107255\n03,4714626b\n04,853c655f\n05,ba8ffebe\n06,ef79b082\n07,c8dc6e13\n08,9a57d83c\n"]],"L\t[holomux] black butler - book of circus § [bd §p x§ §bit flac dual][§]":[["","1080","264","10",""],["\n01,68167ba9\n02,016edb6c\n03,e89238d3\n04,fa56fdc7\n05,181de9b3\n06,5267828a\n07,acbe31e6\n08,169bbc9f\n09,f1a0e9e2\n10,0a805a20\n"]],"L\t[holomux] monthly girls' nozaki-kun § [bd §p x§ §bit flac §.§ dual][§]":
-[["","1080","264","10","2","0",""],["\n01,ad30b5c0\n02,e8e13781\n03,554f6d4a\n04,a6a6a6aa\n05,572588f7\n06,a0be41ea\n07,af4220eb\n08,3bef42c8\n09,44e0eaa6\n10,8f3141a0\n11,ed8f83da\n12,10605656\n"]],"L\t[horriblesubs] rikei ga koi ni ochita no de shoumei shitemita - § [§p]":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\t[lostyears] natsume's book of friends - s§e§ (web-dl §p x§ e-ac-§) [§]":[["07","","1080","264","3",""],["\n01,dc20545d\n02,a9bf1489\n03,87ff0cbd\n04,58a19ac2\n05,cc7b237f\n06,53c386ec\n07,51705ffe\n08,2c89d77f\n09,fd24d3a8\n10,1001e6b6\n11,7e698f12\n12,bb34a83d\n"]
-],"L\t[lostyears] the god of high school - s§e§ v§ (web §p x§ §-bit aac) [§]":[["01","","2","1080","264","10",""],["\n01,e43acb86\n02,9c272e66\n03,1f210d58\n04,466ea74a\n05,51d71987\n06,ffbb51bd\n"]],"L\t[mottoj] watashi ga motete dousunda - § (bdrip §x§ hevc ma§p aac chap)":[["","1280","720","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\t[mysteria] emiya-san chi no kyou no gohan - s§e§ (bd §p hevc flac) [§]":[["01","","1080",""],["\n01,54c3b5ed\n02,99e1907c\n03,5371d47a\n04,84b71c47\n05,cd713d2b\n06,2dce6848\n07,34686d0c\n08,58a467c4\n09,99086094\n10,26549fbd\n11,c9391728\n12,e310b0c7\n13,d3db9b02\n"]
-],"L\t[ozr] nanatsu no taizai - imashime no fukkatsu - § (bdrip §x§ x§ flac)":[["","1920","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"L\t[o§] love live! school idol project - nced § (bd §p x§ §-bit flac) [§]":[["7","","1080","264","10",""],["\n01,54021efa\n02,ca53d60b\n03,4bd7d744\n04,b85483a7\n05,d69eb362\n06,1ddab2d7\n07,adb7fb27\n08,2a66527b\n09,381da316\n"]],"L\t[smugcat] mahou shoujo nante mou ii desukara - § [bd §p §bit flac] [§]":
-[["","1080","10",""],["\n01,77bdb1b4\n02,0ab41dd5\n03,fa215804\n04,86361284\n05,3fe683fb\n06,9afd9273\n07,69a99e76\n08,0dedce55\n09,a7737e05\n10,cab3215f\n11,66a5fdf6\n12,e22ef2ae\n"]],"L\t[sofcj-utsubyou] shaman king - § [webrip][§p][hevc §bit ac§][eng subs]":[["","720","10","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n52\n53\n54\n55\n56\n57\n58\n59\n60\n61\n62\n63\n64\n"]
-],"L\taharen-san.wa.hakarenai.s§e§.§p.bluray.dual-audio.opus.§.§.x§-yurasuka":[["02","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tameku.m.d.doctor.detective.§.s§e§.§p.web-dl.dual-audio.ddp§.§.h.§-mald":[["2025","01","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tjojo's bizarre adventure (§) s§e§ crazy d (diamond) is unbreakable (§)":[["2012","03","",""],["\n37,1\n38,2\n"]],"L\tkubo.wont.let.me.be.invisible.s§e§.§p.bluray.§-bit.flac§.§.x§-yurasuka":
-[["01","","1080","10","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tmajestic prince s§e§ defensive battle at cosmopolitan academy (part §)":[["01","",""],["\n17,1\n18,2\n"]],"L\tremake.our.life.s§e§.repack.§p.bluray.dual-audio.opus§.§.x§-headpatter":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tthe.wrong.way.to.use.healing.magic.s§e§.§p.web-dl.x§.aac.§.§-zerobuild":[["01","","1080","264","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
-],"L\twhen.will.ayumu.make.his.move.s§e§.§p.bluray.§-bit.flac§.§.x§-yurasuka":[["01","","1080","10","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\t[cbt] ore wo suki nano wa omae dake ka yo - s§e§ (bd §p hevc flac) [§]":[["01","","1080",""],["\n01,266fe508\n02,970122b1\n03,6c3472f0\n04,eb89227a\n05,70fc5d1a\n06,58185dbf\n07,234d9e46\n08,01e4f14f\n09,db1ffb86\n10,346a2495\n11,3129cbb2\n12,c740808d\n"]],"X\t[dae] wonder egg priority - s§e§ (bdrip §p hevc flac) [dual-audio] [§]":
-[["","","1080",""],["\n00,01,e067d0d0\n01,01,338a15c6\n01,02,a4731277\n01,03,6456482c\n01,04,18053ff9\n01,05,cdcaa238\n01,06,cca1b80d\n01,07,52b3daa8\n01,08,9b8e4515\n01,09,f07d7aa4\n01,10,ce9885f0\n01,11,083767af\n01,12,7f4e4166\n"]],"X\t[nh] why the hell are you here, teacher! - § (bd §p x§ §-bit flac) [§]":[["","1080","265","10",""],["\n01,465caf27\n02,edc3151b\n03,3cd7c821\n04,aaca6b09\n05,9040f63c\n06,57fecaaa\n07,9212380c\n08,aadac1c4\n09,514be5de\n10,3b8601aa\n11,f39adda1\n12,dcf166e8\n13,3db42227\n"]
-],"X\t[thighs] mushoku tensei jobless reincarnation - nced§ (bd §p flac) [§]":[["","1080",""],["\n1,6200b405\n2,3645c08d\n"]],"X\t[yuri] ground control to psychoelectric girl s§e§ [bd §p x§ §bit flac]":[["01","","1080","264","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\t[yuri] hyperdimension neptunia (creditless ed ep §) [bd §p x§ x§ flac]":[["","1080","264","264"],["\n03\n04\n07\n10\n12\n13\n"]],"X\tfate.kaleid.liner.prisma.illya.s§e§.§p-hi§p.bluray.flac§.§.x§-sola.[§]":
-[["","","1080","10","2","0","264",""],["\n01,01,f730cfb1\n01,02,b80aabaf\n01,03,7f214430\n01,04,c8f0260a\n01,05,7c7bb25e\n01,06,a6444e6b\n01,07,41279685\n01,08,d5e7792a\n01,09,bf085434\n01,10,b9883807\n02,01,899b78e2\n02,02,93097870\n02,03,c2e146b9\n02,04,cf73178f\n02,05,cb5a1888\n02,06,f35762d1\n02,07,e7341337\n02,08,b3010b78\n02,09,4cf4924e\n02,10,5739db2c\n03,01,8f3d1289\n03,02,f33fefde\n03,03,d45d7056\n03,04,2b05cd66\n03,05,4bed597c\n03,06,337f6d3b\n","\n03,07,7261a5dc\n03,08,91bb445b\n03,09,bf860a0e\n03,10,30f6bce1\n04,01,fe41d005\n04,02,55e130f3\n04,03,f3f0c66c\n04,04,11bdb0ef\n04,05,d74512b7\n04,06,79f251cf\n04,07,5f287ef4\n04,08,e7e21f04\n04,09,6eeac5df\n04,10,6a176ef8\n04,11,d105822c\n04,12,588fade7\n"]
-],"X\tsnow.white.with.the.red.hair.s§e§.v§.§p-hi§p.bluray.flac§.§.x§-ctr.[§]":[["01","","2","1080","10","5","1","264",""],["\n03,b26841ef\n04,90416401\n05,dc17137a\n06,0c545a6a\n07,d82df6f5\n08,0aac283e\n09,1bff4474\n10,efb0f765\n11,fe5f1816\n"]]}`,
+],"L\t[getittwisted] psycho-pass - s§e§ [bd §p hevc opus aac dual-audio] [§]":[["03","","1080",""],["\n01,67bae81e\n02,a5107255\n03,4714626b\n04,853c655f\n05,ba8ffebe\n06,ef79b082\n07,c8dc6e13\n08,9a57d83c\n"]],"L\t[hchcsen] amaim warrior at the borderline s§e§ [cr web-dl §p avc opus]":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n"]],"L\t[holomux] black butler - book of circus § [bd §p x§ §bit flac dual][§]":
+[["","1080","264","10",""],["\n01,68167ba9\n02,016edb6c\n03,e89238d3\n04,fa56fdc7\n05,181de9b3\n06,5267828a\n07,acbe31e6\n08,169bbc9f\n09,f1a0e9e2\n10,0a805a20\n"]],"L\t[holomux] monthly girls' nozaki-kun § [bd §p x§ §bit flac §.§ dual][§]":[["","1080","264","10","2","0",""],["\n01,ad30b5c0\n02,e8e13781\n03,554f6d4a\n04,a6a6a6aa\n05,572588f7\n06,a0be41ea\n07,af4220eb\n08,3bef42c8\n09,44e0eaa6\n10,8f3141a0\n11,ed8f83da\n12,10605656\n"]],"L\t[horriblesubs] rikei ga koi ni ochita no de shoumei shitemita - § [§p]":
+[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\t[lostyears] natsume's book of friends - s§e§ (web-dl §p x§ e-ac-§) [§]":[["07","","1080","264","3",""],["\n01,dc20545d\n02,a9bf1489\n03,87ff0cbd\n04,58a19ac2\n05,cc7b237f\n06,53c386ec\n07,51705ffe\n08,2c89d77f\n09,fd24d3a8\n10,1001e6b6\n11,7e698f12\n12,bb34a83d\n"]],"L\t[lostyears] the god of high school - s§e§ v§ (web §p x§ §-bit aac) [§]":[["01","","2","1080","264","10",""],["\n01,e43acb86\n02,9c272e66\n03,1f210d58\n04,466ea74a\n05,51d71987\n06,ffbb51bd\n"]
+],"L\t[mottoj] watashi ga motete dousunda - § (bdrip §x§ hevc ma§p aac chap)":[["","1280","720","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\t[mysteria] emiya-san chi no kyou no gohan - s§e§ (bd §p hevc flac) [§]":[["01","","1080",""],["\n01,54c3b5ed\n02,99e1907c\n03,5371d47a\n04,84b71c47\n05,cd713d2b\n06,2dce6848\n07,34686d0c\n08,58a467c4\n09,99086094\n10,26549fbd\n11,c9391728\n12,e310b0c7\n13,d3db9b02\n"]],"L\t[ozr] nanatsu no taizai - imashime no fukkatsu - § (bdrip §x§ x§ flac)":
+[["","1920","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"L\t[o§] love live! school idol project - nced § (bd §p x§ §-bit flac) [§]":[["7","","1080","264","10",""],["\n01,54021efa\n02,ca53d60b\n03,4bd7d744\n04,b85483a7\n05,d69eb362\n06,1ddab2d7\n07,adb7fb27\n08,2a66527b\n09,381da316\n"]],"L\t[smugcat] mahou shoujo nante mou ii desukara - § [bd §p §bit flac] [§]":[["","1080","10",""],["\n01,77bdb1b4\n02,0ab41dd5\n03,fa215804\n04,86361284\n05,3fe683fb\n06,9afd9273\n07,69a99e76\n08,0dedce55\n09,a7737e05\n10,cab3215f\n11,66a5fdf6\n12,e22ef2ae\n"]
+],"L\t[sofcj-utsubyou] shaman king - § [webrip][§p][hevc §bit ac§][eng subs]":[["","720","10","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n52\n53\n54\n55\n56\n57\n58\n59\n60\n61\n62\n63\n64\n"]],"L\taharen-san.wa.hakarenai.s§e§.§p.bluray.dual-audio.opus.§.§.x§-yurasuka":[["02","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
+],"L\tameku.m.d.doctor.detective.§.s§e§.§p.web-dl.dual-audio.ddp§.§.h.§-mald":[["2025","01","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tjojo's bizarre adventure (§) s§e§ crazy d (diamond) is unbreakable (§)":[["2012","03","",""],["\n37,1\n38,2\n"]],"L\tkubo.wont.let.me.be.invisible.s§e§.§p.bluray.§-bit.flac§.§.x§-yurasuka":[["01","","1080","10","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tmajestic prince s§e§ defensive battle at cosmopolitan academy (part §)":
+[["01","",""],["\n17,1\n18,2\n"]],"L\tremake.our.life.s§e§.repack.§p.bluray.dual-audio.opus§.§.x§-headpatter":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tthe.wrong.way.to.use.healing.magic.s§e§.§p.web-dl.x§.aac.§.§-zerobuild":[["01","","1080","264","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\twhen.will.ayumu.make.his.move.s§e§.§p.bluray.§-bit.flac§.§.x§-yurasuka":[["01","","1080","10","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
+],"X\t[cbt] ore wo suki nano wa omae dake ka yo - s§e§ (bd §p hevc flac) [§]":[["01","","1080",""],["\n01,266fe508\n02,970122b1\n03,6c3472f0\n04,eb89227a\n05,70fc5d1a\n06,58185dbf\n07,234d9e46\n08,01e4f14f\n09,db1ffb86\n10,346a2495\n11,3129cbb2\n12,c740808d\n"]],"X\t[dae] wonder egg priority - s§e§ (bdrip §p hevc flac) [dual-audio] [§]":[["","","1080",""],["\n00,01,e067d0d0\n01,01,338a15c6\n01,02,a4731277\n01,03,6456482c\n01,04,18053ff9\n01,05,cdcaa238\n01,06,cca1b80d\n01,07,52b3daa8\n01,08,9b8e4515\n01,09,f07d7aa4\n01,10,ce9885f0\n01,11,083767af\n01,12,7f4e4166\n"]
+],"X\t[nh] why the hell are you here, teacher! - § (bd §p x§ §-bit flac) [§]":[["","1080","265","10",""],["\n01,465caf27\n02,edc3151b\n03,3cd7c821\n04,aaca6b09\n05,9040f63c\n06,57fecaaa\n07,9212380c\n08,aadac1c4\n09,514be5de\n10,3b8601aa\n11,f39adda1\n12,dcf166e8\n13,3db42227\n"]],"X\t[thighs] mushoku tensei jobless reincarnation - nced§ (bd §p flac) [§]":[["","1080",""],["\n1,6200b405\n2,3645c08d\n"]],"X\t[yuri] ground control to psychoelectric girl s§e§ [bd §p x§ §bit flac]":[["01",
+"","1080","264","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\t[yuri] hyperdimension neptunia (creditless ed ep §) [bd §p x§ x§ flac]":[["","1080","264","264"],["\n03\n04\n07\n10\n12\n13\n"]],"X\tfate.kaleid.liner.prisma.illya.s§e§.§p-hi§p.bluray.flac§.§.x§-sola.[§]":[["","","1080","10","2","0","264",""],["\n01,01,f730cfb1\n01,02,b80aabaf\n01,03,7f214430\n01,04,c8f0260a\n01,05,7c7bb25e\n01,06,a6444e6b\n01,07,41279685\n01,08,d5e7792a\n01,09,bf085434\n01,10,b9883807\n02,01,899b78e2\n02,02,93097870\n02,03,c2e146b9\n02,04,cf73178f\n02,05,cb5a1888\n02,06,f35762d1\n02,07,e7341337\n02,08,b3010b78\n02,09,4cf4924e\n02,10,5739db2c\n03,01,8f3d1289\n03,02,f33fefde\n03,03,d45d7056\n03,04,2b05cd66\n03,05,4bed597c\n03,06,337f6d3b\n",
+"\n03,07,7261a5dc\n03,08,91bb445b\n03,09,bf860a0e\n03,10,30f6bce1\n04,01,fe41d005\n04,02,55e130f3\n04,03,f3f0c66c\n04,04,11bdb0ef\n04,05,d74512b7\n04,06,79f251cf\n04,07,5f287ef4\n04,08,e7e21f04\n04,09,6eeac5df\n04,10,6a176ef8\n04,11,d105822c\n04,12,588fade7\n"]],"X\tsnow.white.with.the.red.hair.s§e§.v§.§p-hi§p.bluray.flac§.§.x§-ctr.[§]":[["01","","2","1080","10","5","1","264",""],["\n03,b26841ef\n04,90416401\n05,dc17137a\n06,0c545a6a\n07,d82df6f5\n08,0aac283e\n09,1bff4474\n10,efb0f765\n11,fe5f1816\n"]
+]}`,
   "73": `{"B\t[fle] boku no hero academia - s§e§v§ (bd §p hevc opus) [dual audio] [§]":[["01","","2","1080",""],["\n01,7a762ffd\n02,b4c2275e\n03,bdfe2c4d\n04,4b21ce25\n05,a734f5c5\n06,caaaf88f\n07,a27c530d\n08,137647ba\n09,40ccf765\n10,1127d171\n11,469fe176\n12,78e975ad\n13,135e11fe\n"]],"B\t[getittwisted] sakugan - s§e§ [bd remux §p avc flac aac dual-audio] [§]":[["01","","1080",""],["\n01,03926e26\n02,d9ba9193\n03,ce4db818\n04,f29db827\n05,b2416cbd\n06,a29c67c5\n07,b89037d9\n08,6c723164\n09,3213663e\n10,dc518216\n11,2e87513d\n12,7664678e\n"]
 ],"B\t[getittwisted] zombie land saga - s§e§ [bd §p hevc opus dual-audio] [§]":[["02","","1080",""],["\n01,d1003490\n02,80e3f5b2\n03,309b946e\n04,50ea76d2\n05,8485ff51\n06,197034df\n07,65e909e2\n08,fe639709\n09,9f6ae4d2\n10,63b478fb\n11,d244b951\n12,12691bc3\n"]],"B\t[gsk_kun] my neighbour seki § [bdrip dual audio §x§p x§ §-bit flac] [§]":[["","1920","1080","264","10",""],["\n01,06efbdee\n02,c5a99a41\n03,1a243510\n04,8cf30ec6\n05,edfbe32f\n06,985e7b78\n07,29cd84b6\n08,c3e80d46\n09,77a49208\n10,bde34cf9\n11,ae0757c6\n12,91bf2d45\n13,1eb62918\n14,9cba5344\n15,7950e2e5\n16,affa292b\n17,c8687864\n18,f23cf6b7\n19,b469f61e\n20,e64e4d78\n21,0a7b0df5\n"]
 ],"B\t[hchcsen] a.i.c.o. -incarnation- s§e§ [bd remux §p avc §-bit flac eac§]":[["01","","1080","8","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\t[hchcsen] blue reflection ray s§e§ v§ [web dual audio §p avc e-ac§ aac]":[["01","","2","1080","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"B\t[hchcsen] brave of the legend da-garn s§e§ [bd remux §p avc §-bit flac]":[["01","","1080","8"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n"]
@@ -26971,6 +27155,8 @@ Lhchcsen|mobile suit gundam seed hd remaster s01e18 fangs of the enemy bd 1080p 
 
 Lhchcsen|mobile suit gundam seed hd remaster s01e31 gathering darkness bd 1080p x264 hi10p 2xflac ac3
 
+Lkitsune|mazinger z s01e83 first encounter phantom officer viscount pygman 1080p bluray flac 1 0 x264
+
 Lkitsune|mobile suit gundam seed special edition ii the far away dawn 2004 1080p bluray flac 2 0 x264
 
 Lkitsune|mobile suit gundam seed special edition iii the rumbling sky 2004 1080p bluray flac 2 0 x264
@@ -27148,6 +27334,8 @@ Lkitsune|heavens lost property s02e05 the brother who came from heaven 1080p blu
 
 Lkitsune|heavens lost property the movie the angeloid of clockwork 2011 1080p bluray dual flac2 0 x264
 
+Lkitsune|mazinger z s01e28 treacherous orders the plot to steal super alloy 1080p bluray flac 1 0 x264
+
 Lsai0nji|goblin slayer 2023 s02e08 heart of darkness 1080p bdrip avc japanese flac 2 0 english aac 2 0
 
 Lsneed|kimi to boku no saigo no senjou arui wa sekai ga hajimaru seisen nced bd 1080p x265 10 bit flac
@@ -27313,6 +27501,10 @@ Lhchcsen|shaman king 2021 s01e12 ren vs en the end of the tao v2 web dual audio 
 
 Lkitsune|heavens lost property s02e02 bombshell the angel is a big boob 1080p bluray dual flac 2 0 x264
 
+Lkitsune|mazinger z s01e78 baron ashura dies with honor in the pacific ocean 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e87 death by explosion the terrifying viscount pygman 1080p bluray flac 1 0 x264
+
 Lsev|demon slayer episode 61 the strongest of the demon slayer corps 1080p ita bdrip x265 flac 2 0 kira
 
 Lsmoke|yuri on ice 1x12 gotta super super supercharge it grand prix final free skate bd 1080p x264 flac
@@ -27443,6 +27635,8 @@ Lhchcsen|mobile suit gundam seed destiny hd remaster s01e02 those who call for w
 Lhchcsen|shaman king 2021 s01e15 when the pieces come together v2 web dual audio 1080p x264 10bit 2xeac3
 
 Lhchcsen|shaman king 2021 s01e25 the great onmyoji hao asakura v2 web dual audio 1080p x264 10bit 2xeac3
+
+Lkitsune|mazinger z s01e35 the reaper mechanical beast deathmas fierce attack 1080p bluray flac 1 0 x264
 
 Lkitsune|mobile suit gundam seed special edition i the empty battlefield 2004 1080p bluray flac 2 0 x264
 
@@ -27602,6 +27796,8 @@ Lhchcsen|mobile suit gundam seed hd remaster s01e34 in the name of justice bd 10
 Lhchcsen|mobile suit gundam seed hd remaster s01e41 what stands in the way bd 1080p x264 hi10p 2xflac ac3
 
 Lhchcsen|shaman king 2021 s01e01 the boy who dances with ghosts v2 web dual audio 1080p x264 10bit 2xeac3
+
+Lkitsune|mazinger z s01e89 its now or never miracle at 4000 meters underground 1080p bluray flac 1 0 x264
 
 Lsev|demon slayer episode 55 a connected bond daybreak and first light 1080p ita bdrip x265 flac 2 0 kira
 
@@ -27840,6 +28036,8 @@ Bnan0|the demon sword master of excalibur academy s01e08 a bond everlasting 1080
 Bnan0|welcome to demon school iruma kun s01e19 i want to pick everything up 1080p bluray remux avc flac 2 0
 
 Lhchcsen|mobile suit gundam seed destiny hd remaster s01e15 return to the battlefield avc 10 bit 2xflac ac3
+
+Lkitsune|mazinger z s01e53 double transformation the camouflage mechanical beast 1080p bluray flac 1 0 x264
 
 Lkitsune|mobile suit gundam seed destiny special edition i the broken world 2006 1080p bluray flac 2 0 x264
 
@@ -28258,6 +28456,8 @@ Lhchcsen|mobile suit gundam seed destiny hd remaster s01e16 struggle in the indi
 
 Lhchcsen|mother of the goddess dormitory s01e08 kiriya wishes upon a christmas bd dual audio 1080p hevc 2xflac
 
+Lkitsune|mazinger z s01e31 the hostage taking mechanical beast and the em wave plot 1080p bluray flac 1 0 x264
+
 Lkitsune|mobile suit gundam seed destiny special edition iii flames of destiny 2006 1080p bluray flac 2 0 x264
 
 Lsai0nji|goblin slayer 2023 s02e02 the red haired wizard boy 1080p bdrip avc japanese flac 2 0 english aac 2 0
@@ -28364,6 +28564,8 @@ L8rm|ishura s01e03 dakai the magpie and regnejee the wings of sunset repack 1080
 L8rm|ishura s01e05 higuare the pelagic and nastique the quiet singer repack 1080p bluray dual audio aac2 0 x265
 
 Lbluraydesuyo|yuusha ni narenakatta ore wa shibushibu shuushoku wo ketsui shimashita 13 ova bd 1080p 10bit flac
+
+Lkitsune|mazinger z s01e36 the transforming mechanical beast in the five great lakes 1080p bluray flac 1 0 x264
 
 Lkitsune|mobile suit gundam seed destiny special edition iv the cost of freedom 2007 1080p bluray flac 2 0 x264
 
@@ -37148,6 +37350,8 @@ Lkh|the master of ragnarok blesser of einherjar 11 proof of a great ruler
 
 Lkitsune|kaiju no 8 s02e01 kaiju weapon 1080p cr web dl dual ddp2 0 h 264
 
+Lkitsune|mazinger z s01e04 mazinger z in peril 1080p bluray flac 1 0 x264
+
 Lkitsune|to be hero x s01e13 tough girl 1080p cr web dl dual aac2 0 h 264
 
 Lkitsune|wind breaker s02e02 conclusion 1080p cr web dl dual ddp2 0 h 264
@@ -37378,6 +37582,10 @@ Lkh|motto to love ru 07 yami s clinic the antagonist a strange haruna chan
 Lkh|the master of ragnarok blesser of einherjar 01 the oath of the chalice
 
 Lkitsune|gundam build divers s01e13 duel 1080p cr web dl dual ddp2 0 h 264
+
+Lkitsune|mazinger z s01e02 stop the ashura army 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e57 dr hell seizes japan 1080p bluray flac 1 0 x264
 
 Lkitsune|murder princess s01e02 coronation 1080p bluray dual flac 2 0 x264
 
@@ -37959,6 +38167,10 @@ Lkitsune|gundam build divers s01e25 a new world 1080p cr web dl ddp2 0 h 264
 
 Lkitsune|kaiju no 8 s02e06 compatible user 1080p cr web dl dual ddp2 0 h 264
 
+Lkitsune|mazinger z s01e05 ghost mazinger appears 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e73 mazinger z is abducted 1080p bluray flac 1 0 x264
+
 Lkitsune|to be hero x s01e08 the cyan girl 1080p cr web dl dual aac2 0 h 264
 
 Lkitsune|to be hero x s01e09 loss and gain 1080p cr web dl dual aac2 0 h 264
@@ -38231,6 +38443,8 @@ Lhchcsen|island s01e06 as long as you are there bd dual audio 720p x264 2xaac
 Lhchcsen|letter bee s01e19 a sick letter bee and the girls bd 1080p x264 flac
 
 Lheadpatter|a certain scientific accelerator s00e01 1080p bluray opus2 0 x264
+
+Lkitsune|mazinger z s01e63 the beauty holds a bomb 1080p bluray flac 1 0 x264
 
 Lkitsune|to be hero x s01e17 whisper flower 1080p cr web dl dual aac2 0 h 264
 
@@ -38529,6 +38743,12 @@ Lkitsune|gundam build divers s01e08 festival 1080p cr web dl dual ddp2 0 h 264
 
 Lkitsune|kaiju no 8 s02e10 cataclysms repack 1080p cr web dl dual ddp2 0 h 264
 
+Lkitsune|mazinger z s01e07 baron ashuras great plan 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e21 showdown in a ghost town 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e48 boss borots first battle 1080p bluray flac 1 0 x264
+
 Lkitsune|record of ragnarok s01e10 greatest loser 1080p nf web dl ddp2 0 h 264
 
 Lkitsune|wind breaker s02e06 hidden feelings 1080p cr web dl dual ddp2 0 h 264
@@ -38793,6 +39013,10 @@ Lkh|ulysses jeanne d arc and the alchemist knight 08 return of the female saint
 Lkitsune|gundam build divers s01e20 the truth 1080p cr web dl dual ddp2 0 h 264
 
 Lkitsune|kaiju no 8 s02e11 second wave repack 1080p cr web dl dual ddp2 0 h 264
+
+Lkitsune|mazinger z s01e10 the flying metal arm dyan 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e81 sleep in hell koji kabuto 1080p bluray flac 1 0 x264
 
 Lkitsune|record of ragnarok s01e02 worthy opponent 1080p nf web dl ddp2 0 h 264
 
@@ -39069,6 +39293,12 @@ Lkh|ulysses jeanne d arc and the alchemist knight 07 rain and memory in brittany
 
 Lkitsune|kaiju no 8 s02e05 i want to be strong 1080p cr web dl dual ddp2 0 h 264
 
+Lkitsune|mazinger z s01e19 the flying demon deviler x 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e50 shoot it down jet scrander 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e66 invisible killer jenova m9 1080p bluray flac 1 0 x264
+
 Lkitsune|to be hero x s01e11 road to the crown 1080p cr web dl dual aac2 0 h 264
 
 Lkitsune|wind breaker s02e04 senpais teachings 1080p cr web dl dual ddp2 0 h 264
@@ -39319,6 +39549,12 @@ Lkitsune|gundam build divers s01e14 a new power 1080p cr web dl dual ddp2 0 h 26
 Lkitsune|gundam build divers s01e17 joint front 1080p cr web dl dual ddp2 0 h 264
 
 Lkitsune|gundam build divers s01e18 a mans will 1080p cr web dl dual ddp2 0 h 264
+
+Lkitsune|mazinger z s01e40 count brocken ruler of evil 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e56 the super alloy z is stolen 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e71 crisis relief go new pilder 1080p bluray flac 1 0 x264
 
 Lkitsune|to be hero x s01e15 affective disorder 1080p cr web dl dual aac2 0 h 264
 
@@ -39621,6 +39857,14 @@ Lkitsune|gundam build divers s01e07 force battle 1080p cr web dl dual ddp2 0 h 2
 
 Lkitsune|gundam build divers s01e11 ayames tears 1080p cr web dl dual ddp2 0 h 264
 
+Lkitsune|mazinger z s01e24 mach mechanical beast jinrai 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e29 great turnaround mazin power 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e47 fierce a hellish double plan 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e64 lady 007 vs brockens hit men 1080p bluray flac 1 0 x264
+
 Lkitsune|wind breaker s02e07 night street repack 1080p cr web dl dual ddp2 0 h 264
 
 Lmcballs|neon genesis evangelion s01e04 rain after running away bd 1080p hi10 flac
@@ -39912,6 +40156,14 @@ Lkitsune|gundam build divers s01e21 your feelings 1080p cr web dl dual ddp2 0 h 
 
 Lkitsune|gundam build divers s01e22 devoted heart 1080p cr web dl dual ddp2 0 h 264
 
+Lkitsune|mazinger z s01e27 operation capture aphrodite a 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e74 heroic the end of aphrodite a 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e76 lover of the century dianan a 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e80 a trap waits at bardos island 1080p bluray flac 1 0 x264
+
 Lkitsune|murder princess s01e06 determination s end 1080p bluray dual flac 2 0 x264
 
 Lkitsune|record of ragnarok s01e05 file no 00000000001 1080p nf web dl ddp2 0 h 264
@@ -40192,6 +40444,16 @@ Lheadpatter|haikara san here comes miss modern part 2 2018 1080p bluray opus5 1 
 Lkh|the master of ragnarok blesser of einherjar 08 the kotatsu and the empty bellows
 
 Lkitsune|gundam build divers s01e01 welcome to gbd 1080p cr web dl dual ddp2 0 h 264
+
+Lkitsune|mazinger z s01e38 the mysterious robot minerva x 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e51 hells assassins the skull army 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e58 front line base hells fortress 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e62 no way boss borot takes flight 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e65 the wind carries balloon bombs 1080p bluray flac 1 0 x264
 
 Lkitsune|record of ragnarok s01e12 and ragnarok goes on 1080p nf web dl ddp2 0 h 264
 
@@ -40484,6 +40746,12 @@ Lkitsune|gundam build divers s01e23 the fateful two 1080p cr web dl dual ddp2 0 
 
 Lkitsune|gundam build divers s01e24 decisive battle 1080p cr web dl dual ddp2 0 h 264
 
+Lkitsune|mazinger z s01e01 the birth of a miraculous robot 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e13 the devils great rolling attack 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e14 rage the sleeping giant spartan 1080p bluray flac 1 0 x264
+
 Lkitsune|to be hero x s01e03 the ever standing hero 1080p cr web dl dual aac2 0 h 264
 
 Lmcballs|neon genesis evangelion s01e14 seele the seat of the soul bd 1080p hi10 flac
@@ -40751,6 +41019,8 @@ Lkitsune|gundam build divers s01e16 friends reunited 1080p cr web dl dual ddp2 0
 
 Lkitsune|gundam build divers s01e19 nadeshiko athlon 1080p cr web dl dual ddp2 0 h 264
 
+Lkitsune|mazinger z s01e22 pursuit undersea fortress salude 1080p bluray flac 1 0 x264
+
 Lkitsune|record of ragnarok s01e07 expelled from paradise 1080p nf web dl ddp2 0 h 264
 
 Lkitsune|to be hero x s01e14 impromptu counterattack 1080p cr web dl dual aac2 0 h 264
@@ -40979,6 +41249,20 @@ Linid4c|jojo s bizarre adventure stardust crusaders battle in egypt ncopc bd 108
 Linid4c|jojo s bizarre adventure stardust crusaders battle in egypt ncsp1 bd 1080p flac
 
 Lkitsune|kaiju no 8 s02e02 the next generations trial 1080p cr web dl dual ddp2 0 h 264
+
+Lkitsune|mazinger z s01e03 the plan to annihilate mazinger z 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e08 great devil abdullahs true colors 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e09 deimos f3 is satans bastard child 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e12 traitor the enlarged robot vikong 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e15 the mechanical beast tsunami plot 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e16 orders to assassinate koji kabuto 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e43 assault the invading paratroopers 1080p bluray flac 1 0 x264
 
 Lkitsune|wind breaker s02e08 shared frontlines repack 1080p cr web dl dual ddp2 0 h 264
 
@@ -41223,6 +41507,18 @@ Linid4c|jojo s bizarre adventure stardust crusaders battle in egypt ncsp2b bd 10
 
 Lkitsune|gundam build divers s01e09 return of the ogre 1080p cr web dl dual ddp2 0 h 264
 
+Lkitsune|mazinger z s01e18 gangster of the sea pirate glossom 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e30 shiro in peril move out mazinger z 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e49 the insane robots desperate battle 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e60 mazinger z fires its secret weapon 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e69 melted in the air the hover pilder 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e85 bizarre attack of the black shadow 1080p bluray flac 1 0 x264
+
 Lsev|horimiya the missing pieces episode 02 cooking class 1080p bdrip x265 flac 2 0 kira
 
 Lsev|inazuma eleven outer code story 01 shirou and atsuya 1080p bdrip x265 flac 2 0 kira
@@ -41399,6 +41695,10 @@ Lhchcsen|mobile suit gundam seed hd remaster s01e37 athrun bd 1080p x264 hi10p 2
 Lhchcsen|shaman king 2021 s01e02 another shaman v2 web dual audio 1080p x264 10bit 2xeac3
 
 Lhchcsen|shaman king 2021 s01e28 yoh s decision v2 web dual audio 1080p x264 10bit 2xeac3
+
+Lkitsune|mazinger z s01e54 explosion the powerful rocket punch 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e68 bodyguard from hell archduke gorgon 1080p bluray flac 1 0 x264
 
 Lnaiyas|shingeki no kyojin attack on titan chronicle bd 1080p hevc 10 qaac aac dual audio
 
@@ -41614,6 +41914,20 @@ Lhchcsen|shaman king 2021 s01e06 yoh vs horohoro v2 web dual audio 1080p x264 10
 Lkitsune|gundam build divers s01e05 holy land of perisia 1080p cr web dl dual ddp2 0 h 264
 
 Lkitsune|kaiju no 8 s02e04 the man called isao shinomiya 1080p cr web dl dual ddp2 0 h 264
+
+Lkitsune|mazinger z s01e06 dr hells two great mechanical beasts 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e61 robot of destiny the song of rhine x 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e70 the invincible commander koji kabuto 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e77 officer at deaths door count brocken 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e82 mazinger falls into the devils hands 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e86 general attack triple death strategy 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e92 death match resurrect our mazinger z 1080p bluray flac 1 0 x264
 
 Lnan0|scott pilgrim takes off s01e07 2 scott 2 pilgrim 1080p bluray remux avc dts hd ma5 1
 
@@ -41849,6 +42163,8 @@ Lkitsune|heavens lost property s02e03 a proud fought battle 1080p bluray dual fl
 
 Lkitsune|kaiju no 8 s02e03 the strongest division repack2 1080p cr web dl dual ddp2 0 h 264
 
+Lkitsune|mazinger z s01e55 the great schuss operation of mt fuji 1080p bluray flac 1 0 x264
+
 Lmcballs|neon genesis evangelion s01e16 the sickness unto death and then bd 1080p hi10 flac
 
 Lsev|inazuma eleven ares no tenbin 02 the demon on the pitch 1080p bdrip x265 flac 2 0 kira
@@ -42047,6 +42363,10 @@ Lhchcsen|shaman king 2021 s01e07 a form of courage v2 web dual audio 1080p x264 
 Lhchcsen|shaman king 2021 s01e36 redseb and seyram v2 web dual audio 1080p x264 10bit 2xeac3
 
 Lhchcsen|shaman king 2021 s01e37 winds of laughter v2 web dual audio 1080p x264 10bit 2xeac3
+
+Lkitsune|mazinger z s01e41 broken wings death battle in the skies 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e67 dont cry koji a sole life on the cross 1080p bluray flac 1 0 x264
 
 Lkulot|the seven deadly sins prisoners of the sky dual audio bdrip 1920x1080 hevc ac3 flacx2
 
@@ -42274,6 +42594,14 @@ Lhchcsen|shaman king 2021 s01e43 the end of a dream v2 web dual audio 1080p x264
 Lhchcsen|shaman king 2021 s01e50 foreign damselfish v2 web dual audio 1080p x264 10bit 2xeac3
 
 Lkitsune|gundam build divers s01e10 coalition of volunteers 1080p cr web dl dual ddp2 0 h 264
+
+Lkitsune|mazinger z s01e34 a red flash of lightning mazinger flies 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e46 the ninja twin mechanical beasts appear 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e75 suicide attack gorgons mechanical beast 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e84 the oceans depths are mazinger zs grave 1080p bluray flac 1 0 x264
 
 Lnan0|scott pilgrim takes off s01e03 ramona rents a video 1080p bluray remux avc dts hd ma5 1
 
@@ -42649,6 +42977,12 @@ Lhchcsen|mobile suit gundam seed destiny hd remaster s01e03 warning shots avc 10
 
 Lhchcsen|mobile suit gundam seed hd remaster s01e46 day of wrath bd 1080p x264 hi10p 2xflac ac3
 
+Lkitsune|mazinger z s01e11 the phantom galen cannon is going to blow 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e25 the aero brothers the great eruption plot 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e72 for the kill the giant swing rocket punch 1080p bluray flac 1 0 x264
+
 Lozr|code geass lelouch of the rebellion r2 creditless ed 2 ep 25 ver bdrip 1920x1080 x264 flac
 
 Lsev|demon slayer episode 47 a sword from over 300 years ago 1080p ita bdrip x265 flac 2 0 kira
@@ -42815,6 +43149,12 @@ Lhchcsen|shaman king 2021 s01e20 chocolove s christmas v2 web dual audio 1080p x
 Lkh|motto to love ru 01 once again from the beginning war at the baths the sound of ticking love
 
 Lkitsune|heavens lost property s02e07 tomoki devours watermelons 1080p bluray dual flac 2 0 x264
+
+Lkitsune|mazinger z s01e17 the underground mechanical beast holzon v3 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e52 koji in a pinch sayaka deploys in mazinger 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e90 get angry shiro shoot your mothers vestige 1080p bluray flac 1 0 x264
 
 Lkitsune|record of ragnarok s01e11 the swallow gazes into the abyss 1080p nf web dl ddp2 0 h 264
 
@@ -43022,6 +43362,12 @@ Lhchcsen|shaman king 2021 s01e51 last test shaman fight v2 web dual audio 1080p 
 Lkh|motto to love ru 02 things that move in the dark welcome to the yuuki household slumber party
 
 Lkitsune|heavens lost property s02e11 after an elegy of illusions 1080p bluray dual flac 2 0 x264
+
+Lkitsune|mazinger z s01e20 the storm calling mechanical beast stronger 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e37 messenger from the dark the deadly scrander 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e79 mazinger will explode in less than 1 minute 1080p bluray flac 1 0 x264
 
 Lsev|kuroko s basketball episode 51 i m just going at full strength 1080p bdrip x265 pcm 2 0 kira
 
@@ -43258,6 +43604,10 @@ Lhchcsen|mobile suit gundam seed hd remaster s01e47 the final light bd 1080p x26
 
 Lkh|motto to love ru 05 the queen of love let s play the flavour of chocolate is a sweet sensation
 
+Lkitsune|mazinger z s01e32 the horrifying three headed mechanical beast 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e45 the devils target the photon light institute 1080p bluray flac 1 0 x264
+
 Lnekotan|the labyrinth of grisaia the cocoon of caprice 0 special s00e08 bd 1080p x264 10 bit opus
 
 Lsai0nji|goblin slayer 2023 s02e07 jungle cruise 1080p bdrip avc japanese flac 2 0 english aac 2 0
@@ -43481,6 +43831,16 @@ Lhchcsen|mobile suit gundam seed hd remaster s01e43 the opening door bd 1080p x2
 
 Lhchcsen|shaman king 2021 s01e18 great spirit and my team v2 web dual audio 1080p x264 10bit 2xeac3
 
+Lkitsune|mazinger z s01e23 mechanical beast dam dam the great wheel plan 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e39 suicide challenge salude in the scarlet ocean 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e44 great charge the new underwater fortress bood 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e88 life or death desperate battle of hell island 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e91 last chance dr hells decisive battle of death 1080p bluray flac 1 0 x264
+
 Lmetal|that time i got reincarnated as a slime the movie scarlet bond s00e09 bd 1920x1080 hevc opus
 
 Lnan0|scott pilgrim takes off s01e08 the world vs scott pilgrim 1080p bluray remux avc dts hd ma5 1
@@ -43681,6 +44041,14 @@ Lhchcsen|shaman king 2021 s01e22 i ll go anywhere with you v2 web dual audio 108
 Lkh|motto to love ru 03 special love medicine seeing you through the lens my dear beloved cinderella
 
 Lkitsune|heavens lost property final the movie eternal my master 2014 1080p bluray dual flac2 0 x264
+
+Lkitsune|mazinger z s01e26 clash samurai koji vs ashuras mechanical beast 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e33 great aerial raid barras k outlaw of the skies 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e42 the demons command attacks from sky and ground 1080p bluray flac 1 0 x264
+
+Lkitsune|mazinger z s01e59 hell fortress the devils declaration of battle 1080p bluray flac 1 0 x264
 
 Lsev|demon slayer episode 50 aren t you going to become a hashira 1080p ita bdrip x265 flac 2 0 kira
 
@@ -44366,10 +44734,10 @@ tolerant_template_routes := {
 [["01","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"B\theadpatter|valvrave the liberator s§e§v§ §p bluray opus§ § §bit x§":[["01","","2","1080","2","0","10","264"],["\n01\n02\n03\n04\n"]],"B\tlacroix|arakawa under the bridge s§e§ §p bluray remux flac § § h §":[["","","1080","2","0","264"],["\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n01,13\n02,01\n02,02\n02,03\n02,04\n02,05\n02,06\n02,07\n02,08\n02,09\n02,10\n02,11\n02,12\n02,13\n"]
 ],"B\tlacroix|cat planet cuties s§ nced § §p bluray remux truehd § § h §":[["01","","1080","2","0","264"],["\n02\n05\n"]],"B\tmoxie|doukyonin wa hiza tokidoki atama no ue s§e§ bd remux §p flac":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tnekotan|the yakuza s guide to babysitting s§e§ bd §p x§ § bit opus":[["01","","1080","265","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tpog§|sewayaki kitsune no senko san s§e§ bd §p hevc opus dual audio":
 [["42","01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n09\n10\n11\n12\n"]],"B\tsmol|netsuzou trap ntr nced §v§ meguru omoi meguru bd §p hevc opus":[["","2","1080"],["\n04\n05\n06\n"]],"B\tsorrow|the genius prince s guide to raising a nation out of debt §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tzerobuild|the water magician s§e§ §p bluray dual audio opus § § x§":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tdemihuman|pop team epic nced§ female version §p bluray opus§ § h §":
-[["","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n"]],"L\terairaws|arknights rise from ember § §p cr web dl avc aac multisub":[["","1080"],["\n02\n03\n04\n05\n06\n07\n08\n09\n10\n"]],"L\theadpatter|beast tamer s§e§ repack §p bluray dual audio opus§ § x§":[["01","","1080","2","0","265"],["\n02\n03\n08\n11\n12\n"]],"L\theadpatter|i parry everything s§e§ §p bluray dual audio opus§ § x§":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\theadpatter|modern magic made simple s§e§ §p bluray opus§ § §bit x§":
-[["01","","1080","2","0","10","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tkawasubs|orb on the movements of the earth s§e§ nf web §p avc eac§":[["01","","1080","3"],["\n02\n03\n04\n05\n06\n"]],"L\tozr|nanatsu no taizai imashime no fukkatsu nced§ bdrip §x§ x§ flac":[["","1920","1080","264"],["\n01\n02\n"]],"L\tozr|nanatsu no taizai imashime no fukkatsu ncop§ bdrip §x§ x§ flac":[["","1920","1080","264"],["\n01\n02\n"]],"L\tsomestuffs|jojo s bizarre adventure stone ocean § §x§ blu ray opus":
-[["","1920","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n20\n22\n"]],"L\twham|bna brand new animal s§e§ bd §p x§ § bits flac aac dual audio":[["01","","1080","265","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tyuki|kubikiri cycle aoiro savant to zaregotozukai § bd §p hi§ flac":[["","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n"]],"L\tyurasuka|invaders of the rokujouma s§e§ §p bluray § bit flac§ § x§":[["01","","1080","10","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
-],"L\tyurasuka|say i love you s§e§ §p bluray § bit dual audio flac§ § x§":[["01","","1080","10","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]]}`,
+[["","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n"]],"L\terairaws|arknights rise from ember § §p cr web dl avc aac multisub":[["","1080"],["\n02\n03\n04\n05\n06\n07\n08\n09\n10\n"]],"L\thchcsen|amaim warrior at the borderline s§e§ cr web dl §p avc opus":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n"]],"L\theadpatter|beast tamer s§e§ repack §p bluray dual audio opus§ § x§":[["01","","1080","2","0","265"]
+,["\n02\n03\n08\n11\n12\n"]],"L\theadpatter|i parry everything s§e§ §p bluray dual audio opus§ § x§":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\theadpatter|modern magic made simple s§e§ §p bluray opus§ § §bit x§":[["01","","1080","2","0","10","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tkawasubs|orb on the movements of the earth s§e§ nf web §p avc eac§":[["01","","1080","3"],["\n02\n03\n04\n05\n06\n"]],"L\tozr|nanatsu no taizai imashime no fukkatsu nced§ bdrip §x§ x§ flac":
+[["","1920","1080","264"],["\n01\n02\n"]],"L\tozr|nanatsu no taizai imashime no fukkatsu ncop§ bdrip §x§ x§ flac":[["","1920","1080","264"],["\n01\n02\n"]],"L\tsomestuffs|jojo s bizarre adventure stone ocean § §x§ blu ray opus":[["","1920","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n20\n22\n"]],"L\twham|bna brand new animal s§e§ bd §p x§ § bits flac aac dual audio":[["01","","1080","265","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tyuki|kubikiri cycle aoiro savant to zaregotozukai § bd §p hi§ flac":
+[["","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n"]],"L\tyurasuka|invaders of the rokujouma s§e§ §p bluray § bit flac§ § x§":[["01","","1080","10","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tyurasuka|say i love you s§e§ §p bluray § bit dual audio flac§ § x§":[["01","","1080","10","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]]}`,
   "69": `{"B\tcrucible|laid back camp s§e§ §p bluray remux dual audio flac§ § h §":[["03","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tcrucible|tenpuru s§e§ repack §p bluray remux dual audio flac§ § h §":[["01","","1080","2","0","264"],["\n01\n04\n"]],"B\tdoc|blood c § s§e§ §p bluray hybrid remux avc truehd § § dual audio":[["2011","01","","1080","5","1"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tfle|re zero starting life in another world s§e§ bd remux §p x§ flac":
 [["00","","1080","264"],["\n55\n56\n57\n58\n59\n60\n61\n62\n63\n64\n65\n66\n67\n68\n69\n70\n"]],"B\tfle|the angel next door spoils me rotten s§ncedv§ bluray flac§ § x§":[["01","","2","0","265"],["\n1\n2\n3\n4\n5\n"]],"B\thchcsen|blue reflection ray s§e§ v§ web dual audio §p avc e ac§ aac":[["01","","2","1080","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"B\thchcsen|brave of the legend da garn s§e§ bd remux §p avc § bit flac":
 [["01","","1080","8"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n"]],"B\thchcsen|gundam build fighters battlogue § s§e§ bd remux §p avc flac":[["","00","","1080"],["\n01,06\n02,07\n03,08\n04,09\n05,10\n"]],"B\theadpatter|as miss beelzebub likes s§e§ §p bluray remux avc flac§ §":[["01","","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
