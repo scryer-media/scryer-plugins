@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.30",
-  "snapshot_sha256": "be73713c75a966dc8cf3b9fafb29ac918c5a543b4836182bc8972b15e28566ef",
+  "pack_version": "1.0.31",
+  "snapshot_sha256": "bbafe810db6c936088cf01422337a31cbb8e556904ee127a29d27d36372be50a",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -1305,7 +1305,7 @@
       "alias_sources": 0,
       "entry_id": "0k2jo4ojsb4ju7h",
       "file_sources": 12,
-      "release_id": "dq3x6vai1qhmsx8",
+      "release_id": "es7i6cj0l62l9vd",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -1876,6 +1876,14 @@
       "release_id": "mz9g26s7ykav6fw",
       "strict_keys": 12,
       "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "0wqjz20hasey2qv",
+      "file_sources": 12,
+      "release_id": "jap54av8xiabetz",
+      "strict_keys": 12,
+      "tolerant_keys": 11
     },
     {
       "alias_sources": 0,
@@ -3529,7 +3537,7 @@
       "alias_sources": 0,
       "entry_id": "215n8kug64t5n85",
       "file_sources": 13,
-      "release_id": "jsora5zr623fgil",
+      "release_id": "chxd2sw43gr82k1",
       "strict_keys": 13,
       "tolerant_keys": 13
     },
@@ -3537,15 +3545,7 @@
       "alias_sources": 0,
       "entry_id": "215n8kug64t5n85",
       "file_sources": 13,
-      "release_id": "u74t2r98dsicf50",
-      "strict_keys": 13,
-      "tolerant_keys": 13
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "215n8kug64t5n85",
-      "file_sources": 13,
-      "release_id": "yq6e0s3vpkgn632",
+      "release_id": "u47nddgck7r0hvb",
       "strict_keys": 13,
       "tolerant_keys": 13
     },
@@ -7489,6 +7489,14 @@
       "alias_sources": 0,
       "entry_id": "4g0fug3zz6nades",
       "file_sources": 12,
+      "release_id": "bgynnlptjdnh334",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "4g0fug3zz6nades",
+      "file_sources": 12,
       "release_id": "sb69004k8qbslvm",
       "strict_keys": 12,
       "tolerant_keys": 12
@@ -9369,6 +9377,14 @@
       "alias_sources": 0,
       "entry_id": "5ezurgg4wxis0v9",
       "file_sources": 12,
+      "release_id": "i0hedtiha4jk87g",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "5ezurgg4wxis0v9",
+      "file_sources": 12,
       "release_id": "mw6fcdmig7mw0w2",
       "strict_keys": 12,
       "tolerant_keys": 12
@@ -10241,6 +10257,14 @@
       "alias_sources": 0,
       "entry_id": "5t65u73hqzvx7vx",
       "file_sources": 1,
+      "release_id": "12wc5cyjo3ccryw",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "5t65u73hqzvx7vx",
+      "file_sources": 1,
       "release_id": "7lgg249zkjvyays",
       "strict_keys": 1,
       "tolerant_keys": 1
@@ -10337,23 +10361,23 @@
       "alias_sources": 0,
       "entry_id": "5vfe6f5k8aurc1s",
       "file_sources": 12,
-      "release_id": "d9qdwjapbhjfu83",
+      "release_id": "e32pwdbbkea3o5l",
       "strict_keys": 12,
-      "tolerant_keys": 12
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "5vfe6f5k8aurc1s",
+      "file_sources": 35,
+      "release_id": "i79x53rh38dz0tt",
+      "strict_keys": 35,
+      "tolerant_keys": 0
     },
     {
       "alias_sources": 0,
       "entry_id": "5vfe6f5k8aurc1s",
       "file_sources": 12,
       "release_id": "j3nn70trfjhauvj",
-      "strict_keys": 12,
-      "tolerant_keys": 12
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "5vfe6f5k8aurc1s",
-      "file_sources": 12,
-      "release_id": "nsuzq5l459n7s4v",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -11194,6 +11218,14 @@
       "entry_id": "6di13yt0fq2spxb",
       "file_sources": 13,
       "release_id": "9l0c597km7m7oab",
+      "strict_keys": 13,
+      "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "6di13yt0fq2spxb",
+      "file_sources": 13,
+      "release_id": "bhgahjh463a9z1v",
       "strict_keys": 13,
       "tolerant_keys": 13
     },
@@ -14153,6 +14185,14 @@
       "alias_sources": 0,
       "entry_id": "83s9b8h5b09tvk4",
       "file_sources": 13,
+      "release_id": "fd1z4mglpel2wup",
+      "strict_keys": 13,
+      "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "83s9b8h5b09tvk4",
+      "file_sources": 13,
       "release_id": "ptn97zwi16ac8is",
       "strict_keys": 13,
       "tolerant_keys": 0
@@ -14527,6 +14567,14 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "89kbypxmxwsonyx",
+      "file_sources": 12,
+      "release_id": "zw6bsyf9q5v0yjw",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "89vfe1ci4r3b6cs",
       "file_sources": 12,
       "release_id": "9bt9kl2t0fv4crw",
@@ -14540,6 +14588,14 @@
       "release_id": "a7ykd1i43iqpal6",
       "strict_keys": 12,
       "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "89vfe1ci4r3b6cs",
+      "file_sources": 12,
+      "release_id": "b0ewqbhcttj989t",
+      "strict_keys": 12,
+      "tolerant_keys": 12
     },
     {
       "alias_sources": 0,
@@ -17303,6 +17359,14 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "9uyi394h1nkg4xd",
+      "file_sources": 8,
+      "release_id": "pokrmprbuutqrb7",
+      "strict_keys": 8,
+      "tolerant_keys": 8
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "9v8df0awweo4kqp",
       "file_sources": 12,
       "release_id": "ivodxhtzhnw3pgn",
@@ -18476,6 +18540,14 @@
       "release_id": "7stqocbv92k7cew",
       "strict_keys": 14,
       "tolerant_keys": 14
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "ai52qxfgyhqjk2f",
+      "file_sources": 12,
+      "release_id": "hzhqe43fuelqgg2",
+      "strict_keys": 12,
+      "tolerant_keys": 12
     },
     {
       "alias_sources": 0,
@@ -19711,6 +19783,14 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "bhswg7l1o6keu5x",
+      "file_sources": 4,
+      "release_id": "9ystuywruaa6wq4",
+      "strict_keys": 4,
+      "tolerant_keys": 4
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "bi4wxeuckvbi6kt",
       "file_sources": 21,
       "release_id": "gjqmbfbg6sr3w6g",
@@ -20273,6 +20353,14 @@
       "alias_sources": 0,
       "entry_id": "bpfeik088i2jo6d",
       "file_sources": 11,
+      "release_id": "oy48tw84rxmiv2n",
+      "strict_keys": 11,
+      "tolerant_keys": 11
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "bpfeik088i2jo6d",
+      "file_sources": 11,
       "release_id": "pw8lxzl2vzre4h5",
       "strict_keys": 11,
       "tolerant_keys": 11
@@ -20356,6 +20444,14 @@
       "release_id": "64l7kvr24ssjozz",
       "strict_keys": 25,
       "tolerant_keys": 25
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "bt3vbocehbbd6z6",
+      "file_sources": 12,
+      "release_id": "iudydo7gc1f5yb9",
+      "strict_keys": 12,
+      "tolerant_keys": 0
     },
     {
       "alias_sources": 0,
@@ -20964,6 +21060,14 @@
       "release_id": "nhlkme8ulmc521t",
       "strict_keys": 13,
       "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "cbc7r7qi4ea7zvj",
+      "file_sources": 13,
+      "release_id": "yuws5nwh1ixc961",
+      "strict_keys": 13,
+      "tolerant_keys": 13
     },
     {
       "alias_sources": 0,
@@ -25800,6 +25904,14 @@
     {
       "alias_sources": 0,
       "entry_id": "fa3q2l0t0xs2l3c",
+      "file_sources": 12,
+      "release_id": "15me9i02as5inyg",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "fa3q2l0t0xs2l3c",
       "file_sources": 16,
       "release_id": "5z19ioiwb4rarkb",
       "strict_keys": 16,
@@ -27772,6 +27884,54 @@
       "release_id": "gm88v906u0nlwud",
       "strict_keys": 12,
       "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "gfhjm1xi3meni3i",
+      "file_sources": 109,
+      "release_id": "20e9rzd9sw1toas",
+      "strict_keys": 109,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "gfhjm1xi3meni3i",
+      "file_sources": 36,
+      "release_id": "332jiwj7mpnttjr",
+      "strict_keys": 36,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "gfhjm1xi3meni3i",
+      "file_sources": 36,
+      "release_id": "duycsldhy6axtdd",
+      "strict_keys": 36,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "gfhjm1xi3meni3i",
+      "file_sources": 109,
+      "release_id": "n9q460c4gmi52yj",
+      "strict_keys": 109,
+      "tolerant_keys": 109
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "gfhjm1xi3meni3i",
+      "file_sources": 37,
+      "release_id": "o7x0miv0o01panf",
+      "strict_keys": 37,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "gfhjm1xi3meni3i",
+      "file_sources": 152,
+      "release_id": "s707n26acb1lot1",
+      "strict_keys": 152,
+      "tolerant_keys": 152
     },
     {
       "alias_sources": 0,
@@ -37857,6 +38017,14 @@
       "alias_sources": 0,
       "entry_id": "lvs2o2z2hu6gtyh",
       "file_sources": 12,
+      "release_id": "l2bc2b4jguhqh8w",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "lvs2o2z2hu6gtyh",
+      "file_sources": 12,
       "release_id": "yetq7k04eidp4gy",
       "strict_keys": 12,
       "tolerant_keys": 12
@@ -39793,6 +39961,14 @@
       "alias_sources": 0,
       "entry_id": "muwybgzewq5iej2",
       "file_sources": 16,
+      "release_id": "3g6zibshzk2i372",
+      "strict_keys": 16,
+      "tolerant_keys": 16
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "muwybgzewq5iej2",
+      "file_sources": 16,
       "release_id": "53xilsc9rxzl36w",
       "strict_keys": 16,
       "tolerant_keys": 16
@@ -40018,6 +40194,14 @@
       "entry_id": "mzh6q0pirf1lceg",
       "file_sources": 12,
       "release_id": "a0vocifunjhts0y",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "mzh6q0pirf1lceg",
+      "file_sources": 12,
+      "release_id": "mbpfdq64fiesf8x",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -40842,6 +41026,14 @@
       "entry_id": "nkoo3v5e071tfeq",
       "file_sources": 12,
       "release_id": "qbigknrhtps7z4u",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "nkoo3v5e071tfeq",
+      "file_sources": 12,
+      "release_id": "sd5u4ebgajkuybr",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -54217,6 +54409,14 @@
       "alias_sources": 0,
       "entry_id": "v26bf5jhmya0dcn",
       "file_sources": 12,
+      "release_id": "p832y2s5xhkmodp",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "v26bf5jhmya0dcn",
+      "file_sources": 12,
       "release_id": "zpk5k49a0tih9tc",
       "strict_keys": 12,
       "tolerant_keys": 11
@@ -56442,6 +56642,14 @@
       "entry_id": "wd1ao50nmh50ovo",
       "file_sources": 12,
       "release_id": "509ty22s9259sx5",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "wd1ao50nmh50ovo",
+      "file_sources": 12,
+      "release_id": "9aeo2byueyzzrsz",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -67064,6 +67272,12 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "zh4e9l7g81jj3ll",
       "source_name": "Harukana Receive PV2 [1080p_Hi10P_Blu-Ray_FLAC] [Hark0n] [C76BE496].mkv"
+    },
+    {
+      "entry_id": "0wqjz20hasey2qv",
+      "reason": "non_ascii_tolerant_evidence",
+      "release_id": "jap54av8xiabetz",
+      "source_name": "The.Demon.Girl.Next.Door.S02E04.A.New.Species.Discovered!.The.Town.Café.Is.a.Demon.Lair!.1080p.BluRay.REMUX.AVC.FLAC.2.0-NAN0.mkv"
     },
     {
       "entry_id": "0wqjz20hasey2qv",
@@ -92842,6 +93056,18 @@
       "source_name": "18if.S01E10.Dream.Dimension.α.1080p.BluRay.REMUX.AVC.FLAC.2.0-NAN0.mkv"
     },
     {
+      "entry_id": "4g0fug3zz6nades",
+      "reason": "non_release_file",
+      "release_id": "bgynnlptjdnh334",
+      "source_name": "Extras/Date.A.Live.S05.Ending.1080p.BluRay.Remux.FLAC2.0.H.264-CRUCiBLE.mkv"
+    },
+    {
+      "entry_id": "4g0fug3zz6nades",
+      "reason": "non_release_file",
+      "release_id": "bgynnlptjdnh334",
+      "source_name": "Extras/Date.A.Live.S05.Opening.1080p.BluRay.Remux.FLAC2.0.H.264-CRUCiBLE.mkv"
+    },
+    {
       "entry_id": "4hqhfk16tzeajtz",
       "reason": "non_release_file",
       "release_id": "tm9bw4xny1up1au",
@@ -99536,6 +99762,1326 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "m7by7a6cgi77o20",
       "source_name": "Inari.Konkon.Koi.Iroha.OVA.2014.BluRay.1080p.AVC.FLAC.2.0.Remux.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "e32pwdbbkea3o5l",
+      "source_name": "Extras/[Creditless Ending]  DANDADAN - Season 02 [2025].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "e32pwdbbkea3o5l",
+      "source_name": "Extras/[Opening]  DANDADAN - Season 02 [2025].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "e32pwdbbkea3o5l",
+      "source_name": "DANDADAN - Episode 13 - Like, This Is the Legend of the Giant Snake.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "e32pwdbbkea3o5l",
+      "source_name": "DANDADAN - Episode 14 - The Evil Eye.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "e32pwdbbkea3o5l",
+      "source_name": "DANDADAN - Episode 15 - You Won't Get Away With This!.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "e32pwdbbkea3o5l",
+      "source_name": "DANDADAN - Episode 16 - That's, Like, Way Deadly!.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "e32pwdbbkea3o5l",
+      "source_name": "DANDADAN - Episode 17 - We Can All Stay There Together!.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "e32pwdbbkea3o5l",
+      "source_name": "DANDADAN - Episode 18 - We Became a Family.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "e32pwdbbkea3o5l",
+      "source_name": "DANDADAN - Episode 19 - Feeling Kinda Gloomy.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "e32pwdbbkea3o5l",
+      "source_name": "DANDADAN - Episode 20 - You Can Do It, Okarun!.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "e32pwdbbkea3o5l",
+      "source_name": "DANDADAN - Episode 21 - I Want to Rebuild the House.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "e32pwdbbkea3o5l",
+      "source_name": "DANDADAN - Episode 22 - The Secret Art of Being Attractive.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "e32pwdbbkea3o5l",
+      "source_name": "DANDADAN - Episode 23 - Hey, It's a Kaiju.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "e32pwdbbkea3o5l",
+      "source_name": "DANDADAN - Episode 24 - Clash! Space Kaiju vs. Giant Robot!.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "01 革命道中.flac"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "01. Track01.flac"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "01. Track01.flac"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "01. Track01.flac"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "01. Track01.flac"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "01.png"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "02 革命道中 -Instrumental-.flac"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "02.png"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "03 革命道中 -KARAOKE-.flac"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "03.png"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "04.png"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "05.png"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "06.png"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "07.png"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "08.png"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Box_Back.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Box_Bottom.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Box_Front.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Box_Spine.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Box_Top.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_BD.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_01.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_02.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_03.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_04.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_05.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_06.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_07.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_08.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_09.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_10.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_11.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_12.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_13.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_14.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_15.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_16.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_17.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_18.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_19.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_20.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_21.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_22.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_23.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Booklet_24.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_CD.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Case_Back.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Case_Bottom.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Case_Front.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Case_Spine.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Case_Top.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Digipack_Inner.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Digipack_Outer.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Shikishi_01.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Shikishi_02.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Shikishi_03.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol5_Strip_Spine,Back.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_BD.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_01.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_02.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_03.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_04.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_05.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_06.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_07.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_08.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_09.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_10.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_11.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_12.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_13.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_14.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_15.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_16.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_17.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_18.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_19.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_20.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_21.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_22.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_23.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Booklet_24.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_CD.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Case_Back.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Case_Bottom.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Case_Front.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Case_Spine.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Case_Top.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Digipack_Inner.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Digipack_Outer.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol6_Strip_Spine,Back.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_BD.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_01.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_02.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_03.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_04.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_05.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_06.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_07.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_08.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_09.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_10.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_11.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_12.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_13.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_14.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_15.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_16.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_17.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_18.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_19.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_20.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_21.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_22.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_23.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Booklet_24.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_CD.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Case_Back.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Case_Bottom.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Case_Front.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Case_Spine.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Case_Top.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Digipack_Inner.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Digipack_Outer.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol7_Strip_Spine,Back.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_BD.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_01.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_02.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_03.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_04.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_05.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_06.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_07.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_08.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_09.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_10.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_11.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_12.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_13.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_14.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_15.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_16.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_17.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_18.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_19.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_20.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_21.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_22.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_23.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Booklet_24.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_CD.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Case_Back.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Case_Bottom.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Case_Front.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Case_Spine.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Case_Top.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Digipack_Inner.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Digipack_Outer.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Vol8_Strip_Spine,Back.webp"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "WurtS - 「どうかしてる」 [ED] [2025.07.11].flac"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "[Theatrical Trailer]  DANDADAN - Season 02 [2025].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "アイナ・ジ・エンド - 「革命道中 - On The Way」 [OP] [2025.07.02].flac"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "トシロウ - 「Hunting Soul」 (CV.谷山紀章) E18 [2025.08.09].flac"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "若山詩音、杉田智和 - ダンダ談話室～出張版～ Vol.06.cue"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "若山詩音、杉田智和 - ダンダ談話室～出張版～ Vol.06.log"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "若山詩音、田村睦心 - ダンダ談話室～出張版～ Vol.05.cue"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "若山詩音、田村睦心 - ダンダ談話室～出張版～ Vol.05.log"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "若山詩音、藤原大智 - ダンダ談話室～出張版～ Vol.08.cue"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "若山詩音、藤原大智 - ダンダ談話室～出張版～ Vol.08.log"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "若山詩音、関智一 - ダンダ談話室～出張版～ Vol.07.cue"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "non_release_file",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "若山詩音、関智一 - ダンダ談話室～出張版～ Vol.07.log"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "AiNA THE END - On the Way [Music Video].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "AiNA THE END x DANDADAN - On the Way [Collaboration Music Video].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "DANDADAN - Episode 13 - Like, This Is the Legend of the Giant Snake.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "DANDADAN - Episode 14 - The Evil Eye.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "DANDADAN - Episode 15 - You Won't Get Away With This!.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "DANDADAN - Episode 16 - That's, Like, Way Deadly!.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "DANDADAN - Episode 17 - We Can All Stay There Together!.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "DANDADAN - Episode 18 - We Became a Family.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "DANDADAN - Episode 19 - Feeling Kinda Gloomy.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "DANDADAN - Episode 20 - You Can Do It, Okarun!.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "DANDADAN - Episode 21 - I Want to Rebuild the House.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "DANDADAN - Episode 22 - The Secret Art of Being Attractive.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "DANDADAN - Episode 23 - Hey, It's a Kaiju.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "DANDADAN - Episode 24 - Clash! Space Kaiju vs. Giant Robot!.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Interview with the Directors.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Making of AiNA THE END - On the Way [Music Video].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Meet the Filmmakers with Fuga Yamashiro, Kohei Sakita, and Horishi Kamei.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Scene Breakdown with Director Fuga Yamashiro.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "Season 2 Behind The Scenes by Director Fuga Yamashiro.mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "[BD Menu] AiNA THE END - On the Way [Music Video].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "[Creditless Ending]  DANDADAN - Season 02 [2025].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "[Creditless Opening]  DANDADAN - Season 02 [2025].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "[JPN BD Menu 01]  DANDADAN - Season 02 [2025].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "[JPN BD Menu 02]  DANDADAN - Season 02 [2025].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "[JPN BD Menu 03]  DANDADAN - Season 02 [2025].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "[JPN BD Menu 04]  DANDADAN - Season 02 [2025].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "[Opening]  DANDADAN - Season 02 [2025].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "[PV 01]  DANDADAN - Season 02 [2025].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "[PV 02]  DANDADAN - Season 02 [2025].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "[PV 03]  DANDADAN - Season 02 [2025].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "[PV 04]  DANDADAN - Season 02 [2025].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "[PV 05]  DANDADAN - Season 02 [2025].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "[PV 06]  DANDADAN - Season 02 [2025].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "[USA BD Menu 01]  DANDADAN - Season 02 [2025].mkv"
+    },
+    {
+      "entry_id": "5vfe6f5k8aurc1s",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "i79x53rh38dz0tt",
+      "source_name": "[USA BD Menu 02]  DANDADAN - Season 02 [2025].mkv"
     },
     {
       "entry_id": "5vpa6fjivkj1bts",
@@ -122080,6 +123626,18 @@
       "source_name": "Riding Bean [BD.1080p] [Iznjie Biznjie] [DF0E2C13].mkv"
     },
     {
+      "entry_id": "ai52qxfgyhqjk2f",
+      "reason": "non_release_file",
+      "release_id": "hzhqe43fuelqgg2",
+      "source_name": "Extras/My.Dress-Up.Darling.NCED.1080p.BluRay.Remux.FLAC.2.0.AVC-DemiHuman.mkv"
+    },
+    {
+      "entry_id": "ai52qxfgyhqjk2f",
+      "reason": "non_release_file",
+      "release_id": "hzhqe43fuelqgg2",
+      "source_name": "Extras/My.Dress-Up.Darling.NCOP.1080p.BluRay.Remux.FLAC.2.0.AVC-DemiHuman.mkv"
+    },
+    {
       "entry_id": "akanw0mhevpsnr3",
       "reason": "non_release_file",
       "release_id": "6nhn0s7duzt5xl5",
@@ -126514,6 +128072,66 @@
       "source_name": "Simoun - 26 [DVD 576p 10bit AAC].mkv"
     },
     {
+      "entry_id": "bhswg7l1o6keu5x",
+      "reason": "non_release_file",
+      "release_id": "9ystuywruaa6wq4",
+      "source_name": "01.jpg"
+    },
+    {
+      "entry_id": "bhswg7l1o6keu5x",
+      "reason": "non_release_file",
+      "release_id": "9ystuywruaa6wq4",
+      "source_name": "01.jpg"
+    },
+    {
+      "entry_id": "bhswg7l1o6keu5x",
+      "reason": "non_release_file",
+      "release_id": "9ystuywruaa6wq4",
+      "source_name": "02.jpg"
+    },
+    {
+      "entry_id": "bhswg7l1o6keu5x",
+      "reason": "non_release_file",
+      "release_id": "9ystuywruaa6wq4",
+      "source_name": "02.jpg"
+    },
+    {
+      "entry_id": "bhswg7l1o6keu5x",
+      "reason": "non_release_file",
+      "release_id": "9ystuywruaa6wq4",
+      "source_name": "03.jpg"
+    },
+    {
+      "entry_id": "bhswg7l1o6keu5x",
+      "reason": "non_release_file",
+      "release_id": "9ystuywruaa6wq4",
+      "source_name": "03.jpg"
+    },
+    {
+      "entry_id": "bhswg7l1o6keu5x",
+      "reason": "non_release_file",
+      "release_id": "9ystuywruaa6wq4",
+      "source_name": "04.jpg"
+    },
+    {
+      "entry_id": "bhswg7l1o6keu5x",
+      "reason": "non_release_file",
+      "release_id": "9ystuywruaa6wq4",
+      "source_name": "04.jpg"
+    },
+    {
+      "entry_id": "bhswg7l1o6keu5x",
+      "reason": "non_release_file",
+      "release_id": "9ystuywruaa6wq4",
+      "source_name": "05.jpg"
+    },
+    {
+      "entry_id": "bhswg7l1o6keu5x",
+      "reason": "non_release_file",
+      "release_id": "9ystuywruaa6wq4",
+      "source_name": "[Obscurerips] Dangaizer 3 Extras - Gallery.mkv"
+    },
+    {
       "entry_id": "bi4wxeuckvbi6kt",
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "gjqmbfbg6sr3w6g",
@@ -127544,6 +129162,90 @@
       "reason": "non_release_file",
       "release_id": "rncczpral5woo36",
       "source_name": "[Alt] The Garden of Sinners - Future Gospel - Extra Chorus [BDRip 1080p Hi10 FLAC5.1].mkv"
+    },
+    {
+      "entry_id": "bt3vbocehbbd6z6",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "iudydo7gc1f5yb9",
+      "source_name": "NCED #01.mkv"
+    },
+    {
+      "entry_id": "bt3vbocehbbd6z6",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "iudydo7gc1f5yb9",
+      "source_name": "NCOP #01.mkv"
+    },
+    {
+      "entry_id": "bt3vbocehbbd6z6",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "iudydo7gc1f5yb9",
+      "source_name": "Seven Senses of the Re'Union (Shichisei no Subaru) S01E01 2018 1080p Bluray REMUX AVC LPCM 2.0 English Subbed -ZR-.mkv"
+    },
+    {
+      "entry_id": "bt3vbocehbbd6z6",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "iudydo7gc1f5yb9",
+      "source_name": "Seven Senses of the Re'Union (Shichisei no Subaru) S01E02 2018 1080p Bluray REMUX AVC LPCM 2.0 English Subbed -ZR-.mkv"
+    },
+    {
+      "entry_id": "bt3vbocehbbd6z6",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "iudydo7gc1f5yb9",
+      "source_name": "Seven Senses of the Re'Union (Shichisei no Subaru) S01E03 2018 1080p Bluray REMUX AVC LPCM 2.0 English Subbed -ZR-.mkv"
+    },
+    {
+      "entry_id": "bt3vbocehbbd6z6",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "iudydo7gc1f5yb9",
+      "source_name": "Seven Senses of the Re'Union (Shichisei no Subaru) S01E04 2018 1080p Bluray REMUX AVC LPCM 2.0 English Subbed -ZR-.mkv"
+    },
+    {
+      "entry_id": "bt3vbocehbbd6z6",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "iudydo7gc1f5yb9",
+      "source_name": "Seven Senses of the Re'Union (Shichisei no Subaru) S01E05 2018 1080p Bluray REMUX AVC LPCM 2.0 English Subbed -ZR-.mkv"
+    },
+    {
+      "entry_id": "bt3vbocehbbd6z6",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "iudydo7gc1f5yb9",
+      "source_name": "Seven Senses of the Re'Union (Shichisei no Subaru) S01E06 2018 1080p Bluray REMUX AVC LPCM 2.0 English Subbed -ZR-.mkv"
+    },
+    {
+      "entry_id": "bt3vbocehbbd6z6",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "iudydo7gc1f5yb9",
+      "source_name": "Seven Senses of the Re'Union (Shichisei no Subaru) S01E07 2018 1080p Bluray REMUX AVC LPCM 2.0 English Subbed -ZR-.mkv"
+    },
+    {
+      "entry_id": "bt3vbocehbbd6z6",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "iudydo7gc1f5yb9",
+      "source_name": "Seven Senses of the Re'Union (Shichisei no Subaru) S01E08 2018 1080p Bluray REMUX AVC LPCM 2.0 English Subbed -ZR-.mkv"
+    },
+    {
+      "entry_id": "bt3vbocehbbd6z6",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "iudydo7gc1f5yb9",
+      "source_name": "Seven Senses of the Re'Union (Shichisei no Subaru) S01E09 2018 1080p Bluray REMUX AVC LPCM 2.0 English Subbed -ZR-.mkv"
+    },
+    {
+      "entry_id": "bt3vbocehbbd6z6",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "iudydo7gc1f5yb9",
+      "source_name": "Seven Senses of the Re'Union (Shichisei no Subaru) S01E10 2018 1080p Bluray REMUX AVC LPCM 2.0 English Subbed -ZR-.mkv"
+    },
+    {
+      "entry_id": "bt3vbocehbbd6z6",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "iudydo7gc1f5yb9",
+      "source_name": "Seven Senses of the Re'Union (Shichisei no Subaru) S01E11 2018 1080p Bluray REMUX AVC LPCM 2.0 English Subbed -ZR-.mkv"
+    },
+    {
+      "entry_id": "bt3vbocehbbd6z6",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "iudydo7gc1f5yb9",
+      "source_name": "Seven Senses of the Re'Union (Shichisei no Subaru) S01E12 2018 1080p Bluray REMUX AVC LPCM 2.0 English Subbed -ZR-.mkv"
     },
     {
       "entry_id": "bug6sw9a1097spe",
@@ -129446,6 +131148,24 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "nhlkme8ulmc521t",
       "source_name": "Horimiya - S01E13v2 [BD 1080p x264 10bit FLAC] [Dual-Audio].mkv"
+    },
+    {
+      "entry_id": "cbc7r7qi4ea7zvj",
+      "reason": "non_release_file",
+      "release_id": "yuws5nwh1ixc961",
+      "source_name": "Extras/[WAP] Horimiya - NCED01 (BD Remux 1080p AVC FLAC).mkv"
+    },
+    {
+      "entry_id": "cbc7r7qi4ea7zvj",
+      "reason": "non_release_file",
+      "release_id": "yuws5nwh1ixc961",
+      "source_name": "Extras/[WAP] Horimiya - NCED02 (BD Remux 1080p AVC FLAC).mkv"
+    },
+    {
+      "entry_id": "cbc7r7qi4ea7zvj",
+      "reason": "non_release_file",
+      "release_id": "yuws5nwh1ixc961",
+      "source_name": "Extras/[WAP] Horimiya - OP (BD Remux 1080p AVC FLAC).mkv"
     },
     {
       "entry_id": "ccjnqzz6b46p4mj",
@@ -147706,6 +149426,30 @@
       "source_name": "NCOP.mkv"
     },
     {
+      "entry_id": "fa3q2l0t0xs2l3c",
+      "reason": "non_release_file",
+      "release_id": "15me9i02as5inyg",
+      "source_name": "Extras/KonoSuba.An.Explosion.on.This.Wonderful.World.NCED01.1080p.BluRay.HEVC.Opus2.0-DemiHuman.mkv"
+    },
+    {
+      "entry_id": "fa3q2l0t0xs2l3c",
+      "reason": "non_release_file",
+      "release_id": "15me9i02as5inyg",
+      "source_name": "Extras/KonoSuba.An.Explosion.on.This.Wonderful.World.NCED02.1080p.BluRay.HEVC.Opus2.0-DemiHuman.mkv"
+    },
+    {
+      "entry_id": "fa3q2l0t0xs2l3c",
+      "reason": "non_release_file",
+      "release_id": "15me9i02as5inyg",
+      "source_name": "Extras/KonoSuba.An.Explosion.on.This.Wonderful.World.NCOP01.1080p.BluRay.HEVC.Opus2.0-DemiHuman.mkv"
+    },
+    {
+      "entry_id": "fa3q2l0t0xs2l3c",
+      "reason": "non_release_file",
+      "release_id": "15me9i02as5inyg",
+      "source_name": "Extras/KonoSuba.An.Explosion.on.This.Wonderful.World.NCOP02.1080p.BluRay.HEVC.Opus2.0-DemiHuman.mkv"
+    },
+    {
       "entry_id": "fadyabw4ujehul4",
       "reason": "non_release_file",
       "release_id": "91n0hkf5rl1ro71",
@@ -154220,6 +155964,1608 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "jm851o73xidvff5",
       "source_name": "Requiem of the Rose King - S01E24 - Requiem of the Rose King WEBDL-1080p.mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 001 (DVD 640x476 x264 10bit AC3) [922D1AE6].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 002 (DVD 640x476 x264 10bit AC3) [37FB980F].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 003 (DVD 640x476 x264 10bit AC3) [7CB36B2E].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 004 (DVD 640x476 x264 10bit AC3) [096B07BC].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 005 (DVD 640x476 x264 10bit AC3) [C18AA1AF].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 006 (DVD 640x476 x264 10bit AC3) [7F91CBF2].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 007 (DVD 640x478 x264 10bit AC3) [6C39C880].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 008 (DVD 640x478 x264 10bit AC3) [B4A47502].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 009 (DVD 640x478 x264 10bit AC3) [A9A3FFEA].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 010 (DVD 640x478 x264 10bit AC3) [9B3950D6].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 011 (DVD 640x478 x264 10bit AC3) [26A38860].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 012 (DVD 640x478 x264 10bit AC3) [A1A69AE3].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 013 (DVD 640x476 x264 10bit AC3) [73639EC8].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 014 (DVD 640x476 x264 10bit AC3) [2AD1517C].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 015 (DVD 640x476 x264 10bit AC3) [7A71FCC6].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 016 (DVD 640x476 x264 10bit AC3) [EF9F79C5].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 017 (DVD 640x476 x264 10bit AC3) [2514AFAF].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 018 (DVD 640x476 x264 10bit AC3) [80EE751F].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 019 (DVD 640x478 x264 10bit AC3) [F204631B].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 020 (DVD 640x478 x264 10bit AC3) [982229BA].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 021 (DVD 640x478 x264 10bit AC3) [A495E9A4].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 022 (DVD 640x478 x264 10bit AC3) [93208FCB].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 023 (DVD 640x478 x264 10bit AC3) [98111841].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 024 (DVD 640x478 x264 10bit AC3) [16838319].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 025 (DVD 640x478 x264 10bit AC3) [73391501].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 026 (DVD 640x478 x264 10bit AC3) [28A2C3DC].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 027 (DVD 640x478 x264 10bit AC3) [93AE39C7].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 028 (DVD 640x478 x264 10bit AC3) [E9B226E7].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 029 (DVD 640x478 x264 10bit AC3) [366BFD98].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 030 (DVD 640x478 x264 10bit AC3) [4D21B8AC].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 031 (DVD 640x476 x264 10bit AC3) [D725FF7B].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 032 (DVD 640x476 x264 10bit AC3) [E4AAD9E4].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 033 (DVD 640x476 x264 10bit AC3) [F6B3DBFC].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 034 (DVD 640x476 x264 10bit AC3) [7473CF49].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 035 (DVD 640x476 x264 10bit AC3) [28CE1B14].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 036 (DVD 640x476 x264 10bit AC3) [DECEA575].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 037 (DVD 640x476 x264 10bit AC3) [58CD8345].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 038 (DVD 640x476 x264 10bit AC3) [3DBE4534].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 039 (DVD 640x476 x264 10bit AC3) [5A1005EE].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 040 (DVD 640x476 x264 10bit AC3) [04095886].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 041 (DVD 640x476 x264 10bit AC3) [44CCDF93].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 042 (DVD 640x476 x264 10bit AC3) [5086F285].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 043 (DVD 640x476 x264 10bit AC3) [3834455E].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 044 (DVD 640x476 x264 10bit AC3) [54396E3B].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 045 (DVD 640x476 x264 10bit AC3) [1C741369].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 046 (DVD 640x476 x264 10bit AC3) [98D955F4].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 047 (DVD 640x476 x264 10bit AC3) [1B5FC031].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 048 (DVD 640x476 x264 10bit AC3) [6D1DA0CF].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 049 (DVD 640x476 x264 10bit AC3) [40F126DE].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 050 (DVD 640x476 x264 10bit AC3) [DB218771].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 051 (DVD 640x476 x264 10bit AC3) [2F473C62].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 052 (DVD 640x476 x264 10bit AC3) [92D64F92].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 053 (DVD 640x476 x264 10bit AC3) [12E1E2E9].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 054 (DVD 640x476 x264 10bit AC3) [B4975740].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 055 (DVD 640x476 x264 10bit AC3) [19F90E97].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 056 (DVD 640x476 x264 10bit AC3) [0A056C24].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 057 (DVD 640x476 x264 10bit AC3) [1B33F7E7].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 058 (DVD 640x476 x264 10bit AC3) [AC45DA57].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 059 (DVD 640x476 x264 10bit AC3) [01196498].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 060 (DVD 640x476 x264 10bit AC3) [3906F6DB].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 061 (DVD 640x476 x264 10bit AC3) [487AFDDD].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 062 (DVD 640x476 x264 10bit AC3) [2C354653].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 063 (DVD 640x476 x264 10bit AC3) [90476B79].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 064 (DVD 640x476 x264 10bit AC3) [B9CCA457].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 065 (DVD 640x476 x264 10bit AC3) [CB1253E1].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 066 (DVD 640x476 x264 10bit AC3) [67AC5E93].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 067 (DVD 640x476 x264 10bit AC3) [B738C232].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 068 (DVD 640x476 x264 10bit AC3) [81A75405].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 069 (DVD 640x476 x264 10bit AC3) [794F38E2].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 070 (DVD 640x476 x264 10bit AC3) [6A16E66E].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 071 (DVD 640x476 x264 10bit AC3) [D168C3C6].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 072 (DVD 640x476 x264 10bit AC3) [296D09B8].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 073 (DVD 640x476 x264 10bit AC3) [A42A1140].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 074 (DVD 640x476 x264 10bit AC3) [B544AA8C].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 075 (DVD 640x476 x264 10bit AC3) [2661C285].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 076 (DVD 640x476 x264 10bit AC3) [81E0B50C].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 077 (DVD 640x476 x264 10bit AC3) [F5A13750].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 078 (DVD 640x476 x264 10bit AC3) [F4AF8190].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 079 (DVD 640x476 x264 10bit AC3) [DBA42883].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 080 (DVD 640x476 x264 10bit AC3) [0F11C852].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 081 (DVD 640x476 x264 10bit AC3) [B8E14BAA].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 082 (DVD 640x476 x264 10bit AC3) [19B40027].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 083 (DVD 640x476 x264 10bit AC3) [A32E6AA0].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 084 (DVD 640x476 x264 10bit AC3) [13C87529].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 085 (DVD 640x476 x264 10bit AC3) [AA5A528D].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 086 (DVD 640x476 x264 10bit AC3) [E3A76C27].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 087 (DVD 640x476 x264 10bit AC3) [92E963A3].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 088 (DVD 640x476 x264 10bit AC3) [70929A17].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 089 (DVD 640x476 x264 10bit AC3) [26C52402].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 090 (DVD 640x476 x264 10bit AC3) [7C6260C6].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 091 (DVD 640x476 x264 10bit AC3) [0B93A954].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 092 (DVD 640x476 x264 10bit AC3) [52CFBEA1].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 093 (DVD 640x476 x264 10bit AC3) [C33DA49B].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 094 (DVD 640x476 x264 10bit AC3) [551CE31A].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 095 (DVD 640x476 x264 10bit AC3) [8E3B991C].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 096 (DVD 640x476 x264 10bit AC3) [4221333E].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 097 (DVD 640x476 x264 10bit AC3) [7EE5BB50].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 098 (DVD 640x476 x264 10bit AC3) [BA0B9606].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 099 (DVD 640x476 x264 10bit AC3) [89AF43E1].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 100 (DVD 640x476 x264 10bit AC3) [6D6C9036].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 101 (DVD 640x476 x264 10bit AC3) [694CE3C1].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 102 (DVD 640x476 x264 10bit AC3) [1F8B59A2].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 103 (DVD 640x476 x264 10bit AC3) [C4A0A40C].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 104 (DVD 640x476 x264 10bit AC3) [954C766C].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 105 (DVD 640x476 x264 10bit AC3) [057157E8].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 106 (DVD 640x476 x264 10bit AC3) [85F363F7].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 107 (DVD 640x476 x264 10bit AC3) [1C308997].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 108 (DVD 640x476 x264 10bit AC3) [72C365F0].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "20e9rzd9sw1toas",
+      "source_name": "Hokuto no Ken 109 (DVD 640x476 x264 10bit AC3) [6C097678].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 037 (DVD 640x476 x264 10bit AC3) [58CD8345].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 038 (DVD 640x476 x264 10bit AC3) [3DBE4534].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 039 (DVD 640x476 x264 10bit AC3) [5A1005EE].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 040 (DVD 640x476 x264 10bit AC3) [04095886].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 041 (DVD 640x476 x264 10bit AC3) [44CCDF93].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 042 (DVD 640x476 x264 10bit AC3) [5086F285].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 043 (DVD 640x476 x264 10bit AC3) [3834455E].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 044 (DVD 640x476 x264 10bit AC3) [54396E3B].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 045 (DVD 640x476 x264 10bit AC3) [1C741369].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 046 (DVD 640x476 x264 10bit AC3) [98D955F4].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 047 (DVD 640x476 x264 10bit AC3) [1B5FC031].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 048 (DVD 640x476 x264 10bit AC3) [6D1DA0CF].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 049 (DVD 640x476 x264 10bit AC3) [40F126DE].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 050 (DVD 640x476 x264 10bit AC3) [DB218771].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 051 (DVD 640x476 x264 10bit AC3) [2F473C62].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 052 (DVD 640x476 x264 10bit AC3) [92D64F92].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 053 (DVD 640x476 x264 10bit AC3) [12E1E2E9].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 054 (DVD 640x476 x264 10bit AC3) [B4975740].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 055 (DVD 640x476 x264 10bit AC3) [19F90E97].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 056 (DVD 640x476 x264 10bit AC3) [0A056C24].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 057 (DVD 640x476 x264 10bit AC3) [1B33F7E7].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 058 (DVD 640x476 x264 10bit AC3) [AC45DA57].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 059 (DVD 640x476 x264 10bit AC3) [01196498].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 060 (DVD 640x476 x264 10bit AC3) [3906F6DB].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 061 (DVD 640x476 x264 10bit AC3) [487AFDDD].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 062 (DVD 640x476 x264 10bit AC3) [2C354653].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 063 (DVD 640x476 x264 10bit AC3) [90476B79].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 064 (DVD 640x476 x264 10bit AC3) [B9CCA457].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 065 (DVD 640x476 x264 10bit AC3) [CB1253E1].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 066 (DVD 640x476 x264 10bit AC3) [67AC5E93].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 067 (DVD 640x476 x264 10bit AC3) [B738C232].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 068 (DVD 640x476 x264 10bit AC3) [81A75405].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 069 (DVD 640x476 x264 10bit AC3) [794F38E2].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 070 (DVD 640x476 x264 10bit AC3) [6A16E66E].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 071 (DVD 640x476 x264 10bit AC3) [D168C3C6].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "332jiwj7mpnttjr",
+      "source_name": "Hokuto no Ken 072 (DVD 640x476 x264 10bit AC3) [296D09B8].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010001.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010002.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010003.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010004.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010005.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010006.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010007.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010008.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010009.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010010.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010011.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010012.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010013.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010014.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010015.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010016.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010017.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010018.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010019.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010020.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010021.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010022.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010023.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010024.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010025.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010026.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010027.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010028.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010029.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010030.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010031.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010032.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010033.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010034.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010035.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010036.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "010037.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "BAT.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken - Movie Trailer (DVD 640x478 x264 10bit AC3) [B3C8D33C].ass"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken - Movie Trailer (DVD 640x478 x264 10bit AC3) [B3C8D33C].idx"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken - Movie Trailer (DVD 640x478 x264 10bit AC3) [B3C8D33C].mp4"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken - Movie Trailer (DVD 640x478 x264 10bit AC3) [B3C8D33C].sub"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "JULIA.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "KENSHIRO.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "LIN.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "SERGEANT MADD.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "SHIN.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "THE JACKS.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "non_release_file",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "ZEED.jpeg"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 001 (DVD 640x476 x264 10bit AC3) [922D1AE6].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 002 (DVD 640x476 x264 10bit AC3) [37FB980F].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 003 (DVD 640x476 x264 10bit AC3) [7CB36B2E].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 004 (DVD 640x476 x264 10bit AC3) [096B07BC].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 005 (DVD 640x476 x264 10bit AC3) [C18AA1AF].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 006 (DVD 640x476 x264 10bit AC3) [7F91CBF2].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 007 (DVD 640x478 x264 10bit AC3) [6C39C880].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 008 (DVD 640x478 x264 10bit AC3) [B4A47502].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 009 (DVD 640x478 x264 10bit AC3) [A9A3FFEA].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 010 (DVD 640x478 x264 10bit AC3) [9B3950D6].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 011 (DVD 640x478 x264 10bit AC3) [26A38860].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 012 (DVD 640x478 x264 10bit AC3) [A1A69AE3].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 013 (DVD 640x476 x264 10bit AC3) [73639EC8].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 014 (DVD 640x476 x264 10bit AC3) [2AD1517C].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 015 (DVD 640x476 x264 10bit AC3) [7A71FCC6].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 016 (DVD 640x476 x264 10bit AC3) [EF9F79C5].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 017 (DVD 640x476 x264 10bit AC3) [2514AFAF].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 018 (DVD 640x476 x264 10bit AC3) [80EE751F].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 019 (DVD 640x478 x264 10bit AC3) [F204631B].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 020 (DVD 640x478 x264 10bit AC3) [982229BA].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 021 (DVD 640x478 x264 10bit AC3) [A495E9A4].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 022 (DVD 640x478 x264 10bit AC3) [93208FCB].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 023 (DVD 640x478 x264 10bit AC3) [98111841].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 024 (DVD 640x478 x264 10bit AC3) [16838319].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 025 (DVD 640x478 x264 10bit AC3) [73391501].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 026 (DVD 640x478 x264 10bit AC3) [28A2C3DC].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 027 (DVD 640x478 x264 10bit AC3) [93AE39C7].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 028 (DVD 640x478 x264 10bit AC3) [E9B226E7].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 029 (DVD 640x478 x264 10bit AC3) [366BFD98].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 030 (DVD 640x478 x264 10bit AC3) [4D21B8AC].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 031 (DVD 640x476 x264 10bit AC3) [D725FF7B].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 032 (DVD 640x476 x264 10bit AC3) [E4AAD9E4].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 033 (DVD 640x476 x264 10bit AC3) [F6B3DBFC].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 034 (DVD 640x476 x264 10bit AC3) [7473CF49].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 035 (DVD 640x476 x264 10bit AC3) [28CE1B14].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "duycsldhy6axtdd",
+      "source_name": "Hokuto no Ken 036 (DVD 640x476 x264 10bit AC3) [DECEA575].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 073 (DVD 640x476 x264 10bit AC3) [A42A1140].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 074 (DVD 640x476 x264 10bit AC3) [B544AA8C].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 075 (DVD 640x476 x264 10bit AC3) [2661C285].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 076 (DVD 640x476 x264 10bit AC3) [81E0B50C].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 077 (DVD 640x476 x264 10bit AC3) [F5A13750].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 078 (DVD 640x476 x264 10bit AC3) [F4AF8190].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 079 (DVD 640x476 x264 10bit AC3) [DBA42883].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 080 (DVD 640x476 x264 10bit AC3) [0F11C852].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 081 (DVD 640x476 x264 10bit AC3) [B8E14BAA].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 082 (DVD 640x476 x264 10bit AC3) [19B40027].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 083 (DVD 640x476 x264 10bit AC3) [A32E6AA0].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 084 (DVD 640x476 x264 10bit AC3) [13C87529].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 085 (DVD 640x476 x264 10bit AC3) [AA5A528D].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 086 (DVD 640x476 x264 10bit AC3) [E3A76C27].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 087 (DVD 640x476 x264 10bit AC3) [92E963A3].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 088 (DVD 640x476 x264 10bit AC3) [70929A17].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 089 (DVD 640x476 x264 10bit AC3) [26C52402].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 090 (DVD 640x476 x264 10bit AC3) [7C6260C6].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 091 (DVD 640x476 x264 10bit AC3) [0B93A954].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 092 (DVD 640x476 x264 10bit AC3) [52CFBEA1].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 093 (DVD 640x476 x264 10bit AC3) [C33DA49B].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 094 (DVD 640x476 x264 10bit AC3) [551CE31A].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 095 (DVD 640x476 x264 10bit AC3) [8E3B991C].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 096 (DVD 640x476 x264 10bit AC3) [4221333E].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 097 (DVD 640x476 x264 10bit AC3) [7EE5BB50].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 098 (DVD 640x476 x264 10bit AC3) [BA0B9606].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 099 (DVD 640x476 x264 10bit AC3) [89AF43E1].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 100 (DVD 640x476 x264 10bit AC3) [6D6C9036].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 101 (DVD 640x476 x264 10bit AC3) [694CE3C1].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 102 (DVD 640x476 x264 10bit AC3) [1F8B59A2].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 103 (DVD 640x476 x264 10bit AC3) [C4A0A40C].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 104 (DVD 640x476 x264 10bit AC3) [954C766C].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 105 (DVD 640x476 x264 10bit AC3) [057157E8].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 106 (DVD 640x476 x264 10bit AC3) [85F363F7].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 107 (DVD 640x476 x264 10bit AC3) [1C308997].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 108 (DVD 640x476 x264 10bit AC3) [72C365F0].mkv"
+    },
+    {
+      "entry_id": "gfhjm1xi3meni3i",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "o7x0miv0o01panf",
+      "source_name": "Hokuto no Ken 109 (DVD 640x476 x264 10bit AC3) [6C097678].mkv"
     },
     {
       "entry_id": "gfhzgp6jtullarh",
@@ -202046,6 +205392,30 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "awe5rvqc93gpwia",
       "source_name": "NCOP - 02.mkv"
+    },
+    {
+      "entry_id": "muwybgzewq5iej2",
+      "reason": "non_release_file",
+      "release_id": "3g6zibshzk2i372",
+      "source_name": "Season 3/Extras/NCED 01 (BD Remux 1080p AVC FLAC) [PMR].mkv"
+    },
+    {
+      "entry_id": "muwybgzewq5iej2",
+      "reason": "non_release_file",
+      "release_id": "3g6zibshzk2i372",
+      "source_name": "Season 3/Extras/NCED 02 (BD Remux 1080p AVC FLAC) [PMR].mkv"
+    },
+    {
+      "entry_id": "muwybgzewq5iej2",
+      "reason": "non_release_file",
+      "release_id": "3g6zibshzk2i372",
+      "source_name": "Season 3/Extras/NCOP 01 (BD Remux 1080p AVC FLAC) [PMR].mkv"
+    },
+    {
+      "entry_id": "muwybgzewq5iej2",
+      "reason": "non_release_file",
+      "release_id": "3g6zibshzk2i372",
+      "source_name": "Season 3/Extras/NCOP 02 (BD Remux 1080p AVC FLAC) [PMR].mkv"
     },
     {
       "entry_id": "mxchzoq033pxfrs",
@@ -254996,6 +258366,18 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "7qr8bo1jtm2kpdy",
       "source_name": "NCOP.mkv"
+    },
+    {
+      "entry_id": "v26bf5jhmya0dcn",
+      "reason": "non_release_file",
+      "release_id": "p832y2s5xhkmodp",
+      "source_name": "Extras/Assassins.Pride.S01.NCED.1080p.BluRay.Remux.AVC.FLAC.2.0-CRUCiBLE.mkv"
+    },
+    {
+      "entry_id": "v26bf5jhmya0dcn",
+      "reason": "non_release_file",
+      "release_id": "p832y2s5xhkmodp",
+      "source_name": "Extras/Assassins.Pride.S01.NCOP.1080p.BluRay.Remux.AVC.FLAC.2.0-CRUCiBLE.mkv"
     },
     {
       "entry_id": "v26bf5jhmya0dcn",
@@ -510750,6 +514132,13 @@
           "source_name": "NCED #01.mkv"
         },
         {
+          "anilist_id": 100085,
+          "entry_id": "bt3vbocehbbd6z6",
+          "release_id": "iudydo7gc1f5yb9",
+          "source": "file",
+          "source_name": "NCED #01.mkv"
+        },
+        {
           "anilist_id": 21196,
           "entry_id": "c1bwu25446ibujd",
           "release_id": "6nto6mdsvqx5d4m",
@@ -516626,6 +520015,13 @@
           "anilist_id": 9367,
           "entry_id": "bsn4cqco13v7t6j",
           "release_id": "nzzakkrz8rc8paf",
+          "source": "file",
+          "source_name": "NCOP #01.mkv"
+        },
+        {
+          "anilist_id": 100085,
+          "entry_id": "bt3vbocehbbd6z6",
+          "release_id": "iudydo7gc1f5yb9",
           "source": "file",
           "source_name": "NCOP #01.mkv"
         },
@@ -736544,22 +739940,54 @@
   "changes": {
     "entries": {
       "added": [
-        "po3arfw0pebob7w",
-        "r5fyu3wbpx25389"
+        "bhswg7l1o6keu5x",
+        "bt3vbocehbbd6z6",
+        "gfhjm1xi3meni3i"
       ],
       "removed": []
     },
     "releases": {
       "added": [
-        "6zx2hx5al8n7pad",
-        "idwazoiw0hfcszs",
-        "j0ia4mhh20zek09",
-        "m4e0bq08gi8slta",
-        "se45kf95gymxpev"
+        "12wc5cyjo3ccryw",
+        "15me9i02as5inyg",
+        "20e9rzd9sw1toas",
+        "332jiwj7mpnttjr",
+        "3g6zibshzk2i372",
+        "9aeo2byueyzzrsz",
+        "9ystuywruaa6wq4",
+        "b0ewqbhcttj989t",
+        "bgynnlptjdnh334",
+        "bhgahjh463a9z1v",
+        "chxd2sw43gr82k1",
+        "duycsldhy6axtdd",
+        "e32pwdbbkea3o5l",
+        "es7i6cj0l62l9vd",
+        "fd1z4mglpel2wup",
+        "hzhqe43fuelqgg2",
+        "i0hedtiha4jk87g",
+        "i79x53rh38dz0tt",
+        "iudydo7gc1f5yb9",
+        "jap54av8xiabetz",
+        "l2bc2b4jguhqh8w",
+        "mbpfdq64fiesf8x",
+        "n9q460c4gmi52yj",
+        "o7x0miv0o01panf",
+        "oy48tw84rxmiv2n",
+        "p832y2s5xhkmodp",
+        "pokrmprbuutqrb7",
+        "s707n26acb1lot1",
+        "sd5u4ebgajkuybr",
+        "u47nddgck7r0hvb",
+        "yuws5nwh1ixc961",
+        "zw6bsyf9q5v0yjw"
       ],
       "removed": [
-        "suhuz0svxikbi9b",
-        "zuwclr6hc0jwg72"
+        "d9qdwjapbhjfu83",
+        "dq3x6vai1qhmsx8",
+        "jsora5zr623fgil",
+        "nsuzq5l459n7s4v",
+        "u74t2r98dsicf50",
+        "yq6e0s3vpkgn632"
       ]
     }
   },
@@ -736567,26 +739995,26 @@
     "encoding": {
       "direct_buckets": {
         "bucket_count": 350,
-        "key_count": 21079,
+        "key_count": 21102,
         "max_keys": 233,
-        "mean_keys": 60.22571428571428
+        "mean_keys": 60.29142857142857
       },
-      "direct_entries": 21079,
+      "direct_entries": 21102,
       "route_buckets": 259,
-      "source_bytes": 2998021,
-      "source_lines": 45156,
+      "source_bytes": 3002474,
+      "source_lines": 45207,
       "template_buckets": {
         "bucket_count": 259,
-        "key_count": 6564,
+        "key_count": 6567,
         "max_keys": 126,
-        "mean_keys": 25.343629343629345
+        "mean_keys": 25.355212355212355
       },
-      "template_groups": 6564,
-      "tuple_chunks": 6766
+      "template_groups": 6567,
+      "tuple_chunks": 6775
     },
     "provenance": {
-      "strict_keys": 56701,
-      "tolerant_keys": 46243
+      "strict_keys": 56976,
+      "tolerant_keys": 46362
     },
     "stale_overrides": []
   }
