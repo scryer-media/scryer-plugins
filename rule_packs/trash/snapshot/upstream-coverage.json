@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_revision": "07a6c54390507c62f64b3df3af1ff5fea598bf35",
+  "source_revision": "fad104383718cdb90e939ab99625439334012b50",
   "input_files": [
     {
       "path": "docs/json/guide-only/language-german-and-original.json",
@@ -52,7 +52,7 @@
     },
     {
       "path": "docs/json/radarr/cf/3d.json",
-      "sha256": "2c99a76ab35b56ae46a082da312a1b3d1a22fbaf4201a7405bf6170edf3117ae"
+      "sha256": "79c4588107ed08d14c7a4674238eb31cbde411f8b80a1865a4fc57f96b817dba"
     },
     {
       "path": "docs/json/radarr/cf/40-sound.json",
@@ -876,7 +876,7 @@
     },
     {
       "path": "docs/json/radarr/cf/upscaled.json",
-      "sha256": "8569c6345bd299f3e71f8a46befbb67225984a2f5837f8878de310bcae33b8e9"
+      "sha256": "9b8615d516130a5eb937be8d1a5455f41c2651c79ddcdc64c3355e92add420a2"
     },
     {
       "path": "docs/json/radarr/cf/v0.json",
@@ -1824,7 +1824,7 @@
     },
     {
       "path": "docs/json/sonarr/cf/upscaled.json",
-      "sha256": "5891681c467d6f57dd4975f32aad21567779ba910d5e3bdeb1004ddb581151a5"
+      "sha256": "f66dea049b5ec7076d19d08bb983be17324980aa5f253218b266436de06ecacd"
     },
     {
       "path": "docs/json/sonarr/cf/v0.json",
@@ -1947,8 +1947,8 @@
     "service_alias_rules": 106,
     "token_signal_rules": 49
   },
-  "core_sha256": "e59fe775e79100fba7e3b2f8a4d908b1c4bf805752e515aeb054b7126864277f",
-  "detection_sha256": "dffeb9266352d11ffc3e7d0799ed8bc736fdf6d6df38fde20618ac78315e144b",
+  "core_sha256": "ab1bb87be982b84a6a7d3330898a0220332611a08f8bab8079dec66fb0c049a4",
+  "detection_sha256": "cabd7ea53eaa0b33c5b073df65f089a9ebef0bd793528132369e33684564d8ff",
   "ignored_records": [
     "docs/json/radarr/cf/amzn.json:WEBDL:requires_positive_title",
     "docs/json/radarr/cf/amzn.json:WEBRIP:requires_positive_title",

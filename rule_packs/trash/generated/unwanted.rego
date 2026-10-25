@@ -2,7 +2,7 @@ package scryer.user.trash_guides_unwanted
 import rego.v1
 
 
-# Generated from parser snapshot 07a6c54390507c62f64b3df3af1ff5fea598bf35.
+# Generated from parser snapshot fad104383718cdb90e939ab99625439334012b50.
 trash_detection_tables := {
   "blocked_title_rules_by_anchor": {
     "1XBET": [
@@ -825,6 +825,8 @@ trash_detection_tables := {
             "D3",
             "AI",
             "ENHANCED",
+            "REMASTER",
+            "ED",
             "UPS",
             "UHD",
             "UPSCALED",
@@ -923,6 +925,8 @@ trash_detection_tables := {
             "D34P",
             "AI",
             "ENHANCED",
+            "REMASTER",
+            "ED",
             "UPS",
             "UHD",
             "UPSCALED",
@@ -2246,6 +2250,8 @@ trash_detection_tables := {
             "D3",
             "AI",
             "ENHANCED",
+            "REMASTER",
+            "ED",
             "UPS",
             "UHD",
             "UPSCALED",
@@ -2330,6 +2336,8 @@ trash_detection_tables := {
             "D34P",
             "AI",
             "ENHANCED",
+            "REMASTER",
+            "ED",
             "UPS",
             "UHD",
             "UPSCALED",

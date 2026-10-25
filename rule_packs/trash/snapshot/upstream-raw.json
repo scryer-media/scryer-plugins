@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_revision": "07a6c54390507c62f64b3df3af1ff5fea598bf35",
+  "source_revision": "fad104383718cdb90e939ab99625439334012b50",
   "files": [
     {
       "path": "docs/json/guide-only/language-german-and-original.json",
@@ -483,8 +483,8 @@
     },
     {
       "path": "docs/json/radarr/cf/3d.json",
-      "sha256": "2c99a76ab35b56ae46a082da312a1b3d1a22fbaf4201a7405bf6170edf3117ae",
-      "canonical_sha256": "d2415c492848cf72cd63414ffc817cb0a42bf289571a3cf66217280fe0b3fea3",
+      "sha256": "79c4588107ed08d14c7a4674238eb31cbde411f8b80a1865a4fc57f96b817dba",
+      "canonical_sha256": "1d33ccfb8a9b2b55201b58dd50eabb54fed4f5a4f854052e558285fcc89fc3ec",
       "records": [
         {
           "name": "3D",
@@ -501,7 +501,7 @@
               "required": false,
               "negate": false,
               "fields": {
-                "value": "(?\u003c=\\b[12]\\d{3}\\b).*\\b(3d|sbs|half[ .-]ou|half[ .-]sbs)\\b"
+                "value": "(?\u003c=\\b[12]\\d{3}\\b).*(\\b|_)(3d|[fh]?sbs|half[ ._-]ou)(\\b|_)"
               }
             },
             {
@@ -18642,8 +18642,8 @@
     },
     {
       "path": "docs/json/radarr/cf/upscaled.json",
-      "sha256": "8569c6345bd299f3e71f8a46befbb67225984a2f5837f8878de310bcae33b8e9",
-      "canonical_sha256": "56410f0cfdea357419b584ded9b24a8b1a75a2ec0d8e886adb401cd3c69162a3",
+      "sha256": "9b8615d516130a5eb937be8d1a5455f41c2651c79ddcdc64c3355e92add420a2",
+      "canonical_sha256": "936c247185d883eb7b444f54ce92c9d426587f57f22ee16a06f0c94f867d3e60",
       "records": [
         {
           "name": "Upscaled",
@@ -18714,7 +18714,7 @@
               "required": false,
               "negate": false,
               "fields": {
-                "value": "(?\u003c=\\b[12]\\d{3}\\b).*\\b(AI[ ._-]?Enhanced?|UPS(UHD)?|Upscaled?([ ._-]?UHD)?|UpRez)\\b"
+                "value": "(?\u003c=\\b[12]\\d{3}\\b).*\\b(AI[ ._-]?(Enhanced?|Remaster(ed)?)|UPS(UHD)?|Upscaled?([ ._-]?UHD)?|UpRez)\\b"
               }
             }
           ]
@@ -36715,8 +36715,8 @@
     },
     {
       "path": "docs/json/sonarr/cf/upscaled.json",
-      "sha256": "5891681c467d6f57dd4975f32aad21567779ba910d5e3bdeb1004ddb581151a5",
-      "canonical_sha256": "910ea97a4876777c24e065237c34256d284d7347f23a86906a9678494af24145",
+      "sha256": "f66dea049b5ec7076d19d08bb983be17324980aa5f253218b266436de06ecacd",
+      "canonical_sha256": "74625e399370dd41183a7773cc6842d15f326c0ecb0c98574168a94fb81eb0b6",
       "records": [
         {
           "name": "Upscaled",
@@ -36778,7 +36778,7 @@
               "required": false,
               "negate": false,
               "fields": {
-                "value": "(?\u003c=\\b\\d{3,4}p\\b).*\\b(AI[ ._-]?Enhanced?|UPS(UHD)?|Upscaled?([ ._-]?UHD)?|UpRez)\\b"
+                "value": "(?\u003c=\\b\\d{3,4}p\\b).*\\b(AI[ ._-]?(Enhanced?|Remaster(ed)?)|UPS(UHD)?|Upscaled?([ ._-]?UHD)?|UpRez)\\b"
               }
             }
           ]
