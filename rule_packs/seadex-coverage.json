@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.31",
-  "snapshot_sha256": "bbafe810db6c936088cf01422337a31cbb8e556904ee127a29d27d36372be50a",
+  "pack_version": "1.0.32",
+  "snapshot_sha256": "fecf3f771b9d62e4adc327b55816af5b030685d179fa7861e1057ff79ed92353",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -16080,98 +16080,10 @@
     {
       "alias_sources": 0,
       "entry_id": "981eihqo5s3s099",
-      "file_sources": 1,
-      "release_id": "5q87it1lfg01w8r",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "981eihqo5s3s099",
-      "file_sources": 1,
-      "release_id": "5qq4rpxwvdmgk8q",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "981eihqo5s3s099",
-      "file_sources": 1,
-      "release_id": "5u4kp9vnavewbee",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "981eihqo5s3s099",
-      "file_sources": 1,
-      "release_id": "6mi7ezcnh9nq673",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "981eihqo5s3s099",
-      "file_sources": 1,
-      "release_id": "6rugbeiq2zm29ov",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "981eihqo5s3s099",
-      "file_sources": 1,
-      "release_id": "8eqmipkarraixrr",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "981eihqo5s3s099",
-      "file_sources": 1,
-      "release_id": "c7bs9otnquq6bt2",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "981eihqo5s3s099",
-      "file_sources": 1,
-      "release_id": "jmcje87icp6ds28",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "981eihqo5s3s099",
-      "file_sources": 1,
-      "release_id": "khvypazfofwve06",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "981eihqo5s3s099",
-      "file_sources": 1,
-      "release_id": "miuz3gpiynx1t35",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "981eihqo5s3s099",
-      "file_sources": 1,
-      "release_id": "r34fx4qdsk6axw7",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "981eihqo5s3s099",
-      "file_sources": 1,
-      "release_id": "wmemsyl63hmdykl",
-      "strict_keys": 1,
-      "tolerant_keys": 1
+      "file_sources": 12,
+      "release_id": "hvn8qf05fnw3udi",
+      "strict_keys": 12,
+      "tolerant_keys": 12
     },
     {
       "alias_sources": 0,
@@ -16756,6 +16668,54 @@
       "release_id": "upqjgiz711ypsc7",
       "strict_keys": 24,
       "tolerant_keys": 24
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "9m9nwes5gs3pk8y",
+      "file_sources": 1,
+      "release_id": "1yh749qwu5yr9l9",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "9m9nwes5gs3pk8y",
+      "file_sources": 1,
+      "release_id": "73g76q0k8lzo869",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "9m9nwes5gs3pk8y",
+      "file_sources": 13,
+      "release_id": "doy8rlc1n27f6v2",
+      "strict_keys": 13,
+      "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "9m9nwes5gs3pk8y",
+      "file_sources": 1,
+      "release_id": "gyh3ssixhzdogkr",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "9m9nwes5gs3pk8y",
+      "file_sources": 1,
+      "release_id": "ips4ofydywe31kr",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "9m9nwes5gs3pk8y",
+      "file_sources": 1,
+      "release_id": "semeb7h8aqkp1vh",
+      "strict_keys": 1,
+      "tolerant_keys": 1
     },
     {
       "alias_sources": 0,
@@ -22097,7 +22057,7 @@
       "alias_sources": 0,
       "entry_id": "cskxcpzzu36dmw4",
       "file_sources": 46,
-      "release_id": "a403gcxd4a27qfc",
+      "release_id": "iqeu1cgvgfz3ksl",
       "strict_keys": 46,
       "tolerant_keys": 46
     },
@@ -22105,7 +22065,7 @@
       "alias_sources": 0,
       "entry_id": "cskxcpzzu36dmw4",
       "file_sources": 46,
-      "release_id": "m0o8fgbjkskhmk1",
+      "release_id": "voq076vhkl1sjo9",
       "strict_keys": 46,
       "tolerant_keys": 46
     },
@@ -24612,6 +24572,14 @@
       "release_id": "slnp9helsktjhhv",
       "strict_keys": 13,
       "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "emtdf5kb54azwza",
+      "file_sources": 12,
+      "release_id": "ljupxluzh3mixyu",
+      "strict_keys": 12,
+      "tolerant_keys": 0
     },
     {
       "alias_sources": 0,
@@ -33576,6 +33544,14 @@
     {
       "alias_sources": 0,
       "entry_id": "joatweeaiyj5spp",
+      "file_sources": 12,
+      "release_id": "dmtr2eaitvcxed8",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "joatweeaiyj5spp",
       "file_sources": 14,
       "release_id": "tsvbu291nn951t0",
       "strict_keys": 14,
@@ -33761,15 +33737,7 @@
       "alias_sources": 0,
       "entry_id": "jr0ihhy8u8zxpdq",
       "file_sources": 12,
-      "release_id": "bzn7ke0aaafly2h",
-      "strict_keys": 12,
-      "tolerant_keys": 12
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "jr0ihhy8u8zxpdq",
-      "file_sources": 12,
-      "release_id": "k0gxtsztnh58nr6",
+      "release_id": "mlusqgg9mjgwdaj",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -37564,6 +37532,30 @@
       "release_id": "xcfm1lu028ozo45",
       "strict_keys": 1,
       "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "lnag0lr2axv7gyh",
+      "file_sources": 24,
+      "release_id": "abv0uk2zbea0lgr",
+      "strict_keys": 24,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "lnag0lr2axv7gyh",
+      "file_sources": 24,
+      "release_id": "h6z6nmtnc6rmplk",
+      "strict_keys": 24,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "lnag0lr2axv7gyh",
+      "file_sources": 25,
+      "release_id": "rmi8j5s1zlhvmzq",
+      "strict_keys": 25,
+      "tolerant_keys": 25
     },
     {
       "alias_sources": 0,
@@ -141405,6 +141397,78 @@
     },
     {
       "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "ljupxluzh3mixyu",
+      "source_name": "Noukin 01.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "ljupxluzh3mixyu",
+      "source_name": "Noukin 02.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "ljupxluzh3mixyu",
+      "source_name": "Noukin 03.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "ljupxluzh3mixyu",
+      "source_name": "Noukin 04.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "ljupxluzh3mixyu",
+      "source_name": "Noukin 05.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "ljupxluzh3mixyu",
+      "source_name": "Noukin 06.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "ljupxluzh3mixyu",
+      "source_name": "Noukin 07.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "ljupxluzh3mixyu",
+      "source_name": "Noukin 08.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "ljupxluzh3mixyu",
+      "source_name": "Noukin 09.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "ljupxluzh3mixyu",
+      "source_name": "Noukin 10.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "ljupxluzh3mixyu",
+      "source_name": "Noukin 11.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "ljupxluzh3mixyu",
+      "source_name": "Noukin 12.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
       "reason": "non_release_file",
       "release_id": "wcdfngrnbykkii4",
       "source_name": "Extras/[Lia] Noukin - NCED.mkv"
@@ -201432,6 +201496,294 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "d6iar29uvu05wor",
       "source_name": "Wicked City [BD.1080p] [Iznjie Biznjie] [D86384B2].mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E01-Meeting.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E02-Founding.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E03-Dream Pangs.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E04-Rin at Odds.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E05-Fanatic.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E06-Cry of the Worm.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E07-Evil's Shadow.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E08-Mugai-ryu.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E09-Gathering.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E10-Animal.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E11-Fall Frost.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E12-Blood of Finality.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E13-Twilight.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E14-Amendments.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E15-Acquisition of Guts.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E16-Altered Limb.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E17-Ceremonial Bond.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E18-Banshee's Cries.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E19-Massacre.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E20-Unending.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E21-Trap.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E22-Ten Final Pushes.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E23-100 Spectacular Dances.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "abv0uk2zbea0lgr",
+      "source_name": "S01E24-Blade of the Immortal.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E01-Meeting.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E02-Founding.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E03-Dream Pangs.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E04-Rin at Odds.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E05-Fanatic.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E06-Cry of the Worm.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E07-Evil's Shadow.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E08-Mugai-ryu.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E09-Gathering.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E10-Animal.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E11-Fall Frost.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E12-Blood of Finality.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E13-Twilight.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E14-Amendments.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E15-Acquisition of Guts.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E16-Altered Limb.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E17-Ceremonial Bond.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E18-Banshee's Cries.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E19-Massacre.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E20-Unending.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E21-Trap.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E22-Ten Final Pushes.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E23-100 Spectacular Dances.mkv"
+    },
+    {
+      "entry_id": "lnag0lr2axv7gyh",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "h6z6nmtnc6rmplk",
+      "source_name": "S01E24-Blade of the Immortal.mkv"
     },
     {
       "entry_id": "lq2szezjccv3m9w",
@@ -443867,6 +444219,510 @@
         }
       ],
       "key": "[some-stuffs] pocket monsters twilight wings 8 (web 1080p opus) [1c29b22e]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 01.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 01.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 01",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 02.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 02.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 02",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 03.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 03.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 03",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 04.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 04.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 04",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 05.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 05.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 05",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 06.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 06.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 06",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 07.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 07.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 07",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 08.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 08.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 08",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 09.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 09.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 09",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 10.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 10.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 10",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 11.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 11.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 11",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 12.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 12.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 12",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 13.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 13.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 13",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 14.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 14.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 14",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 15.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 15.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 15",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 16.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 16.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 16",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 17.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 17.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 17",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 18.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 18.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 18",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 19.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 19.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 19",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 20.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 20.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 20",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 20.5.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 20.5.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 20.5",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 21.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 21.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 21",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 21.5.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 21.5.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 21.5",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 22.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 22.mkv"
+        }
+      ],
+      "key": "[sristi] shiki - 22",
       "kind": "strict",
       "reason": "conflicting_identity_or_recommendation_level"
     },
@@ -709082,6 +709938,510 @@
     {
       "candidates": [
         {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 01.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 01.mkv"
+        }
+      ],
+      "key": "sristi|shiki 01",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 02.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 02.mkv"
+        }
+      ],
+      "key": "sristi|shiki 02",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 03.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 03.mkv"
+        }
+      ],
+      "key": "sristi|shiki 03",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 04.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 04.mkv"
+        }
+      ],
+      "key": "sristi|shiki 04",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 05.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 05.mkv"
+        }
+      ],
+      "key": "sristi|shiki 05",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 06.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 06.mkv"
+        }
+      ],
+      "key": "sristi|shiki 06",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 07.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 07.mkv"
+        }
+      ],
+      "key": "sristi|shiki 07",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 08.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 08.mkv"
+        }
+      ],
+      "key": "sristi|shiki 08",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 09.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 09.mkv"
+        }
+      ],
+      "key": "sristi|shiki 09",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 10.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 10.mkv"
+        }
+      ],
+      "key": "sristi|shiki 10",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 11.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 11.mkv"
+        }
+      ],
+      "key": "sristi|shiki 11",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 12.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 12.mkv"
+        }
+      ],
+      "key": "sristi|shiki 12",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 13.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 13.mkv"
+        }
+      ],
+      "key": "sristi|shiki 13",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 14.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 14.mkv"
+        }
+      ],
+      "key": "sristi|shiki 14",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 15.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 15.mkv"
+        }
+      ],
+      "key": "sristi|shiki 15",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 16.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 16.mkv"
+        }
+      ],
+      "key": "sristi|shiki 16",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 17.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 17.mkv"
+        }
+      ],
+      "key": "sristi|shiki 17",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 18.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 18.mkv"
+        }
+      ],
+      "key": "sristi|shiki 18",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 19.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 19.mkv"
+        }
+      ],
+      "key": "sristi|shiki 19",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 20.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 20.mkv"
+        }
+      ],
+      "key": "sristi|shiki 20",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 20.5.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 20.5.mkv"
+        }
+      ],
+      "key": "sristi|shiki 20 5",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 21.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 21.mkv"
+        }
+      ],
+      "key": "sristi|shiki 21",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 21.5.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 21.5.mkv"
+        }
+      ],
+      "key": "sristi|shiki 21 5",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 7724,
+          "entry_id": "e99zost5qgqld89",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 22.mkv"
+        },
+        {
+          "anilist_id": 10083,
+          "entry_id": "mupxg1c3qxnsrlj",
+          "release_id": "n47un7vuhoy6fv7",
+          "source": "file",
+          "source_name": "[Sristi] Shiki - 22.mkv"
+        }
+      ],
+      "key": "sristi|shiki 22",
+      "kind": "tolerant",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
           "anilist_id": 116588,
           "entry_id": "4ztrairiy28v3b7",
           "release_id": "83oyrf39pw1m91z",
@@ -739940,54 +741300,47 @@
   "changes": {
     "entries": {
       "added": [
-        "bhswg7l1o6keu5x",
-        "bt3vbocehbbd6z6",
-        "gfhjm1xi3meni3i"
+        "9m9nwes5gs3pk8y",
+        "lnag0lr2axv7gyh"
       ],
       "removed": []
     },
     "releases": {
       "added": [
-        "12wc5cyjo3ccryw",
-        "15me9i02as5inyg",
-        "20e9rzd9sw1toas",
-        "332jiwj7mpnttjr",
-        "3g6zibshzk2i372",
-        "9aeo2byueyzzrsz",
-        "9ystuywruaa6wq4",
-        "b0ewqbhcttj989t",
-        "bgynnlptjdnh334",
-        "bhgahjh463a9z1v",
-        "chxd2sw43gr82k1",
-        "duycsldhy6axtdd",
-        "e32pwdbbkea3o5l",
-        "es7i6cj0l62l9vd",
-        "fd1z4mglpel2wup",
-        "hzhqe43fuelqgg2",
-        "i0hedtiha4jk87g",
-        "i79x53rh38dz0tt",
-        "iudydo7gc1f5yb9",
-        "jap54av8xiabetz",
-        "l2bc2b4jguhqh8w",
-        "mbpfdq64fiesf8x",
-        "n9q460c4gmi52yj",
-        "o7x0miv0o01panf",
-        "oy48tw84rxmiv2n",
-        "p832y2s5xhkmodp",
-        "pokrmprbuutqrb7",
-        "s707n26acb1lot1",
-        "sd5u4ebgajkuybr",
-        "u47nddgck7r0hvb",
-        "yuws5nwh1ixc961",
-        "zw6bsyf9q5v0yjw"
+        "1yh749qwu5yr9l9",
+        "73g76q0k8lzo869",
+        "abv0uk2zbea0lgr",
+        "dmtr2eaitvcxed8",
+        "doy8rlc1n27f6v2",
+        "gyh3ssixhzdogkr",
+        "h6z6nmtnc6rmplk",
+        "hvn8qf05fnw3udi",
+        "ips4ofydywe31kr",
+        "iqeu1cgvgfz3ksl",
+        "ljupxluzh3mixyu",
+        "mlusqgg9mjgwdaj",
+        "n47un7vuhoy6fv7",
+        "rmi8j5s1zlhvmzq",
+        "semeb7h8aqkp1vh",
+        "voq076vhkl1sjo9"
       ],
       "removed": [
-        "d9qdwjapbhjfu83",
-        "dq3x6vai1qhmsx8",
-        "jsora5zr623fgil",
-        "nsuzq5l459n7s4v",
-        "u74t2r98dsicf50",
-        "yq6e0s3vpkgn632"
+        "5q87it1lfg01w8r",
+        "5qq4rpxwvdmgk8q",
+        "5u4kp9vnavewbee",
+        "6mi7ezcnh9nq673",
+        "6rugbeiq2zm29ov",
+        "8eqmipkarraixrr",
+        "a403gcxd4a27qfc",
+        "bzn7ke0aaafly2h",
+        "c7bs9otnquq6bt2",
+        "jmcje87icp6ds28",
+        "k0gxtsztnh58nr6",
+        "khvypazfofwve06",
+        "m0o8fgbjkskhmk1",
+        "miuz3gpiynx1t35",
+        "r34fx4qdsk6axw7",
+        "wmemsyl63hmdykl"
       ]
     }
   },
@@ -740001,20 +741354,20 @@
       },
       "direct_entries": 21102,
       "route_buckets": 259,
-      "source_bytes": 3002474,
-      "source_lines": 45207,
+      "source_bytes": 3002826,
+      "source_lines": 45208,
       "template_buckets": {
         "bucket_count": 259,
-        "key_count": 6567,
+        "key_count": 6581,
         "max_keys": 126,
-        "mean_keys": 25.355212355212355
+        "mean_keys": 25.409266409266408
       },
-      "template_groups": 6567,
-      "tuple_chunks": 6775
+      "template_groups": 6581,
+      "tuple_chunks": 6789
     },
     "provenance": {
-      "strict_keys": 56976,
-      "tolerant_keys": 46362
+      "strict_keys": 57067,
+      "tolerant_keys": 46417
     },
     "stale_overrides": []
   }
