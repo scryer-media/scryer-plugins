@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.32",
-  "snapshot_sha256": "fecf3f771b9d62e4adc327b55816af5b030685d179fa7861e1057ff79ed92353",
+  "pack_version": "1.0.33",
+  "snapshot_sha256": "2cf920dfd99c17e6bd24511a86cb00cf2bdd35017e5f7da30990c44c92f76f1e",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -5535,6 +5535,14 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "3az5acwnoy3n57i",
+      "file_sources": 3,
+      "release_id": "y26wkdtv8lbh9wa",
+      "strict_keys": 3,
+      "tolerant_keys": 3
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "3baw4m5gsjsl8hx",
       "file_sources": 12,
       "release_id": "e63ohukbfd69cgv",
@@ -6908,6 +6916,14 @@
       "release_id": "zql506n3xtw16y5",
       "strict_keys": 1,
       "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "42yv7resprho82h",
+      "file_sources": 25,
+      "release_id": "b959a73fwccxd7q",
+      "strict_keys": 25,
+      "tolerant_keys": 25
     },
     {
       "alias_sources": 0,
@@ -14839,6 +14855,22 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "8g90lvwu9v417l4",
+      "file_sources": 12,
+      "release_id": "h26vbnm4g52x1ie",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "8g90lvwu9v417l4",
+      "file_sources": 12,
+      "release_id": "nkflgkbnnrvxy63",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "8h1ybv677rz2esx",
       "file_sources": 24,
       "release_id": "ks07h417jgglazo",
@@ -15488,26 +15520,18 @@
     {
       "alias_sources": 0,
       "entry_id": "8w2x8e8vr14xd7d",
-      "file_sources": 13,
-      "release_id": "l01xmx4sk5qbz4a",
-      "strict_keys": 13,
-      "tolerant_keys": 13
+      "file_sources": 25,
+      "release_id": "kumrh89c2hlj474",
+      "strict_keys": 25,
+      "tolerant_keys": 25
     },
     {
       "alias_sources": 0,
       "entry_id": "8w2x8e8vr14xd7d",
-      "file_sources": 51,
-      "release_id": "lgbnamwg2egj8vo",
-      "strict_keys": 51,
-      "tolerant_keys": 51
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "8w2x8e8vr14xd7d",
-      "file_sources": 51,
-      "release_id": "mpwziu92o2yhpz2",
-      "strict_keys": 51,
-      "tolerant_keys": 51
+      "file_sources": 32,
+      "release_id": "zldlwiragzd7664",
+      "strict_keys": 32,
+      "tolerant_keys": 32
     },
     {
       "alias_sources": 0,
@@ -15896,10 +15920,10 @@
     {
       "alias_sources": 0,
       "entry_id": "93jc576j1dp2sr2",
-      "file_sources": 11,
-      "release_id": "bywgrf052fbz7cg",
-      "strict_keys": 11,
-      "tolerant_keys": 11
+      "file_sources": 13,
+      "release_id": "nderiwp8qp2pymd",
+      "strict_keys": 13,
+      "tolerant_keys": 13
     },
     {
       "alias_sources": 0,
@@ -19257,15 +19281,7 @@
       "alias_sources": 0,
       "entry_id": "b79azluuc3w4s6w",
       "file_sources": 1,
-      "release_id": "7d950iv2qd8demh",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "b79azluuc3w4s6w",
-      "file_sources": 1,
-      "release_id": "sc78tkqyox45ulj",
+      "release_id": "sosrg1e2eztuonn",
       "strict_keys": 1,
       "tolerant_keys": 1
     },
@@ -20148,6 +20164,30 @@
       "release_id": "y4lv6nv5gg5ahfv",
       "strict_keys": 17,
       "tolerant_keys": 17
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "bo4z8bq2hlsko5u",
+      "file_sources": 1,
+      "release_id": "bkk0mnmttr9qpm5",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "bo4z8bq2hlsko5u",
+      "file_sources": 1,
+      "release_id": "n1xaqbm6ziq7mpq",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "bo4z8bq2hlsko5u",
+      "file_sources": 1,
+      "release_id": "z22njnb59rejv0v",
+      "strict_keys": 1,
+      "tolerant_keys": 1
     },
     {
       "alias_sources": 0,
@@ -24168,6 +24208,22 @@
     {
       "alias_sources": 0,
       "entry_id": "edorge56v40w3qk",
+      "file_sources": 4,
+      "release_id": "3baiefi4v7jws9o",
+      "strict_keys": 4,
+      "tolerant_keys": 4
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "edorge56v40w3qk",
+      "file_sources": 1,
+      "release_id": "8nbj6qpmwknvbm7",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "edorge56v40w3qk",
       "file_sources": 1,
       "release_id": "gbnusblx4gdut63",
       "strict_keys": 1,
@@ -24849,7 +24905,7 @@
       "alias_sources": 0,
       "entry_id": "erj1qdwk252zn15",
       "file_sources": 25,
-      "release_id": "mwdooa2nqlqtto5",
+      "release_id": "rg2auhtvosrhzrw",
       "strict_keys": 25,
       "tolerant_keys": 25
     },
@@ -26516,6 +26572,22 @@
       "release_id": "xad2fkykwbaqymb",
       "strict_keys": 22,
       "tolerant_keys": 22
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "fmqxar76qo8dlnz",
+      "file_sources": 15,
+      "release_id": "f0491n4hom5ck4l",
+      "strict_keys": 15,
+      "tolerant_keys": 15
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "fmqxar76qo8dlnz",
+      "file_sources": 21,
+      "release_id": "t7izb3r045n7wr4",
+      "strict_keys": 21,
+      "tolerant_keys": 21
     },
     {
       "alias_sources": 0,
@@ -28913,33 +28985,9 @@
       "alias_sources": 0,
       "entry_id": "h6rol09qdslqfye",
       "file_sources": 12,
-      "release_id": "lx1vblaace9yyib",
+      "release_id": "y8lh1t9pmgr1h3u",
       "strict_keys": 12,
       "tolerant_keys": 12
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "h6rol09qdslqfye",
-      "file_sources": 12,
-      "release_id": "pw6gf9muz5tyh49",
-      "strict_keys": 12,
-      "tolerant_keys": 12
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "h6rol09qdslqfye",
-      "file_sources": 14,
-      "release_id": "q6zmcv41uue4lpw",
-      "strict_keys": 14,
-      "tolerant_keys": 0
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "h6rol09qdslqfye",
-      "file_sources": 14,
-      "release_id": "t3fhllig1493plx",
-      "strict_keys": 14,
-      "tolerant_keys": 0
     },
     {
       "alias_sources": 0,
@@ -29744,10 +29792,10 @@
     {
       "alias_sources": 0,
       "entry_id": "hnj1drcb96k09wl",
-      "file_sources": 2,
-      "release_id": "b2qqvor2yxzbb3v",
-      "strict_keys": 2,
-      "tolerant_keys": 2
+      "file_sources": 13,
+      "release_id": "1cxe1023oj7re3p",
+      "strict_keys": 13,
+      "tolerant_keys": 13
     },
     {
       "alias_sources": 0,
@@ -29756,14 +29804,6 @@
       "release_id": "f9ayy2nedhpry57",
       "strict_keys": 13,
       "tolerant_keys": 13
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "hnj1drcb96k09wl",
-      "file_sources": 2,
-      "release_id": "m3o55h6fcoz7sr1",
-      "strict_keys": 2,
-      "tolerant_keys": 2
     },
     {
       "alias_sources": 0,
@@ -34207,6 +34247,22 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "jycjoy7w4yrddx0",
+      "file_sources": 13,
+      "release_id": "buktupbp3ju5ujt",
+      "strict_keys": 13,
+      "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "jycjoy7w4yrddx0",
+      "file_sources": 13,
+      "release_id": "j3p8mc2obkw7sg7",
+      "strict_keys": 13,
+      "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "jykuxzq26kndldx",
       "file_sources": 7,
       "release_id": "l06yyr1ci5qmrf9",
@@ -37580,6 +37636,38 @@
       "release_id": "w79qd954m5ja12h",
       "strict_keys": 1,
       "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "lpjt5000ektjhu1",
+      "file_sources": 36,
+      "release_id": "1ue3au3cb1fb2g2",
+      "strict_keys": 36,
+      "tolerant_keys": 36
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "lpjt5000ektjhu1",
+      "file_sources": 36,
+      "release_id": "4xd302xtuehk065",
+      "strict_keys": 36,
+      "tolerant_keys": 36
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "lpjt5000ektjhu1",
+      "file_sources": 36,
+      "release_id": "7be9zlgkelgqyug",
+      "strict_keys": 36,
+      "tolerant_keys": 36
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "lpjt5000ektjhu1",
+      "file_sources": 36,
+      "release_id": "uy4dw6pxl5nczse",
+      "strict_keys": 36,
+      "tolerant_keys": 36
     },
     {
       "alias_sources": 0,
@@ -41912,26 +42000,18 @@
     {
       "alias_sources": 0,
       "entry_id": "o2h7nrmduglxb38",
-      "file_sources": 7,
-      "release_id": "06dh12ba8te8vuk",
-      "strict_keys": 7,
-      "tolerant_keys": 7
+      "file_sources": 17,
+      "release_id": "ftyd3r6rb0vi1ie",
+      "strict_keys": 17,
+      "tolerant_keys": 17
     },
     {
       "alias_sources": 0,
       "entry_id": "o2h7nrmduglxb38",
-      "file_sources": 12,
-      "release_id": "9nkzl5g14hp7ad5",
-      "strict_keys": 12,
-      "tolerant_keys": 12
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "o2h7nrmduglxb38",
-      "file_sources": 7,
-      "release_id": "fcdow0nkogk0hdq",
-      "strict_keys": 7,
-      "tolerant_keys": 7
+      "file_sources": 17,
+      "release_id": "irc7hu9gll0j3ie",
+      "strict_keys": 17,
+      "tolerant_keys": 17
     },
     {
       "alias_sources": 0,
@@ -42017,7 +42097,7 @@
       "alias_sources": 0,
       "entry_id": "o4h7c6furbwtkue",
       "file_sources": 13,
-      "release_id": "44e7b2oxwqwl3hl",
+      "release_id": "beyav7wqrt3wh3i",
       "strict_keys": 13,
       "tolerant_keys": 13
     },
@@ -42844,6 +42924,22 @@
       "release_id": "xa7qff2275v0ofb",
       "strict_keys": 11,
       "tolerant_keys": 11
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "oqujq7vz6pw2h9r",
+      "file_sources": 24,
+      "release_id": "9avjy34497661ab",
+      "strict_keys": 24,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "oqujq7vz6pw2h9r",
+      "file_sources": 24,
+      "release_id": "quirezo4joh2hfx",
+      "strict_keys": 24,
+      "tolerant_keys": 0
     },
     {
       "alias_sources": 0,
@@ -48649,7 +48745,7 @@
       "alias_sources": 0,
       "entry_id": "rtbgvay5tsobfh8",
       "file_sources": 12,
-      "release_id": "1tk7bjhktoesb9y",
+      "release_id": "68bzio7z40tj8vs",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -48657,7 +48753,7 @@
       "alias_sources": 0,
       "entry_id": "rtbgvay5tsobfh8",
       "file_sources": 12,
-      "release_id": "bceoo4tk7fo51lz",
+      "release_id": "qqv4ns9nmpk9lde",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -49676,6 +49772,14 @@
       "release_id": "ux72y534bolxy65",
       "strict_keys": 10,
       "tolerant_keys": 10
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "sdnjjqkrk5x6spm",
+      "file_sources": 25,
+      "release_id": "bo6jr5r33y6nu4r",
+      "strict_keys": 25,
+      "tolerant_keys": 23
     },
     {
       "alias_sources": 0,
@@ -51728,10 +51832,18 @@
     {
       "alias_sources": 0,
       "entry_id": "ta0g5m5qgbfgv7s",
-      "file_sources": 43,
-      "release_id": "hd10d0e0ztge0k1",
-      "strict_keys": 43,
-      "tolerant_keys": 0
+      "file_sources": 15,
+      "release_id": "iwbeo309ycqgr5f",
+      "strict_keys": 15,
+      "tolerant_keys": 15
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "ta0g5m5qgbfgv7s",
+      "file_sources": 12,
+      "release_id": "j6047u52bg890s4",
+      "strict_keys": 12,
+      "tolerant_keys": 12
     },
     {
       "alias_sources": 0,
@@ -56898,6 +57010,22 @@
       "entry_id": "wh693qm3bnw12yh",
       "file_sources": 1,
       "release_id": "q9p41b9ui5j4pf5",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "whvv7kvahyeso9i",
+      "file_sources": 1,
+      "release_id": "on4i7cwfisfgd6u",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "whvv7kvahyeso9i",
+      "file_sources": 1,
+      "release_id": "phkq3www0xuvmbd",
       "strict_keys": 1,
       "tolerant_keys": 1
     },
@@ -164166,198 +164294,6 @@
       "source_name": "[MTBB] Kamisama Hajimemashitaː Kako-hen - 04 [276F8DCE].mkv"
     },
     {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "lx1vblaace9yyib",
-      "source_name": "NCED.mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "lx1vblaace9yyib",
-      "source_name": "NCOP.mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pw6gf9muz5tyh49",
-      "source_name": "NCED.mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pw6gf9muz5tyh49",
-      "source_name": "NCOP.mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "q6zmcv41uue4lpw",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E01 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "q6zmcv41uue4lpw",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E02 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "q6zmcv41uue4lpw",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E03 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "q6zmcv41uue4lpw",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E04 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "q6zmcv41uue4lpw",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E05 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "q6zmcv41uue4lpw",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E06 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "q6zmcv41uue4lpw",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E07 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "q6zmcv41uue4lpw",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E08 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "q6zmcv41uue4lpw",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E09 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "q6zmcv41uue4lpw",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E10 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "q6zmcv41uue4lpw",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E11 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "q6zmcv41uue4lpw",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E12 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "q6zmcv41uue4lpw",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu NCED [BD 1080p REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "q6zmcv41uue4lpw",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu NCOP [BD 1080p REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "t3fhllig1493plx",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E01 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "t3fhllig1493plx",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E02 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "t3fhllig1493plx",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E03 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "t3fhllig1493plx",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E04 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "t3fhllig1493plx",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E05 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "t3fhllig1493plx",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E06 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "t3fhllig1493plx",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E07 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "t3fhllig1493plx",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E08 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "t3fhllig1493plx",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E09 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "t3fhllig1493plx",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E10 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "t3fhllig1493plx",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E11 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "t3fhllig1493plx",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu - E12 [BD 1080p Hybrid REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "t3fhllig1493plx",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu NCED [BD 1080p REMUX].mkv"
-    },
-    {
-      "entry_id": "h6rol09qdslqfye",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "t3fhllig1493plx",
-      "source_name": "Isekai Maou to Shoukan Shoujo no Dorei Majutsu NCOP [BD 1080p REMUX].mkv"
-    },
-    {
       "entry_id": "h6xrir3w4dnk40i",
       "reason": "non_release_file",
       "release_id": "k7ejzo7gt3ozh2i",
@@ -212814,6 +212750,294 @@
       "source_name": "NCOP.mkv"
     },
     {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E01.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E02.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E03.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E04.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E05.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E06.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E07.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E08.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E09.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E10.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E11.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E12.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E13.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E14.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E15.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E16.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E17.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E18.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E19.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E20.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E21.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E22.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E23.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "9avjy34497661ab",
+      "source_name": "Shangri-La S01E24.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E01.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E02.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E03.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E04.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E05.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E06.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E07.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E08.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E09.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E10.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E11.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E12.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E13.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E14.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E15.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E16.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E17.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E18.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E19.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E20.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E21.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E22.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E23.mkv"
+    },
+    {
+      "entry_id": "oqujq7vz6pw2h9r",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "quirezo4joh2hfx",
+      "source_name": "Shangri-La S01E24.mkv"
+    },
+    {
       "entry_id": "oro3ohirx6o2iny",
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "ek4niegy24ggtyo",
@@ -245394,6 +245618,18 @@
       "source_name": "Extras/Fate kaleid liner Prisma Illya - S02 NCOP (BD Remux 1080p AVC FLAC) [PMR].mkv"
     },
     {
+      "entry_id": "sdnjjqkrk5x6spm",
+      "reason": "non_ascii_tolerant_evidence",
+      "release_id": "bo6jr5r33y6nu4r",
+      "source_name": "Phi-Brain.Puzzle.of.God.S03E01.Rätsel.1080p.BluRay.REMUX.AVC.FLAC.2.0-NAN0.mkv"
+    },
+    {
+      "entry_id": "sdnjjqkrk5x6spm",
+      "reason": "non_ascii_tolerant_evidence",
+      "release_id": "bo6jr5r33y6nu4r",
+      "source_name": "Phi-Brain.Puzzle.of.God.S03E12.Is.That.What.You.Thought.I’d.Say.1080p.BluRay.REMUX.AVC.FLAC.2.0-NAN0.mkv"
+    },
+    {
       "entry_id": "se08ffvxnxz8v5q",
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "iwjjgigv46gvo22",
@@ -249836,878 +250072,20 @@
     {
       "entry_id": "ta0g5m5qgbfgv7s",
       "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "01 トラック 1.flac"
+      "release_id": "j6047u52bg890s4",
+      "source_name": "Extras/[Drag] Busou Shoujo Machiavellianism - S01NCED01 (BD 1080p AVC Opus 2.0) [181B0C2C].mkv"
     },
     {
       "entry_id": "ta0g5m5qgbfgv7s",
       "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "01 トラック 1.flac"
+      "release_id": "j6047u52bg890s4",
+      "source_name": "Extras/[Drag] Busou Shoujo Machiavellianism - S01NCOP01a (BD 1080p AVC Opus 2.0) [1610D2F4].mkv"
     },
     {
       "entry_id": "ta0g5m5qgbfgv7s",
       "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "01 トラック 1.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "01 トラック 1.wav"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "01 トラック 1.wav"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "01. DECIDE.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "01. Shocking Blue.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "01. 五剣の花.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "01. 天下五剣.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "02 トラック 2.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "02 トラック 2.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "02 トラック 2.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "02 トラック 2.wav"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "02 トラック 2.wav"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "02. DECIDE feat.輪.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "02. Shocking Blue(TV-size) -off vocal ver.-.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "02. Shocking Blue(TV-size).flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "02. ルージュバック.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "03 トラック 3.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "03 トラック 3.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "03 トラック 3.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "03 トラック 3.wav"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "03 トラック 3.wav"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "03. DECIDE feat.メアリ.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "03. Shocking Blue [instrumental].flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "03. 納村不道.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "03. 自由への疾走.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "04 トラック 4.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "04 トラック 4.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "04 トラック 4.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "04 トラック 4.wav"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "04 トラック 4.wav"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "04. DECIDE feat.蕨.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "04. ルージュバック [instrumental].flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "04. 決死の潜入.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "04. 鬼瓦輪.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "05 トラック 5.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "05 トラック 5.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "05. DECIDE feat.さとり.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "05. 抜刀.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "05. 禁断の抱擁.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "06 トラック 6.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "06. DECIDE feat.月夜.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "06. ひょっひょっひょ.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "06. 素晴らしき刃.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "07 トラック 7.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "07. DECIDE (off vocal ver.).flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "07. ツインテールのため息.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "07. 矯正してやる.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "08. 素顔の輪.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "08. 血風.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "09. うわさの転校生.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "09. 眠目さとり.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "10. 亀鶴城メアリ.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "10. 妖しき刃.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "11. 花開く乙女心.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "11. 麗しき刃.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "12. 気になるあいつ.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "12. 複雑な気持ち.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "13. メアリ純情.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "13. 秘めた想い.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "14. おかしな二人.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "14. 鬼面の告白.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "15. ノムラの過去.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "15. 女の戦い.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "16. 女帝の影.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "16. 自由と平穏を愛する男.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "17. 学園の闇.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "17. 蕨の救援.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "18. ありえない危機.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "18. さとりとみそぎ.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "19. 因幡月夜.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "19. 花酒蕨.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "20. ワラビンピック.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "20. 恐ろしき刃.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "21. キョーボーVSノムラ.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "21. 斬々との因縁.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "22. 天羽斬々.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "22. 怒りの宣戦.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "23. 化身刀.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "23. 芽生える絆.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "24. 愛狂しき刃.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "24. 魔弾.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "25. 美しき挑戦者.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "25. 親愛.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "26. 帰還.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "26. 徒手空拳.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "27. DECIDE(TV-size).flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "27. 戦いのあとに.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "28. DECIDE(TV-size) -off vocal ver.-.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "28. ひとごっこ.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "29. 心の声.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "29. 鬼さんコチラ.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "30. KILL×KILL.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "30. romantique.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "31. Go-Ran-Shin.flac"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Cover.jpg"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Cover2.jpg"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "cover.jpg"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "cover.jpg"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "cover.jpg"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "天下五剣 - DECIDE.log"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "non_release_file",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "武装少女マキャヴェリズム BD_VOL1 特典CD WEBラジオ「武装少女マキャヴェリズム すくすく矯正するらじお！」出張版CD VOL.1 (ALAC).m4a"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism - 01.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism - 02.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism - 03.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism - 04.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism - 05.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism - 06.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism - 07.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism - 08.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism - 09.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism - 10.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism - 11.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism - 12.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism - 13.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism - ED.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Cast Kobudou Experience - 01.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Cast Kobudou Experience - 02.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Cast Kobudou Experience - 03.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Cast Kobudou Experience - 04.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Cast Kobudou Experience - 05.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Cast Kobudou Experience - 06.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Menu - 01.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Menu - 02.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Menu - 03.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Menu - 04.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Menu - 05.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Menu - 06.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Menu - 07.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Menu - 08.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Menu - 09.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Menu - 10.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Menu - 11.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Menu - 12.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Menu - 13.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Menu - 14.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism Menu - 15.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism OP - 01.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism OP - 02.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism PV - 01.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism PV - 02.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism PV - 03.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism PV - 04.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism PV - 05.mkv"
-    },
-    {
-      "entry_id": "ta0g5m5qgbfgv7s",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "hd10d0e0ztge0k1",
-      "source_name": "Busou Shoujo Machiavellianism PV - 06.mkv"
+      "release_id": "j6047u52bg890s4",
+      "source_name": "Extras/[Drag] Busou Shoujo Machiavellianism - S01NCOP01b (BD 1080p AVC Opus 2.0) [69865CE2].mkv"
     },
     {
       "entry_id": "tavgmg31y31fd6z",
@@ -330566,237 +329944,6 @@
     {
       "candidates": [
         {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 01 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 01 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "[erai-raws] gundam build divers re-rise - 01 [1080p][multiple subtitle]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 02 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 02 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "[erai-raws] gundam build divers re-rise - 02 [1080p][multiple subtitle]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 03 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 03 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "[erai-raws] gundam build divers re-rise - 03 [1080p][multiple subtitle]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 04 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 04 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "[erai-raws] gundam build divers re-rise - 04 [1080p][multiple subtitle]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 06 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 06 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "[erai-raws] gundam build divers re-rise - 06 [1080p][multiple subtitle]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 07 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 07 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "[erai-raws] gundam build divers re-rise - 07 [1080p][multiple subtitle]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 08 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 08 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "[erai-raws] gundam build divers re-rise - 08 [1080p][multiple subtitle]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 09 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 09 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "[erai-raws] gundam build divers re-rise - 09 [1080p][multiple subtitle]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 10 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 10 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "[erai-raws] gundam build divers re-rise - 10 [1080p][multiple subtitle]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 11 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 11 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "[erai-raws] gundam build divers re-rise - 11 [1080p][multiple subtitle]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 13 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 13 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "[erai-raws] gundam build divers re-rise - 13 [1080p][multiple subtitle]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
           "anilist_id": 487,
           "entry_id": "clm90ptkv5btg2k",
           "release_id": "5hi92ynl6zhumsg",
@@ -353716,111 +352863,6 @@
         }
       ],
       "key": "[kametsu] the testament of sister new devil burst - ova (bd 1080p hi10 flac) [593a3979]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "06dh12ba8te8vuk",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 08 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        },
-        {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "fcdow0nkogk0hdq",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 08 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        }
-      ],
-      "key": "[kekkan] champignon no majo - 08 (webrip 1080p av1 multi-subs alicia)",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "06dh12ba8te8vuk",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 09 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        },
-        {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "fcdow0nkogk0hdq",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 09 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        }
-      ],
-      "key": "[kekkan] champignon no majo - 09 (webrip 1080p av1 multi-subs alicia)",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "06dh12ba8te8vuk",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 10 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        },
-        {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "fcdow0nkogk0hdq",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 10 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        }
-      ],
-      "key": "[kekkan] champignon no majo - 10 (webrip 1080p av1 multi-subs alicia)",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "06dh12ba8te8vuk",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 11 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        },
-        {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "fcdow0nkogk0hdq",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 11 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        }
-      ],
-      "key": "[kekkan] champignon no majo - 11 (webrip 1080p av1 multi-subs alicia)",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "06dh12ba8te8vuk",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 12 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        },
-        {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "fcdow0nkogk0hdq",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 12 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        }
-      ],
-      "key": "[kekkan] champignon no majo - 12 (webrip 1080p av1 multi-subs alicia)",
       "kind": "strict",
       "reason": "conflicting_identity_or_recommendation_level"
     },
@@ -514169,20 +513211,6 @@
           "source_name": "NCED.mkv"
         },
         {
-          "anilist_id": 101004,
-          "entry_id": "h6rol09qdslqfye",
-          "release_id": "lx1vblaace9yyib",
-          "source": "file",
-          "source_name": "NCED.mkv"
-        },
-        {
-          "anilist_id": 101004,
-          "entry_id": "h6rol09qdslqfye",
-          "release_id": "pw6gf9muz5tyh49",
-          "source": "file",
-          "source_name": "NCED.mkv"
-        },
-        {
           "anilist_id": 97996,
           "entry_id": "j5qc6l37cmm0cib",
           "release_id": "ckw1m3gfwr6bafo",
@@ -519996,20 +519024,6 @@
           "anilist_id": 9041,
           "entry_id": "gqmdn59jkq37h0v",
           "release_id": "i6y2rf8ytuf2693",
-          "source": "file",
-          "source_name": "NCOP.mkv"
-        },
-        {
-          "anilist_id": 101004,
-          "entry_id": "h6rol09qdslqfye",
-          "release_id": "lx1vblaace9yyib",
-          "source": "file",
-          "source_name": "NCOP.mkv"
-        },
-        {
-          "anilist_id": 101004,
-          "entry_id": "h6rol09qdslqfye",
-          "release_id": "pw6gf9muz5tyh49",
           "source": "file",
           "source_name": "NCOP.mkv"
         },
@@ -537138,14 +536152,7 @@
         {
           "anilist_id": 21853,
           "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E07.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "o6vk3i9yq551d68",
+          "release_id": "y26wkdtv8lbh9wa",
           "source": "file",
           "source_name": "To.Love-Ru.S00E07.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
         },
@@ -537166,14 +536173,7 @@
         {
           "anilist_id": 21853,
           "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E08.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "o6vk3i9yq551d68",
+          "release_id": "y26wkdtv8lbh9wa",
           "source": "file",
           "source_name": "To.Love-Ru.S00E08.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
         },
@@ -537194,14 +536194,7 @@
         {
           "anilist_id": 21853,
           "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E09.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "o6vk3i9yq551d68",
+          "release_id": "y26wkdtv8lbh9wa",
           "source": "file",
           "source_name": "To.Love-Ru.S00E09.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
         },
@@ -537222,14 +536215,7 @@
         {
           "anilist_id": 21853,
           "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E10.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "o6vk3i9yq551d68",
+          "release_id": "y26wkdtv8lbh9wa",
           "source": "file",
           "source_name": "To.Love-Ru.S00E10.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
         },
@@ -537250,14 +536236,7 @@
         {
           "anilist_id": 21853,
           "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E11.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "o6vk3i9yq551d68",
+          "release_id": "y26wkdtv8lbh9wa",
           "source": "file",
           "source_name": "To.Love-Ru.S00E11.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
         },
@@ -537278,14 +536257,7 @@
         {
           "anilist_id": 21853,
           "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E12.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "o6vk3i9yq551d68",
+          "release_id": "y26wkdtv8lbh9wa",
           "source": "file",
           "source_name": "To.Love-Ru.S00E12.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
         },
@@ -537298,118 +536270,6 @@
         }
       ],
       "key": "to.love-ru.s00e12.1080p.bluray.flac.2.0.x264-kitsune",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E13.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "o6vk3i9yq551d68",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E13.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 100659,
-          "entry_id": "edorge56v40w3qk",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E13.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        }
-      ],
-      "key": "to.love-ru.s00e13.1080p.bluray.flac.2.0.x264-kitsune",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E14.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "o6vk3i9yq551d68",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E14.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 100659,
-          "entry_id": "edorge56v40w3qk",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E14.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        }
-      ],
-      "key": "to.love-ru.s00e14.1080p.bluray.flac.2.0.x264-kitsune",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E15.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "o6vk3i9yq551d68",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E15.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 100659,
-          "entry_id": "edorge56v40w3qk",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E15.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        }
-      ],
-      "key": "to.love-ru.s00e15.1080p.bluray.flac.2.0.x264-kitsune",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E16.Multiplication.From.Front.to.Back.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 100659,
-          "entry_id": "edorge56v40w3qk",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E16.Multiplication.From.Front.to.Back.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 100659,
-          "entry_id": "edorge56v40w3qk",
-          "release_id": "8nbj6qpmwknvbm7",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E16.Multiplication.From.Front.to.Back.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        }
-      ],
-      "key": "to.love-ru.s00e16.multiplication.from.front.to.back.1080p.bluray.flac.2.0.x264-kitsune",
       "kind": "strict",
       "reason": "conflicting_identity_or_recommendation_level"
     },
@@ -579668,237 +578528,6 @@
     {
       "candidates": [
         {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 01 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 01 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "erairaws|gundam build divers re rise 01 1080p multiple subtitle",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 02 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 02 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "erairaws|gundam build divers re rise 02 1080p multiple subtitle",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 03 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 03 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "erairaws|gundam build divers re rise 03 1080p multiple subtitle",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 04 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 04 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "erairaws|gundam build divers re rise 04 1080p multiple subtitle",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 06 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 06 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "erairaws|gundam build divers re rise 06 1080p multiple subtitle",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 07 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 07 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "erairaws|gundam build divers re rise 07 1080p multiple subtitle",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 08 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 08 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "erairaws|gundam build divers re rise 08 1080p multiple subtitle",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 09 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 09 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "erairaws|gundam build divers re rise 09 1080p multiple subtitle",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 10 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 10 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "erairaws|gundam build divers re rise 10 1080p multiple subtitle",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 11 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 11 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "erairaws|gundam build divers re rise 11 1080p multiple subtitle",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "b2qqvor2yxzbb3v",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 13 [1080p][Multiple Subtitle].mkv"
-        },
-        {
-          "anilist_id": 110786,
-          "entry_id": "hnj1drcb96k09wl",
-          "release_id": "m3o55h6fcoz7sr1",
-          "source": "file",
-          "source_name": "[Erai-raws] Gundam Build Divers Re-Rise - 13 [1080p][Multiple Subtitle].mkv"
-        }
-      ],
-      "key": "erairaws|gundam build divers re rise 13 1080p multiple subtitle",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
           "anilist_id": 487,
           "entry_id": "clm90ptkv5btg2k",
           "release_id": "5hi92ynl6zhumsg",
@@ -609299,111 +607928,6 @@
     {
       "candidates": [
         {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "06dh12ba8te8vuk",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 08 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        },
-        {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "fcdow0nkogk0hdq",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 08 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        }
-      ],
-      "key": "kekkan|champignon no majo 08 webrip 1080p av1 multi subs alicia",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "06dh12ba8te8vuk",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 09 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        },
-        {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "fcdow0nkogk0hdq",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 09 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        }
-      ],
-      "key": "kekkan|champignon no majo 09 webrip 1080p av1 multi subs alicia",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "06dh12ba8te8vuk",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 10 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        },
-        {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "fcdow0nkogk0hdq",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 10 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        }
-      ],
-      "key": "kekkan|champignon no majo 10 webrip 1080p av1 multi subs alicia",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "06dh12ba8te8vuk",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 11 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        },
-        {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "fcdow0nkogk0hdq",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 11 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        }
-      ],
-      "key": "kekkan|champignon no majo 11 webrip 1080p av1 multi subs alicia",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "06dh12ba8te8vuk",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 12 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        },
-        {
-          "anilist_id": 185514,
-          "entry_id": "o2h7nrmduglxb38",
-          "release_id": "fcdow0nkogk0hdq",
-          "source": "file",
-          "source_name": "[Kekkan] Champignon no Majo - 12 (WebRip 1080p AV1 Multi-Subs Alicia).mkv"
-        }
-      ],
-      "key": "kekkan|champignon no majo 12 webrip 1080p av1 multi subs alicia",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
           "anilist_id": 435,
           "entry_id": "nrvp8h3fe3botqk",
           "release_id": "4x4g2cqvy2qndap",
@@ -619402,14 +617926,7 @@
         {
           "anilist_id": 21853,
           "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E07.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "o6vk3i9yq551d68",
+          "release_id": "y26wkdtv8lbh9wa",
           "source": "file",
           "source_name": "To.Love-Ru.S00E07.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
         },
@@ -619430,14 +617947,7 @@
         {
           "anilist_id": 21853,
           "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E08.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "o6vk3i9yq551d68",
+          "release_id": "y26wkdtv8lbh9wa",
           "source": "file",
           "source_name": "To.Love-Ru.S00E08.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
         },
@@ -619458,14 +617968,7 @@
         {
           "anilist_id": 21853,
           "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E09.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "o6vk3i9yq551d68",
+          "release_id": "y26wkdtv8lbh9wa",
           "source": "file",
           "source_name": "To.Love-Ru.S00E09.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
         },
@@ -619486,14 +617989,7 @@
         {
           "anilist_id": 21853,
           "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E10.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "o6vk3i9yq551d68",
+          "release_id": "y26wkdtv8lbh9wa",
           "source": "file",
           "source_name": "To.Love-Ru.S00E10.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
         },
@@ -619514,14 +618010,7 @@
         {
           "anilist_id": 21853,
           "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E11.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "o6vk3i9yq551d68",
+          "release_id": "y26wkdtv8lbh9wa",
           "source": "file",
           "source_name": "To.Love-Ru.S00E11.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
         },
@@ -619542,14 +618031,7 @@
         {
           "anilist_id": 21853,
           "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E12.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "o6vk3i9yq551d68",
+          "release_id": "y26wkdtv8lbh9wa",
           "source": "file",
           "source_name": "To.Love-Ru.S00E12.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
         },
@@ -619562,118 +618044,6 @@
         }
       ],
       "key": "kitsune|to love ru s00e12 1080p bluray flac 2 0 x264",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E13.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "o6vk3i9yq551d68",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E13.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 100659,
-          "entry_id": "edorge56v40w3qk",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E13.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        }
-      ],
-      "key": "kitsune|to love ru s00e13 1080p bluray flac 2 0 x264",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E14.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "o6vk3i9yq551d68",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E14.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 100659,
-          "entry_id": "edorge56v40w3qk",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E14.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        }
-      ],
-      "key": "kitsune|to love ru s00e14 1080p bluray flac 2 0 x264",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E15.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "o6vk3i9yq551d68",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E15.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 100659,
-          "entry_id": "edorge56v40w3qk",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E15.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        }
-      ],
-      "key": "kitsune|to love ru s00e15 1080p bluray flac 2 0 x264",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 21853,
-          "entry_id": "3az5acwnoy3n57i",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E16.Multiplication.From.Front.to.Back.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 100659,
-          "entry_id": "edorge56v40w3qk",
-          "release_id": "3baiefi4v7jws9o",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E16.Multiplication.From.Front.to.Back.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        },
-        {
-          "anilist_id": 100659,
-          "entry_id": "edorge56v40w3qk",
-          "release_id": "8nbj6qpmwknvbm7",
-          "source": "file",
-          "source_name": "To.Love-Ru.S00E16.Multiplication.From.Front.to.Back.1080p.BluRay.FLAC.2.0.x264-Kitsune.mkv"
-        }
-      ],
-      "key": "kitsune|to love ru s00e16 multiplication from front to back 1080p bluray flac 2 0 x264",
       "kind": "tolerant",
       "reason": "conflicting_identity_or_recommendation_level"
     },
@@ -741300,47 +739670,77 @@
   "changes": {
     "entries": {
       "added": [
-        "9m9nwes5gs3pk8y",
-        "lnag0lr2axv7gyh"
+        "42yv7resprho82h",
+        "8g90lvwu9v417l4",
+        "bo4z8bq2hlsko5u",
+        "fmqxar76qo8dlnz",
+        "jycjoy7w4yrddx0",
+        "lpjt5000ektjhu1",
+        "oqujq7vz6pw2h9r",
+        "sdnjjqkrk5x6spm",
+        "whvv7kvahyeso9i"
       ],
       "removed": []
     },
     "releases": {
       "added": [
-        "1yh749qwu5yr9l9",
-        "73g76q0k8lzo869",
-        "abv0uk2zbea0lgr",
-        "dmtr2eaitvcxed8",
-        "doy8rlc1n27f6v2",
-        "gyh3ssixhzdogkr",
-        "h6z6nmtnc6rmplk",
-        "hvn8qf05fnw3udi",
-        "ips4ofydywe31kr",
-        "iqeu1cgvgfz3ksl",
-        "ljupxluzh3mixyu",
-        "mlusqgg9mjgwdaj",
-        "n47un7vuhoy6fv7",
-        "rmi8j5s1zlhvmzq",
-        "semeb7h8aqkp1vh",
-        "voq076vhkl1sjo9"
+        "1cxe1023oj7re3p",
+        "1ue3au3cb1fb2g2",
+        "4xd302xtuehk065",
+        "68bzio7z40tj8vs",
+        "7be9zlgkelgqyug",
+        "9avjy34497661ab",
+        "b959a73fwccxd7q",
+        "beyav7wqrt3wh3i",
+        "bkk0mnmttr9qpm5",
+        "bo6jr5r33y6nu4r",
+        "buktupbp3ju5ujt",
+        "f0491n4hom5ck4l",
+        "ftyd3r6rb0vi1ie",
+        "h26vbnm4g52x1ie",
+        "irc7hu9gll0j3ie",
+        "iwbeo309ycqgr5f",
+        "j3p8mc2obkw7sg7",
+        "j6047u52bg890s4",
+        "kumrh89c2hlj474",
+        "n1xaqbm6ziq7mpq",
+        "nderiwp8qp2pymd",
+        "nkflgkbnnrvxy63",
+        "on4i7cwfisfgd6u",
+        "phkq3www0xuvmbd",
+        "qqv4ns9nmpk9lde",
+        "quirezo4joh2hfx",
+        "rg2auhtvosrhzrw",
+        "sosrg1e2eztuonn",
+        "t7izb3r045n7wr4",
+        "uy4dw6pxl5nczse",
+        "y26wkdtv8lbh9wa",
+        "y8lh1t9pmgr1h3u",
+        "z22njnb59rejv0v",
+        "zldlwiragzd7664"
       ],
       "removed": [
-        "5q87it1lfg01w8r",
-        "5qq4rpxwvdmgk8q",
-        "5u4kp9vnavewbee",
-        "6mi7ezcnh9nq673",
-        "6rugbeiq2zm29ov",
-        "8eqmipkarraixrr",
-        "a403gcxd4a27qfc",
-        "bzn7ke0aaafly2h",
-        "c7bs9otnquq6bt2",
-        "jmcje87icp6ds28",
-        "k0gxtsztnh58nr6",
-        "khvypazfofwve06",
-        "m0o8fgbjkskhmk1",
-        "miuz3gpiynx1t35",
-        "r34fx4qdsk6axw7",
-        "wmemsyl63hmdykl"
+        "06dh12ba8te8vuk",
+        "1tk7bjhktoesb9y",
+        "44e7b2oxwqwl3hl",
+        "7d950iv2qd8demh",
+        "9nkzl5g14hp7ad5",
+        "b2qqvor2yxzbb3v",
+        "bceoo4tk7fo51lz",
+        "bywgrf052fbz7cg",
+        "fcdow0nkogk0hdq",
+        "hd10d0e0ztge0k1",
+        "l01xmx4sk5qbz4a",
+        "lgbnamwg2egj8vo",
+        "lx1vblaace9yyib",
+        "m3o55h6fcoz7sr1",
+        "mpwziu92o2yhpz2",
+        "mwdooa2nqlqtto5",
+        "o6vk3i9yq551d68",
+        "pw6gf9muz5tyh49",
+        "q6zmcv41uue4lpw",
+        "sc78tkqyox45ulj",
+        "t3fhllig1493plx"
       ]
     }
   },
@@ -741348,26 +739748,26 @@
     "encoding": {
       "direct_buckets": {
         "bucket_count": 350,
-        "key_count": 21102,
-        "max_keys": 233,
-        "mean_keys": 60.29142857142857
+        "key_count": 21142,
+        "max_keys": 231,
+        "mean_keys": 60.40571428571429
       },
-      "direct_entries": 21102,
+      "direct_entries": 21142,
       "route_buckets": 259,
-      "source_bytes": 3002826,
-      "source_lines": 45208,
+      "source_bytes": 3011329,
+      "source_lines": 45300,
       "template_buckets": {
         "bucket_count": 259,
-        "key_count": 6581,
-        "max_keys": 126,
-        "mean_keys": 25.409266409266408
+        "key_count": 6600,
+        "max_keys": 125,
+        "mean_keys": 25.482625482625483
       },
-      "template_groups": 6581,
-      "tuple_chunks": 6789
+      "template_groups": 6600,
+      "tuple_chunks": 6807
     },
     "provenance": {
-      "strict_keys": 57067,
-      "tolerant_keys": 46417
+      "strict_keys": 57243,
+      "tolerant_keys": 46624
     },
     "stale_overrides": []
   }
