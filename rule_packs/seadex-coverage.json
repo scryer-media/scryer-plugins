@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.33",
-  "snapshot_sha256": "2cf920dfd99c17e6bd24511a86cb00cf2bdd35017e5f7da30990c44c92f76f1e",
+  "pack_version": "1.0.34",
+  "snapshot_sha256": "193834c279b0db992260b997164d0dcc5a8975e315b695202c77e25ad1d23d4f",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -14455,6 +14455,22 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "86yv9mrfonanxg1",
+      "file_sources": 12,
+      "release_id": "et4khr226781nkp",
+      "strict_keys": 12,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "86yv9mrfonanxg1",
+      "file_sources": 12,
+      "release_id": "vodxfdx5pzx9u1h",
+      "strict_keys": 12,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "871sy71pvczxr2q",
       "file_sources": 1,
       "release_id": "76wpzzhoxmlmak4",
@@ -25956,6 +25972,22 @@
       "release_id": "y1cx6z0ga09osh5",
       "strict_keys": 12,
       "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "faamxe9cgjey35t",
+      "file_sources": 13,
+      "release_id": "lrds312r4x6bqq5",
+      "strict_keys": 13,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "faamxe9cgjey35t",
+      "file_sources": 13,
+      "release_id": "r5n12evi89z38aa",
+      "strict_keys": 13,
+      "tolerant_keys": 0
     },
     {
       "alias_sources": 0,
@@ -38952,6 +38984,14 @@
     {
       "alias_sources": 0,
       "entry_id": "mbri3wc8srvac98",
+      "file_sources": 12,
+      "release_id": "wc3624hbs9r6v40",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "mbri3wc8srvac98",
       "file_sources": 1,
       "release_id": "wcmhkqmnl6dry7j",
       "strict_keys": 1,
@@ -39297,7 +39337,7 @@
       "alias_sources": 0,
       "entry_id": "mjadvwtb2knlftx",
       "file_sources": 24,
-      "release_id": "605zdamzrcgc7tm",
+      "release_id": "6saz7u9fc0dmn5l",
       "strict_keys": 24,
       "tolerant_keys": 24
     },
@@ -39305,7 +39345,7 @@
       "alias_sources": 0,
       "entry_id": "mjadvwtb2knlftx",
       "file_sources": 24,
-      "release_id": "lnwr5wpooxx17hl",
+      "release_id": "h4s6mfl3086bbqj",
       "strict_keys": 24,
       "tolerant_keys": 24
     },
@@ -52697,7 +52737,7 @@
       "alias_sources": 0,
       "entry_id": "u0lexhhj70k3bpp",
       "file_sources": 8,
-      "release_id": "t681feihrtpiyg1",
+      "release_id": "4bkxlalfhlk6xab",
       "strict_keys": 8,
       "tolerant_keys": 8
     },
@@ -52705,7 +52745,23 @@
       "alias_sources": 0,
       "entry_id": "u0lexhhj70k3bpp",
       "file_sources": 8,
-      "release_id": "y1g2a3h2tbr4nf3",
+      "release_id": "65ldxhu4mmsc01r",
+      "strict_keys": 8,
+      "tolerant_keys": 8
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "u0lexhhj70k3bpp",
+      "file_sources": 8,
+      "release_id": "cuzluv5gr3ib4gx",
+      "strict_keys": 8,
+      "tolerant_keys": 8
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "u0lexhhj70k3bpp",
+      "file_sources": 8,
+      "release_id": "w7vp3wfcl1jxdb2",
       "strict_keys": 8,
       "tolerant_keys": 8
     },
@@ -106748,6 +106804,150 @@
       "source_name": "Extras/[smol] Monogatari - S07 Owarimonogatari Second Season (Ge) - NCOP 03 - dark cherry mystery (BD 1080p HEVC Opus) [9D7B50BA].mkv"
     },
     {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "et4khr226781nkp",
+      "source_name": "RPG Real Estate - S01E01 - Welcome to RPG Real Estate! Room-Searching for the First Time! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "et4khr226781nkp",
+      "source_name": "RPG Real Estate - S01E02 - Troublesome Property! First Business Trip to the Dark Lord's Castle (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "et4khr226781nkp",
+      "source_name": "RPG Real Estate - S01E03 - For Real! Dragon, Ghost, Overwhelming Magic! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "et4khr226781nkp",
+      "source_name": "RPG Real Estate - S01E04 - Always Together! A Property Packed With Pets, Dreams, and Friendship! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "et4khr226781nkp",
+      "source_name": "RPG Real Estate - S01E05 - Summer! We Found a Great House for Wearing Swimsuits! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "et4khr226781nkp",
+      "source_name": "RPG Real Estate - S01E06 - A Melody for the Grim Reaper! We're All Friends! Let's Get Along! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "et4khr226781nkp",
+      "source_name": "RPG Real Estate - S01E07 - Doors, Doors, Doors! Open the Door to Summer Vacation! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "et4khr226781nkp",
+      "source_name": "RPG Real Estate - S01E08 - Wha! Finding a Dream Home Through Fortune Telling! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "et4khr226781nkp",
+      "source_name": "RPG Real Estate - S01E09 - Nyan! One More Deal Until We Meet Our Goal! Let's Make Our Wishes Come True at the Millennium Star Festival! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "et4khr226781nkp",
+      "source_name": "RPG Real Estate - S01E10 - Woes of Longevity! I Need a Sturdy House That I Can Live in for a Long Time! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "et4khr226781nkp",
+      "source_name": "RPG Real Estate - S01E11 - Fa, Let's Go Home Together (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "et4khr226781nkp",
+      "source_name": "RPG Real Estate - S01E12 - Thanks, Everyone! RPG Real Estate's New Journey Begins! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "vodxfdx5pzx9u1h",
+      "source_name": "RPG Fudousan 01.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "vodxfdx5pzx9u1h",
+      "source_name": "RPG Fudousan 02.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "vodxfdx5pzx9u1h",
+      "source_name": "RPG Fudousan 03.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "vodxfdx5pzx9u1h",
+      "source_name": "RPG Fudousan 04.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "vodxfdx5pzx9u1h",
+      "source_name": "RPG Fudousan 05.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "vodxfdx5pzx9u1h",
+      "source_name": "RPG Fudousan 06.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "vodxfdx5pzx9u1h",
+      "source_name": "RPG Fudousan 07.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "vodxfdx5pzx9u1h",
+      "source_name": "RPG Fudousan 08.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "vodxfdx5pzx9u1h",
+      "source_name": "RPG Fudousan 09.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "vodxfdx5pzx9u1h",
+      "source_name": "RPG Fudousan 10.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "vodxfdx5pzx9u1h",
+      "source_name": "RPG Fudousan 11.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "vodxfdx5pzx9u1h",
+      "source_name": "RPG Fudousan 12.mkv"
+    },
+    {
       "entry_id": "88q945d5gh508hw",
       "reason": "non_release_file",
       "release_id": "4r4bis63ss0j9us",
@@ -149640,6 +149840,162 @@
       "reason": "non_release_file",
       "release_id": "15me9i02as5inyg",
       "source_name": "Extras/KonoSuba.An.Explosion.on.This.Wonderful.World.NCOP02.1080p.BluRay.HEVC.Opus2.0-DemiHuman.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lrds312r4x6bqq5",
+      "source_name": "S01E01-Playback Part 2.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lrds312r4x6bqq5",
+      "source_name": "S01E02-Girl A.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lrds312r4x6bqq5",
+      "source_name": "S01E03-Wanting to Protect.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lrds312r4x6bqq5",
+      "source_name": "S01E04-Full of Memories.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lrds312r4x6bqq5",
+      "source_name": "S01E05-Secret Flower Garden.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lrds312r4x6bqq5",
+      "source_name": "S01E06-Falling In Love.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lrds312r4x6bqq5",
+      "source_name": "S01E07-An Outsider's Relation.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lrds312r4x6bqq5",
+      "source_name": "S01E08-Suit Yourself.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lrds312r4x6bqq5",
+      "source_name": "S01E09-Hero - Now's the Time for You to Become a Hero!.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lrds312r4x6bqq5",
+      "source_name": "S01E10-Stranger.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lrds312r4x6bqq5",
+      "source_name": "S01E11-The World Exist For the Sake of Two.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lrds312r4x6bqq5",
+      "source_name": "S01E12-Entrust Yourself to the Flow of Time.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lrds312r4x6bqq5",
+      "source_name": "S01E13-Playback Part 1.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "r5n12evi89z38aa",
+      "source_name": "S01E01-Playback Part 2.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "r5n12evi89z38aa",
+      "source_name": "S01E02-Girl A.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "r5n12evi89z38aa",
+      "source_name": "S01E03-Wanting to Protect.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "r5n12evi89z38aa",
+      "source_name": "S01E04-Full of Memories.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "r5n12evi89z38aa",
+      "source_name": "S01E05-Secret Flower Garden.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "r5n12evi89z38aa",
+      "source_name": "S01E06-Falling In Love.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "r5n12evi89z38aa",
+      "source_name": "S01E07-An Outsider's Relation.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "r5n12evi89z38aa",
+      "source_name": "S01E08-Suit Yourself.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "r5n12evi89z38aa",
+      "source_name": "S01E09-Hero - Now's the Time for You to Become a Hero!.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "r5n12evi89z38aa",
+      "source_name": "S01E10-Stranger.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "r5n12evi89z38aa",
+      "source_name": "S01E11-The World Exist For the Sake of Two.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "r5n12evi89z38aa",
+      "source_name": "S01E12-Entrust Yourself to the Flow of Time.mkv"
+    },
+    {
+      "entry_id": "faamxe9cgjey35t",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "r5n12evi89z38aa",
+      "source_name": "S01E13-Playback Part 1.mkv"
     },
     {
       "entry_id": "fadyabw4ujehul4",
@@ -739670,77 +740026,30 @@
   "changes": {
     "entries": {
       "added": [
-        "42yv7resprho82h",
-        "8g90lvwu9v417l4",
-        "bo4z8bq2hlsko5u",
-        "fmqxar76qo8dlnz",
-        "jycjoy7w4yrddx0",
-        "lpjt5000ektjhu1",
-        "oqujq7vz6pw2h9r",
-        "sdnjjqkrk5x6spm",
-        "whvv7kvahyeso9i"
+        "86yv9mrfonanxg1",
+        "faamxe9cgjey35t"
       ],
       "removed": []
     },
     "releases": {
       "added": [
-        "1cxe1023oj7re3p",
-        "1ue3au3cb1fb2g2",
-        "4xd302xtuehk065",
-        "68bzio7z40tj8vs",
-        "7be9zlgkelgqyug",
-        "9avjy34497661ab",
-        "b959a73fwccxd7q",
-        "beyav7wqrt3wh3i",
-        "bkk0mnmttr9qpm5",
-        "bo6jr5r33y6nu4r",
-        "buktupbp3ju5ujt",
-        "f0491n4hom5ck4l",
-        "ftyd3r6rb0vi1ie",
-        "h26vbnm4g52x1ie",
-        "irc7hu9gll0j3ie",
-        "iwbeo309ycqgr5f",
-        "j3p8mc2obkw7sg7",
-        "j6047u52bg890s4",
-        "kumrh89c2hlj474",
-        "n1xaqbm6ziq7mpq",
-        "nderiwp8qp2pymd",
-        "nkflgkbnnrvxy63",
-        "on4i7cwfisfgd6u",
-        "phkq3www0xuvmbd",
-        "qqv4ns9nmpk9lde",
-        "quirezo4joh2hfx",
-        "rg2auhtvosrhzrw",
-        "sosrg1e2eztuonn",
-        "t7izb3r045n7wr4",
-        "uy4dw6pxl5nczse",
-        "y26wkdtv8lbh9wa",
-        "y8lh1t9pmgr1h3u",
-        "z22njnb59rejv0v",
-        "zldlwiragzd7664"
+        "4bkxlalfhlk6xab",
+        "65ldxhu4mmsc01r",
+        "6saz7u9fc0dmn5l",
+        "cuzluv5gr3ib4gx",
+        "et4khr226781nkp",
+        "h4s6mfl3086bbqj",
+        "lrds312r4x6bqq5",
+        "r5n12evi89z38aa",
+        "vodxfdx5pzx9u1h",
+        "w7vp3wfcl1jxdb2",
+        "wc3624hbs9r6v40"
       ],
       "removed": [
-        "06dh12ba8te8vuk",
-        "1tk7bjhktoesb9y",
-        "44e7b2oxwqwl3hl",
-        "7d950iv2qd8demh",
-        "9nkzl5g14hp7ad5",
-        "b2qqvor2yxzbb3v",
-        "bceoo4tk7fo51lz",
-        "bywgrf052fbz7cg",
-        "fcdow0nkogk0hdq",
-        "hd10d0e0ztge0k1",
-        "l01xmx4sk5qbz4a",
-        "lgbnamwg2egj8vo",
-        "lx1vblaace9yyib",
-        "m3o55h6fcoz7sr1",
-        "mpwziu92o2yhpz2",
-        "mwdooa2nqlqtto5",
-        "o6vk3i9yq551d68",
-        "pw6gf9muz5tyh49",
-        "q6zmcv41uue4lpw",
-        "sc78tkqyox45ulj",
-        "t3fhllig1493plx"
+        "605zdamzrcgc7tm",
+        "lnwr5wpooxx17hl",
+        "t681feihrtpiyg1",
+        "y1g2a3h2tbr4nf3"
       ]
     }
   },
@@ -739748,26 +740057,26 @@
     "encoding": {
       "direct_buckets": {
         "bucket_count": 350,
-        "key_count": 21142,
+        "key_count": 21183,
         "max_keys": 231,
-        "mean_keys": 60.40571428571429
+        "mean_keys": 60.52285714285714
       },
-      "direct_entries": 21142,
+      "direct_entries": 21183,
       "route_buckets": 259,
-      "source_bytes": 3011329,
-      "source_lines": 45300,
+      "source_bytes": 3014270,
+      "source_lines": 45382,
       "template_buckets": {
         "bucket_count": 259,
-        "key_count": 6600,
+        "key_count": 6602,
         "max_keys": 125,
-        "mean_keys": 25.482625482625483
+        "mean_keys": 25.49034749034749
       },
-      "template_groups": 6600,
-      "tuple_chunks": 6807
+      "template_groups": 6602,
+      "tuple_chunks": 6809
     },
     "provenance": {
-      "strict_keys": 57243,
-      "tolerant_keys": 46624
+      "strict_keys": 57288,
+      "tolerant_keys": 46632
     },
     "stale_overrides": []
   }

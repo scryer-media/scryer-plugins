@@ -119,6 +119,8 @@ Bstudio.apartment.good.lighting.angel.included.s01e11.to.camp.1080p.bluray.remux
 
 Btanaka-kun.is.always.listless.s01e02.apprenticeship.application.1080p.bluray.remux.avc.flac.2.0-nan0
 
+Btatsuki fujimoto 17-26 - s01e06 - woke-up-as-a-girl syndrome - (bd 1080p dd+ x265) [38148c15] [mira]
+
 Bthat.time.i.got.reincarnated.as.a.slime.s02e13.the.visitors.1080p.bluray.remux.avc.flac.2.0-crucible
 
 Bthe idaten deities know only peace - s01e07 - performance (bd 1080p flac x265) [161f31ce] [kawatare]
@@ -224,6 +226,8 @@ Lrascal does not dream of bunny girl senpai - nced c (bdrip 1080p hevc opus e-ac
 Lrascal does not dream of bunny girl senpai - nced d (bdrip 1080p hevc opus e-ac-3) [c7a6453a] [pyon]
 
 Lrascal does not dream of bunny girl senpai - nced e (bdrip 1080p hevc opus e-ac-3) [e0263367] [pyon]
+
+Ltatsuki fujimoto 17-26 - s01e06 - woke-up-as-a-girl syndrome - (bd 1080p opus av1) [e67c9c49] [mira]
 
 Lthe idaten deities know only peace - s01e11 - smells fishy (bd 1080p opus av1) [2e63b0f2] [tasokare]
 
@@ -339,6 +343,8 @@ Bpersona 4 the golden animation s01e05 lets go get it! get pumped! [bluray-1080p
 Brascal does not dream of a knapsack kid (2023) (bdrip 1080p hevc opus) [dual-audio] [b83b4815] [arid]
 
 Brecovery.of.an.mmo.junkie.s01e06.i'm.so.embarrassed.i.could.die!.1080p.bluray.remux.avc.flac.2.0-nan0
+
+Brpg real estate - s01e06 - a melody for the grim reaper! we're all friends! let's get along! (unholy)
 
 Bshaman king special 4 - kanashimi no katachi ~hao densetsu~ (dvd 576p x264 10bit ac3) [peachflavored]
 
@@ -784,6 +790,8 @@ Bromantic.killer.s01e02.its.time.for.children.to.go.to.sleep.1080p.nf.web-dl.ddp
 
 Bromantic.killer.s01e06.a.reincarnated-in-another-world.date.1080p.nf.web-dl.ddp5.1.dv.hdr.h.265-kitsune
 
+Brpg real estate - s01e02 - troublesome property! first business trip to the dark lord's castle (unholy)
+
 Bspace.brothers.s01ep03.the.man.with.the.advantage.and.the.running.female.doctor.1080p.remux.avc.flac2.0
 
 Bstar.driver.takuto.of.the.radiance.s01e12.a.kiss.through.the.glass.1080p.bluray.remux.avc.flac.2.0-nan0
@@ -875,8 +883,6 @@ Lmobile.suit.gundam.seed.special.edition.i.the.empty.battlefield.2004.1080p.blur
 Lmy home hero (2023) - s01e04 - 004 - the world of violence [webdl-1080p][8bit][x264][aac 2.0][ja+en]-cw
 
 Lmy home hero (2023) - s01e12 - 012 - the current happiness [webdl-1080p][8bit][x264][aac 2.0][ja+en]-cw
-
-Ltatsuki.fujimoto.17-26.s01e07.nayuta.of.the.prophecy.1080p.amzn.web-dl.dual.ddp5.1.h.264.msubs-toonshub
 
 Lthe idaten deities know only peace - s01e02 - the black south (bd 1080p opus av1) [b5e3a142] [tasokare]
 
@@ -1073,8 +1079,6 @@ Lmazinger.z.s01e89.its.now.or.never.miracle.at.4000.meters.underground.1080p.blu
 
 Lmysterious.disappearances.s01e05.underwear.snacks.and.scarlet.clothes.1080p.cr.web-dl.aac2.0.h.264-varyg
 
-Ltatsuki.fujimoto.17-26.s01e02.sasaki.stopped.a.bullet.1080p.amzn.web-dl.dual.ddp5.1.h.264.msubs-toonshub
-
 Lthe seven deadly sins - s05e11 - the one who stands against a god (hi10 1080p nf dual audio webrip -ks-)
 
 Lthe seven deadly sins - s05e21 - what the witch had always wanted (hi10 1080p nf dual audio webrip -ks-)
@@ -1165,6 +1169,8 @@ Brequiem.of.the.rose.king.s01e11.that.is.my.my.punishment.1080p.bluray.remux.avc
 Brequiem.of.the.rose.king.s01e24.requiem.of.the.rose.king.1080p.bluray.remux.avc.truehd.5.1.dual.audio-iba
 
 Bromantic.killer.s01e01.why.is.there.so.much.legalese.in.magic.1080p.nf.web-dl.ddp5.1.dv.hdr.h.265-kitsune
+
+Brpg real estate - s01e04 - always together! a property packed with pets, dreams, and friendship! (unholy)
 
 Bsasaki.and.miyano.2022.s01e11.what.do.i.do.about.these.feelings.bluray.1080p.remux.flac2.0.h.264-lys1th3a
 
@@ -1625,8 +1631,6 @@ Linazuma eleven - outer code - story 02 - sun garden's light and shadow 1080p bd
 Lmysterious.disappearances.s01e02.schoolhouse.drool.and.an.apartment.wife.1080p.cr.web-dl.aac2.0.h.264-varyg
 
 Lscott.pilgrim.takes.off.s01e01.scott.pilgrims.precious.little.life.1080p.bluray.remux.avc.dts-hd.ma5.1-nan0
-
-Ltatsuki.fujimoto.17-26.s01e06.woke-up-as-a-girl.syndrome.1080p.amzn.web-dl.dual.ddp5.1.h.264.msubs-toonshub
 
 Lthe.misfit.of.demon.king.academy.s02e19.the.great.demon.king.drills.1080p.cr.web-dl.aac2.0.h.264.dual-varyg
 
@@ -2349,6 +2353,8 @@ Bmagical girl lyrical nanoha (2015) - s04e03 - true feelings - 1080p bluray remu
 Bour.last.crusade.or.the.rise.of.a.new.world.s01e11.beginning.the.witch.hunt.1080p.bluray.remux.avc.flac.2.0-nan0
 
 Bparallel world pharmacy (2022) s01e11v2 the miracle at l'estacque (1080p web-dl h264 ddp 2.0 dual-audio) [cytox]
+
+Brpg real estate - s01e10 - woes of longevity! i need a sturdy house that i can live in for a long time! (unholy)
 
 Bselection project (2021) - s01e09 - my self in the seashell - 1080p bluray remux avc lpcm 2.0 [japanese] - b00ba
 
@@ -4009,6 +4015,8 @@ Bcreditless op
 
 Bnced #02 ver.
 
+Bs01e02-girl a
+
 Bs01e02-shadow
 
 Bs01e03-payday
@@ -4441,11 +4449,15 @@ Bour.love.has.always.been.10.centimeters.apart.s01e01.spring.first.love.color.of
 
 Bparallel world pharmacy (2022) s01e01v2 a reincarnated pharmacologist and a parallel world (1080p web-dl h264 ddp 2.0 dual-audio) [cytox]
 
+Btatsuki fujimoto 17-26 - s01e01 - a couple clucking chickens were still kickin' in the schoolyard - (bd 1080p dd+ x265) [a32c8ecd] [mira]
+
 Btesla note (2021) - s01e07 - a consideration on hunger, and the readiness to face it - 1080p bluray remux avc lpcm 2.0 [japanese] - b00ba
 
 Bthe.daily.life.of.a.middle-aged.online.shopper.in.another.world.s01e03.a.small.house.in.a.big.forest.1080p.bluray.remux.avc.flac.2.0-nan0
 
 L[hchcsen] aim for the top 1! gunbuster s00e13 new science lesson 2 - the core of the milky way and black holes [bd 1080p x264 hi10p flac]
+
+Ltatsuki fujimoto 17-26 - s01e01 - a couple clucking chickens were still kickin' in the schoolyard - (bd 1080p opus av1) [91db5481] [mira]
 `,
   "138": `
 B[underwater] panty and stocking with garterbelt 09v2 - if the angels wore swimsuits - ghost the phantom of daten city (bd 720p) [968a94b6]
@@ -4707,8 +4719,6 @@ Byamada's first time b gata h kei s01e02 i know! let's go to the pool. you want 
 Ldanganronpa.3.the.end.of.hopes.peak.academy.side.despair.s00e01.the.end.of.hopes.peak.academy.side.hope.1080p.cr.web-dl.aac2.0.x264-trollorange
 
 Lgoblin slayer (2023) - s02e03 - the training grounds on the outskirts of town - 1080p bdrip avc [japanese flac 2.0 + english aac 2.0] - sai0nji
-
-Ltatsuki.fujimoto.17-26.s01e01.a.couple.clucking.chickens.were.still.kickin.in.the.schoolyard.1080p.amzn.web-dl.dual.ddp5.1.h.264.msubs-toonshub
 `,
   "144": `
 Ba.salad.bowl.of.eccentrics.s01e10.multiplying.princesses.gambler.lady.knight.friendship.between.girls.(lol).1080p.bluray.remux.avc.flac.2.0-nan0
@@ -4722,6 +4732,8 @@ Bmore.than.a.married.couple.but.not.lovers.s01e05.more.than.a.nosebleed.but.less
 Bmysterious girlfriend x (2012) - s01e11 - mysterious cultural festival - 1080p bluray hybrid remux avc dts-hdma 2.0 [japanese + english] - b00ba
 
 Bour.love.has.always.been.10.centimeters.apart.s01e04.study.abroad.map.of.the.future.color.of.the.heart.1080p.bluray.remux.flac2.0.h.264-crucible
+
+Brpg real estate - s01e09 - nyan! one more deal until we meet our goal! let's make our wishes come true at the millennium star festival! (unholy)
 
 Bthe.strongest.sage.with.the.weakest.crest.s01e12.the.strongest.sage.goes.on.a.journey.again.1080p.bluray.remux.dual-audio.flac2.0.h.264-crucible
 
@@ -4872,6 +4884,8 @@ Bs01e06-fear six
 Bs01e07-the dawn
 
 Bs01e08-new home
+
+Bs01e10-stranger
 
 Bs01e12-together
 
@@ -5497,6 +5511,8 @@ Bs01e06-knife vs. saw
 
 Bs01e07-evil's shadow
 
+Bs01e08-suit yourself
+
 Bs01e09-deep memories
 
 Bs01e10-learn lessons
@@ -5611,6 +5627,8 @@ Bs01e02-farewell, tokyo
 
 Bs01e06-cry of the worm
 
+Bs01e06-falling in love
+
 Bs01e08-attack on gigas
 
 Bs01e08-produce results
@@ -5664,6 +5682,8 @@ Bjapanese blu-ray promos
 Bs01e03-adult event time
 
 Bs01e03-butterfly effect
+
+Bs01e04-full of memories
 
 Bs01e05-those who follow
 
@@ -5800,6 +5820,8 @@ Bnoragami - 02 - snow-like
 Bs01e01-powerful skill set
 
 Bs01e02-the wandering sage
+
+Bs01e03-wanting to protect
 
 Bs01e04-a creeping madness
 
@@ -5965,6 +5987,8 @@ Bs01e05-as swift as the wind
 
 Bs01e05-reveal your feelings
 
+Bs01e05-secret flower garden
+
 Bs01e08-a little girl's wish
 
 Bs01e09-the collapsed dragon
@@ -6122,6 +6146,8 @@ Bs01e04-what i see in that eye
 Bs01e05-the day of grand magic
 
 Bs01e06-numbers without theory
+
+Bs01e07-an outsider's relation
 
 Bs01e07-the hedonistic arachne
 
@@ -8047,6 +8073,8 @@ Bs01e08-i want to watch fireworks together!
 
 Bs01e11-come and catch the me from that day
 
+Bs01e11-the world exist for the sake of two
+
 Bs01e45-the decisive attack! kisara dances!
 
 Btoonami dbz crtics agree promo [caboosejr]
@@ -8221,6 +8249,8 @@ Bkaiju no. 8 - s02e11 - second wave (unholy)
 Bnoragami aragoto - 02 - one of her memories
 
 Bs01e03-i want to go on a first date, senpai
+
+Bs01e12-entrust yourself to the flow of time
 
 Bs01op-koko de ikiteru [mary x jon-yakitory]
 
@@ -10237,6 +10267,8 @@ Blook.back.2024.1080p.bluray.dd+5.1.atmos.x265-kawatare
 Bmomoiro sisters ed (dvd 480p x264 ac3) [peachflavored]
 
 Bnoragami aragoto - 09 - the sound of a thread snapping
+
+Bs01e09-hero - now's the time for you to become a hero!
 
 Bs01e11-the fists of betrayal! takeda's sorrowful past!
 
@@ -12290,6 +12322,8 @@ Brelife.s00e06.date.1080p.bluray.remux.flac2.0.h.264-rigafterme
 Briding bean - color art [bd.1080p] [iznjie biznjie] [3a0d5e0a]
 
 Briding bean - usbd menu [bd.1080p] [iznjie biznjie] [47f1aef5]
+
+Brpg real estate - s01e11 - fa, let's go home together (unholy)
 
 Bs01e01-science-types fell in love, so they tried to analyze it
 
@@ -18014,6 +18048,8 @@ B[fle] tensei shitara slime datta ken - s02e03 - paradise, once more [82b1f43e]
 
 B[flugel] kaguya-sama wa kokurasetai - s03 - pv (bd 1080p hevc opus) [1147ea7c]
 
+B[getittwisted] fire force - s02e07v2 [bd 1080p avc opus dual-audio] [be468c5a]
+
 B[getittwisted] flcl progressive (2018) v2 [bd remux 1080p avc flac] [7130a924]
 
 B[getittwisted] space patrol luluco - nced [bd remux 1080p avc flac] [f240b087]
@@ -18877,6 +18913,8 @@ Botaku.elf.s01e07.the.aroma.of.the.town.1080p.bluray.remux.flac2.0.h.264-crucibl
 
 Bragna.crimson.s01e10.stakes.and.cooperation.1080p.bluray.remux.avc.flac.2.0-nan0
 
+Brpg real estate - s01e03 - for real! dragon, ghost, overwhelming magic! (unholy)
+
 Bsasaki.and.miyano.2022.s01e06.feelings.bluray.1080p.remux.flac2.0.h.264-lys1th3a
 
 Bscar.on.the.praeter.s01e13.hero.of.akatsuki.1080p.bluray.remux.avc.flac.2.0-nan0
@@ -19310,6 +19348,10 @@ Bstrike witches s02 nced (bd 1080p x264 10bit - flac 2.0 x11) [quetzal] [0b00c3e
 
 Bstrike witches s02 nced e12 (bd 1080p x264 10bit - flac 2.0) [quetzal] [faab9e69]
 
+Btatsuki fujimoto 17-26 - s01e04 - shikaku - (bd 1080p dd+ x265) [483cbe93] [mira]
+
+Btatsuki fujimoto 17-26 - s01e08 - sisters - (bd 1080p dd+ x265) [b5333769] [mira]
+
 Bthe.kingdoms.of.ruin.s01e05.joy.to.the.world.1080p.bluray.remux.avc.flac.2.0-nan0
 
 Bthe.kingdoms.of.ruin.s01e06.the.witch.doroka.1080p.bluray.remux.avc.flac.2.0-nan0
@@ -19509,6 +19551,10 @@ Lsand.land.the.series.s01e12.the.final.battle.1080p.dsnp.web-dl.ddp5.1.h.264-var
 Lserial experiments lain - s01e06 - kids [1080p bluray flac 2.0 x264] [patchedtab]
 
 Lshingeki no bahamut - 02 - escape of levian [bd][1080p][x264][flac][eng-sub]-df68
+
+Ltatsuki fujimoto 17-26 - s01e04 - shikaku - (bd 1080p opus av1) [004e3dc2] [mira]
+
+Ltatsuki fujimoto 17-26 - s01e08 - sisters - (bd 1080p opus av1) [bb94510f] [mira]
 
 Lthe.boy.and.the.heron.2023.1108p.uhd.bluray.sdr.dual-audio.ddp5.1.atmos.x265-stye
 
@@ -21283,6 +21329,8 @@ Bprivate.tutor.to.the.dukes.daughter.s01e08.repack.1080p.bluray.opus2.0.x265-hea
 
 Brecovery.of.an.mmo.junkie.s01e08.one.step.forward.1080p.bluray.remux.avc.flac.2.0-nan0
 
+Brpg real estate - s01e08 - wha! finding a dream home through fortune telling! (unholy)
+
 Bsasaki.and.miyano.2022.s01e02.someone.i.like.bluray.1080p.remux.flac2.0.h.264-lys1th3a
 
 Bsasaki.and.miyano.2022.s01e12.just.beginning.bluray.1080p.remux.flac2.0.h.264-lys1th3a
@@ -21684,6 +21732,8 @@ Bsky wizards academy s01e12 2015 1080p bluray hybrid-remux avc truehd 5.1 dual a
 
 Bspace.brothers.s01ep35.from.the.little.corner.of.a.big.facility.1080p.remux.avc.flac2.0
 
+Btatsuki fujimoto 17-26 - s01e03 - love is blind - (bd 1080p dd+ x265) [461aee0b] [mira]
+
 Bthe.little.lies.we.all.tell.s01e02.school.festival.1080p.bluray.remux.avc.flac.2.0-nan0
 
 Bthe.little.lies.we.all.tell.s01e09.find.fuku-chan!.1080p.bluray.remux.avc.flac.2.0-nan0
@@ -21839,6 +21889,8 @@ Lshingeki no bahamut - 05 - rescue in sword valley [bd][1080p][x264][flac][eng-s
 Lshingeki no bahamut - 10 - helheim - land of lies [bd][1080p][x264][flac][eng-sub]-df68
 
 Lshingeki no bahamut - 11 - all roads lead to abos [bd][1080p][x264][flac][eng-sub]-df68
+
+Ltatsuki fujimoto 17-26 - s01e03 - love is blind - (bd 1080p opus av1) [58ecb3cd] [mira]
 
 Lto your eternity - s02.e05 - the holy man's voyage 1080p bdrip x265 flac 2.0 kira [sev]
 
@@ -22181,10 +22233,6 @@ Lrequiem of the rose king - s01e17 - because god has chosen this bloody demon we
 
 Lserial experiments lain - s01e10 - love [1080p repack bluray flac 2.0 x264] [patchedtab]
 
-Ltatsuki.fujimoto.17-26.s01e04.shikaku.1080p.amzn.web-dl.dual.ddp5.1.h.264.msubs-toonshub
-
-Ltatsuki.fujimoto.17-26.s01e08.sisters.1080p.amzn.web-dl.dual.ddp5.1.h.264.msubs-toonshub
-
 Lthe seven deadly sins - s05e16 - the final battle (hi10 1080p nf dual audio webrip -ks-)
 
 Lthe seven deadly sins - s05e22 - a taste of chaos (hi10 1080p nf dual audio webrip -ks-)
@@ -22359,6 +22407,8 @@ Bphi-brain.puzzle.of.god.s02e02.darkness.of.the.heart.1080p.bluray.remux.avc.fla
 Bphi-brain.puzzle.of.god.s03e09.lets.go.to.that.place.1080p.bluray.remux.avc.flac.2.0-nan0
 
 Bromantic.killer.s01e10.other.way.around.dummy.1080p.nf.web-dl.ddp5.1.dv.hdr.h.265-kitsune
+
+Brpg real estate - s01e05 - summer! we found a great house for wearing swimsuits! (unholy)
 
 Bsarazanmai s01e01 i want to connect but i want to lie [bluray-1080p remux-h264]-lazyremux
 
@@ -22736,6 +22786,8 @@ Brecovery.of.an.mmo.junkie.s01e10.on.a.moonlit.evening.1080p.bluray.remux.avc.fl
 
 Brequiem.of.the.rose.king.s01e18.your.name.1080p.bluray.remux.avc.truehd.5.1.dual.audio-iba
 
+Brpg real estate - s01e07 - doors, doors, doors! open the door to summer vacation! (unholy)
+
 Bsarazanmai s01e02 i want to connect but i want to take [bluray-1080p remux-h264]-lazyremux
 
 Bselector.infected.wixoss.s01e01.this.miracle.trembles.1080p.bluray.remux.avc.flac.2.0-nan0
@@ -22751,6 +22803,8 @@ Bshadows.house.s01e01.the.shadow.and.her.doll.repack.1080p.blu-ray.remux.avc.fla
 Bspace.brothers.s01ep01.little.brother.hibito.and.big.brother.mutta.1080p.remux.avc.flac2.0
 
 Btanaka-kun.is.always.listless.s01e05.tanaka-kun's.day.1080p.bluray.remux.avc.flac.2.0-nan0
+
+Btatsuki fujimoto 17-26 - s01e05 - mermaid rhapsody - (bd 1080p dd+ x265) [7f507cef] [mira]
 
 Bthe.boy.and.the.heron.2024.2160p.uhd.blu-ray.remux.dv.hdr.hevc.truehd.atmos.7.1-cinephiles
 
@@ -22901,6 +22955,8 @@ Lpop.team.epic.sp03.pop.team.epicrimson.female.version.1080p.bluray.opus2.0.h.26
 Lsand.land.the.series.s01e05.the.terrifying.insect.men.1080p.dsnp.web-dl.ddp5.1.h.264-varyg
 
 Lserial experiments lain - s01e11 - infornography [1080p bluray flac 2.0 x264] [patchedtab]
+
+Ltatsuki fujimoto 17-26 - s01e05 - mermaid rhapsody - (bd 1080p opus av1) [8be91df6] [mira]
 
 Lthe seven deadly sins - s05e06 - confront despair!! (hi10 1080p nf dual audio webrip -ks-)
 
@@ -23068,6 +23124,8 @@ Brecovery.of.an.mmo.junkie.s01e02.we.don't.know.a.thing.1080p.bluray.remux.avc.f
 Brecovery.of.an.mmo.junkie.s01e04.like.a.maiden.in.love.1080p.bluray.remux.avc.flac.2.0-nan0
 
 Brosario to vampire (pantsu kaitouhen de chuu~) [bdrip 1920x1080 x264 flac] [exp] [d574e2be]
+
+Brpg real estate - s01e12 - thanks, everyone! rpg real estate's new journey begins! (unholy)
 
 Bsarazanmai s01e06 i want to connect so im not giving up [bluray-1080p remux-h264]-lazyremux
 
@@ -24032,8 +24090,6 @@ Lrequiem of the rose king - s01e03 - i am the shadow, the darkness behind the li
 
 Lshingeki no bahamut - 09 - decision in the wailing woods [bd][1080p][x264][flac][eng-sub]-df68
 
-Ltatsuki.fujimoto.17-26.s01e03.love.is.blind.1080p.amzn.web-dl.dual.ddp5.1.h.264.msubs-toonshub
-
 Lthe idaten deities know only peace - s01e08 - idaten (bd 1080p opus av1) [bea6630a] [tasokare]
 
 Lthe idaten deities know only peace - s01e10 - demons (bd 1080p opus av1) [53744d31] [tasokare]
@@ -24482,6 +24538,8 @@ Btanaka-kun.is.always.listless.s01e07.tanaka-kun's.valentine.1080p.bluray.remux.
 
 Btanaka-kun.is.always.listless.s01e12.tanaka-kun's.happiness.1080p.bluray.remux.avc.flac.2.0-nan0
 
+Btatsuki fujimoto 17-26 - s01e07 - nayuta of the prophecy - (bd 1080p dd+ x265) [8256f922] [mira]
+
 Bthat.time.i.got.reincarnated.as.a.slime.s02e24.octagram.1080p.bluray.remux.avc.flac.2.0-crucible
 
 Bthe future diary - s00e02 - ova redial (bd remux 1080p x264 8-bit flac) [dual audio] [blackrose]
@@ -24625,6 +24683,8 @@ Lrequiem of the rose king - s00e01 - part one digest - meetings and partings web
 Lshingeki no bahamut - 06 - anatae part 1 - legendary saint [bd][1080p][x264][flac][eng-sub]-df68
 
 Lshingeki no bahamut - 07 - anatae part 2 - the storm rages [bd][1080p][x264][flac][eng-sub]-df68
+
+Ltatsuki fujimoto 17-26 - s01e07 - nayuta of the prophecy - (bd 1080p opus av1) [0f29bed1] [mira]
 
 Lthe seven deadly sins - s05e10 - the salvation of the sun (hi10 1080p nf dual audio webrip -ks-)
 
@@ -24809,6 +24869,8 @@ Bstar.driver.takuto.of.the.radiance.s01e24.the.eastern.maiden.1080p.bluray.remux
 
 Btanaka-kun.is.always.listless.s01e01.tanaka-kun.and.ohta-kun.1080p.bluray.remux.avc.flac.2.0-nan0
 
+Btatsuki fujimoto 17-26 - s01e02 - sasaki stopped a bullet - (bd 1080p dd+ x265) [92ceda75] [mira]
+
 Bthe.vampire.dies.in.no.time.s02e02.from.tokyo.to.neo-bayside.1080p.bluray.remux.avc.flac.2.0-nan0
 
 Btiger.and.bunny.s01e04.fear.is.often.greater.than.the.danger.1080p.bluray.remux.avc.flac.2.0-nan0
@@ -24917,7 +24979,7 @@ Lsand.land.the.series.s01e08.operation.sneak.into.the.capital.1080p.dsnp.web-dl.
 
 Lshingeki no bahamut - 08 - anatae part 3 - beyond the storm [bd][1080p][x264][flac][eng-sub]-df68
 
-Ltatsuki.fujimoto.17-26.s01e05.mermaid.rhapsody.1080p.amzn.web-dl.dual.ddp5.1.h.264.msubs-toonshub
+Ltatsuki fujimoto 17-26 - s01e02 - sasaki stopped a bullet - (bd 1080p opus av1) [69654872] [mira]
 
 Lthe idaten deities know only peace - s01e01 - peacetime (bd 1080p opus av1) [7a5d48a4] [tasokare]
 
@@ -25077,6 +25139,8 @@ Bphi-brain.puzzle.of.god.s03e22.thats.why.you.mustn't.hesitate.1080p.bluray.remu
 Brequiem.of.the.rose.king.s01e01.wars.of.the.roses.1080p.bluray.remux.avc.truehd.5.1.dual.audio-iba
 
 Bromantic.killer.s01e03.my.life.has.become.a.dating.sim.1080p.nf.web-dl.ddp5.1.dv.hdr.h.265-kitsune
+
+Brpg real estate - s01e01 - welcome to rpg real estate! room-searching for the first time! (unholy)
 
 Bsarazanmai s01e08 i want to connect but we'll never meet again [bluray-1080p remux-h264]-lazyremux
 
@@ -25631,7 +25695,7 @@ strict_template_routes := {
   "151": `{"B\tfailure frame i became the strongest and annihilated everything with low-level spells (hazurewaku) s§e§ § §p bluray remux avc aac §.§ dual audio -zr-":[["01","","2024","1080","2","0"],["\n05\n08\n09\n10\n"]],"B\tfailure frame i became the strongest and annihilated everything with low-level spells (hazurewaku) s§e§ § §p bluray remux avc ac§ §.§ dual audio -zr-":[["01","","2024","1080","3","2","0"],["\n01\n02\n03\n04\n06\n07\n11\n12\n"]]}`,
   "154": `{"B\tthe reincarnation of the strongest exorcist in another world (saikyou onmyouji no isekai tenseiki) s§e§ § §p bluray remux avc truehd §.§ dual audio -zr-":[["01","","2023","1080","5","1"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]]}`,
   "157": `{"B\tlucifer and the biscuit hammer (§) - s§e§ - amamiya yuuhi and the beast knights (part §) - §p bluray remux avc [japanese lpcm §.§ + english aac §.§] - b§ba":[["2022","01","","","1080","2","0","2","0","00"],["\n07,1\n08,2\n"]]}`,
-  "16": `{"B\tcm - bd \u0026 cd §":[[""],["\n1\n2\n"]]}`,
+  "16": `{"B\tcm - bd \u0026 cd §":[[""],["\n1\n2\n"]],"L\trpg fudousan §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]]}`,
   "160": `{"B\tthe fruit of evolution - before i knew it, my life had it made (shinka no mi - shiranai uchi ni kachigumi jinsei) s§e§ § §p web-dl avc aac §.§ dual audio -zr-":[["01","","2021","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]]}`,
   "167": `{"B\tvermeil in gold (kinsou no vermeil gakeppuchi majutsushi wa saikyou no yakusai to mahou sekai o tsukisusumu) s§e§ § §p bluray remux avc dts hd ma §.§ dual audio -zr-":[["01","","2022","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]]}`,
   "17": `{"L\t[starbez] nced§":[[""],["\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\t[starbez] ncop§":[[""],["\n01\n02\n"]],"L\taudio cd cm - §":[[""],["\n01\n02\n"]],"L\tbd \u0026 dvd cm - §":[[""],["\n01\n02\n"]],"L\tshangri-la s§e§":[["01",""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"X\t[starbez] nced§":[[""],["\n01\n02\n"]],"X\tbdmv menu vol.§":[[""],["\n1\n2\n3\n4\n5\n6\n"]],"X\tinformation - §":[[""],["\n01\n02\n"]],"X\ttoonami usa op§":
@@ -25643,7 +25707,7 @@ strict_template_routes := {
   "193": `{"B\tthe misfit of demon king academy (maou gakuin no futekigousha shijou saikyou no maou no shiso, tensei shite shison-tachi no gakkou e kayou) s§e§ § §p bluray remux avc aac §.§ dual audio -zr-.":[["02","","2023","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]]}`,
   "20": `{"B\tbdmv menu - vol. §":[[""],["\n1\n2\n3\n4\n5\n6\n"]],"B\tfuni dbz ed§ (§-§)":[["","",""],["\n1,1,107\n2,108,199\n3,200,291\n"]],"B\tfuni dbz op§ (§-§)":[["","",""],["\n1,1,107\n2,108,199\n3,200,291\n"]],"X\t[sristi] shiki - §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n"]],"X\tminami-ke okaeri §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]]}`,
   "21": `{"B\t[nced§] freek'n you":[[""],["\n1\n2\n"]],"B\ttoonami usa promo §":[[""],["\n1\n3\n"]],"L\tchibi revengers - §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"X\tminami-ke okawari §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]]}`,
-  "22": `{"L\tlove lab - nced§ [§]":[["",""],["\n1,231bab69\n2,cd1e3036\n"]],"X\t[reza] oreimo - s§e§":[["",""],["\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n02,01\n02,02\n02,03\n02,04\n02,05\n02,06\n02,07\n02,08\n02,09\n02,10\n02,11\n02,12\n02,13\n"]],"X\t[sristi] shiki - §.§":[["","5"],["\n20\n21\n"]]}`,
+  "22": `{"B\ts§e§-playback part §":[["01","",""],["\n01,2\n13,1\n"]],"L\tlove lab - nced§ [§]":[["",""],["\n1,231bab69\n2,cd1e3036\n"]],"X\t[reza] oreimo - s§e§":[["",""],["\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n02,01\n02,02\n02,03\n02,04\n02,05\n02,06\n02,07\n02,08\n02,09\n02,10\n02,11\n02,12\n02,13\n"]],"X\t[sristi] shiki - §.§":[["","5"],["\n20\n21\n"]]}`,
   "23": `{"B\tdbz § nep + dbz m§ cm":[["",""],["\n009,1\n037,2\n038,2\n039,2\n052,3\n053,3\n054,3\n079,4\n080,4\n081,4\n097,5\n098,5\n099,5\n128,6\n129,6\n130,6\n145,7\n146,7\n147,7\n176,8\n190,9\n191,9\n192,9\n218,10\n219,10\n220,10\n230,11\n231,11\n232,11\n256,12\n257,12\n258,12\n268,13\n269,13\n270,13\n271,13\n272,13\n"]],"B\tfate zero - nced§ [§]":[["",""],["\n1,210a4639\n2,67f2034c\n"]],"B\tfate zero - ncop§ [§]":[["",""],["\n1,5f548b0a\n2,63c93e23\n"]],"B\tkimi no iru machi - §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
 ],"B\ttoonami s§ long promo":[[""],["\n5\n6\n"]],"B\t§ - intoccabile act §":[["",""],["\n08,1\n09,2\n"]],"L\t[reza] food wars s§e§":[["04",""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\t[starbez] nced § - e§":[["",""],["\n04,07\n05,12\n"]],"L\tbattery.s§e§.§p-varyg":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n"]],"L\tgintama tv § nced §.§":[["","",""],["\n5,2,1\n5,2,2\n8,1,01\n8,1,02\n8,1,03\n8,1,04\n8,1,05\n8,1,06\n8,1,07\n8,1,08\n8,1,09\n8,1,10\n8,1,11\n8,1,12\n"]
 ],"L\tgintama tv § ncop §.§":[["","1",""],["\n5,1\n5,2\n5,3\n8,1\n8,2\n"]],"X\t[reza] haganai - s§e§":[["",""],["\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n02,01\n02,02\n02,03\n02,04\n02,05\n02,06\n02,07\n02,08\n02,09\n02,10\n02,11\n02,12\n"]],"X\t[toshy] new game! - §":[[""],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]]}`,
@@ -26565,7 +26629,7 @@ strict_template_routes := {
   "66": `{"B\t[asc] acca §-territory inspection dept. - § (bd §p hi§ flac) [§]":[["13","","1080","10",""],["\n01,1eee22e9\n02,c35dafe9\n03,4c954f3e\n04,9ea26e95\n05,d91377b6\n06,d41784d2\n07,e73f0509\n08,467164df\n09,f8597cda\n10,b4452043\n11,e0017d02\n12,dc3b9254\n"]],"B\t[beatrice-kbaraka] k return of kings §v§ [bdrip §x§ x§ flac] [§]":[["","2","1920","1080","264",""],["\n05,4af68961\n09,3e4e356f\n13,93026d00\n"]],"B\t[ejf] honey and clover ii - § [dvd §p flac ac§] (dual audio) [§]":[["",
 "576","3",""],["\n01,de0aff70\n02,ec2d45c5\n03,ff2fbdd8\n04,08110fb1\n05,2edc1dec\n06,9f098ca9\n07,7b661697\n08,e0eaff1a\n09,7db18f16\n10,b9d0ce6b\n11,f0e3157b\n12,01f37547\n"]],"B\t[enon] toilet-bound hanako-kun - s§e§ (bd remux §p avc flac) [§]":[["01","","1080",""],["\n01,4f7e8be1\n02,1f986b84\n03,a86b45d0\n04,e1eaeaf8\n05,8699fbfd\n06,4e49c4f1\n07,705a64eb\n08,7a77edac\n09,1257aa18\n10,0cb2ca17\n11,e62bc161\n12,e86c4b62\n"]],"B\t[fle] solo leveling - s§e§ (bd §p hevc x§ opus) [dual audio] [§]":
 [["01","","1080","265",""],["\n01,0751f96e\n02,6029db4b\n03,17fb5c6b\n04,75568973\n05,c2777485\n06,89b1640e\n07,cd00d509\n08,2483608e\n09,79609f07\n10,7c373e5a\n11,b1f5b718\n12,10ad0704\n"]],"B\t[foxtrot] vinland saga s§ - nced § [bd §p flac] [dual audio] [§]":[["2","","1080",""],["\n01,88912dbc\n02,b8257e49\n"]],"B\t[foxtrot] vinland saga s§ - ncop § [bd §p flac] [dual audio] [§]":[["2","","1080",""],["\n01,7b577d49\n02,97dc83b0\n"]],"B\t[getittwisted] fire force - s§e§ [bd §p avc opus dual-audio] [§]":
-[["","","1080",""],["\n01,01,9354ff87\n01,02,1f67cca8\n01,03,1c60c71a\n01,04,48f890d6\n01,05,419c7287\n01,06,490a5e5f\n01,07,2a421dd6\n01,08,580e9291\n01,09,43481e8c\n01,10,e2918562\n01,11,096909d8\n01,12,be736d79\n01,13,3f865219\n01,14,de3f0811\n01,15,08b91503\n01,16,bdc3adbb\n01,17,35dff124\n01,18,54883f0e\n01,19,8de8e302\n01,20,85d5bb71\n01,21,837d9a5e\n01,22,d01b6cc6\n01,23,f5cc65c9\n01,24,6508248a\n02,01,0c027730\n02,02,6b79d11d\n","\n02,03,c3c19811\n02,04,5c3dbe0f\n02,05,f35194bb\n02,06,ae2995f6\n02,07,ab4b3c79\n02,08,8d34a252\n02,09,77d15c87\n02,10,8a39980c\n02,11,53b27e26\n02,12,b6bbf7a7\n02,13,30af8281\n02,14,c3161b16\n02,15,5069840d\n02,16,c7c8de2e\n02,17,5b003827\n02,18,abbd1b54\n02,19,ddae9441\n02,20,706b968f\n02,21,e4b21e72\n02,22,8540a336\n02,23,28e2af86\n02,24,0a9ba9f4\n"]
+[["","","1080",""],["\n01,01,9354ff87\n01,02,1f67cca8\n01,03,1c60c71a\n01,04,48f890d6\n01,05,419c7287\n01,06,490a5e5f\n01,07,2a421dd6\n01,08,580e9291\n01,09,43481e8c\n01,10,e2918562\n01,11,096909d8\n01,12,be736d79\n01,13,3f865219\n01,14,de3f0811\n01,15,08b91503\n01,16,bdc3adbb\n01,17,35dff124\n01,18,54883f0e\n01,19,8de8e302\n01,20,85d5bb71\n01,21,837d9a5e\n01,22,d01b6cc6\n01,23,f5cc65c9\n01,24,6508248a\n02,01,0c027730\n02,02,6b79d11d\n","\n02,03,c3c19811\n02,04,5c3dbe0f\n02,05,f35194bb\n02,06,ae2995f6\n02,08,8d34a252\n02,09,77d15c87\n02,10,8a39980c\n02,11,53b27e26\n02,12,b6bbf7a7\n02,13,30af8281\n02,14,c3161b16\n02,15,5069840d\n02,16,c7c8de2e\n02,17,5b003827\n02,18,abbd1b54\n02,19,ddae9441\n02,20,706b968f\n02,21,e4b21e72\n02,22,8540a336\n02,23,28e2af86\n02,24,0a9ba9f4\n"]
 ],"B\t[getittwisted] girly air force - s§e§ [bd remux §p avc flac] [§]":[["01","","1080",""],["\n01,5e55b09d\n02,42369d35\n03,1efe9fd3\n04,b5cde47d\n05,b4ce75c0\n06,ff43925c\n07,142c997a\n08,315da7e6\n09,20557b34\n10,be2fcc4e\n11,5b93b459\n12,917e2332\n"]],"B\t[hchcsen] mobile suit victory gundam s§e§ [bd remux §p avc flac]":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n"]
 ],"B\t[kawasubs] journal with witch - s§e§ [web §p avc eac§] [eng-sub]":[["01","","1080","3"],["\n01\n02\n03\n04\n05\n"]],"B\t[kulot] jinrui wa suitai shimashita sp § [bdrip §x§ x§ flac] [§]":[["","1920","1080","264",""],["\n01,7b6b17bc\n02,472456b4\n03,8bb1ee98\n04,e3db94b6\n05,aa8fdb11\n06,561da7d1\n"]],"B\t[lulu] lord marksman and vanadis - § [bd §p x§ flac][dual-audio]":[["","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"B\t[metal] kimi no iru machi ova - § (amzn web-dl §p avc e-ac§) [§]":
 [["","1080","3",""],["\n01,a860bb0f\n02,dac2ba8b\n"]],"B\t[moxie] moriarty the patriot - s§e§ (bd remux §p truehd §.§) [§]":[["00","","1080","5","1",""],["\n01,bd115e95\n02,fff3f755\n"]],"B\t[naiyas] d.gray-man hallow - § (bs-j §x§ x§ §bit aac dual audio)":[["","1920","1080","264","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\t[nekotan] waiting in the summer s§e§ (bd remux §p x§ §-bit flac)":[["01","","1080","264","8"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
@@ -27766,8 +27830,6 @@ Lsai0nji|goblin slayer 2023 s02e04 onward to adventure 1080p bdrip avc japanese 
 
 Lsev|aoashi episode 11 tokyo metropolis league match 1 seikyo high school 1080p bdrip x265 flac 2 0 kira
 
-Ltoonshub|tatsuki fujimoto 17 26 s01e07 nayuta of the prophecy 1080p amzn web dl dual ddp5 1 h 264 msubs
-
 Lvaryg|laid back camp s03e07 true or embellished retrospective camping 1080p cr web dl aac2 0 h 264 dual
 
 Lvaryg|love through a prism s01e18 five years later an engagement ring 1080p nf web dl dual ddp5 1 h 264
@@ -27922,8 +27984,6 @@ Lkitsune|mazinger z s01e89 its now or never miracle at 4000 meters underground 1
 Lsev|demon slayer episode 55 a connected bond daybreak and first light 1080p ita bdrip x265 flac 2 0 kira
 
 Lsev|inazuma eleven ares no tenbin 13 sublime the last stages of the storm 1080p bdrip x265 flac 2 0 kira
-
-Ltoonshub|tatsuki fujimoto 17 26 s01e02 sasaki stopped a bullet 1080p amzn web dl dual ddp5 1 h 264 msubs
 
 Lvaryg|love through a prism s01e08 the perspective of childhood friends 1080p nf web dl dual ddp5 1 h 264
 
@@ -28327,8 +28387,6 @@ Lrawsmaji|lapis relights mv 06 700 000 000 000 000 000 000 000 no sora de by lig
 Lsai0nji|goblin slayer 2023 s02e06 the elven king s forest 1080p bdrip avc japanese flac 2 0 english aac 2 0
 
 Lsev|inazuma eleven ares no tenbin 19 a fierce fight between raimon and eisei 1080p bdrip x265 flac 2 0 kira
-
-Ltoonshub|tatsuki fujimoto 17 26 s01e06 woke up as a girl syndrome 1080p amzn web dl dual ddp5 1 h 264 msubs
 
 Lvaryg|mysterious disappearances s01e02 schoolhouse drool and an apartment wife 1080p cr web dl aac2 0 h 264
 
@@ -29027,6 +29085,8 @@ Bcytox|parallel world pharmacy 2022 s01e09v2 the story of a certain wicked man 1
 
 Bmeakes|jojos bizarre adventure 2012 s02e01 a man possessed by an evil spirit 1080p bluray remux dts hd ma2 1 h 264
 
+Bmira|tatsuki fujimoto 17 26 s01e01 a couple clucking chickens were still kickin in the schoolyard bd 1080p dd x265
+
 Bnan0|a salad bowl of eccentrics s01e03 the homeless gourmet the savior lady knight 1080p bluray remux avc flac 2 0
 
 Bnan0|akashic records of bastard magic instructor s01e05 the queen and the princess 1080p bluray remux avc flac 2 0
@@ -29145,6 +29205,8 @@ Lclara|youkoso jitsuryoku shijou shugi no kyoushitsu e 10 every man has in himse
 Liba|gakuen basara samurai high school s01e12 the longest day at basara academy 1080p bluray remux avc dts hd ma 2 0
 
 Lkitsune|heavens lost property s02e09 a fierce fight fishing at a carnival of dreams 1080p bluray dual flac 2 0 x264
+
+Lmira|tatsuki fujimoto 17 26 s01e01 a couple clucking chickens were still kickin in the schoolyard bd 1080p opus av1
 
 Lsev|inazuma eleven ares no tenbin 04 breakdown their walls the impenetrable fortress 1080p bdrip x265 flac 2 0 kira
 
@@ -30429,8 +30491,6 @@ Bkoala|legend of the galactic heroes 1988 s03e25 the battle of the corridor part
 Bnan0|the vampire dies in no time s01e05 the longest day of tsujigiri nagiri cats are cute handa day off history 1080p bluray remux avc flac 2 0
 
 Lsai0nji|she professed herself pupil of the wise man 2021 s01e09 i do not dislike this sort of turn of events 1080p bdrip hevc flac 2 0 japanese
-
-Ltoonshub|tatsuki fujimoto 17 26 s01e01 a couple clucking chickens were still kickin in the schoolyard 1080p amzn web dl dual ddp5 1 h 264 msubs
 
 Ltrollorange|danganronpa 3 the end of hopes peak academy side despair s00e01 the end of hopes peak academy side hope 1080p cr web dl aac2 0 x264
 `,
@@ -34503,6 +34563,10 @@ Blazyremux|deca dence s01e08 turbine bluray 1080p remux h264
 
 Blazyremux|taboo tattoo s01e07 storm bluray 1080p remux h264
 
+Bmira|tatsuki fujimoto 17 26 s01e04 shikaku bd 1080p dd x265
+
+Bmira|tatsuki fujimoto 17 26 s01e08 sisters bd 1080p dd x265
+
 Bmoxie|fate grand order first order 2016 bd remux 1080p flac
 
 Bmrmanager|metal skin panic madox 01 1987 bdremux dual audio
@@ -34740,6 +34804,10 @@ Llostyears|the girl from the other side bdrip 1080p hi10p aac
 
 Lmd|arpeggio of blue steel 05 not human 1920x1080 blu ray aac
 
+Lmira|tatsuki fujimoto 17 26 s01e04 shikaku bd 1080p opus av1
+
+Lmira|tatsuki fujimoto 17 26 s01e08 sisters bd 1080p opus av1
+
 Lntb|macross 7 s01e13 fold out 1080p dsnp web dl aac2 0 h 264
 
 Lntb|macross 7 s01e43 partings 1080p dsnp web dl aac2 0 h 264
@@ -34798,6 +34866,8 @@ Bframestor|ahiru no sora s01e45 break 1080p flac 2 0 avc remux
 Bframestor|kengan ashura s01e05 brawl 1080p flac 2 0 avc remux
 
 Bframestor|nanbaka s02e09 washed away 1080p flac 2 0 avc remux
+
+Bgetittwisted|fire force s02e07v2 bd 1080p avc opus dual audio
 
 Bgetittwisted|flcl progressive 2018 v2 bd remux 1080p avc flac
 
@@ -35639,6 +35709,8 @@ Blazyremux|nobunagun s01e07 musashi wonder bluray 1080p remux h264
 
 Blulu|boruto naruto the movie bdrip 1912x1036 x264 flac dual audio
 
+Bmira|tatsuki fujimoto 17 26 s01e03 love is blind bd 1080p dd x265
+
 Bmoxie|c3 cube x cursed x curious nced 01a bd remux 1080p flac 2 0
 
 Bmoxie|c3 cube x cursed x curious nced 01b bd remux 1080p flac 2 0
@@ -36014,6 +36086,8 @@ Llulu|code geass lelouch of the rebellion 01x13 shirley at gunpoint
 
 Lmcballs|neon genesis evangelion s01e23 tears dc bd 1080p hi10 flac
 
+Lmira|tatsuki fujimoto 17 26 s01e03 love is blind bd 1080p opus av1
+
 Lntb|macross 7 s01e02 spiritia level 1080p dsnp web dl aac2 0 h 264
 
 Lntb|macross 7 s01e21 dangerous kiss 1080p dsnp web dl aac2 0 h 264
@@ -36367,6 +36441,8 @@ Bmeakes|mars red s01e03 his dream repack 1080p cr web dl opus2 0 x264
 Bmeakes|mars red s01e08 purgatory repack 1080p cr web dl opus2 0 x264
 
 Bmeakes|mars red s01e09 suspicion repack 1080p cr web dl opus2 0 x264
+
+Bmira|tatsuki fujimoto 17 26 s01e05 mermaid rhapsody bd 1080p dd x265
 
 Bmoxie|taimadou gakuen 35 shiken shoutai nced bd remux 1080p flac 2 0
 
@@ -36722,6 +36798,8 @@ Lmald|zenshu 2025 s01e06v2 change 1080p web dl h264 ddp 2 0 dual audio
 Lmald|zenshu 2025 s01e12v2 zenshu 1080p web dl h264 ddp 2 0 dual audio
 
 Lmd|arpeggio of blue steel 10 the ultimate price 1920x1080 blu ray aac
+
+Lmira|tatsuki fujimoto 17 26 s01e05 mermaid rhapsody bd 1080p opus av1
 
 Lnekotan|weathering with you 2019 bd 1080p x265 10 bit opus dual audio
 
@@ -37850,6 +37928,8 @@ Bkoala|the girl from the other side 2022 1080p blu ray remux avc truehd 5 1
 
 Blazyremux|taboo tattoo s01e03 misery loves company bluray 1080p remux h264
 
+Bmira|tatsuki fujimoto 17 26 s01e07 nayuta of the prophecy bd 1080p dd x265
+
 Bmoxie|date a live movie mayuri judgement 2015 bd remux 1080p dts hd ma 3 0
 
 Bnan0|18if s01e05 the witch of ordinariness 1080p bluray remux avc flac 2 0
@@ -38145,6 +38225,8 @@ Blazyremux|cells at work s00e02 special 1 petit quiz bluray 1080p remux h264
 
 Blazyremux|cells at work s01e05 cedar pollen allergy bluray 1080p remux h264
 
+Bmira|tatsuki fujimoto 17 26 s01e02 sasaki stopped a bullet bd 1080p dd x265
+
 Bmoxie|haikara san ga tooru movie 1 benio hana no 17 sai bd remux 1080p flac
 
 Bnan0|anime gatari s01e01 minoa anime rookie 1080p bluray remux avc flac 2 0
@@ -38294,6 +38376,8 @@ Lmald|zenshu 2025 s01e01v2 first stroke 1080p web dl h264 ddp 2 0 dual audio
 Lmcballs|neon genesis evangelion s01e12 a miracle s worth bd 1080p hi10 flac
 
 Lmd|arpeggio of blue steel 12 the power to open a path 1920x1080 blu ray aac
+
+Lmira|tatsuki fujimoto 17 26 s01e07 nayuta of the prophecy bd 1080p opus av1
 
 Lozc|mobile suit gundam wing blu ray box e01 the shooting star she saw 1080p
 
@@ -38569,6 +38653,8 @@ Lmcballs|neon genesis evangelion s01e24 the last cometh dc bd 1080p hi10 flac
 Lmd|arpeggio of blue steel 12a the power to open a path 1920x1080 blu ray aac
 
 Lmd|arpeggio of blue steel 12b the power to open a path 1920x1080 blu ray aac
+
+Lmira|tatsuki fujimoto 17 26 s01e02 sasaki stopped a bullet bd 1080p opus av1
 
 Lmrmanager|metal skin panic madox 01 1987 restored version bdremux dual audio
 
@@ -38998,6 +39084,8 @@ Blys1th3a|5 centimeters per second 2007 1080p bluray hybrid remux flac2 0 h 264
 
 Bmeakes|mars red s01e13 frailty thy name is repack 1080p cr web dl opus2 0 x264
 
+Bmira|tatsuki fujimoto 17 26 s01e06 woke up as a girl syndrome bd 1080p dd x265
+
 Bmoodisubs|lord of mysteries s00e18 city of silver cr web dl 1440p h 264 e ac 3
 
 Bmottoj|koukaku no regios nced01 feat felli loss r2dvd 1024x576 x264 hi10p flac
@@ -39414,6 +39502,8 @@ Lkitsune|to be hero x s01e11 road to the crown 1080p cr web dl dual aac2 0 h 264
 Lkitsune|wind breaker s02e04 senpais teachings 1080p cr web dl dual ddp2 0 h 264
 
 Lmcballs|neon genesis evangelion s01e11 in the still darkness bd 1080p hi10 flac
+
+Lmira|tatsuki fujimoto 17 26 s01e06 woke up as a girl syndrome bd 1080p opus av1
 
 Lntb|macross 7 s01e26 deadly battle at planet lux 1080p dsnp web dl aac2 0 h 264
 
@@ -41834,10 +41924,6 @@ Ltasokare|fate strange fake s01e12 hybrid at the end of the rope 1080p bluray op
 
 Ltasokare|mobile suit gundam unicorn s01e03 the ghost of laplace 1080p bluray opus5 1 av1
 
-Ltoonshub|tatsuki fujimoto 17 26 s01e04 shikaku 1080p amzn web dl dual ddp5 1 h 264 msubs
-
-Ltoonshub|tatsuki fujimoto 17 26 s01e08 sisters 1080p amzn web dl dual ddp5 1 h 264 msubs
-
 Lvaryg|alma chan wants to be a family s01e09 summer vacation 1080p cr web dl aac2 0 h 264
 
 Lvaryg|love through a prism s01e20 love through a prism 1080p nf web dl dual ddp5 1 h 264
@@ -43109,8 +43195,6 @@ Lsomestuffs|thus spoke kishibe rohan episode 16 at a confessional bd 1080p hevc 
 
 Ltasokare|days with my stepsister s01e05 a late show and the real deal 1080p bluray opus2 0 av1
 
-Ltoonshub|tatsuki fujimoto 17 26 s01e03 love is blind 1080p amzn web dl dual ddp5 1 h 264 msubs
-
 Lvaryg|alma chan wants to be a family s01e11 i want to be a family 1080p cr web dl aac2 0 h 264
 
 Lvaryg|toilet bound hanako kun s02e02 the three clock keepers 1080p cr web dl aac2 0 h 264 dual
@@ -43743,8 +43827,6 @@ Lsev|aoashi episode 23 do your best don t lose fight to your limits 1080p bdrip 
 Lsev|inazuma eleven outer code story 03 teikoku academy s new coach 1080p bdrip x265 flac 2 0 kira
 
 Ltasokare|fate strange fake s01e06 hybrid the wandering kings rock n roll 1080p bluray opus2 0 av1
-
-Ltoonshub|tatsuki fujimoto 17 26 s01e05 mermaid rhapsody 1080p amzn web dl dual ddp5 1 h 264 msubs
 
 Lvaryg|fairy tail 100 years quest s01e14 clinging dragon berserk 1080p cr web dl aac2 0 h 264 dual
 
@@ -44659,7 +44741,7 @@ tolerant_template_routes := {
 [["","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tsmol|lycoris recoil s§e§v§ bd §p hevc opus dual audio":[["01","","2","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"L\ttenb|xam d lost memories § §x§ hi§p bd ac§ dual audio":[["","1280","720","10","3"],["\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n"]],"L\ttlacatlc§|ao no exorcist vol § promo § bd §x§ x§ flac":[["6","02","","1920",
 "1080","264"],["\n1\n2\n3\n4\n5\n6\n7\n8\n"]],"L\ttlacatlc§|ao no exorcist vol §v§ omake bd §x§ x§ flac":[["6","","2","1920","1080","264"],["\n01\n02\n03\n04\n05\n06\n"]],"L\tudf|girls last tour §v§ bdrip §p x§ flacx§ dual audio":[["","5","1080","265","2"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\twham|summer time rendering nced§ bd §p x§ § bits flac":[["","1080","265","10"],["\n01\n02\n"]],"L\twham|summer time rendering ncop§ bd §p x§ § bits flac":[["","1080",
 "265","10"],["\n01\n02\n03\n"]],"L\tyurasuka|are you lost s§e§ §p bluray § bit flac§ § x§":[["01","","1080","10","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tyurasuka|pseudo harem s§e§ §p bluray § bit flac§ § x§":[["01","","1080","10","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tyuri|maoyu archenemy hero nced ep§ bd §p x§ §bit flac":[["","1080","264","10"],["\n11\n12\n"]]}`,
-  "56": `{"B\tenon|toilet bound hanako kun s§e§ bd remux §p avc flac":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tfig|soul eater s§e§ §p bluray dual audio opus § § hevc":[["01","","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n"]],"B\tgetittwisted|fire force s§e§ bd §p avc opus dual audio":[["","","1080"],["\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n01,13\n01,14\n01,15\n01,16\n01,17\n01,18\n01,19\n01,20\n01,21\n01,22\n01,23\n01,24\n02,01\n02,02\n02,03\n02,04\n02,05\n02,06\n02,07\n02,08\n02,09\n02,10\n02,11\n02,12\n02,13\n02,14\n02,15\n02,16\n02,17\n02,18\n02,19\n02,20\n02,21\n02,22\n02,23\n02,24\n"]
+  "56": `{"B\tenon|toilet bound hanako kun s§e§ bd remux §p avc flac":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tfig|soul eater s§e§ §p bluray dual audio opus § § hevc":[["01","","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n"]],"B\tgetittwisted|fire force s§e§ bd §p avc opus dual audio":[["","","1080"],["\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n01,13\n01,14\n01,15\n01,16\n01,17\n01,18\n01,19\n01,20\n01,21\n01,22\n01,23\n01,24\n02,01\n02,02\n02,03\n02,04\n02,05\n02,06\n02,08\n02,09\n02,10\n02,11\n02,12\n02,13\n02,14\n02,15\n02,16\n02,17\n02,18\n02,19\n02,20\n02,21\n02,22\n02,23\n02,24\n"]
 ],"B\tgetittwisted|girly air force s§e§ bd remux §p avc flac":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\thchcsen|after war gundam x s§e§v§ bd remux §p avc flac":[["01","","2","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n"]],"B\thchcsen|ssss dynazenon s§e§ bd dual audio §p x§ §xflac":[["01","","1080","265","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
 ],"B\theadpatter|kiss x sis s§e§ §p bluray remux avc flac§ §":[["01","","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\theadpatter|strawberry § s§e§ §p bluray opus§ § §bit x§":[["100","","","1080","2","0","10","264"],["\n00,06\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n"]],"B\thinna|golden kamuy s§e§ §p bluray remux avc truehd § §":[["01","","1080","5","1"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
 ],"B\tholomux|d gray man hallow § tv x§ §bit §p aac § § dual":[["","264","10","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"B\tkinomoto|cardcaptor sakura § bd §p dual audio flac aac":[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n52\n53\n54\n55\n56\n57\n58\n59\n60\n61\n62\n63\n64\n65\n66\n67\n68\n69\n70\n"]
