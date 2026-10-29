@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.34",
-  "snapshot_sha256": "193834c279b0db992260b997164d0dcc5a8975e315b695202c77e25ad1d23d4f",
+  "pack_version": "1.0.35",
+  "snapshot_sha256": "80cb4ca0248729c5c6a54d780aacdba864fb94f5ea321dcd7ac6870b5aa8b9ae",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -1186,6 +1186,14 @@
       "entry_id": "0gks0h5kyxhax44",
       "file_sources": 14,
       "release_id": "4bbqimhzosq5olu",
+      "strict_keys": 14,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "0gks0h5kyxhax44",
+      "file_sources": 14,
+      "release_id": "4w64vxur4tgtacq",
       "strict_keys": 14,
       "tolerant_keys": 0
     },
@@ -5913,6 +5921,14 @@
       "alias_sources": 0,
       "entry_id": "3glkvvmyx5t0j92",
       "file_sources": 12,
+      "release_id": "gwjf3hnd53919kn",
+      "strict_keys": 12,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "3glkvvmyx5t0j92",
+      "file_sources": 12,
       "release_id": "tgu64l87ajpjmqr",
       "strict_keys": 12,
       "tolerant_keys": 0
@@ -7769,6 +7785,14 @@
       "alias_sources": 0,
       "entry_id": "4jom2wgyuy749om",
       "file_sources": 13,
+      "release_id": "ldt5kdtvyc7yuz3",
+      "strict_keys": 13,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "4jom2wgyuy749om",
+      "file_sources": 13,
       "release_id": "qqnwoutdxwsezo2",
       "strict_keys": 13,
       "tolerant_keys": 0
@@ -8628,6 +8652,14 @@
       "release_id": "v6y57rdl2mu4846",
       "strict_keys": 13,
       "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "52jfrh36v7wbanu",
+      "file_sources": 6,
+      "release_id": "42fs3vf2a99bwxo",
+      "strict_keys": 6,
+      "tolerant_keys": 6
     },
     {
       "alias_sources": 0,
@@ -12311,22 +12343,6 @@
     },
     {
       "alias_sources": 0,
-      "entry_id": "6v28eahi6ud93du",
-      "file_sources": 8,
-      "release_id": "a2uez39z63231el",
-      "strict_keys": 8,
-      "tolerant_keys": 0
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "6v28eahi6ud93du",
-      "file_sources": 8,
-      "release_id": "grg9pfvoalen056",
-      "strict_keys": 8,
-      "tolerant_keys": 0
-    },
-    {
-      "alias_sources": 0,
       "entry_id": "6vl2fehh3jkzv5l",
       "file_sources": 6,
       "release_id": "nnsagzvpmks7cic",
@@ -13833,15 +13849,7 @@
       "alias_sources": 0,
       "entry_id": "7tyaj1sjfjjd38i",
       "file_sources": 1,
-      "release_id": "697snh8fbsh4dmo",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "7tyaj1sjfjjd38i",
-      "file_sources": 1,
-      "release_id": "7dmyhsvd6315uwx",
+      "release_id": "grtc3b8ubvqnxfc",
       "strict_keys": 1,
       "tolerant_keys": 1
     },
@@ -15999,6 +16007,22 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "958fm58f2eoqc9c",
+      "file_sources": 19,
+      "release_id": "b7n8nmn5at41xkt",
+      "strict_keys": 19,
+      "tolerant_keys": 19
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "958fm58f2eoqc9c",
+      "file_sources": 16,
+      "release_id": "vxqv013p347twkx",
+      "strict_keys": 16,
+      "tolerant_keys": 16
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "95svrli9ir3qpre",
       "file_sources": 5,
       "release_id": "56w5ptgub87fon4",
@@ -16377,7 +16401,7 @@
       "alias_sources": 0,
       "entry_id": "9f3arn3rant402o",
       "file_sources": 12,
-      "release_id": "x3deghsu66lz148",
+      "release_id": "pwo6z3fiwftiz0a",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -16385,7 +16409,7 @@
       "alias_sources": 0,
       "entry_id": "9f3arn3rant402o",
       "file_sources": 12,
-      "release_id": "xttnyo6wnch0f9h",
+      "release_id": "x3deghsu66lz148",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -17420,6 +17444,14 @@
       "release_id": "cwijnm29j6f49sc",
       "strict_keys": 10,
       "tolerant_keys": 10
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "9wkpw3qa69aop0e",
+      "file_sources": 1,
+      "release_id": "8hga26f2prdqlrl",
+      "strict_keys": 1,
+      "tolerant_keys": 1
     },
     {
       "alias_sources": 0,
@@ -28607,6 +28639,22 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "gwsgvgi69tgy4ai",
+      "file_sources": 26,
+      "release_id": "f2d314qefzn4iht",
+      "strict_keys": 26,
+      "tolerant_keys": 26
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "gwsgvgi69tgy4ai",
+      "file_sources": 26,
+      "release_id": "whmpr019zqqxoe1",
+      "strict_keys": 26,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "gxkk4nm6v0w9b3g",
       "file_sources": 12,
       "release_id": "6hkdxlgv27oni3c",
@@ -31484,6 +31532,22 @@
       "release_id": "vs4r4t0oslpizzy",
       "strict_keys": 12,
       "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "iw2pj16kb2u69ue",
+      "file_sources": 1,
+      "release_id": "nr2gs0dw0x17irp",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "iw2pj16kb2u69ue",
+      "file_sources": 1,
+      "release_id": "t1ppk5ea72bps5v",
+      "strict_keys": 1,
+      "tolerant_keys": 1
     },
     {
       "alias_sources": 0,
@@ -54375,6 +54439,22 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "uyudvfo3k3qy4ee",
+      "file_sources": 9,
+      "release_id": "fci9qiwpy3lln2f",
+      "strict_keys": 9,
+      "tolerant_keys": 9
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "uyudvfo3k3qy4ee",
+      "file_sources": 5,
+      "release_id": "swswtimiwenjgxv",
+      "strict_keys": 5,
+      "tolerant_keys": 5
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "uzg2agkljcvt232",
       "file_sources": 14,
       "release_id": "5pao3rweg8chg8n",
@@ -56935,6 +57015,14 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "wesb4x54myb5rqt",
+      "file_sources": 8,
+      "release_id": "tmqtmipg27cdtz5",
+      "strict_keys": 8,
+      "tolerant_keys": 8
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "wev6surhopki9ns",
       "file_sources": 25,
       "release_id": "clhs3uphhmhgtgw",
@@ -58780,6 +58868,14 @@
       "release_id": "g93081dghfcsdxr",
       "strict_keys": 99,
       "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "x6bb7ha6fgagwfy",
+      "file_sources": 1,
+      "release_id": "3xenmxx90gptcba",
+      "strict_keys": 1,
+      "tolerant_keys": 1
     },
     {
       "alias_sources": 0,
@@ -61972,6 +62068,22 @@
       "release_id": "eo18vjhccy02dgq",
       "strict_keys": 1,
       "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "yw3aslzlsjo0abe",
+      "file_sources": 44,
+      "release_id": "1hop4sbh8t6zww5",
+      "strict_keys": 44,
+      "tolerant_keys": 39
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "yw3aslzlsjo0abe",
+      "file_sources": 38,
+      "release_id": "nsekcwngzbpynwp",
+      "strict_keys": 38,
+      "tolerant_keys": 38
     },
     {
       "alias_sources": 0,
@@ -66272,6 +66384,90 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "4bbqimhzosq5olu",
       "source_name": "NCED \u0026 NCOP/Juuou Mujin no Fafnir - NCOP.mkv"
+    },
+    {
+      "entry_id": "0gks0h5kyxhax44",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "4w64vxur4tgtacq",
+      "source_name": "Juuou Mujin no Fafnir - 01.mkv"
+    },
+    {
+      "entry_id": "0gks0h5kyxhax44",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "4w64vxur4tgtacq",
+      "source_name": "Juuou Mujin no Fafnir - 02.mkv"
+    },
+    {
+      "entry_id": "0gks0h5kyxhax44",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "4w64vxur4tgtacq",
+      "source_name": "Juuou Mujin no Fafnir - 03.mkv"
+    },
+    {
+      "entry_id": "0gks0h5kyxhax44",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "4w64vxur4tgtacq",
+      "source_name": "Juuou Mujin no Fafnir - 04.mkv"
+    },
+    {
+      "entry_id": "0gks0h5kyxhax44",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "4w64vxur4tgtacq",
+      "source_name": "Juuou Mujin no Fafnir - 05.mkv"
+    },
+    {
+      "entry_id": "0gks0h5kyxhax44",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "4w64vxur4tgtacq",
+      "source_name": "Juuou Mujin no Fafnir - 06.mkv"
+    },
+    {
+      "entry_id": "0gks0h5kyxhax44",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "4w64vxur4tgtacq",
+      "source_name": "Juuou Mujin no Fafnir - 07.mkv"
+    },
+    {
+      "entry_id": "0gks0h5kyxhax44",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "4w64vxur4tgtacq",
+      "source_name": "Juuou Mujin no Fafnir - 08.mkv"
+    },
+    {
+      "entry_id": "0gks0h5kyxhax44",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "4w64vxur4tgtacq",
+      "source_name": "Juuou Mujin no Fafnir - 09.mkv"
+    },
+    {
+      "entry_id": "0gks0h5kyxhax44",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "4w64vxur4tgtacq",
+      "source_name": "Juuou Mujin no Fafnir - 10.mkv"
+    },
+    {
+      "entry_id": "0gks0h5kyxhax44",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "4w64vxur4tgtacq",
+      "source_name": "Juuou Mujin no Fafnir - 11.mkv"
+    },
+    {
+      "entry_id": "0gks0h5kyxhax44",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "4w64vxur4tgtacq",
+      "source_name": "Juuou Mujin no Fafnir - 12.mkv"
+    },
+    {
+      "entry_id": "0gks0h5kyxhax44",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "4w64vxur4tgtacq",
+      "source_name": "Juuou Mujin no Fafnir - NCED.mkv"
+    },
+    {
+      "entry_id": "0gks0h5kyxhax44",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "4w64vxur4tgtacq",
+      "source_name": "Juuou Mujin no Fafnir - NCOP.mkv"
     },
     {
       "entry_id": "0h7pdw15sofxpps",
@@ -88566,6 +88762,78 @@
     {
       "entry_id": "3glkvvmyx5t0j92",
       "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gwjf3hnd53919kn",
+      "source_name": "Megami no Cafe Terrace 01.mkv"
+    },
+    {
+      "entry_id": "3glkvvmyx5t0j92",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gwjf3hnd53919kn",
+      "source_name": "Megami no Cafe Terrace 02.mkv"
+    },
+    {
+      "entry_id": "3glkvvmyx5t0j92",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gwjf3hnd53919kn",
+      "source_name": "Megami no Cafe Terrace 03.mkv"
+    },
+    {
+      "entry_id": "3glkvvmyx5t0j92",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gwjf3hnd53919kn",
+      "source_name": "Megami no Cafe Terrace 04.mkv"
+    },
+    {
+      "entry_id": "3glkvvmyx5t0j92",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gwjf3hnd53919kn",
+      "source_name": "Megami no Cafe Terrace 05.mkv"
+    },
+    {
+      "entry_id": "3glkvvmyx5t0j92",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gwjf3hnd53919kn",
+      "source_name": "Megami no Cafe Terrace 06.mkv"
+    },
+    {
+      "entry_id": "3glkvvmyx5t0j92",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gwjf3hnd53919kn",
+      "source_name": "Megami no Cafe Terrace 07.mkv"
+    },
+    {
+      "entry_id": "3glkvvmyx5t0j92",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gwjf3hnd53919kn",
+      "source_name": "Megami no Cafe Terrace 08.mkv"
+    },
+    {
+      "entry_id": "3glkvvmyx5t0j92",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gwjf3hnd53919kn",
+      "source_name": "Megami no Cafe Terrace 09.mkv"
+    },
+    {
+      "entry_id": "3glkvvmyx5t0j92",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gwjf3hnd53919kn",
+      "source_name": "Megami no Cafe Terrace 10.mkv"
+    },
+    {
+      "entry_id": "3glkvvmyx5t0j92",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gwjf3hnd53919kn",
+      "source_name": "Megami no Cafe Terrace 11.mkv"
+    },
+    {
+      "entry_id": "3glkvvmyx5t0j92",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "gwjf3hnd53919kn",
+      "source_name": "Megami no Cafe Terrace 12.mkv"
+    },
+    {
+      "entry_id": "3glkvvmyx5t0j92",
+      "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "tgu64l87ajpjmqr",
       "source_name": "Megami no Cafe Terrace 01.mkv"
     },
@@ -93422,6 +93690,84 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "tm9bw4xny1up1au",
       "source_name": "[Beatrice-Raws] Date A Live II PV2 [BDRip 1920x1080 x264 FLAC].mkv"
+    },
+    {
+      "entry_id": "4jom2wgyuy749om",
+      "reason": "non_ascii_tolerant_evidence",
+      "release_id": "ldt5kdtvyc7yuz3",
+      "source_name": "Prétear.The.New.Legend.of.Snow.White.S01E01.480p.DVDRip.AC32.0.10Bit.x264-Headpatter.mkv"
+    },
+    {
+      "entry_id": "4jom2wgyuy749om",
+      "reason": "non_ascii_tolerant_evidence",
+      "release_id": "ldt5kdtvyc7yuz3",
+      "source_name": "Prétear.The.New.Legend.of.Snow.White.S01E02.480p.DVDRip.AC32.0.10Bit.x264-Headpatter.mkv"
+    },
+    {
+      "entry_id": "4jom2wgyuy749om",
+      "reason": "non_ascii_tolerant_evidence",
+      "release_id": "ldt5kdtvyc7yuz3",
+      "source_name": "Prétear.The.New.Legend.of.Snow.White.S01E03.480p.DVDRip.AC32.0.10Bit.x264-Headpatter.mkv"
+    },
+    {
+      "entry_id": "4jom2wgyuy749om",
+      "reason": "non_ascii_tolerant_evidence",
+      "release_id": "ldt5kdtvyc7yuz3",
+      "source_name": "Prétear.The.New.Legend.of.Snow.White.S01E04.480p.DVDRip.AC32.0.10Bit.x264-Headpatter.mkv"
+    },
+    {
+      "entry_id": "4jom2wgyuy749om",
+      "reason": "non_ascii_tolerant_evidence",
+      "release_id": "ldt5kdtvyc7yuz3",
+      "source_name": "Prétear.The.New.Legend.of.Snow.White.S01E05.480p.DVDRip.AC32.0.10Bit.x264-Headpatter.mkv"
+    },
+    {
+      "entry_id": "4jom2wgyuy749om",
+      "reason": "non_ascii_tolerant_evidence",
+      "release_id": "ldt5kdtvyc7yuz3",
+      "source_name": "Prétear.The.New.Legend.of.Snow.White.S01E06.480p.DVDRip.AC32.0.10Bit.x264-Headpatter.mkv"
+    },
+    {
+      "entry_id": "4jom2wgyuy749om",
+      "reason": "non_ascii_tolerant_evidence",
+      "release_id": "ldt5kdtvyc7yuz3",
+      "source_name": "Prétear.The.New.Legend.of.Snow.White.S01E07.480p.DVDRip.AC32.0.10Bit.x264-Headpatter.mkv"
+    },
+    {
+      "entry_id": "4jom2wgyuy749om",
+      "reason": "non_ascii_tolerant_evidence",
+      "release_id": "ldt5kdtvyc7yuz3",
+      "source_name": "Prétear.The.New.Legend.of.Snow.White.S01E08.480p.DVDRip.AC32.0.10Bit.x264-Headpatter.mkv"
+    },
+    {
+      "entry_id": "4jom2wgyuy749om",
+      "reason": "non_ascii_tolerant_evidence",
+      "release_id": "ldt5kdtvyc7yuz3",
+      "source_name": "Prétear.The.New.Legend.of.Snow.White.S01E09.480p.DVDRip.AC32.0.10Bit.x264-Headpatter.mkv"
+    },
+    {
+      "entry_id": "4jom2wgyuy749om",
+      "reason": "non_ascii_tolerant_evidence",
+      "release_id": "ldt5kdtvyc7yuz3",
+      "source_name": "Prétear.The.New.Legend.of.Snow.White.S01E10.480p.DVDRip.AC32.0.10Bit.x264-Headpatter.mkv"
+    },
+    {
+      "entry_id": "4jom2wgyuy749om",
+      "reason": "non_ascii_tolerant_evidence",
+      "release_id": "ldt5kdtvyc7yuz3",
+      "source_name": "Prétear.The.New.Legend.of.Snow.White.S01E11.480p.DVDRip.AC32.0.10Bit.x264-Headpatter.mkv"
+    },
+    {
+      "entry_id": "4jom2wgyuy749om",
+      "reason": "non_ascii_tolerant_evidence",
+      "release_id": "ldt5kdtvyc7yuz3",
+      "source_name": "Prétear.The.New.Legend.of.Snow.White.S01E12.480p.DVDRip.AC32.0.10Bit.x264-Headpatter.mkv"
+    },
+    {
+      "entry_id": "4jom2wgyuy749om",
+      "reason": "non_ascii_tolerant_evidence",
+      "release_id": "ldt5kdtvyc7yuz3",
+      "source_name": "Prétear.The.New.Legend.of.Snow.White.S01E13.480p.DVDRip.AC32.0.10Bit.x264-Headpatter.mkv"
     },
     {
       "entry_id": "4jom2wgyuy749om",
@@ -163796,6 +164142,162 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "v7qf17rovjqhy9f",
       "source_name": "NCOP - 02.mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E01.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[1DB6A047].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E02.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[997552FF].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E03.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[914E207B].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E04.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[5F469F42].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E05.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[2BF8E1BA].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E06.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[081DC923].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E07.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[BC4EDA6D].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E08.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[8FF3ED14].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E09.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[0B18E4D1].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E10.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[F72AF9DA].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E11.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[3722ADE3].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E12.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[4D452F29].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E13.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[615E51A5].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E14.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[689201A9].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E15.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[ED1F8AC4].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E16.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[E18BEED9].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E17.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[F2DCE70C].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E18.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[7C14D421].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E19.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[680A8C90].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E20.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[B00AA7FC].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E21.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[04238592].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E22.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[2512CA3C].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E23.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[C5C86837].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E24.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[A86F84D1].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E25.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[763084C6].mkv"
+    },
+    {
+      "entry_id": "gwsgvgi69tgy4ai",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "whmpr019zqqxoe1",
+      "source_name": "Outlaw.Star.S01E26.1080p-Hi10p.BluRay.FLAC2.0.x264-CTR.[C0B3CFF8].mkv"
     },
     {
       "entry_id": "gxbpu1r5hq3ufgo",
@@ -258172,6 +258674,18 @@
       "source_name": "[Orphan] Tobira o Akete - Trailers (DVD) [530DD889].mkv"
     },
     {
+      "entry_id": "uyudvfo3k3qy4ee",
+      "reason": "non_release_file",
+      "release_id": "fci9qiwpy3lln2f",
+      "source_name": "Thumbs.db"
+    },
+    {
+      "entry_id": "uyudvfo3k3qy4ee",
+      "reason": "non_release_file",
+      "release_id": "fci9qiwpy3lln2f",
+      "source_name": "zKGAfdocHhA43cbZhSid==.jpeg"
+    },
+    {
       "entry_id": "uzfmc8yet57mp77",
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "syrmhli4v12uf7p",
@@ -290434,6 +290948,498 @@
       "source_name": "Houkago Saikoro Club - NCOP [BD 1080p x264 FLAC].mkv"
     },
     {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA OVA 2 - God Bless Dancouga (BD H264 1328x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 01 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 02 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 03 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 04 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 05 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 06 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 07 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 08 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 09 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 10 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 11 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 12 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 13 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 14 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 15 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 16 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 17 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 18 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 19 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 20 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 21 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 22 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 23 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 24 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 25 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 26 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 27 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 28 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 29 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 30 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 31 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 32 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 33 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 34 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 35 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 36 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 37 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 38 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "Choujuu Kishin Dancougar - Ushinawareta Mono Tachi e no Chinkonka.mkv"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[mSubs] Dancouga Blazing Epilogue 01 [460D0DFD].mkv"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[mSubs] Dancouga Blazing Epilogue 02 [DA30DA10].mkv"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[mSubs] Dancouga Blazing Epilogue 03 [8D16FE25].mkv"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "1hop4sbh8t6zww5",
+      "source_name": "[mSubs] Dancouga Blazing Epilogue 04 [A950BC05].mkv"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 01 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 02 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 03 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 04 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 05 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 06 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 07 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 08 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 09 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 10 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 11 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 12 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 13 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 14 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 15 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 16 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 17 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 18 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 19 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 20 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 21 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 22 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 23 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 24 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 25 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 26 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 27 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 28 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 29 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 30 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 31 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 32 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 33 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 34 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 35 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 36 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 37 (BD H264 960x720 AAC).ass"
+    },
+    {
+      "entry_id": "yw3aslzlsjo0abe",
+      "reason": "non_release_file",
+      "release_id": "nsekcwngzbpynwp",
+      "source_name": "[QTS] Choujuu Kishin DANCOUGA TV ep 38 (BD H264 960x720 AAC).ass"
+    },
+    {
       "entry_id": "yz4ec84kd4bim9p",
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "bmned873uaqgt94",
@@ -297926,6 +298932,102 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "xqm6b0kd3me7ah4",
       "source_name": "NC/NCOP.mkv"
+    },
+    {
+      "entry_id": "zzzh3ci8w4uf886",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "a2uez39z63231el",
+      "source_name": "Agent.Aika.S00E01.Special.Trial.Moving.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[7636900E].mkv"
+    },
+    {
+      "entry_id": "zzzh3ci8w4uf886",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "a2uez39z63231el",
+      "source_name": "Agent.Aika.S01E01.Beautiful.Agent.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[EE1C6BCB].mkv"
+    },
+    {
+      "entry_id": "zzzh3ci8w4uf886",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "a2uez39z63231el",
+      "source_name": "Agent.Aika.S01E02.Naked.Mission.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[B43C1267].mkv"
+    },
+    {
+      "entry_id": "zzzh3ci8w4uf886",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "a2uez39z63231el",
+      "source_name": "Agent.Aika.S01E03.Takeoff.Position.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[2E6A7DF0].mkv"
+    },
+    {
+      "entry_id": "zzzh3ci8w4uf886",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "a2uez39z63231el",
+      "source_name": "Agent.Aika.S01E04.A.Flower.Blooming.in.Space.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[528F3BB8].mkv"
+    },
+    {
+      "entry_id": "zzzh3ci8w4uf886",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "a2uez39z63231el",
+      "source_name": "Agent.Aika.S01E05.The.Golden.Delmo.Operation.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[D87EA8E3].mkv"
+    },
+    {
+      "entry_id": "zzzh3ci8w4uf886",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "a2uez39z63231el",
+      "source_name": "Agent.Aika.S01E06.Delmo.Operation.White.Silver.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[614E2793].mkv"
+    },
+    {
+      "entry_id": "zzzh3ci8w4uf886",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "a2uez39z63231el",
+      "source_name": "Agent.Aika.S01E07.Break.the.Decisive.Battle.Delmo.Base.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[B2F2DC84].mkv"
+    },
+    {
+      "entry_id": "zzzh3ci8w4uf886",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "grg9pfvoalen056",
+      "source_name": "Agent.Aika.S01E01.Beautiful.Agent.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[EE1C6BCB].mkv"
+    },
+    {
+      "entry_id": "zzzh3ci8w4uf886",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "grg9pfvoalen056",
+      "source_name": "Agent.Aika.S01E02.Naked.Mission.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[B43C1267].mkv"
+    },
+    {
+      "entry_id": "zzzh3ci8w4uf886",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "grg9pfvoalen056",
+      "source_name": "Agent.Aika.S01E03.Takeoff.Position.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[2E6A7DF0].mkv"
+    },
+    {
+      "entry_id": "zzzh3ci8w4uf886",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "grg9pfvoalen056",
+      "source_name": "Agent.Aika.S01E04.A.Flower.Blooming.in.Space.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[528F3BB8].mkv"
+    },
+    {
+      "entry_id": "zzzh3ci8w4uf886",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "grg9pfvoalen056",
+      "source_name": "Agent.Aika.S01E05.The.Golden.Delmo.Operation.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[D87EA8E3].mkv"
+    },
+    {
+      "entry_id": "zzzh3ci8w4uf886",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "grg9pfvoalen056",
+      "source_name": "Agent.Aika.S01E06.Delmo.Operation.White.Silver.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[614E2793].mkv"
+    },
+    {
+      "entry_id": "zzzh3ci8w4uf886",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "grg9pfvoalen056",
+      "source_name": "Agent.Aika.S01E07.Break.the.Decisive.Battle.Delmo.Base.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[B2F2DC84].mkv"
+    },
+    {
+      "entry_id": "zzzh3ci8w4uf886",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "grg9pfvoalen056",
+      "source_name": "SP/Agent.Aika.S00E01.Special.Trial.Moving.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[7636900E].mkv"
     }
   ],
   "ambiguous": [
@@ -472072,6 +473174,286 @@
         }
       ],
       "key": "[zetarebel] mobile suit gundam 00 the movie - a wakening of the trailblazer (bd x264 1080p 8-bit dts-hd ma+truehd)",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 366,
+          "entry_id": "6v28eahi6ud93du",
+          "release_id": "a2uez39z63231el",
+          "source": "file",
+          "source_name": "Agent.Aika.S00E01.Special.Trial.Moving.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[7636900E].mkv"
+        },
+        {
+          "anilist_id": 366,
+          "entry_id": "6v28eahi6ud93du",
+          "release_id": "grg9pfvoalen056",
+          "source": "file",
+          "source_name": "SP/Agent.Aika.S00E01.Special.Trial.Moving.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[7636900E].mkv"
+        },
+        {
+          "anilist_id": 4718,
+          "entry_id": "zzzh3ci8w4uf886",
+          "release_id": "a2uez39z63231el",
+          "source": "file",
+          "source_name": "Agent.Aika.S00E01.Special.Trial.Moving.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[7636900E].mkv"
+        },
+        {
+          "anilist_id": 4718,
+          "entry_id": "zzzh3ci8w4uf886",
+          "release_id": "grg9pfvoalen056",
+          "source": "file",
+          "source_name": "SP/Agent.Aika.S00E01.Special.Trial.Moving.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[7636900E].mkv"
+        }
+      ],
+      "key": "agent.aika.s00e01.special.trial.moving.576p.dvdrip.dd2.0.x264-hi10p-rasetsu.[7636900e]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 366,
+          "entry_id": "6v28eahi6ud93du",
+          "release_id": "a2uez39z63231el",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E01.Beautiful.Agent.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[EE1C6BCB].mkv"
+        },
+        {
+          "anilist_id": 366,
+          "entry_id": "6v28eahi6ud93du",
+          "release_id": "grg9pfvoalen056",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E01.Beautiful.Agent.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[EE1C6BCB].mkv"
+        },
+        {
+          "anilist_id": 4718,
+          "entry_id": "zzzh3ci8w4uf886",
+          "release_id": "a2uez39z63231el",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E01.Beautiful.Agent.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[EE1C6BCB].mkv"
+        },
+        {
+          "anilist_id": 4718,
+          "entry_id": "zzzh3ci8w4uf886",
+          "release_id": "grg9pfvoalen056",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E01.Beautiful.Agent.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[EE1C6BCB].mkv"
+        }
+      ],
+      "key": "agent.aika.s01e01.beautiful.agent.576p.dvdrip.dd2.0.x264-hi10p-rasetsu.[ee1c6bcb]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 366,
+          "entry_id": "6v28eahi6ud93du",
+          "release_id": "a2uez39z63231el",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E02.Naked.Mission.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[B43C1267].mkv"
+        },
+        {
+          "anilist_id": 366,
+          "entry_id": "6v28eahi6ud93du",
+          "release_id": "grg9pfvoalen056",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E02.Naked.Mission.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[B43C1267].mkv"
+        },
+        {
+          "anilist_id": 4718,
+          "entry_id": "zzzh3ci8w4uf886",
+          "release_id": "a2uez39z63231el",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E02.Naked.Mission.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[B43C1267].mkv"
+        },
+        {
+          "anilist_id": 4718,
+          "entry_id": "zzzh3ci8w4uf886",
+          "release_id": "grg9pfvoalen056",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E02.Naked.Mission.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[B43C1267].mkv"
+        }
+      ],
+      "key": "agent.aika.s01e02.naked.mission.576p.dvdrip.dd2.0.x264-hi10p-rasetsu.[b43c1267]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 366,
+          "entry_id": "6v28eahi6ud93du",
+          "release_id": "a2uez39z63231el",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E03.Takeoff.Position.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[2E6A7DF0].mkv"
+        },
+        {
+          "anilist_id": 366,
+          "entry_id": "6v28eahi6ud93du",
+          "release_id": "grg9pfvoalen056",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E03.Takeoff.Position.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[2E6A7DF0].mkv"
+        },
+        {
+          "anilist_id": 4718,
+          "entry_id": "zzzh3ci8w4uf886",
+          "release_id": "a2uez39z63231el",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E03.Takeoff.Position.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[2E6A7DF0].mkv"
+        },
+        {
+          "anilist_id": 4718,
+          "entry_id": "zzzh3ci8w4uf886",
+          "release_id": "grg9pfvoalen056",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E03.Takeoff.Position.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[2E6A7DF0].mkv"
+        }
+      ],
+      "key": "agent.aika.s01e03.takeoff.position.576p.dvdrip.dd2.0.x264-hi10p-rasetsu.[2e6a7df0]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 366,
+          "entry_id": "6v28eahi6ud93du",
+          "release_id": "a2uez39z63231el",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E04.A.Flower.Blooming.in.Space.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[528F3BB8].mkv"
+        },
+        {
+          "anilist_id": 366,
+          "entry_id": "6v28eahi6ud93du",
+          "release_id": "grg9pfvoalen056",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E04.A.Flower.Blooming.in.Space.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[528F3BB8].mkv"
+        },
+        {
+          "anilist_id": 4718,
+          "entry_id": "zzzh3ci8w4uf886",
+          "release_id": "a2uez39z63231el",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E04.A.Flower.Blooming.in.Space.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[528F3BB8].mkv"
+        },
+        {
+          "anilist_id": 4718,
+          "entry_id": "zzzh3ci8w4uf886",
+          "release_id": "grg9pfvoalen056",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E04.A.Flower.Blooming.in.Space.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[528F3BB8].mkv"
+        }
+      ],
+      "key": "agent.aika.s01e04.a.flower.blooming.in.space.576p.dvdrip.dd2.0.x264-hi10p-rasetsu.[528f3bb8]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 366,
+          "entry_id": "6v28eahi6ud93du",
+          "release_id": "a2uez39z63231el",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E05.The.Golden.Delmo.Operation.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[D87EA8E3].mkv"
+        },
+        {
+          "anilist_id": 366,
+          "entry_id": "6v28eahi6ud93du",
+          "release_id": "grg9pfvoalen056",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E05.The.Golden.Delmo.Operation.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[D87EA8E3].mkv"
+        },
+        {
+          "anilist_id": 4718,
+          "entry_id": "zzzh3ci8w4uf886",
+          "release_id": "a2uez39z63231el",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E05.The.Golden.Delmo.Operation.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[D87EA8E3].mkv"
+        },
+        {
+          "anilist_id": 4718,
+          "entry_id": "zzzh3ci8w4uf886",
+          "release_id": "grg9pfvoalen056",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E05.The.Golden.Delmo.Operation.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[D87EA8E3].mkv"
+        }
+      ],
+      "key": "agent.aika.s01e05.the.golden.delmo.operation.576p.dvdrip.dd2.0.x264-hi10p-rasetsu.[d87ea8e3]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 366,
+          "entry_id": "6v28eahi6ud93du",
+          "release_id": "a2uez39z63231el",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E06.Delmo.Operation.White.Silver.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[614E2793].mkv"
+        },
+        {
+          "anilist_id": 366,
+          "entry_id": "6v28eahi6ud93du",
+          "release_id": "grg9pfvoalen056",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E06.Delmo.Operation.White.Silver.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[614E2793].mkv"
+        },
+        {
+          "anilist_id": 4718,
+          "entry_id": "zzzh3ci8w4uf886",
+          "release_id": "a2uez39z63231el",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E06.Delmo.Operation.White.Silver.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[614E2793].mkv"
+        },
+        {
+          "anilist_id": 4718,
+          "entry_id": "zzzh3ci8w4uf886",
+          "release_id": "grg9pfvoalen056",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E06.Delmo.Operation.White.Silver.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[614E2793].mkv"
+        }
+      ],
+      "key": "agent.aika.s01e06.delmo.operation.white.silver.576p.dvdrip.dd2.0.x264-hi10p-rasetsu.[614e2793]",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 366,
+          "entry_id": "6v28eahi6ud93du",
+          "release_id": "a2uez39z63231el",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E07.Break.the.Decisive.Battle.Delmo.Base.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[B2F2DC84].mkv"
+        },
+        {
+          "anilist_id": 366,
+          "entry_id": "6v28eahi6ud93du",
+          "release_id": "grg9pfvoalen056",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E07.Break.the.Decisive.Battle.Delmo.Base.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[B2F2DC84].mkv"
+        },
+        {
+          "anilist_id": 4718,
+          "entry_id": "zzzh3ci8w4uf886",
+          "release_id": "a2uez39z63231el",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E07.Break.the.Decisive.Battle.Delmo.Base.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[B2F2DC84].mkv"
+        },
+        {
+          "anilist_id": 4718,
+          "entry_id": "zzzh3ci8w4uf886",
+          "release_id": "grg9pfvoalen056",
+          "source": "file",
+          "source_name": "Agent.Aika.S01E07.Break.the.Decisive.Battle.Delmo.Base.576p.DVDRip.DD2.0.x264-Hi10P-RASETSU.[B2F2DC84].mkv"
+        }
+      ],
+      "key": "agent.aika.s01e07.break.the.decisive.battle.delmo.base.576p.dvdrip.dd2.0.x264-hi10p-rasetsu.[b2f2dc84]",
       "kind": "strict",
       "reason": "conflicting_identity_or_recommendation_level"
     },
@@ -740026,30 +741408,44 @@
   "changes": {
     "entries": {
       "added": [
-        "86yv9mrfonanxg1",
-        "faamxe9cgjey35t"
+        "52jfrh36v7wbanu",
+        "958fm58f2eoqc9c",
+        "9wkpw3qa69aop0e",
+        "gwsgvgi69tgy4ai",
+        "iw2pj16kb2u69ue",
+        "uyudvfo3k3qy4ee",
+        "x6bb7ha6fgagwfy",
+        "yw3aslzlsjo0abe",
+        "zzzh3ci8w4uf886"
       ],
       "removed": []
     },
     "releases": {
       "added": [
-        "4bkxlalfhlk6xab",
-        "65ldxhu4mmsc01r",
-        "6saz7u9fc0dmn5l",
-        "cuzluv5gr3ib4gx",
-        "et4khr226781nkp",
-        "h4s6mfl3086bbqj",
-        "lrds312r4x6bqq5",
-        "r5n12evi89z38aa",
-        "vodxfdx5pzx9u1h",
-        "w7vp3wfcl1jxdb2",
-        "wc3624hbs9r6v40"
+        "1hop4sbh8t6zww5",
+        "3xenmxx90gptcba",
+        "42fs3vf2a99bwxo",
+        "4w64vxur4tgtacq",
+        "8hga26f2prdqlrl",
+        "b7n8nmn5at41xkt",
+        "f2d314qefzn4iht",
+        "fci9qiwpy3lln2f",
+        "grtc3b8ubvqnxfc",
+        "gwjf3hnd53919kn",
+        "ldt5kdtvyc7yuz3",
+        "nr2gs0dw0x17irp",
+        "nsekcwngzbpynwp",
+        "pwo6z3fiwftiz0a",
+        "swswtimiwenjgxv",
+        "t1ppk5ea72bps5v",
+        "tmqtmipg27cdtz5",
+        "vxqv013p347twkx",
+        "whmpr019zqqxoe1"
       ],
       "removed": [
-        "605zdamzrcgc7tm",
-        "lnwr5wpooxx17hl",
-        "t681feihrtpiyg1",
-        "y1g2a3h2tbr4nf3"
+        "697snh8fbsh4dmo",
+        "7dmyhsvd6315uwx",
+        "xttnyo6wnch0f9h"
       ]
     }
   },
@@ -740057,26 +741453,26 @@
     "encoding": {
       "direct_buckets": {
         "bucket_count": 350,
-        "key_count": 21183,
-        "max_keys": 231,
-        "mean_keys": 60.52285714285714
+        "key_count": 21252,
+        "max_keys": 232,
+        "mean_keys": 60.72
       },
-      "direct_entries": 21183,
+      "direct_entries": 21252,
       "route_buckets": 259,
-      "source_bytes": 3014270,
-      "source_lines": 45382,
+      "source_bytes": 3023182,
+      "source_lines": 45526,
       "template_buckets": {
         "bucket_count": 259,
-        "key_count": 6602,
+        "key_count": 6622,
         "max_keys": 125,
-        "mean_keys": 25.49034749034749
+        "mean_keys": 25.56756756756757
       },
-      "template_groups": 6602,
-      "tuple_chunks": 6809
+      "template_groups": 6622,
+      "tuple_chunks": 6829
     },
     "provenance": {
-      "strict_keys": 57288,
-      "tolerant_keys": 46632
+      "strict_keys": 57427,
+      "tolerant_keys": 46748
     },
     "stale_overrides": []
   }
