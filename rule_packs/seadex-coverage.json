@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.36",
-  "snapshot_sha256": "9bb37db3e7640efcb9404455477d8142bc51bf7b7420d3c94f6c93203c946b7c",
+  "pack_version": "1.0.37",
+  "snapshot_sha256": "77a73045c44871bf1cd89d1f2ca0dbd1da724a88492221a3c07c6989e35a248a",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -4064,24 +4064,16 @@
     {
       "alias_sources": 0,
       "entry_id": "28ob7sw4jkhc6u6",
-      "file_sources": 11,
-      "release_id": "3rqzs6jwyztb182",
-      "strict_keys": 11,
-      "tolerant_keys": 11
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "28ob7sw4jkhc6u6",
-      "file_sources": 11,
-      "release_id": "m16gri6kza7frse",
-      "strict_keys": 11,
-      "tolerant_keys": 11
+      "file_sources": 10,
+      "release_id": "8qgcuxnhs1a0suh",
+      "strict_keys": 10,
+      "tolerant_keys": 10
     },
     {
       "alias_sources": 0,
       "entry_id": "28ob7sw4jkhc6u6",
       "file_sources": 10,
-      "release_id": "tzp2s9zjm7rkiq3",
+      "release_id": "jz3szps4zivpgmo",
       "strict_keys": 10,
       "tolerant_keys": 10
     },
@@ -30378,6 +30370,14 @@
       "entry_id": "hwlohux4egnz95g",
       "file_sources": 12,
       "release_id": "ya7szxncy2ai2q9",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "hwlohux4egnz95g",
+      "file_sources": 12,
+      "release_id": "znweo3t0g9cjink",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -80304,12 +80304,6 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "pnkwzsi14d4zyu7",
       "source_name": "Reign of the Seven Spellblades (Nanatsu no Maken ga Shihai suru) S01E15 2023 1080p WEB-DL AVC AAC 2.0 Dual Audio -ZR-.mkv"
-    },
-    {
-      "entry_id": "28ob7sw4jkhc6u6",
-      "reason": "non_release_file",
-      "release_id": "tzp2s9zjm7rkiq3",
-      "source_name": "Extras/[Datte13] Devilman Crybaby S01 v2 - NCOP (BD 1080p Hi10 Opus) [65FABAF0].mkv"
     },
     {
       "entry_id": "2951ybp9ohviul5",
@@ -741325,56 +741319,19 @@
   "stale_overrides": [],
   "changes": {
     "entries": {
-      "added": [
-        "4d468oivw3qgjo2",
-        "g2ckhpgh0mzd2fi",
-        "nj87agjwg8ljn53",
-        "oz94f5x0uxwfiv9"
-      ],
+      "added": [],
       "removed": []
     },
     "releases": {
       "added": [
-        "0o393lvn9j4c7m8",
-        "0uo6nkbzejyejt4",
-        "1x2esot1qshnbvy",
-        "2pmipskkvng3emv",
-        "2pzlb9h70843r56",
-        "3yx5sbzea1mhcto",
-        "4lxgsno3uq66n90",
-        "677isa59m665jn4",
-        "72ifvwo9husn4m0",
-        "7qcbznnu7zsqwr4",
-        "7vj6qwwu66zyebq",
-        "ai3nf8k7exj07lf",
-        "ba95plc02kf59g0",
-        "dvhdol4kslqch2f",
-        "e7j2th7z3ydsx0m",
-        "eqatak4mlv2gngm",
-        "hv6fhz096y7whyy",
-        "hwmwcaabnpzxtdm",
-        "iddzigiof1a6f4a",
-        "j4r3wpmyekvnp7g",
-        "kdsdxgwu81yep7c",
-        "klhf3jrp4m4ekhv",
-        "llwi7n8vzrvh4tz",
-        "mzqo7nezdmia9gd",
-        "nc8fboxip4iqws6",
-        "o7odft22ckfeg2y",
-        "rvprp0y8ex8vfaj",
-        "uhwsdq1yr8007na",
-        "vubyk8ndtfo6g7l",
-        "wzj0s5ghockjaqq",
-        "xoigmvqfk3boque",
-        "yonqgyi0l23a9xr",
-        "yyj0jjduy7d04ke",
-        "z2pltlev9msmmv8",
-        "zg5xekicghg467f",
-        "zqtc6kcvy0xmsr6"
+        "8qgcuxnhs1a0suh",
+        "jz3szps4zivpgmo",
+        "znweo3t0g9cjink"
       ],
       "removed": [
-        "hhu2oclewxm99rc",
-        "mbo9imjq0n1mzto"
+        "3rqzs6jwyztb182",
+        "m16gri6kza7frse",
+        "tzp2s9zjm7rkiq3"
       ]
     }
   },
@@ -741382,26 +741339,26 @@
     "encoding": {
       "direct_buckets": {
         "bucket_count": 350,
-        "key_count": 21307,
+        "key_count": 21303,
         "max_keys": 232,
-        "mean_keys": 60.87714285714286
+        "mean_keys": 60.86571428571428
       },
-      "direct_entries": 21307,
+      "direct_entries": 21303,
       "route_buckets": 260,
-      "source_bytes": 3029189,
-      "source_lines": 45637,
+      "source_bytes": 3028495,
+      "source_lines": 45628,
       "template_buckets": {
         "bucket_count": 260,
-        "key_count": 6632,
+        "key_count": 6630,
         "max_keys": 125,
-        "mean_keys": 25.50769230769231
+        "mean_keys": 25.5
       },
-      "template_groups": 6632,
-      "tuple_chunks": 6838
+      "template_groups": 6630,
+      "tuple_chunks": 6836
     },
     "provenance": {
-      "strict_keys": 57522,
-      "tolerant_keys": 46806
+      "strict_keys": 57510,
+      "tolerant_keys": 46794
     },
     "stale_overrides": []
   }
