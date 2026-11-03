@@ -10,6 +10,12 @@ source "${script_dir}/release-plugin-v3-identity.sh"
 
 work_root="$(mktemp -d)"
 trap 'rm -rf "${work_root}"' EXIT
+cosign_lock="${work_root}/cosign.lock"
+
+if ! command -v flock >/dev/null 2>&1; then
+  printf 'flock is required to serialize cosign verification\n' >&2
+  exit 1
+fi
 
 jq -r '
   .plugins[]
@@ -48,10 +54,16 @@ verify_catalog_artifact() {
     *.zst) zstd -dc "${downloaded_bundle}" > "${bundle_path}" ;;
     *) cp "${downloaded_bundle}" "${bundle_path}" ;;
   esac
-  verify_release_blob_tag_bound \
-    "${artifact_path}" \
-    "${bundle_path}" \
-    "${repository}"
+  # Every cosign verify-blob call refreshes and rewrites the shared Sigstore
+  # TUF cache, and two concurrent calls fail with "failed to persist
+  # metadata". Downloads stay parallel; only cosign runs one at a time.
+  {
+    flock 9
+    verify_release_blob_tag_bound \
+      "${artifact_path}" \
+      "${bundle_path}" \
+      "${repository}"
+  } 9>"${cosign_lock}"
 }
 
 readonly parallelism=2
