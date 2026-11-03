@@ -53,6 +53,7 @@ fn qbittorrent_release_wasm_conforms_to_the_download_client_host_contract() {
     assert_an_unsupported_control_action_is_in_band(&suite);
     assert_a_rejected_login_names_the_credentials(&suite);
     assert_add_options_across_qbittorrent_versions(&suite);
+    assert_legacy_title_tag_migration(&suite);
     suite.assert_another_family_is_an_invocation_error();
 }
 
@@ -426,6 +427,143 @@ fn assert_add_options_across_qbittorrent_versions(suite: &DownloadClientConforma
     }
 }
 
+fn assert_legacy_title_tag_migration(suite: &DownloadClientConformance) {
+    let legacy = (0..405)
+        .map(|index| format!("scryer-title-00000000-0000-4000-8000-{index:012x}"))
+        .collect::<Vec<_>>();
+    let mut tags = legacy.clone();
+    tags.extend(
+        [
+            "user-label",
+            "scryer:imported",
+            "scryer:routing-category:tv",
+            "scryer-title-not-a-uuid",
+            "scryer-tag-favorites",
+        ]
+        .into_iter()
+        .map(str::to_string),
+    );
+    let script_for = |inventory_status, delete_status| {
+        let mut script = authenticated_script();
+        let HttpScript::Routed(routes) = &mut script.http else {
+            unreachable!()
+        };
+        routes[1] = HttpRoute::exact(
+            &format!("{API_ROOT}/torrents/info?sort=added_on&reverse=true&filter=all"),
+            HttpReply::ok(&serde_json::json!([
+                {"hash":"aaaa", "name":"Synthetic torrent", "state":"downloading", "tags":format!("{},user-label", legacy[0])},
+                {"hash":"bbbb", "name":"Unrelated torrent", "state":"downloading", "tags":"user-label"}
+            ]).to_string()),
+        );
+        routes[3] = HttpRoute::exact(
+            &format!("{API_ROOT}/torrents/tags"),
+            HttpReply::new(inventory_status, serde_json::to_vec(&tags).unwrap()),
+        );
+        routes.push(HttpRoute::exact(
+            &format!("{API_ROOT}/torrents/deleteTags"),
+            HttpReply::new(delete_status, Vec::new()),
+        ));
+        script
+    };
+    let assert_queue = |result| {
+        let PluginDownloadClientCommandResult::ListQueue(PluginResult::Ok(items)) = result else {
+            panic!("migration must not break queue feedback: {result:?}");
+        };
+        assert_eq!(
+            items
+                .iter()
+                .map(|item| item.client_item_id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["aaaa", "bbbb"]
+        );
+    };
+    let migration_key = format!("qbittorrent.title-tag-migration.v1:{API_ROOT}");
+    for (inventory_status, delete_status, expected_batches) in
+        [(200, 200, 3), (503, 200, 0), (200, 503, 1)]
+    {
+        let (mut store, plugin) = instantiate(
+            &suite.wasm_path(),
+            script_for(inventory_status, delete_status),
+        );
+        assert_queue(call_download_client(
+            &mut store,
+            &plugin,
+            PluginDownloadClientCommand::ListQueue,
+        ));
+        let requests = &store.data().script.requests;
+        let deletions = requests
+            .iter()
+            .filter(|request| request.url.ends_with("/torrents/deleteTags"))
+            .collect::<Vec<_>>();
+        assert_eq!(deletions.len(), expected_batches);
+        for (index, request) in deletions.iter().enumerate() {
+            assert_eq!(request.method.as_deref(), Some("POST"));
+            assert_eq!(
+                String::from_utf8_lossy(&request.body),
+                format!(
+                    "tags={}",
+                    legacy.chunks(100).nth(index).unwrap().join("%2C")
+                )
+            );
+        }
+        assert!(
+            requests
+                .iter()
+                .filter(|request| request.method.as_deref() == Some("POST"))
+                .all(|request| request.url.ends_with("/auth/login")
+                    || request.url.ends_with("/torrents/deleteTags"))
+        );
+
+        // Explicit state controls avoid wall-clock timing assumptions on slow runners.
+        let mut state = store.data().script.stored_state();
+        assert!(
+            state.contains_key(&migration_key),
+            "attempt is throttled even on failure"
+        );
+        state.insert(
+            migration_key.clone(),
+            serde_json::to_vec(&i64::MAX).unwrap(),
+        );
+        let mut throttled = script_for(200, 200);
+        throttled.state = StateSource::Stored(state.clone());
+        let (mut store, plugin) = instantiate(&suite.wasm_path(), throttled);
+        assert_queue(call_download_client(
+            &mut store,
+            &plugin,
+            PluginDownloadClientCommand::ListQueue,
+        ));
+        assert!(
+            !store
+                .data()
+                .script
+                .requests
+                .iter()
+                .any(|request| request.url.ends_with("/torrents/tags")
+                    || request.url.ends_with("/torrents/deleteTags"))
+        );
+
+        state.insert(migration_key.clone(), serde_json::to_vec(&0i64).unwrap());
+        let mut retry = script_for(200, 200);
+        retry.state = StateSource::Stored(state);
+        let (mut store, plugin) = instantiate(&suite.wasm_path(), retry);
+        assert_queue(call_download_client(
+            &mut store,
+            &plugin,
+            PluginDownloadClientCommand::ListQueue,
+        ));
+        assert_eq!(
+            store
+                .data()
+                .script
+                .requests
+                .iter()
+                .filter(|request| request.url.ends_with("/torrents/deleteTags"))
+                .count(),
+            3
+        );
+    }
+}
+
 fn sent_session_cookie(script: &Script) -> bool {
     script
         .requests
@@ -465,6 +603,7 @@ fn authenticated_script() -> Script {
                 HttpReply::ok("[]"),
             ),
             HttpRoute::exact(&format!("{API_ROOT}/app/version"), HttpReply::ok("v5.2.0")),
+            HttpRoute::exact(&format!("{API_ROOT}/torrents/tags"), HttpReply::ok("[]")),
         ]),
         // This client's contract distinguishes `POST /auth/login` from a `GET`
         // of the same path.
