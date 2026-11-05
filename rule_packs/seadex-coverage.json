@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.40",
-  "snapshot_sha256": "d8cc65796be63c97ead8364116988e96d212f314954cd269b93a2f8087e7176b",
+  "pack_version": "1.0.41",
+  "snapshot_sha256": "997481c1776446c4ddc5a248ad411461bd728d5d93c0fadc14acc694be75d040",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -20673,7 +20673,7 @@
       "alias_sources": 0,
       "entry_id": "bwb51sdrr8tjtgi",
       "file_sources": 12,
-      "release_id": "qdu0snwifmdj9on",
+      "release_id": "1o38j3c2eu8tpae",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -30828,6 +30828,14 @@
       "release_id": "vitq02n7670nthj",
       "strict_keys": 1,
       "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "ibvjbh4csb624m6",
+      "file_sources": 24,
+      "release_id": "fwz87t44hbg553w",
+      "strict_keys": 24,
+      "tolerant_keys": 24
     },
     {
       "alias_sources": 0,
@@ -44511,6 +44519,22 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "pcdb9i6nxppi8ht",
+      "file_sources": 12,
+      "release_id": "161bwjdzouadyf4",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "pcdb9i6nxppi8ht",
+      "file_sources": 12,
+      "release_id": "6dvdssvtvqnid07",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "pczezk4qdk2dqfh",
       "file_sources": 1,
       "release_id": "5r6mn4uydv02skj",
@@ -52740,6 +52764,22 @@
       "release_id": "sr8igozuqxiarzn",
       "strict_keys": 1,
       "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "tniabuz6ol7ok7r",
+      "file_sources": 29,
+      "release_id": "1xmr54lc03s9wsm",
+      "strict_keys": 29,
+      "tolerant_keys": 29
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "tniabuz6ol7ok7r",
+      "file_sources": 14,
+      "release_id": "i3lv8e6g077l4j2",
+      "strict_keys": 14,
+      "tolerant_keys": 14
     },
     {
       "alias_sources": 0,
@@ -62944,46 +62984,6 @@
     {
       "alias_sources": 0,
       "entry_id": "z8hibgovmo06ykp",
-      "file_sources": 1,
-      "release_id": "09o2vk0yb1qgg16",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "z8hibgovmo06ykp",
-      "file_sources": 1,
-      "release_id": "0dymc899ku4ihp8",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "z8hibgovmo06ykp",
-      "file_sources": 1,
-      "release_id": "1g8u9pknr0f81tp",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "z8hibgovmo06ykp",
-      "file_sources": 1,
-      "release_id": "2vbudlguof05u1d",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "z8hibgovmo06ykp",
-      "file_sources": 1,
-      "release_id": "5b1jok614utzx5z",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "z8hibgovmo06ykp",
       "file_sources": 13,
       "release_id": "aogniohbq8bw7n8",
       "strict_keys": 13,
@@ -62992,74 +62992,18 @@
     {
       "alias_sources": 0,
       "entry_id": "z8hibgovmo06ykp",
-      "file_sources": 1,
-      "release_id": "eap9zum32xv9gj4",
-      "strict_keys": 1,
-      "tolerant_keys": 1
+      "file_sources": 15,
+      "release_id": "kicd1ejhzo15on7",
+      "strict_keys": 15,
+      "tolerant_keys": 15
     },
     {
       "alias_sources": 0,
       "entry_id": "z8hibgovmo06ykp",
-      "file_sources": 1,
-      "release_id": "fa6wk6mfookq2os",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "z8hibgovmo06ykp",
-      "file_sources": 13,
-      "release_id": "faxekpfsqlhjet5",
-      "strict_keys": 13,
-      "tolerant_keys": 13
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "z8hibgovmo06ykp",
-      "file_sources": 1,
-      "release_id": "ggpxrei8xinifrn",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "z8hibgovmo06ykp",
-      "file_sources": 1,
-      "release_id": "gwwsnftdiuqnies",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "z8hibgovmo06ykp",
-      "file_sources": 1,
-      "release_id": "ozit9nsvetqks3x",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "z8hibgovmo06ykp",
-      "file_sources": 1,
-      "release_id": "qz56ayu037qjfku",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "z8hibgovmo06ykp",
-      "file_sources": 1,
-      "release_id": "tc5gbis22t14lsc",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "z8hibgovmo06ykp",
-      "file_sources": 1,
-      "release_id": "z7838wdz5ziz2fk",
-      "strict_keys": 1,
-      "tolerant_keys": 1
+      "file_sources": 15,
+      "release_id": "uom97upulvcaqtt",
+      "strict_keys": 15,
+      "tolerant_keys": 15
     },
     {
       "alias_sources": 0,
@@ -257158,6 +257102,24 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "x5pup9525iehrhx",
       "source_name": "Macross Zero - 5 [BDRip 1912x1072 x264 Hi10P TrueHD] [F1633AB9].mkv"
+    },
+    {
+      "entry_id": "tniabuz6ol7ok7r",
+      "reason": "non_release_file",
+      "release_id": "1xmr54lc03s9wsm",
+      "source_name": "checksum.md5"
+    },
+    {
+      "entry_id": "tniabuz6ol7ok7r",
+      "reason": "non_release_file",
+      "release_id": "1xmr54lc03s9wsm",
+      "source_name": "checksum.sfv"
+    },
+    {
+      "entry_id": "tniabuz6ol7ok7r",
+      "reason": "non_release_file",
+      "release_id": "1xmr54lc03s9wsm",
+      "source_name": "info.txt"
     },
     {
       "entry_id": "tq4gglcodc5goi2",
@@ -753260,35 +753222,39 @@
   "changes": {
     "entries": {
       "added": [
-        "8e642x06t4i5w8j",
-        "ha95cy74xu01oue",
-        "lihcmw48ttd3ltr",
-        "n1p4zndfsjrjec2",
-        "nytdbadupzku6ir",
-        "of68jl1zrg7zzx2"
+        "ibvjbh4csb624m6",
+        "pcdb9i6nxppi8ht",
+        "tniabuz6ol7ok7r"
       ],
       "removed": []
     },
     "releases": {
       "added": [
-        "3ywmtndt04ikndr",
-        "9c93gyb1tniggqq",
-        "b3vpz13b34l7pbl",
-        "d079euf2cgas1ke",
-        "doq4cocg7w8928x",
-        "gmzdywex2vhf033",
-        "k78x2bdrtchdgqm",
-        "laps2tu09elm51m",
-        "m9p3kmc2j4oize4",
-        "muy2ydvf40bvtep",
-        "o2xh441tn1ni5r0",
-        "qyj2cuxv8w0duno",
-        "tq9qf8kdadt2kyb",
-        "v2yaupl4jb42byq"
+        "161bwjdzouadyf4",
+        "1o38j3c2eu8tpae",
+        "1xmr54lc03s9wsm",
+        "6dvdssvtvqnid07",
+        "fwz87t44hbg553w",
+        "i3lv8e6g077l4j2",
+        "kicd1ejhzo15on7",
+        "uom97upulvcaqtt"
       ],
       "removed": [
-        "97mjqe2gqk9buho",
-        "rnc8nmg2v1ajyg1"
+        "09o2vk0yb1qgg16",
+        "0dymc899ku4ihp8",
+        "1g8u9pknr0f81tp",
+        "2vbudlguof05u1d",
+        "5b1jok614utzx5z",
+        "eap9zum32xv9gj4",
+        "fa6wk6mfookq2os",
+        "faxekpfsqlhjet5",
+        "ggpxrei8xinifrn",
+        "gwwsnftdiuqnies",
+        "ozit9nsvetqks3x",
+        "qdu0snwifmdj9on",
+        "qz56ayu037qjfku",
+        "tc5gbis22t14lsc",
+        "z7838wdz5ziz2fk"
       ]
     }
   },
@@ -753296,26 +753262,26 @@
     "encoding": {
       "direct_buckets": {
         "bucket_count": 350,
-        "key_count": 21346,
+        "key_count": 21356,
         "max_keys": 230,
-        "mean_keys": 60.988571428571426
+        "mean_keys": 61.01714285714286
       },
-      "direct_entries": 21346,
+      "direct_entries": 21356,
       "route_buckets": 260,
-      "source_bytes": 3032237,
-      "source_lines": 45720,
+      "source_bytes": 3035820,
+      "source_lines": 45744,
       "template_buckets": {
         "bucket_count": 260,
-        "key_count": 6643,
-        "max_keys": 123,
-        "mean_keys": 25.55
+        "key_count": 6661,
+        "max_keys": 125,
+        "mean_keys": 25.619230769230768
       },
-      "template_groups": 6643,
-      "tuple_chunks": 6851
+      "template_groups": 6661,
+      "tuple_chunks": 6869
     },
     "provenance": {
-      "strict_keys": 57669,
-      "tolerant_keys": 46954
+      "strict_keys": 57750,
+      "tolerant_keys": 47035
     },
     "stale_overrides": []
   }
