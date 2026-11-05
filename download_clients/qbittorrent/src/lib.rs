@@ -407,7 +407,14 @@ fn handle_download_add(
 pub fn scryer_download_list_queue(input: String) -> FnResult<String> {
     let config = QbittorrentConfig::from_config()?;
     let scope = scoped_feedback_request(&input).map(|(scope, _)| scope);
-    let torrents = list_torrents(&config, Some("all"))?
+    let torrents = list_torrents(&config, Some("all"))?;
+    // Identity lives in Scryer's durable submission/binding, keyed by client and hash.
+    // Retire old title labels only after a successful connection/listing. Migration
+    // failure must not hide the queue or interfere with seeding management.
+    if let Err(error) = migrate_legacy_title_tags(&config, scope.as_ref(), now_unix_seconds()) {
+        eprintln!("event=qbittorrent_title_tag_migration_failed error={error}");
+    }
+    let torrents = torrents
         .into_iter()
         .filter(|torrent| {
             scope
@@ -1724,14 +1731,6 @@ fn discover_hash_candidate(
 
 fn build_tags(config: &QbittorrentConfig, request: &PluginDownloadClientAddRequest) -> Vec<String> {
     let mut tags = config.static_tags.clone();
-    tags.push("scryer-origin".to_string());
-    if let Some(title_id) = request.title.title_id.as_deref() {
-        tags.push(format!("scryer-title-{}", sanitize_tag_fragment(title_id)));
-    }
-    tags.push(format!(
-        "scryer-facet-{}",
-        sanitize_tag_fragment(&request.title.media_facet)
-    ));
     for tag in &request.title.tags {
         if let Some(tag) = normalize_non_empty(Some(tag.clone())) {
             tags.push(format!("scryer-tag-{}", sanitize_tag_fragment(&tag)));
@@ -2480,24 +2479,83 @@ fn torrent_to_completed_download(torrent: QbTorrent) -> Option<PluginCompletedDo
         content_paths,
         size_bytes: torrent.total_size.or(torrent.size),
         completed_at: unix_to_rfc3339(torrent.completion_on),
-        parameters: parameters_from_tags(torrent.tags.as_deref()),
+        // Client labels are not identity evidence. The host restores title/facet
+        // metadata from its durable submission and tracked download records.
+        parameters: Vec::new(),
         subtitle_paths: Vec::new(),
     })
 }
 
-fn parameters_from_tags(tags: Option<&str>) -> Vec<(String, String)> {
-    let mut out = Vec::new();
-    for tag in parse_csv(tags.unwrap_or_default()) {
-        if tag == "scryer-origin" {
-            continue;
-        }
-        if let Some(title_id) = tag.strip_prefix("scryer-title-") {
-            out.push(("*scryer_title_id".to_string(), title_id.to_string()));
-        } else if let Some(facet) = tag.strip_prefix("scryer-facet-") {
-            out.push(("*scryer_facet".to_string(), facet.to_string()));
-        }
+fn is_legacy_title_tag(tag: &str) -> bool {
+    let Some(id) = tag.strip_prefix("scryer-title-") else {
+        return false;
+    };
+    id.len() == 36
+        && id.bytes().enumerate().all(|(index, byte)| {
+            if matches!(index, 8 | 13 | 18 | 23) {
+                byte == b'-'
+            } else {
+                byte.is_ascii_hexdigit()
+            }
+        })
+}
+
+fn legacy_title_tags_to_remove(
+    tags: Vec<String>,
+    config: &QbittorrentConfig,
+    scope: Option<&PluginDownloadFeedbackScope>,
+) -> Vec<String> {
+    tags.into_iter()
+        .filter(|tag| {
+            is_legacy_title_tag(tag)
+                // Explicit operator labels/routing values override our legacy convention.
+                && !config.static_tags.iter().any(|value| value.eq_ignore_ascii_case(tag))
+                && !config.imported_tag.eq_ignore_ascii_case(tag)
+                && !scope.is_some_and(|scope| scope.categories.iter().any(|value| value.eq_ignore_ascii_case(tag)))
+        })
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect()
+}
+
+fn migrate_legacy_title_tags(
+    config: &QbittorrentConfig,
+    scope: Option<&PluginDownloadFeedbackScope>,
+    now: i64,
+) -> Result<(), Error> {
+    // State survives component invocations, not necessarily host restarts. The
+    // migration is idempotent and revisits tags left by older plugin instances.
+    let key = format!("qbittorrent.title-tag-migration.v1:{}", config.api_root);
+    if var::get::<i64>(&key)?.is_some_and(|next| now < next) {
+        return Ok(());
     }
-    out
+    // Throttle failures as well as successes; never mark a failed pass complete.
+    var::set(&key, now.saturating_add(60))?;
+    let tags: Vec<String> = get_json(config, "/torrents/tags")?;
+    let candidates = legacy_title_tags_to_remove(tags, config, scope);
+    // Bound the work added to a poll even for a very large historical backlog.
+    // Successful deletions disappear from the next inventory; partial progress
+    // and failed batches are both safe to retry.
+    for batch in candidates.chunks(100).take(3) {
+        // This removes definitions, including attachments to live torrents. No
+        // torrent or payload is removed, and none of these tags is read as identity.
+        post_form(
+            config,
+            "/torrents/deleteTags",
+            &[("tags".to_string(), batch.join(","))],
+        )?;
+    }
+    if candidates.len() <= 300 {
+        var::set(&key, now.saturating_add(3600))?;
+    }
+    if !candidates.is_empty() {
+        eprintln!(
+            "event=qbittorrent_title_tag_migration removed={} remaining={}",
+            candidates.len().min(300),
+            candidates.len().saturating_sub(300)
+        );
+    }
+    Ok(())
 }
 
 fn parse_csv(raw: &str) -> Vec<String> {
@@ -3353,11 +3411,76 @@ mod tests {
     }
 
     #[test]
-    fn internal_tags_round_trip_to_parameters() {
-        let parameters =
-            parameters_from_tags(Some("scryer-origin,scryer-title-abc123,scryer-facet-anime"));
-        assert!(parameters.contains(&("*scryer_title_id".to_string(), "abc123".to_string())));
-        assert!(parameters.contains(&("*scryer_facet".to_string(), "anime".to_string())));
+    fn legacy_identity_tags_are_not_import_evidence() {
+        let mut torrent = feedback_torrent("abcd", 100);
+        torrent.tags = Some(
+            "scryer-origin,scryer-title-00000000-0000-4000-8000-000000000001,scryer-facet-anime"
+                .to_string(),
+        );
+        let completed = torrent_to_completed_download(torrent).expect("completed torrent");
+        assert!(completed.parameters.is_empty());
+    }
+
+    #[test]
+    fn new_download_tags_only_carry_operator_labels_and_routing() {
+        let mut config = test_config();
+        config.static_tags = vec!["operator-label".to_string()];
+        let mut request = test_add_request(DownloadInputKind::MagnetUri);
+        request.title.title_id = Some("00000000-0000-4000-8000-000000000001".to_string());
+        request.title.tags = vec!["favorites".to_string()];
+        assert_eq!(
+            build_tags(&config, &request),
+            vec![
+                "operator-label",
+                "scryer-tag-favorites",
+                "scryer:routing-category:movie"
+            ]
+        );
+        config.routing_mode = RoutingMode::Tag;
+        assert_eq!(
+            build_tags(&config, &request),
+            vec!["operator-label", "scryer-tag-favorites", "movie"]
+        );
+    }
+
+    #[test]
+    fn legacy_tag_cleanup_is_exact_and_preserves_explicit_configuration() {
+        let legacy = "scryer-title-00000000-0000-4000-8000-000000000001";
+        let static_tag = "scryer-title-00000000-0000-4000-8000-000000000002";
+        let routing_tag = "scryer-title-00000000-0000-4000-8000-000000000003";
+        let imported_tag = "scryer-title-00000000-0000-4000-8000-000000000004";
+        let mut config = test_config();
+        config.static_tags = vec![static_tag.to_string()];
+        config.imported_tag = imported_tag.to_string();
+        let scope = PluginDownloadFeedbackScope {
+            categories: vec![routing_tag.to_string()],
+        };
+        let tags = [
+            legacy,
+            legacy,
+            static_tag,
+            routing_tag,
+            imported_tag,
+            "scryer-title-not-a-uuid",
+            "scryer-title-00000000-0000-4000-8000-000000000001-notes",
+            "scryer-title-00000000000040008000000000000001",
+            "scryer-title-zzzzzzzz-0000-4000-8000-000000000001",
+            "my-scryer-title-00000000-0000-4000-8000-000000000001",
+            "scryer-origin",
+            "scryer-facet-movie",
+            "scryer:imported",
+            "scryer:routing-category:movie",
+            "scryer-tag-favorites",
+            "operator-label",
+        ];
+        assert_eq!(
+            legacy_title_tags_to_remove(
+                tags.into_iter().map(str::to_string).collect(),
+                &config,
+                Some(&scope)
+            ),
+            vec![legacy]
+        );
     }
 
     #[test]
