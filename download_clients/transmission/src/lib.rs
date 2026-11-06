@@ -19,9 +19,11 @@ use scryer_plugin_sdk::{
     DownloadIsolationMode, DownloadItemState, DownloadTorrentCapabilities, PluginCompletedDownload,
     PluginDescriptor, PluginDownloadClientAddRequest, PluginDownloadClientAddResponse,
     PluginDownloadClientControlRequest, PluginDownloadClientMarkImportedRequest,
-    PluginDownloadClientStatus, PluginDownloadItem, PluginDownloadOutputKind, PluginError,
-    PluginErrorCode, PluginResult, PluginTorrentInitialState, PluginTorrentItem,
-    PluginTorrentQueuePlacement, ProviderDescriptor, SDK_VERSION,
+    PluginDownloadClientStatus, PluginDownloadFeedbackScope, PluginDownloadItem,
+    PluginDownloadOutputKind, PluginDownloadScopedListRequest, PluginDownloadScopedListResponse,
+    PluginDownloadScopedRecentCompletedRequest, PluginError, PluginErrorCode, PluginResult,
+    PluginTorrentInitialState, PluginTorrentItem, PluginTorrentQueuePlacement, ProviderDescriptor,
+    SDK_VERSION,
 };
 use serde::Deserialize;
 
@@ -385,11 +387,9 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
                     reports_content_paths: true,
                     ..DownloadTorrentCapabilities::default()
                 }),
-                // SDK 3.10 addition. `false` is the SDK's own default and therefore exactly
-                // what this client's pre-3.10 descriptor already meant to a 3.10 host;
-                // advertising category-scoped feedback would be a behaviour change, not a
-                // transport one, so it stays off across the component migration.
-                category_scoped_feedback: false,
+                // The label is the host's routed category, so the host's own scope
+                // is what tells Scryer's torrents apart; see `torrent_matches_scope`.
+                category_scoped_feedback: true,
                 // The post-import mark the core actually calls. Both marks run
                 // the same label-only body; neither removes anything.
                 mark_imported_non_destructive: true,
@@ -543,18 +543,44 @@ fn should_move_to_top(
     }
 }
 
-pub fn scryer_download_list_queue(_input: String) -> FnResult<String> {
-    respond(list_queue())
+pub fn scryer_download_list_queue(input: String) -> FnResult<String> {
+    match scoped_feedback_scope(&input) {
+        Some(scope) => respond(list_queue(Some(&scope)).map(scoped_response)),
+        None => respond(list_queue(None)),
+    }
 }
 
-fn list_queue() -> Result<Vec<PluginDownloadItem>, PluginError> {
+/// The host-supplied feedback scope, present only on the scoped listing commands.
+fn scoped_feedback_scope(input: &str) -> Option<PluginDownloadFeedbackScope> {
+    let value = serde_json::from_str::<serde_json::Value>(input).ok()?;
+    value.get("scope")?;
+    if let Ok(request) =
+        serde_json::from_value::<PluginDownloadScopedRecentCompletedRequest>(value.clone())
+    {
+        return Some(request.scope);
+    }
+    serde_json::from_value::<PluginDownloadScopedListRequest>(value)
+        .ok()
+        .map(|request| request.scope)
+}
+
+fn scoped_response<T>(items: Vec<T>) -> PluginDownloadScopedListResponse<T> {
+    PluginDownloadScopedListResponse {
+        items,
+        failures: Vec::new(),
+    }
+}
+
+fn list_queue(
+    scope: Option<&PluginDownloadFeedbackScope>,
+) -> Result<Vec<PluginDownloadItem>, PluginError> {
     let config = TransmissionConfig::from_host();
     let session = session_get(&config)?;
     let supports_labels = session_supports_labels(&session);
     let torrents = list_torrents(&config)?;
     Ok(torrents
         .into_iter()
-        .filter(|torrent| torrent_matches_scope(&config, torrent, supports_labels))
+        .filter(|torrent| torrent_matches_scope(&config, scope, torrent, supports_labels))
         .map(|torrent| torrent_to_item(&config, &session, torrent))
         .collect())
 }
@@ -570,16 +596,21 @@ pub fn scryer_download_list_history(_input: String) -> FnResult<String> {
     respond(Ok::<Vec<PluginDownloadItem>, PluginError>(Vec::new()))
 }
 
-pub fn scryer_download_list_completed(_input: String) -> FnResult<String> {
-    respond(list_completed())
+pub fn scryer_download_list_completed(input: String) -> FnResult<String> {
+    match scoped_feedback_scope(&input) {
+        Some(scope) => respond(list_completed(Some(&scope)).map(scoped_response)),
+        None => respond(list_completed(None)),
+    }
 }
 
-fn list_completed() -> Result<Vec<PluginCompletedDownload>, PluginError> {
+fn list_completed(
+    scope: Option<&PluginDownloadFeedbackScope>,
+) -> Result<Vec<PluginCompletedDownload>, PluginError> {
     let config = TransmissionConfig::from_host();
     let supports_labels = supports_labels(&config)?;
     Ok(list_torrents(&config)?
         .into_iter()
-        .filter(|torrent| torrent_matches_scope(&config, torrent, supports_labels))
+        .filter(|torrent| torrent_matches_scope(&config, scope, torrent, supports_labels))
         .filter(is_completed)
         .map(|torrent| torrent_to_completed(&config, torrent))
         .collect())
@@ -1486,27 +1517,22 @@ fn effective_output_root(config: &TransmissionConfig, session: &SessionConfig) -
     }
 }
 
-/// The configured category is the scope label the queue is matched on, so it
-/// leads; the core's routed isolation value rides along when it differs, which
-/// is what lets Scryer route a download to its own label without dropping it
-/// out of scope.
+/// One label per torrent, as Sonarr writes `TvCategory`: the core's routed
+/// isolation value when it sent one, else the configured category. The host's
+/// feedback scope names the routed values, so the listing matches on them
+/// (`torrent_matches_scope`).
 fn labels_for_request(
     config: &TransmissionConfig,
     request: &PluginDownloadClientAddRequest,
 ) -> Vec<String> {
-    let mut labels = Vec::new();
-    if !config.category.is_empty() {
-        labels.push(config.category.clone());
-    }
-    if let Some(value) = request.routing.isolation_value.as_deref()
-        && !value.trim().is_empty()
-        && !labels
-            .iter()
-            .any(|label| label.eq_ignore_ascii_case(value.trim()))
-    {
-        labels.push(value.trim().to_string());
-    }
-    labels
+    request
+        .routing
+        .isolation_value
+        .as_deref()
+        .and_then(trimmed_non_empty)
+        .or_else(|| trimmed_non_empty(&config.category))
+        .into_iter()
+        .collect()
 }
 
 fn request_paused(config: &TransmissionConfig, request: &PluginDownloadClientAddRequest) -> bool {
@@ -1656,18 +1682,17 @@ fn torrent_to_completed(
 }
 
 /// Sonarr reports `Settings.TvCategory` verbatim (`TransmissionBase.cs:82`).
-/// Scryer reports the client's own casing for the label that matched, and
-/// nothing at all when no label did — a category the torrent does not carry is
-/// not something this client observed
+/// Scryer reports a label the torrent actually carries, in the client's own
+/// casing: the configured category when present, otherwise the first label
+/// (the routed one Scryer wrote), and nothing at all for an unlabelled torrent —
+/// a category the torrent does not carry is not something this client observed
 /// (`memory: download-category-case-sensitivity`).
 fn reported_category(config: &TransmissionConfig, torrent: &TransmissionTorrent) -> Option<String> {
-    if config.category.is_empty() {
-        return None;
-    }
     torrent
         .labels
         .iter()
-        .find(|label| label.eq_ignore_ascii_case(&config.category))
+        .find(|label| !config.category.is_empty() && label.eq_ignore_ascii_case(&config.category))
+        .or_else(|| torrent.labels.iter().find(|label| !label.trim().is_empty()))
         .cloned()
 }
 
@@ -1907,19 +1932,44 @@ fn derive_can_remove(
     }
 }
 
-/// Sonarr's scope filter (`TransmissionBase.cs:51-75`): labels only when the
-/// client actually has them, otherwise the directory, otherwise the category as
-/// a path component.
+/// With labels (Transmission 4.0+), the host's feedback scope decides. A scoped
+/// listing keeps a torrent whose label is one of the scope's categories, or the
+/// post-import label that replaced it — like rTorrent, offered to every scope
+/// rather than to none, since the host dedupes by hash and owns "already
+/// imported". An unscoped listing is unfiltered: the host reads a client
+/// unscoped exactly when it cannot name every category in play, and its own
+/// category admission keeps foreign torrents out. The cost is that an unscoped
+/// poll carries every torrent in the session, not just Scryer's.
+///
+/// Without labels there is nothing to match, so Sonarr's filter
+/// (`TransmissionBase.cs:51-75`) stands: the directory, otherwise the category
+/// as a path component.
 fn torrent_matches_scope(
     config: &TransmissionConfig,
+    scope: Option<&PluginDownloadFeedbackScope>,
     torrent: &TransmissionTorrent,
     supports_labels: bool,
 ) -> bool {
-    if !config.category.is_empty() && supports_labels && !torrent.labels.is_empty() {
-        return torrent
-            .labels
-            .iter()
-            .any(|label| label.eq_ignore_ascii_case(&config.category));
+    if supports_labels {
+        let categories = scope
+            .map(|scope| {
+                scope
+                    .categories
+                    .iter()
+                    .filter_map(|category| trimmed_non_empty(category))
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+        if categories.is_empty() {
+            return true;
+        }
+        let imported = trimmed_non_empty(&config.imported_category);
+        return torrent.labels.iter().any(|label| {
+            categories
+                .iter()
+                .chain(imported.as_ref())
+                .any(|wanted| label.trim().eq_ignore_ascii_case(wanted))
+        });
     }
 
     if !config.directory.is_empty() {
@@ -2348,8 +2398,14 @@ mod tests {
     // Scope (TransmissionFixture.cs:220-256)
     // -----------------------------------------------------------------------
 
+    fn scope(categories: &[&str]) -> PluginDownloadFeedbackScope {
+        PluginDownloadFeedbackScope {
+            categories: categories.iter().map(|value| value.to_string()).collect(),
+        }
+    }
+
     #[test]
-    fn a_category_scopes_by_label_when_the_client_has_labels() {
+    fn the_host_scope_matches_labels_when_the_client_has_labels() {
         let config = TransmissionConfig {
             category: "sonarr".to_string(),
             ..base_config()
@@ -2362,8 +2418,53 @@ mod tests {
             labels: vec!["radarr".to_string()],
             ..downloading_torrent(STATUS_DOWNLOADING)
         };
-        assert!(torrent_matches_scope(&config, &labelled, true));
-        assert!(!torrent_matches_scope(&config, &other, true));
+        let sonarr = scope(&["Sonarr"]);
+        assert!(torrent_matches_scope(
+            &config,
+            Some(&sonarr),
+            &labelled,
+            true
+        ));
+        assert!(!torrent_matches_scope(&config, Some(&sonarr), &other, true));
+        // Unscoped is unfiltered; the host's category admission gates the rest.
+        assert!(torrent_matches_scope(&config, None, &labelled, true));
+        assert!(torrent_matches_scope(&config, None, &other, true));
+        // A scope with no usable category filters nothing.
+        assert!(torrent_matches_scope(
+            &config,
+            Some(&scope(&[" "])),
+            &other,
+            true
+        ));
+    }
+
+    /// The scope label is replaced on import, so the post-import label must not
+    /// drop a torrent out of the scope it was grabbed into.
+    #[test]
+    fn the_post_import_label_is_admitted_by_every_scope() {
+        let config = TransmissionConfig {
+            category: "scryer-tv".to_string(),
+            imported_category: "scryer-imported".to_string(),
+            ..base_config()
+        };
+        let imported = TransmissionTorrent {
+            labels: vec!["keep-me".to_string(), "Scryer-Imported".to_string()],
+            ..complete_torrent(STATUS_SEEDING)
+        };
+        let unlabelled = complete_torrent(STATUS_SEEDING);
+        let series = scope(&["series"]);
+        assert!(torrent_matches_scope(
+            &config,
+            Some(&series),
+            &imported,
+            true
+        ));
+        assert!(!torrent_matches_scope(
+            &config,
+            Some(&series),
+            &unlabelled,
+            true
+        ));
     }
 
     #[test]
@@ -2383,11 +2484,26 @@ mod tests {
             download_dir: "somepath".to_string(),
             ..queued_torrent(STATUS_QUEUED)
         };
-        assert!(torrent_matches_scope(&config, &inside, false));
-        assert!(!torrent_matches_scope(&config, &outside, false));
-        // With labels enabled the same pair flips, which is exactly the bug the
-        // version gate closes.
-        assert!(torrent_matches_scope(&config, &outside, true));
+        // The host's scope does not apply: without labels there is nothing to match.
+        let series = scope(&["series"]);
+        for scope in [None, Some(&series)] {
+            assert!(torrent_matches_scope(&config, scope, &inside, false));
+            assert!(!torrent_matches_scope(&config, scope, &outside, false));
+        }
+        // With labels enabled the label decides, which is exactly what the
+        // version gate protects older clients from.
+        assert!(torrent_matches_scope(
+            &config,
+            Some(&scope(&["sonarr"])),
+            &outside,
+            true
+        ));
+        assert!(!torrent_matches_scope(
+            &config,
+            Some(&scope(&["sonarr"])),
+            &inside,
+            true
+        ));
     }
 
     #[test]
@@ -2400,21 +2516,26 @@ mod tests {
             download_dir: "C:/Downloads/Finished/sonarr/subdir".to_string(),
             ..downloading_torrent(STATUS_DOWNLOADING)
         };
-        assert!(torrent_matches_scope(&config, &inside, true));
+        // A directory is the label-less fallback.
+        assert!(torrent_matches_scope(&config, None, &inside, false));
         assert!(!torrent_matches_scope(
             &config,
+            None,
             &queued_torrent(STATUS_QUEUED),
-            true
+            false
         ));
     }
 
     #[test]
     fn without_a_category_or_directory_every_torrent_is_in_scope() {
-        assert!(torrent_matches_scope(
-            &base_config(),
-            &queued_torrent(STATUS_QUEUED),
-            true
-        ));
+        for supports_labels in [true, false] {
+            assert!(torrent_matches_scope(
+                &base_config(),
+                None,
+                &queued_torrent(STATUS_QUEUED),
+                supports_labels
+            ));
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -2442,12 +2563,22 @@ mod tests {
             Some("Scryer-TV")
         );
 
-        let unlabelled = TransmissionTorrent {
-            labels: vec!["Archive".to_string()],
+        // Without the configured category, the label the torrent carries is
+        // reported: with one label per torrent, that is the routed one.
+        let routed = TransmissionTorrent {
+            labels: vec!["Series".to_string()],
             ..complete_torrent(STATUS_STOPPED)
         };
+        assert_eq!(
+            reported_category(&config, &routed).as_deref(),
+            Some("Series")
+        );
+        assert_eq!(
+            reported_category(&base_config(), &routed).as_deref(),
+            Some("Series")
+        );
+        let unlabelled = complete_torrent(STATUS_STOPPED);
         assert_eq!(reported_category(&config, &unlabelled), None);
-        assert_eq!(reported_category(&base_config(), &unlabelled), None);
     }
 
     // -----------------------------------------------------------------------
@@ -2722,25 +2853,90 @@ mod tests {
     }
 
     #[test]
-    fn the_category_leads_the_labels_and_the_routed_value_rides_along() {
+    fn a_torrent_carries_one_label_routed_value_first() {
         let config = TransmissionConfig {
             category: "scryer-tv".to_string(),
             ..base_config()
         };
         assert_eq!(
-            labels_for_request(&config, &add_request(r#"{"isolation_value":"series"}"#)),
-            vec!["scryer-tv".to_string(), "series".to_string()]
+            labels_for_request(&config, &add_request(r#"{"isolation_value":" series "}"#)),
+            vec!["series".to_string()]
         );
-        // A routed value that *is* the category is not duplicated, whatever its casing.
         assert_eq!(
-            labels_for_request(&config, &add_request(r#"{"isolation_value":"Scryer-TV"}"#)),
+            labels_for_request(&config, &add_request(r#"{"isolation_value":"  "}"#)),
             vec!["scryer-tv".to_string()]
         );
         assert_eq!(
             labels_for_request(&config, &add_request("{}")),
             vec!["scryer-tv".to_string()]
         );
-        assert!(labels_for_request(&base_config(), &add_request("{}")).is_empty());
+        assert!(
+            labels_for_request(&base_config(), &add_request(r#"{"isolation_value":""}"#))
+                .is_empty()
+        );
+    }
+
+    /// The host routes a default grab to its facet (`series`) while the plugin's own
+    /// category stays `scryer-tv`; that torrent must stay listed.
+    #[test]
+    fn a_grab_routed_away_from_the_configured_category_stays_listed() {
+        let config = TransmissionConfig {
+            category: "scryer-tv".to_string(),
+            ..base_config()
+        };
+        let torrent = TransmissionTorrent {
+            labels: labels_for_request(&config, &add_request(r#"{"isolation_value":"series"}"#)),
+            ..downloading_torrent(STATUS_DOWNLOADING)
+        };
+        assert_eq!(torrent.labels, vec!["series".to_string()]);
+        assert!(torrent_matches_scope(&config, None, &torrent, true));
+        assert!(torrent_matches_scope(
+            &config,
+            Some(&scope(&["Series"])),
+            &torrent,
+            true
+        ));
+        assert!(!torrent_matches_scope(
+            &config,
+            Some(&scope(&["movie"])),
+            &torrent,
+            true
+        ));
+
+        // A torrent an older version labelled only `scryer-tv` stays listed while
+        // the host sends no scope.
+        let legacy = TransmissionTorrent {
+            labels: vec!["scryer-tv".to_string()],
+            ..downloading_torrent(STATUS_DOWNLOADING)
+        };
+        assert!(torrent_matches_scope(&config, None, &legacy, true));
+    }
+
+    /// Mark-imported replaces exactly the one label the add wrote.
+    #[test]
+    fn the_post_import_swap_replaces_the_single_grab_label() {
+        let config = TransmissionConfig {
+            category: "scryer-tv".to_string(),
+            imported_category: "scryer-imported".to_string(),
+            ..base_config()
+        };
+        for (routing, mark) in [
+            (
+                r#"{"isolation_value":"series"}"#,
+                r#"{"client_item_id":"abc","category":"series","post_import_isolation":[{"mode":"tag","value":"series"}]}"#,
+            ),
+            ("{}", r#"{"client_item_id":"abc"}"#),
+        ] {
+            let mut existing = labels_for_request(&config, &add_request(routing));
+            existing.push("keep-me".to_string());
+            let mark: PluginDownloadClientMarkImportedRequest = serde_json::from_str(mark).unwrap();
+            let scope_label = post_import_scope_label(&config, &mark);
+            assert_eq!(
+                swap_labels(&existing, scope_label.as_deref(), "scryer-imported"),
+                vec!["keep-me".to_string(), "scryer-imported".to_string()],
+                "{routing}"
+            );
+        }
     }
 
     #[test]

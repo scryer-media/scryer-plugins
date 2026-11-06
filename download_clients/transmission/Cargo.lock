@@ -1532,7 +1532,7 @@ dependencies = [
 
 [[package]]
 name = "transmission-download-client"
-version = "2.1.0"
+version = "3.0.0"
 dependencies = [
  "base64 0.23.1",
  "scryer-plugin-conformance",

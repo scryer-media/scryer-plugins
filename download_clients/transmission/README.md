@@ -11,11 +11,15 @@ provider aliases.
 Set **host**, **port** (default 9091), **use_ssl**, and **url_base** (default
 `/transmission/`), plus optional **username** and **password**.
 
-**category** defaults to `scryer-tv`. On Transmission 4.0 or newer it is
-applied as a label and is what scopes Scryer's queue; on older releases, which
-have no labels, it is used as a sub-folder of Transmission's download directory
-and the queue is scoped by path instead. Allowed characters are `a-z` and `-`,
-with an optional leading dot.
+**category** defaults to `scryer-tv`. On Transmission 4.0 or newer each torrent
+Scryer adds carries one label: the category Scryer routes for that download, or
+**category** when Scryer routes none. Scryer scopes its listings by the
+categories it routes: a scoped listing keeps torrents carrying one of them (or
+**post_import_category**), and an unscoped one returns every torrent and leaves
+it to Scryer to ignore labels it never configured. On older releases, which
+have no labels, **category** is used as a sub-folder of Transmission's download
+directory and the queue is scoped by path instead. Allowed characters are `a-z`
+and `-`, with an optional leading dot.
 
 **directory** forces a destination for everything Scryer adds and cannot be
 combined with **category** — the two describe different sets of torrents, so a
@@ -34,7 +38,7 @@ download, and **label_after_import** (default on) is the switch for it.
 Labels arrived with Transmission 4.0. This plugin reads the version from
 `session-get` once per client and caches it, then gates all three label uses on
 it: the `labels` argument on `torrent-add`, the post-import label, and
-label-based queue scoping. Below 4.0 it falls back to the directory rules
+label-based scoping. Below 4.0 it falls back to the directory rules
 above, and *Test* reports the version it found. *Test* requires Transmission
 2.40 or newer, or — for Vuze/Azureus, which answer with a protocol version
 instead — RPC protocol 14 or newer.
