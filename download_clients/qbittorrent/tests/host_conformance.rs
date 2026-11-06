@@ -431,19 +431,21 @@ fn assert_legacy_title_tag_migration(suite: &DownloadClientConformance) {
     let legacy = (0..405)
         .map(|index| format!("scryer-title-00000000-0000-4000-8000-{index:012x}"))
         .collect::<Vec<_>>();
+    // Labels earlier plugin versions wrote on their own are retired with the
+    // UUID title tags; operator labels and the imported marker survive.
+    let retired = ["scryer:routing-category:tv", "scryer-tag-favorites"];
+    let kept = ["user-label", "scryer:imported", "scryer-title-not-a-uuid"];
     let mut tags = legacy.clone();
-    tags.extend(
-        [
-            "user-label",
-            "scryer:imported",
-            "scryer:routing-category:tv",
-            "scryer-title-not-a-uuid",
-            "scryer-tag-favorites",
-        ]
+    tags.extend(retired.into_iter().chain(kept).map(str::to_string));
+    // Deletion order follows the plugin's sorted candidate set.
+    let candidates = legacy
+        .iter()
+        .cloned()
+        .chain(retired.into_iter().map(str::to_string))
+        .collect::<std::collections::BTreeSet<_>>()
         .into_iter()
-        .map(str::to_string),
-    );
-    let script_for = |inventory_status, delete_status| {
+        .collect::<Vec<_>>();
+    let script_for_tags = |tags: &[String], inventory_status, delete_status| {
         let mut script = authenticated_script();
         let HttpScript::Routed(routes) = &mut script.http else {
             unreachable!()
@@ -457,7 +459,7 @@ fn assert_legacy_title_tag_migration(suite: &DownloadClientConformance) {
         );
         routes[3] = HttpRoute::exact(
             &format!("{API_ROOT}/torrents/tags"),
-            HttpReply::new(inventory_status, serde_json::to_vec(&tags).unwrap()),
+            HttpReply::new(inventory_status, serde_json::to_vec(tags).unwrap()),
         );
         routes.push(HttpRoute::exact(
             &format!("{API_ROOT}/torrents/deleteTags"),
@@ -465,6 +467,8 @@ fn assert_legacy_title_tag_migration(suite: &DownloadClientConformance) {
         ));
         script
     };
+    let script_for =
+        |inventory_status, delete_status| script_for_tags(&tags, inventory_status, delete_status);
     let assert_queue = |result| {
         let PluginDownloadClientCommandResult::ListQueue(PluginResult::Ok(items)) = result else {
             panic!("migration must not break queue feedback: {result:?}");
@@ -477,7 +481,7 @@ fn assert_legacy_title_tag_migration(suite: &DownloadClientConformance) {
             vec!["aaaa", "bbbb"]
         );
     };
-    let migration_key = format!("qbittorrent.title-tag-migration.v1:{API_ROOT}");
+    let migration_key = format!("qbittorrent.title-tag-migration.v2:{API_ROOT}");
     for (inventory_status, delete_status, expected_batches) in
         [(200, 200, 3), (503, 200, 0), (200, 503, 1)]
     {
@@ -502,7 +506,12 @@ fn assert_legacy_title_tag_migration(suite: &DownloadClientConformance) {
                 String::from_utf8_lossy(&request.body),
                 format!(
                     "tags={}",
-                    legacy.chunks(100).nth(index).unwrap().join("%2C")
+                    candidates
+                        .chunks(100)
+                        .nth(index)
+                        .unwrap()
+                        .join("%2C")
+                        .replace(':', "%3A")
                 )
             );
         }
@@ -562,6 +571,46 @@ fn assert_legacy_title_tag_migration(suite: &DownloadClientConformance) {
             3
         );
     }
+
+    // A small inventory drains in one pass: the retired labels go, nothing else does.
+    let small = retired
+        .into_iter()
+        .chain(kept)
+        .map(str::to_string)
+        .collect::<Vec<_>>();
+    let (mut store, plugin) = instantiate(&suite.wasm_path(), script_for_tags(&small, 200, 200));
+    assert_queue(call_download_client(
+        &mut store,
+        &plugin,
+        PluginDownloadClientCommand::ListQueue,
+    ));
+    assert_eq!(
+        deleted_bodies(&store.data().script),
+        vec!["tags=scryer-tag-favorites%2Cscryer%3Arouting-category%3Atv".to_string()]
+    );
+
+    // An instance that finished the v1 pass runs the widened v2 pass.
+    let mut v1_done = script_for_tags(&small, 200, 200);
+    v1_done.state = StateSource::Stored(BTreeMap::from([(
+        format!("qbittorrent.title-tag-migration.v1:{API_ROOT}"),
+        serde_json::to_vec(&i64::MAX).unwrap(),
+    )]));
+    let (mut store, plugin) = instantiate(&suite.wasm_path(), v1_done);
+    assert_queue(call_download_client(
+        &mut store,
+        &plugin,
+        PluginDownloadClientCommand::ListQueue,
+    ));
+    assert_eq!(deleted_bodies(&store.data().script).len(), 1);
+}
+
+fn deleted_bodies(script: &Script) -> Vec<String> {
+    script
+        .requests
+        .iter()
+        .filter(|request| request.url.ends_with("/torrents/deleteTags"))
+        .map(|request| String::from_utf8_lossy(&request.body).into_owned())
+        .collect()
 }
 
 fn sent_session_cookie(script: &Script) -> bool {
