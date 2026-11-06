@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.41",
-  "snapshot_sha256": "997481c1776446c4ddc5a248ad411461bd728d5d93c0fadc14acc694be75d040",
+  "pack_version": "1.0.42",
+  "snapshot_sha256": "1555b1193bbd0eda9a680e08410e4b31cd08371112309e99f0cf57ea7c2d9f6a",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -12395,7 +12395,7 @@
       "file_sources": 11,
       "release_id": "0hd5r63d1botrpn",
       "strict_keys": 11,
-      "tolerant_keys": 11
+      "tolerant_keys": 8
     },
     {
       "alias_sources": 0,
@@ -12412,6 +12412,14 @@
       "release_id": "j1yezumke205gw7",
       "strict_keys": 13,
       "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "6ux7xswuzm2t6gr",
+      "file_sources": 11,
+      "release_id": "v2onkoegolguotv",
+      "strict_keys": 11,
+      "tolerant_keys": 8
     },
     {
       "alias_sources": 0,
@@ -19260,6 +19268,14 @@
       "release_id": "vc4i81acwwhjh0u",
       "strict_keys": 77,
       "tolerant_keys": 77
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "azj8lgo3qg34reg",
+      "file_sources": 12,
+      "release_id": "2auz3bup0jz4ypp",
+      "strict_keys": 12,
+      "tolerant_keys": 0
     },
     {
       "alias_sources": 0,
@@ -28799,6 +28815,14 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "gwsgvgi69tgy4ai",
+      "file_sources": 26,
+      "release_id": "yq8aubg8siivz43",
+      "strict_keys": 26,
+      "tolerant_keys": 26
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "gxkk4nm6v0w9b3g",
       "file_sources": 12,
       "release_id": "6hkdxlgv27oni3c",
@@ -32736,6 +32760,14 @@
     {
       "alias_sources": 0,
       "entry_id": "j9flf0dwdcczmwg",
+      "file_sources": 13,
+      "release_id": "h72b5z4rgqv6cjo",
+      "strict_keys": 13,
+      "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "j9flf0dwdcczmwg",
       "file_sources": 1,
       "release_id": "jyobq4dz29rbfpp",
       "strict_keys": 1,
@@ -35756,6 +35788,22 @@
       "release_id": "ubagqr8w95fgeyy",
       "strict_keys": 12,
       "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "kmhhxpw6zf0fal9",
+      "file_sources": 14,
+      "release_id": "jdok49bft1e9kug",
+      "strict_keys": 14,
+      "tolerant_keys": 14
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "kmhhxpw6zf0fal9",
+      "file_sources": 14,
+      "release_id": "rahnwafru0ayiic",
+      "strict_keys": 14,
+      "tolerant_keys": 14
     },
     {
       "alias_sources": 0,
@@ -127490,6 +127538,78 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "n593plg46hxsrdo",
       "source_name": "Overlord S00E57.mkv"
+    },
+    {
+      "entry_id": "azj8lgo3qg34reg",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2auz3bup0jz4ypp",
+      "source_name": "Pastel Memories 01.mkv"
+    },
+    {
+      "entry_id": "azj8lgo3qg34reg",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2auz3bup0jz4ypp",
+      "source_name": "Pastel Memories 02.mkv"
+    },
+    {
+      "entry_id": "azj8lgo3qg34reg",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2auz3bup0jz4ypp",
+      "source_name": "Pastel Memories 03.mkv"
+    },
+    {
+      "entry_id": "azj8lgo3qg34reg",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2auz3bup0jz4ypp",
+      "source_name": "Pastel Memories 04.mkv"
+    },
+    {
+      "entry_id": "azj8lgo3qg34reg",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2auz3bup0jz4ypp",
+      "source_name": "Pastel Memories 05.mkv"
+    },
+    {
+      "entry_id": "azj8lgo3qg34reg",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2auz3bup0jz4ypp",
+      "source_name": "Pastel Memories 06.mkv"
+    },
+    {
+      "entry_id": "azj8lgo3qg34reg",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2auz3bup0jz4ypp",
+      "source_name": "Pastel Memories 07.mkv"
+    },
+    {
+      "entry_id": "azj8lgo3qg34reg",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2auz3bup0jz4ypp",
+      "source_name": "Pastel Memories 08.mkv"
+    },
+    {
+      "entry_id": "azj8lgo3qg34reg",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2auz3bup0jz4ypp",
+      "source_name": "Pastel Memories 09.mkv"
+    },
+    {
+      "entry_id": "azj8lgo3qg34reg",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2auz3bup0jz4ypp",
+      "source_name": "Pastel Memories 10.mkv"
+    },
+    {
+      "entry_id": "azj8lgo3qg34reg",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2auz3bup0jz4ypp",
+      "source_name": "Pastel Memories 11.mkv"
+    },
+    {
+      "entry_id": "azj8lgo3qg34reg",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2auz3bup0jz4ypp",
+      "source_name": "Pastel Memories 12.mkv"
     },
     {
       "entry_id": "b2c1ljj60bw221b",
@@ -678558,6 +678678,69 @@
     {
       "candidates": [
         {
+          "anilist_id": 146962,
+          "entry_id": "6ux7xswuzm2t6gr",
+          "release_id": "0hd5r63d1botrpn",
+          "source": "file",
+          "source_name": "The.Little.Lies.We.All.Tell.S01E01.The.Four.Girls'.Secrets.1080p.BluRay.REMUX.AVC.FLAC.2.0-NAN0.mkv"
+        },
+        {
+          "anilist_id": 146962,
+          "entry_id": "6ux7xswuzm2t6gr",
+          "release_id": "v2onkoegolguotv",
+          "source": "file",
+          "source_name": "The.Little.Lies.We.All.Tell.S01E01.The.Four.Girls.Secrets.1080p.BluRay.REMUX.AVC.FLAC.2.0-NAN0.mkv"
+        }
+      ],
+      "key": "nan0|the little lies we all tell s01e01 the four girls secrets 1080p bluray remux avc flac 2 0",
+      "kind": "tolerant",
+      "reason": "tolerant_key_merges_distinct_strict_signatures"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 146962,
+          "entry_id": "6ux7xswuzm2t6gr",
+          "release_id": "0hd5r63d1botrpn",
+          "source": "file",
+          "source_name": "The.Little.Lies.We.All.Tell.S01E09.Find.Fuku-chan!.1080p.BluRay.REMUX.AVC.FLAC.2.0-NAN0.mkv"
+        },
+        {
+          "anilist_id": 146962,
+          "entry_id": "6ux7xswuzm2t6gr",
+          "release_id": "v2onkoegolguotv",
+          "source": "file",
+          "source_name": "The.Little.Lies.We.All.Tell.S01E09.Find.Fuku-chan.1080p.BluRay.REMUX.AVC.FLAC.2.0-NAN0.mkv"
+        }
+      ],
+      "key": "nan0|the little lies we all tell s01e09 find fuku chan 1080p bluray remux avc flac 2 0",
+      "kind": "tolerant",
+      "reason": "tolerant_key_merges_distinct_strict_signatures"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 146962,
+          "entry_id": "6ux7xswuzm2t6gr",
+          "release_id": "0hd5r63d1botrpn",
+          "source": "file",
+          "source_name": "The.Little.Lies.We.All.Tell.S01E11.Goodbye,.Colonel.1080p.BluRay.REMUX.AVC.FLAC.2.0-NAN0.mkv"
+        },
+        {
+          "anilist_id": 146962,
+          "entry_id": "6ux7xswuzm2t6gr",
+          "release_id": "v2onkoegolguotv",
+          "source": "file",
+          "source_name": "The.Little.Lies.We.All.Tell.S01E11.Goodbye.Colonel.1080p.BluRay.REMUX.AVC.FLAC.2.0-NAN0.mkv"
+        }
+      ],
+      "key": "nan0|the little lies we all tell s01e11 goodbye colonel 1080p bluray remux avc flac 2 0",
+      "kind": "tolerant",
+      "reason": "tolerant_key_merges_distinct_strict_signatures"
+    },
+    {
+      "candidates": [
+        {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
           "release_id": "53r9gevqior1dap",
@@ -753222,66 +753405,47 @@
   "changes": {
     "entries": {
       "added": [
-        "ibvjbh4csb624m6",
-        "pcdb9i6nxppi8ht",
-        "tniabuz6ol7ok7r"
+        "azj8lgo3qg34reg",
+        "kmhhxpw6zf0fal9"
       ],
       "removed": []
     },
     "releases": {
       "added": [
-        "161bwjdzouadyf4",
-        "1o38j3c2eu8tpae",
-        "1xmr54lc03s9wsm",
-        "6dvdssvtvqnid07",
-        "fwz87t44hbg553w",
-        "i3lv8e6g077l4j2",
-        "kicd1ejhzo15on7",
-        "uom97upulvcaqtt"
+        "2auz3bup0jz4ypp",
+        "h72b5z4rgqv6cjo",
+        "jdok49bft1e9kug",
+        "rahnwafru0ayiic",
+        "v2onkoegolguotv",
+        "yq8aubg8siivz43"
       ],
-      "removed": [
-        "09o2vk0yb1qgg16",
-        "0dymc899ku4ihp8",
-        "1g8u9pknr0f81tp",
-        "2vbudlguof05u1d",
-        "5b1jok614utzx5z",
-        "eap9zum32xv9gj4",
-        "fa6wk6mfookq2os",
-        "faxekpfsqlhjet5",
-        "ggpxrei8xinifrn",
-        "gwwsnftdiuqnies",
-        "ozit9nsvetqks3x",
-        "qdu0snwifmdj9on",
-        "qz56ayu037qjfku",
-        "tc5gbis22t14lsc",
-        "z7838wdz5ziz2fk"
-      ]
+      "removed": []
     }
   },
   "matching": {
     "encoding": {
       "direct_buckets": {
         "bucket_count": 350,
-        "key_count": 21356,
+        "key_count": 21366,
         "max_keys": 230,
-        "mean_keys": 61.01714285714286
+        "mean_keys": 61.04571428571428
       },
-      "direct_entries": 21356,
+      "direct_entries": 21366,
       "route_buckets": 260,
-      "source_bytes": 3035820,
-      "source_lines": 45744,
+      "source_bytes": 3037366,
+      "source_lines": 45764,
       "template_buckets": {
         "bucket_count": 260,
-        "key_count": 6661,
+        "key_count": 6664,
         "max_keys": 125,
-        "mean_keys": 25.619230769230768
+        "mean_keys": 25.630769230769232
       },
-      "template_groups": 6661,
-      "tuple_chunks": 6869
+      "template_groups": 6664,
+      "tuple_chunks": 6872
     },
     "provenance": {
-      "strict_keys": 57750,
-      "tolerant_keys": 47035
+      "strict_keys": 57782,
+      "tolerant_keys": 47049
     },
     "stale_overrides": []
   }
