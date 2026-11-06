@@ -22,7 +22,6 @@ use sha1::{Digest, Sha1};
 
 const COOKIE_VAR_KEY: &str = "qbittorrent.sid";
 const IMPORTED_TAG_DEFAULT: &str = "scryer:imported";
-const ROUTING_CATEGORY_TAG_PREFIX: &str = "scryer:routing-category:";
 
 fn plugin_error_response<T: serde::Serialize>(error: PluginErrorBuilder) -> FnResult<String> {
     Ok(serde_json::to_string(&PluginResult::<T>::Err(
@@ -45,6 +44,7 @@ struct QbittorrentConfig {
     password: String,
     routing_mode: RoutingMode,
     static_tags: Vec<String>,
+    add_title_tags: bool,
     auto_tmm: bool,
     start_paused: bool,
     force_start: bool,
@@ -560,14 +560,7 @@ fn torrent_matches_feedback_scope(
     torrent: &QbTorrent,
 ) -> bool {
     match config.routing_mode {
-        RoutingMode::Category => {
-            feedback_scope_allows(scope, torrent.category.as_deref())
-                || scope
-                    .categories
-                    .iter()
-                    .filter_map(|category| routing_category_tag(category))
-                    .any(|tag| torrent_has_tag(torrent, &tag))
-        }
+        RoutingMode::Category => feedback_scope_allows(scope, torrent.category.as_deref()),
         RoutingMode::Tag => feedback_scope_allows_tags(scope, torrent.tags.as_deref()),
     }
 }
@@ -807,11 +800,10 @@ fn mark_imported_non_destructive(input: String) -> FnResult<String> {
 
     let config = QbittorrentConfig::from_config()?;
 
-    let Some(torrent) = torrent_by_hash(&config, &hash)? else {
+    if torrent_by_hash(&config, &hash)?.is_none() {
         return Ok(serde_json::to_string(&PluginResult::Ok(()))?);
-    };
+    }
 
-    preserve_routing_category_tag(&config, &hash, &torrent)?;
     apply_post_import_isolation(&config, &hash, &request)?;
 
     if config.tag_after_import {
@@ -827,31 +819,6 @@ fn mark_imported_non_destructive(input: String) -> FnResult<String> {
     }
 
     Ok(serde_json::to_string(&PluginResult::Ok(()))?)
-}
-
-fn preserve_routing_category_tag(
-    config: &QbittorrentConfig,
-    hash: &str,
-    torrent: &QbTorrent,
-) -> Result<(), Error> {
-    if !matches!(config.routing_mode, RoutingMode::Category) {
-        return Ok(());
-    }
-    let Some(tag) = torrent.category.as_deref().and_then(routing_category_tag) else {
-        return Ok(());
-    };
-    if torrent_has_tag(torrent, &tag) {
-        return Ok(());
-    }
-    create_tag_if_missing(config, &tag)?;
-    post_form(
-        config,
-        "/torrents/addTags",
-        &[
-            ("hashes".to_string(), hash.to_string()),
-            ("tags".to_string(), tag),
-        ],
-    )
 }
 
 pub fn scryer_download_status(_input: String) -> FnResult<String> {
@@ -979,6 +946,7 @@ impl QbittorrentConfig {
                 .flatten()
                 .unwrap_or_default(),
         );
+        let add_title_tags = config_bool("add_title_tags", false);
         let auto_tmm = config_bool("auto_tmm", false);
         let start_paused = config_bool("start_paused", false);
         let force_start = config_bool("force_start", false);
@@ -1003,6 +971,7 @@ impl QbittorrentConfig {
             password,
             routing_mode,
             static_tags,
+            add_title_tags,
             auto_tmm,
             start_paused,
             force_start,
@@ -1129,6 +1098,19 @@ fn config_fields() -> Vec<ConfigFieldDef> {
             role: None,
             options: vec![],
             help_text: Some("Comma-separated tags added to every torrent".to_string()),
+            ..Default::default()
+        },
+        ConfigFieldDef {
+            key: "add_title_tags".to_string(),
+            label: "Add title tags".to_string(),
+            field_type: ConfigFieldType::Bool,
+            required: false,
+            default_value: Some("false".to_string()),
+            value_source: Default::default(),
+            host_binding: None,
+            role: None,
+            options: vec![],
+            help_text: Some("Copy the title's tags onto each torrent".to_string()),
             ..Default::default()
         },
         ConfigFieldDef {
@@ -1731,28 +1713,17 @@ fn discover_hash_candidate(
 
 fn build_tags(config: &QbittorrentConfig, request: &PluginDownloadClientAddRequest) -> Vec<String> {
     let mut tags = config.static_tags.clone();
-    for tag in &request.title.tags {
-        if let Some(tag) = normalize_non_empty(Some(tag.clone())) {
-            tags.push(format!("scryer-tag-{}", sanitize_tag_fragment(&tag)));
-        }
+    if config.add_title_tags {
+        // Copied verbatim, like Sonarr's "Add series tags"; qBittorrent's tag
+        // list is comma-separated, so a comma cannot survive inside a tag.
+        tags.extend(request.title.tags.iter().map(|tag| tag.replace(',', "")));
     }
     if matches!(config.routing_mode, RoutingMode::Tag)
         && let Some(isolation) = request.routing.isolation_value.as_deref()
     {
         tags.push(sanitize_tag_fragment(isolation));
     }
-    if matches!(config.routing_mode, RoutingMode::Category)
-        && let Some(isolation) = request.routing.isolation_value.as_deref()
-        && let Some(tag) = routing_category_tag(isolation)
-    {
-        tags.push(tag);
-    }
     dedupe(tags)
-}
-
-fn routing_category_tag(category: &str) -> Option<String> {
-    let category = sanitize_tag_fragment(category.trim());
-    (!category.is_empty()).then(|| format!("{ROUTING_CATEGORY_TAG_PREFIX}{category}"))
 }
 
 fn request_paused(config: &QbittorrentConfig, request: &PluginDownloadClientAddRequest) -> bool {
@@ -2486,7 +2457,12 @@ fn torrent_to_completed_download(torrent: QbTorrent) -> Option<PluginCompletedDo
     })
 }
 
+/// Tags earlier plugin versions wrote on their own: `scryer-title-<uuid>`,
+/// prefixed title tags (`scryer-tag-*`) and category-routing markers.
 fn is_legacy_title_tag(tag: &str) -> bool {
+    if tag.starts_with("scryer-tag-") || tag.starts_with("scryer:routing-category:") {
+        return true;
+    }
     let Some(id) = tag.strip_prefix("scryer-title-") else {
         return false;
     };
@@ -2525,7 +2501,7 @@ fn migrate_legacy_title_tags(
 ) -> Result<(), Error> {
     // State survives component invocations, not necessarily host restarts. The
     // migration is idempotent and revisits tags left by older plugin instances.
-    let key = format!("qbittorrent.title-tag-migration.v1:{}", config.api_root);
+    let key = format!("qbittorrent.title-tag-migration.v2:{}", config.api_root);
     if var::get::<i64>(&key)?.is_some_and(|next| now < next) {
         return Ok(());
     }
@@ -2865,7 +2841,7 @@ mod tests {
     }
 
     #[test]
-    fn category_scoped_feedback_uses_original_category_after_post_import_move() {
+    fn category_scoped_feedback_matches_the_torrent_category_only() {
         let config = test_config();
         let movies = PluginDownloadFeedbackScope {
             categories: vec!["Movies".to_owned()],
@@ -2874,28 +2850,34 @@ mod tests {
             categories: vec!["Television".to_owned()],
         };
         let torrent = QbTorrent {
-            category: Some("scryer-imported".to_owned()),
-            tags: Some("scryer-origin,scryer:routing-category:movies".to_owned()),
+            category: Some("movies".to_owned()),
+            tags: Some(format!("{IMPORTED_TAG_DEFAULT},user-label")),
             ..QbTorrent::default()
         };
-
         assert!(torrent_matches_feedback_scope(&config, &movies, &torrent));
         assert!(!torrent_matches_feedback_scope(
             &config,
             &television,
             &torrent
         ));
+
+        // A routing marker left by an older plugin version no longer widens the scope.
+        let elsewhere = QbTorrent {
+            category: Some("scryer-imported".to_owned()),
+            tags: Some("scryer:routing-category:movies".to_owned()),
+            ..QbTorrent::default()
+        };
+        assert!(!torrent_matches_feedback_scope(
+            &config, &movies, &elsewhere
+        ));
     }
 
     #[test]
-    fn category_routing_add_records_the_feedback_category_in_a_tag() {
-        let request = test_add_request(DownloadInputKind::MagnetUri);
+    fn category_routing_add_writes_no_scryer_tags() {
+        let mut request = test_add_request(DownloadInputKind::MagnetUri);
+        request.title.tags = vec!["favorites".to_string()];
 
-        assert!(
-            build_tags(&test_config(), &request)
-                .iter()
-                .any(|tag| tag == "scryer:routing-category:movie")
-        );
+        assert!(build_tags(&test_config(), &request).is_empty());
     }
 
     #[test]
@@ -3236,29 +3218,6 @@ mod tests {
         );
     }
 
-    /// The seeding hold reads the scoped QUEUE listing, and the tracker ends a binding the moment
-    /// that listing stops naming the torrent. Post-import isolation can move an imported torrent
-    /// into a different category, so the scope match must fall back to the `scryer-routing-*`
-    /// tag that `preserve_routing_category_tag` writes before the move.
-    #[test]
-    fn imported_torrent_moved_by_post_import_isolation_stays_in_the_scoped_queue_listing() {
-        let mut moved = feedback_torrent("cafe", 600);
-        moved.name = "Example.Synthetic.Series.S01E03.1080p-SYNTH".to_string();
-        moved.state = "uploading".to_string();
-        // Isolation moved it out of `scryer-tv`; the preserved routing tag is what is left.
-        moved.category = Some("scryer-done".to_string());
-        moved.tags = Some(format!(
-            "scryer-origin,{},{IMPORTED_TAG_DEFAULT}",
-            routing_category_tag("scryer-tv").expect("routing tag")
-        ));
-
-        let config = test_config();
-        let scope = PluginDownloadFeedbackScope {
-            categories: vec!["scryer-tv".to_string()],
-        };
-        assert!(torrent_matches_feedback_scope(&config, &scope, &moved));
-    }
-
     #[test]
     fn completed_torrents_fall_back_to_all_filter_when_completed_filter_is_empty() {
         let mut requested_filters = Vec::new();
@@ -3428,19 +3387,47 @@ mod tests {
         let mut request = test_add_request(DownloadInputKind::MagnetUri);
         request.title.title_id = Some("00000000-0000-4000-8000-000000000001".to_string());
         request.title.tags = vec!["favorites".to_string()];
+        assert_eq!(build_tags(&config, &request), vec!["operator-label"]);
+        config.routing_mode = RoutingMode::Tag;
         assert_eq!(
             build_tags(&config, &request),
-            vec![
-                "operator-label",
-                "scryer-tag-favorites",
-                "scryer:routing-category:movie"
-            ]
+            vec!["operator-label", "movie"]
+        );
+    }
+
+    #[test]
+    fn title_tags_are_copied_verbatim_only_when_enabled() {
+        let mut config = test_config();
+        config.static_tags = vec!["operator-label".to_string()];
+        let mut request = test_add_request(DownloadInputKind::MagnetUri);
+        request.title.tags = vec![
+            "Favorites".to_string(),
+            " Kids, Shows ".to_string(),
+            String::new(),
+            "favorites".to_string(),
+        ];
+        assert_eq!(build_tags(&config, &request), vec!["operator-label"]);
+
+        config.add_title_tags = true;
+        assert_eq!(
+            build_tags(&config, &request),
+            vec!["operator-label", "Favorites", "Kids Shows"]
         );
         config.routing_mode = RoutingMode::Tag;
         assert_eq!(
             build_tags(&config, &request),
-            vec!["operator-label", "scryer-tag-favorites", "movie"]
+            vec!["operator-label", "Favorites", "Kids Shows", "movie"]
         );
+    }
+
+    #[test]
+    fn add_title_tags_defaults_off() {
+        let field = config_fields()
+            .into_iter()
+            .find(|field| field.key == "add_title_tags")
+            .expect("add_title_tags field");
+        assert!(matches!(field.field_type, ConfigFieldType::Bool));
+        assert_eq!(field.default_value.as_deref(), Some("false"));
     }
 
     #[test]
@@ -3450,10 +3437,13 @@ mod tests {
         let routing_tag = "scryer-title-00000000-0000-4000-8000-000000000003";
         let imported_tag = "scryer-title-00000000-0000-4000-8000-000000000004";
         let mut config = test_config();
-        config.static_tags = vec![static_tag.to_string()];
+        config.static_tags = vec![static_tag.to_string(), "scryer-tag-operator".to_string()];
         config.imported_tag = imported_tag.to_string();
         let scope = PluginDownloadFeedbackScope {
-            categories: vec![routing_tag.to_string()],
+            categories: vec![
+                routing_tag.to_string(),
+                "scryer:routing-category:scoped".to_string(),
+            ],
         };
         let tags = [
             legacy,
@@ -3470,8 +3460,11 @@ mod tests {
             "scryer-facet-movie",
             "scryer:imported",
             "scryer:routing-category:movie",
+            "scryer:routing-category:scoped",
             "scryer-tag-favorites",
+            "scryer-tag-operator",
             "operator-label",
+            "favorites",
         ];
         assert_eq!(
             legacy_title_tags_to_remove(
@@ -3479,7 +3472,11 @@ mod tests {
                 &config,
                 Some(&scope)
             ),
-            vec![legacy]
+            vec![
+                "scryer-tag-favorites",
+                legacy,
+                "scryer:routing-category:movie"
+            ]
         );
     }
 
@@ -3810,6 +3807,7 @@ mod tests {
             password: "pass".to_string(),
             routing_mode: RoutingMode::Category,
             static_tags: Vec::new(),
+            add_title_tags: false,
             auto_tmm: false,
             start_paused: false,
             force_start: false,

@@ -12,9 +12,13 @@ explicitly permits unauthenticated Web UI access. An API key takes precedence
 over credentials.
 
 **routing_mode** selects category (default) or tag handling for Scryer's
-isolation value. **static_tags** are comma-separated tags added to every
-torrent. Request-level directory routing is supported; **auto_tmm** remains
-enabled unless Scryer supplies an explicit directory. **start_paused**,
+isolation value. Other than a tag-mode isolation value and the optional
+**imported_tag** below, the plugin adds no tags of its own.
+**static_tags** are comma-separated tags added to every torrent. Enable
+**add_title_tags** (off by default) to also copy the title's own tags onto each
+torrent as they are, without a prefix. Request-level directory routing is
+supported; **auto_tmm** remains enabled unless Scryer supplies an explicit
+directory. **start_paused**,
 **force_start**, and **skip_checking** provide defaults for new work.
 
 ## Torrent lifecycle

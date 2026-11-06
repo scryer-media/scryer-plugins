@@ -25,9 +25,11 @@ use scryer_plugin_sdk::{
     DownloadIsolationMode, DownloadItemState, DownloadTorrentCapabilities, PluginCompletedDownload,
     PluginDescriptor, PluginDownloadClientAddRequest, PluginDownloadClientAddResponse,
     PluginDownloadClientControlRequest, PluginDownloadClientMarkImportedRequest,
-    PluginDownloadClientStatus, PluginDownloadIsolation, PluginDownloadItem,
-    PluginDownloadOutputKind, PluginErrorCode, PluginResult, PluginTorrentInitialState,
-    PluginTorrentItem, PluginTorrentQueuePlacement, ProviderDescriptor, SDK_VERSION,
+    PluginDownloadClientStatus, PluginDownloadFeedbackScope, PluginDownloadIsolation,
+    PluginDownloadItem, PluginDownloadOutputKind, PluginDownloadScopedListRequest,
+    PluginDownloadScopedListResponse, PluginDownloadScopedRecentCompletedRequest, PluginErrorCode,
+    PluginResult, PluginTorrentInitialState, PluginTorrentItem, PluginTorrentQueuePlacement,
+    ProviderDescriptor, SDK_VERSION,
 };
 use serde::Deserialize;
 
@@ -351,11 +353,10 @@ pub fn scryer_describe(_input: String) -> FnResult<String> {
                     reports_content_paths: true,
                     ..DownloadTorrentCapabilities::default()
                 }),
-                // SDK 3.10 addition. `false` is the SDK's own default and therefore exactly
-                // what this client's pre-3.10 descriptor already meant to a 3.10 host;
-                // advertising category-scoped feedback would be a behaviour change, not a
-                // transport one, so it stays off across the component migration.
-                category_scoped_feedback: false,
+                // The grab label is the host's routed category, so the host's own
+                // scope is what tells Scryer's torrents apart; see
+                // `torrent_in_feedback_scope`.
+                category_scoped_feedback: true,
                 // The core's post-import handoff
                 // (`result_state.rs::schedule_non_destructive_import_mark`) routes here,
                 // and this client answers it with a label swap and nothing else.
@@ -377,8 +378,8 @@ fn add_torrent(
 ) -> DelugeResult<PluginDownloadClientAddResponse> {
     let label = add_label(config, request);
     // The label has to exist before the torrent references it: `label.set_torrent`
-    // against an unknown label raises, and a torrent that never gets labelled is
-    // invisible to the label-filtered `web.update_ui` this client polls with.
+    // against an unknown label raises, and a torrent that never gets labelled names no
+    // category, so neither a scoped listing nor the host's admission claims it.
     if let Some(label) = label.as_deref() {
         ensure_label(config, label)?;
     }
@@ -449,20 +450,37 @@ fn add_torrent(
     })
 }
 
-pub fn scryer_download_list_queue(_input: String) -> FnResult<String> {
-    respond(list_queue_items(&DelugeConfig::from_config()))
+pub fn scryer_download_list_queue(input: String) -> FnResult<String> {
+    let config = DelugeConfig::from_config();
+    match scoped_feedback_scope(&input) {
+        Some(scope) => respond(list_queue_items(&config, Some(&scope)).map(scoped_response)),
+        None => respond(list_queue_items(&config, None)),
+    }
 }
 
-fn list_queue_items(config: &DelugeConfig) -> DelugeResult<Vec<PluginDownloadItem>> {
+fn scoped_response<T>(items: Vec<T>) -> PluginDownloadScopedListResponse<T> {
+    PluginDownloadScopedListResponse {
+        items,
+        failures: Vec::new(),
+    }
+}
+
+fn list_queue_items(
+    config: &DelugeConfig,
+    scope: Option<&PluginDownloadFeedbackScope>,
+) -> DelugeResult<Vec<PluginDownloadItem>> {
     let torrents = list_torrents(config)?;
     let total = torrents.len();
-    let items = torrents
+    let valid = torrents
         .into_iter()
         .filter(is_valid_torrent)
-        .map(|torrent| torrent_to_item(config, torrent))
         .collect::<Vec<_>>();
-    note_invalid_torrents(config, total - items.len());
-    Ok(items)
+    note_invalid_torrents(config, total - valid.len());
+    Ok(valid
+        .into_iter()
+        .filter(|torrent| torrent_in_feedback_scope(config, scope, torrent))
+        .map(|torrent| torrent_to_item(config, torrent))
+        .collect())
 }
 
 /// Deluge has no failed-download history: a torrent that errors stays in the same
@@ -476,15 +494,24 @@ pub fn scryer_download_list_history(_input: String) -> FnResult<String> {
     >::new()))?)
 }
 
-pub fn scryer_download_list_completed(_input: String) -> FnResult<String> {
+pub fn scryer_download_list_completed(input: String) -> FnResult<String> {
     let config = DelugeConfig::from_config();
-    respond(list_completed_downloads(&config))
+    match scoped_feedback_scope(&input) {
+        Some(scope) => {
+            respond(list_completed_downloads(&config, Some(&scope)).map(scoped_response))
+        }
+        None => respond(list_completed_downloads(&config, None)),
+    }
 }
 
-fn list_completed_downloads(config: &DelugeConfig) -> DelugeResult<Vec<PluginCompletedDownload>> {
+fn list_completed_downloads(
+    config: &DelugeConfig,
+    scope: Option<&PluginDownloadFeedbackScope>,
+) -> DelugeResult<Vec<PluginCompletedDownload>> {
     Ok(list_torrents(config)?
         .into_iter()
         .filter(is_valid_torrent)
+        .filter(|torrent| torrent_in_feedback_scope(config, scope, torrent))
         .filter(|torrent| map_state(torrent) == DownloadItemState::Completed)
         .map(|torrent| torrent_to_completed(config, torrent))
         .collect())
@@ -1241,15 +1268,60 @@ fn extract_cookie(response: &HttpResponse) -> Option<String> {
         .map(ToString::to_string)
 }
 
-fn list_torrents(config: &DelugeConfig) -> DelugeResult<Vec<DelugeTorrent>> {
-    let mut filter = serde_json::Map::new();
-    if let Some(label) = normalize_label(Some(config.category.as_str())) {
-        filter.insert("label".to_string(), serde_json::Value::String(label));
+/// The host-supplied feedback scope, present only on the scoped listing commands.
+fn scoped_feedback_scope(input: &str) -> Option<PluginDownloadFeedbackScope> {
+    let value = serde_json::from_str::<serde_json::Value>(input).ok()?;
+    value.get("scope")?;
+    if let Ok(request) =
+        serde_json::from_value::<PluginDownloadScopedRecentCompletedRequest>(value.clone())
+    {
+        return Some(request.scope);
     }
+    serde_json::from_value::<PluginDownloadScopedListRequest>(value)
+        .ok()
+        .map(|request| request.scope)
+}
+
+/// Without a scope the listing is unfiltered: the host reads a client unscoped exactly
+/// when it cannot name every category in play (a live download routed under an earlier
+/// configuration), and its own category admission keeps foreign torrents out. With a
+/// scope, the torrent's single label must be one of the scope's categories, or the
+/// post-import label that replaced it — like rTorrent, offered to every scope rather
+/// than to none, since the host dedupes by hash and owns "already imported".
+fn torrent_in_feedback_scope(
+    config: &DelugeConfig,
+    scope: Option<&PluginDownloadFeedbackScope>,
+    torrent: &DelugeTorrent,
+) -> bool {
+    let Some(scope) = scope else {
+        return true;
+    };
+    let categories = scope
+        .categories
+        .iter()
+        .filter_map(|category| normalize_label(Some(category)))
+        .collect::<Vec<_>>();
+    if categories.is_empty() {
+        return true;
+    }
+    let Some(label) =
+        reported_label(config, torrent).and_then(|label| normalize_label(Some(&label)))
+    else {
+        return false;
+    };
+    categories.contains(&label)
+        || normalize_label(Some(config.imported_category.as_str())).as_ref() == Some(&label)
+}
+
+fn list_torrents(config: &DelugeConfig) -> DelugeResult<Vec<DelugeTorrent>> {
+    // No server-side label filter. The grab label is the host's routed category, which
+    // need not be the configured one, so filtering on it hid Scryer's own torrents;
+    // scoping happens client-side in `torrent_in_feedback_scope`. The cost is that an
+    // unscoped poll carries every torrent in the session, not just Scryer's.
     let response = call_value(
         config,
         "web.update_ui",
-        serde_json::json!([REQUIRED_PROPERTIES, filter]),
+        serde_json::json!([REQUIRED_PROPERTIES, serde_json::Map::new()]),
     )?;
     let update: UpdateUiResult = serde_json::from_value(response).map_err(|error| {
         DelugeFailure::new(
@@ -1368,7 +1440,7 @@ fn create_label(config: &DelugeConfig, label: &str) -> DelugeResult<()> {
 ///
 /// Sonarr only does this at `Test` time; here the add and post-import paths do it too,
 /// because a Scryer operator can change the category without re-testing and an
-/// unlabelled torrent is invisible to the label-filtered poll.
+/// unlabelled torrent names no category for the scoped listing to match.
 fn ensure_label(config: &DelugeConfig, label: &str) -> DelugeResult<()> {
     let mut known: Vec<String> = var::get(KNOWN_LABELS_VAR_KEY)
         .ok()
@@ -1577,17 +1649,19 @@ fn torrent_to_completed(config: &DelugeConfig, torrent: DelugeTorrent) -> Plugin
 
 /// The label Deluge itself reports, in Deluge's casing, falling back to the configured
 /// category when the Label plugin is off (so the field is not silently empty).
+///
+/// An empty `label` is the plugin reporting an unlabelled torrent, which is not
+/// Scryer's: now that the listing is unfiltered, claiming the configured category for
+/// it would hand foreign torrents to the host's category admission.
 fn reported_label(config: &DelugeConfig, torrent: &DelugeTorrent) -> Option<String> {
-    torrent
-        .label
-        .as_deref()
-        .map(str::trim)
-        .filter(|label| !label.is_empty())
-        .map(ToString::to_string)
-        .or_else(|| {
+    match torrent.label.as_deref().map(str::trim) {
+        Some("") => None,
+        Some(label) => Some(label.to_string()),
+        None => {
             let configured = config.category.trim();
             (!configured.is_empty()).then(|| configured.to_string())
-        })
+        }
+    }
 }
 
 fn rate_to_bytes(rate: Option<f64>) -> Option<i64> {
@@ -2380,6 +2454,120 @@ mod tests {
         assert_eq!(
             add_label(&unlabelled, &add_request("magnet:?xt=urn:btih:abc")),
             None
+        );
+    }
+
+    fn labelled(label: Option<&str>) -> DelugeTorrent {
+        let mut torrent = serde_json::json!({"hash": "a1", "name": "n", "state": "Downloading"});
+        if let Some(label) = label {
+            torrent["label"] = serde_json::Value::String(label.to_string());
+        }
+        serde_json::from_value(torrent).unwrap()
+    }
+
+    fn scope(categories: &[&str]) -> PluginDownloadFeedbackScope {
+        PluginDownloadFeedbackScope {
+            categories: categories.iter().map(|value| value.to_string()).collect(),
+        }
+    }
+
+    /// The host routes a default grab to its facet (`series`) while the plugin's own
+    /// category stays `scryer-tv`; the torrent must stay listed either way.
+    #[test]
+    fn a_grab_routed_away_from_the_configured_category_stays_listed() {
+        let config = DelugeConfig {
+            category: "scryer-tv".to_string(),
+            ..test_config()
+        };
+        let mut request = add_request("magnet:?xt=urn:btih:abc");
+        request.routing.isolation_value = Some("series".to_string());
+        let label = add_label(&config, &request);
+        assert_eq!(label.as_deref(), Some("series"));
+        let torrent = labelled(label.as_deref());
+
+        assert!(torrent_in_feedback_scope(&config, None, &torrent));
+        assert!(torrent_in_feedback_scope(
+            &config,
+            Some(&scope(&["Series"])),
+            &torrent
+        ));
+        assert!(!torrent_in_feedback_scope(
+            &config,
+            Some(&scope(&["movie"])),
+            &torrent
+        ));
+    }
+
+    #[test]
+    fn a_torrent_labelled_by_an_older_version_stays_listed_without_a_scope() {
+        let config = DelugeConfig {
+            category: "scryer-tv".to_string(),
+            ..test_config()
+        };
+        assert!(torrent_in_feedback_scope(
+            &config,
+            None,
+            &labelled(Some("scryer-tv"))
+        ));
+        // Unscoped means unfiltered: the host's category admission gates the rest.
+        assert!(torrent_in_feedback_scope(
+            &config,
+            None,
+            &labelled(Some("someone-else"))
+        ));
+        assert!(torrent_in_feedback_scope(
+            &config,
+            None,
+            &labelled(Some(""))
+        ));
+    }
+
+    /// The single label is replaced on import, so the post-import label must not drop a
+    /// torrent out of the scope it was grabbed into.
+    #[test]
+    fn the_post_import_label_is_admitted_by_every_scope() {
+        let config = DelugeConfig {
+            category: "scryer-tv".to_string(),
+            imported_category: "scryer-imported".to_string(),
+            ..test_config()
+        };
+        let series = scope(&["series"]);
+        assert!(torrent_in_feedback_scope(
+            &config,
+            Some(&series),
+            &labelled(Some("Scryer-Imported"))
+        ));
+        assert!(!torrent_in_feedback_scope(
+            &config,
+            Some(&series),
+            &labelled(Some("scryer-tv"))
+        ));
+        // An unlabelled torrent names no category, so a scope never claims it.
+        assert!(!torrent_in_feedback_scope(
+            &config,
+            Some(&series),
+            &labelled(Some(""))
+        ));
+        // An empty scope filters nothing.
+        assert!(torrent_in_feedback_scope(
+            &config,
+            Some(&scope(&[])),
+            &labelled(Some("other"))
+        ));
+    }
+
+    #[test]
+    fn an_unlabelled_torrent_reports_no_category_while_the_label_plugin_is_on() {
+        let config = DelugeConfig {
+            category: "scryer-tv".to_string(),
+            ..test_config()
+        };
+        // `label: ""` is the Label plugin reporting "no label": not Scryer's category.
+        assert_eq!(torrent_to_item(&config, labelled(Some(""))).category, None);
+        // No `label` key at all is the plugin being off: keep the configured fallback.
+        assert_eq!(
+            torrent_to_item(&config, labelled(None)).category.as_deref(),
+            Some("scryer-tv")
         );
     }
 
