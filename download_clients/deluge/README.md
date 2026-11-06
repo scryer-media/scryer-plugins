@@ -1,8 +1,9 @@
 # Deluge
 
-This plugin drives Deluge through its Web UI JSON-RPC API (`/json`). It manages only
-torrents carrying the configured label, so an existing Deluge deployment can coexist
-with other work without Scryer treating every torrent as its own.
+This plugin drives Deluge through its Web UI JSON-RPC API (`/json`). Each torrent
+Scryer adds carries one label, and Scryer tells its own torrents apart by that label,
+so an existing Deluge deployment can coexist with other work without Scryer treating
+every torrent as its own.
 
 Deluge **2.x** is the target. The 1.3 fallbacks are kept where Sonarr keeps them:
 `daemon.info` when `daemon.get_version` is missing, and status keys a 1.3 daemon does
@@ -17,8 +18,11 @@ daemon credential. The plugin caches its Web session cookie in plugin state and
 re-authenticates on Deluge's "not authenticated" JSON-RPC codes (1 and 2), which also
 reconnects the Web UI to its daemon.
 
-**category** defaults to `scryer-tv`. It is a Deluge *label*: it scopes the poll, and
-it is applied to every torrent Scryer adds. **post_import_category** is the label moved
+**category** defaults to `scryer-tv`. It is a Deluge *label*, applied to a torrent
+Scryer adds when Scryer routes no category of its own. Scryer scopes its listings by
+the categories it routes: a scoped listing keeps torrents whose label is one of them
+(or the post-import label), and an unscoped one returns every torrent and leaves it to
+Scryer to ignore labels it never configured. **post_import_category** is the label moved
 onto a torrent once Scryer has imported it. Deluge's Label plugin lower-cases label ids
 and allows only `a-z`, `0-9` and `-`; both fields are validated against that rule during
 **Test**, and the values sent to Deluge are lower-cased.
@@ -36,8 +40,8 @@ the configured category.
 
 A configured category or post-import category requires Deluge's **Label** plugin
 (Preferences > Plugins > Label). **Test** fails with a configuration error naming the
-field when it is not active, because a torrent that cannot be labelled is invisible to
-the label-filtered poll this client runs.
+field when it is not active, because a torrent that cannot be labelled names no
+category for Scryer to recognise it by.
 
 Missing labels are created rather than assumed: **Test** creates and re-checks them, and
 the add and post-import paths create the label they are about to use if this instance
