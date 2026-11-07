@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.42",
-  "snapshot_sha256": "1555b1193bbd0eda9a680e08410e4b31cd08371112309e99f0cf57ea7c2d9f6a",
+  "pack_version": "1.0.43",
+  "snapshot_sha256": "d372a8495a9ce859e5665fe412f035267813a6efb8767e789c0a3b713612adaf",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -18468,6 +18468,14 @@
       "release_id": "skr8w159vgg67md",
       "strict_keys": 1,
       "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "agvppcyceuw2uhl",
+      "file_sources": 29,
+      "release_id": "0dh12kxidrhmwit",
+      "strict_keys": 29,
+      "tolerant_keys": 29
     },
     {
       "alias_sources": 0,
@@ -51604,6 +51612,14 @@
       "release_id": "2n53cq9sffwaoxv",
       "strict_keys": 24,
       "tolerant_keys": 24
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "sryqpitueceebky",
+      "file_sources": 24,
+      "release_id": "3lq4qge533c7omp",
+      "strict_keys": 24,
+      "tolerant_keys": 0
     },
     {
       "alias_sources": 0,
@@ -254558,6 +254574,150 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "s1dwnywl4hmvicp",
       "source_name": "Live Event.mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E01 - Meeting of the Braves - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E02 - A Brave`s Magic - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E03 - A Teacher for Braves - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E04 - A Brave`s Errands - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E05 - A Brave Teacher - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E06 - A Brave`s Special Training - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E07 - Death of a Brave - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E08 - A Brave`s Sins - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E09 - A Brave`s Legacy - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E10 - A Brave`s Instruction - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E11 - A Brave`s Teamwork - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E12 - A Brave`s Secret - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E13 - A Brave`s Doubts - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E14 - A Brave Priest - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E15 - A Brave`s Melee - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E16 - The Darkness of Braves - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E17 - Return of the Braves - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E18 - Braves in Danger - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E19 - A Brave`s Motivation - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E20 - A Brave`s Rescue - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E21 - A Brave`s Pride - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E22 - A Brave`s Ideal - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E23 - A Brave`s Truth - Repack (UnHoly).mkv"
+    },
+    {
+      "entry_id": "sryqpitueceebky",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "3lq4qge533c7omp",
+      "source_name": "Scum of the Brave - S01E24 - A Brave`s Lie - Repack (UnHoly).mkv"
     },
     {
       "entry_id": "sryqpitueceebky",
@@ -753404,20 +753564,13 @@
   "stale_overrides": [],
   "changes": {
     "entries": {
-      "added": [
-        "azj8lgo3qg34reg",
-        "kmhhxpw6zf0fal9"
-      ],
+      "added": [],
       "removed": []
     },
     "releases": {
       "added": [
-        "2auz3bup0jz4ypp",
-        "h72b5z4rgqv6cjo",
-        "jdok49bft1e9kug",
-        "rahnwafru0ayiic",
-        "v2onkoegolguotv",
-        "yq8aubg8siivz43"
+        "0dh12kxidrhmwit",
+        "3lq4qge533c7omp"
       ],
       "removed": []
     }
@@ -753426,26 +753579,26 @@
     "encoding": {
       "direct_buckets": {
         "bucket_count": 350,
-        "key_count": 21366,
+        "key_count": 21372,
         "max_keys": 230,
-        "mean_keys": 61.04571428571428
+        "mean_keys": 61.06285714285714
       },
-      "direct_entries": 21366,
+      "direct_entries": 21372,
       "route_buckets": 260,
-      "source_bytes": 3037366,
-      "source_lines": 45764,
+      "source_bytes": 3038016,
+      "source_lines": 45777,
       "template_buckets": {
         "bucket_count": 260,
-        "key_count": 6664,
+        "key_count": 6666,
         "max_keys": 125,
-        "mean_keys": 25.630769230769232
+        "mean_keys": 25.638461538461538
       },
-      "template_groups": 6664,
-      "tuple_chunks": 6872
+      "template_groups": 6666,
+      "tuple_chunks": 6874
     },
     "provenance": {
-      "strict_keys": 57782,
-      "tolerant_keys": 47049
+      "strict_keys": 57787,
+      "tolerant_keys": 47054
     },
     "stale_overrides": []
   }
