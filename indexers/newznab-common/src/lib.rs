@@ -1005,6 +1005,12 @@ async fn search_with_paging(
         },
     );
     let search_type = search_shape.search_type();
+    // Radarr's text fallback names the movie with its year; series and anime
+    // queries never carry one.
+    let movie_text_year = (search_shape == NabSearchShape::Movie)
+        .then(|| req.context.as_ref().and_then(|context| context.year))
+        .flatten()
+        .filter(|year| *year > 0);
 
     // Build Newznab category parameter (numeric codes only)
     let newznab_cat = build_category_param(&req.categories);
@@ -1065,6 +1071,7 @@ async fn search_with_paging(
                 page_limit,
                 req.season,
                 req.episode,
+                movie_text_year,
                 &page_params,
                 &config.http_behavior,
             )
@@ -2689,6 +2696,7 @@ async fn execute_tiered_search(
     limit: usize,
     season: Option<u32>,
     episode: Option<u32>,
+    movie_text_year: Option<i32>,
     additional_params: &str,
     behavior: &NewznabHttpBehavior,
 ) -> Result<(u16, String), Error> {
@@ -2761,7 +2769,7 @@ async fn execute_tiered_search(
             .map(String::as_str)
             .filter(|query| !query.is_empty())
         {
-            let query_text = text_plan.text_query(query_text);
+            let query_text = with_movie_year(text_plan.text_query(query_text), movie_text_year);
             let (status, body) = execute_search(
                 endpoint,
                 text_plan.search_type,
@@ -2790,6 +2798,31 @@ async fn execute_tiered_search(
     }
 
     Ok(last_response.unwrap_or((200, r#"{"channel":{}}"#.to_string())))
+}
+
+/// The movie text query with its year appended, the way Radarr sends
+/// `Title Year`, unless the query already ends with that year. A title that is
+/// itself a number, like `1917`, still gets the year: `1917 2019`.
+fn with_movie_year(query: String, year: Option<i32>) -> String {
+    let Some(year) = year else {
+        return query;
+    };
+    let year = year.to_string();
+    let tokens: Vec<&str> = query.split_whitespace().collect();
+    if tokens.len() > 1 && tokens.last() == Some(&year.as_str()) {
+        return query;
+    }
+    format!("{query} {year}")
+}
+
+/// The `season` parameter value. Specials go out as `00`, the way Sonarr sends
+/// them, because some indexers read a bare `0` as no season at all.
+fn newznab_season(season: u32) -> String {
+    if season == 0 {
+        "00".to_string()
+    } else {
+        season.to_string()
+    }
 }
 
 fn search_response_needs_fallback(status: u16, body: &str) -> bool {
@@ -3605,7 +3638,7 @@ fn build_search_url_with_values(
             pairs.append_pair("cat", c);
         }
         if let Some(s) = season {
-            pairs.append_pair("season", &s.to_string());
+            pairs.append_pair("season", &newznab_season(s));
         }
         if let Some(e) = episode {
             pairs.append_pair("ep", &e.to_string());
@@ -5589,6 +5622,64 @@ fn default_newznab_categories() -> Vec<NewznabCategoryOption> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn movie_text_query_carries_the_year_once() {
+        assert_eq!(with_movie_year("1917".into(), Some(2019)), "1917 2019");
+        assert_eq!(
+            with_movie_year("Amber Circuit".into(), Some(2021)),
+            "Amber Circuit 2021"
+        );
+        assert_eq!(
+            with_movie_year("Amber Circuit 2021".into(), Some(2021)),
+            "Amber Circuit 2021"
+        );
+        assert_eq!(with_movie_year("2021".into(), Some(2021)), "2021 2021");
+        assert_eq!(
+            with_movie_year("Amber Circuit".into(), None),
+            "Amber Circuit"
+        );
+    }
+
+    #[test]
+    fn specials_send_season_double_zero() {
+        let url = build_search_url(
+            "https://indexer.example/api",
+            "tvsearch",
+            None,
+            "key",
+            None,
+            None,
+            Some("123"),
+            None,
+            None,
+            Some("5000"),
+            100,
+            Some(0),
+            Some(3),
+            "",
+        )
+        .unwrap();
+        assert!(url.contains("season=00"), "{url}");
+        let url = build_search_url(
+            "https://indexer.example/api",
+            "tvsearch",
+            None,
+            "key",
+            None,
+            None,
+            Some("123"),
+            None,
+            None,
+            Some("5000"),
+            100,
+            Some(4),
+            Some(3),
+            "",
+        )
+        .unwrap();
+        assert!(url.contains("season=4&"), "{url}");
+    }
 
     #[test]
     fn response_format_respects_provider_support_and_preserves_other_parameters() {

@@ -382,7 +382,12 @@ mod tests {
         assert!(!PROFILE_ASSET.contains("animetosho.org"));
         assert!(profiles.iter().all(|definition| {
             let PluginProviderProfile::Newznab(profile) = &definition.runtime_profile;
-            profile.request_interval_ms == 500
+            let expected = if profile.profile_id == "drunken-slug" {
+                2000
+            } else {
+                500
+            };
+            profile.request_interval_ms == expected
         }));
 
         let ids = profiles
