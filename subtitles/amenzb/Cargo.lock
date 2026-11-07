@@ -19,7 +19,7 @@ checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
 
 [[package]]
 name = "amenzb-subtitles"
-version = "1.2.2"
+version = "1.2.3"
 dependencies = [
  "base64",
  "newznab-common",
@@ -951,7 +951,7 @@ checksum = "743fb55ba31b18fb1ecef6bdc9aa2743314978ac084044301a7eee33fb99a20d"
 
 [[package]]
 name = "newznab-common"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "httpdate",
  "quick-xml",
