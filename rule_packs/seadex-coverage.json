@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.43",
-  "snapshot_sha256": "d372a8495a9ce859e5665fe412f035267813a6efb8767e789c0a3b713612adaf",
+  "pack_version": "1.0.44",
+  "snapshot_sha256": "ee709f82cd035ccbad8292dc6d160a99f2f1836ca324d7de1844324a688a559b",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -404,6 +404,14 @@
       "release_id": "dzxnsuzgs1ub2ek",
       "strict_keys": 1,
       "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "03ip3k8a68faep1",
+      "file_sources": 19,
+      "release_id": "eck5yh3waohyt2v",
+      "strict_keys": 19,
+      "tolerant_keys": 19
     },
     {
       "alias_sources": 0,
@@ -1196,6 +1204,14 @@
       "release_id": "4w64vxur4tgtacq",
       "strict_keys": 14,
       "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "0gks0h5kyxhax44",
+      "file_sources": 12,
+      "release_id": "t12f0c40spmpkut",
+      "strict_keys": 12,
+      "tolerant_keys": 12
     },
     {
       "alias_sources": 0,
@@ -3676,6 +3692,14 @@
       "release_id": "45qc65gvodrv6d9",
       "strict_keys": 12,
       "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "24opyjyy83ukywk",
+      "file_sources": 16,
+      "release_id": "wn8nix22h4iq4jq",
+      "strict_keys": 16,
+      "tolerant_keys": 16
     },
     {
       "alias_sources": 0,
@@ -7001,6 +7025,14 @@
       "alias_sources": 0,
       "entry_id": "48n28gwa1hmu21j",
       "file_sources": 1,
+      "release_id": "2dhxcd87uypsli7",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "48n28gwa1hmu21j",
+      "file_sources": 1,
       "release_id": "9xsudavja67igbz",
       "strict_keys": 1,
       "tolerant_keys": 1
@@ -7180,6 +7212,14 @@
       "release_id": "jnoqksv814v540z",
       "strict_keys": 13,
       "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "4c17c3evqt3z534",
+      "file_sources": 15,
+      "release_id": "p93xulxxsihavfw",
+      "strict_keys": 15,
+      "tolerant_keys": 15
     },
     {
       "alias_sources": 0,
@@ -8207,6 +8247,14 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "4pupic8vvnupswa",
+      "file_sources": 14,
+      "release_id": "w3her1y1qkn4mhe",
+      "strict_keys": 14,
+      "tolerant_keys": 14
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "4q7eaxwyxfan6ki",
       "file_sources": 13,
       "release_id": "a6lzs0b4voy2ov2",
@@ -8748,6 +8796,14 @@
       "release_id": "v6y57rdl2mu4846",
       "strict_keys": 13,
       "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "52jfrh36v7wbanu",
+      "file_sources": 6,
+      "release_id": "3b4pfw2zggdp9s9",
+      "strict_keys": 6,
+      "tolerant_keys": 6
     },
     {
       "alias_sources": 0,
@@ -14033,6 +14089,22 @@
       "alias_sources": 0,
       "entry_id": "7v1e3fyqo5jliy0",
       "file_sources": 24,
+      "release_id": "4u1qvn7d8skom4n",
+      "strict_keys": 24,
+      "tolerant_keys": 24
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "7v1e3fyqo5jliy0",
+      "file_sources": 24,
+      "release_id": "8egs5f6tmzj3oo3",
+      "strict_keys": 24,
+      "tolerant_keys": 24
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "7v1e3fyqo5jliy0",
+      "file_sources": 24,
       "release_id": "8sijeyy5758tq1e",
       "strict_keys": 24,
       "tolerant_keys": 24
@@ -14577,7 +14649,23 @@
       "alias_sources": 0,
       "entry_id": "86yv9mrfonanxg1",
       "file_sources": 12,
+      "release_id": "bti5p2kq5fwlwd6",
+      "strict_keys": 12,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "86yv9mrfonanxg1",
+      "file_sources": 12,
       "release_id": "et4khr226781nkp",
+      "strict_keys": 12,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "86yv9mrfonanxg1",
+      "file_sources": 12,
+      "release_id": "lv3juzl3j6rqhsw",
       "strict_keys": 12,
       "tolerant_keys": 0
     },
@@ -24519,6 +24607,14 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "ee6jjcnkplm6cl0",
+      "file_sources": 1,
+      "release_id": "ugqjjosnz0y4004",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "eee2vac36i541iv",
       "file_sources": 14,
       "release_id": "kfoo23hy4sd0sr5",
@@ -24833,9 +24929,25 @@
       "alias_sources": 0,
       "entry_id": "emtdf5kb54azwza",
       "file_sources": 12,
+      "release_id": "l54fu33v8z85seq",
+      "strict_keys": 12,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "emtdf5kb54azwza",
+      "file_sources": 12,
       "release_id": "ljupxluzh3mixyu",
       "strict_keys": 12,
       "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "emtdf5kb54azwza",
+      "file_sources": 14,
+      "release_id": "p2fu6i7jj7aurmn",
+      "strict_keys": 14,
+      "tolerant_keys": 14
     },
     {
       "alias_sources": 0,
@@ -32575,6 +32687,14 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "j7regom4485m5pk",
+      "file_sources": 2,
+      "release_id": "zr32qxijumucd8x",
+      "strict_keys": 2,
+      "tolerant_keys": 2
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "j8d3j20w813b244",
       "file_sources": 3,
       "release_id": "jsxpv3is9svftaz",
@@ -33943,6 +34063,14 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "jp8via4p2cxad0c",
+      "file_sources": 13,
+      "release_id": "x25iswm9sp881tt",
+      "strict_keys": 13,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "jprlzxve6x178qi",
       "file_sources": 25,
       "release_id": "4mp2rrtynvlvse5",
@@ -35082,6 +35210,14 @@
       "entry_id": "kahj0sknujcicsf",
       "file_sources": 1,
       "release_id": "dmtfgihwxjbnc2n",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "kahj0sknujcicsf",
+      "file_sources": 1,
+      "release_id": "lw1rh7e2zkde8bl",
       "strict_keys": 1,
       "tolerant_keys": 1
     },
@@ -37529,6 +37665,14 @@
       "alias_sources": 0,
       "entry_id": "lihcmw48ttd3ltr",
       "file_sources": 1,
+      "release_id": "97ltixj5f2qq1ul",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "lihcmw48ttd3ltr",
+      "file_sources": 1,
       "release_id": "gmzdywex2vhf033",
       "strict_keys": 1,
       "tolerant_keys": 1
@@ -37658,6 +37802,14 @@
       "entry_id": "lkhos0zk5veka9c",
       "file_sources": 29,
       "release_id": "8eq1btlnutc9kjc",
+      "strict_keys": 29,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "lkhos0zk5veka9c",
+      "file_sources": 29,
+      "release_id": "hi384l8pdb471jz",
       "strict_keys": 29,
       "tolerant_keys": 0
     },
@@ -37916,6 +38068,14 @@
       "release_id": "abv0uk2zbea0lgr",
       "strict_keys": 24,
       "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "lnag0lr2axv7gyh",
+      "file_sources": 25,
+      "release_id": "e7v0cgpuzsyxpbj",
+      "strict_keys": 25,
+      "tolerant_keys": 25
     },
     {
       "alias_sources": 0,
@@ -38484,6 +38644,14 @@
       "release_id": "zfy0ff6m4r6r6e5",
       "strict_keys": 12,
       "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "ly0fs9b1aejrm6m",
+      "file_sources": 11,
+      "release_id": "m6jkm9417yamajw",
+      "strict_keys": 11,
+      "tolerant_keys": 11
     },
     {
       "alias_sources": 0,
@@ -48576,6 +48744,14 @@
     {
       "alias_sources": 0,
       "entry_id": "rbdhn0x0qhr2wmi",
+      "file_sources": 12,
+      "release_id": "txowevmvh8zqrqs",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "rbdhn0x0qhr2wmi",
       "file_sources": 1,
       "release_id": "yc6qr52skahokhy",
       "strict_keys": 1,
@@ -51105,6 +51281,14 @@
       "alias_sources": 0,
       "entry_id": "slcqysqbq4ngylm",
       "file_sources": 15,
+      "release_id": "3s1d9ya666hn9b0",
+      "strict_keys": 15,
+      "tolerant_keys": 15
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "slcqysqbq4ngylm",
+      "file_sources": 15,
       "release_id": "8qd8jorkee26tvc",
       "strict_keys": 15,
       "tolerant_keys": 15
@@ -52832,16 +53016,24 @@
     {
       "alias_sources": 0,
       "entry_id": "tniabuz6ol7ok7r",
-      "file_sources": 29,
-      "release_id": "1xmr54lc03s9wsm",
-      "strict_keys": 29,
-      "tolerant_keys": 29
+      "file_sources": 14,
+      "release_id": "8nxbjujysv1swpa",
+      "strict_keys": 14,
+      "tolerant_keys": 14
     },
     {
       "alias_sources": 0,
       "entry_id": "tniabuz6ol7ok7r",
       "file_sources": 14,
       "release_id": "i3lv8e6g077l4j2",
+      "strict_keys": 14,
+      "tolerant_keys": 14
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "tniabuz6ol7ok7r",
+      "file_sources": 14,
+      "release_id": "rx93wha75hlqyy3",
       "strict_keys": 14,
       "tolerant_keys": 14
     },
@@ -57612,6 +57804,14 @@
       "release_id": "tcug1fg6kih85np",
       "strict_keys": 26,
       "tolerant_keys": 26
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "wfrlyknjkxvodjc",
+      "file_sources": 12,
+      "release_id": "2bcwuo581qh7fi1",
+      "strict_keys": 12,
+      "tolerant_keys": 0
     },
     {
       "alias_sources": 0,
@@ -108214,6 +108414,78 @@
     {
       "entry_id": "86yv9mrfonanxg1",
       "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "bti5p2kq5fwlwd6",
+      "source_name": "RPG Fudousan 01.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "bti5p2kq5fwlwd6",
+      "source_name": "RPG Fudousan 02.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "bti5p2kq5fwlwd6",
+      "source_name": "RPG Fudousan 03.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "bti5p2kq5fwlwd6",
+      "source_name": "RPG Fudousan 04.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "bti5p2kq5fwlwd6",
+      "source_name": "RPG Fudousan 05.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "bti5p2kq5fwlwd6",
+      "source_name": "RPG Fudousan 06.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "bti5p2kq5fwlwd6",
+      "source_name": "RPG Fudousan 07.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "bti5p2kq5fwlwd6",
+      "source_name": "RPG Fudousan 08.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "bti5p2kq5fwlwd6",
+      "source_name": "RPG Fudousan 09.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "bti5p2kq5fwlwd6",
+      "source_name": "RPG Fudousan 10.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "bti5p2kq5fwlwd6",
+      "source_name": "RPG Fudousan 11.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "bti5p2kq5fwlwd6",
+      "source_name": "RPG Fudousan 12.mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "et4khr226781nkp",
       "source_name": "RPG Real Estate - S01E01 - Welcome to RPG Real Estate! Room-Searching for the First Time! (UnHoly).mkv"
     },
@@ -108281,6 +108553,78 @@
       "entry_id": "86yv9mrfonanxg1",
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "et4khr226781nkp",
+      "source_name": "RPG Real Estate - S01E12 - Thanks, Everyone! RPG Real Estate's New Journey Begins! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lv3juzl3j6rqhsw",
+      "source_name": "RPG Real Estate - S01E01 - Welcome to RPG Real Estate! Room-Searching for the First Time! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lv3juzl3j6rqhsw",
+      "source_name": "RPG Real Estate - S01E02 - Troublesome Property! First Business Trip to the Dark Lord's Castle (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lv3juzl3j6rqhsw",
+      "source_name": "RPG Real Estate - S01E03 - For Real! Dragon, Ghost, Overwhelming Magic! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lv3juzl3j6rqhsw",
+      "source_name": "RPG Real Estate - S01E04 - Always Together! A Property Packed With Pets, Dreams, and Friendship! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lv3juzl3j6rqhsw",
+      "source_name": "RPG Real Estate - S01E05 - Summer! We Found a Great House for Wearing Swimsuits! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lv3juzl3j6rqhsw",
+      "source_name": "RPG Real Estate - S01E06 - A Melody for the Grim Reaper! We're All Friends! Let's Get Along! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lv3juzl3j6rqhsw",
+      "source_name": "RPG Real Estate - S01E07 - Doors, Doors, Doors! Open the Door to Summer Vacation! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lv3juzl3j6rqhsw",
+      "source_name": "RPG Real Estate - S01E08 - Wha! Finding a Dream Home Through Fortune Telling! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lv3juzl3j6rqhsw",
+      "source_name": "RPG Real Estate - S01E09 - Nyan! One More Deal Until We Meet Our Goal! Let's Make Our Wishes Come True at the Millennium Star Festival! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lv3juzl3j6rqhsw",
+      "source_name": "RPG Real Estate - S01E10 - Woes of Longevity! I Need a Sturdy House That I Can Live in for a Long Time! (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lv3juzl3j6rqhsw",
+      "source_name": "RPG Real Estate - S01E11 - Fa, Let's Go Home Together (UnHoly).mkv"
+    },
+    {
+      "entry_id": "86yv9mrfonanxg1",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "lv3juzl3j6rqhsw",
       "source_name": "RPG Real Estate - S01E12 - Thanks, Everyone! RPG Real Estate's New Journey Begins! (UnHoly).mkv"
     },
     {
@@ -144714,6 +145058,78 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "8rsdfq15fws6bno",
       "source_name": "Yamada's First Time B Gata H Kei S01E12 The World Revolves Around Us. Farewell... B Gata H Kei Yamada's an Angel! Farewell! B Gata H Kei!!.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "l54fu33v8z85seq",
+      "source_name": "Noukin 01.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "l54fu33v8z85seq",
+      "source_name": "Noukin 02.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "l54fu33v8z85seq",
+      "source_name": "Noukin 03.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "l54fu33v8z85seq",
+      "source_name": "Noukin 04.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "l54fu33v8z85seq",
+      "source_name": "Noukin 05.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "l54fu33v8z85seq",
+      "source_name": "Noukin 06.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "l54fu33v8z85seq",
+      "source_name": "Noukin 07.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "l54fu33v8z85seq",
+      "source_name": "Noukin 08.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "l54fu33v8z85seq",
+      "source_name": "Noukin 09.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "l54fu33v8z85seq",
+      "source_name": "Noukin 10.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "l54fu33v8z85seq",
+      "source_name": "Noukin 11.mkv"
+    },
+    {
+      "entry_id": "emtdf5kb54azwza",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "l54fu33v8z85seq",
+      "source_name": "Noukin 12.mkv"
     },
     {
       "entry_id": "emtdf5kb54azwza",
@@ -186518,6 +186934,84 @@
       "source_name": "[ARC] Gunslinger Girl 13 [BD 714p 10-bit x264 FLAC].mkv"
     },
     {
+      "entry_id": "jp8via4p2cxad0c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "x25iswm9sp881tt",
+      "source_name": "[ARC] Gunslinger Girl 01 [BD 714p 10-bit x264 FLAC].mkv"
+    },
+    {
+      "entry_id": "jp8via4p2cxad0c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "x25iswm9sp881tt",
+      "source_name": "[ARC] Gunslinger Girl 02 [BD 714p 10-bit x264 FLAC].mkv"
+    },
+    {
+      "entry_id": "jp8via4p2cxad0c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "x25iswm9sp881tt",
+      "source_name": "[ARC] Gunslinger Girl 03 [BD 714p 10-bit x264 FLAC].mkv"
+    },
+    {
+      "entry_id": "jp8via4p2cxad0c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "x25iswm9sp881tt",
+      "source_name": "[ARC] Gunslinger Girl 04 [BD 714p 10-bit x264 FLAC].mkv"
+    },
+    {
+      "entry_id": "jp8via4p2cxad0c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "x25iswm9sp881tt",
+      "source_name": "[ARC] Gunslinger Girl 05 [BD 714p 10-bit x264 FLAC].mkv"
+    },
+    {
+      "entry_id": "jp8via4p2cxad0c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "x25iswm9sp881tt",
+      "source_name": "[ARC] Gunslinger Girl 06 [BD 716p 10-bit x264 FLAC].mkv"
+    },
+    {
+      "entry_id": "jp8via4p2cxad0c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "x25iswm9sp881tt",
+      "source_name": "[ARC] Gunslinger Girl 07 [BD 716p 10-bit x264 FLAC].mkv"
+    },
+    {
+      "entry_id": "jp8via4p2cxad0c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "x25iswm9sp881tt",
+      "source_name": "[ARC] Gunslinger Girl 08 [BD 716p 10-bit x264 FLAC].mkv"
+    },
+    {
+      "entry_id": "jp8via4p2cxad0c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "x25iswm9sp881tt",
+      "source_name": "[ARC] Gunslinger Girl 09 [BD 716p 10-bit x264 FLAC].mkv"
+    },
+    {
+      "entry_id": "jp8via4p2cxad0c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "x25iswm9sp881tt",
+      "source_name": "[ARC] Gunslinger Girl 10 [BD 714p 10-bit x264 FLAC].mkv"
+    },
+    {
+      "entry_id": "jp8via4p2cxad0c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "x25iswm9sp881tt",
+      "source_name": "[ARC] Gunslinger Girl 11 [DARC-fix] [BD 714p 10-bit x264 FLAC].mkv"
+    },
+    {
+      "entry_id": "jp8via4p2cxad0c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "x25iswm9sp881tt",
+      "source_name": "[ARC] Gunslinger Girl 12 [BD 714p 10-bit x264 FLAC].mkv"
+    },
+    {
+      "entry_id": "jp8via4p2cxad0c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "x25iswm9sp881tt",
+      "source_name": "[ARC] Gunslinger Girl 13 [BD 714p 10-bit x264 FLAC].mkv"
+    },
+    {
       "entry_id": "jpwdvzj0x1rqmfl",
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "dk1c4fm1cjuibu1",
@@ -206579,6 +207073,336 @@
       "entry_id": "lkhos0zk5veka9c",
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "8eq1btlnutc9kjc",
+      "source_name": "Fantastic Children - NCOP (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 01 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 02 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 03 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 04 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 05 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 06 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 07 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 08 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 09 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 10 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 11 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 12 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 13 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 14 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 15 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 16 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 17 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 18 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 19 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 20 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 21 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 22 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 23 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 24 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 25 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "non_release_file",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 26 (R2DVD 768x576 x264 Hi10p AC3 Chap).srt"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 01 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 02 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 03 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 04 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 05 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 06 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 07 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 08 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 09 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 10 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 11 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 12 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 13 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 14 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 15 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 16 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 17 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 18 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 19 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 20 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 21 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 22 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 23 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 24 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 25 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - 26 (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - ED (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
+      "source_name": "Fantastic Children - ED (Russian ver.) (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
+    },
+    {
+      "entry_id": "lkhos0zk5veka9c",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "hi384l8pdb471jz",
       "source_name": "Fantastic Children - NCOP (R2DVD 768x576 x264 Hi10p AC3 Chap).mkv"
     },
     {
@@ -257384,24 +258208,6 @@
       "source_name": "Macross Zero - 5 [BDRip 1912x1072 x264 Hi10P TrueHD] [F1633AB9].mkv"
     },
     {
-      "entry_id": "tniabuz6ol7ok7r",
-      "reason": "non_release_file",
-      "release_id": "1xmr54lc03s9wsm",
-      "source_name": "checksum.md5"
-    },
-    {
-      "entry_id": "tniabuz6ol7ok7r",
-      "reason": "non_release_file",
-      "release_id": "1xmr54lc03s9wsm",
-      "source_name": "checksum.sfv"
-    },
-    {
-      "entry_id": "tniabuz6ol7ok7r",
-      "reason": "non_release_file",
-      "release_id": "1xmr54lc03s9wsm",
-      "source_name": "info.txt"
-    },
-    {
       "entry_id": "tq4gglcodc5goi2",
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "ieac2dcixofy2b0",
@@ -274194,6 +275000,78 @@
       "reason": "non_ascii_tolerant_evidence",
       "release_id": "dyzozjy4rx9om62",
       "source_name": "Black.Rock.Shooter.S01E05.Black★Rock.Shooter.1080p.BluRay.REMUX.AVC.FLAC.2.0-NAN0.mkv"
+    },
+    {
+      "entry_id": "wfrlyknjkxvodjc",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2bcwuo581qh7fi1",
+      "source_name": "Management of a Novice Alchemist - S01E01 [BD 1080p HEVC 10bit FLAC] [Dual-Audio].mkv"
+    },
+    {
+      "entry_id": "wfrlyknjkxvodjc",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2bcwuo581qh7fi1",
+      "source_name": "Management of a Novice Alchemist - S01E02 [BD 1080p HEVC 10bit FLAC] [Dual-Audio].mkv"
+    },
+    {
+      "entry_id": "wfrlyknjkxvodjc",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2bcwuo581qh7fi1",
+      "source_name": "Management of a Novice Alchemist - S01E03 [BD 1080p HEVC 10bit FLAC] [Dual-Audio].mkv"
+    },
+    {
+      "entry_id": "wfrlyknjkxvodjc",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2bcwuo581qh7fi1",
+      "source_name": "Management of a Novice Alchemist - S01E04 [BD 1080p HEVC 10bit FLAC] [Dual-Audio].mkv"
+    },
+    {
+      "entry_id": "wfrlyknjkxvodjc",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2bcwuo581qh7fi1",
+      "source_name": "Management of a Novice Alchemist - S01E05 [BD 1080p HEVC 10bit FLAC] [Dual-Audio].mkv"
+    },
+    {
+      "entry_id": "wfrlyknjkxvodjc",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2bcwuo581qh7fi1",
+      "source_name": "Management of a Novice Alchemist - S01E06 [BD 1080p HEVC 10bit FLAC] [Dual-Audio].mkv"
+    },
+    {
+      "entry_id": "wfrlyknjkxvodjc",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2bcwuo581qh7fi1",
+      "source_name": "Management of a Novice Alchemist - S01E07 [BD 1080p HEVC 10bit FLAC] [Dual-Audio].mkv"
+    },
+    {
+      "entry_id": "wfrlyknjkxvodjc",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2bcwuo581qh7fi1",
+      "source_name": "Management of a Novice Alchemist - S01E08 [BD 1080p HEVC 10bit FLAC] [Dual-Audio].mkv"
+    },
+    {
+      "entry_id": "wfrlyknjkxvodjc",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2bcwuo581qh7fi1",
+      "source_name": "Management of a Novice Alchemist - S01E09 [BD 1080p HEVC 10bit FLAC] [Dual-Audio].mkv"
+    },
+    {
+      "entry_id": "wfrlyknjkxvodjc",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2bcwuo581qh7fi1",
+      "source_name": "Management of a Novice Alchemist - S01E10 [BD 1080p HEVC 10bit FLAC] [Dual-Audio].mkv"
+    },
+    {
+      "entry_id": "wfrlyknjkxvodjc",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2bcwuo581qh7fi1",
+      "source_name": "Management of a Novice Alchemist - S01E11 [BD 1080p HEVC 10bit FLAC] [Dual-Audio].mkv"
+    },
+    {
+      "entry_id": "wfrlyknjkxvodjc",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "2bcwuo581qh7fi1",
+      "source_name": "Management of a Novice Alchemist - S01E12 [BD 1080p HEVC 10bit FLAC] [Dual-Audio].mkv"
     },
     {
       "entry_id": "wfrlyknjkxvodjc",
@@ -753569,36 +754447,62 @@
     },
     "releases": {
       "added": [
-        "0dh12kxidrhmwit",
-        "3lq4qge533c7omp"
+        "2bcwuo581qh7fi1",
+        "2dhxcd87uypsli7",
+        "3b4pfw2zggdp9s9",
+        "3s1d9ya666hn9b0",
+        "4u1qvn7d8skom4n",
+        "8egs5f6tmzj3oo3",
+        "8nxbjujysv1swpa",
+        "97ltixj5f2qq1ul",
+        "bti5p2kq5fwlwd6",
+        "e7v0cgpuzsyxpbj",
+        "eck5yh3waohyt2v",
+        "hi384l8pdb471jz",
+        "l54fu33v8z85seq",
+        "lv3juzl3j6rqhsw",
+        "lw1rh7e2zkde8bl",
+        "m6jkm9417yamajw",
+        "p2fu6i7jj7aurmn",
+        "p93xulxxsihavfw",
+        "rx93wha75hlqyy3",
+        "t12f0c40spmpkut",
+        "txowevmvh8zqrqs",
+        "ugqjjosnz0y4004",
+        "w3her1y1qkn4mhe",
+        "wn8nix22h4iq4jq",
+        "x25iswm9sp881tt",
+        "zr32qxijumucd8x"
       ],
-      "removed": []
+      "removed": [
+        "1xmr54lc03s9wsm"
+      ]
     }
   },
   "matching": {
     "encoding": {
       "direct_buckets": {
-        "bucket_count": 350,
-        "key_count": 21372,
+        "bucket_count": 351,
+        "key_count": 21390,
         "max_keys": 230,
-        "mean_keys": 61.06285714285714
+        "mean_keys": 60.94017094017094
       },
-      "direct_entries": 21372,
+      "direct_entries": 21390,
       "route_buckets": 260,
-      "source_bytes": 3038016,
-      "source_lines": 45777,
+      "source_bytes": 3038628,
+      "source_lines": 45813,
       "template_buckets": {
         "bucket_count": 260,
-        "key_count": 6666,
-        "max_keys": 125,
-        "mean_keys": 25.638461538461538
+        "key_count": 6660,
+        "max_keys": 123,
+        "mean_keys": 25.615384615384617
       },
-      "template_groups": 6666,
-      "tuple_chunks": 6874
+      "template_groups": 6660,
+      "tuple_chunks": 6868
     },
     "provenance": {
-      "strict_keys": 57787,
-      "tolerant_keys": 47054
+      "strict_keys": 57784,
+      "tolerant_keys": 47051
     },
     "stale_overrides": []
   }
