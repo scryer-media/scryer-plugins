@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.44",
-  "snapshot_sha256": "ee709f82cd035ccbad8292dc6d160a99f2f1836ca324d7de1844324a688a559b",
+  "pack_version": "1.0.45",
+  "snapshot_sha256": "c3e58b0e293ee91176ad0bfd92f164661bf0fb5c3685a4fa1b55b841e1c659f0",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -19545,6 +19545,14 @@
       "alias_sources": 0,
       "entry_id": "b79azluuc3w4s6w",
       "file_sources": 1,
+      "release_id": "36qr3895kye1tfo",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "b79azluuc3w4s6w",
+      "file_sources": 1,
       "release_id": "sosrg1e2eztuonn",
       "strict_keys": 1,
       "tolerant_keys": 1
@@ -20828,6 +20836,14 @@
       "release_id": "eq4rn099x143l78",
       "strict_keys": 39,
       "tolerant_keys": 39
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "bwr45eprn04nzvj",
+      "file_sources": 1,
+      "release_id": "7hlaas9xgtrpdma",
+      "strict_keys": 1,
+      "tolerant_keys": 1
     },
     {
       "alias_sources": 0,
@@ -33481,15 +33497,7 @@
       "alias_sources": 0,
       "entry_id": "jgb0shpk4fiy3k0",
       "file_sources": 12,
-      "release_id": "jou7mp85svw2t04",
-      "strict_keys": 12,
-      "tolerant_keys": 12
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "jgb0shpk4fiy3k0",
-      "file_sources": 12,
-      "release_id": "nps0udjb0ho8zip",
+      "release_id": "7ghx1w40os1pqgv",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -34682,6 +34690,14 @@
       "entry_id": "jycjoy7w4yrddx0",
       "file_sources": 13,
       "release_id": "j3p8mc2obkw7sg7",
+      "strict_keys": 13,
+      "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "jycjoy7w4yrddx0",
+      "file_sources": 13,
+      "release_id": "ycszs2ktct6afax",
       "strict_keys": 13,
       "tolerant_keys": 13
     },
@@ -35936,18 +35952,18 @@
     {
       "alias_sources": 0,
       "entry_id": "kmhhxpw6zf0fal9",
-      "file_sources": 14,
-      "release_id": "jdok49bft1e9kug",
-      "strict_keys": 14,
-      "tolerant_keys": 14
+      "file_sources": 12,
+      "release_id": "kvbs65y6rsk2012",
+      "strict_keys": 12,
+      "tolerant_keys": 12
     },
     {
       "alias_sources": 0,
       "entry_id": "kmhhxpw6zf0fal9",
-      "file_sources": 14,
-      "release_id": "rahnwafru0ayiic",
-      "strict_keys": 14,
-      "tolerant_keys": 14
+      "file_sources": 12,
+      "release_id": "ub79qnoh7y19w27",
+      "strict_keys": 12,
+      "tolerant_keys": 12
     },
     {
       "alias_sources": 0,
@@ -46903,6 +46919,22 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "qcu9sbday97mhuw",
+      "file_sources": 4,
+      "release_id": "l2ew61tfiq5jt3w",
+      "strict_keys": 4,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "qcu9sbday97mhuw",
+      "file_sources": 4,
+      "release_id": "n1s3yfu5cha527o",
+      "strict_keys": 4,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "qdgf95e9xn9pcxy",
       "file_sources": 13,
       "release_id": "cijge6delvsz2g1",
@@ -49840,16 +49872,8 @@
     {
       "alias_sources": 0,
       "entry_id": "s1g0mcy7d3hn43c",
-      "file_sources": 20,
-      "release_id": "4oouj8q7lympdbr",
-      "strict_keys": 20,
-      "tolerant_keys": 20
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "s1g0mcy7d3hn43c",
       "file_sources": 12,
-      "release_id": "anj59ill9bxtydj",
+      "release_id": "9lm1ide71t7fvvy",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -182963,1098 +182987,6 @@
     },
     {
       "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "01 - Baby Baby Love.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "01 - Loop-the-Loop (TV Size).flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "01 - Loop-the-Loop.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "01 - ごめん!からまっちゃっTail.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "01 - のーらぶ.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "01 - ナナいろノーサンキュウ！.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "01 - メロ♡メロマンちっく.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "01 - リビングWars.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "01.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "01.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "01.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "01.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "02 - やさしき日々.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "02 - スキって半透明！.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "02 - パーティー始めよっか!!.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "02 - ミステイク! DEATH.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "02 - モ・モ・い・ろ・み・ご・ろ.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "02 - 君が教えてくれるすべて.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "02 - 楽しくToLOVEる.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "02 - 雷鳴が鳴く頃.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "02.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "02.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "02.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "02.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "03 - Baby Baby Love (Instrumental).flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "03 - Loop-the-Loop (instrumental).flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "03 - のーらぶ (カラオケ).flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "03 - ナナいろノーサンキュウ！ (カラオケ).flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "03 - メロ♡メロマンちっく (カラオケ).flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "03 - リビングWars (カラオケ).flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "03 - 穏やかワルツ.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "03 - 隠れて隠して.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "03.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "03.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "03.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "03.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "04 - おはよう、リト!.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "04 - スキって半透明！ (カラオケ).flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "04 - ミステイク! DEATH (カラオケ).flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "04 - モ・モ・い・ろ・み・ご・ろ (カラオケ).flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "04 - 君が教えてくれるすべて (カラオケ).flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "04 - 雷鳴が鳴く頃 (instrumental).flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "04 - 風紀を乱しちゃイケマセン.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "04.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "04.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "04.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "04.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "05 - 敵対心.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "05 - 無邪気なララ.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "05.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "05.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "05.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "05.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "06 - 減点!.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "06 - 突進~!!.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "06.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "06.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "06.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "06.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "07 - カワイ..!.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "07 - 遅刻だァ~ッ!.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "07.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "07.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "07.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "08 - ど~なっちゃうの~.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "08 - リト、脱線.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "08.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "08.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "08.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "09 - ドキドキ・リト.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "09 - 眠れないの….flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "09.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "10 - じゃないぞ!乙女ちっく.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "10 - 御門先生!!!.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "10.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "11 - オレの気持ち.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "11 - チャキチャキToLOVEる.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "11.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "12 - コ、コケ川.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "12 - 愛してる!.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "13 - それぞれの時間.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "13 - 迫り来るタイヤキ.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "14 - Battle-2.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "14 - リトへの想い.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "15 - あなた、恋をしていますか.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "15 - えっちいのは嫌いです….flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "16 - お気楽ソング.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "16 - ルンの想い.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "17 - リトの匂いだ….flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "17 - 賞金稼ぎ登場.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "18 - ヤミちゃん.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "18 - リト、沈没.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "19 - Battle-1.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "19 - Xmasの想い出.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "20 - 想い出の場所.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "20 - 雨の公園で….flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "21 - ともだち.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "21 - 雨上がりの空に.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "22 - もっとToLOVEる.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "22 - ゴメンネ.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "23 - ダーリンハニィ スィートエモーション.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "23 - ラ・ラ・ラ・ライブフルっ!.flac"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "BD1.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "BD2.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "BD3.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "BD4.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "BD5.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "BD6.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "CD1.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "CD2.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "CD3.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "CD4.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "CD5.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "CD6.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "CDレーベル.webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "CDレーベル.webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "CDレーベル.webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "CDレーベル.webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "ジャケット.webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "ジャケット.webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "ジャケット.webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "ジャケット.webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "ジャケット1表.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "ジャケット1裏.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "ジャケット2表.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "ジャケット2裏.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "ジャケット3表.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "ジャケット3裏.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "ジャケット4表.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "ジャケット4裏.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "ジャケット5表.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "ジャケット5裏.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "ジャケット6表.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "ジャケット6裏.jpg"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "帯(表).webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "帯(表).webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "帯(表).webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "帯(表).webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "帯(裏).webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "帯(裏).webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "帯(裏).webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "帯(裏).webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "歌詞カード.webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "歌詞カード.webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "歌詞カード.webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "歌詞カード.webp"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第01回 101007.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第02回 101014.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第03回 101021.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第04回 101028.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第05回 101104.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第06回 101111.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第07回 101118.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第08回 101125.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第09回 101202.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第10回 101209.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第11回 101216.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第12回 101224.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第13回 101230.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第14回 110113.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第15回 110120.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第16回 110127.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第17回 110203.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第18回 110210.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第19回 110217.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第20回 110224.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第21回 110303.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第22回 110310.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第23回 110317.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "non_release_file",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "第24回 110407.mp3"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "Menu - 01.mkv"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "Menu - 02.mkv"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "Menu - 03.mkv"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "Menu - 04.mkv"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "Menu - 05.mkv"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "Menu - 06.mkv"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "NCED - 01.mkv"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "NCED - 02.mkv"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "jou7mp85svw2t04",
-      "source_name": "NCOP.mkv"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "nps0udjb0ho8zip",
-      "source_name": "NC/NCED - 01.mkv"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "nps0udjb0ho8zip",
-      "source_name": "NC/NCED - 02.mkv"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "nps0udjb0ho8zip",
-      "source_name": "NC/NCOP.mkv"
-    },
-    {
-      "entry_id": "jgb0shpk4fiy3k0",
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "pr1msl2t2wq1n6f",
       "source_name": "NCED #01 Ver.B.mkv"
@@ -236906,6 +235838,54 @@
       "reason": "non_release_file",
       "release_id": "uk5i4is05v7hx2b",
       "source_name": "[HQR] Guin Saga TV -26- (BDRip 1920x1080 HEVC Flac).English.ass"
+    },
+    {
+      "entry_id": "qcu9sbday97mhuw",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "l2ew61tfiq5jt3w",
+      "source_name": "Vampire.Princess Miyu.E01.1988.1080p.Bluray.AVC.FLAC.2.0.Remux.mkv"
+    },
+    {
+      "entry_id": "qcu9sbday97mhuw",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "l2ew61tfiq5jt3w",
+      "source_name": "Vampire.Princess Miyu.E02.1988.1080p.Bluray.AVC.FLAC.2.0.Remux.mkv"
+    },
+    {
+      "entry_id": "qcu9sbday97mhuw",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "l2ew61tfiq5jt3w",
+      "source_name": "Vampire.Princess Miyu.E03.1988.1080p.Bluray.AVC.FLAC.2.0.Remux.mkv"
+    },
+    {
+      "entry_id": "qcu9sbday97mhuw",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "l2ew61tfiq5jt3w",
+      "source_name": "Vampire.Princess Miyu.E04.1988.1080p.Bluray.AVC.FLAC.2.0.Remux.mkv"
+    },
+    {
+      "entry_id": "qcu9sbday97mhuw",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "n1s3yfu5cha527o",
+      "source_name": "Vampire.Princess Miyu.E01.1988.1080p.Bluray.AVC.FLAC.2.0.Remux.mkv"
+    },
+    {
+      "entry_id": "qcu9sbday97mhuw",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "n1s3yfu5cha527o",
+      "source_name": "Vampire.Princess Miyu.E02.1988.1080p.Bluray.AVC.FLAC.2.0.Remux.mkv"
+    },
+    {
+      "entry_id": "qcu9sbday97mhuw",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "n1s3yfu5cha527o",
+      "source_name": "Vampire.Princess Miyu.E03.1988.1080p.Bluray.AVC.FLAC.2.0.Remux.mkv"
+    },
+    {
+      "entry_id": "qcu9sbday97mhuw",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "n1s3yfu5cha527o",
+      "source_name": "Vampire.Princess Miyu.E04.1988.1080p.Bluray.AVC.FLAC.2.0.Remux.mkv"
     },
     {
       "entry_id": "qdgf95e9xn9pcxy",
@@ -520389,13 +519369,6 @@
           "source_name": "Menu - 01.mkv"
         },
         {
-          "anilist_id": 9181,
-          "entry_id": "jgb0shpk4fiy3k0",
-          "release_id": "jou7mp85svw2t04",
-          "source": "file",
-          "source_name": "Menu - 01.mkv"
-        },
-        {
           "anilist_id": 15565,
           "entry_id": "khanf84jjbtclsl",
           "release_id": "nj5696g5fl4xexj",
@@ -520497,13 +519470,6 @@
           "anilist_id": 97996,
           "entry_id": "j5qc6l37cmm0cib",
           "release_id": "ckw1m3gfwr6bafo",
-          "source": "file",
-          "source_name": "Menu - 02.mkv"
-        },
-        {
-          "anilist_id": 9181,
-          "entry_id": "jgb0shpk4fiy3k0",
-          "release_id": "jou7mp85svw2t04",
           "source": "file",
           "source_name": "Menu - 02.mkv"
         },
@@ -520613,13 +519579,6 @@
           "source_name": "Menu - 03.mkv"
         },
         {
-          "anilist_id": 9181,
-          "entry_id": "jgb0shpk4fiy3k0",
-          "release_id": "jou7mp85svw2t04",
-          "source": "file",
-          "source_name": "Menu - 03.mkv"
-        },
-        {
           "anilist_id": 15565,
           "entry_id": "khanf84jjbtclsl",
           "release_id": "nj5696g5fl4xexj",
@@ -520707,13 +519666,6 @@
           "anilist_id": 97996,
           "entry_id": "j5qc6l37cmm0cib",
           "release_id": "ckw1m3gfwr6bafo",
-          "source": "file",
-          "source_name": "Menu - 04.mkv"
-        },
-        {
-          "anilist_id": 9181,
-          "entry_id": "jgb0shpk4fiy3k0",
-          "release_id": "jou7mp85svw2t04",
           "source": "file",
           "source_name": "Menu - 04.mkv"
         },
@@ -520809,13 +519761,6 @@
           "source_name": "Menu - 05.mkv"
         },
         {
-          "anilist_id": 9181,
-          "entry_id": "jgb0shpk4fiy3k0",
-          "release_id": "jou7mp85svw2t04",
-          "source": "file",
-          "source_name": "Menu - 05.mkv"
-        },
-        {
           "anilist_id": 15565,
           "entry_id": "khanf84jjbtclsl",
           "release_id": "nj5696g5fl4xexj",
@@ -520882,13 +519827,6 @@
           "anilist_id": 9041,
           "entry_id": "gqmdn59jkq37h0v",
           "release_id": "i6y2rf8ytuf2693",
-          "source": "file",
-          "source_name": "Menu - 06.mkv"
-        },
-        {
-          "anilist_id": 9181,
-          "entry_id": "jgb0shpk4fiy3k0",
-          "release_id": "jou7mp85svw2t04",
           "source": "file",
           "source_name": "Menu - 06.mkv"
         },
@@ -531589,20 +530527,6 @@
           "source_name": "NCED - 01.mkv"
         },
         {
-          "anilist_id": 9181,
-          "entry_id": "jgb0shpk4fiy3k0",
-          "release_id": "jou7mp85svw2t04",
-          "source": "file",
-          "source_name": "NCED - 01.mkv"
-        },
-        {
-          "anilist_id": 9181,
-          "entry_id": "jgb0shpk4fiy3k0",
-          "release_id": "nps0udjb0ho8zip",
-          "source": "file",
-          "source_name": "NC/NCED - 01.mkv"
-        },
-        {
           "anilist_id": 15565,
           "entry_id": "khanf84jjbtclsl",
           "release_id": "nj5696g5fl4xexj",
@@ -531951,20 +530875,6 @@
           "release_id": "om311x2ruhmn2t9",
           "source": "file",
           "source_name": "NCED - 02.mkv"
-        },
-        {
-          "anilist_id": 9181,
-          "entry_id": "jgb0shpk4fiy3k0",
-          "release_id": "jou7mp85svw2t04",
-          "source": "file",
-          "source_name": "NCED - 02.mkv"
-        },
-        {
-          "anilist_id": 9181,
-          "entry_id": "jgb0shpk4fiy3k0",
-          "release_id": "nps0udjb0ho8zip",
-          "source": "file",
-          "source_name": "NC/NCED - 02.mkv"
         },
         {
           "anilist_id": 15565,
@@ -534093,20 +533003,6 @@
           "release_id": "ckw1m3gfwr6bafo",
           "source": "file",
           "source_name": "NCOP.mkv"
-        },
-        {
-          "anilist_id": 9181,
-          "entry_id": "jgb0shpk4fiy3k0",
-          "release_id": "jou7mp85svw2t04",
-          "source": "file",
-          "source_name": "NCOP.mkv"
-        },
-        {
-          "anilist_id": 9181,
-          "entry_id": "jgb0shpk4fiy3k0",
-          "release_id": "nps0udjb0ho8zip",
-          "source": "file",
-          "source_name": "NC/NCOP.mkv"
         },
         {
           "anilist_id": 139093,
@@ -754442,40 +753338,31 @@
   "stale_overrides": [],
   "changes": {
     "entries": {
-      "added": [],
+      "added": [
+        "bwr45eprn04nzvj",
+        "qcu9sbday97mhuw"
+      ],
       "removed": []
     },
     "releases": {
       "added": [
-        "2bcwuo581qh7fi1",
-        "2dhxcd87uypsli7",
-        "3b4pfw2zggdp9s9",
-        "3s1d9ya666hn9b0",
-        "4u1qvn7d8skom4n",
-        "8egs5f6tmzj3oo3",
-        "8nxbjujysv1swpa",
-        "97ltixj5f2qq1ul",
-        "bti5p2kq5fwlwd6",
-        "e7v0cgpuzsyxpbj",
-        "eck5yh3waohyt2v",
-        "hi384l8pdb471jz",
-        "l54fu33v8z85seq",
-        "lv3juzl3j6rqhsw",
-        "lw1rh7e2zkde8bl",
-        "m6jkm9417yamajw",
-        "p2fu6i7jj7aurmn",
-        "p93xulxxsihavfw",
-        "rx93wha75hlqyy3",
-        "t12f0c40spmpkut",
-        "txowevmvh8zqrqs",
-        "ugqjjosnz0y4004",
-        "w3her1y1qkn4mhe",
-        "wn8nix22h4iq4jq",
-        "x25iswm9sp881tt",
-        "zr32qxijumucd8x"
+        "36qr3895kye1tfo",
+        "7ghx1w40os1pqgv",
+        "7hlaas9xgtrpdma",
+        "9lm1ide71t7fvvy",
+        "kvbs65y6rsk2012",
+        "l2ew61tfiq5jt3w",
+        "n1s3yfu5cha527o",
+        "ub79qnoh7y19w27",
+        "ycszs2ktct6afax"
       ],
       "removed": [
-        "1xmr54lc03s9wsm"
+        "4oouj8q7lympdbr",
+        "anj59ill9bxtydj",
+        "jdok49bft1e9kug",
+        "jou7mp85svw2t04",
+        "nps0udjb0ho8zip",
+        "rahnwafru0ayiic"
       ]
     }
   },
@@ -754483,26 +753370,26 @@
     "encoding": {
       "direct_buckets": {
         "bucket_count": 351,
-        "key_count": 21390,
+        "key_count": 21356,
         "max_keys": 230,
-        "mean_keys": 60.94017094017094
+        "mean_keys": 60.84330484330484
       },
-      "direct_entries": 21390,
+      "direct_entries": 21356,
       "route_buckets": 260,
-      "source_bytes": 3038628,
-      "source_lines": 45813,
+      "source_bytes": 3036580,
+      "source_lines": 45745,
       "template_buckets": {
         "bucket_count": 260,
-        "key_count": 6660,
+        "key_count": 6665,
         "max_keys": 123,
-        "mean_keys": 25.615384615384617
+        "mean_keys": 25.634615384615383
       },
-      "template_groups": 6660,
-      "tuple_chunks": 6868
+      "template_groups": 6665,
+      "tuple_chunks": 6873
     },
     "provenance": {
-      "strict_keys": 57784,
-      "tolerant_keys": 47051
+      "strict_keys": 57805,
+      "tolerant_keys": 47068
     },
     "stale_overrides": []
   }
