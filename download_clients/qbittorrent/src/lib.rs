@@ -1628,14 +1628,12 @@ fn resolve_added_hash(
     let expected_names = candidate_names(request);
     for attempt in 0..8 {
         let after = list_torrents(config, Some("all"))?;
-        if let Some(expected_hash) = expected_hash.as_deref()
-            && after
-                .iter()
-                .any(|torrent| normalize_hash(&torrent.hash) == expected_hash)
-        {
-            return Ok(expected_hash.to_string());
-        }
-        if let Some(hash) = discover_hash_candidate(&after, before_hashes, &expected_names) {
+        if let Some(hash) = added_hash_candidate(
+            &after,
+            before_hashes,
+            &expected_names,
+            expected_hash.as_deref(),
+        ) {
             return Ok(hash);
         }
         if attempt < 7 {
@@ -1675,6 +1673,23 @@ fn candidate_names(request: &PluginDownloadClientAddRequest) -> Vec<String> {
     values
 }
 
+fn added_hash_candidate(
+    torrents: &[QbTorrent],
+    before_hashes: &HashSet<String>,
+    expected_names: &[String],
+    expected_hash: Option<&str>,
+) -> Option<String> {
+    // A metainfo/magnet-derived hash is authoritative. Delayed visibility
+    // must not replace it with another torrent selected by name or timing.
+    if let Some(expected_hash) = expected_hash {
+        return torrents
+            .iter()
+            .any(|torrent| normalize_hash(&torrent.hash) == expected_hash)
+            .then(|| expected_hash.to_string());
+    }
+    discover_hash_candidate(torrents, before_hashes, expected_names)
+}
+
 fn discover_hash_candidate(
     torrents: &[QbTorrent],
     before_hashes: &HashSet<String>,
@@ -1683,6 +1698,7 @@ fn discover_hash_candidate(
     let expected = expected_names
         .iter()
         .map(|value| normalize_title_match(value))
+        .filter(|value| !value.is_empty())
         .collect::<Vec<_>>();
 
     for torrent in torrents {
@@ -2584,13 +2600,8 @@ fn normalize_hash(value: &str) -> String {
 fn normalize_title_match(value: &str) -> String {
     value
         .chars()
-        .map(|ch| {
-            if ch.is_ascii_alphanumeric() {
-                ch.to_ascii_lowercase()
-            } else {
-                ' '
-            }
-        })
+        .flat_map(char::to_lowercase)
+        .map(|ch| if ch.is_alphanumeric() { ch } else { ' ' })
         .collect::<String>()
         .split_whitespace()
         .collect::<Vec<_>>()
@@ -3655,6 +3666,151 @@ mod tests {
         ];
         let hash = discover_hash_candidate(&torrents, &before, &["Example Release".to_string()]);
         assert_eq!(hash.as_deref(), Some("bbbb"));
+    }
+
+    #[test]
+    fn discovered_hash_does_not_adopt_an_unrelated_cyrillic_title() {
+        let torrents = vec![QbTorrent {
+            hash: "aaaa".to_string(),
+            name: "ИИнга".to_string(),
+            ..QbTorrent::default()
+        }];
+        let before = HashSet::from(["aaaa".to_string()]);
+        for title in ["Спецы", "Художник"] {
+            assert_eq!(
+                discover_hash_candidate(&torrents, &before, &[title.to_string()]),
+                None,
+                "an existing Cyrillic title must not match a different title"
+            );
+        }
+    }
+
+    #[test]
+    fn discovered_hash_does_not_match_only_shared_year_and_release_metadata() {
+        let torrents = vec![QbTorrent {
+            hash: "aaaa".to_string(),
+            name: "Чужой сериал (2026) WEB-DL 1080p".to_string(),
+            ..QbTorrent::default()
+        }];
+        let before = HashSet::from(["aaaa".to_string()]);
+        assert_eq!(
+            discover_hash_candidate(
+                &torrents,
+                &before,
+                &["Нужный сериал (2026) WEB-DL 1080p".to_string()],
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn discovered_hash_does_not_match_empty_normalized_names() {
+        let torrents = vec![QbTorrent {
+            hash: "aaaa".to_string(),
+            name: "...".to_string(),
+            ..QbTorrent::default()
+        }];
+        let before = HashSet::from(["aaaa".to_string()]);
+        assert_eq!(
+            discover_hash_candidate(&torrents, &before, &["---".to_string()]),
+            None
+        );
+    }
+
+    #[test]
+    fn discovered_hash_matches_existing_cyrillic_title_case_insensitively() {
+        let torrents = vec![
+            QbTorrent {
+                hash: "aaaa".to_string(),
+                name: "ИИнга".to_string(),
+                ..QbTorrent::default()
+            },
+            QbTorrent {
+                hash: "bbbb".to_string(),
+                name: "Спецы".to_string(),
+                ..QbTorrent::default()
+            },
+        ];
+        let before = HashSet::from(["aaaa".to_string(), "bbbb".to_string()]);
+        assert_eq!(
+            discover_hash_candidate(&torrents, &before, &["СПЕЦЫ".to_string()]).as_deref(),
+            Some("bbbb")
+        );
+    }
+
+    #[test]
+    fn title_matching_preserves_non_ascii_letters() {
+        assert_eq!(normalize_title_match("СПЕЦЫ"), "спецы");
+        assert_eq!(normalize_title_match("Художник"), "художник");
+        assert_eq!(normalize_title_match("東京物語"), "東京物語");
+        assert_eq!(normalize_title_match("ÉTÉ.S01"), "été s01");
+        assert_eq!(
+            normalize_title_match("Example.Release-S01"),
+            "example release s01"
+        );
+    }
+
+    #[test]
+    fn known_hash_waits_instead_of_adopting_an_existing_name_match() {
+        let torrents = vec![QbTorrent {
+            hash: "aaaa".to_string(),
+            name: "Example Release".to_string(),
+            ..QbTorrent::default()
+        }];
+        let before = HashSet::from(["aaaa".to_string()]);
+        assert_eq!(
+            added_hash_candidate(
+                &torrents,
+                &before,
+                &["Example Release".to_string()],
+                Some("bbbb"),
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn known_hash_waits_instead_of_adopting_an_unrelated_new_torrent() {
+        let torrents = vec![QbTorrent {
+            hash: "aaaa".to_string(),
+            name: "Another Release".to_string(),
+            ..QbTorrent::default()
+        }];
+        assert_eq!(
+            added_hash_candidate(
+                &torrents,
+                &HashSet::new(),
+                &["Example Release".to_string()],
+                Some("bbbb"),
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn known_hash_wins_over_a_different_matching_name() {
+        let torrents = vec![
+            QbTorrent {
+                hash: "aaaa".to_string(),
+                name: "Example Release".to_string(),
+                ..QbTorrent::default()
+            },
+            QbTorrent {
+                hash: "BBBB".to_string(),
+                name: "Actual.Payload.Name".to_string(),
+                ..QbTorrent::default()
+            },
+        ];
+        assert_eq!(
+            added_hash_candidate(
+                &torrents,
+                &HashSet::new(),
+                &["Example Release".to_string()],
+                Some("bbbb"),
+            )
+            .as_deref(),
+            Some("bbbb")
+        );
     }
 
     #[test]
