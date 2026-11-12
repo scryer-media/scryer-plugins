@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_revision": "fad104383718cdb90e939ab99625439334012b50",
+  "source_revision": "750c31d44aa132c13425daa9c1ea5563624b618e",
   "files": [
     {
       "path": "docs/json/guide-only/language-german-and-original.json",
@@ -12844,8 +12844,8 @@
     },
     {
       "path": "docs/json/radarr/cf/german-web-tier-02.json",
-      "sha256": "78ebdb1ae67bfac4db2bfbd33fdcfd4ef34ac35da2278b8760c7f3f9372502e1",
-      "canonical_sha256": "ab5b3105c18f4113bc6e90c5bc302667f0c1fd470b558fe71497401a3e66bbfb",
+      "sha256": "cf407598430cabeb0e2054cbf7a45de4bd564d322149c988eab9eba01102b210",
+      "canonical_sha256": "1f449acd613c02fa1f237cfd3eae6325b1322b4688a50676d606542a9bf6f06a",
       "records": [
         {
           "name": "German Web Tier 02",
@@ -12870,15 +12870,6 @@
               "negate": false,
               "fields": {
                 "value": "(ABJ)$"
-              }
-            },
-            {
-              "name": "FLORiX",
-              "implementation": "ReleaseGroupSpecification",
-              "required": false,
-              "negate": false,
-              "fields": {
-                "value": "^(FLORiX)$"
               }
             },
             {
@@ -12959,8 +12950,8 @@
     },
     {
       "path": "docs/json/radarr/cf/german-web-tier-03.json",
-      "sha256": "a61d3874cb25447f27bdfc0d694bc472fd4561a42e48ba05dce4955a1cf2fa6f",
-      "canonical_sha256": "d3c38935d2cfdaf6ef33087325e4dbbd5a9f310fdb8cede5706aa92d27fd7c02",
+      "sha256": "79317787851974fb6f3461991d17bdbef0a4aa41960bbbf4c1c9a31cc70b47d2",
+      "canonical_sha256": "d7caf4231c8fb077d11439e4799016a92d0a8e0a6eab075f93d3e86ce3faed07",
       "records": [
         {
           "name": "German Web Tier 03",
@@ -12994,6 +12985,15 @@
               "negate": false,
               "fields": {
                 "value": "^(HDSource)$"
+              }
+            },
+            {
+              "name": "FLORiX",
+              "implementation": "ReleaseGroupSpecification",
+              "required": false,
+              "negate": false,
+              "fields": {
+                "value": "^(FLORiX)$"
               }
             },
             {
@@ -32533,8 +32533,8 @@
     },
     {
       "path": "docs/json/sonarr/cf/german-web-tier-02.json",
-      "sha256": "62163477f0307ef79d33594f58af051c985eabcb501bc50594de72c8331d9067",
-      "canonical_sha256": "216303607cc2e7208af518d229871cb1eabe5d6d9ad205d781fe7296b4c98859",
+      "sha256": "011c08087f7d98c8458f5f495bf04587b3b9dd4ade6656ea76d3ba92f2c3a840",
+      "canonical_sha256": "b8c63659efaf3088060baedeaf78966467abaf33313ec5ffb9826831b0434273",
       "records": [
         {
           "name": "German Web Tier 02",
@@ -32568,15 +32568,6 @@
               "negate": false,
               "fields": {
                 "value": "^(ABJ)$"
-              }
-            },
-            {
-              "name": "FLORiX",
-              "implementation": "ReleaseGroupSpecification",
-              "required": false,
-              "negate": false,
-              "fields": {
-                "value": "^(FLORiX)$"
               }
             },
             {
@@ -32639,8 +32630,8 @@
     },
     {
       "path": "docs/json/sonarr/cf/german-web-tier-03.json",
-      "sha256": "76c02620ac7f1a2ebeae0efff850969f0d16f1da96342ae46f49a3784a2babe6",
-      "canonical_sha256": "b3d999eaf7e697c4d4ee42c3871fe6e60300bf1f6b754cd1a9cd827c28b3b2e6",
+      "sha256": "7059ebcbd48885b0cb256046bb05591863645b11dd26432340f58ad92c55c4a8",
+      "canonical_sha256": "921cca93ee62b1ad3b4a588cc3200bb110e0551ac136763da86005a422413a99",
       "records": [
         {
           "name": "German Web Tier 03",
@@ -32665,6 +32656,15 @@
               "negate": false,
               "fields": {
                 "value": "^(BALENCiAGA)$"
+              }
+            },
+            {
+              "name": "FLORiX",
+              "implementation": "ReleaseGroupSpecification",
+              "required": false,
+              "negate": false,
+              "fields": {
+                "value": "^(FLORiX)$"
               }
             },
             {

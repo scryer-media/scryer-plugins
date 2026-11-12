@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_revision": "fad104383718cdb90e939ab99625439334012b50",
+  "source_revision": "750c31d44aa132c13425daa9c1ea5563624b618e",
   "input_files": [
     {
       "path": "docs/json/guide-only/language-german-and-original.json",
@@ -520,11 +520,11 @@
     },
     {
       "path": "docs/json/radarr/cf/german-web-tier-02.json",
-      "sha256": "78ebdb1ae67bfac4db2bfbd33fdcfd4ef34ac35da2278b8760c7f3f9372502e1"
+      "sha256": "cf407598430cabeb0e2054cbf7a45de4bd564d322149c988eab9eba01102b210"
     },
     {
       "path": "docs/json/radarr/cf/german-web-tier-03.json",
-      "sha256": "a61d3874cb25447f27bdfc0d694bc472fd4561a42e48ba05dce4955a1cf2fa6f"
+      "sha256": "79317787851974fb6f3461991d17bdbef0a4aa41960bbbf4c1c9a31cc70b47d2"
     },
     {
       "path": "docs/json/radarr/cf/german.json",
@@ -1508,11 +1508,11 @@
     },
     {
       "path": "docs/json/sonarr/cf/german-web-tier-02.json",
-      "sha256": "62163477f0307ef79d33594f58af051c985eabcb501bc50594de72c8331d9067"
+      "sha256": "011c08087f7d98c8458f5f495bf04587b3b9dd4ade6656ea76d3ba92f2c3a840"
     },
     {
       "path": "docs/json/sonarr/cf/german-web-tier-03.json",
-      "sha256": "76c02620ac7f1a2ebeae0efff850969f0d16f1da96342ae46f49a3784a2babe6"
+      "sha256": "7059ebcbd48885b0cb256046bb05591863645b11dd26432340f58ad92c55c4a8"
     },
     {
       "path": "docs/json/sonarr/cf/german.json",
@@ -1947,8 +1947,8 @@
     "service_alias_rules": 106,
     "token_signal_rules": 49
   },
-  "core_sha256": "ab1bb87be982b84a6a7d3330898a0220332611a08f8bab8079dec66fb0c049a4",
-  "detection_sha256": "cabd7ea53eaa0b33c5b073df65f089a9ebef0bd793528132369e33684564d8ff",
+  "core_sha256": "b875d27e394885126c1c3a18f0350819506287ef6778474fab72012d826830e0",
+  "detection_sha256": "ac97414a2049a8762c3e7fbc950b31bd64b72b51715b2bb8937e66b34c487260",
   "ignored_records": [
     "docs/json/radarr/cf/amzn.json:WEBDL:requires_positive_title",
     "docs/json/radarr/cf/amzn.json:WEBRIP:requires_positive_title",

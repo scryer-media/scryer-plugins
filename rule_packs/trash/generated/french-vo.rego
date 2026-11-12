@@ -2,7 +2,7 @@ package scryer.user.trash_guides_french_vo
 import rego.v1
 
 
-# Generated from parser snapshot fad104383718cdb90e939ab99625439334012b50.
+# Generated from parser snapshot 750c31d44aa132c13425daa9c1ea5563624b618e.
 trash_detection_tables := {
   "blocked_title_rules_by_anchor": {},
   "fact_rules_by_anchor": {
