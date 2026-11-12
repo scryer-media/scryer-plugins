@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.45",
-  "snapshot_sha256": "c3e58b0e293ee91176ad0bfd92f164661bf0fb5c3685a4fa1b55b841e1c659f0",
+  "pack_version": "1.0.46",
+  "snapshot_sha256": "d159945193639f0ef6db3a262c9ab91a6ca378ad69dd4861b2e346bc97b4a9c2",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -8817,7 +8817,7 @@
       "alias_sources": 0,
       "entry_id": "52r4bfclychxjbc",
       "file_sources": 12,
-      "release_id": "4ahrynqy9a2lumc",
+      "release_id": "364dunn2ebzwlk7",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -8825,23 +8825,7 @@
       "alias_sources": 0,
       "entry_id": "52r4bfclychxjbc",
       "file_sources": 12,
-      "release_id": "cwjqg7cbxkzjz2t",
-      "strict_keys": 12,
-      "tolerant_keys": 12
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "52r4bfclychxjbc",
-      "file_sources": 12,
-      "release_id": "gttxqi2q6z6i0l8",
-      "strict_keys": 12,
-      "tolerant_keys": 12
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "52r4bfclychxjbc",
-      "file_sources": 12,
-      "release_id": "wsskidzzglflsva",
+      "release_id": "w5f79rrav7iarz7",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -11513,17 +11497,17 @@
       "alias_sources": 0,
       "entry_id": "6h08ukk6lucqr4a",
       "file_sources": 12,
-      "release_id": "ei0k9nr4gvwie3x",
+      "release_id": "0pbend2sjx07kbr",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
     {
       "alias_sources": 0,
       "entry_id": "6h08ukk6lucqr4a",
-      "file_sources": 12,
-      "release_id": "ovhp4fo179xzh74",
-      "strict_keys": 12,
-      "tolerant_keys": 12
+      "file_sources": 14,
+      "release_id": "pqr1omqdqxei89q",
+      "strict_keys": 14,
+      "tolerant_keys": 14
     },
     {
       "alias_sources": 0,
@@ -17636,6 +17620,14 @@
       "release_id": "cwijnm29j6f49sc",
       "strict_keys": 10,
       "tolerant_keys": 10
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "9wkpw3qa69aop0e",
+      "file_sources": 1,
+      "release_id": "3le0qcrpaurqykf",
+      "strict_keys": 1,
+      "tolerant_keys": 1
     },
     {
       "alias_sources": 0,
@@ -32697,7 +32689,7 @@
       "alias_sources": 0,
       "entry_id": "j7regom4485m5pk",
       "file_sources": 2,
-      "release_id": "ltodij4a52566fi",
+      "release_id": "7c79x9om0c49x54",
       "strict_keys": 2,
       "tolerant_keys": 2
     },
@@ -32705,7 +32697,7 @@
       "alias_sources": 0,
       "entry_id": "j7regom4485m5pk",
       "file_sources": 2,
-      "release_id": "zr32qxijumucd8x",
+      "release_id": "prulf9llkqzagka",
       "strict_keys": 2,
       "tolerant_keys": 2
     },
@@ -36068,6 +36060,22 @@
       "release_id": "pe2cndufld85sw5",
       "strict_keys": 1,
       "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "kp2e3q3wu0adoy3",
+      "file_sources": 36,
+      "release_id": "pup7s2v3hpzvamf",
+      "strict_keys": 36,
+      "tolerant_keys": 36
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "kp2e3q3wu0adoy3",
+      "file_sources": 26,
+      "release_id": "z2fhloqv9byal52",
+      "strict_keys": 26,
+      "tolerant_keys": 26
     },
     {
       "alias_sources": 0,
@@ -41938,6 +41946,14 @@
       "entry_id": "nr7to1fh0nncpwk",
       "file_sources": 12,
       "release_id": "imhiutva837zkeh",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "nr7to1fh0nncpwk",
+      "file_sources": 12,
+      "release_id": "tlrmct63hmuexuy",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -49196,6 +49212,30 @@
       "release_id": "z08asg8gcdbmog4",
       "strict_keys": 12,
       "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "rjdvtg7cbw07xy7",
+      "file_sources": 2,
+      "release_id": "482ezm4t034eids",
+      "strict_keys": 2,
+      "tolerant_keys": 2
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "rjdvtg7cbw07xy7",
+      "file_sources": 2,
+      "release_id": "njhere160fnd9se",
+      "strict_keys": 2,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "rjdvtg7cbw07xy7",
+      "file_sources": 2,
+      "release_id": "pb64gl1ogicyp1r",
+      "strict_keys": 2,
+      "tolerant_keys": 0
     },
     {
       "alias_sources": 0,
@@ -57505,15 +57545,7 @@
       "alias_sources": 0,
       "entry_id": "w9yznffw7cqmmjd",
       "file_sources": 12,
-      "release_id": "8hoqmrga10x8gix",
-      "strict_keys": 12,
-      "tolerant_keys": 12
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "w9yznffw7cqmmjd",
-      "file_sources": 12,
-      "release_id": "o69mi6re88sykjs",
+      "release_id": "0ju2z42wg6wg1ck",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -103472,6 +103504,18 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "13dx1l1h60l7vtp",
       "source_name": "Weapons of MADOX Documentary.mkv"
+    },
+    {
+      "entry_id": "6h08ukk6lucqr4a",
+      "reason": "non_release_file",
+      "release_id": "0pbend2sjx07kbr",
+      "source_name": "Extras/[Asakura] Seihantai na Kimi to Boku NCED [BDRip 1920x1080 x265 10bit FLAC] [C85DF3E2].mkv"
+    },
+    {
+      "entry_id": "6h08ukk6lucqr4a",
+      "reason": "non_release_file",
+      "release_id": "0pbend2sjx07kbr",
+      "source_name": "Extras/[Asakura] Seihantai na Kimi to Boku NCOP [BDRip 1920x1080 x265 10bit FLAC] [06D25649].mkv"
     },
     {
       "entry_id": "6hnzu86jvte6tf0",
@@ -195220,6 +195264,12 @@
       "source_name": "NC/Saenai Heroine no Sodatekata-NCOP [A330EB8A].mkv"
     },
     {
+      "entry_id": "kp2e3q3wu0adoy3",
+      "reason": "non_release_file",
+      "release_id": "pup7s2v3hpzvamf",
+      "source_name": "Dirty Pair + Lovely Angels yori Ai o Komete (BDRip 1440x1080p x265 HEVC FLAC 2.0)[sxales].md5"
+    },
+    {
       "entry_id": "kr5ymz3su673hwr",
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "fewuk5008s1h41w",
@@ -243302,6 +243352,30 @@
       "reason": "non_release_file",
       "release_id": "bj6vrfelxd3poyn",
       "source_name": "[Moxie] Mekakucity Actors - S01E12 (BD Remux 1080p FLAC) [C5BA8F9C].commentary.mka"
+    },
+    {
+      "entry_id": "rjdvtg7cbw07xy7",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "njhere160fnd9se",
+      "source_name": "Oira Uchuu no Tankoufu 01 [BD 1440x1080 x265 FLAC].mkv"
+    },
+    {
+      "entry_id": "rjdvtg7cbw07xy7",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "njhere160fnd9se",
+      "source_name": "Oira Uchuu no Tankoufu 02 [BD 1440x1080 x265 FLAC].mkv"
+    },
+    {
+      "entry_id": "rjdvtg7cbw07xy7",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "pb64gl1ogicyp1r",
+      "source_name": "Oira Uchuu no Tankoufu 01 [BD 1440x1080 x265 FLAC].mkv"
+    },
+    {
+      "entry_id": "rjdvtg7cbw07xy7",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "pb64gl1ogicyp1r",
+      "source_name": "Oira Uchuu no Tankoufu 02 [BD 1440x1080 x265 FLAC].mkv"
     },
     {
       "entry_id": "rklqg1sg95nn8kk",
@@ -753339,30 +753413,39 @@
   "changes": {
     "entries": {
       "added": [
-        "bwr45eprn04nzvj",
-        "qcu9sbday97mhuw"
+        "kp2e3q3wu0adoy3",
+        "rjdvtg7cbw07xy7"
       ],
       "removed": []
     },
     "releases": {
       "added": [
-        "36qr3895kye1tfo",
-        "7ghx1w40os1pqgv",
-        "7hlaas9xgtrpdma",
-        "9lm1ide71t7fvvy",
-        "kvbs65y6rsk2012",
-        "l2ew61tfiq5jt3w",
-        "n1s3yfu5cha527o",
-        "ub79qnoh7y19w27",
-        "ycszs2ktct6afax"
+        "0ju2z42wg6wg1ck",
+        "0pbend2sjx07kbr",
+        "364dunn2ebzwlk7",
+        "3le0qcrpaurqykf",
+        "482ezm4t034eids",
+        "7c79x9om0c49x54",
+        "njhere160fnd9se",
+        "pb64gl1ogicyp1r",
+        "pqr1omqdqxei89q",
+        "prulf9llkqzagka",
+        "pup7s2v3hpzvamf",
+        "tlrmct63hmuexuy",
+        "w5f79rrav7iarz7",
+        "z2fhloqv9byal52"
       ],
       "removed": [
-        "4oouj8q7lympdbr",
-        "anj59ill9bxtydj",
-        "jdok49bft1e9kug",
-        "jou7mp85svw2t04",
-        "nps0udjb0ho8zip",
-        "rahnwafru0ayiic"
+        "4ahrynqy9a2lumc",
+        "8hoqmrga10x8gix",
+        "cwjqg7cbxkzjz2t",
+        "ei0k9nr4gvwie3x",
+        "gttxqi2q6z6i0l8",
+        "ltodij4a52566fi",
+        "o69mi6re88sykjs",
+        "ovhp4fo179xzh74",
+        "wsskidzzglflsva",
+        "zr32qxijumucd8x"
       ]
     }
   },
@@ -753370,26 +753453,26 @@
     "encoding": {
       "direct_buckets": {
         "bucket_count": 351,
-        "key_count": 21356,
+        "key_count": 21368,
         "max_keys": 230,
-        "mean_keys": 60.84330484330484
+        "mean_keys": 60.87749287749288
       },
-      "direct_entries": 21356,
+      "direct_entries": 21368,
       "route_buckets": 260,
-      "source_bytes": 3036580,
-      "source_lines": 45745,
+      "source_bytes": 3038762,
+      "source_lines": 45773,
       "template_buckets": {
         "bucket_count": 260,
-        "key_count": 6665,
-        "max_keys": 123,
-        "mean_keys": 25.634615384615383
+        "key_count": 6674,
+        "max_keys": 124,
+        "mean_keys": 25.66923076923077
       },
-      "template_groups": 6665,
-      "tuple_chunks": 6873
+      "template_groups": 6674,
+      "tuple_chunks": 6882
     },
     "provenance": {
-      "strict_keys": 57805,
-      "tolerant_keys": 47068
+      "strict_keys": 57837,
+      "tolerant_keys": 47098
     },
     "stale_overrides": []
   }
