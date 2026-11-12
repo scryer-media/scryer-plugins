@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "pack_id": "trash-guides-scoring-pack",
-  "pack_version": "1.0.5",
-  "source_revision": "fad104383718cdb90e939ab99625439334012b50",
-  "snapshot_sha256": "5146f9687d8420b8c94a856ceb3f04dd52045900e2180f2575a8097f99cb3669",
+  "pack_version": "1.0.6",
+  "source_revision": "750c31d44aa132c13425daa9c1ea5563624b618e",
+  "snapshot_sha256": "68ae8a6f144d0c2913a25fb3ef458687b57b9aa770e3b2c89ac0e4fb7a31d612",
   "membership_provenance": "Compiled upstream rows retain source order, matcher kind, facet, source context, and curated membership rationale from the saved snapshot.",
   "group_rule_count": 857,
   "changes": {
