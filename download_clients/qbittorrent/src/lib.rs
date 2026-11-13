@@ -19,6 +19,7 @@ use scryer_plugin_sdk::{
 };
 use serde::Deserialize;
 use sha1::{Digest, Sha1};
+use sha2::Sha256;
 
 const COOKIE_VAR_KEY: &str = "qbittorrent.sid";
 const IMPORTED_TAG_DEFAULT: &str = "scryer:imported";
@@ -56,6 +57,11 @@ struct QbittorrentConfig {
 #[derive(Debug, Default, Deserialize)]
 struct QbTorrent {
     hash: String,
+    /// Absent on qBittorrent builds that predate v2 torrent support.
+    #[serde(default)]
+    infohash_v1: String,
+    #[serde(default)]
+    infohash_v2: String,
     name: String,
     state: String,
     #[serde(default)]
@@ -237,7 +243,7 @@ fn handle_download_add(
     config: QbittorrentConfig,
     request: PluginDownloadClientAddRequest,
 ) -> Result<PluginResult<PluginDownloadClientAddResponse>, Error> {
-    let expected_hash = derive_expected_hash(&request);
+    let expected = derive_expected_identity(&request);
     let tags = build_tags(&config, &request);
     let download_directory = normalize_non_empty(request.routing.download_directory.clone());
     let auto_tmm = if download_directory.is_some() {
@@ -389,11 +395,11 @@ fn handle_download_add(
         &config,
         add_response.status_code(),
         &String::from_utf8_lossy(&add_response.body()),
-        expected_hash.as_deref(),
-        |hash| Ok(before_hashes.contains(hash) || torrent_by_hash(&config, hash)?.is_some()),
+        expected.as_ref(),
+        |expected| held_torrent_hash(&config, &before, expected),
     )? {
         AddDisposition::Accepted => {
-            resolve_added_hash(&config, &request, &before_hashes, expected_hash)?
+            resolve_added_hash(&config, &request, &before_hashes, expected)?
         }
         AddDisposition::AlreadyPresent(hash) => hash,
     };
@@ -1458,17 +1464,17 @@ fn add_disposition(
     config: &QbittorrentConfig,
     status_code: u16,
     body: &str,
-    expected_hash: Option<&str>,
-    holds_torrent: impl FnOnce(&str) -> Result<bool, Error>,
+    expected: Option<&ExpectedIdentity>,
+    held_torrent_hash: impl FnOnce(&ExpectedIdentity) -> Result<Option<String>, Error>,
 ) -> Result<AddDisposition, Error> {
     if status_code < 400 {
         return Ok(AddDisposition::Accepted);
     }
     if status_code == 409
-        && let Some(hash) = expected_hash.filter(|hash| !hash.is_empty())
-        && holds_torrent(hash)?
+        && let Some(expected) = expected
+        && let Some(hash) = held_torrent_hash(expected)?
     {
-        return Ok(AddDisposition::AlreadyPresent(hash.to_string()));
+        return Ok(AddDisposition::AlreadyPresent(hash));
     }
     // 400 (bad request), 409 (nothing added) and 415 (not a torrent file) are
     // qBittorrent refusing this add, not failing to answer.
@@ -1616,26 +1622,40 @@ fn torrent_by_hash(config: &QbittorrentConfig, hash: &str) -> Result<Option<QbTo
     Ok(torrents.into_iter().next())
 }
 
+/// The hash of the torrent qBittorrent already holds for this identity, from
+/// the pre-add listing or, failing that, a lookup by each id it may be under
+/// (`hashes=` matches only qBittorrent's torrent id, so a v1 hash finds a
+/// v1-only torrent and the truncated v2 hash finds any torrent with v2).
+fn held_torrent_hash(
+    config: &QbittorrentConfig,
+    before: &[QbTorrent],
+    expected: &ExpectedIdentity,
+) -> Result<Option<String>, Error> {
+    if let Some(torrent) = before.iter().find(|torrent| expected.matches(torrent)) {
+        return Ok(Some(normalize_hash(&torrent.hash)));
+    }
+    for id in expected.truncated_v2().iter().chain(expected.v1.iter()) {
+        if let Some(torrent) = torrent_by_hash(config, id)?
+            && expected.matches(&torrent)
+        {
+            return Ok(Some(normalize_hash(&torrent.hash)));
+        }
+    }
+    Ok(None)
+}
+
 fn resolve_added_hash(
     config: &QbittorrentConfig,
     request: &PluginDownloadClientAddRequest,
     before_hashes: &HashSet<String>,
-    expected_hash: Option<String>,
+    expected: Option<ExpectedIdentity>,
 ) -> Result<String, Error> {
-    let expected_hash = expected_hash
-        .map(|hash| normalize_hash(&hash))
-        .filter(|hash| !hash.is_empty());
     let expected_names = candidate_names(request);
     for attempt in 0..8 {
         let after = list_torrents(config, Some("all"))?;
-        if let Some(expected_hash) = expected_hash.as_deref()
-            && after
-                .iter()
-                .any(|torrent| normalize_hash(&torrent.hash) == expected_hash)
+        if let Some(hash) =
+            added_hash_candidate(&after, before_hashes, &expected_names, expected.as_ref())
         {
-            return Ok(expected_hash.to_string());
-        }
-        if let Some(hash) = discover_hash_candidate(&after, before_hashes, &expected_names) {
             return Ok(hash);
         }
         if attempt < 7 {
@@ -1643,11 +1663,11 @@ fn resolve_added_hash(
         }
     }
 
-    resolve_unlisted_added_hash(expected_hash)
+    resolve_unlisted_added_hash(expected)
 }
 
-fn resolve_unlisted_added_hash(expected_hash: Option<String>) -> Result<String, Error> {
-    if let Some(expected_hash) = expected_hash {
+fn resolve_unlisted_added_hash(expected: Option<ExpectedIdentity>) -> Result<String, Error> {
+    if let Some(expected_hash) = expected.as_ref().and_then(ExpectedIdentity::fallback_hash) {
         eprintln!(
             "torrent add was accepted but expected info hash {expected_hash} did not appear in qBittorrent's list before the visibility probe timed out; returning the expected hash"
         );
@@ -1675,6 +1695,24 @@ fn candidate_names(request: &PluginDownloadClientAddRequest) -> Vec<String> {
     values
 }
 
+fn added_hash_candidate(
+    torrents: &[QbTorrent],
+    before_hashes: &HashSet<String>,
+    expected_names: &[String],
+    expected: Option<&ExpectedIdentity>,
+) -> Option<String> {
+    // A metainfo/magnet-derived identity is authoritative. Delayed visibility
+    // must not replace it with another torrent selected by name or timing.
+    // The matched torrent's own hash is qBittorrent's id for it.
+    if let Some(expected) = expected {
+        return torrents
+            .iter()
+            .find(|torrent| expected.matches(torrent))
+            .map(|torrent| normalize_hash(&torrent.hash));
+    }
+    discover_hash_candidate(torrents, before_hashes, expected_names)
+}
+
 fn discover_hash_candidate(
     torrents: &[QbTorrent],
     before_hashes: &HashSet<String>,
@@ -1683,6 +1721,7 @@ fn discover_hash_candidate(
     let expected = expected_names
         .iter()
         .map(|value| normalize_title_match(value))
+        .filter(|value| !value.is_empty())
         .collect::<Vec<_>>();
 
     for torrent in torrents {
@@ -2017,41 +2056,144 @@ fn url_encode(value: &str) -> String {
     out
 }
 
-fn derive_expected_hash(request: &PluginDownloadClientAddRequest) -> Option<String> {
-    request
-        .release
-        .info_hash_v1
-        .clone()
-        .or_else(|| request.release.info_hash_hint.clone())
-        .map(|value| normalize_hash(&value))
-        .filter(|value| !value.is_empty())
-        .or_else(|| {
-            request
-                .source
-                .magnet_uri
-                .as_deref()
-                .and_then(parse_magnet_info_hash)
-        })
-        .or_else(|| {
-            request
-                .source
-                .torrent_bytes_base64
-                .as_deref()
-                .and_then(|value| general_purpose::STANDARD.decode(value).ok())
-                .and_then(|bytes| compute_torrent_info_hash(&bytes).ok())
-        })
+/// The info hashes the grab is known to have: a v1 hash (40 hex) and/or a v2
+/// hash (64 hex). Once known, it is authoritative after an add.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+struct ExpectedIdentity {
+    v1: Option<String>,
+    v2: Option<String>,
 }
 
-fn parse_magnet_info_hash(uri: &str) -> Option<String> {
-    let query = uri.strip_prefix("magnet:?")?;
-    for part in query.split('&') {
-        if let Some(value) = part.strip_prefix("xt=")
-            && let Some(urn) = value.strip_prefix("urn:btih:")
-        {
-            return Some(normalize_hash(&percent_decode(urn)));
+impl ExpectedIdentity {
+    fn known(self) -> Option<Self> {
+        (self.v1.is_some() || self.v2.is_some()).then_some(self)
+    }
+
+    fn fill_from(&mut self, other: ExpectedIdentity) {
+        self.v1 = self.v1.take().or(other.v1);
+        self.v2 = self.v2.take().or(other.v2);
+    }
+
+    fn matches(&self, torrent: &QbTorrent) -> bool {
+        let hash = normalize_hash(&torrent.hash);
+        let v1_matches = self
+            .v1
+            .as_deref()
+            .is_some_and(|v1| v1 == hash || v1 == normalize_hash(&torrent.infohash_v1));
+        let v2_matches = self
+            .v2
+            .as_deref()
+            .is_some_and(|v2| v2 == normalize_hash(&torrent.infohash_v2) || v2[..40] == hash);
+        v1_matches || v2_matches
+    }
+
+    /// The BEP 52 20-byte truncation of the v2 hash. qBittorrent's torrent id
+    /// is libtorrent's `info_hash_t::get_best()`: this whenever the torrent
+    /// has a v2 hash (hybrid included), otherwise the v1 hash.
+    fn truncated_v2(&self) -> Option<String> {
+        self.v2.as_ref().map(|v2| v2[..40].to_string())
+    }
+
+    /// The id to report when the torrent never showed up in the listing:
+    /// the id qBittorrent gives it.
+    fn fallback_hash(&self) -> Option<String> {
+        self.truncated_v2().or_else(|| self.v1.clone())
+    }
+}
+
+/// Only well-formed v1/v2 info hashes are kept, since a known identity is
+/// authoritative and replaces name/timing discovery after an add.
+fn derive_expected_identity(request: &PluginDownloadClientAddRequest) -> Option<ExpectedIdentity> {
+    let mut identity = ExpectedIdentity {
+        v1: [
+            &request.release.info_hash_v1,
+            &request.release.info_hash_hint,
+        ]
+        .into_iter()
+        .find_map(|value| value.as_deref().and_then(well_formed_v1_hash)),
+        v2: request
+            .release
+            .info_hash_v2
+            .as_deref()
+            .and_then(well_formed_v2_hash),
+    };
+    if let Some(magnet) = request.source.magnet_uri.as_deref() {
+        identity.fill_from(parse_magnet_identity(magnet));
+    }
+    if let Some(torrent) = request
+        .source
+        .torrent_bytes_base64
+        .as_deref()
+        .and_then(|value| general_purpose::STANDARD.decode(value).ok())
+        .and_then(|bytes| compute_torrent_identity(&bytes).ok())
+    {
+        identity.fill_from(torrent);
+    }
+    identity.known()
+}
+
+fn parse_magnet_identity(uri: &str) -> ExpectedIdentity {
+    let mut identity = ExpectedIdentity::default();
+    let Some(query) = uri.strip_prefix("magnet:?") else {
+        return identity;
+    };
+    for value in query.split('&').filter_map(|part| part.strip_prefix("xt=")) {
+        if let Some(urn) = value.strip_prefix("urn:btih:") {
+            let urn = percent_decode(urn);
+            if identity.v1.is_none() {
+                identity.v1 = well_formed_v1_hash(&urn).or_else(|| decode_base32_btih(urn.trim()));
+            }
+        } else if let Some(urn) = value.strip_prefix("urn:btmh:") {
+            // Only a sha2-256 multihash (0x12, 32 bytes) is a v2 info hash.
+            let urn = percent_decode(urn);
+            if identity.v2.is_none() {
+                identity.v2 = urn
+                    .trim()
+                    .strip_prefix("1220")
+                    .and_then(well_formed_v2_hash);
+            }
         }
     }
-    None
+    identity
+}
+
+fn well_formed_v1_hash(value: &str) -> Option<String> {
+    well_formed_hex(value, 40)
+}
+
+fn well_formed_v2_hash(value: &str) -> Option<String> {
+    well_formed_hex(value, 64)
+}
+
+fn well_formed_hex(value: &str, len: usize) -> Option<String> {
+    let value = value.trim();
+    (value.len() == len && value.bytes().all(|byte| byte.is_ascii_hexdigit()))
+        .then(|| value.to_ascii_lowercase())
+}
+
+/// Decodes the 32-character base32 (RFC 4648) btih form allowed by BEP 9.
+fn decode_base32_btih(value: &str) -> Option<String> {
+    if value.len() != 32 {
+        return None;
+    }
+    let mut bytes = Vec::with_capacity(20);
+    let mut buffer = 0u32;
+    let mut bits = 0u32;
+    for byte in value.bytes() {
+        let digit = match byte.to_ascii_uppercase() {
+            upper @ b'A'..=b'Z' => upper - b'A',
+            digit @ b'2'..=b'7' => digit - b'2' + 26,
+            _ => return None,
+        };
+        buffer = (buffer << 5) | u32::from(digit);
+        bits += 5;
+        if bits >= 8 {
+            bits -= 8;
+            bytes.push((buffer >> bits) as u8);
+            buffer &= (1 << bits) - 1;
+        }
+    }
+    Some(to_lower_hex(&bytes))
 }
 
 fn percent_decode(value: &str) -> String {
@@ -2074,11 +2216,35 @@ fn percent_decode(value: &str) -> String {
     String::from_utf8_lossy(&out).to_string()
 }
 
-fn compute_torrent_info_hash(bytes: &[u8]) -> Result<String, Error> {
+/// A v1 hash (SHA-1 of the info dict) exists when the info dict has `pieces`;
+/// a v2 hash (SHA-256 of the info dict) when it has `meta version` 2 (BEP 52).
+/// A hybrid torrent has both.
+fn compute_torrent_identity(bytes: &[u8]) -> Result<ExpectedIdentity, Error> {
     let (start, end) = find_info_dict_range(bytes)?;
-    let mut hasher = Sha1::new();
-    hasher.update(&bytes[start..end]);
-    Ok(to_lower_hex(&hasher.finalize()))
+    if bytes.get(start).copied() != Some(b'd') {
+        return Err(Error::msg("torrent info is not a bencoded dictionary"));
+    }
+    let mut has_pieces = false;
+    let mut meta_version_2 = false;
+    let mut idx = start + 1;
+    while idx < end && bytes[idx] != b'e' {
+        let (key, next) = parse_bencoded_string(bytes, idx)?;
+        idx = parse_bencoded_value(bytes, next)?;
+        match key {
+            b"pieces" => has_pieces = true,
+            b"meta version" => meta_version_2 = &bytes[next..idx] == b"i2e",
+            _ => {}
+        }
+    }
+    let info = &bytes[start..end];
+    Ok(ExpectedIdentity {
+        v1: has_pieces.then(|| {
+            let mut hasher = Sha1::new();
+            hasher.update(info);
+            to_lower_hex(&hasher.finalize())
+        }),
+        v2: meta_version_2.then(|| to_lower_hex(&<Sha256 as sha2::Digest>::digest(info))),
+    })
 }
 
 fn find_info_dict_range(bytes: &[u8]) -> Result<(usize, usize), Error> {
@@ -2584,13 +2750,8 @@ fn normalize_hash(value: &str) -> String {
 fn normalize_title_match(value: &str) -> String {
     value
         .chars()
-        .map(|ch| {
-            if ch.is_ascii_alphanumeric() {
-                ch.to_ascii_lowercase()
-            } else {
-                ' '
-            }
-        })
+        .flat_map(char::to_lowercase)
+        .map(|ch| if ch.is_alphanumeric() { ch } else { ' ' })
         .collect::<String>()
         .split_whitespace()
         .collect::<Vec<_>>()
@@ -2928,11 +3089,13 @@ mod tests {
 
     #[test]
     fn magnet_hash_is_extracted() {
-        let hash = parse_magnet_info_hash(
+        let identity = parse_magnet_identity(
             "magnet:?xt=urn:btih:ABCDEF1234567890ABCDEF1234567890ABCDEF12&dn=Example",
-        )
-        .unwrap();
-        assert_eq!(hash, "abcdef1234567890abcdef1234567890abcdef12");
+        );
+        assert_eq!(
+            identity,
+            v1_only("abcdef1234567890abcdef1234567890abcdef12")
+        );
     }
 
     #[test]
@@ -2943,8 +3106,8 @@ mod tests {
     #[test]
     fn torrent_info_hash_is_computed_from_info_dict() {
         let torrent = b"d8:announce14:http://tracker4:infod6:lengthi12345e4:name8:test.txt12:piece lengthi262144e6:pieces20:12345678901234567890ee";
-        let hash = compute_torrent_info_hash(torrent).unwrap();
-        assert_eq!(hash.len(), 40);
+        let identity = compute_torrent_identity(torrent).unwrap();
+        assert_eq!(identity.v1.map(|hash| hash.len()), Some(40));
     }
 
     #[test]
@@ -3658,13 +3821,174 @@ mod tests {
     }
 
     #[test]
+    fn discovered_hash_does_not_adopt_an_unrelated_cyrillic_title() {
+        let torrents = vec![QbTorrent {
+            hash: "aaaa".to_string(),
+            name: "ЗЗорта".to_string(),
+            ..QbTorrent::default()
+        }];
+        let before = HashSet::from(["aaaa".to_string()]);
+        for title in ["Брумвы", "Плюмарник"] {
+            assert_eq!(
+                discover_hash_candidate(&torrents, &before, &[title.to_string()]),
+                None,
+                "an existing Cyrillic title must not match a different title"
+            );
+        }
+    }
+
+    #[test]
+    fn discovered_hash_does_not_match_only_shared_year_and_release_metadata() {
+        let torrents = vec![QbTorrent {
+            hash: "aaaa".to_string(),
+            name: "Квострый ланбар (2026) WEB-DL 1080p".to_string(),
+            ..QbTorrent::default()
+        }];
+        let before = HashSet::from(["aaaa".to_string()]);
+        assert_eq!(
+            discover_hash_candidate(
+                &torrents,
+                &before,
+                &["Друмный ланбар (2026) WEB-DL 1080p".to_string()],
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn discovered_hash_does_not_match_empty_normalized_names() {
+        let torrents = vec![QbTorrent {
+            hash: "aaaa".to_string(),
+            name: "...".to_string(),
+            ..QbTorrent::default()
+        }];
+        let before = HashSet::from(["aaaa".to_string()]);
+        assert_eq!(
+            discover_hash_candidate(&torrents, &before, &["---".to_string()]),
+            None
+        );
+    }
+
+    #[test]
+    fn discovered_hash_matches_existing_cyrillic_title_case_insensitively() {
+        let torrents = vec![
+            QbTorrent {
+                hash: "aaaa".to_string(),
+                name: "ЗЗорта".to_string(),
+                ..QbTorrent::default()
+            },
+            QbTorrent {
+                hash: "bbbb".to_string(),
+                name: "Брумвы".to_string(),
+                ..QbTorrent::default()
+            },
+        ];
+        let before = HashSet::from(["aaaa".to_string(), "bbbb".to_string()]);
+        assert_eq!(
+            discover_hash_candidate(&torrents, &before, &["БРУМВЫ".to_string()]).as_deref(),
+            Some("bbbb")
+        );
+    }
+
+    #[test]
+    fn title_matching_preserves_non_ascii_letters() {
+        assert_eq!(normalize_title_match("БРУМВЫ"), "брумвы");
+        assert_eq!(normalize_title_match("Плюмарник"), "плюмарник");
+        assert_eq!(normalize_title_match("灯霧砂記"), "灯霧砂記");
+        assert_eq!(normalize_title_match("ÉVRÉ.S01"), "évré s01");
+        assert_eq!(
+            normalize_title_match("Example.Release-S01"),
+            "example release s01"
+        );
+    }
+
+    #[test]
+    fn known_hash_waits_instead_of_adopting_an_existing_name_match() {
+        let torrents = vec![QbTorrent {
+            hash: "aaaa".to_string(),
+            name: "Example Release".to_string(),
+            ..QbTorrent::default()
+        }];
+        let before = HashSet::from(["aaaa".to_string()]);
+        assert_eq!(
+            added_hash_candidate(
+                &torrents,
+                &before,
+                &["Example Release".to_string()],
+                Some(&v1_only("bbbb")),
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn known_hash_waits_instead_of_adopting_an_unrelated_new_torrent() {
+        let torrents = vec![QbTorrent {
+            hash: "aaaa".to_string(),
+            name: "Another Release".to_string(),
+            ..QbTorrent::default()
+        }];
+        assert_eq!(
+            added_hash_candidate(
+                &torrents,
+                &HashSet::new(),
+                &["Example Release".to_string()],
+                Some(&v1_only("bbbb")),
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn known_hash_wins_over_a_different_matching_name() {
+        let torrents = vec![
+            QbTorrent {
+                hash: "aaaa".to_string(),
+                name: "Example Release".to_string(),
+                ..QbTorrent::default()
+            },
+            QbTorrent {
+                hash: "BBBB".to_string(),
+                name: "Actual.Payload.Name".to_string(),
+                ..QbTorrent::default()
+            },
+        ];
+        assert_eq!(
+            added_hash_candidate(
+                &torrents,
+                &HashSet::new(),
+                &["Example Release".to_string()],
+                Some(&v1_only("bbbb")),
+            )
+            .as_deref(),
+            Some("bbbb")
+        );
+    }
+
+    #[test]
     fn unlisted_added_hash_returns_expected_hash_when_known() {
-        let hash = resolve_unlisted_added_hash(Some(
-            "92160d9a0e31d1e45b30b6b8101aa0c170e6bdbb".to_string(),
-        ))
-        .expect("expected hash should be accepted after visibility timeout");
+        let hash =
+            resolve_unlisted_added_hash(Some(v1_only("92160d9a0e31d1e45b30b6b8101aa0c170e6bdbb")))
+                .expect("expected hash should be accepted after visibility timeout");
 
         assert_eq!(hash, "92160d9a0e31d1e45b30b6b8101aa0c170e6bdbb");
+
+        let hybrid = ExpectedIdentity {
+            v1: Some(pattern_hash_hex()),
+            v2: Some(pattern_v2_hex()),
+        };
+        assert_eq!(
+            resolve_unlisted_added_hash(Some(hybrid)).unwrap(),
+            pattern_v2_hex()[..40]
+        );
+    }
+
+    #[test]
+    fn unlisted_v2_only_hash_returns_the_truncated_v2_hash() {
+        let hash = resolve_unlisted_added_hash(Some(v2_only(&pattern_v2_hex())))
+            .expect("a v2 identity should be accepted after visibility timeout");
+
+        assert_eq!(hash, pattern_v2_hex()[..40]);
     }
 
     #[test]
@@ -3675,6 +3999,292 @@ mod tests {
             error
                 .to_string()
                 .contains("provide an info-hash hint or magnet URI")
+        );
+    }
+
+    const V1_TORRENT: &[u8] = b"d8:announce14:http://tracker4:infod6:lengthi12345e4:name8:test.txt12:piece lengthi262144e6:pieces20:12345678901234567890ee";
+
+    const V2_ONLY_TORRENT: &[u8] =
+        b"d4:infod9:file treede12:meta versioni2e4:name8:test.txt12:piece lengthi262144eee";
+    const HYBRID_TORRENT: &[u8] = b"d4:infod9:file treede6:lengthi12345e12:meta versioni2e4:name8:test.txt12:piece lengthi262144e6:pieces20:12345678901234567890ee";
+
+    fn pattern_hash_hex() -> String {
+        (0u8..20).map(|byte| format!("{byte:02x}")).collect()
+    }
+
+    fn pattern_v2_hex() -> String {
+        (0u8..32).map(|byte| format!("{byte:02x}")).collect()
+    }
+
+    fn v1_only(hash: &str) -> ExpectedIdentity {
+        ExpectedIdentity {
+            v1: Some(hash.to_string()),
+            v2: None,
+        }
+    }
+
+    fn v2_only(hash: &str) -> ExpectedIdentity {
+        ExpectedIdentity {
+            v1: None,
+            v2: Some(hash.to_string()),
+        }
+    }
+
+    /// The info dict of a test torrent whose last top-level key is `info`.
+    fn info_dict(torrent: &[u8]) -> &[u8] {
+        let key = torrent
+            .windows(7)
+            .position(|window| window == b"4:infod")
+            .unwrap();
+        &torrent[key + 6..torrent.len() - 1]
+    }
+
+    fn sha1_hex(bytes: &[u8]) -> String {
+        let mut hasher = Sha1::new();
+        hasher.update(bytes);
+        to_lower_hex(&hasher.finalize())
+    }
+
+    fn sha256_hex(bytes: &[u8]) -> String {
+        to_lower_hex(&<Sha256 as sha2::Digest>::digest(bytes))
+    }
+
+    #[test]
+    fn base32_magnet_hash_decodes_to_hex() {
+        for btih in [
+            "AAAQEAYEAUDAOCAJBIFQYDIOB4IBCEQT",
+            "aaaqeayeaudaocajbifqydiob4ibceqt",
+        ] {
+            assert_eq!(
+                parse_magnet_identity(&format!("magnet:?xt=urn:btih:{btih}&dn=Example")),
+                v1_only(&pattern_hash_hex())
+            );
+        }
+    }
+
+    #[test]
+    fn btmh_magnet_hash_is_a_v2_identity() {
+        let v2 = pattern_v2_hex();
+        assert_eq!(
+            parse_magnet_identity(&format!("magnet:?xt=urn:btmh:1220{v2}&dn=Example")),
+            v2_only(&v2)
+        );
+
+        let hybrid = format!(
+            "magnet:?xt=urn:btih:AAAQEAYEAUDAOCAJBIFQYDIOB4IBCEQT&xt=urn:btmh:1220{}&dn=Example",
+            v2.to_ascii_uppercase()
+        );
+        assert_eq!(
+            parse_magnet_identity(&hybrid),
+            ExpectedIdentity {
+                v1: Some(pattern_hash_hex()),
+                v2: Some(v2.clone()),
+            }
+        );
+
+        for btmh in [
+            format!("1114{v2}"),
+            format!("1220{}", &v2[..62]),
+            format!("1220{v2}00"),
+            format!("1220{}zz", &v2[..62]),
+        ] {
+            assert_eq!(
+                parse_magnet_identity(&format!("magnet:?xt=urn:btmh:{btmh}")),
+                ExpectedIdentity::default(),
+                "{btmh}"
+            );
+        }
+    }
+
+    #[test]
+    fn malformed_magnet_hash_is_not_trusted() {
+        for btih in [
+            "AAAQEAYEAUDAOCAJBIFQYDIOB4IBCEQ",
+            "AAAQEAYEAUDAOCAJBIFQYDIOB4IBCEQ1",
+            "abcdef1234567890abcdef1234567890abcdef1",
+        ] {
+            let mut request = test_add_request(DownloadInputKind::MagnetUri);
+            request.source.magnet_uri = Some(format!("magnet:?xt=urn:btih:{btih}"));
+            assert_eq!(derive_expected_identity(&request), None, "{btih}");
+
+            request.source.torrent_bytes_base64 =
+                Some(general_purpose::STANDARD.encode(V1_TORRENT));
+            assert_eq!(
+                derive_expected_identity(&request),
+                Some(v1_only(&sha1_hex(info_dict(V1_TORRENT))))
+            );
+        }
+    }
+
+    #[test]
+    fn malformed_release_hashes_fall_through_to_the_next_source() {
+        let valid = pattern_hash_hex();
+        let mut request = test_add_request(DownloadInputKind::MagnetUri);
+        request.release.info_hash_v1 = Some("not-a-hash-abc123".to_string());
+        request.release.info_hash_hint = Some(valid.to_ascii_uppercase());
+        request.release.info_hash_v2 = Some(format!("1220{}", pattern_v2_hex()));
+        assert_eq!(derive_expected_identity(&request), Some(v1_only(&valid)));
+
+        request.release.info_hash_hint = Some(format!("{valid}00"));
+        request.source.magnet_uri =
+            Some("magnet:?xt=urn:btih:AAAQEAYEAUDAOCAJBIFQYDIOB4IBCEQT".to_string());
+        assert_eq!(derive_expected_identity(&request), Some(v1_only(&valid)));
+
+        request.release.info_hash_v2 = Some(pattern_v2_hex().to_ascii_uppercase());
+        assert_eq!(
+            derive_expected_identity(&request),
+            Some(ExpectedIdentity {
+                v1: Some(valid),
+                v2: Some(pattern_v2_hex()),
+            })
+        );
+    }
+
+    #[test]
+    fn torrent_identity_follows_the_info_dict_versions() {
+        assert_eq!(
+            compute_torrent_identity(V1_TORRENT).unwrap(),
+            v1_only(&sha1_hex(info_dict(V1_TORRENT)))
+        );
+        assert_eq!(
+            compute_torrent_identity(V2_ONLY_TORRENT).unwrap(),
+            v2_only(&sha256_hex(info_dict(V2_ONLY_TORRENT)))
+        );
+        assert_eq!(
+            compute_torrent_identity(HYBRID_TORRENT).unwrap(),
+            ExpectedIdentity {
+                v1: Some(sha1_hex(info_dict(HYBRID_TORRENT))),
+                v2: Some(sha256_hex(info_dict(HYBRID_TORRENT))),
+            }
+        );
+
+        let mut request = test_add_request(DownloadInputKind::TorrentBytes);
+        request.source.torrent_bytes_base64 =
+            Some(general_purpose::STANDARD.encode(V2_ONLY_TORRENT));
+        assert_eq!(
+            derive_expected_identity(&request),
+            Some(v2_only(&sha256_hex(info_dict(V2_ONLY_TORRENT))))
+        );
+    }
+
+    #[test]
+    fn v2_identity_matches_the_truncated_hash_and_returns_it() {
+        let v2 = pattern_v2_hex();
+        let torrents = vec![QbTorrent {
+            hash: v2[..40].to_ascii_uppercase(),
+            name: "Payload".to_string(),
+            ..QbTorrent::default()
+        }];
+        assert_eq!(
+            added_hash_candidate(&torrents, &HashSet::new(), &[], Some(&v2_only(&v2))),
+            Some(v2[..40].to_string())
+        );
+    }
+
+    #[test]
+    fn v2_identity_matches_infohash_v2_and_returns_the_listed_hash() {
+        let v2 = pattern_v2_hex();
+        let torrents = vec![QbTorrent {
+            hash: "ffeeddccbbaa99887766554433221100ffeeddcc".to_string(),
+            infohash_v2: v2.clone(),
+            name: "Payload".to_string(),
+            ..QbTorrent::default()
+        }];
+        assert_eq!(
+            added_hash_candidate(&torrents, &HashSet::new(), &[], Some(&v2_only(&v2))),
+            Some("ffeeddccbbaa99887766554433221100ffeeddcc".to_string())
+        );
+    }
+
+    #[test]
+    fn hybrid_torrent_is_matched_by_v1_or_full_identity_under_its_truncated_v2_id() {
+        // qBittorrent lists a hybrid torrent under the truncated v2 hash, with
+        // both full hashes in their own fields.
+        let v2 = pattern_v2_hex();
+        let torrents = vec![QbTorrent {
+            hash: v2[..40].to_string(),
+            infohash_v1: pattern_hash_hex(),
+            infohash_v2: v2.clone(),
+            name: "Payload".to_string(),
+            ..QbTorrent::default()
+        }];
+        let hybrid = ExpectedIdentity {
+            v1: Some(pattern_hash_hex()),
+            v2: Some(v2.clone()),
+        };
+        for identity in [v1_only(&pattern_hash_hex()), hybrid] {
+            assert_eq!(
+                added_hash_candidate(&torrents, &HashSet::new(), &[], Some(&identity)),
+                Some(v2[..40].to_string()),
+                "{identity:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn unlisted_v2_identity_does_not_adopt_another_torrent() {
+        let torrents = vec![
+            QbTorrent {
+                hash: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".to_string(),
+                name: "Example Release".to_string(),
+                ..QbTorrent::default()
+            },
+            QbTorrent {
+                hash: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb".to_string(),
+                infohash_v2: "cc".repeat(32),
+                name: "Another Release".to_string(),
+                ..QbTorrent::default()
+            },
+        ];
+        let before = HashSet::from(["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".to_string()]);
+        assert_eq!(
+            added_hash_candidate(
+                &torrents,
+                &before,
+                &["Example Release".to_string()],
+                Some(&v2_only(&pattern_v2_hex())),
+            ),
+            None
+        );
+    }
+
+    #[test]
+    fn torrent_listing_deserializes_with_and_without_v2_fields() {
+        let legacy: QbTorrent =
+            serde_json::from_str(r#"{"hash":"abcd","name":"Example","state":"uploading"}"#)
+                .unwrap();
+        assert_eq!(legacy.infohash_v1, "");
+        assert_eq!(legacy.infohash_v2, "");
+
+        let current: QbTorrent = serde_json::from_str(
+            r#"{"hash":"abcd","infohash_v1":"abcd","infohash_v2":"ef01","name":"Example","state":"uploading"}"#,
+        )
+        .unwrap();
+        assert_eq!(current.infohash_v1, "abcd");
+        assert_eq!(current.infohash_v2, "ef01");
+    }
+
+    #[test]
+    fn untrusted_hash_still_discovers_a_new_torrent() {
+        let mut request = test_add_request(DownloadInputKind::MagnetUri);
+        request.source.magnet_uri = Some("magnet:?xt=urn:btih:ZZZZ&dn=Example".to_string());
+        let expected = derive_expected_identity(&request);
+        assert_eq!(expected, None);
+
+        let torrents = vec![QbTorrent {
+            hash: "cccc".to_string(),
+            name: "Example Release".to_string(),
+            ..QbTorrent::default()
+        }];
+        assert_eq!(
+            added_hash_candidate(
+                &torrents,
+                &HashSet::new(),
+                &["Example Release".to_string()],
+                expected.as_ref(),
+            )
+            .as_deref(),
+            Some("cccc")
         );
     }
 
@@ -3860,10 +4470,16 @@ mod tests {
         // qBittorrent 5.x refuses a duplicate add with 409 where 4.6 answered
         // 200 "Fails."; either way the torrent the grab asked for is there.
         let mut probed = None;
-        let disposition = add_disposition(&test_config(), 409, "Fails.", Some(HELD_HASH), |hash| {
-            probed = Some(hash.to_string());
-            Ok(true)
-        })
+        let disposition = add_disposition(
+            &test_config(),
+            409,
+            "Fails.",
+            Some(&v1_only(HELD_HASH)),
+            |expected| {
+                probed = expected.v1.clone();
+                Ok(Some(HELD_HASH.to_string()))
+            },
+        )
         .expect("a duplicate of a held torrent is not a failure");
 
         assert_eq!(
@@ -3876,9 +4492,13 @@ mod tests {
     #[test]
     fn add_conflict_for_a_torrent_qbittorrent_does_not_hold_stays_an_error() {
         // 409 also covers an add whose every source was invalid.
-        let error = add_disposition(&test_config(), 409, "Fails.", Some(HELD_HASH), |_| {
-            Ok(false)
-        })
+        let error = add_disposition(
+            &test_config(),
+            409,
+            "Fails.",
+            Some(&v1_only(HELD_HASH)),
+            |_| Ok(None),
+        )
         .expect_err("nothing was added and nothing is held");
 
         let error = scryer_plugin_pdk::error::plugin_error_from(&error);
@@ -3908,9 +4528,13 @@ mod tests {
             (415, PluginErrorCode::from(codes::DOWNLOAD_REJECTED)),
             (500, PluginErrorCode::UpstreamUnavailable),
         ] {
-            let error = add_disposition(&test_config(), status, "nope", Some(HELD_HASH), |_| {
-                panic!("only a conflict can mean the torrent is already held")
-            })
+            let error = add_disposition(
+                &test_config(),
+                status,
+                "nope",
+                Some(&v1_only(HELD_HASH)),
+                |_| panic!("only a conflict can mean the torrent is already held"),
+            )
             .expect_err("a rejected add is a failure");
 
             let error = scryer_plugin_pdk::error::plugin_error_from(&error);
@@ -3999,9 +4623,13 @@ mod tests {
 
     #[test]
     fn successful_add_leaves_hash_resolution_to_the_listing() {
-        let disposition = add_disposition(&test_config(), 200, "Ok.", Some(HELD_HASH), |_| {
-            panic!("an accepted add does not probe for an existing torrent")
-        })
+        let disposition = add_disposition(
+            &test_config(),
+            200,
+            "Ok.",
+            Some(&v1_only(HELD_HASH)),
+            |_| panic!("an accepted add does not probe for an existing torrent"),
+        )
         .expect("accepted");
 
         assert_eq!(disposition, AddDisposition::Accepted);

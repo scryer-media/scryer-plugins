@@ -1084,7 +1084,7 @@ dependencies = [
 
 [[package]]
 name = "qbittorrent-download-client"
-version = "4.0.0"
+version = "4.0.1"
 dependencies = [
  "base64 0.23.1",
  "scryer-plugin-conformance",
@@ -1093,6 +1093,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha1",
+ "sha2",
  "wit-bindgen",
 ]
 
