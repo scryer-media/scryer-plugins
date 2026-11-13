@@ -208,8 +208,14 @@ impl<H: ListHttp> Client<'_, H> {
     pub(super) async fn custom_lists(
         &self,
         user_id: &str,
+        scope: ListScope,
     ) -> Result<Vec<ListAccountList>, PluginError> {
-        let mut result = Vec::new();
+        // The host shows the rows in the order returned. Keep Simkl's order
+        // inside each group, but put the member's own lists first, then the
+        // ones they collaborate on, then the ones they follow.
+        let mut owned = Vec::new();
+        let mut collaborating = Vec::new();
+        let mut following = Vec::new();
         let mut seen = BTreeSet::new();
         let mut requested = 1;
         let mut expected = None;
@@ -217,7 +223,7 @@ impl<H: ListHttp> Client<'_, H> {
             let body = self
                 .get_json(
                     &format!("/lists/user/{}", encode_component(user_id)),
-                    &format!("limit={PAGE_LIMIT}&page={requested}"),
+                    &format!("limit={PAGE_LIMIT}&page={requested}{}", scope.query()),
                     "Simkl custom lists",
                 )
                 .await?;
@@ -241,7 +247,14 @@ impl<H: ListHttp> Client<'_, H> {
                     .get("media_type")
                     .and_then(Value::as_str)
                     .ok_or_else(malformed)?;
-                result.push(ListAccountList {
+                // Simkl says how the member relates to each list; it only
+                // decides the group. The name is Simkl's own, unchanged.
+                let group = match entry.get("role").and_then(Value::as_str) {
+                    Some("follower") => &mut following,
+                    Some("collaborator") => &mut collaborating,
+                    _ => &mut owned,
+                };
+                group.push(ListAccountList {
                     id,
                     name,
                     kinds: kinds(media)?,
@@ -249,7 +262,11 @@ impl<H: ListHttp> Client<'_, H> {
             }
             match paging.next {
                 Some(next) => requested = next,
-                None => return Ok(result),
+                None => {
+                    owned.extend(collaborating);
+                    owned.extend(following);
+                    return Ok(owned);
+                }
             }
         }
     }
