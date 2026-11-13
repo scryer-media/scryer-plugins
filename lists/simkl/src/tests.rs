@@ -1571,3 +1571,188 @@ fn custom_private_list_is_gone_but_scope_errors_still_require_reconnection() {
         assert_eq!(error.public_message.contains("not found"), gone);
     }
 }
+
+#[test]
+fn list_scope_adds_only_literal_true_flags_and_defaults_to_owned_lists() {
+    assert_eq!(ListScope::default().query(), "");
+    assert_eq!(
+        ListScope {
+            followed: true,
+            collaborative: false
+        }
+        .query(),
+        "&followed=true"
+    );
+    assert_eq!(
+        ListScope {
+            followed: false,
+            collaborative: true
+        }
+        .query(),
+        "&collaborants=true"
+    );
+    assert_eq!(
+        ListScope {
+            followed: true,
+            collaborative: true
+        }
+        .query(),
+        "&followed=true&collaborants=true"
+    );
+}
+
+#[test]
+fn list_scope_reads_the_installation_switches() {
+    let read = |on: &'static [&'static str]| {
+        move |key: &str| on.contains(&key).then(|| " True ".to_string())
+    };
+    assert_eq!(ListScope::from_config(read(&[])), ListScope::default());
+    assert_eq!(
+        ListScope::from_config(read(&[CONFIG_INCLUDE_FOLLOWED])),
+        ListScope {
+            followed: true,
+            collaborative: false
+        }
+    );
+    assert_eq!(
+        ListScope::from_config(|_| Some("yes".to_string())),
+        ListScope::default()
+    );
+    let settings = descriptor().settings;
+    assert_eq!(
+        settings
+            .iter()
+            .map(|s| s.field.key.as_str())
+            .collect::<Vec<_>>(),
+        [CONFIG_INCLUDE_FOLLOWED, CONFIG_INCLUDE_COLLABORATIVE]
+    );
+    assert!(settings.iter().all(|s| {
+        s.field.field_type == scryer_plugin_sdk::ConfigFieldType::Bool
+            && s.field.default_value.as_deref() == Some("false")
+            && !s.sensitive
+    }));
+}
+
+#[test]
+fn custom_discovery_asks_for_followed_lists_keeps_names_and_orders_by_role() {
+    let body = serde_json::json!({"pagination":{"page":1,"limit":500,"total_items":5,"total_pages":1},
+        "lists":[{"id":4431,"name":"Fixture followed marathon","media_type":"tv","role":"follower"},
+                 {"id":991,"name":"Mine","media_type":"movies","role":"owner"},
+                 {"id":5,"name":"Shared","media_type":"anime","role":"collaborator"},
+                 {"id":6,"name":"Fixture followed weekend picks","media_type":"tv","role":"follower"},
+                 {"id":992,"name":"Mine too","media_type":"tv","role":"owner"}]});
+    let url = format!(
+        "{}&followed=true&collaborants=true",
+        custom_index_url("990001", 1)
+    );
+    let http = RecordedHttp::new()
+        .with(&api("/users/settings"), 200, SETTINGS)
+        .with(&url, 200, &body.to_string());
+    let scope = ListScope {
+        followed: true,
+        collaborative: true,
+    };
+    let response = block_on(account_with(&http, CLIENT_ID, &credential(), scope)).unwrap();
+    assert_eq!(
+        response
+            .owned_lists
+            .iter()
+            .map(|list| (list.id.as_str(), list.name.as_str()))
+            .collect::<Vec<_>>(),
+        [
+            ("991", "Mine"),
+            ("992", "Mine too"),
+            ("5", "Shared"),
+            ("4431", "Fixture followed marathon"),
+            ("6", "Fixture followed weekend picks")
+        ]
+    );
+}
+
+#[test]
+fn a_refused_scoped_request_fails_the_account_read_visibly() {
+    let url = format!("{}&followed=true", custom_index_url("990001", 1));
+    let http = RecordedHttp::new()
+        .with(&api("/users/settings"), 200, SETTINGS)
+        .with(&url, 403, r#"{"error":"insufficient_scope"}"#);
+    let scope = ListScope {
+        followed: true,
+        collaborative: false,
+    };
+    assert!(block_on(account_with(&http, CLIENT_ID, &credential(), scope)).is_err());
+}
+
+#[test]
+fn installation_settings_are_read_under_the_host_prefix() {
+    assert_eq!(
+        settings_config_key(CONFIG_INCLUDE_FOLLOWED),
+        "plugin.settings.include_followed_lists"
+    );
+    assert_eq!(
+        settings_config_key(CONFIG_INCLUDE_COLLABORATIVE),
+        "plugin.settings.include_collaborative_lists"
+    );
+}
+
+#[test]
+fn an_unknown_or_missing_role_is_treated_as_an_own_list() {
+    let body = serde_json::json!({"pagination":{"page":1,"limit":500,"total_items":4,"total_pages":1},
+        "lists":[{"id":71,"name":"Fixture followed","media_type":"tv","role":"follower"},
+                 {"id":72,"name":"Fixture future role","media_type":"movies","role":"fixture_new_role"},
+                 {"id":73,"name":"Fixture shared","media_type":"tv","role":"collaborator"},
+                 {"id":74,"name":"Fixture no role","media_type":"anime"}]});
+    let url = format!(
+        "{}&followed=true&collaborants=true",
+        custom_index_url("990001", 1)
+    );
+    let http = RecordedHttp::new()
+        .with(&api("/users/settings"), 200, SETTINGS)
+        .with(&url, 200, &body.to_string());
+    let scope = ListScope {
+        followed: true,
+        collaborative: true,
+    };
+    let response = block_on(account_with(&http, CLIENT_ID, &credential(), scope)).unwrap();
+    assert_eq!(
+        response
+            .owned_lists
+            .iter()
+            .map(|list| list.id.as_str())
+            .collect::<Vec<_>>(),
+        ["72", "74", "73", "71"]
+    );
+}
+
+#[test]
+fn scoped_discovery_flags_every_page_and_groups_across_pages() {
+    let first = serde_json::json!({"pagination":{"page":1,"limit":2,"total_items":4,"total_pages":2},
+        "lists":[{"id":81,"name":"Fixture followed one","media_type":"tv","role":"follower"},
+                 {"id":82,"name":"Fixture shared one","media_type":"movies","role":"collaborator"}]});
+    let second = serde_json::json!({"pagination":{"page":2,"limit":2,"total_items":4,"total_pages":2},
+        "lists":[{"id":83,"name":"Fixture own one","media_type":"tv","role":"owner"},
+                 {"id":84,"name":"Fixture own two","media_type":"anime","role":"owner"}]});
+    let flags = "&followed=true&collaborants=true";
+    let page_one = format!("{}{flags}", custom_index_url("990001", 1));
+    let page_two = format!("{}{flags}", custom_index_url("990001", 2));
+    let http = RecordedHttp::new()
+        .with(&api("/users/settings"), 200, SETTINGS)
+        .with(&page_one, 200, &first.to_string())
+        .with(&page_two, 200, &second.to_string());
+    let scope = ListScope {
+        followed: true,
+        collaborative: true,
+    };
+    let response = block_on(account_with(&http, CLIENT_ID, &credential(), scope)).unwrap();
+    assert_eq!(
+        http.urls(),
+        [api("/users/settings"), page_one.clone(), page_two.clone()]
+    );
+    assert_eq!(
+        response
+            .owned_lists
+            .iter()
+            .map(|list| list.id.as_str())
+            .collect::<Vec<_>>(),
+        ["83", "84", "82", "81"]
+    );
+}

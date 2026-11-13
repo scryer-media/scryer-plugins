@@ -54,13 +54,14 @@ use list_provider_common::ids::{
 use list_provider_common::page::single_page;
 use scryer_plugin_sdk::command::{PluginListCommand, PluginListCommandResult};
 use scryer_plugin_sdk::host::{PluginHttpRequest, PluginHttpResponse};
+use scryer_plugin_sdk::{ConfigFieldDef, ConfigFieldType};
 use scryer_plugin_sdk::{
     ListAccountExchange, ListAccountFlow, ListAccountStatus, ListAuthBadge, ListCredential,
     ListExternalId, ListMediaKind, ListNoteTone, ListPluginAccountResponse, ListPluginFetchRequest,
     ListPluginFetchResponse, ListPluginItem, ListProviderAuth, ListProviderCapabilities,
     ListProviderDescriptor, ListProviderGroup, ListProviderItem, ListProviderNote,
     ListProviderTile, ListSourceParam, ListSourceParamType, PluginDescriptor, PluginError,
-    PluginErrorCode, PluginResult, ProviderDescriptor,
+    PluginErrorCode, PluginResult, PluginSettingField, ProviderDescriptor,
 };
 use serde_json::Value;
 
@@ -86,6 +87,62 @@ pub const PROVIDER_TYPE: &str = "simkl";
 pub const SIMKL_CLIENT_ID: &str = "";
 /// The config key the host places the Simkl app client id under.
 pub const CONFIG_CLIENT_ID: &str = "client_id";
+/// Installation-wide switches for the custom lists Simkl reports besides the
+/// member's own. Both are off unless the operator turns them on.
+pub const CONFIG_INCLUDE_FOLLOWED: &str = "include_followed_lists";
+pub const CONFIG_INCLUDE_COLLABORATIVE: &str = "include_collaborative_lists";
+
+/// The host puts an installation setting in the plugin config under
+/// `plugin.settings.<key>` (Scryer 0.21.23 `bind_plugin_settings`), not under
+/// the key the descriptor declares.
+pub fn settings_config_key(key: &str) -> String {
+    format!("plugin.settings.{key}")
+}
+
+/// Which non-owned custom lists the account panel asks Simkl for. The default
+/// (both off) is Simkl's own default: owned lists only.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct ListScope {
+    pub followed: bool,
+    pub collaborative: bool,
+}
+
+impl ListScope {
+    /// Simkl accepts only the literal string `true`, so a switch that is off
+    /// adds nothing to the query.
+    fn query(self) -> String {
+        let mut query = String::new();
+        if self.followed {
+            query.push_str("&followed=true");
+        }
+        if self.collaborative {
+            query.push_str("&collaborants=true");
+        }
+        query
+    }
+
+    fn from_config(read: impl Fn(&str) -> Option<String>) -> Self {
+        let on = |key| read(key).is_some_and(|value| value.trim().eq_ignore_ascii_case("true"));
+        Self {
+            followed: on(CONFIG_INCLUDE_FOLLOWED),
+            collaborative: on(CONFIG_INCLUDE_COLLABORATIVE),
+        }
+    }
+}
+
+fn scope_setting(key: &str, label: &str, help: &str) -> PluginSettingField {
+    PluginSettingField {
+        field: ConfigFieldDef {
+            key: key.to_string(),
+            label: label.to_string(),
+            field_type: ConfigFieldType::Bool,
+            default_value: Some("false".to_string()),
+            help_text: Some(help.to_string()),
+            ..Default::default()
+        },
+        sensitive: false,
+    }
+}
 
 pub const SOURCE_WATCHING: &str = "watching";
 pub const SOURCE_PLAN_TO_WATCH: &str = "plantowatch";
@@ -319,7 +376,18 @@ pub fn descriptor() -> PluginDescriptor {
         sdk_version: scryer_plugin_sdk::SDK_VERSION.to_string(),
         sdk_constraint: scryer_plugin_sdk::current_sdk_constraint(),
         socket_permissions: Vec::new(),
-        settings: Vec::new(),
+        settings: vec![
+            scope_setting(
+                CONFIG_INCLUDE_FOLLOWED,
+                "Include followed lists",
+                "Also list the custom lists a member follows on Simkl but does not own.",
+            ),
+            scope_setting(
+                CONFIG_INCLUDE_COLLABORATIVE,
+                "Include collaborative lists",
+                "Also list the custom lists a member collaborates on at Simkl.",
+            ),
+        ],
         provider: ProviderDescriptor::ListProvider(ListProviderDescriptor {
             provider_type: PROVIDER_TYPE.to_string(),
             provider_aliases: Vec::new(),
@@ -383,10 +451,16 @@ async fn handle_command(command: PluginListCommand) -> PluginListCommandResult {
     let configured = scryer_plugin_pdk::config::get(CONFIG_CLIENT_ID)
         .ok()
         .flatten();
-    run(
+    let scope = ListScope::from_config(|key| {
+        scryer_plugin_pdk::config::get(settings_config_key(key))
+            .ok()
+            .flatten()
+    });
+    run_with(
         &HostHttp,
         client_id(configured.as_deref(), SIMKL_CLIENT_ID),
         command,
+        scope,
     )
     .await
 }
@@ -406,12 +480,21 @@ pub async fn run<H: ListHttp>(
     client_id: &str,
     command: PluginListCommand,
 ) -> PluginListCommandResult {
+    run_with(http, client_id, command, ListScope::default()).await
+}
+
+pub async fn run_with<H: ListHttp>(
+    http: &H,
+    client_id: &str,
+    command: PluginListCommand,
+    scope: ListScope,
+) -> PluginListCommandResult {
     match command {
         PluginListCommand::Fetch(request) => {
             PluginListCommandResult::Fetch(into_result(fetch(http, client_id, &request).await))
         }
         PluginListCommand::Account(request) => PluginListCommandResult::Account(into_result(
-            account(http, client_id, &request.credential).await,
+            account_with(http, client_id, &request.credential, scope).await,
         )),
         PluginListCommand::Health(_) => {
             PluginListCommandResult::Health(PluginResult::Err(plugin_error(
@@ -451,8 +534,17 @@ pub async fn account<H: ListHttp>(
     client_id: &str,
     credential: &ListCredential,
 ) -> Result<ListPluginAccountResponse, PluginError> {
+    account_with(http, client_id, credential, ListScope::default()).await
+}
+
+pub async fn account_with<H: ListHttp>(
+    http: &H,
+    client_id: &str,
+    credential: &ListCredential,
+    scope: ListScope,
+) -> Result<ListPluginAccountResponse, PluginError> {
     Client::new(http, client_id, Some(credential))?
-        .account()
+        .account(scope)
         .await
 }
 
@@ -573,7 +665,7 @@ impl<'a, H: ListHttp> Client<'a, H> {
         })
     }
 
-    async fn account(&self) -> Result<ListPluginAccountResponse, PluginError> {
+    async fn account(&self, scope: ListScope) -> Result<ListPluginAccountResponse, PluginError> {
         let body = self
             .get_json("/users/settings", "", "Simkl account")
             .await?;
@@ -584,7 +676,7 @@ impl<'a, H: ListHttp> Client<'a, H> {
         let name = json_text(user.and_then(|user| user.get("name")));
         let avatar_url = json_text(user.and_then(|user| user.get("avatar")))
             .filter(|url| url.starts_with("https://") || url.starts_with("http://"));
-        let owned_lists = self.custom_lists(&external_user_id).await?;
+        let owned_lists = self.custom_lists(&external_user_id, scope).await?;
         Ok(ListPluginAccountResponse {
             username: name.clone().unwrap_or_else(|| external_user_id.clone()),
             external_user_id,
