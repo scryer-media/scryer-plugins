@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.47",
-  "snapshot_sha256": "4fdaf8b3a52c32f335b13a0f5b74b7573c63b21f9a310e9fbde8678f25dbf932",
+  "pack_version": "1.0.48",
+  "snapshot_sha256": "babb1d19f1df338b98e8baa7fe2ec37f43a3241b8a73d5191f389e8a5d6059d0",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -4327,6 +4327,14 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "2ehqa1524nnqbde",
+      "file_sources": 12,
+      "release_id": "wwo37ix0fnej6yb",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "2fkmnxh4djynb9p",
       "file_sources": 1,
       "release_id": "ew36dbsy86p674f",
@@ -4532,6 +4540,22 @@
       "release_id": "zfhezqadwmzmr5m",
       "strict_keys": 1,
       "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "2lhrg0usco53ek9",
+      "file_sources": 12,
+      "release_id": "5iqscq6ko3y8emh",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "2lhrg0usco53ek9",
+      "file_sources": 12,
+      "release_id": "auyuvg1cs0wqrp5",
+      "strict_keys": 12,
+      "tolerant_keys": 12
     },
     {
       "alias_sources": 0,
@@ -4953,15 +4977,7 @@
       "alias_sources": 0,
       "entry_id": "2w4wo9fobpeycfd",
       "file_sources": 12,
-      "release_id": "h5w3u4yt1e2c3qi",
-      "strict_keys": 12,
-      "tolerant_keys": 12
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "2w4wo9fobpeycfd",
-      "file_sources": 12,
-      "release_id": "ilbrgfvtrmnea5d",
+      "release_id": "s436z7ibdll0qwr",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -17617,6 +17633,14 @@
       "alias_sources": 0,
       "entry_id": "9uyi394h1nkg4xd",
       "file_sources": 8,
+      "release_id": "oc5lsdwzaywu0qp",
+      "strict_keys": 8,
+      "tolerant_keys": 8
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "9uyi394h1nkg4xd",
+      "file_sources": 8,
       "release_id": "pokrmprbuutqrb7",
       "strict_keys": 8,
       "tolerant_keys": 8
@@ -19634,14 +19658,6 @@
       "entry_id": "b7j9e4y4b062ttl",
       "file_sources": 12,
       "release_id": "fcunndwjdroo3e2",
-      "strict_keys": 12,
-      "tolerant_keys": 12
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "b7j9e4y4b062ttl",
-      "file_sources": 12,
-      "release_id": "jc0x0wdtrt6x1vz",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -34825,6 +34841,14 @@
       "alias_sources": 0,
       "entry_id": "jycjoy7w4yrddx0",
       "file_sources": 13,
+      "release_id": "3n4gnj0i6j82286",
+      "strict_keys": 13,
+      "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "jycjoy7w4yrddx0",
+      "file_sources": 13,
       "release_id": "buktupbp3ju5ujt",
       "strict_keys": 13,
       "tolerant_keys": 13
@@ -38192,6 +38216,14 @@
     {
       "alias_sources": 0,
       "entry_id": "ln68sib3b9tl5px",
+      "file_sources": 12,
+      "release_id": "h18enmfgzcxqci2",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "ln68sib3b9tl5px",
       "file_sources": 1,
       "release_id": "mb1o564nxjlllo1",
       "strict_keys": 1,
@@ -38284,6 +38316,14 @@
       "release_id": "tcxq3v1ii8i8363",
       "strict_keys": 10,
       "tolerant_keys": 10
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "loc43vbbesaglo9",
+      "file_sources": 47,
+      "release_id": "6jn0yiaem3wifo7",
+      "strict_keys": 47,
+      "tolerant_keys": 0
     },
     {
       "alias_sources": 0,
@@ -38506,6 +38546,14 @@
       "entry_id": "lqyeb9h7urvosiq",
       "file_sources": 4,
       "release_id": "nmzn7o9jv9pz4r4",
+      "strict_keys": 4,
+      "tolerant_keys": 4
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "lqyeb9h7urvosiq",
+      "file_sources": 4,
+      "release_id": "pv7w8gb1naovfi1",
       "strict_keys": 4,
       "tolerant_keys": 4
     },
@@ -47425,7 +47473,23 @@
       "alias_sources": 0,
       "entry_id": "qjle1vo34onr74v",
       "file_sources": 12,
+      "release_id": "ld1jm9cp7kwa5uv",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "qjle1vo34onr74v",
+      "file_sources": 12,
       "release_id": "nr3oqq4qbqa32og",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "qjle1vo34onr74v",
+      "file_sources": 12,
+      "release_id": "rodt16xmhi2pa4i",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -49394,6 +49458,14 @@
       "entry_id": "rjdvtg7cbw07xy7",
       "file_sources": 2,
       "release_id": "482ezm4t034eids",
+      "strict_keys": 2,
+      "tolerant_keys": 2
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "rjdvtg7cbw07xy7",
+      "file_sources": 2,
+      "release_id": "9dp72to1668v9n9",
       "strict_keys": 2,
       "tolerant_keys": 2
     },
@@ -52586,6 +52658,14 @@
       "entry_id": "syfc4j5llat8b89",
       "file_sources": 8,
       "release_id": "ftnx6qdxr4i0gjs",
+      "strict_keys": 8,
+      "tolerant_keys": 8
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "syfc4j5llat8b89",
+      "file_sources": 8,
+      "release_id": "jm2738r7qkuakfv",
       "strict_keys": 8,
       "tolerant_keys": 8
     },
@@ -63578,14 +63658,6 @@
       "entry_id": "z8ltbonst1qoy31",
       "file_sources": 1,
       "release_id": "gfzu7g1nf3hx7qj",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "z948qtpfmqygmdu",
-      "file_sources": 1,
-      "release_id": "8wny8jcerlhbq1q",
       "strict_keys": 1,
       "tolerant_keys": 1
     },
@@ -206996,6 +207068,318 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "h6z6nmtnc6rmplk",
       "source_name": "S01E24-Blade of the Immortal.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "non_release_file",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Extras/Clean ED1.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "non_release_file",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Extras/Clean ED2.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "non_release_file",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Extras/Clean OP.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "non_release_file",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Extras/Clean OP2.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "non_release_file",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Extras/Pilot Ultraman-style OP.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 01.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 02.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 03.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 04.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 05.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 06.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 07.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 08.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 09.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 10.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 11.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 12.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 13.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 14.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 15.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 16.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 17.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 18.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 19.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 20.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 21.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 22.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 23.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 24.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 25.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 26.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 27.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 28.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 29.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 30.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 31.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 32.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 33.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 34.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 35.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 36.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 37.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 38.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 39.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 40.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 41.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 42.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 43.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 44.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 45.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 46.mkv"
+    },
+    {
+      "entry_id": "loc43vbbesaglo9",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "6jn0yiaem3wifo7",
+      "source_name": "Might Gaine 47 (Finale).mkv"
     },
     {
       "entry_id": "loc43vbbesaglo9",
@@ -489409,13 +489793,6 @@
           "source_name": "Attack.on.Titan.S00E07.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 20811,
-          "entry_id": "6dsu13ddpf94crj",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E07.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 99634,
           "entry_id": "gt9akvcpn1iebgo",
           "release_id": "6jld083pzz01pns",
@@ -489423,23 +489800,9 @@
           "source_name": "Attack.on.Titan.S00E07.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 99634,
-          "entry_id": "gt9akvcpn1iebgo",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E07.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 18397,
           "entry_id": "h6aktpmniq75jwx",
           "release_id": "6jld083pzz01pns",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E07.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
-          "anilist_id": 18397,
-          "entry_id": "h6aktpmniq75jwx",
-          "release_id": "y66v16krdfu9fzg",
           "source": "file",
           "source_name": "Attack.on.Titan.S00E07.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         }
@@ -489458,13 +489821,6 @@
           "source_name": "Attack.on.Titan.S00E13.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 20811,
-          "entry_id": "6dsu13ddpf94crj",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E13.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 99634,
           "entry_id": "gt9akvcpn1iebgo",
           "release_id": "6jld083pzz01pns",
@@ -489472,23 +489828,9 @@
           "source_name": "Attack.on.Titan.S00E13.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 99634,
-          "entry_id": "gt9akvcpn1iebgo",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E13.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 18397,
           "entry_id": "h6aktpmniq75jwx",
           "release_id": "6jld083pzz01pns",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E13.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
-          "anilist_id": 18397,
-          "entry_id": "h6aktpmniq75jwx",
-          "release_id": "y66v16krdfu9fzg",
           "source": "file",
           "source_name": "Attack.on.Titan.S00E13.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         }
@@ -489507,13 +489849,6 @@
           "source_name": "Attack.on.Titan.S00E14.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 20811,
-          "entry_id": "6dsu13ddpf94crj",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E14.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 99634,
           "entry_id": "gt9akvcpn1iebgo",
           "release_id": "6jld083pzz01pns",
@@ -489521,23 +489856,9 @@
           "source_name": "Attack.on.Titan.S00E14.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 99634,
-          "entry_id": "gt9akvcpn1iebgo",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E14.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 18397,
           "entry_id": "h6aktpmniq75jwx",
           "release_id": "6jld083pzz01pns",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E14.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
-          "anilist_id": 18397,
-          "entry_id": "h6aktpmniq75jwx",
-          "release_id": "y66v16krdfu9fzg",
           "source": "file",
           "source_name": "Attack.on.Titan.S00E14.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         }
@@ -489556,13 +489877,6 @@
           "source_name": "Attack.on.Titan.S00E15.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 20811,
-          "entry_id": "6dsu13ddpf94crj",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E15.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 99634,
           "entry_id": "gt9akvcpn1iebgo",
           "release_id": "6jld083pzz01pns",
@@ -489570,23 +489884,9 @@
           "source_name": "Attack.on.Titan.S00E15.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 99634,
-          "entry_id": "gt9akvcpn1iebgo",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E15.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 18397,
           "entry_id": "h6aktpmniq75jwx",
           "release_id": "6jld083pzz01pns",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E15.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
-          "anilist_id": 18397,
-          "entry_id": "h6aktpmniq75jwx",
-          "release_id": "y66v16krdfu9fzg",
           "source": "file",
           "source_name": "Attack.on.Titan.S00E15.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         }
@@ -489605,13 +489905,6 @@
           "source_name": "Attack.on.Titan.S00E16.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 20811,
-          "entry_id": "6dsu13ddpf94crj",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E16.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 99634,
           "entry_id": "gt9akvcpn1iebgo",
           "release_id": "6jld083pzz01pns",
@@ -489619,23 +489912,9 @@
           "source_name": "Attack.on.Titan.S00E16.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 99634,
-          "entry_id": "gt9akvcpn1iebgo",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E16.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 18397,
           "entry_id": "h6aktpmniq75jwx",
           "release_id": "6jld083pzz01pns",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E16.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
-          "anilist_id": 18397,
-          "entry_id": "h6aktpmniq75jwx",
-          "release_id": "y66v16krdfu9fzg",
           "source": "file",
           "source_name": "Attack.on.Titan.S00E16.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         }
@@ -489654,13 +489933,6 @@
           "source_name": "Attack.on.Titan.S00E17.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 20811,
-          "entry_id": "6dsu13ddpf94crj",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E17.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 99634,
           "entry_id": "gt9akvcpn1iebgo",
           "release_id": "6jld083pzz01pns",
@@ -489668,23 +489940,9 @@
           "source_name": "Attack.on.Titan.S00E17.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 99634,
-          "entry_id": "gt9akvcpn1iebgo",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E17.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 18397,
           "entry_id": "h6aktpmniq75jwx",
           "release_id": "6jld083pzz01pns",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E17.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
-          "anilist_id": 18397,
-          "entry_id": "h6aktpmniq75jwx",
-          "release_id": "y66v16krdfu9fzg",
           "source": "file",
           "source_name": "Attack.on.Titan.S00E17.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         }
@@ -489703,13 +489961,6 @@
           "source_name": "Attack.on.Titan.S00E18.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 20811,
-          "entry_id": "6dsu13ddpf94crj",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E18.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 99634,
           "entry_id": "gt9akvcpn1iebgo",
           "release_id": "6jld083pzz01pns",
@@ -489717,23 +489968,9 @@
           "source_name": "Attack.on.Titan.S00E18.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 99634,
-          "entry_id": "gt9akvcpn1iebgo",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E18.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 18397,
           "entry_id": "h6aktpmniq75jwx",
           "release_id": "6jld083pzz01pns",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E18.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
-          "anilist_id": 18397,
-          "entry_id": "h6aktpmniq75jwx",
-          "release_id": "y66v16krdfu9fzg",
           "source": "file",
           "source_name": "Attack.on.Titan.S00E18.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         }
@@ -489752,13 +489989,6 @@
           "source_name": "Attack.on.Titan.S00E19.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 20811,
-          "entry_id": "6dsu13ddpf94crj",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E19.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 99634,
           "entry_id": "gt9akvcpn1iebgo",
           "release_id": "6jld083pzz01pns",
@@ -489766,23 +489996,9 @@
           "source_name": "Attack.on.Titan.S00E19.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 99634,
-          "entry_id": "gt9akvcpn1iebgo",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E19.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 18397,
           "entry_id": "h6aktpmniq75jwx",
           "release_id": "6jld083pzz01pns",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E19.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
-          "anilist_id": 18397,
-          "entry_id": "h6aktpmniq75jwx",
-          "release_id": "y66v16krdfu9fzg",
           "source": "file",
           "source_name": "Attack.on.Titan.S00E19.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         }
@@ -604293,13 +604509,6 @@
           "source_name": "Attack.on.Titan.S00E07.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 20811,
-          "entry_id": "6dsu13ddpf94crj",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E07.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 99634,
           "entry_id": "gt9akvcpn1iebgo",
           "release_id": "6jld083pzz01pns",
@@ -604307,23 +604516,9 @@
           "source_name": "Attack.on.Titan.S00E07.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 99634,
-          "entry_id": "gt9akvcpn1iebgo",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E07.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 18397,
           "entry_id": "h6aktpmniq75jwx",
           "release_id": "6jld083pzz01pns",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E07.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
-          "anilist_id": 18397,
-          "entry_id": "h6aktpmniq75jwx",
-          "release_id": "y66v16krdfu9fzg",
           "source": "file",
           "source_name": "Attack.on.Titan.S00E07.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         }
@@ -604342,13 +604537,6 @@
           "source_name": "Attack.on.Titan.S00E13.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 20811,
-          "entry_id": "6dsu13ddpf94crj",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E13.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 99634,
           "entry_id": "gt9akvcpn1iebgo",
           "release_id": "6jld083pzz01pns",
@@ -604356,23 +604544,9 @@
           "source_name": "Attack.on.Titan.S00E13.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 99634,
-          "entry_id": "gt9akvcpn1iebgo",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E13.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 18397,
           "entry_id": "h6aktpmniq75jwx",
           "release_id": "6jld083pzz01pns",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E13.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
-          "anilist_id": 18397,
-          "entry_id": "h6aktpmniq75jwx",
-          "release_id": "y66v16krdfu9fzg",
           "source": "file",
           "source_name": "Attack.on.Titan.S00E13.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         }
@@ -604391,13 +604565,6 @@
           "source_name": "Attack.on.Titan.S00E14.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 20811,
-          "entry_id": "6dsu13ddpf94crj",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E14.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 99634,
           "entry_id": "gt9akvcpn1iebgo",
           "release_id": "6jld083pzz01pns",
@@ -604405,23 +604572,9 @@
           "source_name": "Attack.on.Titan.S00E14.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 99634,
-          "entry_id": "gt9akvcpn1iebgo",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E14.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 18397,
           "entry_id": "h6aktpmniq75jwx",
           "release_id": "6jld083pzz01pns",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E14.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
-          "anilist_id": 18397,
-          "entry_id": "h6aktpmniq75jwx",
-          "release_id": "y66v16krdfu9fzg",
           "source": "file",
           "source_name": "Attack.on.Titan.S00E14.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         }
@@ -604440,13 +604593,6 @@
           "source_name": "Attack.on.Titan.S00E15.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 20811,
-          "entry_id": "6dsu13ddpf94crj",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E15.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 99634,
           "entry_id": "gt9akvcpn1iebgo",
           "release_id": "6jld083pzz01pns",
@@ -604454,23 +604600,9 @@
           "source_name": "Attack.on.Titan.S00E15.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 99634,
-          "entry_id": "gt9akvcpn1iebgo",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E15.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 18397,
           "entry_id": "h6aktpmniq75jwx",
           "release_id": "6jld083pzz01pns",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E15.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
-          "anilist_id": 18397,
-          "entry_id": "h6aktpmniq75jwx",
-          "release_id": "y66v16krdfu9fzg",
           "source": "file",
           "source_name": "Attack.on.Titan.S00E15.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         }
@@ -604489,13 +604621,6 @@
           "source_name": "Attack.on.Titan.S00E16.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 20811,
-          "entry_id": "6dsu13ddpf94crj",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E16.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 99634,
           "entry_id": "gt9akvcpn1iebgo",
           "release_id": "6jld083pzz01pns",
@@ -604503,23 +604628,9 @@
           "source_name": "Attack.on.Titan.S00E16.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 99634,
-          "entry_id": "gt9akvcpn1iebgo",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E16.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 18397,
           "entry_id": "h6aktpmniq75jwx",
           "release_id": "6jld083pzz01pns",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E16.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
-          "anilist_id": 18397,
-          "entry_id": "h6aktpmniq75jwx",
-          "release_id": "y66v16krdfu9fzg",
           "source": "file",
           "source_name": "Attack.on.Titan.S00E16.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         }
@@ -604538,13 +604649,6 @@
           "source_name": "Attack.on.Titan.S00E17.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 20811,
-          "entry_id": "6dsu13ddpf94crj",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E17.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 99634,
           "entry_id": "gt9akvcpn1iebgo",
           "release_id": "6jld083pzz01pns",
@@ -604552,23 +604656,9 @@
           "source_name": "Attack.on.Titan.S00E17.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 99634,
-          "entry_id": "gt9akvcpn1iebgo",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E17.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 18397,
           "entry_id": "h6aktpmniq75jwx",
           "release_id": "6jld083pzz01pns",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E17.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
-          "anilist_id": 18397,
-          "entry_id": "h6aktpmniq75jwx",
-          "release_id": "y66v16krdfu9fzg",
           "source": "file",
           "source_name": "Attack.on.Titan.S00E17.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         }
@@ -604587,13 +604677,6 @@
           "source_name": "Attack.on.Titan.S00E18.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 20811,
-          "entry_id": "6dsu13ddpf94crj",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E18.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 99634,
           "entry_id": "gt9akvcpn1iebgo",
           "release_id": "6jld083pzz01pns",
@@ -604601,23 +604684,9 @@
           "source_name": "Attack.on.Titan.S00E18.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 99634,
-          "entry_id": "gt9akvcpn1iebgo",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E18.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 18397,
           "entry_id": "h6aktpmniq75jwx",
           "release_id": "6jld083pzz01pns",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E18.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
-          "anilist_id": 18397,
-          "entry_id": "h6aktpmniq75jwx",
-          "release_id": "y66v16krdfu9fzg",
           "source": "file",
           "source_name": "Attack.on.Titan.S00E18.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         }
@@ -604636,13 +604705,6 @@
           "source_name": "Attack.on.Titan.S00E19.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 20811,
-          "entry_id": "6dsu13ddpf94crj",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E19.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 99634,
           "entry_id": "gt9akvcpn1iebgo",
           "release_id": "6jld083pzz01pns",
@@ -604650,23 +604712,9 @@
           "source_name": "Attack.on.Titan.S00E19.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         },
         {
-          "anilist_id": 99634,
-          "entry_id": "gt9akvcpn1iebgo",
-          "release_id": "y66v16krdfu9fzg",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E19.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
           "anilist_id": 18397,
           "entry_id": "h6aktpmniq75jwx",
           "release_id": "6jld083pzz01pns",
-          "source": "file",
-          "source_name": "Attack.on.Titan.S00E19.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
-        },
-        {
-          "anilist_id": 18397,
-          "entry_id": "h6aktpmniq75jwx",
-          "release_id": "y66v16krdfu9fzg",
           "source": "file",
           "source_name": "Attack.on.Titan.S00E19.1080p.BluRay.Remux.AVC.FLAC.2.0-Flugel.mkv"
         }
@@ -759456,50 +759504,31 @@
   "stale_overrides": [],
   "changes": {
     "entries": {
-      "added": [
-        "loc43vbbesaglo9"
-      ],
+      "added": [],
       "removed": []
     },
     "releases": {
       "added": [
-        "0ce2q0hmnvm4rkp",
-        "2pnr8drbaxeb1ib",
-        "3fax16hxzioarcq",
-        "5c254wdyubl79wt",
-        "73dgsjib67eugjs",
-        "8an7khy20al6ldb",
-        "8ugkzps97rtlkgx",
-        "8w2fwv9jbyaqnmv",
-        "ba98u8hgb55pwkh",
-        "cbw41yr6l00g8mn",
-        "dcrfdkg1iez3ov2",
-        "dtmqz9gw8mnnhen",
-        "foocoljam7o4sph",
-        "ir21e6tfwfeafjz",
-        "nf04b79kkyvo8tb",
-        "omrnen5g0kysz77",
-        "os7o5rz58vo1trg",
-        "osw1kpf7q6vsgq0",
-        "prh3z5wiw76stl2",
-        "qmmlwv9bpeiezph",
-        "rz3095rew1p82ri",
-        "s1i8x8odscbna65",
-        "sqx5ipgey06mn7r",
-        "ta1re77asf05vku",
-        "tp87rz1yd3ecf2b",
-        "trx3261oqltjot4",
-        "ubezx2owemlk95l",
-        "vqcs9r7nq6u0ikl",
-        "xmv5hjf8zn7oe88",
-        "xw06x7e4bvb0kxm",
-        "yj2971yy9oadjab",
-        "znyprpsnhbnihnf"
+        "3n4gnj0i6j82286",
+        "5iqscq6ko3y8emh",
+        "6jn0yiaem3wifo7",
+        "9dp72to1668v9n9",
+        "auyuvg1cs0wqrp5",
+        "h18enmfgzcxqci2",
+        "jm2738r7qkuakfv",
+        "ld1jm9cp7kwa5uv",
+        "oc5lsdwzaywu0qp",
+        "pv7w8gb1naovfi1",
+        "rodt16xmhi2pa4i",
+        "s436z7ibdll0qwr",
+        "wwo37ix0fnej6yb"
       ],
       "removed": [
-        "l2ew61tfiq5jt3w",
-        "n1s3yfu5cha527o",
-        "nqy3zj0v9gpw2yg"
+        "8wny8jcerlhbq1q",
+        "h5w3u4yt1e2c3qi",
+        "ilbrgfvtrmnea5d",
+        "jc0x0wdtrt6x1vz",
+        "y66v16krdfu9fzg"
       ]
     }
   },
@@ -759513,8 +759542,8 @@
       },
       "direct_entries": 21373,
       "route_buckets": 260,
-      "source_bytes": 3039771,
-      "source_lines": 45785,
+      "source_bytes": 3039885,
+      "source_lines": 45786,
       "template_buckets": {
         "bucket_count": 260,
         "key_count": 6681,
