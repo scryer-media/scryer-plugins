@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.48",
-  "snapshot_sha256": "babb1d19f1df338b98e8baa7fe2ec37f43a3241b8a73d5191f389e8a5d6059d0",
+  "pack_version": "1.0.49",
+  "snapshot_sha256": "bb680f381d0669a4e354c3d5bb8fb39d3b4181dc775ced9974055a8658082a02",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -34161,6 +34161,14 @@
       "alias_sources": 0,
       "entry_id": "joatweeaiyj5spp",
       "file_sources": 12,
+      "release_id": "7d31xnuxksx3kz6",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "joatweeaiyj5spp",
+      "file_sources": 12,
       "release_id": "dmtr2eaitvcxed8",
       "strict_keys": 12,
       "tolerant_keys": 12
@@ -60759,6 +60767,22 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "xm352cubyncemhu",
+      "file_sources": 12,
+      "release_id": "anwca7822w4hnhy",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "xm352cubyncemhu",
+      "file_sources": 12,
+      "release_id": "yu830g2y6n7rdns",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "xm8kfnbuorbv2b6",
       "file_sources": 1,
       "release_id": "1ln6wbrrjyr6ci3",
@@ -62244,6 +62268,14 @@
       "release_id": "wb64u92y5n0uhdh",
       "strict_keys": 12,
       "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "ychtcu7fox1t3dw",
+      "file_sources": 10,
+      "release_id": "m5pvpcu8a599xfh",
+      "strict_keys": 10,
+      "tolerant_keys": 10
     },
     {
       "alias_sources": 0,
@@ -186190,6 +186222,18 @@
       "source_name": "12 - mission [00431048].mkv"
     },
     {
+      "entry_id": "joatweeaiyj5spp",
+      "reason": "non_release_file",
+      "release_id": "7d31xnuxksx3kz6",
+      "source_name": "Extras/Akudama Drive - S01 NCED (BD Remux 1080p AVC FLAC) [PMR].mkv"
+    },
+    {
+      "entry_id": "joatweeaiyj5spp",
+      "reason": "non_release_file",
+      "release_id": "7d31xnuxksx3kz6",
+      "source_name": "Extras/Akudama Drive - S01 NCOP (BD Remux 1080p AVC FLAC) [PMR].mkv"
+    },
+    {
       "entry_id": "jp8via4p2cxad0c",
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "4ekdze6d7dn3xf1",
@@ -299222,6 +299266,18 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "g0w2jq1fvka0x9t",
       "source_name": "My Sister, My Writer OP (BDRip 1920x1080 HEVC FLAC Rus + Jap + Eng).mkv"
+    },
+    {
+      "entry_id": "ychtcu7fox1t3dw",
+      "reason": "non_release_file",
+      "release_id": "m5pvpcu8a599xfh",
+      "source_name": "Extras/[Moxie] My Sister, My Writer - S01NCED01 (BD Remux 1080p FLAC 2.0) [7A04427C].mkv"
+    },
+    {
+      "entry_id": "ychtcu7fox1t3dw",
+      "reason": "non_release_file",
+      "release_id": "m5pvpcu8a599xfh",
+      "source_name": "Extras/[Moxie] My Sister, My Writer - S01NCOP01 (BD Remux 1080p FLAC 2.0) [92BBA508].mkv"
     },
     {
       "entry_id": "yfoyjeqnqaqqjp0",
@@ -759504,32 +759560,19 @@
   "stale_overrides": [],
   "changes": {
     "entries": {
-      "added": [],
+      "added": [
+        "xm352cubyncemhu"
+      ],
       "removed": []
     },
     "releases": {
       "added": [
-        "3n4gnj0i6j82286",
-        "5iqscq6ko3y8emh",
-        "6jn0yiaem3wifo7",
-        "9dp72to1668v9n9",
-        "auyuvg1cs0wqrp5",
-        "h18enmfgzcxqci2",
-        "jm2738r7qkuakfv",
-        "ld1jm9cp7kwa5uv",
-        "oc5lsdwzaywu0qp",
-        "pv7w8gb1naovfi1",
-        "rodt16xmhi2pa4i",
-        "s436z7ibdll0qwr",
-        "wwo37ix0fnej6yb"
+        "7d31xnuxksx3kz6",
+        "anwca7822w4hnhy",
+        "m5pvpcu8a599xfh",
+        "yu830g2y6n7rdns"
       ],
-      "removed": [
-        "8wny8jcerlhbq1q",
-        "h5w3u4yt1e2c3qi",
-        "ilbrgfvtrmnea5d",
-        "jc0x0wdtrt6x1vz",
-        "y66v16krdfu9fzg"
-      ]
+      "removed": []
     }
   },
   "matching": {
@@ -759542,20 +759585,20 @@
       },
       "direct_entries": 21373,
       "route_buckets": 260,
-      "source_bytes": 3039885,
-      "source_lines": 45786,
+      "source_bytes": 3040868,
+      "source_lines": 45787,
       "template_buckets": {
         "bucket_count": 260,
-        "key_count": 6681,
+        "key_count": 6685,
         "max_keys": 124,
-        "mean_keys": 25.696153846153845
+        "mean_keys": 25.71153846153846
       },
-      "template_groups": 6681,
-      "tuple_chunks": 6889
+      "template_groups": 6685,
+      "tuple_chunks": 6893
     },
     "provenance": {
-      "strict_keys": 57913,
-      "tolerant_keys": 47123
+      "strict_keys": 57947,
+      "tolerant_keys": 47157
     },
     "stale_overrides": []
   }
