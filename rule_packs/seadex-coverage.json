@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.49",
-  "snapshot_sha256": "bb680f381d0669a4e354c3d5bb8fb39d3b4181dc775ced9974055a8658082a02",
+  "pack_version": "1.0.50",
+  "snapshot_sha256": "eaf18363449c06b6f9faaffb6b35fe497295142292035341d480881ac2dcbac9",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -3450,6 +3450,14 @@
       "entry_id": "1x6iyw1sj5yc2jv",
       "file_sources": 1,
       "release_id": "4ijc8rrfdr58974",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "1x6iyw1sj5yc2jv",
+      "file_sources": 1,
+      "release_id": "9ktp2ajdtg45b6n",
       "strict_keys": 1,
       "tolerant_keys": 1
     },
@@ -13241,6 +13249,14 @@
       "alias_sources": 0,
       "entry_id": "7gjk1hxzxsb0dzi",
       "file_sources": 12,
+      "release_id": "gkogjix8djdkhs5",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "7gjk1hxzxsb0dzi",
+      "file_sources": 12,
       "release_id": "uw290fg6q9uwo8e",
       "strict_keys": 12,
       "tolerant_keys": 12
@@ -18137,6 +18153,14 @@
       "alias_sources": 0,
       "entry_id": "a7wjpff058jj6lp",
       "file_sources": 12,
+      "release_id": "kjrm0zytq3gbpy9",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "a7wjpff058jj6lp",
+      "file_sources": 12,
       "release_id": "mwd1ynnm1skwlgc",
       "strict_keys": 12,
       "tolerant_keys": 12
@@ -22505,6 +22529,14 @@
       "alias_sources": 0,
       "entry_id": "cskxcpzzu36dmw4",
       "file_sources": 46,
+      "release_id": "kik0wp7cdf26cma",
+      "strict_keys": 46,
+      "tolerant_keys": 46
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "cskxcpzzu36dmw4",
+      "file_sources": 46,
       "release_id": "voq076vhkl1sjo9",
       "strict_keys": 46,
       "tolerant_keys": 46
@@ -23372,6 +23404,22 @@
       "release_id": "vb8wj9cy7rd7uwi",
       "strict_keys": 12,
       "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "dhjgqig6z8blk3c",
+      "file_sources": 1,
+      "release_id": "zq8opijtn3f24ib",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "dhjgqig6z8blk3c",
+      "file_sources": 1,
+      "release_id": "zwcehib1df03oy5",
+      "strict_keys": 1,
+      "tolerant_keys": 1
     },
     {
       "alias_sources": 0,
@@ -33663,6 +33711,14 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "jgb0shpk4fiy3k0",
+      "file_sources": 12,
+      "release_id": "vo9xgh8zv5zueh8",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "jgghiaq9n0akyxw",
       "file_sources": 6,
       "release_id": "96yygq18mmxxq2v",
@@ -35410,6 +35466,14 @@
       "entry_id": "kahj0sknujcicsf",
       "file_sources": 1,
       "release_id": "lw1rh7e2zkde8bl",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "kahj0sknujcicsf",
+      "file_sources": 1,
+      "release_id": "srj84x49fqzuu7i",
       "strict_keys": 1,
       "tolerant_keys": 1
     },
@@ -45015,6 +45079,14 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "pbrkf61gh3ib5tn",
+      "file_sources": 12,
+      "release_id": "v2ijzzusdmyt92n",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "pcdb9i6nxppi8ht",
       "file_sources": 12,
       "release_id": "161bwjdzouadyf4",
@@ -46527,6 +46599,22 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "pzv132p04k63xtj",
+      "file_sources": 1,
+      "release_id": "jdw5ho4fnmzxfta",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "pzv132p04k63xtj",
+      "file_sources": 1,
+      "release_id": "pe3l5gksl1cy6sq",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "q12z6wcjn2umngt",
       "file_sources": 12,
       "release_id": "6gvl9r5cqo4ocbc",
@@ -47570,6 +47658,14 @@
       "entry_id": "qlfz3e0d5hatv93",
       "file_sources": 12,
       "release_id": "u93ewrmejgy70i1",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "qlmg8og9i7k9lx7",
+      "file_sources": 12,
+      "release_id": "0mkf1c1e7t60t2m",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -57826,6 +57922,14 @@
       "entry_id": "w9yznffw7cqmmjd",
       "file_sources": 12,
       "release_id": "0ju2z42wg6wg1ck",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "w9yznffw7cqmmjd",
+      "file_sources": 12,
+      "release_id": "hqn9ezzs1vyravw",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -554090,7 +554194,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E01.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E01.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E01.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -554146,7 +554264,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E02.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E02.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E02.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -554202,7 +554334,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E03.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E03.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E03.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -554258,7 +554404,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E04.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E04.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E04.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -554314,7 +554474,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E05.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E05.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E05.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -554370,7 +554544,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E06.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E06.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E06.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -554426,7 +554614,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E07.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E07.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E07.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -554482,7 +554684,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E08.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E08.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E08.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -554538,7 +554754,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E09.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E09.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E09.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -554594,7 +554824,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E10.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E10.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E10.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -554650,7 +554894,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E11.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E11.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E11.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -554706,7 +554964,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E12.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E12.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E12.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -554762,7 +555034,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E13.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E13.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E13.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -554818,7 +555104,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E14.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E14.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E14.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -554874,7 +555174,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E15.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E15.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E15.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -554930,7 +555244,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E16.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E16.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E16.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -554986,7 +555314,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E17.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E17.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E17.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -555042,7 +555384,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E18.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E18.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E18.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -555098,7 +555454,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E19.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E19.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E19.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -555154,7 +555524,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E20.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E20.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E20.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -555210,7 +555594,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E21.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E21.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E21.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -555266,7 +555664,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E22.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E22.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E22.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -555322,7 +555734,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E23.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E23.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E23.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -555378,7 +555804,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E24.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E24.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E24.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -555434,7 +555874,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E25.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E25.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E25.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -613835,7 +614289,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E01.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E01.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E01.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -613856,7 +614324,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E02.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E02.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E02.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -613877,7 +614359,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E03.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E03.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E03.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -613898,7 +614394,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E04.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E04.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E04.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -613919,7 +614429,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E05.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E05.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E05.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -613940,7 +614464,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E06.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E06.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E06.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -613961,7 +614499,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E07.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E07.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E07.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -613982,7 +614534,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E08.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E08.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E08.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -614003,7 +614569,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E09.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E09.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E09.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -614024,7 +614604,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E10.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E10.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E10.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -614045,7 +614639,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E11.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E11.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E11.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -614066,7 +614674,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E12.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E12.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E12.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -614087,7 +614709,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E13.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E13.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E13.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -614108,7 +614744,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E14.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E14.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E14.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -614129,7 +614779,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E15.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E15.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E15.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -614150,7 +614814,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E16.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E16.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E16.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -614171,7 +614849,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E17.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E17.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E17.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -614192,7 +614884,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E18.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E18.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E18.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -614213,7 +614919,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E19.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E19.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E19.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -614234,7 +614954,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E20.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E20.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E20.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -614255,7 +614989,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E21.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E21.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E21.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -614276,7 +615024,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E22.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E22.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E22.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -614297,7 +615059,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E23.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E23.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E23.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -614318,7 +615094,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E24.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E24.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E24.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -614339,7 +615129,21 @@
         {
           "anilist_id": 117197,
           "entry_id": "m0m11keo4ls8l7k",
+          "release_id": "f941wmczxzlmoa5",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E25.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 117197,
+          "entry_id": "m0m11keo4ls8l7k",
           "release_id": "h5z4shtqe7wrk1p",
+          "source": "file",
+          "source_name": "Tiger.and.Bunny.S02E25.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
+        },
+        {
+          "anilist_id": 151803,
+          "entry_id": "ozfytxxj25r6og6",
+          "release_id": "f941wmczxzlmoa5",
           "source": "file",
           "source_name": "Tiger.and.Bunny.S02E25.1080p.BluRay.Dual-Audio.Opus2.0.x264-Headpatter.mkv"
         },
@@ -759561,16 +760365,27 @@
   "changes": {
     "entries": {
       "added": [
-        "xm352cubyncemhu"
+        "dhjgqig6z8blk3c",
+        "pzv132p04k63xtj"
       ],
       "removed": []
     },
     "releases": {
       "added": [
-        "7d31xnuxksx3kz6",
-        "anwca7822w4hnhy",
-        "m5pvpcu8a599xfh",
-        "yu830g2y6n7rdns"
+        "0mkf1c1e7t60t2m",
+        "9ktp2ajdtg45b6n",
+        "f941wmczxzlmoa5",
+        "gkogjix8djdkhs5",
+        "hqn9ezzs1vyravw",
+        "jdw5ho4fnmzxfta",
+        "kik0wp7cdf26cma",
+        "kjrm0zytq3gbpy9",
+        "pe3l5gksl1cy6sq",
+        "srj84x49fqzuu7i",
+        "v2ijzzusdmyt92n",
+        "vo9xgh8zv5zueh8",
+        "zq8opijtn3f24ib",
+        "zwcehib1df03oy5"
       ],
       "removed": []
     }
@@ -759579,14 +760394,14 @@
     "encoding": {
       "direct_buckets": {
         "bucket_count": 351,
-        "key_count": 21373,
+        "key_count": 21377,
         "max_keys": 230,
-        "mean_keys": 60.89173789173789
+        "mean_keys": 60.903133903133906
       },
-      "direct_entries": 21373,
+      "direct_entries": 21377,
       "route_buckets": 260,
-      "source_bytes": 3040868,
-      "source_lines": 45787,
+      "source_bytes": 3041110,
+      "source_lines": 45795,
       "template_buckets": {
         "bucket_count": 260,
         "key_count": 6685,
@@ -759597,8 +760412,8 @@
       "tuple_chunks": 6893
     },
     "provenance": {
-      "strict_keys": 57947,
-      "tolerant_keys": 47157
+      "strict_keys": 57949,
+      "tolerant_keys": 47159
     },
     "stale_overrides": []
   }
