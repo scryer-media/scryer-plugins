@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_revision": "750c31d44aa132c13425daa9c1ea5563624b618e",
+  "source_revision": "f91330331d83897d588c4248158c6317e007988d",
   "input_files": [
     {
       "path": "docs/json/guide-only/language-german-and-original.json",
@@ -548,7 +548,7 @@
     },
     {
       "path": "docs/json/radarr/cf/hd-bluray-tier-02.json",
-      "sha256": "e1b701f088e3eaab9d46d3de26a4d0a6e544e1f2d6e9bf388d326a2fd10dd48d"
+      "sha256": "7d00dd0cd867779cb9f01dbfbfdff0b47e7884a6fb16f3800fa964912d265bff"
     },
     {
       "path": "docs/json/radarr/cf/hd-bluray-tier-03.json",
@@ -864,7 +864,7 @@
     },
     {
       "path": "docs/json/radarr/cf/uhd-bluray-tier-02.json",
-      "sha256": "4474d539d5a3d94e9b8b18380e207084d180177e981c7be434af2e3012f445e9"
+      "sha256": "afaada29fe9196ec7d6385f9469093d30740606f6bb94e7e69c08587260c55ff"
     },
     {
       "path": "docs/json/radarr/cf/uhd-bluray-tier-03.json",
@@ -1947,8 +1947,8 @@
     "service_alias_rules": 106,
     "token_signal_rules": 49
   },
-  "core_sha256": "b875d27e394885126c1c3a18f0350819506287ef6778474fab72012d826830e0",
-  "detection_sha256": "ac97414a2049a8762c3e7fbc950b31bd64b72b51715b2bb8937e66b34c487260",
+  "core_sha256": "02c8ab57af00330b650ea570ee8aee1bf80ddc3ecbee5d2dac63d47c02ff72ef",
+  "detection_sha256": "bfd3dbee8d23fb56e4510197299b3e5daa7790ed3a8150a4338511272d759c40",
   "ignored_records": [
     "docs/json/radarr/cf/amzn.json:WEBDL:requires_positive_title",
     "docs/json/radarr/cf/amzn.json:WEBRIP:requires_positive_title",

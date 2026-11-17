@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_revision": "750c31d44aa132c13425daa9c1ea5563624b618e",
+  "source_revision": "f91330331d83897d588c4248158c6317e007988d",
   "files": [
     {
       "path": "docs/json/guide-only/language-german-and-original.json",
@@ -13473,8 +13473,8 @@
     },
     {
       "path": "docs/json/radarr/cf/hd-bluray-tier-02.json",
-      "sha256": "e1b701f088e3eaab9d46d3de26a4d0a6e544e1f2d6e9bf388d326a2fd10dd48d",
-      "canonical_sha256": "62b2256e51d7d519a9bda27b262498f1895b630d271a6ffe8c414863addd8f78",
+      "sha256": "7d00dd0cd867779cb9f01dbfbfdff0b47e7884a6fb16f3800fa964912d265bff",
+      "canonical_sha256": "f95949c387f91a781bde5c40482daed53474de2ad296e310a269e408e8092d03",
       "records": [
         {
           "name": "HD Bluray Tier 02",
@@ -13586,6 +13586,15 @@
               "negate": false,
               "fields": {
                 "value": "^(sbR)$"
+              }
+            },
+            {
+              "name": "SoLaR",
+              "implementation": "ReleaseGroupSpecification",
+              "required": false,
+              "negate": false,
+              "fields": {
+                "value": "^(SoLaR)$"
               }
             }
           ]
@@ -18425,8 +18434,8 @@
     },
     {
       "path": "docs/json/radarr/cf/uhd-bluray-tier-02.json",
-      "sha256": "4474d539d5a3d94e9b8b18380e207084d180177e981c7be434af2e3012f445e9",
-      "canonical_sha256": "447de4b8bce9f73b6a5eaccf0f24290effd7594ebe1c301192f7d3e8c28eaad2",
+      "sha256": "afaada29fe9196ec7d6385f9469093d30740606f6bb94e7e69c08587260c55ff",
+      "canonical_sha256": "19a24cbcf798ba605e470e6cd18eed64ed5c8465387c1a79a4b98db84ae8c46f",
       "records": [
         {
           "name": "UHD Bluray Tier 02",
@@ -18501,6 +18510,15 @@
               "negate": false,
               "fields": {
                 "value": "^(RandomBytes)$"
+              }
+            },
+            {
+              "name": "SoLaR",
+              "implementation": "ReleaseGroupSpecification",
+              "required": false,
+              "negate": false,
+              "fields": {
+                "value": "^(SoLaR)$"
               }
             }
           ]
