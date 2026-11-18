@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_revision": "f91330331d83897d588c4248158c6317e007988d",
+  "source_revision": "0ecc2efc9f2434e2390c30aa75805cf233e785dc",
   "input_files": [
     {
       "path": "docs/json/guide-only/language-german-and-original.json",
@@ -940,7 +940,7 @@
     },
     {
       "path": "docs/json/radarr/cf/web-tier-03.json",
-      "sha256": "531a3ca1f1282fb395c2a9a2890c775ef8fec724b62f72ed1af54e5aca862b37"
+      "sha256": "519cee0615d13cce3530f1cf18d35c9eac9b460df5385131e5ba00f74b1d45af"
     },
     {
       "path": "docs/json/radarr/cf/webdl-boost.json",
@@ -1947,8 +1947,8 @@
     "service_alias_rules": 106,
     "token_signal_rules": 49
   },
-  "core_sha256": "02c8ab57af00330b650ea570ee8aee1bf80ddc3ecbee5d2dac63d47c02ff72ef",
-  "detection_sha256": "bfd3dbee8d23fb56e4510197299b3e5daa7790ed3a8150a4338511272d759c40",
+  "core_sha256": "a608eef74e7f657da5d72f48b5c49186979abd3b1d6ca80a98ef35473d484068",
+  "detection_sha256": "eec7cea0d24420f1097ad63d6053b102c5278c8879bce1301a2923da8f75474a",
   "ignored_records": [
     "docs/json/radarr/cf/amzn.json:WEBDL:requires_positive_title",
     "docs/json/radarr/cf/amzn.json:WEBRIP:requires_positive_title",
