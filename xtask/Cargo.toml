@@ -23,7 +23,7 @@ toml_edit = "0.25"
 futures = { version = "0.3", default-features = false, features = ["executor"] }
 # wasmtime's defaults minus `cache`: nothing here uses the on-disk compile
 # cache, and it pulls in zstd 0.13, which RustSec flags.
-wasmtime = { version = "~50.0.0", default-features = false, features = [
+wasmtime = { version = "~50.0.3", default-features = false, features = [
     "anyhow",
     "async",
     "backtrace",
@@ -52,14 +52,14 @@ wasmtime = { version = "~50.0.0", default-features = false, features = [
 ] }
 # Preview 2 only: the Preview 1 (`p1`) tier pulled in `wiggle` to run
 # command-model modules, and there are no core-module plugin artifacts left.
-wasmtime-wasi = { version = "~50.0.0", default-features = false, features = ["p2"] }
+wasmtime-wasi = { version = "~50.0.3", default-features = false, features = ["p2"] }
 zstd = "0.14"
 
 [dev-dependencies]
-aws-lc-sys = "0.45"
+aws-lc-sys = "0.47"
 crc32fast = "1"
-sevenz-rust2 = { version = "0.22", default-features = false, features = ["compress"] }
-zip = { version = "9.0.4", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+sevenz-rust2 = { version = "0.25", default-features = false, features = ["compress"] }
+zip = { version = "9.8.1", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 
 [profile.xtask-release]
 inherits = "dev"

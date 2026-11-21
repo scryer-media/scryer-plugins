@@ -1,6 +1,6 @@
 [package]
 name = "archive-extraction-archive-extractor"
-version = "1.2.2"
+version = "1.2.3"
 edition = "2024"
 autolib = false
 license-file = "LICENSE"
@@ -25,34 +25,34 @@ path = "src/lib.rs"
 # since that crate checksums through `lzma_turbo::crc`. The SHA-256 check (type 10) takes
 # RustCrypto, because the default AWS-LC backend is C and wasm has no
 # toolchain for it.
-lzma-turbo = { version = "0.10.2", default-features = false, features = ["std", "asm", "crc", "crc-host", "native-crypto", "xz"] }
-par2-rs = { version = "0.10.13", default-features = false, features = ["crypto-rust"] }
-scryer-plugin-sdk = "3.18.0"
+lzma-turbo = { version = "0.12.1", default-features = false, features = ["std", "asm", "crc", "crc-host", "native-crypto", "xz"] }
+par2-rs = { version = "0.13.1", default-features = false, features = ["crypto-rust"] }
+scryer-plugin-sdk = "3.20.0"
 serde_json = "1"
 # `crypto-host` hands 7z's bulk AES-256-CBC decrypt to the world's `crypto`
 # import, the same seam unrar-rs uses. It is inert off wasm32, so native builds
 # take the RustCrypto backend below instead.
-sevenz-turbo = { version = "0.29.3", default-features = false, features = ["aes256", "bzip2", "crypto-host", "deflate", "ppmd"] }
-unrar-rs = { version = "0.14.1", default-features = false, features = ["crypto-host", "crc-host"] }
-wit-bindgen = "0.62"
-zip = { version = "=9.0.5", default-features = false, features = ["aes-crypto", "deflate-flate2-zlib-rs"] }
+sevenz-turbo = { version = "0.30.4", default-features = false, features = ["aes256", "bzip2", "crypto-host", "deflate", "ppmd"] }
+unrar-rs = { version = "0.16.8", default-features = false, features = ["crypto-host", "crc-host"] }
+wit-bindgen = "0.63"
+zip = { version = "=9.8.1", default-features = false, features = ["aes-crypto", "deflate-flate2-zlib-rs"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-sevenz-turbo = { version = "0.29.3", default-features = false, features = ["native-crypto"] }
+sevenz-turbo = { version = "0.30.4", default-features = false, features = ["native-crypto"] }
 
 [dev-dependencies]
-aws-lc-sys = "0.46"
+aws-lc-sys = "0.47"
 # The conformance harness serves the 1.1.0 catalog `crc` import with the same
 # backend the Scryer host uses.
 crc-fast = { version = "1.10.0", default-features = false, features = ["std"] }
 crc32fast = "1"
-par2-rs = "0.10.13"
-lzma-turbo = { version = "0.10.2", default-features = false, features = ["enc"] }
-sevenz-turbo = { version = "0.29.3", default-features = false, features = ["compress"] }
+par2-rs = "0.13.1"
+lzma-turbo = { version = "0.12.1", default-features = false, features = ["enc"] }
+sevenz-turbo = { version = "0.30.4", default-features = false, features = ["compress"] }
 tempfile = "3"
 # wasmtime's defaults minus `cache`: nothing here uses the on-disk compile
 # cache, and it pulls in zstd 0.13, which RustSec flags.
-wasmtime = { version = "~50.0.0", default-features = false, features = [
+wasmtime = { version = "~50.0.3", default-features = false, features = [
     "anyhow",
     "async",
     "backtrace",
@@ -79,15 +79,7 @@ wasmtime = { version = "~50.0.0", default-features = false, features = [
     "compile-time-builtins",
     "wit-parser",
 ] }
-wasmtime-wasi = "~50.0.0"
-
-# zip 9 depends on typed-path, whose 0.12.3 release enables
-# `#![feature(wasip2)]` unconditionally on wasm32-wasip2 and so fails on the
-# pinned stable toolchain. This pins typed-path to upstream main plus
-# chipsenkbeil/typed-path#72, which makes that feature opt-in. Drop the patch
-# once a typed-path release includes the fix.
-[patch.crates-io]
-typed-path = { git = "https://github.com/drarijitdas/typed-path", rev = "aa2d542688a1f9feb1edcc74cafa7239dfb4b20e" }
+wasmtime-wasi = "~50.0.3"
 
 [profile.plugin-release]
 inherits = "release"
