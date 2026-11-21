@@ -137,6 +137,9 @@ enum State {
     Repairable,
     InsufficientRecoveryData,
     ResourceLimited,
+    /// The set names files it carries no File Description packet for, so
+    /// their names, lengths and hashes are unknown and nothing can be proven.
+    IncompleteMetadata,
 }
 
 /// What a recovery set turns out to protect.
@@ -183,8 +186,9 @@ pub(crate) fn prepare_for_extraction(
     match placement.state {
         // par2-rs could not finish within its own budget. The host warns and
         // extracts anyway rather than failing an archive that may well be
-        // intact; do the same.
-        State::ResourceLimited => return Par2Plan::NoRecoverySet,
+        // intact; do the same. A set missing File Description packets cannot
+        // be verified or repaired either, and is treated the same way.
+        State::ResourceLimited | State::IncompleteMetadata => return Par2Plan::NoRecoverySet,
         State::InsufficientRecoveryData => {
             return Par2Plan::Complete(Box::new(failed_message(
                 "par2_insufficient_recovery",
@@ -366,6 +370,10 @@ pub(crate) fn inspect(source_dir: &Path) -> Option<ArchivePluginProcessResponse>
             ArchivePluginStatus::Ok,
             "PAR2 verification exceeded its resource limits and was not completed".to_string(),
         ),
+        State::IncompleteMetadata => (
+            ArchivePluginStatus::Ok,
+            "PAR2 set is missing file descriptions, so it cannot be verified".to_string(),
+        ),
     };
 
     Some(ArchivePluginProcessResponse {
@@ -493,6 +501,7 @@ fn scan(
         Repairability::Repairable { .. } => State::Repairable,
         Repairability::Insufficient { .. } => State::InsufficientRecoveryData,
         Repairability::ResourceLimited { .. } => State::ResourceLimited,
+        Repairability::IncompleteMetadata { .. } => State::IncompleteMetadata,
     };
 
     Ok(Placement {
@@ -993,6 +1002,12 @@ fn repair_in_place(set: &Par2FileSet, dir: &Path) -> Result<(), Box<ArchivePlugi
                 &format!("PAR2 repair exceeded its resource limits: {reason}"),
             )));
         }
+        Repairability::IncompleteMetadata { .. } => {
+            return Err(Box::new(failed_message(
+                "par2_incomplete_metadata",
+                "PAR2 set is missing file descriptions, so these files cannot be repaired",
+            )));
+        }
         Repairability::Repairable { .. } => {}
     }
 
@@ -1292,6 +1307,94 @@ mod tests {
             assert_eq!(error.error_code.as_deref(), Some("par2_unsafe_source_path"));
             assert_eq!(fs::read(actual).unwrap(), b"original");
             assert_eq!(fs::read(nested).unwrap(), b"unrelated");
+        }
+    }
+
+    /// Drop every File Description packet for `filename` from a PAR2 file,
+    /// leaving the Main packet still naming that file's id.
+    fn strip_file_descriptions(par2: &Path, filename: &str) {
+        const HEADER: usize = 64;
+        const FILE_DESC: &[u8; 16] = b"PAR 2.0\0FileDesc";
+        // File id, full MD5, 16 KiB MD5 and length precede the name.
+        const NAME_OFFSET: usize = HEADER + 16 + 16 + 16 + 8;
+        let bytes = fs::read(par2).unwrap();
+        let mut kept = Vec::with_capacity(bytes.len());
+        let mut offset = 0;
+        while offset < bytes.len() {
+            let len =
+                u64::from_le_bytes(bytes[offset + 8..offset + 16].try_into().unwrap()) as usize;
+            let packet = &bytes[offset..offset + len];
+            let description_of_file = &packet[48..64] == FILE_DESC
+                && packet[NAME_OFFSET..]
+                    .split(|byte| *byte == 0)
+                    .next()
+                    .is_some_and(|name| name == filename.as_bytes());
+            if !description_of_file {
+                kept.extend_from_slice(packet);
+            }
+            offset += len;
+        }
+        assert!(
+            kept.len() < bytes.len(),
+            "no description stripped from {}",
+            par2.display()
+        );
+        fs::write(par2, kept).unwrap();
+    }
+
+    #[test]
+    fn a_set_missing_file_descriptions_is_never_reported_verified() {
+        use par2_rs::{BlockSizing, Par2Creator, Par2CreatorOptions, RecoveryAmount};
+
+        let source = tempfile::tempdir().unwrap();
+        let inputs = ["first.bin", "second.bin"].map(|name| {
+            let path = source.path().join(name);
+            fs::write(&path, vec![name.len() as u8; 9_000]).unwrap();
+            path
+        });
+        let mut options = Par2CreatorOptions::with_output(
+            source.path().join("recovery"),
+            Some(source.path().to_path_buf()),
+            inputs.to_vec(),
+        );
+        options.block_sizing = BlockSizing::Bytes(4_096);
+        options.recovery_amount = RecoveryAmount::Count(2);
+        let creator = Par2Creator::new(options);
+        creator.create(&creator.plan().unwrap()).unwrap();
+
+        let recovery_files = find_recovery_files(source.path()).unwrap();
+        for par2 in &recovery_files {
+            strip_file_descriptions(par2, "second.bin");
+        }
+
+        let set = load_set(&recovery_files).unwrap();
+        let placement = scan(source.path(), &set).unwrap();
+        assert!(placement.state == State::IncompleteMetadata);
+
+        // Nothing can be proven, so extraction goes ahead as if no set were
+        // present, the same as a resource-limited verification.
+        let output = tempfile::tempdir().unwrap();
+        assert!(matches!(
+            prepare_for_extraction(
+                source.path(),
+                Path::new("first.bin"),
+                ArchivePluginFormat::Zip,
+                output.path(),
+            ),
+            Par2Plan::NoRecoverySet
+        ));
+        assert_eq!(fs::read_dir(output.path()).unwrap().count(), 0);
+
+        let inspected = inspect(source.path()).unwrap();
+        assert!(matches!(inspected.status, ArchivePluginStatus::Ok));
+
+        let error = repair_in_place(&set, source.path()).unwrap_err();
+        assert_eq!(
+            error.error_code.as_deref(),
+            Some("par2_incomplete_metadata")
+        );
+        for input in &inputs {
+            assert_eq!(fs::read(input).unwrap().len(), 9_000);
         }
     }
 
