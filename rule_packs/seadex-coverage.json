@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.53",
-  "snapshot_sha256": "b3d098fafbd958718045690221f2bf35642a8f369ab017fd64edf0bb0c45d36c",
+  "pack_version": "1.0.54",
+  "snapshot_sha256": "5e3bd814b950129a303c086d8213298d6121196bddc747f3fb4d5fc2107c2284",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -761,17 +761,9 @@
       "alias_sources": 0,
       "entry_id": "0ab2zhebxmtnj62",
       "file_sources": 52,
-      "release_id": "pihrwu54qjtqrgv",
+      "release_id": "nougq730x30dymx",
       "strict_keys": 52,
-      "tolerant_keys": 0
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "0ab2zhebxmtnj62",
-      "file_sources": 52,
-      "release_id": "vqop6xax01uktw1",
-      "strict_keys": 52,
-      "tolerant_keys": 0
+      "tolerant_keys": 52
     },
     {
       "alias_sources": 0,
@@ -1912,14 +1904,6 @@
     {
       "alias_sources": 0,
       "entry_id": "0wqjz20hasey2qv",
-      "file_sources": 12,
-      "release_id": "jap54av8xiabetz",
-      "strict_keys": 12,
-      "tolerant_keys": 11
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "0wqjz20hasey2qv",
       "file_sources": 14,
       "release_id": "n7603t89t4i4abw",
       "strict_keys": 14,
@@ -2785,15 +2769,7 @@
       "alias_sources": 0,
       "entry_id": "1i6nxa1h3ry1sp9",
       "file_sources": 25,
-      "release_id": "n9hf89crxsrspor",
-      "strict_keys": 25,
-      "tolerant_keys": 25
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "1i6nxa1h3ry1sp9",
-      "file_sources": 25,
-      "release_id": "x8mscglekujpmlp",
+      "release_id": "wi5mznxnylv64w3",
       "strict_keys": 25,
       "tolerant_keys": 25
     },
@@ -4746,6 +4722,14 @@
       "entry_id": "2ojx91sf26jgm9h",
       "file_sources": 24,
       "release_id": "iy2h1u19xmn30h8",
+      "strict_keys": 24,
+      "tolerant_keys": 24
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "2ojx91sf26jgm9h",
+      "file_sources": 24,
+      "release_id": "s16v69ele7zphoe",
       "strict_keys": 24,
       "tolerant_keys": 24
     },
@@ -7039,6 +7023,14 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "42yv7resprho82h",
+      "file_sources": 25,
+      "release_id": "qglhe2luju1gyqz",
+      "strict_keys": 25,
+      "tolerant_keys": 25
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "44kroowow7pz2vh",
       "file_sources": 1,
       "release_id": "0v0pr2lg9u3sw7v",
@@ -7738,14 +7730,6 @@
       "entry_id": "4g0fug3zz6nades",
       "file_sources": 12,
       "release_id": "9o0nesh5asmxkez",
-      "strict_keys": 12,
-      "tolerant_keys": 12
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "4g0fug3zz6nades",
-      "file_sources": 12,
-      "release_id": "bgynnlptjdnh334",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -9648,14 +9632,6 @@
     {
       "alias_sources": 0,
       "entry_id": "5eam84tl9z2p9ci",
-      "file_sources": 14,
-      "release_id": "oxcvpebs44cibhq",
-      "strict_keys": 14,
-      "tolerant_keys": 14
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "5eam84tl9z2p9ci",
       "file_sources": 12,
       "release_id": "p0r0944kffnqiju",
       "strict_keys": 12,
@@ -9671,25 +9647,9 @@
     },
     {
       "alias_sources": 0,
-      "entry_id": "5eam84tl9z2p9ci",
-      "file_sources": 14,
-      "release_id": "wkceb3lp1e6th7j",
-      "strict_keys": 14,
-      "tolerant_keys": 14
-    },
-    {
-      "alias_sources": 0,
       "entry_id": "5ezurgg4wxis0v9",
       "file_sources": 12,
       "release_id": "g7ibhyqbla0y6yw",
-      "strict_keys": 12,
-      "tolerant_keys": 12
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "5ezurgg4wxis0v9",
-      "file_sources": 12,
-      "release_id": "i0hedtiha4jk87g",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -10596,14 +10556,6 @@
       "release_id": "ue7kejgzmx9mlpu",
       "strict_keys": 30,
       "tolerant_keys": 30
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "5t65u73hqzvx7vx",
-      "file_sources": 1,
-      "release_id": "12wc5cyjo3ccryw",
-      "strict_keys": 1,
-      "tolerant_keys": 1
     },
     {
       "alias_sources": 0,
@@ -11562,14 +11514,6 @@
       "entry_id": "6di13yt0fq2spxb",
       "file_sources": 13,
       "release_id": "9l0c597km7m7oab",
-      "strict_keys": 13,
-      "tolerant_keys": 13
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "6di13yt0fq2spxb",
-      "file_sources": 13,
-      "release_id": "bhgahjh463a9z1v",
       "strict_keys": 13,
       "tolerant_keys": 13
     },
@@ -12716,14 +12660,6 @@
       "release_id": "jvj78txdzenlked",
       "strict_keys": 25,
       "tolerant_keys": 25
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "6yr95a06s2ztb9r",
-      "file_sources": 12,
-      "release_id": "aidyiakag1cfpxd",
-      "strict_keys": 12,
-      "tolerant_keys": 12
     },
     {
       "alias_sources": 0,
@@ -14545,14 +14481,6 @@
       "alias_sources": 0,
       "entry_id": "83s9b8h5b09tvk4",
       "file_sources": 13,
-      "release_id": "fd1z4mglpel2wup",
-      "strict_keys": 13,
-      "tolerant_keys": 13
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "83s9b8h5b09tvk4",
-      "file_sources": 13,
       "release_id": "ptn97zwi16ac8is",
       "strict_keys": 13,
       "tolerant_keys": 0
@@ -14988,14 +14916,6 @@
       "release_id": "a7ykd1i43iqpal6",
       "strict_keys": 12,
       "tolerant_keys": 0
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "89vfe1ci4r3b6cs",
-      "file_sources": 12,
-      "release_id": "b0ewqbhcttj989t",
-      "strict_keys": 12,
-      "tolerant_keys": 12
     },
     {
       "alias_sources": 0,
@@ -16004,6 +15924,22 @@
       "release_id": "t7ip0ln5beb25s7",
       "strict_keys": 13,
       "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "8xvy77oljyeutwl",
+      "file_sources": 1,
+      "release_id": "eu8wonxakgutf6e",
+      "strict_keys": 1,
+      "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "8xvy77oljyeutwl",
+      "file_sources": 1,
+      "release_id": "zzvthujvc6mi14g",
+      "strict_keys": 1,
+      "tolerant_keys": 0
     },
     {
       "alias_sources": 0,
@@ -18105,7 +18041,23 @@
       "alias_sources": 0,
       "entry_id": "a1ro5ezt0wjvb4k",
       "file_sources": 12,
+      "release_id": "gj7b2p6gxxhyccn",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "a1ro5ezt0wjvb4k",
+      "file_sources": 12,
       "release_id": "np34pzggx7wnfxz",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "a1ro5ezt0wjvb4k",
+      "file_sources": 12,
+      "release_id": "z7ryv5shcbhm3yp",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -19689,7 +19641,7 @@
       "alias_sources": 0,
       "entry_id": "b4h796sgp6s8mrg",
       "file_sources": 25,
-      "release_id": "901zjf1ciqs4ten",
+      "release_id": "49qru8fnpbmpn6v",
       "strict_keys": 25,
       "tolerant_keys": 25
     },
@@ -19705,7 +19657,7 @@
       "alias_sources": 0,
       "entry_id": "b4h796sgp6s8mrg",
       "file_sources": 29,
-      "release_id": "vdv1u4tqx5k2qt4",
+      "release_id": "sdvw8zg8m7oqnjd",
       "strict_keys": 29,
       "tolerant_keys": 29
     },
@@ -26604,14 +26556,6 @@
       "release_id": "t7or5e3kzvub9z0",
       "strict_keys": 14,
       "tolerant_keys": 14
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "fa3q2l0t0xs2l3c",
-      "file_sources": 12,
-      "release_id": "15me9i02as5inyg",
-      "strict_keys": 12,
-      "tolerant_keys": 12
     },
     {
       "alias_sources": 0,
@@ -37633,6 +37577,14 @@
       "alias_sources": 0,
       "entry_id": "l8yg8fhe3igwbig",
       "file_sources": 8,
+      "release_id": "kcmk2x96bk7nv8r",
+      "strict_keys": 8,
+      "tolerant_keys": 8
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "l8yg8fhe3igwbig",
+      "file_sources": 8,
       "release_id": "kkiwf6yb7btt2x6",
       "strict_keys": 8,
       "tolerant_keys": 8
@@ -39202,14 +39154,6 @@
       "entry_id": "lvs2o2z2hu6gtyh",
       "file_sources": 12,
       "release_id": "k493fxup91ygcaf",
-      "strict_keys": 12,
-      "tolerant_keys": 12
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "lvs2o2z2hu6gtyh",
-      "file_sources": 12,
-      "release_id": "l2bc2b4jguhqh8w",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -41177,14 +41121,6 @@
       "alias_sources": 0,
       "entry_id": "muwybgzewq5iej2",
       "file_sources": 16,
-      "release_id": "3g6zibshzk2i372",
-      "strict_keys": 16,
-      "tolerant_keys": 16
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "muwybgzewq5iej2",
-      "file_sources": 16,
       "release_id": "53xilsc9rxzl36w",
       "strict_keys": 16,
       "tolerant_keys": 16
@@ -41410,14 +41346,6 @@
       "entry_id": "mzh6q0pirf1lceg",
       "file_sources": 12,
       "release_id": "a0vocifunjhts0y",
-      "strict_keys": 12,
-      "tolerant_keys": 12
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "mzh6q0pirf1lceg",
-      "file_sources": 12,
-      "release_id": "mbpfdq64fiesf8x",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -42274,14 +42202,6 @@
       "entry_id": "nkoo3v5e071tfeq",
       "file_sources": 12,
       "release_id": "qbigknrhtps7z4u",
-      "strict_keys": 12,
-      "tolerant_keys": 12
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "nkoo3v5e071tfeq",
-      "file_sources": 12,
-      "release_id": "sd5u4ebgajkuybr",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -50056,6 +49976,14 @@
     {
       "alias_sources": 0,
       "entry_id": "rklqg1sg95nn8kk",
+      "file_sources": 24,
+      "release_id": "pxg347rmz96w5qa",
+      "strict_keys": 24,
+      "tolerant_keys": 24
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "rklqg1sg95nn8kk",
       "file_sources": 30,
       "release_id": "tkinbst6ss5rrbh",
       "strict_keys": 30,
@@ -51314,6 +51242,14 @@
       "entry_id": "sdnjjqkrk5x6spm",
       "file_sources": 25,
       "release_id": "bo6jr5r33y6nu4r",
+      "strict_keys": 25,
+      "tolerant_keys": 23
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "sdnjjqkrk5x6spm",
+      "file_sources": 25,
+      "release_id": "rv3vk90hiw1o7k3",
       "strict_keys": 25,
       "tolerant_keys": 23
     },
@@ -55488,14 +55424,6 @@
     {
       "alias_sources": 0,
       "entry_id": "uoeye1cpfcaaipq",
-      "file_sources": 13,
-      "release_id": "9y2hg6vesoyd15b",
-      "strict_keys": 13,
-      "tolerant_keys": 13
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "uoeye1cpfcaaipq",
       "file_sources": 15,
       "release_id": "a5zoau5qsxwirfj",
       "strict_keys": 15,
@@ -56172,14 +56100,6 @@
       "release_id": "7qr8bo1jtm2kpdy",
       "strict_keys": 12,
       "tolerant_keys": 11
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "v26bf5jhmya0dcn",
-      "file_sources": 12,
-      "release_id": "p832y2s5xhkmodp",
-      "strict_keys": 12,
-      "tolerant_keys": 12
     },
     {
       "alias_sources": 0,
@@ -58418,14 +58338,6 @@
       "entry_id": "wd1ao50nmh50ovo",
       "file_sources": 12,
       "release_id": "509ty22s9259sx5",
-      "strict_keys": 12,
-      "tolerant_keys": 12
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "wd1ao50nmh50ovo",
-      "file_sources": 12,
-      "release_id": "9aeo2byueyzzrsz",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -65910,630 +65822,6 @@
       "source_name": "Extras/[GetItTwisted] Bodacious Space Pirates - NCOP1b [BD 1080p AVC Opus] [6DD9D859].mkv"
     },
     {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 01.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 02.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 03.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 04.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 05.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 06.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 07.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 08.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 09.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 10.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 11.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 12.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 13.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 14.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 15.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 16.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 17.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 18.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 19.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 20.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 21.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 22.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 23.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 24.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 25.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 26.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 27.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 28.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 29.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 30.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 31.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 32.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 33.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 34.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 35.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 36.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 37.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 38.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 39.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 40.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 41.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 42.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 43.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 44.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 45.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 46.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 47.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 48.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 49.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 50.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 51.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "pihrwu54qjtqrgv",
-      "source_name": "Armored Trooper Votoms - 52.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 01.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 02.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 03.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 04.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 05.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 06.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 07.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 08.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 09.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 10.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 11.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 12.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 13.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 14.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 15.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 16.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 17.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 18.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 19.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 20.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 21.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 22.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 23.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 24.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 25.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 26.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 27.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 28.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 29.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 30.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 31.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 32.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 33.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 34.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 35.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 36.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 37.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 38.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 39.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 40.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 41.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 42.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 43.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 44.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 45.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 46.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 47.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 48.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 49.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 50.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 51.mkv"
-    },
-    {
-      "entry_id": "0ab2zhebxmtnj62",
-      "reason": "source_missing_edge_group_for_tolerant_match",
-      "release_id": "vqop6xax01uktw1",
-      "source_name": "Armored Trooper Votoms - 52.mkv"
-    },
-    {
       "entry_id": "0b41pfs26sm1zvy",
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "424rg44s01ox7nv",
@@ -69220,12 +68508,6 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "zh4e9l7g81jj3ll",
       "source_name": "Harukana Receive PV2 [1080p_Hi10P_Blu-Ray_FLAC] [Hark0n] [C76BE496].mkv"
-    },
-    {
-      "entry_id": "0wqjz20hasey2qv",
-      "reason": "non_ascii_tolerant_evidence",
-      "release_id": "jap54av8xiabetz",
-      "source_name": "The.Demon.Girl.Next.Door.S02E04.A.New.Species.Discovered!.The.Town.Café.Is.a.Demon.Lair!.1080p.BluRay.REMUX.AVC.FLAC.2.0-NAN0.mkv"
     },
     {
       "entry_id": "0wqjz20hasey2qv",
@@ -95178,18 +94460,6 @@
       "source_name": "18if.S01E10.Dream.Dimension.α.1080p.BluRay.REMUX.AVC.FLAC.2.0-NAN0.mkv"
     },
     {
-      "entry_id": "4g0fug3zz6nades",
-      "reason": "non_release_file",
-      "release_id": "bgynnlptjdnh334",
-      "source_name": "Extras/Date.A.Live.S05.Ending.1080p.BluRay.Remux.FLAC2.0.H.264-CRUCiBLE.mkv"
-    },
-    {
-      "entry_id": "4g0fug3zz6nades",
-      "reason": "non_release_file",
-      "release_id": "bgynnlptjdnh334",
-      "source_name": "Extras/Date.A.Live.S05.Opening.1080p.BluRay.Remux.FLAC2.0.H.264-CRUCiBLE.mkv"
-    },
-    {
       "entry_id": "4hqhfk16tzeajtz",
       "reason": "non_release_file",
       "release_id": "tm9bw4xny1up1au",
@@ -111292,6 +110562,18 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "nni1l6zrrfmokb9",
       "source_name": "Steins.Gate.0.S00E01.1080p.BluRay.10bit.x265.FLAC.Dual.Audio-QM.[9FB40FC0].mkv"
+    },
+    {
+      "entry_id": "8xvy77oljyeutwl",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "eu8wonxakgutf6e",
+      "source_name": "Absolute.Whiteness.Magical.Girl.2012.BluRay.1080p.AVC.Opus.2.0.mkv"
+    },
+    {
+      "entry_id": "8xvy77oljyeutwl",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "zzvthujvc6mi14g",
+      "source_name": "Absolute.Whiteness.Magical.Girl.2012.BluRay.1080p.AVC.Opus.2.0.mkv"
     },
     {
       "entry_id": "8xwllylwp9jw1ya",
@@ -152218,30 +151500,6 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "d9f5xut3sszoxj1",
       "source_name": "NCOP.mkv"
-    },
-    {
-      "entry_id": "fa3q2l0t0xs2l3c",
-      "reason": "non_release_file",
-      "release_id": "15me9i02as5inyg",
-      "source_name": "Extras/KonoSuba.An.Explosion.on.This.Wonderful.World.NCED01.1080p.BluRay.HEVC.Opus2.0-DemiHuman.mkv"
-    },
-    {
-      "entry_id": "fa3q2l0t0xs2l3c",
-      "reason": "non_release_file",
-      "release_id": "15me9i02as5inyg",
-      "source_name": "Extras/KonoSuba.An.Explosion.on.This.Wonderful.World.NCED02.1080p.BluRay.HEVC.Opus2.0-DemiHuman.mkv"
-    },
-    {
-      "entry_id": "fa3q2l0t0xs2l3c",
-      "reason": "non_release_file",
-      "release_id": "15me9i02as5inyg",
-      "source_name": "Extras/KonoSuba.An.Explosion.on.This.Wonderful.World.NCOP01.1080p.BluRay.HEVC.Opus2.0-DemiHuman.mkv"
-    },
-    {
-      "entry_id": "fa3q2l0t0xs2l3c",
-      "reason": "non_release_file",
-      "release_id": "15me9i02as5inyg",
-      "source_name": "Extras/KonoSuba.An.Explosion.on.This.Wonderful.World.NCOP02.1080p.BluRay.HEVC.Opus2.0-DemiHuman.mkv"
     },
     {
       "entry_id": "faamxe9cgjey35t",
@@ -200466,6 +199724,30 @@
       "source_name": "Shinkon Gattai Godannar!! - OP 4.mkv"
     },
     {
+      "entry_id": "l8yg8fhe3igwbig",
+      "reason": "non_release_file",
+      "release_id": "kcmk2x96bk7nv8r",
+      "source_name": "Extras/[Moxie] KanColle - S02NCED01 (BD Remux 1080p FLAC 2.0) [07752660].mkv"
+    },
+    {
+      "entry_id": "l8yg8fhe3igwbig",
+      "reason": "non_release_file",
+      "release_id": "kcmk2x96bk7nv8r",
+      "source_name": "Extras/[Moxie] KanColle - S02NCED02 (BD Remux 1080p FLAC 2.0) [4D66BD96].mkv"
+    },
+    {
+      "entry_id": "l8yg8fhe3igwbig",
+      "reason": "non_release_file",
+      "release_id": "kcmk2x96bk7nv8r",
+      "source_name": "Extras/[Moxie] KanColle - S02NCED03 (BD Remux 1080p FLAC 2.0) [F2917E4F].mkv"
+    },
+    {
+      "entry_id": "l8yg8fhe3igwbig",
+      "reason": "non_release_file",
+      "release_id": "kcmk2x96bk7nv8r",
+      "source_name": "Extras/[Moxie] KanColle - S02NCOP01 (BD Remux 1080p FLAC 2.0) [3A53C55C].mkv"
+    },
+    {
       "entry_id": "lai5gh48m8t6r3e",
       "reason": "non_release_file",
       "release_id": "ms16bph7kr0vzgu",
@@ -208084,30 +207366,6 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "awe5rvqc93gpwia",
       "source_name": "NCOP - 02.mkv"
-    },
-    {
-      "entry_id": "muwybgzewq5iej2",
-      "reason": "non_release_file",
-      "release_id": "3g6zibshzk2i372",
-      "source_name": "Season 3/Extras/NCED 01 (BD Remux 1080p AVC FLAC) [PMR].mkv"
-    },
-    {
-      "entry_id": "muwybgzewq5iej2",
-      "reason": "non_release_file",
-      "release_id": "3g6zibshzk2i372",
-      "source_name": "Season 3/Extras/NCED 02 (BD Remux 1080p AVC FLAC) [PMR].mkv"
-    },
-    {
-      "entry_id": "muwybgzewq5iej2",
-      "reason": "non_release_file",
-      "release_id": "3g6zibshzk2i372",
-      "source_name": "Season 3/Extras/NCOP 01 (BD Remux 1080p AVC FLAC) [PMR].mkv"
-    },
-    {
-      "entry_id": "muwybgzewq5iej2",
-      "reason": "non_release_file",
-      "release_id": "3g6zibshzk2i372",
-      "source_name": "Season 3/Extras/NCOP 02 (BD Remux 1080p AVC FLAC) [PMR].mkv"
     },
     {
       "entry_id": "mxchzoq033pxfrs",
@@ -248154,6 +247412,18 @@
       "source_name": "Phi-Brain.Puzzle.of.God.S03E12.Is.That.What.You.Thought.I’d.Say.1080p.BluRay.REMUX.AVC.FLAC.2.0-NAN0.mkv"
     },
     {
+      "entry_id": "sdnjjqkrk5x6spm",
+      "reason": "non_ascii_tolerant_evidence",
+      "release_id": "rv3vk90hiw1o7k3",
+      "source_name": "Phi-Brain.Puzzle.of.God.S03E01.Rätsel.1080p.BluRay.REMUX.AVC.FLAC.2.0-NAN0.mkv"
+    },
+    {
+      "entry_id": "sdnjjqkrk5x6spm",
+      "reason": "non_ascii_tolerant_evidence",
+      "release_id": "rv3vk90hiw1o7k3",
+      "source_name": "Phi-Brain.Puzzle.of.God.S03E12.Is.That.What.You.Thought.I’d.Say.1080p.BluRay.REMUX.AVC.FLAC.2.0-NAN0.mkv"
+    },
+    {
       "entry_id": "se08ffvxnxz8v5q",
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "iwjjgigv46gvo22",
@@ -260376,18 +259646,6 @@
       "source_name": "Extras/[Recluse] Bocchi the Rock! - NCOP (BD 1080p HEVC Opus 2.0) [973F9709].mkv"
     },
     {
-      "entry_id": "uoeye1cpfcaaipq",
-      "reason": "non_release_file",
-      "release_id": "9y2hg6vesoyd15b",
-      "source_name": "Extras/[WAP] Solo Leveling - S02 NCED (BD Remux 1080p AVC FLAC).mkv"
-    },
-    {
-      "entry_id": "uoeye1cpfcaaipq",
-      "reason": "non_release_file",
-      "release_id": "9y2hg6vesoyd15b",
-      "source_name": "Extras/[WAP] Solo Leveling - S02 NCOP (BD Remux 1080p AVC FLAC).mkv"
-    },
-    {
       "entry_id": "utrp8u4kjmoazl2",
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "7m7l0tvr3v09pmq",
@@ -260800,18 +260058,6 @@
       "reason": "source_missing_edge_group_for_tolerant_match",
       "release_id": "7qr8bo1jtm2kpdy",
       "source_name": "NCOP.mkv"
-    },
-    {
-      "entry_id": "v26bf5jhmya0dcn",
-      "reason": "non_release_file",
-      "release_id": "p832y2s5xhkmodp",
-      "source_name": "Extras/Assassins.Pride.S01.NCED.1080p.BluRay.Remux.AVC.FLAC.2.0-CRUCiBLE.mkv"
-    },
-    {
-      "entry_id": "v26bf5jhmya0dcn",
-      "reason": "non_release_file",
-      "release_id": "p832y2s5xhkmodp",
-      "source_name": "Extras/Assassins.Pride.S01.NCOP.1080p.BluRay.Remux.AVC.FLAC.2.0-CRUCiBLE.mkv"
     },
     {
       "entry_id": "v26bf5jhmya0dcn",
@@ -744496,43 +743742,79 @@
   "stale_overrides": [],
   "changes": {
     "entries": {
-      "added": [],
+      "added": [
+        "8xvy77oljyeutwl"
+      ],
       "removed": []
     },
     "releases": {
       "added": [
-        "1ypc1abucce664n",
-        "6zeeje056c3oz5g",
-        "99hzgvacmobclzg",
-        "f5s9ee6d34bvf4j"
+        "49qru8fnpbmpn6v",
+        "eu8wonxakgutf6e",
+        "gj7b2p6gxxhyccn",
+        "kcmk2x96bk7nv8r",
+        "nougq730x30dymx",
+        "pxg347rmz96w5qa",
+        "qglhe2luju1gyqz",
+        "rv3vk90hiw1o7k3",
+        "s16v69ele7zphoe",
+        "sdvw8zg8m7oqnjd",
+        "wi5mznxnylv64w3",
+        "z7ryv5shcbhm3yp",
+        "zzvthujvc6mi14g"
       ],
-      "removed": []
+      "removed": [
+        "12wc5cyjo3ccryw",
+        "15me9i02as5inyg",
+        "3g6zibshzk2i372",
+        "901zjf1ciqs4ten",
+        "9aeo2byueyzzrsz",
+        "9y2hg6vesoyd15b",
+        "aidyiakag1cfpxd",
+        "b0ewqbhcttj989t",
+        "bgynnlptjdnh334",
+        "bhgahjh463a9z1v",
+        "fd1z4mglpel2wup",
+        "i0hedtiha4jk87g",
+        "jap54av8xiabetz",
+        "l2bc2b4jguhqh8w",
+        "mbpfdq64fiesf8x",
+        "n9hf89crxsrspor",
+        "oxcvpebs44cibhq",
+        "p832y2s5xhkmodp",
+        "pihrwu54qjtqrgv",
+        "sd5u4ebgajkuybr",
+        "vdv1u4tqx5k2qt4",
+        "vqop6xax01uktw1",
+        "wkceb3lp1e6th7j",
+        "x8mscglekujpmlp"
+      ]
     }
   },
   "matching": {
     "encoding": {
       "direct_buckets": {
         "bucket_count": 351,
-        "key_count": 21336,
+        "key_count": 21327,
         "max_keys": 230,
-        "mean_keys": 60.78632478632478
+        "mean_keys": 60.76068376068376
       },
-      "direct_entries": 21336,
+      "direct_entries": 21327,
       "route_buckets": 260,
-      "source_bytes": 3044819,
-      "source_lines": 45717,
+      "source_bytes": 3046164,
+      "source_lines": 45700,
       "template_buckets": {
         "bucket_count": 260,
-        "key_count": 6704,
+        "key_count": 6713,
         "max_keys": 124,
-        "mean_keys": 25.784615384615385
+        "mean_keys": 25.81923076923077
       },
-      "template_groups": 6704,
-      "tuple_chunks": 6912
+      "template_groups": 6713,
+      "tuple_chunks": 6923
     },
     "provenance": {
-      "strict_keys": 58084,
-      "tolerant_keys": 47361
+      "strict_keys": 58139,
+      "tolerant_keys": 47467
     },
     "stale_overrides": []
   }
