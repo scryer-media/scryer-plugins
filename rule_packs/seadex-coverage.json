@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.54",
-  "snapshot_sha256": "5e3bd814b950129a303c086d8213298d6121196bddc747f3fb4d5fc2107c2284",
+  "pack_version": "1.0.55",
+  "snapshot_sha256": "80283ec8a7a77d7dc8924395305e7d7b2f3b1e37d2108bc240bacfe44d97101f",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -3185,15 +3185,7 @@
       "alias_sources": 0,
       "entry_id": "1o61s447bz6bonh",
       "file_sources": 2,
-      "release_id": "0xarugbnxcvq3mg",
-      "strict_keys": 2,
-      "tolerant_keys": 2
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "1o61s447bz6bonh",
-      "file_sources": 2,
-      "release_id": "d8f4a8ejuwj7uw3",
+      "release_id": "5shz5hnq0b1b5pl",
       "strict_keys": 2,
       "tolerant_keys": 2
     },
@@ -8418,6 +8410,110 @@
       "entry_id": "4s03c2t3xr389fy",
       "file_sources": 1,
       "release_id": "h9a1dbfu8s8oq6k",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "4s7hrl1442xvsa8",
+      "file_sources": 1,
+      "release_id": "151p1b0kq8apxd5",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "4s7hrl1442xvsa8",
+      "file_sources": 1,
+      "release_id": "9dujm6aff2knj7j",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "4s7hrl1442xvsa8",
+      "file_sources": 1,
+      "release_id": "dww0kyjvt2109xt",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "4s7hrl1442xvsa8",
+      "file_sources": 1,
+      "release_id": "g8mv3fprwemqj65",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "4s7hrl1442xvsa8",
+      "file_sources": 1,
+      "release_id": "icierop1g4tkdoa",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "4s7hrl1442xvsa8",
+      "file_sources": 12,
+      "release_id": "lazs5pyhq0mfje4",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "4s7hrl1442xvsa8",
+      "file_sources": 1,
+      "release_id": "lc7m18u0wbb946s",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "4s7hrl1442xvsa8",
+      "file_sources": 1,
+      "release_id": "mj8r5ijer5ae3wd",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "4s7hrl1442xvsa8",
+      "file_sources": 1,
+      "release_id": "r18mdpup27m5l6n",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "4s7hrl1442xvsa8",
+      "file_sources": 1,
+      "release_id": "x3moxcp7chexojz",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "4s7hrl1442xvsa8",
+      "file_sources": 1,
+      "release_id": "xhsvdpyn3ibktat",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "4s7hrl1442xvsa8",
+      "file_sources": 1,
+      "release_id": "ynqk7spevannt0m",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "4s7hrl1442xvsa8",
+      "file_sources": 1,
+      "release_id": "zmvrywmnj1l01mp",
       "strict_keys": 1,
       "tolerant_keys": 1
     },
@@ -35321,6 +35417,14 @@
       "alias_sources": 0,
       "entry_id": "k30rsge3dovw48j",
       "file_sources": 1,
+      "release_id": "5sfga82hcwt1dka",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "k30rsge3dovw48j",
+      "file_sources": 1,
       "release_id": "60cbe4z4flo9u55",
       "strict_keys": 1,
       "tolerant_keys": 1
@@ -36676,6 +36780,214 @@
       "release_id": "pd6zfnzuh4e4b07",
       "strict_keys": 14,
       "tolerant_keys": 14
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "20hw6zxx7wljfqs",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "2fz7v7ypiqfdy20",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "47j2ix9bs2v8oj7",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "743sue1vse56bo6",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "7r2alvfwk7ruizq",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "8wd2xy8quepj3rx",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "bfnvzqkhmctyu1t",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "cb6oawhdmzam0fe",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "eo47dmgrr82t9sa",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "esn8nbxbbkktgp1",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "fp6a2ruz58fdrap",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "gmwqiqnjqliq8pz",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "hckiwhc59yjgt3j",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "j5bh32tdazi3tzy",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "loiwliyq3xdnqrr",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "lu0mrzu4vywz6hi",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "n0yiyixplb8u2fe",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "p6ddbhgvtc0tn3y",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "qca81po0wa5my6n",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "s41r56ivvj5fhbx",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "s9mcwfrwzvmhtud",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "u6ydnlhqaw4uplx",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "uofsbedb55fxqee",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "wv90nez9o5hdg89",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "x5nncqwjpqqr3bv",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "krr3sqgtzreh9b7",
+      "file_sources": 1,
+      "release_id": "yxuc6cxgaukdlvb",
+      "strict_keys": 1,
+      "tolerant_keys": 1
     },
     {
       "alias_sources": 0,
@@ -53929,7 +54241,7 @@
       "alias_sources": 0,
       "entry_id": "tu41btay8urvzym",
       "file_sources": 12,
-      "release_id": "3dte3k2wll8ii55",
+      "release_id": "4lgutfb1egyxw6p",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -53937,7 +54249,23 @@
       "alias_sources": 0,
       "entry_id": "tu41btay8urvzym",
       "file_sources": 12,
-      "release_id": "72zflrfg5yejgvz",
+      "release_id": "a36objkgvq2c26k",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "tu41btay8urvzym",
+      "file_sources": 12,
+      "release_id": "a5nxi96nlb7tdux",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "tu41btay8urvzym",
+      "file_sources": 12,
+      "release_id": "b6m86ra4jrncazx",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -65130,6 +65458,22 @@
       "entry_id": "zrzx6ohi8cp80cl",
       "file_sources": 1,
       "release_id": "vo0t4cho9yv3wvv",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "zsrokjwehgz2g7m",
+      "file_sources": 1,
+      "release_id": "3oxr1q1oev8osgs",
+      "strict_keys": 1,
+      "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "zsrokjwehgz2g7m",
+      "file_sources": 1,
+      "release_id": "dsnqfop66rf1y3x",
       "strict_keys": 1,
       "tolerant_keys": 1
     },
@@ -743743,78 +744087,94 @@
   "changes": {
     "entries": {
       "added": [
-        "8xvy77oljyeutwl"
+        "4s7hrl1442xvsa8",
+        "krr3sqgtzreh9b7",
+        "zsrokjwehgz2g7m"
       ],
       "removed": []
     },
     "releases": {
       "added": [
-        "49qru8fnpbmpn6v",
-        "eu8wonxakgutf6e",
-        "gj7b2p6gxxhyccn",
-        "kcmk2x96bk7nv8r",
-        "nougq730x30dymx",
-        "pxg347rmz96w5qa",
-        "qglhe2luju1gyqz",
-        "rv3vk90hiw1o7k3",
-        "s16v69ele7zphoe",
-        "sdvw8zg8m7oqnjd",
-        "wi5mznxnylv64w3",
-        "z7ryv5shcbhm3yp",
-        "zzvthujvc6mi14g"
+        "151p1b0kq8apxd5",
+        "20hw6zxx7wljfqs",
+        "2fz7v7ypiqfdy20",
+        "3oxr1q1oev8osgs",
+        "47j2ix9bs2v8oj7",
+        "4lgutfb1egyxw6p",
+        "5sfga82hcwt1dka",
+        "5shz5hnq0b1b5pl",
+        "743sue1vse56bo6",
+        "7r2alvfwk7ruizq",
+        "8wd2xy8quepj3rx",
+        "9dujm6aff2knj7j",
+        "a36objkgvq2c26k",
+        "a5nxi96nlb7tdux",
+        "b6m86ra4jrncazx",
+        "bfnvzqkhmctyu1t",
+        "cb6oawhdmzam0fe",
+        "dsnqfop66rf1y3x",
+        "dww0kyjvt2109xt",
+        "eo47dmgrr82t9sa",
+        "esn8nbxbbkktgp1",
+        "fp6a2ruz58fdrap",
+        "g8mv3fprwemqj65",
+        "gmwqiqnjqliq8pz",
+        "hckiwhc59yjgt3j",
+        "icierop1g4tkdoa",
+        "j5bh32tdazi3tzy",
+        "lazs5pyhq0mfje4",
+        "lc7m18u0wbb946s",
+        "loiwliyq3xdnqrr",
+        "lu0mrzu4vywz6hi",
+        "mj8r5ijer5ae3wd",
+        "n0yiyixplb8u2fe",
+        "p6ddbhgvtc0tn3y",
+        "qca81po0wa5my6n",
+        "r18mdpup27m5l6n",
+        "s41r56ivvj5fhbx",
+        "s9mcwfrwzvmhtud",
+        "u6ydnlhqaw4uplx",
+        "uofsbedb55fxqee",
+        "wv90nez9o5hdg89",
+        "x3moxcp7chexojz",
+        "x5nncqwjpqqr3bv",
+        "xhsvdpyn3ibktat",
+        "ynqk7spevannt0m",
+        "yxuc6cxgaukdlvb",
+        "zmvrywmnj1l01mp"
       ],
       "removed": [
-        "12wc5cyjo3ccryw",
-        "15me9i02as5inyg",
-        "3g6zibshzk2i372",
-        "901zjf1ciqs4ten",
-        "9aeo2byueyzzrsz",
-        "9y2hg6vesoyd15b",
-        "aidyiakag1cfpxd",
-        "b0ewqbhcttj989t",
-        "bgynnlptjdnh334",
-        "bhgahjh463a9z1v",
-        "fd1z4mglpel2wup",
-        "i0hedtiha4jk87g",
-        "jap54av8xiabetz",
-        "l2bc2b4jguhqh8w",
-        "mbpfdq64fiesf8x",
-        "n9hf89crxsrspor",
-        "oxcvpebs44cibhq",
-        "p832y2s5xhkmodp",
-        "pihrwu54qjtqrgv",
-        "sd5u4ebgajkuybr",
-        "vdv1u4tqx5k2qt4",
-        "vqop6xax01uktw1",
-        "wkceb3lp1e6th7j",
-        "x8mscglekujpmlp"
+        "0xarugbnxcvq3mg",
+        "3dte3k2wll8ii55",
+        "72zflrfg5yejgvz",
+        "d8f4a8ejuwj7uw3"
       ]
     }
   },
   "matching": {
     "encoding": {
       "direct_buckets": {
-        "bucket_count": 351,
-        "key_count": 21327,
+        "bucket_count": 352,
+        "key_count": 21379,
         "max_keys": 230,
-        "mean_keys": 60.76068376068376
+        "mean_keys": 60.73579545454545
       },
-      "direct_entries": 21327,
+      "direct_entries": 21379,
       "route_buckets": 260,
-      "source_bytes": 3046164,
-      "source_lines": 45700,
+      "source_bytes": 3053370,
+      "source_lines": 45807,
       "template_buckets": {
         "bucket_count": 260,
-        "key_count": 6713,
-        "max_keys": 124,
-        "mean_keys": 25.81923076923077
+        "key_count": 6715,
+        "max_keys": 125,
+        "mean_keys": 25.826923076923077
       },
-      "template_groups": 6713,
-      "tuple_chunks": 6923
+      "template_groups": 6715,
+      "tuple_chunks": 6925
     },
     "provenance": {
-      "strict_keys": 58139,
-      "tolerant_keys": 47467
+      "strict_keys": 58191,
+      "tolerant_keys": 47519
     },
     "stale_overrides": []
   }
