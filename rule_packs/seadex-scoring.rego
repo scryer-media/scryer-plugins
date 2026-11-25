@@ -3791,10 +3791,6 @@ Bthe magnificent kotobuki (2019) - s01e11 - duel in ikesuka - 1080p bluray remux
 
 Bthe.demon.girl.next.door.s02e06.vow.under.the.setting.sun!.the.path.forward.for.demonkind.1080p.bluray.remux.avc.flac.2.0-nan0
 
-Bthe.magical.girl.and.the.evil.lieutenant.used.to.be.archenemies.s01e05.we're.enemies.1080p.bluray.remux.flac2.0.h.264-crucible
-
-Bthe.magical.girl.and.the.evil.lieutenant.used.to.be.archenemies.s01e12.side.b.side.m.1080p.bluray.remux.flac2.0.h.264-crucible
-
 Bthe.strongest.sage.with.the.weakest.crest.s01e09.the.strongest.sage.duels.1080p.bluray.remux.dual-audio.flac2.0.h.264-crucible
 
 Bthe.too-perfect.saint.tossed.aside.by.my.fiance.and.sold.to.another.kingdom.s01e04.repack.1080p.bluray.opus2.0.x265-headpatter
@@ -3941,8 +3937,6 @@ Bthe.daily.life.of.a.middle-aged.online.shopper.in.another.world.s01e01.an.unfam
 
 Bthe.demon.girl.next.door.s02e02.urban.exploration!.the.troubled.mikan.and.the.excited.demon.1080p.bluray.remux.avc.flac.2.0-nan0
 
-Bthe.magical.girl.and.the.evil.lieutenant.used.to.be.archenemies.s01e07.they're.friends.1080p.bluray.remux.flac2.0.h.264-crucible
-
 Bthe.stories.of.girls.who.couldn't.be.magicians.s01e07.happy.holidays.except.im.feeling.sad!.1080p.bluray.remux.avc.flac.2.0-nan0
 
 Bthe.strongest.sage.with.the.weakest.crest.s01e01.the.strongest.sage.appears.1080p.bluray.remux.dual-audio.flac2.0.h.264-crucible
@@ -4007,8 +4001,6 @@ Bsabikui bisco (2022) - s01e11 - i'm bisco! - 1080p bluray hybrid remux avc [jap
 Bstar.driver.takuto.of.the.radiance.s01e02.the.challenge.of.the.holy.order.of.glittering.crux.1080p.bluray.remux.avc.flac.2.0-nan0
 
 Bthe magnificent kotobuki (2019) - s01e06 - no place to return - 1080p bluray remux avc japanese [lpcm 2.0 + dts-hdma 2.1] - b00ba
-
-Bthe.magical.girl.and.the.evil.lieutenant.used.to.be.archenemies.s01e08.before.christmas.1080p.bluray.remux.flac2.0.h.264-crucible
 
 Bthe.weakest.tamer.began.a.journey.to.pick.up.trash.s01e01.on.a.journey.alone.1080p.bluray.remux.dual-audio.flac2.0.h.264-crucible
 
@@ -4151,8 +4143,6 @@ Bthe magnificent kotobuki (2019) - s01e09 - the vagabond toddler - 1080p bluray 
 
 Bthe.daily.life.of.a.middle-aged.online.shopper.in.another.world.s01e09.so.its.a.spider.so.what.1080p.bluray.remux.avc.flac.2.0-nan0
 
-Bthe.magical.girl.and.the.evil.lieutenant.used.to.be.archenemies.s01e09.on.christmas.night.1080p.bluray.remux.flac2.0.h.264-crucible
-
 Btrapped.in.a.dating.sim.s01e12.no.matter.how.tough.the.world.of.otome.games.is.1080p.bluray.remux.dual-audio.flac2.0.h.264-crucible
 
 Buzaki-chan.wants.to.hang.out.s02e05.the.whole.uzaki.clan.wants.to.get.together.1080p.bluray.remux.dual-audio.flac2.0.h.264-crucible
@@ -4220,8 +4210,6 @@ Bsabikui bisco (2022) - s01e08 - fiendish trap - 1080p bluray hybrid remux avc [
 
 Bthe magnificent kotobuki (2019) - s01e01 - moonlit guns for hire - 1080p bluray remux avc japanese [lpcm 2.0 + dts-hdma 2.1] - b00ba
 
-Bthe.magical.girl.and.the.evil.lieutenant.used.to.be.archenemies.s01e01.won't.kill.for.love.1080p.bluray.remux.flac2.0.h.264-crucible
-
 Bthe.strongest.sage.with.the.weakest.crest.s01e04.the.strongest.sage.infiltrates.1080p.bluray.remux.dual-audio.flac2.0.h.264-crucible
 
 Bwitch.watch.s01e21.secret.urges.keikos.carefree.style.jekyll.visits.the.otogi.house.repack.1080p.bluray.remux.avc.dual.flac.2.0-nan0
@@ -4268,8 +4256,6 @@ Bmysterious girlfriend x (2012) - s01e02 - a mysterious bond - 1080p bluray hybr
 Bthe magnificent kotobuki (2019) - s01e10 - the aggressive bombers - 1080p bluray remux avc japanese [lpcm 2.0 + dts-hdma 2.1] - b00ba
 
 Bthe.ice.guy.and.his.cool.female.colleague.s01e03.a.first.meal.and.a.secret.photo.1080p.bluray.remux.dual-audio.flac2.0.h.264-crucible
-
-Bthe.magical.girl.and.the.evil.lieutenant.used.to.be.archenemies.s01e11.53-year.old.building.1080p.bluray.remux.flac2.0.h.264-crucible
 
 Bthe.stories.of.girls.who.couldn't.be.magicians.s01e06.everyone.but.us.went.home.for.the.holidays.1080p.bluray.remux.avc.flac.2.0-nan0
 
@@ -4382,10 +4368,6 @@ Bthe girl i like forgot her glasses (2023) - s01e10 - the girl i like had a requ
 Bthe.daily.life.of.a.middle-aged.online.shopper.in.another.world.s01e05.the.moon.over.an.old.castle.1080p.bluray.remux.avc.flac.2.0-nan0
 
 Bthe.demon.girl.next.door.s02e01.yet.another.showdown!.the.magical.girl.has.a.brand.new.appearance!.1080p.bluray.remux.avc.flac.2.0-nan0
-
-Bthe.magical.girl.and.the.evil.lieutenant.used.to.be.archenemies.s01e06.what.magical.girls.are.1080p.bluray.remux.flac2.0.h.264-crucible
-
-Bthe.magical.girl.and.the.evil.lieutenant.used.to.be.archenemies.s01e10.a.day.with.mr.familiar.1080p.bluray.remux.flac2.0.h.264-crucible
 
 Bthe.strongest.sage.with.the.weakest.crest.s01e03.the.strongest.sage.meets.a.dragon.1080p.bluray.remux.dual-audio.flac2.0.h.264-crucible
 
@@ -4706,10 +4688,6 @@ Brascal.does.not.dream.of.bunny.girl.senpai.s01e02.on.first.dates.trouble.is.ess
 Bthe girl i like forgot her glasses (2023) - s01e13 - the girl i like and i made a promise - 1080p bluray remux avc lpcm 2.0 [japanese] - b00ba
 
 Bthe.ice.guy.and.his.cool.female.colleague.s01e07.excitement.the.halloween.costume.contest.1080p.bluray.remux.dual-audio.flac2.0.h.264-crucible
-
-Bthe.magical.girl.and.the.evil.lieutenant.used.to.be.archenemies.s01e03.now.back.to.the.drawing.board.1080p.bluray.remux.flac2.0.h.264-crucible
-
-Bthe.magical.girl.and.the.evil.lieutenant.used.to.be.archenemies.s01e04.a.habit.of.chasing.what.moves.1080p.bluray.remux.flac2.0.h.264-crucible
 
 Bthe.vampire.dies.in.no.time.s01e06.tale.of.the.empress's.birth.draluc's.family.draluc's.family,.continued.1080p.bluray.remux.avc.flac.2.0-nan0
 
@@ -5372,8 +5350,6 @@ Lthe.aristocrats.otherworldly.adventure.serving.gods.who.go.too.far.s01e06.a.dat
 `,
   "173": `
 Brequiem.of.the.rose.king.s01e08.even.alone.it.wasnt.frightening.rather.the.loneliness.has.been.kind.ever.since.losing.father.1080p.bluray.remux.avc.truehd.5.1.dual.audio-iba
-
-Bthe.magical.girl.and.the.evil.lieutenant.used.to.be.archenemies.s01e02.the.taking.down.of.the.magical.girl.belongs.to.no.one.but.me.1080p.bluray.remux.flac2.0.h.264-crucible
 
 Bthe.vampire.dies.in.no.time.s01e10.the.festival.music.calls.you.heisei.annoying.vampire.battle.in.shin-yoko.draluc's.all.night.shin-yoko.1080p.bluray.remux.avc.flac.2.0-nan0
 
@@ -27185,9 +27161,9 @@ strict_template_routes := {
 "264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n"]],"L\t[nekotan] that time i got reincarnated as a slime s§e§ (bd §p x§ §-bit opus)":[["03","","1080","265","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"L\t[philosophy-raws][la storia della arcana famiglia][§][bdrip][hi§p flac][§x§]":[["","10","1920","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\t[xpearse] gundam build fighters try - disc § menu with buttons [jp raw] [§p]":
 [["","1080"],["\n1\n2\n3\n4\n5\n6\n"]],"L\taharen.is.indecipherable.s§e§.§p.bluray.§-bit.dual-audio.flac§.§.x§-yurasuka":[["01","","1080","10","5","1","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tgankutsuou.the.count.of.monte.cristo.s§e§.§p.cr.web-dl.aac§.§.x§-trollorange":[["01","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"L\thow a realist hero rebuilt the kingdom - s§e§v§ [bd §p x§ flac] [dual-audio]":
 [["01","","2","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n"]],"L\tjuni taisen zodiac war (§) s§e§ (§p cr web-dl h§ dual-audio aac §.§) [anozu]":[["2017","01","","1080","264","2","0"],["\n01\n02\n03\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tkarakai jouzu no takagi-san § - § (bdrip §x§ x§ §bit eac§-flac) [dual-audio]":[["2","","1920","1080","264","10","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],
-"L\tmay.i.ask.for.one.final.thing.s§e§.§p.bluray.hevc.dual-audio.opus.§.§-sylvar":[["01","","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"L\tre.zero.starting.life.in.another.world.s§e§.§p.bluray.opus.§.§.x§-headpatter":[["03","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n"]],"L\twitch hunter robin - § (dvdrip §x§p x§ hevc ac§x§ §.§x§)(dual audio)[sxales]":[["","720","480","265","3","2","2","0","2"],
-["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n"]],"L\tyou.and.i.are.polar.opposites.s§e§.§p.bluray.dual-audio.opus.§.§.x§-yurasuka":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\t[beatrice-raws] date a live (director's cut edition) pv§ [bdrip §x§ x§ flac]":[["","1920","1080","264"],["\n1\n2\n3\n4\n5\n6\n"]],"X\t[lostyears] natsume's book of friends - s§e§ v§ (bdrip §p hi§p aac opus) [§]":
-[["","","2","1080","10",""],["\n00,03,bebd149a\n00,04,09943a21\n05,01,c91f73d1\n05,02,f7f146ec\n05,03,3adcabb8\n05,04,c516ca53\n05,05,5b2ec139\n05,06,ea715474\n05,07,83271217\n05,08,b9a640f3\n05,09,99fef14e\n05,10,bd06f28e\n05,11,3baf5224\n"]],"X\t[mysteria] saenai heroine no sodatekata flat - s§e§ v§ (bd §p hevc flac) [§]":[["01","","2","1080",""],["\n00,8f5d407a\n01,19fabaa7\n02,270b0559\n03,d37a7f51\n04,3bd1d459\n05,e00c2744\n06,b12f48ef\n07,ac6a9a46\n08,62ae7ae3\n09,68d5df2b\n10,8b2b8eda\n11,2180aa83\n"]
+"L\tmay.i.ask.for.one.final.thing.s§e§.§p.bluray.hevc.dual-audio.opus.§.§-sylvar":[["01","","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"L\tmobile.suit.gundam.wing.s§e§.§p.bluray.dual-audio.opus§.§.§bit.x§-headpatter":[["00","","1080","2","0","10","264"],["\n05\n06\n07\n"]],"L\tre.zero.starting.life.in.another.world.s§e§.§p.bluray.opus.§.§.x§-headpatter":[["03","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n"]
+],"L\twitch hunter robin - § (dvdrip §x§p x§ hevc ac§x§ §.§x§)(dual audio)[sxales]":[["","720","480","265","3","2","2","0","2"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n"]],"L\tyou.and.i.are.polar.opposites.s§e§.§p.bluray.dual-audio.opus.§.§.x§-yurasuka":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\t[beatrice-raws] date a live (director's cut edition) pv§ [bdrip §x§ x§ flac]":
+[["","1920","1080","264"],["\n1\n2\n3\n4\n5\n6\n"]],"X\t[lostyears] natsume's book of friends - s§e§ v§ (bdrip §p hi§p aac opus) [§]":[["","","2","1080","10",""],["\n00,03,bebd149a\n00,04,09943a21\n05,01,c91f73d1\n05,02,f7f146ec\n05,03,3adcabb8\n05,04,c516ca53\n05,05,5b2ec139\n05,06,ea715474\n05,07,83271217\n05,08,b9a640f3\n05,09,99fef14e\n05,10,bd06f28e\n05,11,3baf5224\n"]],"X\t[mysteria] saenai heroine no sodatekata flat - s§e§ v§ (bd §p hevc flac) [§]":[["01","","2","1080",""],["\n00,8f5d407a\n01,19fabaa7\n02,270b0559\n03,d37a7f51\n04,3bd1d459\n05,e00c2744\n06,b12f48ef\n07,ac6a9a46\n08,62ae7ae3\n09,68d5df2b\n10,8b2b8eda\n11,2180aa83\n"]
 ],"X\t[rasetsu]_gakusen_toshi_asterisk_-_s§_ep§_nc-prologue_(bd_§p_hi§_flacx§)_[§]":[["01","","1080","10","2",""],["\n01,f399ca5b\n12,f2de7c6f\n"]],"X\tfullmetal.alchemist.brotherhood.§.§p.bluray.dual-audio.flac§.§.hi§p.x§-jysze":[["","1080","2","0","10","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n51\n52\n53\n54\n55\n56\n57\n58\n59\n60\n61\n62\n63\n64\n"]
 ],"X\tgargantia.on.the.verdurous.planet.s§e§.proper.§p-hi§p.bluray.flac§.§-ctr.[§]":[["01","","1080","10","2","0",""],["\n01,e8247cce\n05,ef05bf4d\n10,3f579be9\n"]]}`,
   "79": `{"B\t[cunnysseur] kunoichi tsubaki no mune no uchi s§e§ [bd remux §p avc flac] [§]":[["01","","1080",""],["\n01,cbd35ed6\n02,92bea54a\n03,df82633b\n04,b0604244\n05,51c8b577\n06,2d21edfb\n07,ccdeee0e\n08,72b92316\n09,e15d37c8\n10,1c4ca58a\n11,ccab975a\n12,92fdd9c7\n13,64025b12\n"]],"B\t[fle] re zero starting life in another world - s§e§ (bd remux §p x§ flac) [§]":[["00","","1080","264",""],["\n55,036c11b1\n56,46636a68\n57,e70844c2\n58,e103ef18\n59,eb436a6a\n60,845df2e6\n61,8393f6a2\n62,0ca4e671\n63,d87f448d\n64,e7ba398e\n65,fe4f55e9\n66,1c5c441d\n67,890f6cbb\n68,6202e89a\n69,95bc3f84\n70,af8bd39b\n"]
@@ -27349,9 +27325,9 @@ strict_template_routes := {
 [["","2","1080",""],["\n01,47408149\n02,43cdbf15\n03,48b52525\n04,24de7340\n05,15b2da19\n06,41008c3e\n07,feb84f59\n08,23bb75ef\n09,2e688288\n10,3490ce2e\n11,d0e91ef3\n12,0a9dd1e3\n"]],"X\t[smol] monogatari - s§ owarimonogatari - nced § - sayonara no yukue (bd §p hevc opus) [§]":[["07","","1080",""],["\n01,cb73e119\n02,495ae718\n"]],"X\t[yousei-raws] minami-ke okawari (creditless ed fullsize ver. ep §-§) [dvdrip §x§ x§ ac-§]":[["","","1024","576","264","3"],["\n01,03\n04,06\n07,09\n10,12\n"]
 ],"X\tkonosuba.gods.blessing.on.this.wonderful.world.s§e§.§p.bluray.remux.dual.flac.§.§.avc-fig":[["02","","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n"]]}`,
   "92": `{"B\t[hchcsen] mobile suit gundam iron-blooded orphans s§e§ [bd remux dual audio §p avc §xflac]":[["01","","1080","2"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n"]],"B\t[hchcsen] mobile suit gundam seed hd remaster s§e§ [bd remux dual audio §p avc §xflac ac§]":[["01","","1080","2","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n"]
-],"B\t[lostyears] the great jahy will not be defeated! - s§e§v§ (web §p x§ §-bit aac e-ac-§) [§]":[["01","","2","1080","265","10","3",""],["\n01,a37ba3d0\n04,bea14145\n05,03a89cb9\n"]],"B\tguin.saga.s§e§.farewell.my.beloved.part.§.§p.bluray.remux.avc.dts-hd.ma.§.§.dual.audio-iba":[["01","","","1080","2","0"],["\n17,1\n18,2\n"]],"B\thero.without.a.class.who.even.needs.skills.s§e§.§p.bluray.dual-audio.opus§.§.x§-headpatter":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
-],"B\ti'm.getting.married.to.a.girl.i.hate.in.my.class.s§e§.§p.bluray.remux.flac§.§.h.§-crucible":[["01","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tjojos.bizarre.adventure.§.s§e§.darby.the.gambler.§.§p.bluray.remux.dts-hd.ma§.§.h.§-meakes":[["2012","02","","","1080","2","1","264"],["\n34,1\n35,2\n"]],"B\tminami.kamakura.high.school.girls.cycling.club.s§e§.§p.bluray.remux.avc.flac§.§-headpatter":[["","","1080","2","0"],["\n00,01\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n"]
-],"B\tsleepy princess in the demon castle - s§e§ (bd remux §p x§ flac truehd) [dual audio] [pmr]":[["01","","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\t[subsplus+] sword of the demon hunter - kijin gentosho - s§e§v§ (nf web-dl §p avc aac) [§]":[["01","","","1080",""],["\n01,2,c7067cad\n02,3,50a6443a\n03,2,acf39ab2\n04,2,fecaf095\n05,2,21d8bbab\n06,2,60750db0\n07,3,a7d4e62a\n08,2,ed963436\n09,2,1c556e42\n10,2,f9a86f75\n11,2,0facdd50\n12,2,396bd9be\n13,2,4f383589\n"]
+],"B\t[hchcsen] mobile suit gundam wing s§e§ endless waltz § [bd remux dual audio §p avc §xflac]":[["00","","","1080","2"],["\n05,01\n06,02\n07,03\n"]],"B\t[lostyears] the great jahy will not be defeated! - s§e§v§ (web §p x§ §-bit aac e-ac-§) [§]":[["01","","2","1080","265","10","3",""],["\n01,a37ba3d0\n04,bea14145\n05,03a89cb9\n"]],"B\tguin.saga.s§e§.farewell.my.beloved.part.§.§p.bluray.remux.avc.dts-hd.ma.§.§.dual.audio-iba":[["01","","","1080","2","0"],["\n17,1\n18,2\n"]],"B\thero.without.a.class.who.even.needs.skills.s§e§.§p.bluray.dual-audio.opus§.§.x§-headpatter":
+[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\ti'm.getting.married.to.a.girl.i.hate.in.my.class.s§e§.§p.bluray.remux.flac§.§.h.§-crucible":[["01","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tjojos.bizarre.adventure.§.s§e§.darby.the.gambler.§.§p.bluray.remux.dts-hd.ma§.§.h.§-meakes":[["2012","02","","","1080","2","1","264"],["\n34,1\n35,2\n"]],"B\tminami.kamakura.high.school.girls.cycling.club.s§e§.§p.bluray.remux.avc.flac§.§-headpatter":
+[["","","1080","2","0"],["\n00,01\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n"]],"B\tsleepy princess in the demon castle - s§e§ (bd remux §p x§ flac truehd) [dual audio] [pmr]":[["01","","1080","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\t[subsplus+] sword of the demon hunter - kijin gentosho - s§e§v§ (nf web-dl §p avc aac) [§]":[["01","","","1080",""],["\n01,2,c7067cad\n02,3,50a6443a\n03,2,acf39ab2\n04,2,fecaf095\n05,2,21d8bbab\n06,2,60750db0\n07,3,a7d4e62a\n08,2,ed963436\n09,2,1c556e42\n10,2,f9a86f75\n11,2,0facdd50\n12,2,396bd9be\n13,2,4f383589\n"]
 ],"L\t[§x§] seishun buta yarou wa bunny girl senpai no yume o minai - § (bd §p x§ §bit flac) [§]":[["0","539","","1080","265","10",""],["\n01,33203c78\n02,fcc67d14\n03,67937620\n04,356e6085\n05,6de466ce\n06,ab432136\n07,9f3a55af\n08,b7743024\n09,fc3d9fee\n10,47a39bce\n11,bcc7f7bb\n12,2a324bcd\n13,98e9d4b4\n"]],"L\tminami.kamakura.high.school.girls.cycling.club.s§e§.repack.§p.bluray.opus§.§.x§-headpatter":[["01","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n"]],"L\tthe.iceblade.sorcerer.shall.rule.the.world.s§e§.§p.bluray.dual-audio.opus§.§.x§-headpatter":
 [["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tthe.world.ends.with.you.the.animation.s§e§.§p.bluray.dual-audio.opus§.§.§bit.x§-headpatter":[["01","","1080","2","0","10","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\twhy.raeliana.ended.up.at.the.dukes.mansion.s§e§.§p.bluray.dual-audio.opus§.§.x§-headpatter":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\t[beatrice-raws] date a live (director's cut edition) (bd menu vol §) § [bdrip §x§ x§ flac]":
 [["","01","1920","1080","264"],["\n1\n2\n3\n"]],"X\t[hien] kotoura-san - publicity spot - haruka and manabe ver. (§s) [bd §p h.§ §-bit aac][§]":[["","1080","264","10",""],["\n15,64a33a74\n30,b5f42491\n"]],"X\t[hien] kotoura-san - publicity spot - haruka and mifune ver. (§s) [bd §p h.§ §-bit aac][§]":[["","1080","264","10",""],["\n15,6613c7e3\n30,475534b5\n"]],"X\t[holomux] the seven deadly sins - signs of holy war § [bd §p x§ §bit flac-ac§ §.§ dual][§]":[["","1080","264","10","3",
@@ -27383,9 +27359,9 @@ strict_template_routes := {
 ],"L\t[erai-raws] §-man no inochi no ue ni ore wa tatteiru §nd season - § [§p][multiple subtitle][§]":[["100","2","","1080",""],["\n01,4ce4b532\n02,3813437c\n03,3a995413\n04,0fa5ff5b\n05,92b293d0\n06,b6558497\n07,732f053d\n08,b97129d9\n09,32b5a12f\n10,13e78794\n11,919d194a\n12,7e791e34\n"]],"L\t[tsundere] danna ga nani wo itteiru ka wakaranai ken § sure-me - § [bdrip h§ §x§ §bit flac][§]":[["2","","264","1920","1080","10",""],["\n01,129a7f09\n02,07e47982\n03,01824dc3\n04,1b99c9e4\n05,ff9e75bf\n06,f098eb4f\n07,4d919ea3\n08,e65ab199\n09,c6f5f8bf\n10,56d6e7bc\n11,874e40eb\n12,fd62421e\n13,ef4c451b\n"]
 ],"L\tdeath.march.to.the.parallel.world.rhapsody.s§e§.§p.bluray.§-bit.dual-audio.flac§.§.x§-yurasuka":[["01","","1080","10","5","1","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]]}`,
   "97": `{"B\t[npz] katsute kami datta kemono-tachi e - sp - key frame animation § (jp bd remux, raw, §p) [§]":[["","1080",""],["\n1,a41c0bcb\n2,a27a6ebe\n3,93e77a14\n4,0c45c3ca\n"]],"B\tjojos.bizarre.adventure.§.s§e§.hol.horse.and.mondatta.§.§p.bluray.remux.dts-hd.ma§.§.h.§-meakes":[["2012","02","","","1080","2","1","264"],["\n36,1\n37,2\n"]],"B\tpeter grill and the philosopher's time s§e§ § §p bluray remux avc dts hd ma §.§ dual audio -zr-":[["01","","2020","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
-],"B\tplanetarian.the.reverie.of.a.little.planet.s§e§.§p.bluray.remux.dual-audio.flac.§.§.h.§-lacroix":[["01","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n"]],"L\tlucifer and the biscuit hammer (hoshi no samidare) s§e§ § §p web-dl avc aac §.§ dual audio -zr-":[["01","","2022","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"L\t§.§.seiin.high.school.boys.volleyball.team.s§e§.§p.bluray.dual-audio.opus§.§.§bit.x§-headpatter":
-[["2","43","01","","1080","2","0","10","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\t[holomux] the seven deadly sins - revival of the commandments nced§ [bd §p x§ §bit flac §.§][§]":[["","1080","264","10","2","0",""],["\n01,fd86c521\n02,115b4aae\n"]],"X\t[holomux] the seven deadly sins - revival of the commandments ncop§ [bd §p x§ §bit flac §.§][§]":[["","1080","264","10","2","0",""],["\n01,c44cc73c\n02,f29c0ab8\n"]],"X\tsaikin, imouto no yousu ga chotto okashiinda ga. - creditless op§ [bdrip §x§ x§ flac] [exp] [§]":
-[["","1920","1080","264",""],["\n1,8e7857b6\n2,f714d539\n"]]}`,
+],"B\tplanetarian.the.reverie.of.a.little.planet.s§e§.§p.bluray.remux.dual-audio.flac.§.§.h.§-lacroix":[["01","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n"]],"L\t[chihiro] futsutsuka na akujo dewa gozaimasu ga- suuguu chouso torikae den - § [§p hevc aac][§]":[["","1080",""],["\n01,dc4d7b5d\n02,f5b17362\n03,966714b6\n04,aa61c197\n05,f94c53e6\n06,109439b1\n07,e0fefb72\n08,ab2642f3\n09,1395fe2a\n10,08ed3953\n11,e52df113\n"]],"L\tlucifer and the biscuit hammer (hoshi no samidare) s§e§ § §p web-dl avc aac §.§ dual audio -zr-":
+[["01","","2022","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"L\t§.§.seiin.high.school.boys.volleyball.team.s§e§.§p.bluray.dual-audio.opus§.§.§bit.x§-headpatter":[["2","43","01","","1080","2","0","10","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"X\t[holomux] the seven deadly sins - revival of the commandments nced§ [bd §p x§ §bit flac §.§][§]":[["","1080","264","10","2","0",""],["\n01,fd86c521\n02,115b4aae\n"]
+],"X\t[holomux] the seven deadly sins - revival of the commandments ncop§ [bd §p x§ §bit flac §.§][§]":[["","1080","264","10","2","0",""],["\n01,c44cc73c\n02,f29c0ab8\n"]],"X\tsaikin, imouto no yousu ga chotto okashiinda ga. - creditless op§ [bdrip §x§ x§ flac] [exp] [§]":[["","1920","1080","264",""],["\n1,8e7857b6\n2,f714d539\n"]]}`,
   "98": `{"B\t[half-baked] campfire cooking in another world with my absurd skill - s§e§ [bd §p hevc opus] [§]":[["01","","1080",""],["\n01,dd1387c3\n02,bcb07f50\n03,a078934e\n04,a756e9c7\n05,9cebf705\n06,711a70fd\n07,3e38727b\n08,b29480f8\n09,6d1f3dfc\n10,b36bf912\n11,63769c48\n12,16bfbc92\n"]],"B\t[npz] katsute kami datta kemono-tachi e - sp - live screening event § (jp bd remux, raw, §p) [§]":[["","1080",""],["\n1,2ebee83b\n2,154f08eb\n"]],"B\tcampfire cooking in another world with my absurd skill - s§e§ [bd §p hevc aac-opus] [dual audio]":
 [["01","","1080"],["\n01\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\ti.can't.understand.what.my.husband.is.saying.s§e§.repack.§p.bluray.remux.avc.flac.§.§-headpatter":[["02","","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"B\twanna be the strongest in the world s§e§ § §p bluray hybrid-remux avc truehd §.§ dual audio -zr-":[["","","2013","1080","5","1"],["\n00,01\n00,02\n00,03\n00,04\n00,05\n00,06\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n"]
 ],"L\t[arid] lupin the third - the woman called fujiko mine - § - the woman called fujiko mine (§) [§]":[["","",""],["\n12,1,f35f9336\n13,2,cee310ea\n"]],"L\t[erai-raws] shin shinka no mi - shiranai uchi ni kachigumi jinsei - § [§p][multiple subtitle][§]":[["","1080",""],["\n01,4b859e28\n02,1c88c0ca\n03,a47fbe43\n04,9d41e029\n05,e1981df6\n06,11d5efee\n07,e53ba199\n08,ac5557d3\n09,0f58a45a\n10,3a375e54\n11,76467fb7\n"]],"L\t[erai-raws] §-sai made doutei da to mahou tsukai ni nareru rashii - § [§p][multiple subtitle][§]":
@@ -30121,10 +30097,6 @@ Bcrucible|mother of the goddess dormitory s01e04 a childhood friend visits the d
 
 Bcrucible|studio apartment good lighting angel included s01e08 how wonderful is the rule of cool 1080p bluray remux avc flac2 0
 
-Bcrucible|the magical girl and the evil lieutenant used to be archenemies s01e05 we re enemies 1080p bluray remux flac2 0 h 264
-
-Bcrucible|the magical girl and the evil lieutenant used to be archenemies s01e12 side b side m 1080p bluray remux flac2 0 h 264
-
 Bcrucible|the strongest sage with the weakest crest s01e09 the strongest sage duels 1080p bluray remux dual audio flac2 0 h 264
 
 Bcrucible|uzaki chan wants to hang out s02e02 i want to make udon after we hang out 1080p bluray remux dual audio flac2 0 h 264
@@ -30243,8 +30215,6 @@ Bcrucible|studio apartment good lighting angel included s01e04 the real deal is 
 
 Bcrucible|studio apartment good lighting angel included s01e06 the attack of the low pressure girl 1080p bluray remux avc flac2 0
 
-Bcrucible|the magical girl and the evil lieutenant used to be archenemies s01e07 they re friends 1080p bluray remux flac2 0 h 264
-
 Bcrucible|the strongest sage with the weakest crest s01e01 the strongest sage appears 1080p bluray remux dual audio flac2 0 h 264
 
 Bcrucible|the weakest tamer began a journey to pick up trash s01e02 to latoto village 1080p bluray remux dual audio flac2 0 h 264
@@ -30285,8 +30255,6 @@ Bb00ba|lucifer and the biscuit hammer 2022 s01e03 the knight and the pact 1080p 
 Bb00ba|lucifer and the biscuit hammer 2022 s01e13 the hero kusakabe tarou 1080p bluray remux avc japanese lpcm 2 0 english aac 2 0
 
 Bcrucible|more than a married couple but not lovers s01e03 broken up and not rekindled 1080p bluray remux dual audio flac2 0 h 264
-
-Bcrucible|the magical girl and the evil lieutenant used to be archenemies s01e08 before christmas 1080p bluray remux flac2 0 h 264
 
 Bcrucible|the weakest tamer began a journey to pick up trash s01e01 on a journey alone 1080p bluray remux dual audio flac2 0 h 264
 
@@ -30360,8 +30328,6 @@ Bb00ba|kill me baby 2012 s01e09 fishing tsuchinokos and forgotten things 1080p h
 
 Bb00ba|lucifer and the biscuit hammer 2022 s01e17 the hero and the children 1080p bluray remux avc japanese lpcm 2 0 english aac 2 0
 
-Bcrucible|the magical girl and the evil lieutenant used to be archenemies s01e09 on christmas night 1080p bluray remux flac2 0 h 264
-
 Bcrucible|trapped in a dating sim s01e12 no matter how tough the world of otome games is 1080p bluray remux dual audio flac2 0 h 264
 
 Bcrucible|uzaki chan wants to hang out s02e05 the whole uzaki clan wants to get together 1080p bluray remux dual audio flac2 0 h 264
@@ -30394,8 +30360,6 @@ Bcrucible|birdie wing golf girls story s01e13 i think who gets what room is very
 Bcrucible|more than a married couple but not lovers s01e08 an entreaty but no reassurance 1080p bluray remux dual audio flac2 0 h 264
 
 Bcrucible|more than a married couple but not lovers s01e10 already has passed but not yet 1080p bluray remux dual audio flac2 0 h 264
-
-Bcrucible|the magical girl and the evil lieutenant used to be archenemies s01e01 won t kill for love 1080p bluray remux flac2 0 h 264
 
 Bcrucible|the strongest sage with the weakest crest s01e04 the strongest sage infiltrates 1080p bluray remux dual audio flac2 0 h 264
 
@@ -30431,8 +30395,6 @@ Bb00ba|the girl i like forgot her glasses 2023 s01e03 the girl i like picked up 
 Bcrucible|i m quitting heroing s01e10 i ll save the world even if that means destroying it 1080p bluray remux dual audio flac2 0 h 264
 
 Bcrucible|the ice guy and his cool female colleague s01e03 a first meal and a secret photo 1080p bluray remux dual audio flac2 0 h 264
-
-Bcrucible|the magical girl and the evil lieutenant used to be archenemies s01e11 53 year old building 1080p bluray remux flac2 0 h 264
 
 Bcrucible|the strongest sage with the weakest crest s01e05 the strongest sage makes allies 1080p bluray remux dual audio flac2 0 h 264
 
@@ -30501,10 +30463,6 @@ Bcrucible|more than a married couple but not lovers s01e04 a hero but not the ma
 Bcrucible|studio apartment good lighting angel included s01e05 the two after school the two after schools 1080p bluray remux avc flac2 0
 
 Bcrucible|studio apartment good lighting angel included s01e07 what most mangaka are like after deadlines 1080p bluray remux avc flac2 0
-
-Bcrucible|the magical girl and the evil lieutenant used to be archenemies s01e06 what magical girls are 1080p bluray remux flac2 0 h 264
-
-Bcrucible|the magical girl and the evil lieutenant used to be archenemies s01e10 a day with mr familiar 1080p bluray remux flac2 0 h 264
 
 Bcrucible|the strongest sage with the weakest crest s01e03 the strongest sage meets a dragon 1080p bluray remux dual audio flac2 0 h 264
 
@@ -30706,10 +30664,6 @@ Bb00ba|lucifer and the biscuit hammer 2022 s01e18 amamiya yuuhi and shinonome ha
 Bcrucible|my instant death ability is overpowered s01e12 you should use your power any way you want 1080p bluray remux dual audio flac2 0 h 264
 
 Bcrucible|the ice guy and his cool female colleague s01e07 excitement the halloween costume contest 1080p bluray remux dual audio flac2 0 h 264
-
-Bcrucible|the magical girl and the evil lieutenant used to be archenemies s01e03 now back to the drawing board 1080p bluray remux flac2 0 h 264
-
-Bcrucible|the magical girl and the evil lieutenant used to be archenemies s01e04 a habit of chasing what moves 1080p bluray remux flac2 0 h 264
 
 Bnan0|a salad bowl of eccentrics s01e10 multiplying princesses gambler lady knight friendship between girls lol 1080p bluray remux avc flac 2 0
 
@@ -31042,8 +30996,6 @@ Bcrucible|the iceblade sorcerer shall rule the world s01e10 the boy who became t
 Lkitsune|the aristocrats otherworldly adventure serving gods who go too far s01e06 a date with the strongest captain of the knights repack3 1080p cr web dl dual ddp2 0 h 264
 `,
   "173": `
-Bcrucible|the magical girl and the evil lieutenant used to be archenemies s01e02 the taking down of the magical girl belongs to no one but me 1080p bluray remux flac2 0 h 264
-
 Biba|requiem of the rose king s01e08 even alone it wasnt frightening rather the loneliness has been kind ever since losing father 1080p bluray remux avc truehd 5 1 dual audio
 
 Bnan0|the vampire dies in no time s01e10 the festival music calls you heisei annoying vampire battle in shin yoko draluc s all night shin yoko 1080p bluray remux avc flac 2 0
@@ -45478,10 +45430,10 @@ tolerant_template_routes := {
 ,["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tderpie|tying the knot with an amagami sister s§e§ bd §p hevc opus dual audio":[["01","","1080"],["\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"B\terairaws|mikadono sanshimai wa angai choroi § §p cr web dl avc eac§ multisub":[["","1080","3"],["\n01\n02\n"]],"B\tfig|my hero academia s§ ncop§ repack §p bluray remux dual audio flac § § avc":[["06","","1080","2","0"],["\n1\n2\n"]],"B\tgetittwisted|space patrol luluco s§e§ bd remux §p avc flac truehd dual audio":
 [["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"B\thchcsen|gundam build fighters sd knight fighters § s§e§ bd remux §p avc flac":[["","00","","1080"],["\n01,02\n02,03\n"]],"B\theadpatter|mahou shoujo nante mouiidesukara s§e§ §p bluray remux avc flac§ §":[["","","1080","2","0"],["\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n02,01\n02,02\n02,03\n02,04\n02,05\n02,06\n02,07\n02,08\n02,09\n02,10\n02,11\n02,12\n"]],"B\theadpatter|the dawn of the witch s§e§ repack §p bluray dual audio opus§ § x§":
 [["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tpmr|summoned to another world for a second time s§e§ v§ bd remux §p avc flac":[["01","","2","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tvanilla|the misfit of demon king academy § s§e§ § bd §p hevc flac dual audio":[["2020","01","","","1080"],["\n01,01\n02,02\n03,03\n04,04\n05,05\n06,06\n07,07\n08,08\n09,09\n10,10\n11,11\n12,12\n13,13\n"]],"B\tyurasuka|tune in to the midnight heart s§e§ §p bluray dual audio opus § § x§":
-[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tasakura|tensei shitara slime datta ken §nd season § § bdrip §x§ x§ §bit flac":[["2","","","1920","1080","265","10"],["\n24,9\n36,5\n"]],"L\tasakura|tensei shitara slime datta ken §nd season §v§ bdrip §x§ x§ §bit flac":[["2","","2","1920","1080","265","10"],["\n37\n45\n47\n"]],"L\theadpatter|re zero starting life in another world s§e§ §p bluray opus § § x§":[["03","","1080","2","0","265"]
-,["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n"]],"L\tozr|code geass lelouch of the rebellion r§ creditless ed § bdrip §x§ x§ flac":[["2","","1920","1080","264"],["\n1\n2\n"]],"L\tpolarwindz|level § demon lord and one room hero § bd §p hevc opus dual audio":[["1","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tsylvar|may i ask for one final thing s§e§ §p bluray hevc dual audio opus § §":[["01","","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]
-],"L\ttrollorange|gankutsuou the count of monte cristo s§e§ §p cr web dl aac§ § x§":[["01","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"L\tyurasuka|aharen is indecipherable s§e§ §p bluray § bit dual audio flac§ § x§":[["01","","1080","10","5","1","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tyurasuka|you and i are polar opposites s§e§ §p bluray dual audio opus § § x§":[["01",
-"","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tzetarebel|mobile suit gundam zz § crybaby cecilia part § bd x§ §p § bit flac":[["","","264","1080","8"],["\n20,1\n21,2\n"]]}`,
+[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tasakura|tensei shitara slime datta ken §nd season § § bdrip §x§ x§ §bit flac":[["2","","","1920","1080","265","10"],["\n24,9\n36,5\n"]],"L\tasakura|tensei shitara slime datta ken §nd season §v§ bdrip §x§ x§ §bit flac":[["2","","2","1920","1080","265","10"],["\n37\n45\n47\n"]],"L\theadpatter|mobile suit gundam wing s§e§ §p bluray dual audio opus§ § §bit x§":[["00","","1080","2","0","10",
+"264"],["\n05\n06\n07\n"]],"L\theadpatter|re zero starting life in another world s§e§ §p bluray opus § § x§":[["03","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n"]],"L\tozr|code geass lelouch of the rebellion r§ creditless ed § bdrip §x§ x§ flac":[["2","","1920","1080","264"],["\n1\n2\n"]],"L\tpolarwindz|level § demon lord and one room hero § bd §p hevc opus dual audio":[["1","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]
+],"L\tsylvar|may i ask for one final thing s§e§ §p bluray hevc dual audio opus § §":[["01","","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"L\ttrollorange|gankutsuou the count of monte cristo s§e§ §p cr web dl aac§ § x§":[["01","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n"]],"L\tyurasuka|aharen is indecipherable s§e§ §p bluray § bit dual audio flac§ § x§":[["01","","1080",
+"10","5","1","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tyurasuka|you and i are polar opposites s§e§ §p bluray dual audio opus § § x§":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tzetarebel|mobile suit gundam zz § crybaby cecilia part § bd x§ §p § bit flac":[["","","264","1080","8"],["\n20,1\n21,2\n"]]}`,
   "79": `{"B\tbussyremux|godzilla singular point s§e§ bd remux §p avc dual audio flac e ac§":[["01","","1080","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"B\tflugel|wandering witch the journey of elaina s§e§ repack §p bluray opus§ § x§":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tlostyears|the great jahy will not be defeated s§e§ web §p x§ § bit aac e ac §":[["01","","1080","265","10","3"],["\n02\n03\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n"]
 ],"B\tpmr|arifureta from commonplace to world s strongest s§e§ bd remux §p avc flac":[["02","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tstye|ameku m d doctor detective § s§e§ §p bluray remux avc dual audio flac§ §":[["2025","01","","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tyolerejiju|revolutionary girl utena s§e§ §p bluray dual audio opus§ § §bit x§":[["01","","1080","5","1","10","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]
 ],"B\tyurasuka|bottom tier character tomozaki s§e§ §p bluray dual audio opus § § x§":[["02","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"B\tyurasuka|dont toy with me miss nagatoro s§e§ §p bluray dual audio opus § § x§":[["","","1080","2","0","265"],["\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n02,01\n02,02\n02,03\n02,04\n02,05\n02,06\n02,07\n02,08\n02,09\n02,10\n02,11\n02,12\n"]],"B\tyurasuka|heroines run the show s§e§ §p bluray § bit dual audio aac flac§ § x§":
@@ -45530,11 +45482,13 @@ tolerant_template_routes := {
 ],"L\tyurasuka|i m getting married to a girl i hate in my class s§e§ §p bluray opus § § x§":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]]}`,
   "87": `{"B\thalfbaked|campfire cooking in another world with my absurd skill s§e§ bd §p hevc opus":[["01","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\theadpatter|granblue fantasy the animation s§e§ repack §p bluray dual audio opus§ § x§":[["","","1080","2","0","265"],["\n00,01\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n"]],"B\theadpatter|nadia the secret of blue water s§e§ §p bluray remux avc dual audio flac§ §":[["01","",
 "1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n26\n27\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n"]],"B\theadpatter|theres no freaking way i ll be your lover unless s§e§ §p bluray opus§ § x§":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tkekku|kenichi the mightiest disciple the attack of darkness s§e§ §p remux avc flac§ §":[["01","","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n"]
-],"B\tlazyremux|ikebukuro west gate park § s§e§ g boys winter war part § bluray §p remux h§":[["2020","01","","","1080","264"],["\n06,1\n07,2\n"]],"B\tmeakes|jojos bizarre adventure § s§e§ basts mariah § §p bluray remux dts hd ma§ § h §":[["2012","02","","","1080","2","1","264"],["\n30,1\n31,2\n"]],"B\tnan§|the warrior princess and the barbaric king s§e§ §p bluray remux avc dual flac§ §":[["0","01","","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\terairaws|§ sai made doutei da to mahou tsukai ni nareru rashii § §p multiple subtitle":
-[["30","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\theadpatter|to the abandoned sacred beasts s§e§ repack §p bluray dual audio opus§ § x§":[["01","","1080","2","0","264"],["\n08\n10\n"]],"L\ttsundere|danna ga nani wo itteiru ka wakaranai ken § sure me § bdrip h§ §x§ §bit flac":[["2","","264","1920","1080","10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]]}`,
+],"B\tlazyremux|ikebukuro west gate park § s§e§ g boys winter war part § bluray §p remux h§":[["2020","01","","","1080","264"],["\n06,1\n07,2\n"]],"B\tmeakes|jojos bizarre adventure § s§e§ basts mariah § §p bluray remux dts hd ma§ § h §":[["2012","02","","","1080","2","1","264"],["\n30,1\n31,2\n"]],"B\tnan§|the warrior princess and the barbaric king s§e§ §p bluray remux avc dual flac§ §":[["0","01","","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\tchihiro|futsutsuka na akujo dewa gozaimasu ga suuguu chouso torikae den § §p hevc aac":
+[["","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n"]],"L\terairaws|§ sai made doutei da to mahou tsukai ni nareru rashii § §p multiple subtitle":[["30","","1080"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"L\theadpatter|to the abandoned sacred beasts s§e§ repack §p bluray dual audio opus§ § x§":[["01","","1080","2","0","264"],["\n08\n10\n"]],"L\ttsundere|danna ga nani wo itteiru ka wakaranai ken § sure me § bdrip h§ §x§ §bit flac":[["2","","264","1920","1080",
+"10"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]]}`,
   "88": `{"B\tcrucible|seirei gensouki spirit chronicles s§e§ §p bluray remux dual audio flac§ § h §":[["02","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tcrucible|welcome to demon school iruma kun s§e§ §p bluray remux dual audio flac§ § h §":[["03","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n"]],"B\thchcsen|mobile suit gundam iron blooded orphans s§e§ bd remux dual audio §p avc §xflac":
-[["01","","1080","2"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n"]],"B\thchcsen|mobile suit gundam seed hd remaster s§e§ bd remux dual audio §p avc §xflac ac§":[["01","","1080","2","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n"]],"B\tpmr|re zero starting life in another world s§e§ bd remux §p avc flac e ac § dual audio":
-[["03","","1080","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n"]],"B\tyurasuka|my love story with yamada kun at lv§ s§e§ v§ §p bluray dual audio opus § § x§":[["999","01","","2","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"B\tyurasuka|the foolish angel dances with the devil s§e§ §p bluray dual audio opus § § x§":[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]]}`,
+[["01","","1080","2"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n"]],"B\thchcsen|mobile suit gundam seed hd remaster s§e§ bd remux dual audio §p avc §xflac ac§":[["01","","1080","2","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n16\n17\n18\n19\n20\n21\n22\n23\n24\n25\n28\n29\n30\n31\n32\n33\n34\n35\n36\n37\n38\n39\n40\n41\n42\n43\n44\n45\n46\n47\n48\n49\n50\n"]],"B\thchcsen|mobile suit gundam wing s§e§ endless waltz § bd remux dual audio §p avc §xflac":
+[["00","","","1080","2"],["\n05,01\n06,02\n07,03\n"]],"B\tpmr|re zero starting life in another world s§e§ bd remux §p avc flac e ac § dual audio":[["03","","1080","3"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n14\n15\n16\n"]],"B\tyurasuka|my love story with yamada kun at lv§ s§e§ v§ §p bluray dual audio opus § § x§":[["999","01","","2","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n13\n"]],"B\tyurasuka|the foolish angel dances with the devil s§e§ §p bluray dual audio opus § § x§":
+[["01","","1080","2","0","265"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]]}`,
   "89": `{"B\tanozu|a playthrough of a certain dudes vrmmo life § s§e§ repack §p cr web dl ddp§ § h §":[["2023","01","","1080","2","0","264"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tcrucible|that time i got reincarnated as a slime s§p§ nced §p bluray remux avc flac § §":[["02","","1080","2","0"],["\n01\n02\n"]],"B\tcrucible|that time i got reincarnated as a slime s§p§ ncop §p bluray remux avc flac § §":[["02","","1080","2","0"],["\n01\n02\n"]],"B\tgetittwisted|samurai girls s§e§ samurai bride special § bd remux §p avc flac dual audio":
 [["00","","","1080"],["\n14,01\n15,02\n16,03\n17,04\n18,05\n19,06\n"]],"B\theadpatter|jack of all trades party of none s§e§ §p bluray remux avc dual audio flac§ §":[["01","","1080","2","0"],["\n01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n11\n12\n"]],"B\tnan§|bungo stray dogs s§e§ a perfect murder and murderer § §p bluray remux avc flac § §":[["0","04","","","1080","2","0"],["\n04,1\n05,2\n"]],"L\thchcsen|shaman king § s§e§ osorezan le voile part § v§ web dual audio §p x§ §bit §xeac§":
 [["2021","01","","","2","1080","264","10","2","3"],["\n30,1\n31,2\n32,3\n33,4\n"]],"L\theadpatter|mobile suit gundam iron blooded orphans s§e§ §p bluray dual audio opus§ § x§":[["","","1080","2","0","264"],["\n01,01\n01,02\n01,03\n01,04\n01,05\n01,06\n01,07\n01,08\n01,09\n01,10\n01,11\n01,12\n01,13\n01,14\n01,15\n01,16\n01,17\n01,18\n01,19\n01,20\n01,21\n01,22\n01,23\n01,24\n01,25\n02,01\n02,02\n02,03\n02,04\n02,05\n02,06\n02,07\n02,08\n02,09\n02,10\n02,11\n02,12\n02,13\n02,14\n02,15\n02,16\n02,17\n02,18\n02,19\n02,20\n02,21\n02,22\n02,23\n02,24\n02,25\n"]
