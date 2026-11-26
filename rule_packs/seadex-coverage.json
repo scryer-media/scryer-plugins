@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.57",
-  "snapshot_sha256": "01fd5f4b1800889080ae8afff96db6051816e2adb3af42c0e0fdf386ffcefaa7",
+  "pack_version": "1.0.58",
+  "snapshot_sha256": "479486ddef239b1e752a467c7950ef7799c570bf9bb708159652986826c9ab49",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -4722,6 +4722,14 @@
       "entry_id": "2ojx91sf26jgm9h",
       "file_sources": 24,
       "release_id": "6gijd8u7n49nm8s",
+      "strict_keys": 24,
+      "tolerant_keys": 24
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "2ojx91sf26jgm9h",
+      "file_sources": 24,
+      "release_id": "c3nb7fa53miel0t",
       "strict_keys": 24,
       "tolerant_keys": 24
     },
@@ -18217,6 +18225,14 @@
       "alias_sources": 0,
       "entry_id": "a1ro5ezt0wjvb4k",
       "file_sources": 12,
+      "release_id": "fs0yg0ngnm7pbcp",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "a1ro5ezt0wjvb4k",
+      "file_sources": 12,
       "release_id": "gj7b2p6gxxhyccn",
       "strict_keys": 12,
       "tolerant_keys": 12
@@ -19364,6 +19380,14 @@
       "release_id": "xqpbx51shvso1ad",
       "strict_keys": 55,
       "tolerant_keys": 14
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "anwzazn00cjr4ge",
+      "file_sources": 13,
+      "release_id": "9wgc6k1ed83w2r3",
+      "strict_keys": 13,
+      "tolerant_keys": 13
     },
     {
       "alias_sources": 0,
@@ -26823,6 +26847,22 @@
     },
     {
       "alias_sources": 0,
+      "entry_id": "fbo14mxroh727xn",
+      "file_sources": 28,
+      "release_id": "lgygfszlxieckxe",
+      "strict_keys": 28,
+      "tolerant_keys": 28
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "fbo14mxroh727xn",
+      "file_sources": 24,
+      "release_id": "tvwr7gthpmyhpe4",
+      "strict_keys": 24,
+      "tolerant_keys": 24
+    },
+    {
+      "alias_sources": 0,
       "entry_id": "fboltf8xs26c2uu",
       "file_sources": 1,
       "release_id": "2hthhv59xugvx6d",
@@ -30130,6 +30170,14 @@
       "entry_id": "hbfgs3c1ickw5rv",
       "file_sources": 13,
       "release_id": "six9a7yt51gli11",
+      "strict_keys": 13,
+      "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "hbmzapnx2oaoa1u",
+      "file_sources": 13,
+      "release_id": "37l4k4w8e2fh9dt",
       "strict_keys": 13,
       "tolerant_keys": 13
     },
@@ -57340,6 +57388,14 @@
       "release_id": "w5cjef3nemwk70p",
       "strict_keys": 1,
       "tolerant_keys": 1
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "vkt02rl6g7joq0r",
+      "file_sources": 11,
+      "release_id": "xymdwa0g1j9tl3g",
+      "strict_keys": 11,
+      "tolerant_keys": 11
     },
     {
       "alias_sources": 0,
@@ -743999,59 +744055,47 @@
   "changes": {
     "entries": {
       "added": [
-        "5qfyb6m6pplksy0",
-        "vkt02rl6g7joq0r"
+        "fbo14mxroh727xn"
       ],
       "removed": []
     },
     "releases": {
       "added": [
-        "0qbncvi6f7i3vun",
-        "19q0ew2jhvdd81i",
-        "3gvfs4r8i2dxp9d",
-        "4d3ccied82tl6vt",
-        "6cny9tqhsayvqvc",
-        "86o7jtfyd1z3dd7",
-        "cb3q3zyj9uqu5vh",
-        "dnqbl3kupkvpips",
-        "een43ki8zd590bv",
-        "g6fsj89dhl9agfp",
-        "guta3oenygvf9gm",
-        "trdphrw6666ut3x",
-        "utfcihkg67eavxi",
-        "w5cjef3nemwk70p",
-        "xwa74imduupdnt9"
+        "37l4k4w8e2fh9dt",
+        "9wgc6k1ed83w2r3",
+        "c3nb7fa53miel0t",
+        "fs0yg0ngnm7pbcp",
+        "lgygfszlxieckxe",
+        "tvwr7gthpmyhpe4",
+        "xymdwa0g1j9tl3g"
       ],
-      "removed": [
-        "ugand3qts7sbijj",
-        "vpy1rbl4s8prist"
-      ]
+      "removed": []
     }
   },
   "matching": {
     "encoding": {
       "direct_buckets": {
         "bucket_count": 352,
-        "key_count": 21350,
+        "key_count": 21352,
         "max_keys": 230,
-        "mean_keys": 60.65340909090909
+        "mean_keys": 60.65909090909091
       },
-      "direct_entries": 21350,
+      "direct_entries": 21352,
       "route_buckets": 260,
-      "source_bytes": 3051545,
-      "source_lines": 45753,
+      "source_bytes": 3053008,
+      "source_lines": 45762,
       "template_buckets": {
         "bucket_count": 260,
-        "key_count": 6727,
-        "max_keys": 125,
-        "mean_keys": 25.873076923076923
+        "key_count": 6735,
+        "max_keys": 126,
+        "mean_keys": 25.903846153846153
       },
-      "template_groups": 6727,
-      "tuple_chunks": 6937
+      "template_groups": 6735,
+      "tuple_chunks": 6945
     },
     "provenance": {
-      "strict_keys": 58227,
-      "tolerant_keys": 47586
+      "strict_keys": 58267,
+      "tolerant_keys": 47626
     },
     "stale_overrides": []
   }
