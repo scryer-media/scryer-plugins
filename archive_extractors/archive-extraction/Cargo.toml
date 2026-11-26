@@ -52,7 +52,7 @@ sevenz-turbo = { version = "0.30.4", default-features = false, features = ["comp
 tempfile = "3"
 # wasmtime's defaults minus `cache`: nothing here uses the on-disk compile
 # cache, and it pulls in zstd 0.13, which RustSec flags.
-wasmtime = { version = "~50.0.3", default-features = false, features = [
+wasmtime = { version = "~51.0.0", default-features = false, features = [
     "anyhow",
     "async",
     "backtrace",
@@ -79,7 +79,7 @@ wasmtime = { version = "~50.0.3", default-features = false, features = [
     "compile-time-builtins",
     "wit-parser",
 ] }
-wasmtime-wasi = "~50.0.3"
+wasmtime-wasi = "~51.0.0"
 
 [profile.plugin-release]
 inherits = "release"
