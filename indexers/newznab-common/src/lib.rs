@@ -2488,7 +2488,7 @@ fn build_query_variants(query: &str) -> Vec<String> {
 
 /// Whether `ch` is a precomposed Latin letter, whose accents a query drops.
 fn is_accented_latin_letter(ch: char) -> bool {
-    matches!(ch as u32, 0xC0..=0x24F | 0x1E00..=0x1EFF)
+    matches!(ch as u32, 0xC0..=0x24F | 0x1E00..=0x1EFF) && ch.is_alphabetic()
 }
 
 fn clean_newznab_query_title(query: &str) -> String {
@@ -2525,6 +2525,18 @@ fn clean_newznab_query_title(query: &str) -> String {
     }
 
     normalized.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+#[cfg(test)]
+mod query_title_sign_tests {
+    use super::clean_newznab_query_title;
+
+    #[test]
+    fn multiplication_and_division_signs_separate_words() {
+        assert_eq!(clean_newznab_query_title("Alpha×Beta"), "Alpha Beta");
+        assert_eq!(clean_newznab_query_title("Alpha÷Beta"), "Alpha Beta");
+        assert_eq!(clean_newznab_query_title("Café Beta"), "Cafe Beta");
+    }
 }
 
 fn is_anime_request(facet_hint: Option<&str>, category_hint: Option<&str>) -> bool {
