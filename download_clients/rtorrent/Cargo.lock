@@ -1180,7 +1180,7 @@ dependencies = [
 
 [[package]]
 name = "rtorrent-download-client"
-version = "2.1.0"
+version = "2.1.1"
 dependencies = [
  "base64 0.23.1",
  "roxmltree",
