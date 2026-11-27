@@ -2486,13 +2486,30 @@ fn build_query_variants(query: &str) -> Vec<String> {
     variants
 }
 
+/// Whether `ch` is a precomposed Latin letter, whose accents a query drops.
+fn is_accented_latin_letter(ch: char) -> bool {
+    matches!(ch as u32, 0xC0..=0x24F | 0x1E00..=0x1EFF) && ch.is_alphabetic()
+}
+
 fn clean_newznab_query_title(query: &str) -> String {
     let mut normalized = String::new();
+    // Accents are dropped from Latin letters only. In other scripts a mark
+    // makes a different letter, so the letter is sent as written.
+    let mut after_latin = false;
 
-    for ch in query.nfd() {
+    for ch in query.nfc() {
         if is_combining_mark(ch) {
+            if !after_latin {
+                normalized.push(ch);
+            }
             continue;
         }
+        if is_accented_latin_letter(ch) {
+            normalized.extend(ch.nfd().filter(|part| !is_combining_mark(*part)));
+            after_latin = true;
+            continue;
+        }
+        after_latin = ch.is_ascii_alphanumeric();
 
         if ch == '&' {
             normalized.push(' ');
@@ -2508,6 +2525,18 @@ fn clean_newznab_query_title(query: &str) -> String {
     }
 
     normalized.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+#[cfg(test)]
+mod query_title_sign_tests {
+    use super::clean_newznab_query_title;
+
+    #[test]
+    fn multiplication_and_division_signs_separate_words() {
+        assert_eq!(clean_newznab_query_title("Alpha×Beta"), "Alpha Beta");
+        assert_eq!(clean_newznab_query_title("Alpha÷Beta"), "Alpha Beta");
+        assert_eq!(clean_newznab_query_title("Café Beta"), "Cafe Beta");
+    }
 }
 
 fn is_anime_request(facet_hint: Option<&str>, category_hint: Option<&str>) -> bool {
@@ -6418,6 +6447,24 @@ mod tests {
         assert_eq!(
             build_query_variants("Betty White’s Café"),
             vec!["Betty Whites Cafe"]
+        );
+    }
+
+    #[test]
+    fn query_variants_keep_letters_of_other_scripts_as_written() {
+        // Precomposed and decomposed spellings of the same Cyrillic letters.
+        assert_eq!(
+            build_query_variants("Пример: Зелёный йод"),
+            vec!["Пример Зелёный йод"]
+        );
+        assert_eq!(
+            build_query_variants("Зеле\u{0308}ныи\u{0306} и\u{0306}од"),
+            vec!["Зелёный йод"]
+        );
+        // Latin accents are still dropped, composed or decomposed.
+        assert_eq!(
+            build_query_variants("Cafe\u{0301} Señor Ångström"),
+            vec!["Cafe Senor Angstrom"]
         );
     }
 
