@@ -3409,8 +3409,8 @@ fn mask_credentials(context: &Context, text: &str) -> String {
     mask_setting_values(&context.definition, &context.config, text)
 }
 
-/// `text` with every credential-bearing setting value masked, raw and in the
-/// percent-encoded form a rendered URL carries it in. A passkey a definition
+/// `text` with every credential-bearing setting value masked, raw and in each
+/// encoded form a rendered URL or form body carries it in. A passkey a definition
 /// puts in the URL path has no parameter name to mark it, so masking goes by
 /// value.
 fn mask_setting_values(
@@ -3432,10 +3432,26 @@ fn mask_setting_values(
         .map(|value| value.trim())
         .filter(|value| value.len() >= 4)
         .flat_map(|value| {
-            let encoded =
+            // Every form a request carries a value in: the strict encoding, the
+            // template's path and query encodings, and the form body's, each
+            // in UTF-8 and in the definition's own character encoding.
+            let strict =
                 percent_encoding::utf8_percent_encode(value, percent_encoding::NON_ALPHANUMERIC)
                     .to_string();
-            [value.to_string(), encoded]
+            let query = crate::filters::url_encode(value);
+            let query_native =
+                crate::filters::url_encode_with_encoding(value, definition.encoding.encoding());
+            let form = form_component(definition, value);
+            [
+                value.to_string(),
+                strict,
+                query.replace('+', "%20"),
+                query_native.replace('+', "%20"),
+                form.replace('+', "%20"),
+                query,
+                query_native,
+                form,
+            ]
         })
         .collect::<Vec<_>>();
     // Longest first, so a value that contains another is masked whole.
@@ -5140,6 +5156,42 @@ mod tests {
             "The tracker uses a kind of CAPTCHA the plugin cannot show."
         );
         assert!(host.requests.is_empty());
+    }
+
+    /// A credential is masked in each form a request can carry it in: the
+    /// path encoding, the query encoding and the form body encoding.
+    #[test]
+    fn credentials_are_masked_in_every_request_encoding() {
+        let definition = parse_definition(&PUBLIC_DEFINITION.replace(
+            "caps:\n",
+            "settings:\n  - { name: passkey, type: text }\ncaps:\n",
+        ))
+        .unwrap();
+        for value in [
+            "synthetic-key+secret",
+            "synthetic key (one)!",
+            "sýnthetic*key~two",
+        ] {
+            let config = BTreeMap::from([("passkey".to_string(), value.to_string())]);
+            let query = crate::filters::url_encode(value);
+            let carried = [
+                value.to_string(),
+                query.replace('+', "%20"),
+                query,
+                form_component(&definition, value),
+            ];
+            for form in carried {
+                let masked = mask_setting_values(
+                    &definition,
+                    &config,
+                    &format!("https://tracker.example/rss/{form}/search?key={form}"),
+                );
+                assert_eq!(
+                    masked, "https://tracker.example/rss/[redacted]/search?key=[redacted]",
+                    "{value} as {form}"
+                );
+            }
+        }
     }
 
     /// Every tracker request writes an `http_trace` line before it and an
