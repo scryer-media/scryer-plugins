@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.58",
-  "snapshot_sha256": "479486ddef239b1e752a467c7950ef7799c570bf9bb708159652986826c9ab49",
+  "pack_version": "1.0.59",
+  "snapshot_sha256": "5a634d6e03e07981f071a402ab947b1d5c01444c84fa98a7b0533559ecd0a23f",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -14201,6 +14201,14 @@
       "alias_sources": 0,
       "entry_id": "7sb1b3nt3iz9b6g",
       "file_sources": 12,
+      "release_id": "vpyzxi2olw9qdb9",
+      "strict_keys": 12,
+      "tolerant_keys": 12
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "7sb1b3nt3iz9b6g",
+      "file_sources": 12,
       "release_id": "y16yk8xscwin0zt",
       "strict_keys": 12,
       "tolerant_keys": 12
@@ -16032,18 +16040,18 @@
     {
       "alias_sources": 0,
       "entry_id": "8w2x8e8vr14xd7d",
-      "file_sources": 25,
-      "release_id": "kumrh89c2hlj474",
-      "strict_keys": 25,
-      "tolerant_keys": 25
+      "file_sources": 26,
+      "release_id": "dllnmw3isgi8d21",
+      "strict_keys": 26,
+      "tolerant_keys": 26
     },
     {
       "alias_sources": 0,
       "entry_id": "8w2x8e8vr14xd7d",
-      "file_sources": 26,
-      "release_id": "rhcpcct5r6pqs7j",
-      "strict_keys": 26,
-      "tolerant_keys": 26
+      "file_sources": 25,
+      "release_id": "kumrh89c2hlj474",
+      "strict_keys": 0,
+      "tolerant_keys": 25
     },
     {
       "alias_sources": 0,
@@ -16300,6 +16308,14 @@
       "release_id": "8y7vkcj6gx7kiht",
       "strict_keys": 6,
       "tolerant_keys": 0
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "8zu5jbkhdk57jqb",
+      "file_sources": 12,
+      "release_id": "1518s13s5zw8a1x",
+      "strict_keys": 12,
+      "tolerant_keys": 12
     },
     {
       "alias_sources": 0,
@@ -18217,7 +18233,7 @@
       "alias_sources": 0,
       "entry_id": "a1ro5ezt0wjvb4k",
       "file_sources": 12,
-      "release_id": "57m6zrgs7zdup44",
+      "release_id": "8j94cevvcgbsr48",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -18241,7 +18257,7 @@
       "alias_sources": 0,
       "entry_id": "a1ro5ezt0wjvb4k",
       "file_sources": 12,
-      "release_id": "np34pzggx7wnfxz",
+      "release_id": "q4p1kdhpekukmkr",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
@@ -21281,7 +21297,7 @@
       "alias_sources": 0,
       "entry_id": "bwr45eprn04nzvj",
       "file_sources": 1,
-      "release_id": "7hlaas9xgtrpdma",
+      "release_id": "02b7kvky171huwx",
       "strict_keys": 1,
       "tolerant_keys": 1
     },
@@ -21289,7 +21305,7 @@
       "alias_sources": 0,
       "entry_id": "bwr45eprn04nzvj",
       "file_sources": 1,
-      "release_id": "nf04b79kkyvo8tb",
+      "release_id": "rracr8g0r2ug4sh",
       "strict_keys": 1,
       "tolerant_keys": 1
     },
@@ -31076,6 +31092,22 @@
       "release_id": "h7a8vv30f9tbftn",
       "strict_keys": 24,
       "tolerant_keys": 24
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "hux560zd8iieynp",
+      "file_sources": 13,
+      "release_id": "3kk3vr99tia51zd",
+      "strict_keys": 13,
+      "tolerant_keys": 13
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "hux560zd8iieynp",
+      "file_sources": 12,
+      "release_id": "f27624tu2of8wk8",
+      "strict_keys": 12,
+      "tolerant_keys": 12
     },
     {
       "alias_sources": 0,
@@ -53184,18 +53216,10 @@
     {
       "alias_sources": 0,
       "entry_id": "svb9c4dnk1v6u06",
-      "file_sources": 1,
+      "file_sources": 11,
       "release_id": "6nx1g1778b329sk",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "svb9c4dnk1v6u06",
-      "file_sources": 1,
-      "release_id": "pexcljyfo6y5ydv",
-      "strict_keys": 1,
-      "tolerant_keys": 1
+      "strict_keys": 11,
+      "tolerant_keys": 11
     },
     {
       "alias_sources": 0,
@@ -110944,38 +110968,188 @@
     {
       "entry_id": "8w2x8e8vr14xd7d",
       "reason": "non_release_file",
-      "release_id": "rhcpcct5r6pqs7j",
-      "source_name": "Extras/Soul.Eater.NCED1.1080p.BluRay.Remux.FLAC.2.0.AVC-fig.mkv"
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E01-E26.1080p.BluRay.Dual-Audio.Opus.2.0.HEVC-fig/Extras/Soul.Eater.NCED1.1080p.BluRay.Remux.FLAC.2.0.AVC-fig.mkv"
     },
     {
       "entry_id": "8w2x8e8vr14xd7d",
       "reason": "non_release_file",
-      "release_id": "rhcpcct5r6pqs7j",
-      "source_name": "Extras/Soul.Eater.NCED2.1080p.BluRay.Remux.FLAC.2.0.AVC-fig.mkv"
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E01-E26.1080p.BluRay.Dual-Audio.Opus.2.0.HEVC-fig/Extras/Soul.Eater.NCED2.1080p.BluRay.Remux.FLAC.2.0.AVC-fig.mkv"
     },
     {
       "entry_id": "8w2x8e8vr14xd7d",
       "reason": "non_release_file",
-      "release_id": "rhcpcct5r6pqs7j",
-      "source_name": "Extras/Soul.Eater.NCED3.1080p.BluRay.Remux.FLAC.2.0.AVC-fig.mkv"
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E01-E26.1080p.BluRay.Dual-Audio.Opus.2.0.HEVC-fig/Extras/Soul.Eater.NCED3.1080p.BluRay.Remux.FLAC.2.0.AVC-fig.mkv"
     },
     {
       "entry_id": "8w2x8e8vr14xd7d",
       "reason": "non_release_file",
-      "release_id": "rhcpcct5r6pqs7j",
-      "source_name": "Extras/Soul.Eater.NCED4.1080p.BluRay.Remux.FLAC.2.0.AVC-fig.mkv"
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E01-E26.1080p.BluRay.Dual-Audio.Opus.2.0.HEVC-fig/Extras/Soul.Eater.NCED4.1080p.BluRay.Remux.FLAC.2.0.AVC-fig.mkv"
     },
     {
       "entry_id": "8w2x8e8vr14xd7d",
       "reason": "non_release_file",
-      "release_id": "rhcpcct5r6pqs7j",
-      "source_name": "Extras/Soul.Eater.NCOP1.1080p.BluRay.Remux.FLAC.2.0.AVC-fig.mkv"
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E01-E26.1080p.BluRay.Dual-Audio.Opus.2.0.HEVC-fig/Extras/Soul.Eater.NCOP1.1080p.BluRay.Remux.FLAC.2.0.AVC-fig.mkv"
     },
     {
       "entry_id": "8w2x8e8vr14xd7d",
       "reason": "non_release_file",
-      "release_id": "rhcpcct5r6pqs7j",
-      "source_name": "Extras/Soul.Eater.NCOP2.1080p.BluRay.Remux.FLAC.2.0.AVC-fig.mkv"
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E01-E26.1080p.BluRay.Dual-Audio.Opus.2.0.HEVC-fig/Extras/Soul.Eater.NCOP2.1080p.BluRay.Remux.FLAC.2.0.AVC-fig.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E27.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E28.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E29.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E30.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E31.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E32.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E33.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E34.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E35.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E36.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E37.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E38.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E39.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E40.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E41.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E42.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E43.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E44.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E45.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E46.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E47.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E48.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E49.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E50.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+    },
+    {
+      "entry_id": "8w2x8e8vr14xd7d",
+      "reason": "source_missing_edge_group_for_tolerant_match",
+      "release_id": "dllnmw3isgi8d21",
+      "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
     },
     {
       "entry_id": "8w8annigf2rbo4z",
@@ -323227,216 +323401,6 @@
     {
       "candidates": [
         {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 01 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 01 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "[css] jashin-chan dropkick' ep 01 (2020) [bdrip 1920x1080 x264 flac]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 02 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 02 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "[css] jashin-chan dropkick' ep 02 (2020) [bdrip 1920x1080 x264 flac]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 03 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 03 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "[css] jashin-chan dropkick' ep 03 (2020) [bdrip 1920x1080 x264 flac]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 04 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 04 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "[css] jashin-chan dropkick' ep 04 (2020) [bdrip 1920x1080 x264 flac]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 05 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 05 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "[css] jashin-chan dropkick' ep 05 (2020) [bdrip 1920x1080 x264 flac]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 06 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 06 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "[css] jashin-chan dropkick' ep 06 (2020) [bdrip 1920x1080 x264 flac]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 07 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 07 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "[css] jashin-chan dropkick' ep 07 (2020) [bdrip 1920x1080 x264 flac]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 08 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 08 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "[css] jashin-chan dropkick' ep 08 (2020) [bdrip 1920x1080 x264 flac]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 09 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 09 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "[css] jashin-chan dropkick' ep 09 (2020) [bdrip 1920x1080 x264 flac]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 10 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 10 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "[css] jashin-chan dropkick' ep 10 (2020) [bdrip 1920x1080 x264 flac]",
-      "kind": "strict",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
           "anilist_id": 10845,
           "entry_id": "hzx60bbavkn7k67",
           "release_id": "cook1db7nfwxj22",
@@ -535187,6 +535151,531 @@
     {
       "candidates": [
         {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E27.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e27.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E28.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E28.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e28.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E29.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E29.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e29.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E30.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E30.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e30.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E31.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E31.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e31.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E32.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E32.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e32.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E33.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E33.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e33.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E34.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E34.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e34.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E35.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E35.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e35.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E36.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E36.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e36.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E37.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E37.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e37.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E38.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E38.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e38.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E39.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E39.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e39.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E40.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E40.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e40.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E41.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E41.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e41.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E42.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E42.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e42.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E43.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E43.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e43.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E44.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E44.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e44.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E45.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E45.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e45.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E46.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E46.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e46.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E47.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E47.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e47.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E48.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E48.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e48.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E49.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E49.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e49.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E50.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E50.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e50.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "dllnmw3isgi8d21",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E27-E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged/Soul.Eater.S01E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        },
+        {
+          "anilist_id": 3588,
+          "entry_id": "8w2x8e8vr14xd7d",
+          "release_id": "kumrh89c2hlj474",
+          "source": "file",
+          "source_name": "Soul.Eater.S01E51.720p.BluRay.Dual-Audio.Opus.2.0.AVC-figged.mkv"
+        }
+      ],
+      "key": "soul.eater.s01e51.720p.bluray.dual-audio.opus.2.0.avc-figged",
+      "kind": "strict",
+      "reason": "conflicting_identity_or_recommendation_level"
+    },
+    {
+      "candidates": [
+        {
           "anilist_id": 20912,
           "entry_id": "1qw4iqh1sh5rpxd",
           "release_id": "pz6uinxnnxq9tq3",
@@ -571469,216 +571958,6 @@
         }
       ],
       "key": "crucible|wonder egg priority s01e12 an unvanquished warrior 1080p bluray remux dual audio flac2 0 h 264",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 01 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 01 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "css|jashin chan dropkick ep 01 2020 bdrip 1920x1080 x264 flac",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 02 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 02 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "css|jashin chan dropkick ep 02 2020 bdrip 1920x1080 x264 flac",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 03 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 03 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "css|jashin chan dropkick ep 03 2020 bdrip 1920x1080 x264 flac",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 04 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 04 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "css|jashin chan dropkick ep 04 2020 bdrip 1920x1080 x264 flac",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 05 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 05 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "css|jashin chan dropkick ep 05 2020 bdrip 1920x1080 x264 flac",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 06 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 06 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "css|jashin chan dropkick ep 06 2020 bdrip 1920x1080 x264 flac",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 07 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 07 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "css|jashin chan dropkick ep 07 2020 bdrip 1920x1080 x264 flac",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 08 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 08 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "css|jashin chan dropkick ep 08 2020 bdrip 1920x1080 x264 flac",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 09 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 09 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "css|jashin chan dropkick ep 09 2020 bdrip 1920x1080 x264 flac",
-      "kind": "tolerant",
-      "reason": "conflicting_identity_or_recommendation_level"
-    },
-    {
-      "candidates": [
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "6nx1g1778b329sk",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 10 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        },
-        {
-          "anilist_id": 107294,
-          "entry_id": "svb9c4dnk1v6u06",
-          "release_id": "pexcljyfo6y5ydv",
-          "source": "file",
-          "source_name": "[CsS] Jashin-chan Dropkick' Ep 10 (2020) [BDRip 1920x1080 x264 FLAC].mkv"
-        }
-      ],
-      "key": "css|jashin chan dropkick ep 10 2020 bdrip 1920x1080 x264 flac",
       "kind": "tolerant",
       "reason": "conflicting_identity_or_recommendation_level"
     },
@@ -744055,47 +744334,56 @@
   "changes": {
     "entries": {
       "added": [
-        "fbo14mxroh727xn"
+        "hux560zd8iieynp"
       ],
       "removed": []
     },
     "releases": {
       "added": [
-        "37l4k4w8e2fh9dt",
-        "9wgc6k1ed83w2r3",
-        "c3nb7fa53miel0t",
-        "fs0yg0ngnm7pbcp",
-        "lgygfszlxieckxe",
-        "tvwr7gthpmyhpe4",
-        "xymdwa0g1j9tl3g"
+        "02b7kvky171huwx",
+        "1518s13s5zw8a1x",
+        "3kk3vr99tia51zd",
+        "8j94cevvcgbsr48",
+        "dllnmw3isgi8d21",
+        "f27624tu2of8wk8",
+        "q4p1kdhpekukmkr",
+        "rracr8g0r2ug4sh",
+        "vpyzxi2olw9qdb9"
       ],
-      "removed": []
+      "removed": [
+        "57m6zrgs7zdup44",
+        "7hlaas9xgtrpdma",
+        "nf04b79kkyvo8tb",
+        "np34pzggx7wnfxz",
+        "pexcljyfo6y5ydv",
+        "rhcpcct5r6pqs7j"
+      ]
     }
   },
   "matching": {
     "encoding": {
       "direct_buckets": {
         "bucket_count": 352,
-        "key_count": 21352,
+        "key_count": 21356,
         "max_keys": 230,
-        "mean_keys": 60.65909090909091
+        "mean_keys": 60.67045454545455
       },
-      "direct_entries": 21352,
+      "direct_entries": 21356,
       "route_buckets": 260,
-      "source_bytes": 3053008,
-      "source_lines": 45762,
+      "source_bytes": 3053902,
+      "source_lines": 45770,
       "template_buckets": {
         "bucket_count": 260,
-        "key_count": 6735,
+        "key_count": 6740,
         "max_keys": 126,
-        "mean_keys": 25.903846153846153
+        "mean_keys": 25.923076923076923
       },
-      "template_groups": 6735,
-      "tuple_chunks": 6945
+      "template_groups": 6740,
+      "tuple_chunks": 6950
     },
     "provenance": {
-      "strict_keys": 58267,
-      "tolerant_keys": 47626
+      "strict_keys": 58264,
+      "tolerant_keys": 47648
     },
     "stale_overrides": []
   }
