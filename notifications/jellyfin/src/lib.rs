@@ -114,6 +114,17 @@ enum JellyfinRequestPlan {
     },
 }
 
+impl JellyfinRequestPlan {
+    /// Whether this call refreshes a title by provider id rather than by path.
+    /// Jellyfin serves these endpoints; Silo's Jellyfin-compatible API does not.
+    fn is_provider_id_refresh(&self) -> bool {
+        matches!(
+            self,
+            Self::MoviesUpdated { .. } | Self::SeriesUpdated { .. }
+        )
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct PreparedHttpRequest {
     method: String,
@@ -630,7 +641,7 @@ fn trim_trailing_separator(value: &str) -> String {
 
 fn execute_plan(plan: &JellyfinRequestPlan, config: &JellyfinConfig) -> Result<(), PluginError> {
     let request = build_http_request(plan, config)?;
-    execute_http(request)
+    execute_http(request, plan)
 }
 
 fn build_http_request(
@@ -709,7 +720,10 @@ fn base_request(method: &str, url: &str, config: &JellyfinConfig) -> PreparedHtt
         .with_header("User-Agent", "scryer-jellyfin-plugin/0.1")
 }
 
-fn execute_http(prepared: PreparedHttpRequest) -> Result<(), PluginError> {
+fn execute_http(
+    prepared: PreparedHttpRequest,
+    plan: &JellyfinRequestPlan,
+) -> Result<(), PluginError> {
     let (request, body) = prepared.into_http_request();
     match http::request::<Vec<u8>>(&request, body) {
         Ok(response) => {
@@ -718,6 +732,7 @@ fn execute_http(prepared: PreparedHttpRequest) -> Result<(), PluginError> {
                 Ok(())
             } else {
                 Err(classify_failure(
+                    plan,
                     status,
                     retry_after_header(response.headers()),
                     &response.body(),
@@ -735,10 +750,21 @@ fn execute_http(prepared: PreparedHttpRequest) -> Result<(), PluginError> {
 }
 
 /// A non-success Jellyfin answer. Jellyfin checks only the API key, so a 401
-/// or 403 is a rejected key. The response body goes to the debug log only.
-fn classify_failure(status: u16, retry_after: Option<i64>, body: &[u8]) -> PluginError {
+/// or 403 is a rejected key. A 404 on a provider-id refresh means the server
+/// has no such endpoint (Silo), not a wrong base URL. The response body goes
+/// to the debug log only.
+fn classify_failure(
+    plan: &JellyfinRequestPlan,
+    status: u16,
+    retry_after: Option<i64>,
+    body: &[u8],
+) -> PluginError {
     let debug = format!("HTTP {status}: {}", String::from_utf8_lossy(body));
     let builder = match status {
+        404 if plan.is_provider_id_refresh() => scryer_plugin_pdk::plugin_error(
+            PluginErrorCode::Unsupported,
+            "the server does not support refresh by provider id; add a path mapping that covers this title's library",
+        ),
         401 | 403 => scryer_plugin_pdk::plugin_error(
             codes::INVALID_API_KEY,
             "Jellyfin rejected the configured api_key",
@@ -1325,7 +1351,12 @@ mod tests {
     #[test]
     fn a_rejected_api_key_carries_the_invalid_api_key_code() {
         for status in [401, 403] {
-            let error = classify_failure(status, None, b"invalid token for synthetic-user");
+            let error = classify_failure(
+                &JellyfinRequestPlan::SystemInfo,
+                status,
+                None,
+                b"invalid token for synthetic-user",
+            );
             assert_eq!(error.code, PluginErrorCode::from(codes::INVALID_API_KEY));
             assert!(!error.public_message.contains("synthetic-user"));
             assert_eq!(
@@ -1338,20 +1369,58 @@ mod tests {
     #[test]
     fn other_jellyfin_answers_map_to_their_codes() {
         assert_eq!(
-            classify_failure(404, None, b"").code,
+            classify_failure(&JellyfinRequestPlan::SystemInfo, 404, None, b"").code,
             PluginErrorCode::from(codes::ENDPOINT_NOT_FOUND)
         );
-        let limited = classify_failure(429, Some(9), b"");
+        let limited = classify_failure(&JellyfinRequestPlan::SystemInfo, 429, Some(9), b"");
         assert_eq!(limited.code, PluginErrorCode::RateLimited);
         assert_eq!(limited.retry_after_seconds, Some(9));
         assert_eq!(
-            classify_failure(502, None, b"").code,
+            classify_failure(&JellyfinRequestPlan::SystemInfo, 502, None, b"").code,
             PluginErrorCode::UpstreamUnavailable
         );
         assert_eq!(
-            classify_failure(400, None, b"").code,
+            classify_failure(&JellyfinRequestPlan::SystemInfo, 400, None, b"").code,
             PluginErrorCode::Permanent
         );
+    }
+
+    #[test]
+    fn a_missing_provider_id_refresh_endpoint_is_unsupported() {
+        let fallbacks = [
+            JellyfinRequestPlan::MoviesUpdated {
+                tmdb_id: Some("101".to_string()),
+                imdb_id: None,
+            },
+            JellyfinRequestPlan::SeriesUpdated {
+                tvdb_id: "202".to_string(),
+            },
+        ];
+        for plan in &fallbacks {
+            let error = classify_failure(plan, 404, None, b"404 page not found");
+            assert_eq!(error.code, PluginErrorCode::Unsupported);
+            assert!(error.public_message.contains("path mapping"));
+            assert_eq!(
+                error.debug_message.as_deref(),
+                Some("HTTP 404: 404 page not found")
+            );
+        }
+    }
+
+    #[test]
+    fn a_missing_path_refresh_endpoint_is_still_endpoint_not_found() {
+        let media_updated = JellyfinRequestPlan::MediaUpdated {
+            updates: vec![MediaUpdate {
+                path: "/media/Synthetic Show/S01E01.mkv".to_string(),
+                update_type: MediaUpdateType::Created,
+            }],
+        };
+        for plan in [&media_updated, &JellyfinRequestPlan::SystemInfo] {
+            assert_eq!(
+                classify_failure(plan, 404, None, b"").code,
+                PluginErrorCode::from(codes::ENDPOINT_NOT_FOUND)
+            );
+        }
     }
 
     #[test]
