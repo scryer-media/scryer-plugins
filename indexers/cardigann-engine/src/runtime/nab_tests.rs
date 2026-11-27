@@ -54,7 +54,7 @@ fn request(operation: Op, params: &[(&str, &str)]) -> PluginSearchRequest {
     }
 }
 
-fn begin_search(definition: Definition, request: PluginSearchRequest) -> Result<Step, String> {
+fn begin_search(definition: Definition, request: PluginSearchRequest) -> Result<Step, EngineError> {
     begin(
         serde_json::to_string(&CompiledIr {
             ir_version: COMPILED_IR_VERSION,

@@ -238,7 +238,7 @@ pub fn begin(
     compiled_ir: String,
     operation: Operation,
     config: BTreeMap<String, String>,
-) -> Result<Step, String> {
+) -> Result<Step, EngineError> {
     let definition = parse_compiled_ir(&compiled_ir)?;
     let stored_operation = match operation {
         Operation::TestConnection => StoredOperation::TestConnection,
@@ -427,7 +427,13 @@ async fn drive_operation<H: EngineHost>(
     mut config: BTreeMap<String, String>,
     wants_captcha: bool,
 ) -> Result<Value, EngineError> {
-    let state_key = session_state_key(&definition, &config)?;
+    let state_key = session_state_key(&definition, &config).map_err(|error| {
+        rejection_error(
+            PluginErrorCode::InvalidConfig,
+            "The indexer has no valid tracker URL.",
+            error,
+        )
+    })?;
     let mut session: EngineSession = host
         .state_get(&state_key)
         .await?
@@ -467,11 +473,14 @@ async fn drive_operation<H: EngineHost>(
             return Ok(serde_json::json!({}));
         };
         if !captcha.captcha_type.eq_ignore_ascii_case("image") {
-            return Err(format!(
-                "unsupported Cardigann CAPTCHA type `{}`",
-                captcha.captcha_type
-            )
-            .into());
+            return Err(rejection_error(
+                PluginErrorCode::Unsupported,
+                "The tracker uses a kind of CAPTCHA the plugin cannot show.",
+                format!(
+                    "unsupported Cardigann CAPTCHA type `{}`",
+                    captcha.captcha_type
+                ),
+            ));
         }
         config.remove("CAPTCHA");
     }
@@ -489,7 +498,16 @@ async fn drive_operation<H: EngineHost>(
                 request,
                 continuation,
             } => {
-                host.pace_request(&state_key, min_delay).await?;
+                host.pace_request(&state_key, min_delay)
+                    .await
+                    .map_err(|error| {
+                        rejection_error(
+                            PluginErrorCode::RateLimited,
+                            "The tracker's request spacing does not fit in the time left for \
+                             this request. Try again shortly.",
+                            error,
+                        )
+                    })?;
                 let trace = format!(
                     "plugin={TRACE_PLUGIN_ID} definition={} method={} url={}",
                     definition.id,
@@ -516,7 +534,9 @@ async fn drive_operation<H: EngineHost>(
                     session.expires_at_millis = (!session.cookies.is_empty()).then_some(
                         response_now.saturating_add(SESSION_LIFETIME.as_millis() as u64),
                     );
-                    persist_session(host, &state_key, &session).await?;
+                    persist_session(host, &state_key, &session)
+                        .await
+                        .map_err(session_save_error)?;
                 }
                 last_response = Some(response.clone());
                 step = resume(&continuation, ResumeInput::Http(response))?;
@@ -569,7 +589,9 @@ async fn drive_operation<H: EngineHost>(
                 )?;
             }
             Step::Complete { output } => {
-                persist_session(host, &state_key, &session).await?;
+                persist_session(host, &state_key, &session)
+                    .await
+                    .map_err(session_save_error)?;
                 return Ok(output);
             }
             Step::Rejected { error } => return Err(EngineError::Plugin(error)),
@@ -578,6 +600,15 @@ async fn drive_operation<H: EngineHost>(
     Err(EngineError::Message(format!(
         "Cardigann operation exceeded the {MAX_OPERATION_STEPS}-step limit"
     )))
+}
+
+/// The tracker session could not be saved between requests.
+fn session_save_error(debug: String) -> EngineError {
+    rejection_error(
+        PluginErrorCode::Temporary,
+        "The tracker login could not be saved. Try again shortly.",
+        debug,
+    )
 }
 
 fn session_state_key(
@@ -624,7 +655,7 @@ async fn persist_session<H: EngineHost>(
     host.state_set(key, value).await
 }
 
-pub fn resume(continuation: &[u8], input: ResumeInput) -> Result<Step, String> {
+pub fn resume(continuation: &[u8], input: ResumeInput) -> Result<Step, EngineError> {
     let continuation: Continuation = serde_json::from_slice(continuation)
         .map_err(|error| format!("invalid Cardigann continuation: {error}"))?;
     match (continuation, input) {
@@ -957,16 +988,21 @@ pub fn resume(continuation: &[u8], input: ResumeInput) -> Result<Step, String> {
             }
         }
         (Continuation::ManualCaptcha(_), ResumeInput::Http(_)) => {
-            Err("captcha expected manual input".to_string())
+            Err("captcha expected manual input".to_string().into())
         }
         (Continuation::CaptchaImage(_), ResumeInput::ManualInteraction(_)) => {
-            Err("captcha image expected an HTTP response".to_string())
+            Err("captcha image expected an HTTP response".to_string().into())
         }
-        (_, ResumeInput::ManualInteraction(_)) => Err("flow expected an HTTP response".to_string()),
+        (_, ResumeInput::ManualInteraction(_)) => {
+            Err("flow expected an HTTP response".to_string().into())
+        }
     }
 }
 
-fn begin_after_optional_login(definition: &Definition, context: Context) -> Result<Step, String> {
+fn begin_after_optional_login(
+    definition: &Definition,
+    context: Context,
+) -> Result<Step, EngineError> {
     let Some(login) = definition.login.as_ref() else {
         return continue_operation(definition, context);
     };
@@ -1000,7 +1036,7 @@ fn direct_login(
     definition: &Definition,
     login: &LoginBlock,
     context: Context,
-) -> Result<Step, String> {
+) -> Result<Step, EngineError> {
     let method = login.method.to_ascii_uppercase();
     let mut path = render(&login.path, &context.variables)?;
     let mut inputs = render_map(&login.inputs, &context.variables)?;
@@ -1028,7 +1064,10 @@ fn direct_login(
     )
 }
 
-fn submit_form_login(mut context: Context, response: &PluginHttpResponse) -> Result<Step, String> {
+fn submit_form_login(
+    mut context: Context,
+    response: &PluginHttpResponse,
+) -> Result<Step, EngineError> {
     let definition = context.definition.clone();
     let login = definition
         .login
@@ -1077,10 +1116,14 @@ fn submit_form_login(mut context: Context, response: &PluginHttpResponse) -> Res
                         Continuation::CaptchaImage(context),
                     );
                 }
-                return Err(
+                return Ok(rejected(
+                    PluginErrorCode::Unsupported,
+                    "The tracker's CAPTCHA image is served from another site, which the plugin \
+                     does not load."
+                        .to_string(),
                     "cross-origin CAPTCHA image is blocked by the configured-origin policy"
                         .to_string(),
-                );
+                ));
             }
         }
         return need_manual(
@@ -1104,10 +1147,11 @@ fn submit_form_login(mut context: Context, response: &PluginHttpResponse) -> Res
 
     let form_selector_text = login.form.as_deref().unwrap_or("form");
     let form_selector = parse_selector(form_selector_text)?;
-    let form = document
-        .select(&form_selector.css)
-        .next()
-        .ok_or_else(|| format!("login form selector `{form_selector_text}` did not match"))?;
+    let Some(form) = document.select(&form_selector.css).next() else {
+        return Ok(login_page_mismatch(format!(
+            "login form selector `{form_selector_text}` did not match"
+        )));
+    };
     let input_selector = parse_selector("input")?;
     let mut inputs = Vec::new();
     for input in form.select(&input_selector.css) {
@@ -1129,12 +1173,16 @@ fn submit_form_login(mut context: Context, response: &PluginHttpResponse) -> Res
     for (key, value) in render_map(&login.inputs, &context.variables)? {
         let input_key = if login.selectors {
             let selector = parse_selector(&key)?;
-            document
+            let Some(name) = document
                 .select(&selector.css)
                 .next()
                 .and_then(|element| element.value().attr("name"))
-                .ok_or_else(|| format!("login input selector `{key}` did not match a named input"))?
-                .to_string()
+            else {
+                return Ok(login_page_mismatch(format!(
+                    "login input selector `{key}` did not match a named input"
+                )));
+            };
+            name.to_string()
         } else {
             key
         };
@@ -1175,17 +1223,17 @@ fn submit_form_login(mut context: Context, response: &PluginHttpResponse) -> Res
     {
         let input = if login.selectors {
             let selector = parse_selector(&captcha.input)?;
-            document
+            let Some(name) = document
                 .select(&selector.css)
                 .next()
                 .and_then(|element| element.value().attr("name"))
-                .ok_or_else(|| {
-                    format!(
-                        "login captcha selector `{}` did not match a named input",
-                        captcha.input
-                    )
-                })?
-                .to_string()
+            else {
+                return Ok(login_page_mismatch(format!(
+                    "login captcha selector `{}` did not match a named input",
+                    captcha.input
+                )));
+            };
+            name.to_string()
         } else {
             captcha.input.clone()
         };
@@ -1229,7 +1277,7 @@ fn submit_form_login(mut context: Context, response: &PluginHttpResponse) -> Res
 /// reference engine parses it without ever evaluating it. Fetching it cost one extra
 /// authenticated request before every search and grab on 328 definitions and
 /// stamped a fabricated `minimum_seed_ratio` onto every release.
-fn continue_operation(definition: &Definition, context: Context) -> Result<Step, String> {
+fn continue_operation(definition: &Definition, context: Context) -> Result<Step, EngineError> {
     match &context.operation {
         StoredOperation::TestConnection => {
             let path = definition
@@ -1251,7 +1299,7 @@ fn continue_operation(definition: &Definition, context: Context) -> Result<Step,
     }
 }
 
-fn next_search(definition: &Definition, mut context: Context) -> Result<Step, String> {
+fn next_search(definition: &Definition, mut context: Context) -> Result<Step, EngineError> {
     if context.search_path >= definition.search.paths.len() {
         let response = PluginSearchResponse {
             results: context.results,
@@ -1264,9 +1312,16 @@ fn next_search(definition: &Definition, mut context: Context) -> Result<Step, St
     }
     let request = match &context.operation {
         StoredOperation::Search(search) => search.clone(),
-        _ => return Err("search continuation lost its search request".to_string()),
+        _ => {
+            return Err("search continuation lost its search request"
+                .to_string()
+                .into());
+        }
     };
-    context.variables = search_variables(definition, &context.config, &request)?;
+    context.variables = match search_variables(definition, &context.config, &request) {
+        Ok(variables) => variables,
+        Err(error) => return Ok(search_not_buildable(error)),
+    };
     let path = &definition.search.paths[context.search_path];
     if !path.categories.is_empty()
         && let Some(Value::Array(categories)) = context.variables.get(".Categories")
@@ -1305,7 +1360,15 @@ fn next_search(definition: &Definition, mut context: Context) -> Result<Step, St
             .variables
             .insert(".Categories".to_string(), Value::Array(selected));
     }
-    let request = build_search_request(definition, path, &context)?;
+    let request = match build_search_request(definition, path, &context) {
+        Ok(request) => request,
+        Err(error) => {
+            return Ok(search_not_buildable(format!(
+                "search path {}: {error}",
+                context.search_path + 1
+            )));
+        }
+    };
     if request
         .method
         .as_deref()
@@ -1412,7 +1475,7 @@ pub(crate) fn render_all_search_paths(
     Ok(rendered)
 }
 
-fn begin_grab(definition: &Definition, context: Context) -> Result<Step, String> {
+fn begin_grab(definition: &Definition, context: Context) -> Result<Step, EngineError> {
     let Some(download) = definition.download.as_ref() else {
         return complete_grab(&context, &grab_url(&context)?, "GET", Vec::new());
     };
@@ -1434,7 +1497,7 @@ fn begin_grab(definition: &Definition, context: Context) -> Result<Step, String>
     continue_grab_after_before(context)
 }
 
-fn continue_grab_after_before(context: Context) -> Result<Step, String> {
+fn continue_grab_after_before(context: Context) -> Result<Step, EngineError> {
     let definition = context.definition.clone();
     let download = definition
         .download
@@ -1466,7 +1529,7 @@ fn continue_grab_after_before(context: Context) -> Result<Step, String> {
     }
 }
 
-fn finish_grab(mut context: Context, body: &[u8]) -> Result<Step, String> {
+fn finish_grab(mut context: Context, body: &[u8]) -> Result<Step, EngineError> {
     let definition = context.definition.clone();
     let download = definition
         .download
@@ -1484,7 +1547,7 @@ fn finish_grab(mut context: Context, body: &[u8]) -> Result<Step, String> {
     next_grab_selector(context)
 }
 
-fn next_grab_selector(mut context: Context) -> Result<Step, String> {
+fn next_grab_selector(mut context: Context) -> Result<Step, EngineError> {
     let definition = context.definition.clone();
     let download = definition
         .download
@@ -1555,7 +1618,7 @@ fn complete_grab(
     url: &str,
     method: &str,
     body: Vec<u8>,
-) -> Result<Step, String> {
+) -> Result<Step, EngineError> {
     let definition = context.definition.clone();
     let method = render(method, &context.variables)?.to_ascii_uppercase();
     if url.starts_with("magnet:") {
@@ -1598,7 +1661,10 @@ fn complete_grab(
     need_http(request, Continuation::GrabDownload(context.clone()))
 }
 
-fn complete_grab_response(context: &Context, response: PluginHttpResponse) -> Result<Step, String> {
+fn complete_grab_response(
+    context: &Context,
+    response: PluginHttpResponse,
+) -> Result<Step, EngineError> {
     // A multi-file torrent's piece table alone can run past a megabyte, so the
     // old 2 MiB ceiling rejected legitimate season packs.
     const MAX_TORRENT_BYTES: usize = 64 * 1024 * 1024;
@@ -2584,7 +2650,7 @@ fn http_request(
 fn need_http(
     mut request: PluginHttpRequest,
     mut continuation: Continuation,
-) -> Result<Step, String> {
+) -> Result<Step, EngineError> {
     let context = continuation.context_mut();
     if !same_configured_site(&context.definition, context, &request.url) {
         request.headers.remove("cookie");
@@ -2639,7 +2705,7 @@ fn same_configured_site(definition: &Definition, context: &Context, url: &str) -
 fn need_redirect(
     request: PluginHttpRequest,
     mut continuation: Continuation,
-) -> Result<Step, String> {
+) -> Result<Step, EngineError> {
     let context = continuation.context_mut();
     context.current_request = Some(RequestState {
         url: request.url.clone(),
@@ -2658,7 +2724,7 @@ fn need_manual(
     prompt: String,
     fields: Vec<ConfigFieldDef>,
     continuation: Continuation,
-) -> Result<Step, String> {
+) -> Result<Step, EngineError> {
     Ok(Step::NeedManualInteraction {
         prompt,
         fields,
@@ -2776,17 +2842,30 @@ fn follow_redirect(
     context: &mut Context,
     response: &PluginHttpResponse,
     enabled: bool,
-) -> Result<Option<PluginHttpRequest>, String> {
+) -> Result<Option<PluginHttpRequest>, EngineError> {
     if !(300..400).contains(&response.status) || !enabled {
         return Ok(None);
     }
-    let location = response
+    let Some(location) = response
         .headers
         .iter()
         .find_map(|(name, value)| name.eq_ignore_ascii_case("location").then_some(value))
-        .ok_or_else(|| "redirect response did not include a Location header".to_string())?;
+    else {
+        return Err(rejection_error(
+            codes::INVALID_RESPONSE.into(),
+            "The tracker answered with a redirect that names no destination.",
+            format!(
+                "HTTP {} redirect response did not include a Location header",
+                response.status
+            ),
+        ));
+    };
     if context.redirect_hops >= 5 {
-        return Err("Cardigann redirect limit (5 hops) exceeded".to_string());
+        return Err(rejection_error(
+            codes::INVALID_RESPONSE.into(),
+            "The tracker redirected more times than the plugin follows.",
+            "Cardigann redirect limit (5 hops) exceeded".to_string(),
+        ));
     }
     let previous = context
         .current_request
@@ -2828,7 +2907,7 @@ fn retry_login_if_needed(
     definition: &Definition,
     mut context: Context,
     response: &PluginHttpResponse,
-) -> Result<Option<Step>, String> {
+) -> Result<Option<Step>, EngineError> {
     let Some(login) = definition.login.as_ref() else {
         return Ok(None);
     };
@@ -3165,7 +3244,7 @@ fn login_failure(
     definition: &Definition,
     context: &Context,
     response: &PluginHttpResponse,
-) -> Result<Option<Step>, String> {
+) -> Result<Option<Step>, EngineError> {
     if let Some(login) = definition.login.as_ref()
         && let Some(message) = error_block_message(
             definition,
@@ -3285,6 +3364,39 @@ fn rejected(code: PluginErrorCode, public_message: String, debug_message: String
     }
 }
 
+/// The typed failure of a step that reports through `Err` rather than a
+/// rejected `Step`. The public message is fixed wording and carries no
+/// tracker or setting text.
+fn rejection_error(
+    code: PluginErrorCode,
+    public_message: &str,
+    debug_message: String,
+) -> EngineError {
+    EngineError::Plugin(
+        plugin_error(code, public_message)
+            .debug(debug_message)
+            .build(),
+    )
+}
+
+/// The definition's search templates do not evaluate with these settings.
+fn search_not_buildable(debug_message: String) -> Step {
+    rejected(
+        PluginErrorCode::InvalidConfig,
+        "The definition's search could not be built from the indexer's settings.".to_string(),
+        debug_message,
+    )
+}
+
+/// The tracker's login page does not hold what the definition looks for.
+fn login_page_mismatch(debug_message: String) -> Step {
+    rejected(
+        codes::INVALID_RESPONSE.into(),
+        "The tracker's login page did not show the login form this definition expects.".to_string(),
+        debug_message,
+    )
+}
+
 /// Upper bound on tracker-supplied text in a debug message. An error block
 /// without a `message:` reports the matched element's text, which for a
 /// `:root:contains(…)` selector is the whole page.
@@ -3370,7 +3482,7 @@ fn search_error_block(
     definition: &Definition,
     context: &Context,
     response: &PluginHttpResponse,
-) -> Result<Option<Step>, String> {
+) -> Result<Option<Step>, EngineError> {
     let Some(message) = error_block_message(
         definition,
         &definition.search.error,
@@ -4825,6 +4937,7 @@ mod tests {
         persisted: Option<Vec<u8>>,
         now: u64,
         paced: Vec<Duration>,
+        pace_error: Option<String>,
         traces: Vec<String>,
     }
 
@@ -4855,12 +4968,178 @@ mod tests {
 
         async fn pace_request(&mut self, _state_key: &str, delay: Duration) -> Result<(), String> {
             self.paced.push(delay);
-            Ok(())
+            self.pace_error.clone().map_or(Ok(()), Err)
         }
 
         fn trace(&mut self, line: &str) {
             self.traces.push(line.to_string());
         }
+    }
+
+    fn typed_search_failure(
+        host: &mut MockEngineHost,
+        definition: &str,
+        config: BTreeMap<String, String>,
+    ) -> PluginError {
+        let definition = parse_definition(definition).unwrap();
+        match block_on(search_with_host(
+            host,
+            definition,
+            PluginSearchRequest::default(),
+            config,
+        )) {
+            Err(EngineError::Plugin(error)) => error,
+            other => panic!("a typed failure expected, got {other:?}"),
+        }
+    }
+
+    fn redirect(location: Option<&str>) -> PluginHttpResponse {
+        PluginHttpResponse {
+            status: 302,
+            headers: location
+                .map(|location| BTreeMap::from([("location".into(), location.into())]))
+                .unwrap_or_default(),
+            set_cookie_headers: Vec::new(),
+            body: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn a_redirect_without_a_destination_is_an_invalid_response() {
+        let definition = PUBLIC_DEFINITION.replace("search:\n", "followredirect: true\nsearch:\n");
+        let mut host = MockEngineHost {
+            responses: vec![redirect(None)],
+            ..Default::default()
+        };
+        let error = typed_search_failure(&mut host, &definition, BTreeMap::new());
+        assert_eq!(error.code, PluginErrorCode::from(codes::INVALID_RESPONSE));
+        assert_eq!(
+            error.public_message,
+            "The tracker answered with a redirect that names no destination."
+        );
+        assert_eq!(
+            error.debug_message.as_deref(),
+            Some("HTTP 302 redirect response did not include a Location header")
+        );
+    }
+
+    #[test]
+    fn a_redirect_chain_past_the_hop_limit_is_an_invalid_response() {
+        let definition = PUBLIC_DEFINITION.replace("search:\n", "followredirect: true\nsearch:\n");
+        let mut host = MockEngineHost {
+            responses: (0..6).map(|_| redirect(Some("/loop"))).collect(),
+            ..Default::default()
+        };
+        let error = typed_search_failure(&mut host, &definition, BTreeMap::new());
+        assert_eq!(error.code, PluginErrorCode::from(codes::INVALID_RESPONSE));
+        assert_eq!(
+            error.public_message,
+            "The tracker redirected more times than the plugin follows."
+        );
+        assert_eq!(host.requests.len(), 6);
+    }
+
+    #[test]
+    fn a_login_page_without_the_expected_form_is_a_definition_mismatch() {
+        let definition = PUBLIC_DEFINITION.replace(
+            "search:\n",
+            "login:\n  method: form\n  path: login\n  inputs: { username: \"{{ .Config.username }}\" }\nsearch:\n",
+        );
+        let mut host = MockEngineHost {
+            responses: vec![html_response(200, "<html><p>Maintenance</p></html>")],
+            ..Default::default()
+        };
+        let error = typed_search_failure(
+            &mut host,
+            &definition,
+            BTreeMap::from([("username".to_string(), "synthetic-user".to_string())]),
+        );
+        assert_eq!(error.code, PluginErrorCode::from(codes::INVALID_RESPONSE));
+        assert_eq!(
+            error.public_message,
+            "The tracker's login page did not show the login form this definition expects."
+        );
+        assert_eq!(
+            error.debug_message.as_deref(),
+            Some("login form selector `form` did not match")
+        );
+        assert_eq!(host.requests.len(), 1);
+    }
+
+    #[test]
+    fn a_login_input_selector_without_a_named_input_is_a_definition_mismatch() {
+        let definition = PUBLIC_DEFINITION.replace(
+            "search:\n",
+            "login:\n  method: form\n  path: login\n  selectors: true\n  inputs: { \"input.user\": alice }\nsearch:\n",
+        );
+        let mut host = MockEngineHost {
+            responses: vec![html_response(
+                200,
+                "<form><input class=pass name=pass></form>",
+            )],
+            ..Default::default()
+        };
+        let error = typed_search_failure(&mut host, &definition, BTreeMap::new());
+        assert_eq!(error.code, PluginErrorCode::from(codes::INVALID_RESPONSE));
+        assert_eq!(
+            error.debug_message.as_deref(),
+            Some("login input selector `input.user` did not match a named input")
+        );
+    }
+
+    #[test]
+    fn an_unparseable_tracker_url_is_invalid_config_before_any_request() {
+        let mut host = MockEngineHost::default();
+        let error = typed_search_failure(
+            &mut host,
+            PUBLIC_DEFINITION,
+            BTreeMap::from([("base_url".to_string(), "not a url".to_string())]),
+        );
+        assert_eq!(error.code, PluginErrorCode::InvalidConfig);
+        assert_eq!(
+            error.public_message,
+            "The indexer has no valid tracker URL."
+        );
+        assert!(host.requests.is_empty());
+    }
+
+    #[test]
+    fn request_spacing_past_the_deadline_is_rate_limited() {
+        let mut host = MockEngineHost {
+            pace_error: Some("tracker request pacing needs 9000 ms".to_string()),
+            ..Default::default()
+        };
+        let error = typed_search_failure(&mut host, PUBLIC_DEFINITION, BTreeMap::new());
+        assert_eq!(error.code, PluginErrorCode::RateLimited);
+        assert_eq!(
+            error.debug_message.as_deref(),
+            Some("tracker request pacing needs 9000 ms")
+        );
+        assert!(host.requests.is_empty());
+    }
+
+    #[test]
+    fn a_captcha_kind_the_plugin_cannot_show_is_unsupported() {
+        let definition = parse_definition(&PUBLIC_DEFINITION.replace(
+            "search:\n",
+            "login:\n  method: form\n  path: login\n  captcha:\n    type: recaptcha\n    selector: div.g-recaptcha\n    input: captcha\nsearch:\n",
+        ))
+        .unwrap();
+        let mut host = MockEngineHost::default();
+        let Err(EngineError::Plugin(error)) = block_on(action_with_host(
+            &mut host,
+            definition,
+            EngineAction::CheckCaptcha,
+            BTreeMap::new(),
+        )) else {
+            panic!("a typed failure expected")
+        };
+        assert_eq!(error.code, PluginErrorCode::Unsupported);
+        assert_eq!(
+            error.public_message,
+            "The tracker uses a kind of CAPTCHA the plugin cannot show."
+        );
+        assert!(host.requests.is_empty());
     }
 
     /// Every tracker request writes an `http_trace` line before it and an
@@ -5709,7 +5988,7 @@ search:
         .unwrap() else {
             panic!("login landing request expected")
         };
-        let error = resume(
+        let error = rejection(resume(
             &continuation,
             ResumeInput::Http(PluginHttpResponse {
                 status: 200,
@@ -5717,11 +5996,16 @@ search:
                 set_cookie_headers: Vec::new(),
                 body: br#"<form><img class=captcha src='https://captcha.example/challenge.png'></form>"#.to_vec(),
             }),
-        )
-        .unwrap_err();
+        ));
+        assert_eq!(error.code, PluginErrorCode::Unsupported);
         assert_eq!(
-            error,
-            "cross-origin CAPTCHA image is blocked by the configured-origin policy"
+            error.public_message,
+            "The tracker's CAPTCHA image is served from another site, which the plugin does \
+             not load."
+        );
+        assert_eq!(
+            error.debug_message.as_deref(),
+            Some("cross-origin CAPTCHA image is blocked by the configured-origin policy")
         );
     }
 
@@ -7170,7 +7454,11 @@ search:
         })
         .to_string();
         let error = begin(invalid, Operation::TestConnection, BTreeMap::new()).unwrap_err();
-        assert!(error.contains("unsupported Cardigann compiled IR version"));
+        assert!(
+            error
+                .to_string()
+                .contains("unsupported Cardigann compiled IR version")
+        );
     }
 
     #[test]
@@ -8038,9 +8326,9 @@ search:
         assert_eq!(request.url, "https://tracker.example/health");
     }
 
-    fn rejection(step: Result<Step, String>) -> PluginError {
+    fn rejection(step: Result<Step, EngineError>) -> PluginError {
         match step {
-            Ok(Step::Rejected { error }) => error,
+            Ok(Step::Rejected { error }) | Err(EngineError::Plugin(error)) => error,
             other => panic!("a typed rejection expected, got {other:?}"),
         }
     }
