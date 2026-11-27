@@ -67,7 +67,13 @@ pub trait EngineHost {
     async fn wall_now_millis(&mut self) -> Result<u64, String>;
     /// Wait until this component instance may start its next tracker request.
     async fn pace_request(&mut self, state_key: &str, delay: Duration) -> Result<(), String>;
+    /// Write one line of the debug-level `http_trace` every indexer plugin
+    /// emits around its tracker requests. The line is already masked.
+    fn trace(&mut self, _line: &str) {}
 }
+
+/// The plugin name the `http_trace` lines carry.
+const TRACE_PLUGIN_ID: &str = "cardigann";
 
 /// The tracker session this configured indexer carries between operations.
 ///
@@ -399,6 +405,10 @@ impl EngineHost for ComponentEngineHost {
                 )
             })
     }
+
+    fn trace(&mut self, line: &str) {
+        component::log(component::LogLevel::Debug, line);
+    }
 }
 
 /// A failed host HTTP attempt as the PDK classifies it: an unreachable
@@ -480,7 +490,26 @@ async fn drive_operation<H: EngineHost>(
                 continuation,
             } => {
                 host.pace_request(&state_key, min_delay).await?;
-                let response = host.http(request).await?;
+                let trace = format!(
+                    "plugin={TRACE_PLUGIN_ID} definition={} method={} url={}",
+                    definition.id,
+                    request.method.as_deref().unwrap_or("GET"),
+                    mask_setting_values(&definition, &config, &request.url)
+                );
+                host.trace(&format!("http_trace {trace}"));
+                let response = match host.http(request).await {
+                    Ok(response) => response,
+                    Err(error) => {
+                        let error_text =
+                            mask_setting_values(&definition, &config, &error.to_string());
+                        host.trace(&format!("http_trace_error {trace} error={error_text}"));
+                        return Err(error);
+                    }
+                };
+                host.trace(&format!(
+                    "http_trace_response {trace} status={}",
+                    response.status
+                ));
                 let cookies_changed = merge_response_cookies(&mut session.cookies, &response);
                 if cookies_changed {
                     let response_now = host.wall_now_millis().await?;
@@ -3265,25 +3294,43 @@ const TRACKER_TEXT_LIMIT: usize = 200;
 /// operator configured masked, in case a definition's message template or the
 /// tracker's page echoes one back.
 fn mask_credentials(context: &Context, text: &str) -> String {
+    mask_setting_values(&context.definition, &context.config, text)
+}
+
+/// `text` with every credential-bearing setting value masked, raw and in the
+/// percent-encoded form a rendered URL carries it in. A passkey a definition
+/// puts in the URL path has no parameter name to mark it, so masking goes by
+/// value.
+fn mask_setting_values(
+    definition: &Definition,
+    config: &BTreeMap<String, String>,
+    text: &str,
+) -> String {
     let mut text = text.to_string();
     let mut secrets = ["username", "password", "cookie", "cardigannCaptcha"]
         .into_iter()
         .chain(
-            context
-                .definition
+            definition
                 .settings
                 .iter()
                 .filter(|setting| matches!(setting.setting_type.as_str(), "text" | "password"))
                 .map(|setting| setting.name.as_str()),
         )
-        .filter_map(|key| context.config.get(key))
+        .filter_map(|key| config.get(key))
         .map(|value| value.trim())
         .filter(|value| value.len() >= 4)
+        .flat_map(|value| {
+            let encoded =
+                percent_encoding::utf8_percent_encode(value, percent_encoding::NON_ALPHANUMERIC)
+                    .to_string();
+            [value.to_string(), encoded]
+        })
         .collect::<Vec<_>>();
     // Longest first, so a value that contains another is masked whole.
-    secrets.sort_by_key(|value| std::cmp::Reverse(value.len()));
+    secrets.sort_by(|left, right| right.len().cmp(&left.len()).then_with(|| left.cmp(right)));
+    secrets.dedup();
     for secret in secrets {
-        text = text.replace(secret, "[redacted]");
+        text = text.replace(&secret, "[redacted]");
     }
     text
 }
@@ -4778,6 +4825,7 @@ mod tests {
         persisted: Option<Vec<u8>>,
         now: u64,
         paced: Vec<Duration>,
+        traces: Vec<String>,
     }
 
     impl EngineHost for MockEngineHost {
@@ -4809,6 +4857,85 @@ mod tests {
             self.paced.push(delay);
             Ok(())
         }
+
+        fn trace(&mut self, line: &str) {
+            self.traces.push(line.to_string());
+        }
+    }
+
+    /// Every tracker request writes an `http_trace` line before it and an
+    /// `http_trace_response` or `http_trace_error` line after it, with the
+    /// configured passkey masked wherever the URL carries it.
+    #[test]
+    fn tracker_requests_write_a_masked_http_trace() {
+        let definition = parse_definition(
+            &PUBLIC_DEFINITION
+                .replace(
+                    "caps:\n",
+                    "settings:\n  - { name: passkey, type: text }\ncaps:\n",
+                )
+                .replace(
+                    "    - path: search\n",
+                    "    - path: \"rss/{{ .Config.passkey }}/search\"\n",
+                ),
+        )
+        .unwrap();
+        let config = BTreeMap::from([("passkey".to_string(), "synthetic+key".to_string())]);
+        let mut host = MockEngineHost {
+            responses: vec![PluginHttpResponse {
+                status: 200,
+                headers: BTreeMap::new(),
+                set_cookie_headers: Vec::new(),
+                body: b"<table></table>".to_vec(),
+            }],
+            ..Default::default()
+        };
+        block_on(search_with_host(
+            &mut host,
+            definition.clone(),
+            PluginSearchRequest::default(),
+            config.clone(),
+        ))
+        .unwrap();
+
+        assert_eq!(host.traces.len(), 2, "{:?}", host.traces);
+        assert!(
+            host.traces[0].starts_with("http_trace plugin=cardigann definition=fixture method=GET url=https://tracker.example/rss/[redacted]/search"),
+            "{:?}",
+            host.traces
+        );
+        assert!(
+            host.traces[1].starts_with("http_trace_response plugin=cardigann definition=fixture"),
+            "{:?}",
+            host.traces
+        );
+        assert!(host.traces[1].ends_with(" status=200"), "{:?}", host.traces);
+        for line in &host.traces {
+            assert!(!line.contains("synthetic"), "{line}");
+        }
+
+        let mut host = MockEngineHost::default();
+        assert!(
+            block_on(search_with_host(
+                &mut host,
+                definition,
+                PluginSearchRequest::default(),
+                config,
+            ))
+            .is_err()
+        );
+        assert_eq!(host.traces.len(), 2, "{:?}", host.traces);
+        assert!(
+            host.traces[1].starts_with("http_trace_error plugin=cardigann definition=fixture"),
+            "{:?}",
+            host.traces
+        );
+        assert!(
+            host.traces[1].ends_with(" error=unexpected HTTP request"),
+            "{:?}",
+            host.traces
+        );
+        assert!(!host.traces[1].contains("synthetic"), "{:?}", host.traces);
     }
 
     fn compiled(definition: &str) -> String {
