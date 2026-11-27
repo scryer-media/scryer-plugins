@@ -730,7 +730,7 @@ impl DelugeConfig {
         Self {
             json_url: format!("{}/json", base.trim_end_matches('/')),
             password: config_value("password").unwrap_or_else(|| "deluge".to_string()),
-            category: config_value("category").unwrap_or_else(|| "scryer-tv".to_string()),
+            category: config_text_or("category", "scryer-tv"),
             imported_category: config_value("post_import_category").unwrap_or_default(),
             recent_priority: queue_placement_config("recent_priority"),
             older_priority: queue_placement_config("older_priority"),
@@ -1926,6 +1926,17 @@ fn config_value(key: &str) -> Option<String> {
         .filter(|value| !value.is_empty())
 }
 
+/// A text setting whose stored empty value means "none": a key the host
+/// stored, even empty, is the operator's choice; only an absent key takes
+/// `default`.
+fn config_text_or(key: &str, default: &str) -> String {
+    stored_text_or(config::get(key).ok().flatten(), default)
+}
+
+fn stored_text_or(stored: Option<String>, default: &str) -> String {
+    stored.map_or_else(|| default.to_string(), |value| value.trim().to_string())
+}
+
 fn config_bool(key: &str, default: bool) -> bool {
     config_value(key)
         .map(|value| {
@@ -2023,6 +2034,17 @@ fn is_localhost_url(url: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_stored_empty_category_means_none_and_only_an_absent_one_takes_the_default() {
+        assert_eq!(stored_text_or(None, "scryer-tv"), "scryer-tv");
+        assert_eq!(stored_text_or(Some(String::new()), "scryer-tv"), "");
+        assert_eq!(stored_text_or(Some("  ".to_string()), "scryer-tv"), "");
+        assert_eq!(
+            stored_text_or(Some(" sonarr ".to_string()), "scryer-tv"),
+            "sonarr"
+        );
+    }
 
     fn finished_torrent(state: &str) -> DelugeTorrent {
         DelugeTorrent {
