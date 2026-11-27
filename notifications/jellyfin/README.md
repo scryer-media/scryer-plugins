@@ -66,4 +66,5 @@ If an event contains updates that cannot be mapped and also lacks the needed fal
 
 - The plugin authenticates with Jellyfin using `Authorization: MediaBrowser Token="..."`
 - It sends targeted refreshes only. It does not trigger a full Jellyfin library refresh.
+- It also works with Silo's Jellyfin-compatible API through `POST /Library/Media/Updated`. Silo has no provider-id endpoints, so every library path needs a mapping there. It has not been run against a live Silo server.
 - A test event validates the connection through the System/Info endpoint; it does not alter the Jellyfin library.

@@ -175,7 +175,7 @@ struct MediaUpdatedPathPayload<'a> {
 fn default_descriptor() -> PluginDescriptor {
     PluginDescriptor {
         id: "jellyfin".to_string(),
-        name: "Jellyfin".to_string(),
+        name: "Jellyfin / Silo".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         sdk_version: SDK_VERSION.to_string(),
         sdk_constraint: current_sdk_constraint(),
@@ -210,7 +210,7 @@ fn default_descriptor() -> PluginDescriptor {
                     role: None,
                     options: vec![],
                     help_text: Some(
-                        "Jellyfin server URL, for example http://jellyfin:8096".to_string(),
+                        "Jellyfin or Silo server URL, for example http://jellyfin:8096".to_string(),
                     ),
                     ..Default::default()
                 },
@@ -224,7 +224,9 @@ fn default_descriptor() -> PluginDescriptor {
                     host_binding: None,
                     role: None,
                     options: vec![],
-                    help_text: Some("Jellyfin API key used for targeted refresh calls.".to_string()),
+                    help_text: Some(
+                        "Jellyfin or Silo API key used for targeted refresh calls.".to_string(),
+                    ),
                     ..Default::default()
                 },
                 ConfigFieldDef {
@@ -238,7 +240,7 @@ fn default_descriptor() -> PluginDescriptor {
                     role: None,
                     options: vec![],
                     help_text: Some(
-                        "Pick the Scryer path on the left and enter the matching Jellyfin-visible path on the right. Add up to 10 mappings. Most specific path wins."
+                        "Pick the Scryer path on the left and enter the matching path as Jellyfin or Silo sees it on the right. Add up to 10 mappings. Most specific path wins. Silo refreshes mapped paths only, so add a mapping for each library even where both sides are the same; the provider-id fallback for unmapped paths works on Jellyfin only."
                             .to_string(),
                     ),
                     ..Default::default()
