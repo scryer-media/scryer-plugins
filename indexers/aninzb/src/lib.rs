@@ -31,7 +31,9 @@ const API_MAX_RESULTS: usize = 50;
 const MAX_PARTITION_REQUESTS: usize = 64;
 const MAX_SIZE_PARTITION_DEPTH: u8 = 12;
 const MAX_API_RESPONSE_BYTES: usize = 20 * 1024 * 1024;
+const MAX_API_ERROR_BODY_BYTES: usize = 64 * 1024;
 const API_REQUESTS_PER_SECOND: u32 = 3;
+const MAX_CONCURRENT_API_REQUESTS: usize = 4;
 const DEFAULT_HOURLY_HIT_CAP: u32 = 1000;
 const DEFAULT_DAILY_HIT_CAP: u32 = 5000;
 const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
@@ -267,8 +269,9 @@ async fn execute_api_search(
     config: &AniNzbConfig,
     request: &SearchRequest,
 ) -> Result<SearchResponse, Error> {
-    let initial_queries = initial_api_queries(request);
-    let mut queries = Vec::new();
+    // The loop pops from the end, so the initial branches are queued in
+    // reverse to go out in their planned order.
+    let mut queries: Vec<ApiSearchQuery> = initial_api_queries(request).into_iter().rev().collect();
     let mut seen_queries = HashSet::new();
     let mut seen_results = HashSet::new();
     let mut results = Vec::new();
@@ -278,92 +281,6 @@ async fn execute_api_search(
     let mut completed_request = false;
     let mut request_count = 0;
     let start_gate = StartRateGate::new("aninzb.api.start_rate", API_REQUESTS_PER_SECOND, 1_000);
-
-    let mut probe_batch = Vec::with_capacity(initial_queries.len() * 2);
-    for query in initial_queries {
-        probe_batch.push((
-            query.clone(),
-            build_api_size_probe_url(config, &query, "asc")?,
-        ));
-        probe_batch.push((
-            query.clone(),
-            build_api_size_probe_url(config, &query, "desc")?,
-        ));
-    }
-    let probe_len = u32::try_from(probe_batch.len()).unwrap_or(u32::MAX);
-    if probe_batch.len() > MAX_PARTITION_REQUESTS {
-        return Err(incomplete_search_error(
-            SearchResponse::default(),
-            IndexerSearchIncompleteReason::SaturatedPartition,
-            None,
-            false,
-            None,
-        ));
-    }
-    if let Err(error) = reserve_hit_budget_uses(&config.http_behavior, probe_len) {
-        if newznab_common::is_hit_budget_exhausted_error(&error) {
-            return Err(incomplete_search_error(
-                SearchResponse::default(),
-                IndexerSearchIncompleteReason::RateLimited,
-                hit_budget_retry_after_seconds(&config.http_behavior, probe_len)?,
-                false,
-                None,
-            ));
-        }
-        return Err(error);
-    }
-    request_count += probe_batch.len();
-    let probe_pages = execute_api_search_batch(&probe_batch, &start_gate).await?;
-    let mut probes = probe_batch.into_iter().zip(probe_pages);
-    while let Some(((mut query, _), ascending)) = probes.next() {
-        let Some(((_, _), descending)) = probes.next() else {
-            incomplete_reason = Some(IndexerSearchIncompleteReason::FanoutBranchFailed);
-            break;
-        };
-        match (ascending, descending) {
-            (Ok(ascending), Ok(descending)) => {
-                completed_request = true;
-                append_page_results(&ascending, &mut seen_results, &mut results);
-                append_page_results(&descending, &mut seen_results, &mut results);
-                if ascending.is_saturated() || descending.is_saturated() {
-                    if let Some((minimum, maximum)) = probe_size_bounds(&ascending, &descending) {
-                        query.min_size = Some(minimum);
-                        query.max_size = Some(maximum);
-                        queries.push(query);
-                    } else {
-                        incomplete_reason = Some(IndexerSearchIncompleteReason::SaturatedPartition);
-                    }
-                }
-            }
-            (Ok(page), Err(failure)) | (Err(failure), Ok(page)) => {
-                completed_request = true;
-                append_page_results(&page, &mut seen_results, &mut results);
-                record_api_failure(
-                    &failure,
-                    &mut incomplete_reason,
-                    &mut invalid_kind,
-                    &mut retry_after_seconds,
-                );
-                if page.is_saturated() {
-                    queries.push(query);
-                }
-            }
-            (Err(ascending), Err(descending)) => {
-                record_api_failure(
-                    &ascending,
-                    &mut incomplete_reason,
-                    &mut invalid_kind,
-                    &mut retry_after_seconds,
-                );
-                record_api_failure(
-                    &descending,
-                    &mut incomplete_reason,
-                    &mut invalid_kind,
-                    &mut retry_after_seconds,
-                );
-            }
-        }
-    }
 
     while !queries.is_empty() {
         let remaining = MAX_PARTITION_REQUESTS.saturating_sub(request_count);
@@ -405,7 +322,7 @@ async fn execute_api_search(
                     completed_request = true;
                     append_page_results(&page, &mut seen_results, &mut results);
 
-                    if page.is_saturated() {
+                    if page.is_saturated() && query.partitions_when_saturated() {
                         if let Some((lower, upper)) = query.size_partitions(&page.items) {
                             queries.push(upper);
                             queries.push(lower);
@@ -416,6 +333,7 @@ async fn execute_api_search(
                     }
                 }
                 Err(failure) => {
+                    completed_request |= failure.is_provider_answer();
                     record_api_failure(
                         &failure,
                         &mut incomplete_reason,
@@ -465,6 +383,12 @@ struct ApiSearchQuery {
 }
 
 impl ApiSearchQuery {
+    /// The recent feed wants the newest page only. Splitting it by size would
+    /// walk the whole archive.
+    fn partitions_when_saturated(&self) -> bool {
+        self.branch != ApiSearchBranch::Recent
+    }
+
     fn size_partitions(&self, items: &[AniNzbApiItem]) -> Option<(Self, Self)> {
         if self.partition_depth >= MAX_SIZE_PARTITION_DEPTH {
             return None;
@@ -517,12 +441,6 @@ fn append_page_results(
             results.push(result);
         }
     }
-}
-
-fn probe_size_bounds(ascending: &ApiSearchPage, descending: &ApiSearchPage) -> Option<(i64, i64)> {
-    let minimum = ascending.items.iter().filter_map(|item| item.size).min()?;
-    let maximum = descending.items.iter().filter_map(|item| item.size).max()?;
-    (minimum <= maximum).then_some((minimum, maximum))
 }
 
 fn initial_api_queries(request: &SearchRequest) -> Vec<ApiSearchQuery> {
@@ -603,6 +521,10 @@ enum ApiRequestFailure {
     RateLimited(Option<i64>),
     Invalid(IndexerSearchInvalidResponseKind, String),
     Upstream(String),
+    /// AniNZB answered that the query is too broad to run in time. Asking the
+    /// same query again gets the same answer, so it is a provider limit, not
+    /// an outage.
+    QueryTooBroad,
 }
 
 impl ApiRequestFailure {
@@ -611,7 +533,14 @@ impl ApiRequestFailure {
             Self::RateLimited(_) => IndexerSearchIncompleteReason::RateLimited,
             Self::Invalid(_, _) => IndexerSearchIncompleteReason::MalformedContent,
             Self::Upstream(_) => IndexerSearchIncompleteReason::FanoutBranchFailed,
+            Self::QueryTooBroad => IndexerSearchIncompleteReason::SaturatedPartition,
         }
+    }
+
+    /// Whether AniNZB itself answered the query, as opposed to the request
+    /// failing on the way.
+    fn is_provider_answer(&self) -> bool {
+        matches!(self, Self::QueryTooBroad)
     }
 
     fn invalid_kind(&self) -> Option<IndexerSearchInvalidResponseKind> {
@@ -642,6 +571,31 @@ fn record_api_failure(
         ApiRequestFailure::Invalid(_, message) | ApiRequestFailure::Upstream(message) => {
             log!(LogLevel::Warn, "AniNZB search branch failed: {}", message);
         }
+        ApiRequestFailure::QueryTooBroad => {
+            log!(
+                LogLevel::Info,
+                "AniNZB declined a search branch as too broad to answer"
+            );
+        }
+    }
+    note_api_failure(
+        failure,
+        incomplete_reason,
+        invalid_kind,
+        retry_after_seconds,
+    );
+}
+
+fn note_api_failure(
+    failure: &ApiRequestFailure,
+    incomplete_reason: &mut Option<IndexerSearchIncompleteReason>,
+    invalid_kind: &mut Option<IndexerSearchInvalidResponseKind>,
+    retry_after_seconds: &mut Option<i64>,
+) {
+    if failure.is_provider_answer() {
+        // A provider limit never hides a real failure from another branch.
+        incomplete_reason.get_or_insert(failure.incomplete_reason());
+        return;
     }
     *incomplete_reason = Some(failure.incomplete_reason());
     if invalid_kind.is_none() {
@@ -682,7 +636,7 @@ async fn execute_api_search_batch(
             (index, response)
         }
     }))
-    .buffer_unordered(16)
+    .buffer_unordered(MAX_CONCURRENT_API_REQUESTS)
     .collect::<Vec<_>>()
     .await;
     ordered.sort_by_key(|(index, _)| *index);
@@ -697,6 +651,9 @@ fn parse_api_http_response(
             response_header(&response.headers, "retry-after")
                 .and_then(|value| value.parse::<i64>().ok()),
         ));
+    }
+    if response.status == 504 && is_api_error_body(&response.body) {
+        return Err(ApiRequestFailure::QueryTooBroad);
     }
     if !(200..300).contains(&response.status) {
         return Err(ApiRequestFailure::Upstream(format!(
@@ -745,6 +702,19 @@ fn parse_api_http_response(
         total_count: parsed.total_count,
         items: parsed.items.unwrap_or_default(),
     })
+}
+
+/// AniNZB's own query-time limit answers 504 with a JSON `error` object. A
+/// gateway timeout in front of it carries no such body and stays an upstream
+/// failure.
+fn is_api_error_body(body: &[u8]) -> bool {
+    #[derive(Deserialize)]
+    struct ApiErrorBody {
+        error: String,
+    }
+    body.len() <= MAX_API_ERROR_BODY_BYTES
+        && serde_json::from_slice::<ApiErrorBody>(body)
+            .is_ok_and(|body| !body.error.trim().is_empty())
 }
 
 fn response_header<'a>(headers: &'a BTreeMap<String, String>, name: &str) -> Option<&'a str> {
@@ -850,21 +820,6 @@ fn build_api_search_url(config: &AniNzbConfig, request: &ApiSearchQuery) -> Resu
             query.append_pair("max_size", &max_size.to_string());
         }
     }
-    Ok(url.to_string())
-}
-
-fn build_api_size_probe_url(
-    config: &AniNzbConfig,
-    request: &ApiSearchQuery,
-    order: &str,
-) -> Result<String, Error> {
-    let mut url = Url::parse(&build_api_search_url(config, request)?).or_plugin_error(
-        PluginErrorCode::Permanent,
-        "the AniNZB search address could not be built",
-    )?;
-    url.query_pairs_mut()
-        .append_pair("sort", "size")
-        .append_pair("order", order);
     Ok(url.to_string())
 }
 
@@ -1262,11 +1217,14 @@ mod tests {
             Some("Example Animation & Companions")
         );
 
-        let probe_url =
-            Url::parse(&build_api_size_probe_url(&config, anidb_query, "asc").unwrap()).unwrap();
-        let probe = probe_url.query_pairs().collect::<HashMap<_, _>>();
-        assert_eq!(probe.get("sort").map(|value| value.as_ref()), Some("size"));
-        assert_eq!(probe.get("order").map(|value| value.as_ref()), Some("asc"));
+        // Sorting is costly on AniNZB's side; every branch keeps the default
+        // newest-first order.
+        for url in [&tvdb_url, &name_url, &filename_url] {
+            assert!(
+                url.query_pairs()
+                    .all(|(key, _)| key != "sort" && key != "order")
+            );
+        }
     }
 
     #[test]
@@ -1607,5 +1565,108 @@ mod tests {
         });
         assert_eq!(error.code, PluginErrorCode::RateLimited);
         assert_eq!(error.retry_after_seconds, Some(17));
+    }
+
+    fn api_failure(status: u16, content_type: &str, body: &[u8]) -> ApiRequestFailure {
+        let Err(failure) = parse_api_http_response(PluginHttpResponse {
+            status,
+            headers: BTreeMap::from([("Content-Type".to_string(), content_type.to_string())]),
+            body: body.to_vec(),
+        }) else {
+            panic!("the page fails");
+        };
+        failure
+    }
+
+    #[test]
+    fn a_query_time_limit_answer_is_a_contained_partial_result() {
+        let failure = api_failure(
+            504,
+            "application/json",
+            br#"{"error":"synthetic limit message"}"#,
+        );
+        assert!(matches!(failure, ApiRequestFailure::QueryTooBroad));
+        assert!(failure.is_provider_answer());
+
+        let mut reason = None;
+        let mut invalid_kind = None;
+        let mut retry_after = None;
+        note_api_failure(&failure, &mut reason, &mut invalid_kind, &mut retry_after);
+        assert_eq!(
+            reason,
+            Some(IndexerSearchIncompleteReason::SaturatedPartition)
+        );
+
+        // A search whose only answers were "too broad" still completed: the
+        // host gets partial results, not a deferral that escalates backoff.
+        let error = scryer_plugin_pdk::error::plugin_error_from(&incomplete_search_error(
+            SearchResponse::default(),
+            reason.unwrap(),
+            retry_after,
+            failure.is_provider_answer(),
+            invalid_kind,
+        ));
+        assert!(matches!(
+            error.details,
+            Some(PluginErrorDetails::IndexerSearch(
+                IndexerSearchPluginError::PartialResults {
+                    reason: IndexerSearchIncompleteReason::SaturatedPartition,
+                    ..
+                }
+            ))
+        ));
+    }
+
+    #[test]
+    fn a_gateway_timeout_without_an_api_error_body_stays_an_upstream_failure() {
+        for body in [
+            &b""[..],
+            b"<html>synthetic gateway</html>",
+            br#"{"error":"  "}"#,
+        ] {
+            let failure = api_failure(504, "text/html", body);
+            assert!(matches!(failure, ApiRequestFailure::Upstream(_)));
+            assert!(!failure.is_provider_answer());
+        }
+        assert!(matches!(
+            api_failure(502, "application/json", br#"{"error":"synthetic"}"#),
+            ApiRequestFailure::Upstream(_)
+        ));
+    }
+
+    #[test]
+    fn only_searches_split_a_saturated_page_by_size() {
+        let recent = initial_api_queries(&SearchRequest::default());
+        assert!(matches!(recent.as_slice(), [query] if query.branch == ApiSearchBranch::Recent));
+        assert!(!recent[0].partitions_when_saturated());
+
+        let search = ApiSearchQuery {
+            branch: ApiSearchBranch::Tvdb("1".to_string()),
+            season: Some(1),
+            episode: None,
+            min_size: None,
+            max_size: None,
+            partition_depth: 0,
+        };
+        assert!(search.partitions_when_saturated());
+    }
+
+    #[test]
+    fn a_too_broad_branch_never_masks_a_failed_branch() {
+        let failed = ApiRequestFailure::Upstream("synthetic".to_string());
+        let too_broad = ApiRequestFailure::QueryTooBroad;
+
+        for order in [[&failed, &too_broad], [&too_broad, &failed]] {
+            let mut reason = None;
+            let mut invalid_kind = None;
+            let mut retry_after = None;
+            for failure in order {
+                note_api_failure(failure, &mut reason, &mut invalid_kind, &mut retry_after);
+            }
+            assert_eq!(
+                reason,
+                Some(IndexerSearchIncompleteReason::FanoutBranchFailed)
+            );
+        }
     }
 }
