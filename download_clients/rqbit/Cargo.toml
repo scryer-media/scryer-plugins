@@ -1,8 +1,8 @@
 [package]
 name = "rqbit-download-client"
-version = "2.1.0"
+version = "2.1.1"
 edition = "2024"
-rust-version = "1.97.1"
+rust-version = "1.99.1"
 license = "GPL-3.0-only"
 description = "RQBit torrent download client plugin"
 

@@ -1,6 +1,6 @@
 [package]
 name = "mdblist-list-provider"
-version = "2.1.0"
+version = "2.1.1"
 edition = "2024"
 license = "GPL-3.0-only"
 description = "MDBList list provider for public lists, and members' own lists and watchlist"

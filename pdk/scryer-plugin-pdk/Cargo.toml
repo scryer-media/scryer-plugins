@@ -2,7 +2,7 @@
 name = "scryer-plugin-pdk"
 version = "0.8.1"
 edition = "2024"
-rust-version = "1.97.1"
+rust-version = "1.99.1"
 license = "GPL-3.0-only"
 description = "Guest runtime bindings for Scryer WebAssembly plugin components."
 repository = "https://github.com/scryer-media/scryer-plugins"

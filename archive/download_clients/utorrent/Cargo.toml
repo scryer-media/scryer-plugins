@@ -2,7 +2,7 @@
 name = "utorrent-download-client"
 version = "1.2.0"
 edition = "2024"
-rust-version = "1.97.1"
+rust-version = "1.99.1"
 license = "GPL-3.0-only"
 description = "uTorrent download client plugin"
 

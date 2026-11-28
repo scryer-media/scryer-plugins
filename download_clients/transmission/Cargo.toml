@@ -1,8 +1,8 @@
 [package]
 name = "transmission-download-client"
-version = "3.0.0"
+version = "3.0.1"
 edition = "2024"
-rust-version = "1.97.1"
+rust-version = "1.99.1"
 license = "GPL-3.0-only"
 description = "Transmission-compatible torrent download client plugin, including Vuze RPC compatibility"
 
