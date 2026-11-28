@@ -2021,7 +2021,7 @@ dependencies = [
 
 [[package]]
 name = "webhook-notification"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "scryer-plugin-conformance",
  "scryer-plugin-pdk",

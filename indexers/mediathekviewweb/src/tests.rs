@@ -171,7 +171,7 @@ fn descriptor_declares_an_interactive_http_indexer() {
     let descriptor = crate::build_descriptor();
     assert_eq!(descriptor.id, "mediathekviewweb");
     assert_eq!(descriptor.name, "MediathekViewWeb");
-    assert_eq!(descriptor.version, "0.1.1");
+    assert_eq!(descriptor.version, "0.1.2");
     let ProviderDescriptor::Indexer(indexer) = descriptor.provider else {
         panic!("not an indexer");
     };

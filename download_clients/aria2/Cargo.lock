@@ -31,7 +31,7 @@ checksum = "3bc62ac97cc33321f50863d514c3bc38a453947a8f9e781137e47c7401020aed"
 
 [[package]]
 name = "aria2-download-client"
-version = "2.1.0"
+version = "2.1.1"
 dependencies = [
  "base64 0.23.1",
  "roxmltree",

@@ -1480,7 +1480,7 @@ dependencies = [
 
 [[package]]
 name = "torrent-blackhole-download-client"
-version = "2.1.0"
+version = "2.1.1"
 dependencies = [
  "base64 0.23.1",
  "scryer-plugin-conformance",

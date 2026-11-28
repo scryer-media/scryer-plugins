@@ -19,7 +19,7 @@ checksum = "57b212daf2e827b1ccdd778b7eb48ba433e58cb0e4f27b43cd6b7a608425a014"
 
 [[package]]
 name = "animetosho-xyz-subtitle-provider"
-version = "1.1.1"
+version = "1.1.2"
 dependencies = [
  "base64 0.23.1",
  "scryer-plugin-conformance",

@@ -407,7 +407,7 @@ checksum = "0e9c71c2167ca323c882b99918929403426e2373ea17242ff5653e0d5e1058be"
 
 [[package]]
 name = "email-notification"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "base64 0.23.1",
  "futures",
