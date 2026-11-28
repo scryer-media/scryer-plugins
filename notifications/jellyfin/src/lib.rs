@@ -60,6 +60,10 @@ struct JellyfinConfig {
     base_url: String,
     api_key: String,
     path_mappings: String,
+    /// Opt-in: push Scryer artwork and title metadata onto the Jellyfin item
+    /// after the library refresh. Off by default so existing channels keep
+    /// sending only refresh requests.
+    export_images_metadata: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -112,6 +116,60 @@ enum JellyfinRequestPlan {
     SeriesUpdated {
         tvdb_id: String,
     },
+    /// Resolve the Jellyfin item id from one of Scryer's provider ids.
+    ItemLookup {
+        provider: String,
+        id: String,
+    },
+    /// Ask Jellyfin to download one of Scryer's artwork URLs into its own image store.
+    DownloadRemoteImage {
+        item_id: String,
+        image_type: &'static str,
+        image_url: String,
+    },
+    /// Set the title fields Scryer already knows on the Jellyfin item.
+    UpdateItemMetadata {
+        item_id: String,
+        fields: ItemMetadataFields,
+    },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ItemMetadataFields {
+    overview: Option<String>,
+    tags: Vec<String>,
+    release_date: Option<String>,
+    runtime_minutes: Option<i32>,
+    studio: Option<String>,
+    network: Option<String>,
+    content_status: Option<String>,
+    sort_title: Option<String>,
+}
+
+impl ItemMetadataFields {
+    /// Only fields Scryer actually has are sent; Jellyfin keeps the rest.
+    fn from_title(title: Option<&PluginNotificationTitle>) -> Option<Self> {
+        let title = title?;
+        let fields = Self {
+            overview: title.overview.clone(),
+            tags: title.tags.clone(),
+            release_date: title.release_date.clone(),
+            runtime_minutes: title.runtime_minutes,
+            studio: title.studio.clone(),
+            network: title.network.clone(),
+            content_status: title.content_status.clone(),
+            sort_title: title.sort_title.clone(),
+        };
+        (fields.overview.is_some()
+            || !fields.tags.is_empty()
+            || fields.release_date.is_some()
+            || fields.runtime_minutes.is_some()
+            || fields.studio.is_some()
+            || fields.network.is_some()
+            || fields.content_status.is_some()
+            || fields.sort_title.is_some())
+        .then_some(fields)
+    }
 }
 
 impl JellyfinRequestPlan {
@@ -181,6 +239,40 @@ struct MediaUpdatedPayload<'a> {
 struct MediaUpdatedPathPayload<'a> {
     path: &'a str,
     update_type: &'a str,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "PascalCase")]
+struct ItemMetadataPayload {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    overview: Option<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    tags: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    premiere_date: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    run_time_ticks: Option<i64>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    studios: Vec<StudioPayload>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    sort_name: Option<String>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "PascalCase")]
+struct StudioPayload {
+    name: String,
+}
+
+fn iso_datetime(date: &str) -> String {
+    let date = date.trim();
+    // Date-only values are what Scryer stores; Jellyfin's PremiereDate is a
+    // timestamp, so promote them to midnight UTC.
+    if date.len() == 10 && date.as_bytes()[4] == b'-' && date.as_bytes()[7] == b'-' {
+        format!("{date}T00:00:00Z")
+    } else {
+        date.to_string()
+    }
 }
 
 fn default_descriptor() -> PluginDescriptor {
@@ -256,6 +348,22 @@ fn default_descriptor() -> PluginDescriptor {
                     ),
                     ..Default::default()
                 },
+                ConfigFieldDef {
+                    key: "export_images_metadata".to_string(),
+                    label: "Export Artwork and Metadata".to_string(),
+                    field_type: ConfigFieldType::Bool,
+                    required: false,
+                    default_value: Some("false".to_string()),
+                    value_source: Default::default(),
+                    host_binding: None,
+                    role: None,
+                    options: vec![],
+                    help_text: Some(
+                        "After a refresh, push Scryer's poster/background images and title metadata onto the Jellyfin item."
+                            .to_string(),
+                    ),
+                    ..Default::default()
+                },
             ],
         }),
         settings: Vec::new(),
@@ -320,7 +428,126 @@ fn send_notification(
         }
     }
 
+    // Artwork/metadata export is best-effort and opt-in: the refresh above is
+    // the notification's contract, and a Jellyfin item may not be indexed yet
+    // on the first import. Never fail a delivery because enrichment had no
+    // matching item or the image host was unavailable.
+    if config.export_images_metadata
+        && matches!(
+            request.event_type,
+            SdkNotificationEventType::ImportComplete | SdkNotificationEventType::Upgrade
+        )
+    {
+        let _ = export_images_and_metadata(request, &config);
+    }
+
     PluginResult::Ok(success_response())
+}
+
+/// Preferred provider ids for finding the Jellyfin item. Jellyfin's
+/// `AnyProviderIdEquals` uses lowercase provider names and a dot separator.
+fn first_provider_id(title: Option<&PluginNotificationTitle>) -> Option<(&'static str, String)> {
+    let title = title?;
+    for (provider, id) in [
+        ("imdb", title.external_ids.imdb_id.as_deref()),
+        ("tmdb", title.external_ids.tmdb_id.as_deref()),
+        ("tvdb", title.external_ids.tvdb_id.as_deref()),
+    ] {
+        if let Some(id) = id.map(str::trim).filter(|id| !id.is_empty()) {
+            return Some((provider, id.to_string()));
+        }
+    }
+    None
+}
+
+fn export_images_and_metadata(
+    request: &PluginNotificationRequest,
+    config: &JellyfinConfig,
+) -> Result<(), PluginError> {
+    let (provider, id) = first_provider_id(request.title.as_ref()).ok_or_else(|| {
+        payload_error("artwork export needs an imdb/tmdb/tvdb id on the title".to_string())
+    })?;
+    let item_id = resolve_jellyfin_item(provider, &id, config)?.ok_or_else(|| {
+        payload_error("no Jellyfin item matched the title provider ids".to_string())
+    })?;
+
+    let mut plans = Vec::new();
+    if let Some(url) = request
+        .title
+        .as_ref()
+        .and_then(|title| title.poster_url.as_deref())
+        .map(str::trim)
+        .filter(|url| !url.is_empty())
+    {
+        plans.push(JellyfinRequestPlan::DownloadRemoteImage {
+            item_id: item_id.clone(),
+            image_type: "Primary",
+            image_url: url.to_string(),
+        });
+    }
+    if let Some(url) = request
+        .title
+        .as_ref()
+        .and_then(|title| title.background_url.as_deref())
+        .map(str::trim)
+        .filter(|url| !url.is_empty())
+    {
+        plans.push(JellyfinRequestPlan::DownloadRemoteImage {
+            item_id: item_id.clone(),
+            image_type: "Backdrop",
+            image_url: url.to_string(),
+        });
+    }
+    if let Some(fields) = ItemMetadataFields::from_title(request.title.as_ref()) {
+        plans.push(JellyfinRequestPlan::UpdateItemMetadata { item_id, fields });
+    }
+
+    for plan in plans {
+        execute_plan(&plan, config)?;
+    }
+    Ok(())
+}
+
+/// Parse the first item id from Jellyfin's `GET /Items` response.
+fn parse_item_id(body: &[u8]) -> Option<String> {
+    let value: serde_json::Value = serde_json::from_slice(body).ok()?;
+    value
+        .get("Items")?
+        .as_array()?
+        .first()?
+        .get("Id")?
+        .as_str()
+        .map(str::trim)
+        .filter(|id| !id.is_empty())
+        .map(str::to_string)
+}
+
+fn resolve_jellyfin_item(
+    provider: &str,
+    id: &str,
+    config: &JellyfinConfig,
+) -> Result<Option<String>, PluginError> {
+    let plan = JellyfinRequestPlan::ItemLookup {
+        provider: provider.to_string(),
+        id: id.to_string(),
+    };
+    let request = build_http_request(&plan, config)?;
+    let (request, body) = request.into_http_request();
+    let response = http::request::<Vec<u8>>(&request, body).map_err(|error| {
+        plugin_error(
+            PluginErrorCode::UpstreamUnavailable,
+            "could not look up the Jellyfin item",
+            Some(error.to_string()),
+        )
+    })?;
+    if !(200..300).contains(&response.status_code()) {
+        return Err(classify_failure(
+            response.status_code(),
+            retry_after_header(response.headers()),
+            &response.body(),
+        ));
+    }
+    Ok(parse_item_id(&response.body()))
 }
 
 fn plugin_error(
@@ -358,11 +585,21 @@ impl JellyfinConfig {
             .ok()
             .flatten()
             .unwrap_or_default();
+        let export_images_metadata = config::get("export_images_metadata")
+            .ok()
+            .flatten()
+            .is_some_and(|value| {
+                matches!(
+                    value.trim().to_ascii_lowercase().as_str(),
+                    "true" | "1" | "yes" | "on"
+                )
+            });
 
         Ok(Self {
             base_url,
             api_key,
             path_mappings,
+            export_images_metadata,
         })
     }
 }
@@ -707,6 +944,61 @@ fn build_http_request(
             ),
             config,
         )),
+        JellyfinRequestPlan::ItemLookup { provider, id } => Ok(base_request(
+            "GET",
+            &format!(
+                "{}/Items?AnyProviderIdEquals={}.{}&Fields=Id&Limit=1",
+                config.base_url,
+                encode_query_value(provider),
+                encode_query_value(id)
+            ),
+            config,
+        )),
+        JellyfinRequestPlan::DownloadRemoteImage {
+            item_id,
+            image_type,
+            image_url,
+        } => Ok(base_request(
+            "POST",
+            &format!(
+                "{}/Items/{}/RemoteImages/Download?type={}&imageUrl={}&providerName=Scryer",
+                config.base_url,
+                encode_query_value(item_id),
+                encode_query_value(image_type),
+                encode_query_value(image_url)
+            ),
+            config,
+        )),
+        JellyfinRequestPlan::UpdateItemMetadata { item_id, fields } => {
+            let payload = ItemMetadataPayload {
+                overview: fields.overview.clone(),
+                tags: fields.tags.clone(),
+                premiere_date: fields.release_date.as_deref().map(iso_datetime),
+                run_time_ticks: fields
+                    .runtime_minutes
+                    .map(|minutes| i64::from(minutes) * 60 * 10_000_000),
+                studios: fields
+                    .studio
+                    .iter()
+                    .map(|name| StudioPayload { name: name.clone() })
+                    .collect(),
+                sort_name: fields.sort_title.clone(),
+            };
+            let body = serde_json::to_vec(&payload).map_err(|error| {
+                plugin_error(
+                    PluginErrorCode::Permanent,
+                    "the Jellyfin item metadata payload could not be encoded",
+                    Some(error.to_string()),
+                )
+            })?;
+            Ok(base_request(
+                "POST",
+                &format!("{}/Items/{}", config.base_url, encode_query_value(item_id)),
+                config,
+            )
+            .with_header("Content-Type", "application/json")
+            .with_body(body))
+        }
     }
 }
 
@@ -899,6 +1191,26 @@ mod tests {
                 aliases: Vec::new(),
                 original_language: None,
                 original_country: None,
+                release_date: metadata
+                    .get("release_date")
+                    .and_then(serde_json::Value::as_str)
+                    .map(str::to_string),
+                runtime_minutes: metadata
+                    .get("runtime_minutes")
+                    .and_then(serde_json::Value::as_i64)
+                    .map(|value| value as i32),
+                studio: metadata
+                    .get("studio")
+                    .and_then(serde_json::Value::as_str)
+                    .map(str::to_string),
+                network: metadata
+                    .get("network")
+                    .and_then(serde_json::Value::as_str)
+                    .map(str::to_string),
+                content_status: metadata
+                    .get("content_status")
+                    .and_then(serde_json::Value::as_str)
+                    .map(str::to_string),
                 external_ids: scryer_plugin_sdk::PluginNotificationExternalIds {
                     tmdb_id: external_ids
                         .and_then(|ids| ids.get("tmdb_id"))
@@ -944,6 +1256,7 @@ mod tests {
             base_url: "http://jellyfin:8096".to_string(),
             api_key: "secret".to_string(),
             path_mappings: path_mappings.to_string(),
+            export_images_metadata: false,
         }
     }
 
@@ -1262,6 +1575,7 @@ mod tests {
                 base_url: "http://jellyfin:8096/".trim_end_matches('/').to_string(),
                 api_key: "secret".to_string(),
                 path_mappings: String::new(),
+                export_images_metadata: false,
             },
         )
         .unwrap();
@@ -1437,5 +1751,106 @@ mod tests {
         let error = build_request_plans(&request, &config("relative => /mnt")).unwrap_err();
         assert_eq!(error.code, PluginErrorCode::InvalidConfig);
         assert!(error.public_message.starts_with("path_mappings: "));
+    }
+
+    #[test]
+    fn item_lookup_and_remote_image_requests_use_jellyfin_endpoints() {
+        let cfg = config("");
+        let lookup = build_http_request(
+            &JellyfinRequestPlan::ItemLookup {
+                provider: "imdb".to_string(),
+                id: "tt0114709".to_string(),
+            },
+            &cfg,
+        )
+        .unwrap();
+        assert_eq!(lookup.method, "GET");
+        assert_eq!(
+            lookup.url,
+            "http://jellyfin:8096/Items?AnyProviderIdEquals=imdb.tt0114709&Fields=Id&Limit=1"
+        );
+
+        let image = build_http_request(
+            &JellyfinRequestPlan::DownloadRemoteImage {
+                item_id: "item-1".to_string(),
+                image_type: "Primary",
+                image_url: "https://example.invalid/poster.jpg".to_string(),
+            },
+            &cfg,
+        )
+        .unwrap();
+        assert_eq!(image.method, "POST");
+        assert_eq!(
+            image.url,
+            "http://jellyfin:8096/Items/item-1/RemoteImages/Download?type=Primary&imageUrl=https%3A%2F%2Fexample.invalid%2Fposter.jpg&providerName=Scryer"
+        );
+    }
+
+    #[test]
+    fn metadata_update_request_carries_title_fields() {
+        let fields = ItemMetadataFields {
+            overview: Some("Overview".to_string()),
+            tags: vec!["tag-1".to_string()],
+            release_date: Some("2024-01-02".to_string()),
+            runtime_minutes: Some(95),
+            studio: Some("Studio".to_string()),
+            network: None,
+            content_status: None,
+            sort_title: Some("Sort Title".to_string()),
+        };
+        let request = build_http_request(
+            &JellyfinRequestPlan::UpdateItemMetadata {
+                item_id: "item-1".to_string(),
+                fields,
+            },
+            &config(""),
+        )
+        .unwrap();
+        assert_eq!(request.method, "POST");
+        assert_eq!(request.url, "http://jellyfin:8096/Items/item-1");
+        let body = request.body.expect("metadata update has a JSON body");
+        let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(json["Overview"], "Overview");
+        assert_eq!(json["Tags"], serde_json::json!(["tag-1"]));
+        assert_eq!(json["PremiereDate"], "2024-01-02T00:00:00Z");
+        assert_eq!(json["RunTimeTicks"], 95_i64 * 60 * 10_000_000);
+        assert_eq!(json["Studios"], serde_json::json!([{"Name": "Studio"}]));
+        assert_eq!(json["SortName"], "Sort Title");
+        assert!(json.get("Network").is_none());
+    }
+
+    #[test]
+    fn item_id_is_read_from_the_first_lookup_result() {
+        assert_eq!(
+            parse_item_id(br#"{"Items":[{"Id":"item-1"},{"Id":"item-2"}]}"#).as_deref(),
+            Some("item-1")
+        );
+        assert_eq!(parse_item_id(br#"{"Items":[]}"#), None);
+        assert_eq!(parse_item_id(b"not json"), None);
+    }
+
+    #[test]
+    fn provider_ids_are_preferred_imdb_then_tmdb_then_tvdb() {
+        let request = request_with_metadata(
+            "import_complete",
+            "movie",
+            serde_json::json!({
+                "external_ids": {"imdb_id": " tt123 ", "tmdb_id": "456", "tvdb_id": "789"}
+            }),
+        );
+        assert_eq!(
+            first_provider_id(request.title.as_ref()),
+            Some(("imdb", "tt123".to_string()))
+        );
+
+        let request = request_with_metadata(
+            "import_complete",
+            "movie",
+            serde_json::json!({"external_ids": {"tmdb_id": "456"}}),
+        );
+        assert_eq!(
+            first_provider_id(request.title.as_ref()),
+            Some(("tmdb", "456".to_string()))
+        );
     }
 }

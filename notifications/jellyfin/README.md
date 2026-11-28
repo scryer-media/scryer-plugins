@@ -10,6 +10,7 @@ This plugin sends targeted Jellyfin library refresh requests when Scryer imports
    - `base_url`
    - `api_key`
    - `path_mappings`
+   - `export_images_metadata` (optional, default `false`)
 4. Subscribe the channel to the lifecycle events you want forwarded to Jellyfin.
 
 ## Config
@@ -60,6 +61,25 @@ Example:
   - Falls back to `POST /Library/Series/Updated` using `tvdbId`
 
 If an event contains updates that cannot be mapped and also lacks the needed fallback IDs, the plugin returns an error for that notification.
+
+## Artwork and metadata export (opt-in)
+
+With `export_images_metadata` enabled, `import_complete` and `upgrade` events additionally:
+
+1. Resolve the Jellyfin item by one of Scryer's provider ids
+   (`GET /Items?AnyProviderIdEquals=<provider>.<id>`; imdb, then tmdb, then tvdb).
+2. Push Scryer's `poster_url` and `background_url` to that item as Jellyfin
+   `Primary` and `Backdrop` remote images
+   (`POST /Items/{id}/RemoteImages/Download`).
+3. Set the title fields Scryer carries on the item
+   (`POST /Items/{id}`): overview, tags, release date, runtime, studio and sort
+   title. Fields Jellyfin derives from the media file itself (stream details,
+   certifications, trailers) are deliberately not touched.
+
+Export is best-effort: if no item matches, or the image host fails, the library
+refresh still succeeds. The sandbox has no host filesystem access, so this
+pushes data into Jellyfin's own storage instead of writing `poster.jpg` or NFO
+files beside the media.
 
 ## Notes
 

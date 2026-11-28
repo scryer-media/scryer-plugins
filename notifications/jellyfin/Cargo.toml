@@ -34,6 +34,11 @@ scryer-plugin-conformance = { path = "../../pdk/scryer-plugin-conformance", feat
     "notification",
 ] }
 
+# Temporary until SDK 3.21.0 is published: the payload fields this plugin uses
+# are on the in-tree SDK. Remove this patch once the release exists.
+[patch.crates-io]
+scryer-plugin-sdk = { git = "https://github.com/godofdream/scryer.git", rev = "3f451f18608c3039cbba8b603084df59695b3e12" }
+
 [profile.plugin-release]
 inherits = "release"
 opt-level = 3
