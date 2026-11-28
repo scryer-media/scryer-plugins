@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "pack_id": "seadex-scoring-pack",
-  "pack_version": "1.0.59",
-  "snapshot_sha256": "5a634d6e03e07981f071a402ab947b1d5c01444c84fa98a7b0533559ecd0a23f",
+  "pack_version": "1.0.60",
+  "snapshot_sha256": "41f7c47b7d21dc9c2fa0ec518d60c29b90272d834d5ab87a1a71a930684ac355",
   "converter_revision": "83da44e98b85d2049b73a1915b54543023213d43642a62a7eeb6709489f21b6f",
   "included": [
     {
@@ -2060,6 +2060,14 @@
       "release_id": "vk6pqqtp2g6gc74",
       "strict_keys": 14,
       "tolerant_keys": 14
+    },
+    {
+      "alias_sources": 0,
+      "entry_id": "0zx88tisosomtc7",
+      "file_sources": 1,
+      "release_id": "9aplg7gdrdw70sn",
+      "strict_keys": 1,
+      "tolerant_keys": 1
     },
     {
       "alias_sources": 0,
@@ -47088,106 +47096,18 @@
     {
       "alias_sources": 0,
       "entry_id": "pxur5dyzccdts8k",
-      "file_sources": 1,
-      "release_id": "1sxpxrd9nyrk6yt",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "pxur5dyzccdts8k",
-      "file_sources": 1,
-      "release_id": "6del1n5o4vg7flq",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "pxur5dyzccdts8k",
-      "file_sources": 1,
-      "release_id": "6el8qy3o2ud1aor",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "pxur5dyzccdts8k",
-      "file_sources": 1,
-      "release_id": "7tyomh5u13msijw",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "pxur5dyzccdts8k",
-      "file_sources": 1,
-      "release_id": "95wtcrodjg8cgwg",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "pxur5dyzccdts8k",
       "file_sources": 12,
-      "release_id": "ezpai4o685raqgj",
+      "release_id": "ftx4hl9k6sz2c1e",
       "strict_keys": 12,
       "tolerant_keys": 12
     },
     {
       "alias_sources": 0,
       "entry_id": "pxur5dyzccdts8k",
-      "file_sources": 1,
-      "release_id": "fvbvc3lg4spnwk2",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "pxur5dyzccdts8k",
-      "file_sources": 1,
-      "release_id": "jm7t430wbn9bjae",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "pxur5dyzccdts8k",
-      "file_sources": 1,
-      "release_id": "kjv7ylr0ro8yjy6",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "pxur5dyzccdts8k",
-      "file_sources": 1,
-      "release_id": "myodqkximlkz6le",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "pxur5dyzccdts8k",
-      "file_sources": 1,
-      "release_id": "p3rnbts9cy73nvy",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "pxur5dyzccdts8k",
-      "file_sources": 1,
-      "release_id": "rh8yldwtcqj0gvg",
-      "strict_keys": 1,
-      "tolerant_keys": 1
-    },
-    {
-      "alias_sources": 0,
-      "entry_id": "pxur5dyzccdts8k",
-      "file_sources": 1,
-      "release_id": "rqiqrfa6fql41qq",
-      "strict_keys": 1,
-      "tolerant_keys": 1
+      "file_sources": 12,
+      "release_id": "lfz4uz9n9psd2zi",
+      "strict_keys": 12,
+      "tolerant_keys": 12
     },
     {
       "alias_sources": 0,
@@ -73062,6 +72982,12 @@
       "reason": "non_release_file",
       "release_id": "in1lkelhox3n9bz",
       "source_name": "Extras/Free!.S00E05-E07.1080p.BluRay.Remux.AVC.FLAC2.0.Dual.Audio-RUDY.mkv"
+    },
+    {
+      "entry_id": "0zx88tisosomtc7",
+      "reason": "non_release_file",
+      "release_id": "9aplg7gdrdw70sn",
+      "source_name": "[GHOST][1080p] Triage X - EXTRA [BD HEVC 10bit AC3][191D3867].mkv"
     },
     {
       "entry_id": "112z0x1k75tlwxe",
@@ -744334,29 +744260,30 @@
   "changes": {
     "entries": {
       "added": [
-        "hux560zd8iieynp"
+        "0zx88tisosomtc7"
       ],
       "removed": []
     },
     "releases": {
       "added": [
-        "02b7kvky171huwx",
-        "1518s13s5zw8a1x",
-        "3kk3vr99tia51zd",
-        "8j94cevvcgbsr48",
-        "dllnmw3isgi8d21",
-        "f27624tu2of8wk8",
-        "q4p1kdhpekukmkr",
-        "rracr8g0r2ug4sh",
-        "vpyzxi2olw9qdb9"
+        "9aplg7gdrdw70sn",
+        "ftx4hl9k6sz2c1e",
+        "lfz4uz9n9psd2zi"
       ],
       "removed": [
-        "57m6zrgs7zdup44",
-        "7hlaas9xgtrpdma",
-        "nf04b79kkyvo8tb",
-        "np34pzggx7wnfxz",
-        "pexcljyfo6y5ydv",
-        "rhcpcct5r6pqs7j"
+        "1sxpxrd9nyrk6yt",
+        "6del1n5o4vg7flq",
+        "6el8qy3o2ud1aor",
+        "7tyomh5u13msijw",
+        "95wtcrodjg8cgwg",
+        "ezpai4o685raqgj",
+        "fvbvc3lg4spnwk2",
+        "jm7t430wbn9bjae",
+        "kjv7ylr0ro8yjy6",
+        "myodqkximlkz6le",
+        "p3rnbts9cy73nvy",
+        "rh8yldwtcqj0gvg",
+        "rqiqrfa6fql41qq"
       ]
     }
   },
@@ -744364,14 +744291,14 @@
     "encoding": {
       "direct_buckets": {
         "bucket_count": 352,
-        "key_count": 21356,
+        "key_count": 21358,
         "max_keys": 230,
-        "mean_keys": 60.67045454545455
+        "mean_keys": 60.67613636363637
       },
-      "direct_entries": 21356,
+      "direct_entries": 21358,
       "route_buckets": 260,
-      "source_bytes": 3053902,
-      "source_lines": 45770,
+      "source_bytes": 3054005,
+      "source_lines": 45774,
       "template_buckets": {
         "bucket_count": 260,
         "key_count": 6740,
@@ -744382,8 +744309,8 @@
       "tuple_chunks": 6950
     },
     "provenance": {
-      "strict_keys": 58264,
-      "tolerant_keys": 47648
+      "strict_keys": 58265,
+      "tolerant_keys": 47649
     },
     "stale_overrides": []
   }
