@@ -512,14 +512,13 @@ async fn drive_operation<H: EngineHost>(
                     "plugin={TRACE_PLUGIN_ID} definition={} method={} url={}",
                     definition.id,
                     request.method.as_deref().unwrap_or("GET"),
-                    mask_setting_values(&definition, &config, &request.url)
+                    mask_trace_text(&definition, &config, &request.url)
                 );
                 host.trace(&format!("http_trace {trace}"));
                 let response = match host.http(request).await {
                     Ok(response) => response,
                     Err(error) => {
-                        let error_text =
-                            mask_setting_values(&definition, &config, &error.to_string());
+                        let error_text = mask_trace_text(&definition, &config, &error.to_string());
                         host.trace(&format!("http_trace_error {trace} error={error_text}"));
                         return Err(error);
                     }
@@ -3463,6 +3462,55 @@ fn mask_setting_values(
     text
 }
 
+/// Trace text with every configured credential masked and, beyond those, the
+/// value of every URL parameter whose name marks it as a credential. A
+/// download or redirect URL the tracker supplies can carry a passkey or signed
+/// token that is no configured setting, so that one is masked by name.
+fn mask_trace_text(
+    definition: &Definition,
+    config: &BTreeMap<String, String>,
+    text: &str,
+) -> String {
+    mask_credential_parameters(&mask_setting_values(definition, config, text))
+}
+
+/// `text` with the value of each credential-named `name=value` URL parameter
+/// replaced. Other parameters, such as the search terms, are left readable.
+fn mask_credential_parameters(text: &str) -> String {
+    static PATTERN: OnceLock<regex::Regex> = OnceLock::new();
+    let pattern = PATTERN.get_or_init(|| {
+        regex::Regex::new(r#"([?&;])([^=&;#?\s"'<>]+)=([^&;#\s"'<>]+)"#)
+            .expect("the credential parameter pattern is valid")
+    });
+    pattern
+        .replace_all(text, |captures: &regex::Captures<'_>| {
+            let name = &captures[2];
+            if is_credential_parameter(name) {
+                format!("{}{name}=[redacted]", &captures[1])
+            } else {
+                captures[0].to_string()
+            }
+        })
+        .into_owned()
+}
+
+/// Whether a URL parameter name marks its value as a credential.
+fn is_credential_parameter(name: &str) -> bool {
+    let name = name
+        .chars()
+        .filter(char::is_ascii_alphanumeric)
+        .collect::<String>()
+        .to_ascii_lowercase();
+    ["pass", "token", "secret", "signature"]
+        .iter()
+        .any(|part| name.contains(part))
+        || name.ends_with("key")
+        || matches!(
+            name.as_str(),
+            "auth" | "authorization" | "sig" | "sid" | "session" | "sessionid" | "rss"
+        )
+}
+
 /// Masked tracker text made fit for a `debug_message`: whitespace collapsed
 /// and length bounded. Tracker text never goes into a `public_message`.
 fn tracker_text(text: &str) -> String {
@@ -5267,6 +5315,43 @@ mod tests {
             host.traces
         );
         assert!(!host.traces[1].contains("synthetic"), "{:?}", host.traces);
+    }
+
+    /// A passkey or signed token in a URL the tracker supplied is no
+    /// configured setting, so the trace masks it by its parameter name and
+    /// leaves the other parameters readable.
+    #[test]
+    fn trace_text_masks_credential_parameters_the_tracker_supplied() {
+        let definition = parse_definition(PUBLIC_DEFINITION).unwrap();
+        let config = BTreeMap::new();
+        for (url, masked) in [
+            (
+                "https://tracker.example/download/1?passkey=returned-value",
+                "https://tracker.example/download/1?passkey=[redacted]",
+            ),
+            (
+                "https://tracker.example/dl.php?id=7&torrent_pass=returned-value&name=fixture",
+                "https://tracker.example/dl.php?id=7&torrent_pass=[redacted]&name=fixture",
+            ),
+            (
+                "https://cdn.example/file?Expires=9&Signature=returned-value&Key-Pair-Id=returned-value#top",
+                "https://cdn.example/file?Expires=9&Signature=[redacted]&Key-Pair-Id=returned-value#top",
+            ),
+            (
+                "https://tracker.example/rss?apikey=returned-value&authkey=returned-value&token=returned-value",
+                "https://tracker.example/rss?apikey=[redacted]&authkey=[redacted]&token=[redacted]",
+            ),
+            (
+                "https://tracker.example/search?keywords=fixture+title&author=fixture&page=2",
+                "https://tracker.example/search?keywords=fixture+title&author=fixture&page=2",
+            ),
+            (
+                "redirect to https://tracker.example/get?sid=returned-value failed",
+                "redirect to https://tracker.example/get?sid=[redacted] failed",
+            ),
+        ] {
+            assert_eq!(mask_trace_text(&definition, &config, url), masked);
+        }
     }
 
     fn compiled(definition: &str) -> String {
